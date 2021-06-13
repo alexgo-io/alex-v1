@@ -1,0 +1,1 @@
+<img src="http://yuml.me/diagram/scruffy/activity/[View Summary]-(start)-|a|,|a|->(Click on Token)->|b|,|a|->(Click on Yield Token)->|b|,|a|->(Click on Borrowing)->|c|,|b|->(Buy),|b|->(Sell),|b|->(Borrow),|c|->(Borrow),|c|->(Top-up),|c|->(Repay)">
