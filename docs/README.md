@@ -1,4 +1,4 @@
-# Test
+# What is ALEX?
 
 ## ALEX is an open-source DeFi development company built on Stacks Blockchain modelled on the world’s financial markets.
 
