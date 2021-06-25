@@ -1,0 +1,42 @@
+[project]
+name = "clarity"
+requirements = []
+[contracts.FlashLoans]
+path = "contracts/FlashLoans.clar"
+depends_on = []
+
+[contracts.IAuthorizer]
+path = "contracts/IAuthorizer.clar"
+depends_on = []
+
+[contracts.IAuthorizer-trait]
+path = "contracts/IAuthorizer-trait.clar"
+depends_on = []
+
+[contracts.IVault]
+path = "contracts/IVault.clar"
+depends_on = []
+
+[contracts.IVault-trait]
+path = "contracts/IVault-trait.clar"
+depends_on = []
+
+[contracts.SidneyPlayground]
+path = "contracts/SidneyPlayground.clar"
+depends_on = []
+
+[contracts.Swaps]
+path = "contracts/Swaps.clar"
+depends_on = []
+
+[contracts.Vault]
+path = "contracts/Vault.clar"
+depends_on = []
+
+[contracts.VaultAuthorization]
+path = "contracts/VaultAuthorization.clar"
+depends_on = []
+
+[contracts.trait-sip-010]
+path = "contracts/trait-sip-010.clar"
+depends_on = []
