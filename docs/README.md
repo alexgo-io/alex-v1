@@ -51,13 +51,35 @@ Equation abstracts rebalancing and market making logic, while Pool encapsulates 
 
 Equation triggers Pool rebalancing. This allows creation of any arbitrary rebalancing strategies to be deployed as a pool.
 
+#### Collateral Rebalancing Equation
+
+Collateral Rebalancing Equation \("CRE"\) triggers ayToken / Collateral Pool rebalancing.
+
+CRE dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remain solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\). This dynamic rebalancing, together with a judicious choice of the key parameters \(including LTV and volatilty assumption\) allows ALEX to eliminate the needs for liquidation. Any residual gap risk \(which CRE cannot address entirely\) is addressed through maintaining a strong reserve fund.
+
+When a Borrower mints ayToken by providing appropriate Collateral, the Collateral is converted into a basket of Collateral and Token, with the weights determined by CRE. CRE determines the weights based on the prevailing LTV and uses the following formula:
+
+$$
+w_{Token}=N\left(d_{1}\right)\\
+w_{Collateral}=\left(1-w_{Token}\right)\\
+d_{1}= \frac{1}{\sigma\sqrt{t}}\left[\ln\left(\frac{LTV_{t}}{LTV_{0}}\right) + t\times\left(APY_{Token}-APY_{Collateral} + \frac{\sigma^2}{2}\right)\right]
+$$
+
+Some readers may note the similarity of the above formula to the [Black & Scholes delta](https://en.wikipedia.org/wiki/Black–Scholes_model), because it is. CRE essentially implements a delta replicating strategy of a call option on Token / Collateral, buying more Token when LTV moves higher and vice versa.
+
+#### ayToken / Token Equation
+
+#### Liquidity Bootstrapping Equation
+
+Liquidity Bootstrapping Equation \("LBE"\) is a dynamic weight rebalancing equation whose weights changes over a set period of time. LBE is used to initialize a pool in a capital efficient manner.
+
 ### Pool
 
-Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Pools consist of the Strategy Token whose value is driven by Collateral Tokens. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity provider, representing a proportional ownership of that Pool
+Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity provider, representing a proportional ownership of that Pool.
 
 ### Vault
 
-Vault holds and manages the assets of all ALEX pools. The design has many advantages over the traditional DEX architecture; it enables abstraction of pool logic, significantly cheaper multi-hop trades, high frequency trading, flash loans, and more.
+Vault holds and manages the assets of all ALEX pools. The separation of pool and vault has many benefits including, among others, cheaper transaction costs for users and quicker learning curve for developers when building custom pools on ALEX.
 
 ### Oracle
 
