@@ -1,4 +1,4 @@
-# Platform Architecture that supports ecosystem development
+# Platform built for developers
 
 The platform architecture of ALEX allows for implementation of arbitrary trading strategies and borrows heavily from [Balancer V2](https://docs.balancer.fi).
 
