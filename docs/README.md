@@ -1,3 +1,9 @@
+---
+description: >-
+  Did you know ALEX stands for Automated Liquidity Exchange, but actually comes
+  from the name of one of our co-founder's son?
+---
+
 # What is ALEX?
 
 ## ALEX is an open-source DeFi development company built on Stacks Blockchain modelled on the world’s financial markets.
