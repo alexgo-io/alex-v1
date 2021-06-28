@@ -40,6 +40,10 @@ Some readers may note the similarity of the above formula to the [Black & Schole
 
 ### Yield Token Equation
 
+Yield Token Equation \("YTE"\) follows [Yield Space](https://yield.is/YieldSpace.pdf) and is designed specifically to facilitate efficient trading between ayToken and Token. Our main contribution is to extend the model to allow for capital efficiency from liquidity provision perspective \(inspired by [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf)\).
+
+For example, if a pool is configured to trade between 0% and 10% APY, the capital efficiency can improve to 40x compared to when the yield can trade between $$-\infty$$ and $$+\infty$$.
+
 ### Liquidity Bootstrapping Equation
 
 Liquidity Bootstrapping Equation \("LBE"\) extends Weighted Equation and is a dynamic rebalancing equation designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
