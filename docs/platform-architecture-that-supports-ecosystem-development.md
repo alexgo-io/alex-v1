@@ -29,9 +29,11 @@ CRE dynamically rebalances collateral to ensure the ayToken minted \(i.e. the lo
 When a Borrower mints ayToken by providing appropriate Collateral, the Collateral is converted into a basket of Collateral and Token, with the weights determined by CRE. CRE determines the weights based on the prevailing LTV and uses the following formula:
 
 $$
-w_{Token}=N\left(d_{1}\right)\\
-w_{Collateral}=\left(1-w_{Token}\right)\\
-d_{1}= \frac{1}{\sigma\sqrt{t}}\left[\ln\left(\frac{LTV_{t}}{LTV_{0}}\right) + t\times\left(APY_{Token}-APY_{Collateral} + \frac{\sigma^2}{2}\right)\right]
+\begin{split}
+&w_{Token}=N\left(d_{1}\right)\\
+&w_{Collateral}=\left(1-w_{Token}\right)\\
+&d_{1}= \frac{1}{\sigma\sqrt{t}}\left[\ln\left(\frac{LTV_{t}}{LTV_{0}}\right) + t\times\left(APY_{Token}-APY_{Collateral} + \frac{\sigma^2}{2}\right)\right]
+\end{split}
 $$
 
 Some readers may note the similarity of the above formula to the [Black & Scholes delta](https://en.wikipedia.org/wiki/Black–Scholes_model), because it is. CRE essentially implements a delta replicating strategy of a call option on Token / Collateral, buying more Token when LTV moves higher and vice versa.
@@ -54,7 +56,7 @@ Pools handle the logic of dynamic trading strategies, whose token rebalancing ar
 
 Vault holds and manages the assets of all ALEX pools. The separation of pool and vault has many benefits including, among others, cheaper transaction costs for users and quicker learning curve for developers when building custom pools on ALEX.
 
-<img alt="Vault Use Case" src="https://yuml.me/diagram/scruffy/usecase/[Arbitrageur]-(Go to Vault), [Flash Loan User]-(Go to Vault), (Go to Vault)-(Create Flash Loan), (Go to Vault)-(Create Swap / Batch Swap), (Create Swap / Batch Swap)-(Create Flash Loan), (Create Swap / Batch Swap)-(Sell Token), (Create Swap / Batch Swap)-(Buy Token)">
+![Vault Use Case](https://yuml.me/diagram/scruffy/usecase/[Arbitrageur]-%28Go%20to%20Vault%29,%20[Flash%20Loan%20User]-%28Go%20to%20Vault%29,%20%28Go%20to%20Vault%29-%28Create%20Flash%20Loan%29,%20%28Go%20to%20Vault%29-%28Create%20Swap%20/%20Batch%20Swap%29,%20%28Create%20Swap%20/%20Batch%20Swap%29-%28Create%20Flash%20Loan%29,%20%28Create%20Swap%20/%20Batch%20Swap%29-%28Sell%20Token%29,%20%28Create%20Swap%20/%20Batch%20Swap%29-%28Buy%20Token%29)
 
 ### Flash Loan
 
