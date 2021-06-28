@@ -4,3 +4,4 @@ Yield Token Pool facilitates trading of between Yield Token and its base Token, 
 
 The AMM formula is constructed such that its liquidity distribution is optimal for the trading between Yield Token and its base Token, hence allowing a better fungibility between Pool Tokens, i.e. the token representing the proportional ownership of the pool. ALEX does not at the moment support a custom liquidity provision \(except for the limit orders\).
 
+<img alt="LP Use Case" src="https://yuml.me/diagram/scruffy/usecase/[Liquidity Provider]-(Go to ayToken / Token Pool), (Go to ayToken / Token Pool)-(Deposit ayToken & Token), (Deposit ayToken & Token)-(Mint ayToken / Token Pool Token)">
