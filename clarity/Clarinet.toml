@@ -1,7 +1,6 @@
 [project]
 name = "clarity"
 requirements = []
-
 [contracts.IAuthorizer]
 path = "contracts/IAuthorizer.clar"
 depends_on = []
@@ -20,7 +19,7 @@ depends_on = []
 
 [contracts.alex-vault-v1]
 path = "contracts/alex-vault-v1.clar"
-depends_on = ["trait-vault-v1","trait-sip-010"]
+depends_on = ["trait-vault-v1", "trait-sip-010"]
 
 [contracts.trait-equation-v1]
 path = "contracts/trait-equation-v1.clar"
@@ -30,10 +29,14 @@ depends_on = ["trait-oracle-v1"]
 path = "contracts/trait-oracle-v1.clar"
 depends_on = []
 
+[contracts.trait-pool-token-v1]
+path = "contracts/trait-pool-token-v1.clar"
+depends_on = ["trait-sip-010"]
+
 [contracts.trait-sip-010]
 path = "contracts/trait-sip-010.clar"
 depends_on = []
 
 [contracts.trait-vault-v1]
 path = "contracts/trait-vault-v1.clar"
-depends_on = ["trait-sip-010","trait-equation-v1"]
+depends_on = ["trait-sip-010", "trait-equation-v1"]
