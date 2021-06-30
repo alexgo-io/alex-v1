@@ -1,12 +1,11 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 ;;(use-trait pool-token-trait #FILEPATH )
-(use-trait equation-trait .trait-equation-v1.equation-trait)
+;;(use-trait equation-trait .trait-equation-v1.equation-trait)
 
 ;; Fungible Token SIP-010
 ;; TODO : Define all the error types in implementation file
 
 (define-trait vault-trait
-
     (   
         ;; get-name(token-x:sip-010-token, token-y:sip-010-token):string-ascii
         (get-name (<ft-trait> <ft-trait>) (response (string-ascii 32) uint))
@@ -54,7 +53,7 @@
         (flashLoan () (response uint uint))
     
         ;; get-y-given-x(token-x:sip-010-token, token-y:sip-010-token, dx uint):uint
-        (get-y-given-x(<ft-trait> <ft-trait> uint) (response uint uint))
+        (get-y-given-x (<ft-trait> <ft-trait> uint) (response uint uint))
 
         ;; get-x-given-y(token-x:sip-010-token, token-y:sip-010-token, dy uint):uint
         (get-x-given-y (<ft-trait> <ft-trait> uint) (response uint uint))
