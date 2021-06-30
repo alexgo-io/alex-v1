@@ -31,16 +31,13 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-name (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
-  
     (let
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
         (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
         )
-
     (ok (get name pair))
-
     ) 
 )
 
@@ -54,3 +51,37 @@
     )
   )
 )
+
+(define-read-only (get-total-supply (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+  (let
+    (
+      (token-x (contract-of token-x-trait))
+      (token-y (contract-of token-y-trait))
+      (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
+    )
+    (ok (get shares-total pair))
+  )
+)
+
+(define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+  (let
+    (
+      (token-x (contract-of token-x-trait))
+      (token-y (contract-of token-y-trait))
+      (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
+    )
+    (ok (list (get balance-x pair) (get balance-y pair)))
+  )
+)
+
+
+;; ---------------------------------------------------------
+;; Create Pool
+;; ---------------------------------------------------------
+
+;; (create-pool (<ft-trait> <ft-trait> <pool-token-trait> <equation-trait> (string-ascii 32)) (response bool uint))    ;; WHY NEED EQUATION ? UML ERROR ?
+
+;; (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (pool-token-trait <pool-token-trait>) (equation-trait <equation-trait>) (pool-name (string-ascii 32))
+
+
+;; )

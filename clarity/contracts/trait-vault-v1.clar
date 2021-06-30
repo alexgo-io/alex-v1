@@ -1,6 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 ;;(use-trait pool-token-trait #FILEPATH )
-;;(use-trait equation-trait .trait-equation-v1.equation-trait)
+(use-trait equation-trait .trait-equation-v1.equation-trait)
 
 ;; Fungible Token SIP-010
 ;; TODO : Define all the error types in implementation file
@@ -20,7 +20,7 @@
         (get-total-supply (<ft-trait> <ft-trait>) (response (list 2 uint) uint)) ;; Tuple ? -> keyname
 
         ;; create-pool(token-x:sip-010-token, token-y:sip-010-token, pool-token:trait-pool-token, equation:trait-equation, pair-name:string-ascii):bool
-        ;; (get-total-supply (<ft-trait> <ft-trait> <pool-token-trait> <equation-trait> (string-ascii 32)) (response bool uint))    ;; WHY NEED EQUATION ? UML ERROR ?
+        (create-pool (<ft-trait> <ft-trait> <pool-token-trait> <equation-trait> (string-ascii 32)) (response bool uint))    ;; WHY NEED EQUATION ? UML ERROR ?
     
         ;; add-to-position(token-x:sip-010-token, token-y:sip-010-token, pool-token:trait-pool-token, x uint, y uint):bool
         ;; (add-to-position (<ft-trait> <ft-trait> <pool-token-trait> uint uint) (response bool uint))
