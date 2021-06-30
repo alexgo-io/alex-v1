@@ -1,9 +1,6 @@
 [project]
 name = "clarity"
 requirements = []
-[contracts.FlashLoans]
-path = "contracts/FlashLoans.clar"
-depends_on = []
 
 [contracts.IAuthorizer]
 path = "contracts/IAuthorizer.clar"
@@ -21,22 +18,22 @@ depends_on = []
 path = "contracts/IVault-trait.clar"
 depends_on = []
 
-[contracts.SidneyPlayground]
-path = "contracts/SidneyPlayground.clar"
-depends_on = []
+[contracts.alex-vault-v1]
+path = "contracts/alex-vault-v1.clar"
+depends_on = ["trait-vault-v1","trait-sip-010"]
 
-[contracts.Swaps]
-path = "contracts/Swaps.clar"
-depends_on = []
+[contracts.trait-equation-v1]
+path = "contracts/trait-equation-v1.clar"
+depends_on = ["trait-oracle-v1"]
 
-[contracts.Vault]
-path = "contracts/Vault.clar"
-depends_on = []
-
-[contracts.VaultAuthorization]
-path = "contracts/VaultAuthorization.clar"
+[contracts.trait-oracle-v1]
+path = "contracts/trait-oracle-v1.clar"
 depends_on = []
 
 [contracts.trait-sip-010]
 path = "contracts/trait-sip-010.clar"
 depends_on = []
+
+[contracts.trait-vault-v1]
+path = "contracts/trait-vault-v1.clar"
+depends_on = ["trait-sip-010"]
