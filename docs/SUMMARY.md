@@ -9,5 +9,6 @@
 * [FAQ](faq.md)
 * [ALEXnomics](alexnomics.md)
 * [Diagrams](diagrams/README.md)
-  * [Back-end Use Case](diagrams/back-end-use-case.md)
+  * [Class Diagram](diagrams/class-diagram.md)
+  * [Use Case](diagrams/protocol-use-case.md)
 
