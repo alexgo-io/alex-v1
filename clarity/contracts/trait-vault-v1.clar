@@ -1,6 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 ;;(use-trait pool-token-trait #FILEPATH )
-;;(use-trait equation-trait #FILEPATH)
+(use-trait equation-trait .trait-equation-v1.equation-trait)
 
 ;; Fungible Token SIP-010
 ;; TODO : Define all the error types in implementation file
