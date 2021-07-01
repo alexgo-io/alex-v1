@@ -22,13 +22,13 @@ $$\Delta y=y-\left[x^{1-t}+y^{1-t} - (x+\Delta x)^{1-t}\right]^{\frac{1}{1-t}}$$
 
 This is the opposite case to Out-Given-In. We are expressing $$\Delta x$$as a function of $$ \Delta y $$
 
-$$\Delta x= \frac{1}{\lambda} \{  \left[x^{1-t}+y^{1-t} - (y-\Delta y)^{1-t}\right]^{\frac{1}{1-t}}-x  \}$$
+$$\Delta x=  \left[x^{1-t}+y^{1-t} - (y-\Delta y)^{1-t}\right]^{\frac{1}{1-t}}-x $$
 
 ### In-Given-Price
 
 Sometimes trader would like to adjust the price, perhaps due to deviation of AMM price to the market value. Denote $$p=\left( \frac{y}{x}\right)^t$$and $$p'=\left( \frac{y-\Delta y}{x + \Delta x}\right)^t$$pool price before and after the adjustment respectively,  we can then express $$\Delta x$$as
 
-$$\Delta x=\lambda\left[\left(\frac{1+p^{\frac{1-t}{t}}}{1+p'^{\frac{1-t}{t}}}\right)^{\frac{1}{1-t}}-1\right]$$
+$$\Delta x=x\left[\left(\frac{1+p^{\frac{1-t}{t}}}{1+p'^{\frac{1-t}{t}}}\right)^{\frac{1}{1-t}}-1\right]$$
 
 ## Capital Efficiency - Concentrated Liquidity
 
