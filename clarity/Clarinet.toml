@@ -1,0 +1,10 @@
+[project]
+name = "alex-v1"
+requirements = []
+[contracts.trait-equation]
+path = "contracts/trait-equation.clar"
+depends_on = []
+
+[contracts.weighted-equation]
+path = "contracts/weighted-equation.clar"
+depends_on = []
