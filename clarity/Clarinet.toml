@@ -5,6 +5,10 @@ requirements = []
 path = "contracts/trait-equation.clar"
 depends_on = []
 
+[contracts.trait-flash-loan-user]
+path = "contracts/trait-flash-loan-user.clar"
+depends_on = []
+
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
 depends_on = []
