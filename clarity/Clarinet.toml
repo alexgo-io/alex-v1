@@ -1,7 +1,6 @@
 [project]
 name = "clarity"
 requirements = []
-
 [contracts.alex-vault-v1]
 path = "contracts/alex-vault-v1.clar"
 depends_on = ["trait-vault-v1", "trait-sip-010"]
@@ -17,6 +16,10 @@ depends_on = []
 [contracts.trait-equation-v1]
 path = "contracts/trait-equation-v1.clar"
 depends_on = ["trait-oracle-v1"]
+
+[contracts.trait-flash-loan-user-v1]
+path = "contracts/trait-flash-loan-user-v1.clar"
+depends_on = ["trait-sip-010"]
 
 [contracts.trait-liquidity-bootstrap-equation]
 path = "contracts/trait-liquidity-bootstrap-equation.clar"
@@ -40,4 +43,4 @@ depends_on = []
 
 [contracts.trait-vault-v1]
 path = "contracts/trait-vault-v1.clar"
-depends_on = ["trait-sip-010", "trait-equation-v1"]
+depends_on = ["trait-sip-010", "trait-equation-v1","trait-flash-loan-user-v1"]

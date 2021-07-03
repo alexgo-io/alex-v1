@@ -1,4 +1,4 @@
-(impl-trait .trait-vault-v1.vault-trait)
+(use-trait vault-trait .trait-vault-v1.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 
@@ -87,26 +87,26 @@
 ;; )
 
 
-(define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
-  (let
-    (
-      (token-x (contract-of token-x-trait))
-      (token-y (contract-of token-y-trait))
-      (pair (unwrap-panic (map-get? pairs-data-map { token-x: token-x, token-y: token-y })))
-      (address (get fee-to-address pair))
-      (fee-x (get fee-balance-x pair))
-      (fee-y (get fee-balance-y pair))
-    )
+;; (define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+;;   (let
+;;     (
+;;       (token-x (contract-of token-x-trait))
+;;       (token-y (contract-of token-y-trait))
+;;       (pair (unwrap-panic (map-get? pairs-data-map { token-x: token-x, token-y: token-y })))
+;;       (address (get fee-to-address pair))
+;;       (fee-x (get fee-balance-x pair))
+;;       (fee-y (get fee-balance-y pair))
+;;     )
 
-    ;; (asserts! (is-eq fee-x u0) no-fee-x-err)
-    ;; (asserts! (is-ok (contract-call? token-x-trait transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
-    ;; (asserts! (is-eq fee-y u0) no-fee-y-err)
-    ;; (asserts! (is-ok (contract-call? token-y-trait transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
+;;     ;; (asserts! (is-eq fee-x u0) no-fee-x-err)
+;;     ;; (asserts! (is-ok (contract-call? token-x-trait transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
+;;     ;; (asserts! (is-eq fee-y u0) no-fee-y-err)
+;;     ;; (asserts! (is-ok (contract-call? token-y-trait transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
 
-    (map-set pairs-data-map
-      { token-x: token-x, token-y: token-y }
-      (merge pair { fee-balance-x: u0, fee-balance-y: u0 })
-    )
-    (ok (list fee-x fee-y))
-  )
-)
+;;     (map-set pairs-data-map
+;;       { token-x: token-x, token-y: token-y }
+;;       (merge pair { fee-balance-x: u0, fee-balance-y: u0 })
+;;     )
+;;     (ok (list fee-x fee-y))
+;;   )
+;; )
