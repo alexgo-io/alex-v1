@@ -39,8 +39,8 @@
     (ok
         (if (is-eq total-supply u0)
             ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
-            (sqrti (* (pow x (/ weight-x u100)) (pow y (/ weight-y u100))))
-            (/ (* x total-supply) balance-x)
+            {token: (sqrti (* (pow x (/ weight-x u100)) (pow y (/ weight-y u100)))), y: y}
+            {token: (/ (* x total-supply) balance-x), y: (/ (* x balance-y) balance-x)}
         )
     )   
 )
@@ -54,7 +54,7 @@
             (x (* balance-x (/ token total-supply))) 
             (y (* x (/ (/ weight-y u100) (/ weight-x u100))))
         ) 
-        (ok (list x y))
+        (ok {x: x, y: y})
     )
 )
 
@@ -68,6 +68,6 @@
             (x (* balance-x (/ token total-supply))) 
             (y (* x (/ (/ weight-y u100) (/ weight-x u100))))
         ) 
-        (ok (list x y))
+        (ok {x: x, y: y})
     )
 )

@@ -1,12 +1,32 @@
 [project]
 name = "alex-v1"
 requirements = []
+[contracts.collateral-rebalancing-pool]
+path = "contracts/collateral-rebalancing-pool.clar"
+depends_on = []
+
+[contracts.fixed-weight-pool]
+path = "contracts/fixed-weight-pool.clar"
+depends_on = []
+
 [contracts.trait-equation]
 path = "contracts/trait-equation.clar"
 depends_on = []
 
 [contracts.trait-flash-loan-user]
 path = "contracts/trait-flash-loan-user.clar"
+depends_on = []
+
+[contracts.trait-fungible-token]
+path = "contracts/trait-fungible-token.clar"
+depends_on = []
+
+[contracts.trait-pool]
+path = "contracts/trait-pool.clar"
+depends_on = []
+
+[contracts.trait-pool-token]
+path = "contracts/trait-pool-token.clar"
 depends_on = []
 
 [contracts.weighted-equation]

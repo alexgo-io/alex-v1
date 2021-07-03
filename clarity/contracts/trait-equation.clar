@@ -24,13 +24,13 @@
         ;;(get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint) (response uint uint))
         (get-x-given-price (uint uint uint uint uint) (response uint uint))
 
-        ;;(get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (x uint) (y uint) (response uint uint))
-        (get-token-given-position (uint uint uint uint uint uint uint) (response uint uint))
+        ;;(get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (x uint) (y uint) (response {token, y} uint))
+        (get-token-given-position (uint uint uint uint uint uint uint) (response {token: uint, y: uint} uint))
 
-        ;;(get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response (list 2 uint) uint))
-        (get-position-given-mint (uint uint uint uint uint uint) (response (list 2 uint) uint))
+        ;;(get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response {x, y} uint))
+        (get-position-given-mint (uint uint uint uint uint uint) (response {x: uint, y: uint} uint))
 
-        ;;(get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response (list 2 uint) uint))
-        (get-position-given-burn (uint uint uint uint uint uint) (response (list 2 uint) uint))
+        ;;(get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response {x, y} uint))
+        (get-position-given-burn (uint uint uint uint uint uint) (response {x: uint, y: uint} uint))
     )
 )
