@@ -1,8 +1,8 @@
 (impl-trait .trait-pool.trait-pool)
 
-(use-trait equation .trait-equation.trait-equation)
-(use-trait fungible-token .trait-fungible-token.trait-fungible-token)
-(use-trait pool-token .trait-pool-token.trait-pool-token)
+(use-trait equation-trait .trait-equation.equation-trait)
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 
 ;; fixed-weight-pool
 ;; <add a description here>
@@ -16,7 +16,7 @@
 ;; data maps and vars
 ;;
 (define-map pools-map
-  { pair-id: uint }
+  { pool-id: uint }
   {
     token-x: principal,
     token-y: principal,
@@ -67,10 +67,12 @@
 )
 
 ;; additional functions
-(define-read-only (get-pool-details (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint))
+(define-read-only (get-pool-details (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (let 
         (
-            (pool (map-get? pools-data-map { token-x: token-x-trait, token-y: token-y-trait, weight-x: weight-x, weight-y: weight-y }))
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
         )
         (if (is-some pool)
             (ok pool)
@@ -79,11 +81,11 @@
     )
 )
 
-(define-public (create-pool (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (equation-trait <equation>) (pool-token-trait <pool-token>))
-    (ok true)
-)
+;; (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-trait <equation-trait>) (pool-token-trait <pool-token-trait>))
+;;     (ok true)
+;; )
 ;; 
-(define-public (add-to-position (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (equation-trait <equation>) (pool-token-trait <pool-token>) (dx uint) (dy uint))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>) (dx uint) (dy uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -92,7 +94,7 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap-panic (contract-call? equation-trait get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
+            (add-data (unwrap-panic (contract-call? equation-xy get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
@@ -116,55 +118,55 @@
     )
 )    
 
-(define-public (reduce-position (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (equation-trait <equation>) (pool-token-trait <pool-token>) (token uint))
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>) (token uint))
     (ok true)
 )
 
-(define-public (swap-x-for-y (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (equation-trait <equation>) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (dx uint))
     (ok true)
 )
 
-(define-public (swap-y-for-x (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (equation-trait <equation>) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (dy uint))
     (ok true)
 )
 
-(define-public (set-fee-to-address (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (address principal))
+(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (address principal))
     (ok true)
 )
 
-(define-read-only (get-fee-to-address (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint))
+(define-read-only (get-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     ;; return principal
     (ok none)
 )
 
-(define-read-only (get-fees (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint))
+(define-read-only (get-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (ok {x: u0, y: u0})
 )
 
-(define-public (collect-fees (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint))
+(define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (ok true)
 )
 
-;; (define-read-only (get-y-given-x (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (dx uint))
-;;     (ok u0)
-;; )
+(define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
+    (ok u0)
+)
 
-;; (define-read-only (get-x-given-y (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (dy uint))
-;;     (ok u0)
-;; )
+(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
+    (ok u0)
+)
 
-;; (define-read-only (get-x-given-price (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (price uint))
-;;     (ok u0)
-;; )
+(define-read-only (get-x-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (price uint))
+    (ok u0)
+)
 
-;; (define-read-only (get-token-given-position (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (pool-token-trait <pool-token>) (x uint) (y uint))
-;;     (ok {token: u0, y: u0})
-;; )
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-xy <pool-token-trait>) (x uint) (y uint))
+    (ok {token: u0, y: u0})
+)
 
-;; (define-read-only (get-position-given-mint (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (pool-token-trait <pool-token>) (token uint))
-;;     (ok {x: u0, y: u0})
-;; )
+(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-xy <pool-token-trait>) (token uint))
+    (ok {x: u0, y: u0})
+)
 
-;; (define-read-only (get-position-given-burn (token-x-trait <fungible-token>) (token-y-trait <fungible-token>) (weight-x uint) (weight-y uint) (pool-token-trait <pool-token>) (token uint))
-;;     (ok {x: u0, y: u0})
-;; )
+(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-xy <pool-token-trait>) (token uint))
+    (ok {x: u0, y: u0})
+)

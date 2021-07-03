@@ -1,4 +1,3 @@
-
 ;; trait-pool
 ;; <add a description here>
 

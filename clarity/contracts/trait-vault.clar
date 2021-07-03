@@ -1,6 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 ;;(use-trait pool-token-trait #FILEPATH )
-(use-trait trait-equation .trait-equation.trait-equation)
+(use-trait trait-equation .trait-equation.equation-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 ;; Fungible Token SIP-010
