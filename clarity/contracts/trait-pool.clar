@@ -13,7 +13,7 @@
 
 ;; public functions
 ;;
-(define-trait trait-pool
+(define-trait pool-trait
     (
         (get-pool-contracts (uint) (response
             {

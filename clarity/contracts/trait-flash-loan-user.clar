@@ -1,21 +1,10 @@
-;; trait-flash-loan-user
-;; <add a description here>
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-;; constants
-;;
+(define-trait flash-loan-user-trait
+  (
 
-;; data maps and vars
-;;
+    ;; execute (list 3 trait-fungible-token) (list 3 uint) (response bool uint)
+    (execute ((list 3 <ft-trait>) (list 3 uint)) (response bool uint))
 
-;; private functions
-;;
-
-;; public functions
-;;
-
-(define-trait trait-flash-loan-user
-    (
-        ;; (execute (list 3 trait-fungible-token) (list 3 uint) (response bool uint))
-        (execute ((list 3 principal) (list 3 uint)) (response bool uint))
-    )
+  )
 )

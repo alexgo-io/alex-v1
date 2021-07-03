@@ -1,20 +1,8 @@
 
-;; trait-fungible-token
+;; trait-sip-010
 ;; <add a description here>
 
-;; constants
-;;
-
-;; data maps and vars
-;;
-
-;; private functions
-;;
-
-;; public functions
-;;
-
-(define-trait trait-fungible-token
+(define-trait sip-010-trait
   (
     ;; Transfer from the caller to a new principal
     (transfer (uint principal principal (optional (buff 34))) (response bool uint))
