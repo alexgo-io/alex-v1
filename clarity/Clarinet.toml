@@ -44,3 +44,11 @@ depends_on = []
 [contracts.trait-vault-v1]
 path = "contracts/trait-vault-v1.clar"
 depends_on = ["trait-sip-010", "trait-equation-v1","trait-flash-loan-user-v1"]
+
+[contracts.trait-equation]
+path = "contracts/trait-equation.clar"
+depends_on = []
+
+[contracts.weighted-equation]
+path = "contracts/weighted-equation.clar"
+depends_on = []
