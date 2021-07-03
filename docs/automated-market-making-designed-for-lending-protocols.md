@@ -24,11 +24,27 @@ This is the opposite case to Out-Given-In. We are expressing $$\Delta x$$as a fu
 
 $$\Delta x=  \left[x^{1-t}+y^{1-t} - (y-\Delta y)^{1-t}\right]^{\frac{1}{1-t}}-x $$
 
-### In-Given-Price
+### In-Given-Price/Yield
 
 Sometimes trader would like to adjust the price, perhaps due to deviation of AMM price to the market value. Denote $$p=\left( \frac{y}{x}\right)^t$$and $$p'=\left( \frac{y-\Delta y}{x + \Delta x}\right)^t$$pool price before and after the adjustment respectively,  we can then express $$\Delta x$$as
 
 $$\Delta x=x\left[\left(\frac{1+p^{\frac{1-t}{t}}}{1+p'^{\frac{1-t}{t}}}\right)^{\frac{1}{1-t}}-1\right]$$
 
+Under continuous compounding, where $$ p=e^{rt}$$, $$ p'=e^{r't}$$and $$r$$ and $$r'$$ are the corresponding interest rate, we can then express$$\Delta x$$as a function of $$r$$ and $$r'$$
+
+$$\Delta x=x\left[\left(\frac{1+e^{r(1-t)}}{1+e^{r'(1-t)}}\right)^{\frac{1}{1-t}}-1\right]$$
+
 ## Capital Efficiency - Concentrated Liquidity
+
+This is to allow liquidity to be concentrated on a fraction of the interest rate curve. A typical example is to set a floor of $$ 0\% $$ so that negative interest rate is not permitted. Inspired by Uniswap V3. Concentrated liquidity is achieved by introducing virtual tokens to satisfy the invariant function which is $$(x+x_v)^{1-t}+(y+y_v)^{1-t}=L$$, where $$x_v$$and $$y_v$$are virtual balance of Token and ayToken respectively. As a result, actual balance of Token/fyToken that liquidity providers are required to maintain is reduced by $$x_v$$/$$y_v$$. 
+
+Levels of $$x_v$$ and $$y_v$$ are related to the interest rate bounds imposed to the liquidity pool. Assume that the lower/upper interest rate bound is$$r_l$$/$$r_u$$, out of which only one token exists and the liquidity pool trading function ceases to operate. Virtual balance can then be expressed as $$x_v=\left [ \frac{L}{1+e^{(1-t)r_u}} \right ]^{\frac{1}{1-t}}$$and $$y_v=\left [ \frac{L}{1+e^{-(1-t)r_l}} \right ]^{\frac{1}{1-t}}$$
+
+### Example: Floor of $$0\%$$
+
+Set $$t=0.5$$and $$L=20$$. In this case, virtual fyToken $$y_v$$is $$100$$. Assuming the current interest rate 10%, liquidity provider only needs to hold minimum $$5.06$$ fyTokens. Any larger amount would not be touched, as they would send the rate to negative territory. This is in contrast with$$105.06$$fyTokens without virtual reserve - a capital saving of 95%!
+
+![Table: Balance of liquidity pool with 0% floor, t=0.5 and L=20. Virtual fyToken is 100.](.gitbook/assets/0floor.png)
+
+
 
