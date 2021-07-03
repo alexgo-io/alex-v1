@@ -10,7 +10,7 @@ The key of the AMM is **invariant function**, as it dynamically adjusts the pric
 
 ## **Trading Formula**
 
-The market transaction, which invovles exchange of Token and ayToken, satisfies the invariant function. Fee is not returned to the pool, therefore $$k$$remains constant.
+The market transaction, which involves exchange of Token and ayToken, satisfies the invariant function. Fee is not returned to the pool, therefore $$k$$remains constant.
 
 ### Out-Given-In
 
