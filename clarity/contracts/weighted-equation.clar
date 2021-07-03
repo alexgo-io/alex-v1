@@ -1,5 +1,7 @@
 
-(imp-trait .trait-equation.trait-equation)
+(impl-trait .trait-equation.trait-equation)
+
+(define-constant no-liquidity-err (err u61))
 
 ;; weighted-equation
 ;; <add a description here>
@@ -15,6 +17,57 @@
 
 ;; public functions
 ;;
-(define-read-only (get-y-given-x (dx uint))
+(define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    ;; TODO check weights add to 1
+    ;; TODO add fee
+    (ok (* balance-y (pow (pow (- u1 (/ balance-x (+ balance-x dx))) weight-x) (/ u1 weight-y))))
+)
 
+(define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    ;; TODO check weights add to 1
+    ;; TODO add fee
+    (ok (* balance-x (- (pow (pow (/ balance-y (- balance-y dy)) weight-y) (/ u1 weight-x)) u1)))
+)
+
+(define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    ;; TODO check weights add to 1
+    ;; TODO add fee
+    (ok (* balance-x (- (pow (/ price (/ (* balance-x weight-y) (* balance-y weight-x))) weight-y) u1)))
+)
+
+(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (x uint) (y uint))
+    (ok
+        (if (is-eq total-supply u0)
+            ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
+            (sqrti (* (pow x weight-x) (pow y weight-y)))
+            (/ (* x total-supply) balance-x)
+        )
+    )   
+)
+
+(define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    
+    ;; need to ensure total-supply > 0
+    ;;(asserts! (> total-supply u0) no-liquidity-err)
+    (let 
+        (
+            (x (* balance-x (/ token total-supply))) 
+            (y (* x (/ weight-y weight-x)))
+        ) 
+        (ok (list x y))
+    )
+)
+
+(define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    ;; this is identical to get-position-given-mint. Can we reduce to one?
+
+    ;; need to ensure total-supply > 0
+    ;;(asserts! (> total-supply u0) no-liquidity-err)
+    (let 
+        (
+            (x (* balance-x (/ token total-supply))) 
+            (y (* x (/ weight-y weight-x)))
+        ) 
+        (ok (list x y))
+    )
 )
