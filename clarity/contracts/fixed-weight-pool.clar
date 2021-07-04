@@ -3,6 +3,7 @@
 (use-trait equation-trait .trait-equation.equation-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait vault-trait .trait-vault.vault-trait)
 
 ;; fixed-weight-pool
 ;; <add a description here>
@@ -12,6 +13,11 @@
 (define-constant invalid-pool-err (err u201))
 (define-constant no-liquidity-err (err u61))
 (define-constant invalid-liquidity-err (err u202))
+(define-constant transfer-x-failed-err (err u72))
+(define-constant transfer-y-failed-err (err u73))
+(define-constant pool-already-exists-err (err u69))
+(define-constant too-many-pools-err (err u68))
+(define-constant percent-greater-than-one (err u5))
 
 ;; data maps and vars
 ;;
@@ -90,11 +96,43 @@
     )
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>))
-    (ok true)
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool-id (+ (var-get pool-count) u1))
+            (pool-data {
+                total-supply: u0,
+                balance-x: u0,
+                balance-y: u0,
+                fee-balance-x: u0,
+                fee-balance-y: u0,
+                fee-to-address: (contract-of the-pool-token),
+                pool-token: (contract-of the-pool-token),
+                equation: (contract-of the-equation)
+            })
+        )
+        (asserts!
+            (and
+                (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
+                (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }))
+            )
+            pool-already-exists-err
+        )
+
+        (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-data)
+        
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pool-count pool-id)
+        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-equation the-pool-token the-vault dx dy))
+        (print { object: "pool", action: "created", data: pool-data })
+        (ok true)
+    )
 )
 
-(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>) (dx uint) (dy uint))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -103,7 +141,7 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap-panic (contract-call? equation-xy get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
+            (add-data (unwrap-panic (contract-call? the-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
@@ -116,26 +154,55 @@
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        ;; (asserts! (is-ok (contract-call? token-x-trait transfer x tx-sender contract-address none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
         ;; send y to vault
-        ;; (asserts! (is-ok (contract-call? token-y-trait transfer new-y tx-sender contract-address none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
         ;; mint pool token and send to tx-sender
-        ;; (map-set pairs-data-map { token-x: token-x, token-y: token-y } pair-updated)
-        ;; (try! (contract-call? swap-token-trait mint recipient-address new-shares))
-        ;; (print { object: "pair", action: "liquidity-added", data: pair-updated })
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
     )
 )    
 
-(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>) (token uint))
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (percent uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (shares (* (unwrap-panic (contract-call? this-pool-token get-balance tx-sender)) (/ percent u100)))
+            (total-supply (get total-supply pool))
+            (reduce-data (unwrap-panic (contract-call? the-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
+            (dx (get dx reduce-data))
+            (dy (get dy reduce-data))
+            (pool-updated (merge pool {
+                total-supply: (- total-supply shares),
+                balance-x: (- (get balance-x pool) dx),
+                balance-y: (- (get balance-y pool) dy)
+                })
+            )
+        )
+
+        (asserts! (<= percent u100) percent-greater-than-one)
+        (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
+
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (try! (contract-call? the-pool-token burn tx-sender shares))
+
+        (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+        (ok {dx: dx, dy: dy})
+    )
+)
+
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (dx uint))
     (ok true)
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (dx uint))
-    (ok true)
-)
-
-(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (dy uint))
     (ok true)
 )
 
@@ -168,14 +235,14 @@
     (ok u0)
 )
 
-(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-xy <pool-token-trait>) (x uint) (y uint))
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (x uint) (y uint))
     (ok {token: u0, y: u0})
 )
 
-(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-xy <pool-token-trait>) (token uint))
+(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (token uint))
     (ok {x: u0, y: u0})
 )
 
-(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-xy <pool-token-trait>) (token uint))
+(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (token uint))
     (ok {x: u0, y: u0})
 )

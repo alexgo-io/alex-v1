@@ -7,7 +7,7 @@ depends_on = []
 
 [contracts.fixed-weight-pool]
 path = "contracts/fixed-weight-pool.clar"
-depends_on = ["trait-equation","trait-sip-010","trait-pool-token","trait-pool"]
+depends_on = ["trait-equation","trait-sip-010","trait-pool-token","trait-pool","trait-vault"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
