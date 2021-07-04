@@ -1,3 +1,6 @@
+// {type:usecase}
+// {direction:leftToRight}
+
 [Arbitrageur]-(Go to Vault)
 [Lender]-(Go to ayToken / Token Pool)
 (Go to ayToken / Token Pool)-(Sell Token)
