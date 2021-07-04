@@ -1,4 +1,4 @@
 # Use Case
 
-![](https://yuml.me/alexgo/Alex-v1-back-end-usecase.svg)
+![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-back-end.svg)
 
