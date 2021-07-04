@@ -1,5 +1,5 @@
 
-(impl-trait .trait-equation.trait-equation)
+(impl-trait .trait-equation.equation-trait)
 
 (define-constant no-liquidity-err (err u61))
 
@@ -35,12 +35,12 @@
     (ok (* balance-x (- (pow (/ price (/ (* balance-x (/ weight-y u100)) (* balance-y (/ weight-x u100)))) (/ weight-y u100)) u1)))
 )
 
-(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (x uint) (y uint))
+(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
     (ok
         (if (is-eq total-supply u0)
             ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
-            {token: (sqrti (* (pow x (/ weight-x u100)) (pow y (/ weight-y u100)))), y: y}
-            {token: (/ (* x total-supply) balance-x), y: (/ (* x balance-y) balance-x)}
+            {token: (sqrti (* (pow dx (/ weight-x u100)) (pow dy (/ weight-y u100)))), dy: dy}
+            {token: (/ (* dx total-supply) balance-x), dy: (/ (* dx balance-y) balance-x)}
         )
     )   
 )
@@ -51,10 +51,10 @@
     ;;(asserts! (> total-supply u0) no-liquidity-err)
     (let 
         (
-            (x (* balance-x (/ token total-supply))) 
-            (y (* x (/ (/ weight-y u100) (/ weight-x u100))))
+            (dx (* balance-x (/ token total-supply))) 
+            (dy (* dx (/ (/ weight-y u100) (/ weight-x u100))))
         ) 
-        (ok {x: x, y: y})
+        (ok {dx: dx, dy: dy})
     )
 )
 
@@ -65,9 +65,9 @@
     ;;(asserts! (> total-supply u0) no-liquidity-err)
     (let 
         (
-            (x (* balance-x (/ token total-supply))) 
-            (y (* x (/ (/ weight-y u100) (/ weight-x u100))))
+            (dx (* balance-x (/ token total-supply))) 
+            (dy (* dx (/ (/ weight-y u100) (/ weight-x u100))))
         ) 
-        (ok {x: x, y: y})
+        (ok {dx: dx, dy: dy})
     )
 )

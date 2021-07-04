@@ -43,4 +43,4 @@ depends_on = ["trait-sip-010","trait-flash-loan-user"]
 
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
-depends_on = []
+depends_on = ["trait-equation"]

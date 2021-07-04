@@ -28,9 +28,9 @@
         (get-token-given-position (uint uint uint uint uint uint uint) (response {token: uint, dy: uint} uint))
 
         ;;(get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response {x, y} uint))
-        (get-position-given-mint (uint uint uint uint uint uint) (response {x: uint, y: uint} uint))
+        (get-position-given-mint (uint uint uint uint uint uint) (response {dx: uint, dy: uint} uint))
 
         ;;(get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response {x, y} uint))
-        (get-position-given-burn (uint uint uint uint uint uint) (response {x: uint, y: uint} uint))
+        (get-position-given-burn (uint uint uint uint uint uint) (response {dx: uint, dy: uint} uint))
     )
 )

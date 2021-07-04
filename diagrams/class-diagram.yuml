@@ -1,0 +1,47 @@
+[trait-vault|+(get-balance(token trait-sip-010) (response unit uint)); +(get-balances() (response (list 2000 (tuple (token trait-sip-010) (balance uint))) uint)); +(swap-x-for-y (token-x trait-sip-010) (token-y trait-sip-010) (dx uint) (response uint uint)); +(flash-loan (loan-user trait-flash-loan-user) (list 3 trait-sip-010) (list 3 uint) (response bool uint))]
+[trait-pool|+(get-pool-count () (response uint uint)); +(get-pool-contracts (uint) (response (tuple (token-x trait-sip-010) (token-y trait-sip-010) (weight-x uint) (weight-y uint)) uint)); +(get-pools () (response (list 2000 (tuple (token-x trait-sip-010) (token-y trait-sip-010) (weight-x uint) (weight-y uint))) uint))]
+[trait-equation|+(get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint) (response uint uint)); +(get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint) (response uint uint))); +(get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint) (response uint uint)); +(get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (x uint) (y uint) (response (tuple (token uint) (dy uint)) uint)); +(get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response (tuple (dx uint) (dy uint)) uint)); +(get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response (tuple (dx uint) (dy uint)) uint))]
+[trait-sip-010| +(transfer uint principal principal (response bool uint)); +(get-name () (response string-ascii uint)); + get-symbol () (response string-ascii uint)); +(get-decimals () (response uint uint)); +(get-balance-of principal (response uint uint)); +(get-total-supply () (response uint uint)); +(get-token-uri () (response string-utf8 uint))]
+[trait-pool-token| +(mint principal uint (response bool uint)); +(burn principal uint (response bool uint))]
+[trait-flash-loan-user|+(execute (list 3 trait-sip-010) (list 3 uint) (response bool uint))] 
+[yield-token-pool|+(get-x-given-yield (yield uint) (response uint uint))]
+[collateral-rebalancing-pool]
+[liquidity-bootstrapping-pool]
+[fixed-weight-pool]
+[weighted-equation]
+[trait-oracle|+(get-price (source string-ascii) (symbol string-ascii) (response uint uint))]
+
+[trait-equation]^-.-[weighted-equation]
+[trait-equation]^-.-[yield-token-equation]
+[trait-pool]^-.-[fixed-weight-pool]
+[trait-pool]^-.-[collateral-rebalancing-pool]
+[trait-pool]^-.-[liquidity-bootstrapping-pool]
+
+[yield-token-equation]<-[yield-token-pool]
+[weighted-equation]<-[fixed-weight-pool]
+[weighted-equation]<-[collateral-rebalancing-pool]
+[weighted-equation]<-[liquidity-bootstrapping-pool]
+
+[trait-oracle]<-[collateral-rebalancing-pool]
+
+[trait-sip-010]^-.-[trait-pool-token]
+[trait-sip-010]<-[trait-flash-loan-user]
+[trait-sip-010]<-[trait-vault]
+
+[trait-pool-token]<-[yield-token-pool]
+[trait-pool-token]<-[fixed-weight-pool]
+[trait-pool-token]<-[collateral-rebalancing-pool]
+[trait-pool-token]<-[liquidity-bootstrapping-pool]
+
+[trait-flash-loan-user]<-[trait-vault]
+
+[trait-vault]<-[yield-token-pool]
+[trait-vault]<-[fixed-weight-pool]
+[trait-vault]<-[collateral-rebalancing-pool]
+[trait-vault]<-[liquidity-bootstrapping-pool]
+
+[trait-pool]-[note: Interface abstracting AMM pool logic{bg:wheat}]
+[trait-equation]-[note: Interface abstracting AMM equation logic{bg:wheat}]
+[trait-vault]-[note: Holds all token balances{bg:wheat}]
+[trait-pool-token]-[note: ayToken is a pool token{bg:wheat}]
+

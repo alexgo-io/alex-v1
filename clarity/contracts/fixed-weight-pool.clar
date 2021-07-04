@@ -1,4 +1,4 @@
-(impl-trait .trait-pool.pool-trait)
+;;(impl-trait .trait-pool.pool-trait)
 
 (use-trait equation-trait .trait-equation.equation-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
@@ -54,12 +54,21 @@
 ;;
 
 ;; implement trait-pool
-(define-read-only (get-pool-contracts (pool-id uint))
-    (unwrap-panic (map-get? pools-map { pool-id: pool-id }))
-)
-
 (define-read-only (get-pool-count)
     (ok (var-get pool-count))
+)
+
+(define-read-only (get-pool-contracts (pool-id uint))
+;;    (unwrap-panic (map-get? pools-map { pool-id: pool-id }))
+    (let
+        (
+            (pool (map-get? pools-map {pool-id: pool-id}))
+        )
+        (if (is-some pool)
+            (ok pool)
+            (err invalid-pool-err)
+        )
+    )
 )
 
 (define-read-only (get-pools)
