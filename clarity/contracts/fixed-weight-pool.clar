@@ -1,4 +1,4 @@
-(impl-trait .trait-pool.trait-pool)
+(impl-trait .trait-pool.pool-trait)
 
 (use-trait equation-trait .trait-equation.equation-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
@@ -81,10 +81,10 @@
     )
 )
 
-;; (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-trait <equation-trait>) (pool-token-trait <pool-token-trait>))
-;;     (ok true)
-;; )
-;; 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>))
+    (ok true)
+)
+
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (equation-xy <equation-trait>) (pool-token-xy <pool-token-trait>) (dx uint) (dy uint))
     (let
         (
