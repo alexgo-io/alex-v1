@@ -44,6 +44,8 @@ Yield Token Equation \("YTE"\) follows [Yield Space](https://yield.is/YieldSpace
 
 For example, if a pool is configured to trade between 0% and 10% APY, the capital efficiency can improve to 40x compared to when the yield can trade between $$-\infty$$ and $$+\infty$$.
 
+More details are available at [Automated Market Making designed for lending protocols](automated-market-making-designed-for-lending-protocols.md).
+
 ### Liquidity Bootstrapping Equation
 
 Liquidity Bootstrapping Equation \("LBE"\) extends Weighted Equation and is a dynamic rebalancing equation designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
@@ -51,6 +53,8 @@ Liquidity Bootstrapping Equation \("LBE"\) extends Weighted Equation and is a dy
 Initially, a bigger weight \(say 80%\) is assigned to Base Token, while the remaining \(say 20%\) is assigned to Target Token. The weights are gradually rebalanced to allow for the sale of Base Token and an efficient discovery of its price relative to the Target Token.
 
 LBE is used to initialise all Yield Token Pools.
+
+More details are available at [Liquidity Bootstrapping Pool](liquidity-bootstrapping-pool.md).
 
 ## Pool
 
