@@ -31,7 +31,7 @@ depends_on = ["trait-sip-010"]
 
 [contracts.trait-pool-token]
 path = "contracts/trait-pool-token.clar"
-depends_on = ["trait-sip-010"]
+depends_on = []
 
 [contracts.trait-sip-010]
 path = "contracts/trait-sip-010.clar"

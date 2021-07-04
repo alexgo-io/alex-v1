@@ -44,7 +44,7 @@
     balance-y: uint,
     fee-balance-x: uint,
     fee-balance-y: uint,
-    fee-to-address: (optional principal),
+    fee-to-address: principal,
     pool-token: principal,
     equation: principal
   }
@@ -173,7 +173,7 @@
             (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (shares (* (unwrap-panic (contract-call? this-pool-token get-balance tx-sender)) (/ percent u100)))
+            (shares (* (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) (/ percent u100)))
             (total-supply (get total-supply pool))
             (reduce-data (unwrap-panic (contract-call? the-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
             (dx (get dx reduce-data))
