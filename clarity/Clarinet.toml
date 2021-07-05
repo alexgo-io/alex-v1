@@ -1,17 +1,17 @@
 [project]
 name = "alex-v1"
 requirements = []
-[contracts.collateral-rebalancing-pool]
-path = "contracts/collateral-rebalancing-pool.clar"
-depends_on = []
-
-[contracts.fixed-weight-pool]
-path = "contracts/fixed-weight-pool.clar"
-depends_on = ["trait-equation","trait-sip-010","trait-pool-token","trait-pool","trait-vault"]
-
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
 depends_on = ["trait-sip-010"]
+
+[contracts.collateral-rebalancing-pool]
+path = "contracts/collateral-rebalancing-pool.clar"
+depends_on = ["trait-equation", "trait-sip-010", "trait-yield-token", "trait-pool", "trait-vault"]
+
+[contracts.fixed-weight-pool]
+path = "contracts/fixed-weight-pool.clar"
+depends_on = ["trait-equation", "trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault"]
 
 [contracts.trait-equation]
 path = "contracts/trait-equation.clar"
@@ -39,7 +39,11 @@ depends_on = []
 
 [contracts.trait-vault]
 path = "contracts/trait-vault.clar"
-depends_on = ["trait-sip-010","trait-flash-loan-user"]
+depends_on = ["trait-sip-010", "trait-flash-loan-user"]
+
+[contracts.trait-yield-token]
+path = "contracts/trait-yield-token.clar"
+depends_on = []
 
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
