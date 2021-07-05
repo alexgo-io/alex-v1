@@ -20,13 +20,25 @@ Where $$V$$is a constant, $$B_{i}$$ is the balance of token i and $$w_{i}$$ is t
 
 As the price of each token changes, arbitrageurs rebalance the pool by making trades. This maintains the desired weighting of the value held by each token whilst collecting trading fees from the traders.
 
-### Collateral Rebalancing Equation
+### Yield Token Equation
 
-Collateral Rebalancing Equation \("CRE"\) extends Weighted Equation and triggers ayToken / Collateral Pool rebalancing.
+Yield Token Equation \("YTE"\) follows [Yield Space](https://yield.is/YieldSpace.pdf) and is designed specifically to facilitate efficient trading between ayToken and Token. Our main contribution is to extend the model to allow for capital efficiency from liquidity provision perspective \(inspired by [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf)\).
 
-CRE dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remain solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\). This dynamic rebalancing, together with a judicious choice of the key parameters \(including LTV and volatilty assumption\) allows ALEX to eliminate the needs for liquidation. Any residual gap risk \(which CRE cannot address entirely\) is addressed through maintaining a strong reserve fund.
+For example, if a pool is configured to trade between 0% and 10% APY, the capital efficiency can improve to 40x compared to when the yield can trade between $$-\infty$$ and $$+\infty$$.
 
-When a Borrower mints ayToken by providing appropriate Collateral, the Collateral is converted into a basket of Collateral and Token, with the weights determined by CRE. CRE determines the weights based on the prevailing LTV and uses the following formula:
+More details are available at [Automated Market Making designed for lending protocols](automated-market-making-designed-for-lending-protocols.md).
+
+## Pool
+
+Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity provider, representing a proportional ownership of that Pool.
+
+### Collateral Rebalancing Pool
+
+Collateral Rebalancing Pool \("CRP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and dynamically rebalances between ayToken and Collateral.
+
+CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remain solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\). This dynamic rebalancing, together with a careful choice of the key parameters \(including LTV and volatilty assumption\) allows ALEX to eliminate the needs for liquidation. Any residual gap risk \(which CRP cannot address entirely\) is addressed through maintaining a strong reserve fund.
+
+When a Borrower mints ayToken by providing appropriate Collateral, the Collateral is converted into a basket of Collateral and Token, with the weights determined by CRP. CRP determines the weights based on the prevailing LTV and uses the following formula:
 
 $$
 \begin{split}
@@ -36,29 +48,27 @@ $$
 \end{split}
 $$
 
-Some readers may note the similarity of the above formula to the [Black & Scholes delta](https://en.wikipedia.org/wiki/Black–Scholes_model), because it is. CRE essentially implements a delta replicating strategy of a call option on Token / Collateral, buying more Token when LTV moves higher and vice versa.
+Some readers may note the similarity of the above formula to the [Black & Scholes delta](https://en.wikipedia.org/wiki/Black–Scholes_model), because it is. CRP essentially implements a delta replicating strategy of a call option on Token / Collateral, buying more Token when LTV moves higher and vice versa.
 
-### Yield Token Equation
+### Yield Token Pool
 
-Yield Token Equation \("YTE"\) follows [Yield Space](https://yield.is/YieldSpace.pdf) and is designed specifically to facilitate efficient trading between ayToken and Token. Our main contribution is to extend the model to allow for capital efficiency from liquidity provision perspective \(inspired by [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf)\).
+Yield Token Pool \("YTP"\) uses[ Yield Token Equation](platform-architecture-that-supports-ecosystem-development.md#yield-token-equation) and is designed specifically to facilitate efficient trading between ayToken and Token.
 
-For example, if a pool is configured to trade between 0% and 10% APY, the capital efficiency can improve to 40x compared to when the yield can trade between $$-\infty$$ and $$+\infty$$.
+### Liquidity Bootstrapping Pool
 
-More details are available at [Automated Market Making designed for lending protocols](automated-market-making-designed-for-lending-protocols.md).
+Liquidity Bootstrapping Pool \("LBP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and is designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
 
-### Liquidity Bootstrapping Equation
-
-Liquidity Bootstrapping Equation \("LBE"\) extends Weighted Equation and is a dynamic rebalancing equation designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
+LBP is used to initialise all Yield Token Pools \(with ayToken being the Base Token and Token being the Target Token\).
 
 Initially, a bigger weight \(say 80%\) is assigned to Base Token, while the remaining \(say 20%\) is assigned to Target Token. The weights are gradually rebalanced to allow for the sale of Base Token and an efficient discovery of its price relative to the Target Token.
 
-LBE is used to initialise all Yield Token Pools.
+LBP was first offered by [Balancer](https://docs.balancer.fi/v/v1/guides/smart-pool-templates-gui/liquidity-bootstrapping-pool) in 2020 and can be an interesting alternative to ICOs, IDOs or IEOs to bootstrap liquidity with little initial investment from the team.
 
-More details are available at [Liquidity Bootstrapping Pool](liquidity-bootstrapping-pool.md).
+ALEX brings LBP to Stacks, allowing Stacks projects to build deep liquidity and find its price efficiently with low capital requirements.
 
-## Pool
+LBPs can result in a significantly better-funded project whose governance tokens are more evenly distributed among the community. This means the tokens remain in the hands of those that are invested in the project in the long term, instead of speculators looking for quick profits.
 
-Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity provider, representing a proportional ownership of that Pool.
+For illustration, you may check out [LBP simulator](https://docs.google.com/spreadsheets/d/1t6VsMJF8lh4xuH_rfPNdT5DM3nY4orF9KFOj2HdMmuY/edit?usp=sharing). 
 
 ## Vault
 
