@@ -10,7 +10,7 @@ Equation triggers Pool rebalancing. This allows creation of any arbitrary rebala
 
 ### Weighted Equation
 
-Weighted Equation \("WE"\) is the most basic Equation of all and is a fork of [Balancer Weighted Pool](https://docs.balancer.fi/core-concepts/protocol/pools#weighted-pools), which generalised the constant product AMM popularised by Uniswap. WE implements the following formula:
+Weighted Equation \("WE"\) is the most basic Equation of all and is a fork of [Balancer](https://balancer.fi/whitepaper.pdf), which generalised the constant product AMM popularised by Uniswap. WE implements the following formula:
 
 $$
 V=\prod_{i}B_{i}^{w_{i}}
@@ -31,6 +31,10 @@ More details are available at [Automated Market Making designed for lending prot
 ## Pool
 
 Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity provider, representing a proportional ownership of that Pool.
+
+### Fixed Weight Pool
+
+Fixed Weight Pool \("FWP"\) is a fork of [Balancer Weighted Pool](https://docs.balancer.fi/core-concepts/protocol/pools#weighted-pools).
 
 ### Collateral Rebalancing Pool
 
