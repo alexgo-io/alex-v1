@@ -58,6 +58,8 @@ Some readers may note the similarity of the above formula to the [Black & Schole
 
 Yield Token Pool \("YTP"\) uses[ Yield Token Equation](platform-architecture-that-supports-ecosystem-development.md#yield-token-equation) and is designed specifically to facilitate efficient trading between ayToken and Token.
 
+Full details at [Automated Market Making designed for lending protocols](automated-market-making-designed-for-lending-protocols.md).
+
 ### Liquidity Bootstrapping Pool
 
 Liquidity Bootstrapping Pool \("LBP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and is designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
