@@ -1,4 +1,4 @@
-# Automated Market Making designed for lending protocols
+# Yield Token Pool
 
 Yield Token Pool facilitates trading of between Yield Token and its base Token, and uses an AMM logic similar to [Yield Space](https://yield.is/YieldSpace.pdf), but suitably modified to allow for capital efficiency from liquidity provision perspective.
 

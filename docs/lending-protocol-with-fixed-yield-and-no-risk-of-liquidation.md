@@ -1,4 +1,4 @@
-# Lending Protocol with fixed yield and no risk of liquidation
+# Lending and Borrowing with fixed yield and no risk of liquidation
 
 ## Lending at fixed yield for a fixed term
 
