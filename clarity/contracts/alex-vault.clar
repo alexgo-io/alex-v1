@@ -1,11 +1,31 @@
 ;;(use-trait vault-trait .trait-vault.vault-trait) ;; TO DO : CHANGE LATER
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-
+(use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 ;; TODO : DEFINE ALL VAULT ERRORS - by type!!!
 (define-constant ERR-NOT-AUTHORIZED u20401)
 (define-constant INVALID-PAIR-ERR (err u201))
 (define-constant ERR-INVALID-LIQUIDITY u202)
+(define-constant INVALID-TOKEN-ERR u203)
+(define-constant INVALID-BALANCES u204)
+(define-constant FUNDING_ERR (err u205))
+
+(define-data-var tokens-list (list 2000 uint) (list ))
+
+(define-data-var token-balances (list 2000 {token: (string-ascii 32), balance: uint}) (list ))
+
+
+(define-map token-data-map
+  { token : principal }
+  {
+    shares-total: uint,
+    balance: uint,
+    fee-balance: uint,
+    fee-to-address: principal,
+    swap-token: principal,
+    name: (string-ascii 32),
+  }
+)
 
 (define-map pairs-data-map
   {
@@ -30,83 +50,52 @@
 ;; Getters
 ;; ---------------------------------------------------------
 
-(define-read-only (get-name (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+(define-read-only (get-balance (token-x-trait <ft-trait>))
     (let
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
+        (token-x (contract-of token-x-trait))   
+        (token-data (unwrap! (map-get? token-data-map { token : token-x }) (err INVALID-TOKEN-ERR)))
         )
-    (ok (get name pair))
-    ) 
-)
-
-(define-public (get-symbol (token-x <ft-trait>) (token-y <ft-trait>))
-  (ok
-    (concat
-      (unwrap-panic (as-max-len? (unwrap-panic (contract-call? token-x get-symbol)) u15))
-      (concat "-"
-        (unwrap-panic (as-max-len? (unwrap-panic (contract-call? token-y get-symbol)) u15))
-      )
+    (ok (get balance token-data))
     )
-  )
-)
-
-(define-read-only (get-total-supply (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
-  (let
-    (
-      (token-x (contract-of token-x-trait))
-      (token-y (contract-of token-y-trait))
-      (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
-    )
-    (ok (get shares-total pair))
-  )
-)
-
-(define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
-  (let
-    (
-      (token-x (contract-of token-x-trait))
-      (token-y (contract-of token-y-trait))
-      (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
-    )
-    (ok (list (get balance-x pair) (get balance-y pair)))
-  )
 )
 
 
-;; ---------------------------------------------------------
-;; Create Pool
-;; ---------------------------------------------------------
 
-;; (create-pool (<ft-trait> <ft-trait> <pool-token-trait> <equation-trait> (string-ascii 32)) (response bool uint))    ;; WHY NEED EQUATION ? UML ERROR ?
+(define-read-only (get-balances)
 
-;; (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (pool-token-trait <pool-token-trait>) (equation-trait <equation-trait>) (pool-name (string-ascii 32))
+    (ok (var-get token-balances))
+    ;;(err INVALID-BALANCES)
 
+)
 
+(define-public (flash-loan (loan-user <flash-loan-user-trait>) (var1 (list 3 <ft-trait>)) (var2 (list 3 uint)))
+
+    ;; (unwrap! (as-contract (contract-call? token transfer loan-amount tx-sender (contract-of loan-user))) FUNDING_ERR)
+    ;; TO DO : get TOKEN from the loan user
+    ;; TO DO : transfer loan amount from tx-sender to loan user principal
+    (ok (var-get token-balances)) ;; 
+)
+
+;; (define-read-only (get-balance (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+;;     (let
+;;         (
+;;         (token-x (contract-of token-x-trait))
+;;         (token-y (contract-of token-y-trait))
+;;         (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
+;;         )
+;;     (ok (get name pair))
+;;     ) 
 ;; )
 
-
-;; (define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+;; (define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
 ;;   (let
 ;;     (
 ;;       (token-x (contract-of token-x-trait))
 ;;       (token-y (contract-of token-y-trait))
-;;       (pair (unwrap-panic (map-get? pairs-data-map { token-x: token-x, token-y: token-y })))
-;;       (address (get fee-to-address pair))
-;;       (fee-x (get fee-balance-x pair))
-;;       (fee-y (get fee-balance-y pair))
+;;       (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
 ;;     )
-
-;;     ;; (asserts! (is-eq fee-x u0) no-fee-x-err)
-;;     ;; (asserts! (is-ok (contract-call? token-x-trait transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
-;;     ;; (asserts! (is-eq fee-y u0) no-fee-y-err)
-;;     ;; (asserts! (is-ok (contract-call? token-y-trait transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
-
-;;     (map-set pairs-data-map
-;;       { token-x: token-x, token-y: token-y }
-;;       (merge pair { fee-balance-x: u0, fee-balance-y: u0 })
-;;     )
-;;     (ok (list fee-x fee-y))
+;;     (ok (list (get balance-x pair) (get balance-y pair)))
 ;;   )
 ;; )
+
