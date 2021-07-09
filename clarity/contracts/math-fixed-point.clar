@@ -5,7 +5,7 @@
 
 ;; constants
 ;;
-(define-constant ONE18 (pow u10 u18)) ;;18 decimal places
+(define-constant ONE_18 (pow u10 u18)) ;;18 decimal places
 (define-constant SCALE_UP_OVERFLOW (err u10000))
 (define-constant SCALE_DOWN_OVERFLOW (err u10001))
 (define-constant ADD_OVERFLOW (err u10002))
@@ -20,16 +20,16 @@
 
 (define-read-only (scale-up (a uint))
   (let
-    ((r (* a ONE18)))
-    (asserts! (is-eq (/ r ONE18) a) (err SCALE_UP_OVERFLOW))
+    ((r (* a ONE_18)))
+    (asserts! (is-eq (/ r ONE_18) a) (err SCALE_UP_OVERFLOW))
     (ok r)
   )
 )
 
 (define-read-only (scale-down (a uint))
   (let
-    ((r (/ a ONE18)))
-    (asserts! (is-eq (* r ONE18) a) (err SCALE_DOWN_OVERFLOW))
+    ((r (/ a ONE_18)))
+    (asserts! (is-eq (* r ONE_18) a) (err SCALE_DOWN_OVERFLOW))
     (ok r)
   )
 )
@@ -54,7 +54,7 @@
         (
             (product (* a b))
         )
-        (ok (/ product ONE18))
+        (ok (/ product ONE_18))
     )
 )
 
@@ -65,7 +65,7 @@
         )
         (if (is-eq product u0)
             (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE18)))
+            (ok (+ u1 (/ (- product u1) ONE_18)))
         )
     )
 )
@@ -73,7 +73,7 @@
 (define-read-only (divDown (a uint) (b uint))
     (let
         (
-            (a-inflated (* a ONE18))
+            (a-inflated (* a ONE_18))
         )
         (if (is-eq a u0)
             (ok u0)
@@ -85,7 +85,7 @@
 (define-read-only (divUp (a uint) (b uint))
     (let
         (
-            (a-inflated (* a ONE18))
+            (a-inflated (* a ONE_18))
         )
         (if (is-eq a u0)
             (ok u0)
@@ -97,7 +97,7 @@
 (define-read-only (powDown (a uint) (b uint))    
     (let
         (
-            (raw (pow u2 (/ (* b (log2 a)) ONE18)))
+            (raw (pow u2 (/ (* b (log2 a)) ONE_18)))
             (max-error (+ u1 (unwrap-panic (mulUp raw MAX_POW_RELATIVE_ERROR))))
         )
         (if (< raw max-error)

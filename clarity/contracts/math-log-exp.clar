@@ -4,8 +4,8 @@
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
 ;; Reference: https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
-;; MODIFIED: because we are only using 128 bits instead of 256 bits, 
-;; we cannot do 20 decimal or 36 decimal accuracy like in Balancer. Everything here is in 18 decimal.
+;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
+;; Everything here is in 18 decimal.
 
 ;; constants
 ;;
@@ -19,7 +19,7 @@
 ;; which makes the largest exponent ln((2^127 - 1) / 10^18) = 46.5831602572.
 ;; The smallest possible result is 10^(-18), which makes largest negative argument
 ;; ln(10^(-18)) = -41.446531673892822312.
-;; We use 41.0 and -41.0 to have some safety margin.
+;; We use 46.0 and -41.0 to have some safety margin.
 (define-constant MAX_NATURAL_EXPONENT (* 46 ONE_18))
 (define-constant MIN_NATURAL_EXPONENT (* -41 ONE_18))
 
@@ -89,19 +89,6 @@
   )
 )
 
-(define-private (taylor-terms (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
-  (let
-    (
-      (rolling_term (get term rolling))
-      (rolling_sum (get seriesSum rolling))
-      (rolling_x (get x rolling))
-      (next_term (/ (/ (* rolling_term rolling_x) ONE_18) n))
-      (next_sum (+ rolling_sum next_term))
-    )
-    {term: next_term, seriesSum: next_sum, x: rolling_x}
-  )
-)
-
 (define-private (accumulate_product (rolling_check_a (tuple (check int) (a int))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
@@ -114,6 +101,19 @@
       {x: (- rolling_x rolling_check), product: (/ (* rolling_product rolling_a) ONE_18)}
       {x: rolling_x, product: rolling_product}
     )
+  )
+)
+
+(define-private (taylor-terms (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
+  (let
+    (
+      (rolling_term (get term rolling))
+      (rolling_sum (get seriesSum rolling))
+      (rolling_x (get x rolling))
+      (next_term (/ (/ (* rolling_term rolling_x) ONE_18) n))
+      (next_sum (+ rolling_sum next_term))
+    )
+    {term: next_term, seriesSum: next_sum, x: rolling_x}
   )
 )
 
