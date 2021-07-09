@@ -19,8 +19,4 @@ Clarinet.test({
              * Add transactions with: 
              * Tx.contractCall(...)
             */
-        ]);
-        assertEquals(block.receipts.length, 0);
-        assertEquals(block.height, 3);
-    },
-});
+        ]);::
