@@ -1,81 +1,18 @@
-
-(impl-trait .trait-equation.equation-trait)
-
-(define-constant no-liquidity-err (err u61))
-(define-constant weight-sum-err (err u62))
-
-;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-(define-constant ONE18 u1000000000000000000) ;;18 decimal places
-(define-constant MAX_POW_RELATIVE_ERROR u10000) 
-
 ;; weighted-equation
 ;; <add a description here>
 
+(impl-trait .trait-equation.equation-trait)
+
 ;; constants
 ;;
+(define-constant no-liquidity-err (err u61))
+(define-constant weight-sum-err (err u62))
 
 ;; data maps and vars
 ;;
 
 ;; private functions
 ;;
-(define-read-only (mulDown (a uint) (b uint))
-    (let 
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE18))
-    )
-)
-
-(define-read-only (mulUp (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE18)))
-        )
-    )
-)
-
-(define-read-only (divDown (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE18))
-        )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-        )
-    )
-)
-
-(define-read-only (divUp (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE18))
-        )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-        )
-    )
-)
-
-(define-read-only (powDown (a uint) (b uint))    
-    (let
-        (
-            (raw (pow u2 (/ (* b (log2 a)) ONE18)))
-            (max-error (+ u1 (unwrap-panic (mulUp raw MAX_POW_RELATIVE_ERROR))))
-        )
-        (if (< raw max-error)
-            (ok u0)
-            (ok (- raw max-error))
-        )
-    )
-)
 
 ;; public functions
 ;;
