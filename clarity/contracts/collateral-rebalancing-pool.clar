@@ -63,7 +63,7 @@
 )
 
 (define-data-var pool-count uint u0)
-(define-data-var pools-list (list 2000 uint) (list ))
+(define-data-var pools-list (list 2000 uint) (list))
 
 ;; private functions
 ;;
@@ -97,9 +97,9 @@
             ;; TODO ln approximated
             ;; TODO t multiplier of 100 makes sense? 
             (d1 (/ (+ (- (/ spot strike) u1) (* t (/ (pow (/ bs-vol u100) u2) u2))) (* (/ bs-vol u100) (/ (sqrti (* t u100)) u10))))
-        )
+       )
         (ok (/ (+ u1 (unwrap-panic (erf (* (/ d1 (/ (sqrti u200) u10)) erf-div)))) u2))
-    )
+   )
 )
 
 ;; public functions
@@ -115,12 +115,12 @@
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
-        )
+       )
         (if (is-some pool)
             (ok pool)
             (err invalid-pool-err)
-        )
-    )
+       )
+   )
 )
 
 (define-read-only (get-pools)
@@ -134,12 +134,12 @@
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
             (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, strike: strike, bs-vol: bs-vol }))
-        )
+       )
         (if (is-some pool)
             (ok pool)
             (err invalid-pool-err)
-        )
-    )
+       )
+   )
 )
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
@@ -160,14 +160,14 @@
                 yield-token: (contract-of the-yield-token),
                 equation: (contract-of the-equation)
             })
-        )
+       )
         (asserts!
             (and
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, strike: strike, bs-vol: bs-vol }))
                 (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, strike: strike, bs-vol: bs-vol }))
-            )
+           )
             pool-already-exists-err
-        )
+       )
 
         (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, strike: strike, bs-vol: bs-vol })
         (map-set pools-data-map { token-x: token-x, token-y: token-y, strike: strike, bs-vol: bs-vol } pool-data)
@@ -177,7 +177,7 @@
         (try! (add-to-position token-x-trait token-y-trait strike bs-vol the-equation the-yield-token the-vault dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
-    )
+   )
 )
 
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
@@ -201,7 +201,7 @@
                 weight-x: weight-x,
                 weight-y: weight-y
             }))
-        )
+       )
 
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
@@ -214,7 +214,7 @@
         (try! (contract-call? the-yield-token mint tx-sender new-supply))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
-    )
+   )
 )    
 
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (percent uint))
@@ -239,8 +239,8 @@
                 weight-x: weight-x,
                 weight-y: weight-y
                 })
-            )
-        )
+           )
+       )
 
         (asserts! (<= percent u100) percent-greater-than-one)
         (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
@@ -251,7 +251,7 @@
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: dy})
-    )
+   )
 )
 
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (dx uint))

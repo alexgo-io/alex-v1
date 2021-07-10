@@ -6,5 +6,5 @@
     ;; execute (list 3 trait-fungible-token) (list 3 uint) (response bool uint)
     (execute ((list 3 <ft-trait>) (list 3 uint)) (response bool uint))
 
-  )
+ )
 )

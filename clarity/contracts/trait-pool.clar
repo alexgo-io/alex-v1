@@ -17,5 +17,5 @@
         (get-pool-contracts (uint) (response {token-x: principal, token-y: principal, weight-x: uint, weight-y: uint} uint))
         (get-pool-count () (response uint uint))
         (get-pools () (response (list 2000 {token-x: principal, token-y: principal, weight-x: uint, weight-y: uint}) uint))
-    )
+   )
 )

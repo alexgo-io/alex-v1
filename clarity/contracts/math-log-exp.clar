@@ -67,9 +67,9 @@
       (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
       (seriesSum (get seriesSum num_sum_zsq))
       (r (+ out_sum (* seriesSum 2)))
-    )
+   )
     (ok r)
-  )
+ )
 )
 
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
@@ -80,12 +80,12 @@
       (use_deci (get use_deci x_a_pre))
       (rolling_a (get a rolling_a_sum))
       (rolling_sum (get sum rolling_a_sum))
-    )
+   )
     (if (>= rolling_a (if use_deci a_pre (* a_pre ONE_18)))
       {a: (/ (* rolling_a (if use_deci ONE_18 1)) a_pre), sum: (+ rolling_sum x_pre)}
       {a: rolling_a, sum: rolling_sum}
-    )
-  )
+   )
+ )
 )
 
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
@@ -96,9 +96,9 @@
       (z_squared (get z_squared rolling))
       (next_num (/ (* rolling_num z_squared) ONE_18))
       (next_sum (+ rolling_sum (/ next_num n)))
-    )
+   )
     {num: next_num, seriesSum: next_sum, z_squared: z_squared}
-  )
+ )
 )
 
 ;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
@@ -112,10 +112,10 @@
       (y-int (to-int y))
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) ONE_18))
-    )
+   )
     (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) (err PRODUCT_OUT_OF_BOUNDS))
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
-  )
+ )
 )
 
 (define-private (exp-pos (x int))
@@ -135,10 +135,10 @@
         (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
         (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
         (sum (get seriesSum term_sum_x))
-      )
+     )
       (ok (* (/ (* product_out sum) ONE_18) firstAN))
-    )
-  )
+   )
+ )
 )
 
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
@@ -149,12 +149,12 @@
       (use_deci (get use_deci x_a_pre))
       (rolling_x (get x rolling_x_p))
       (rolling_product (get product rolling_x_p))
-    )
+   )
     (if (>= rolling_x x_pre)
       {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) (if use_deci ONE_18 1))}
       {x: rolling_x, product: rolling_product}
-    )
-  )
+   )
+ )
 )
 
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
@@ -165,9 +165,9 @@
       (x (get x rolling))
       (next_term (/ (/ (* rolling_term x) ONE_18) n))
       (next_sum (+ rolling_sum next_term))
-    )
+   )
     {term: next_term, seriesSum: next_sum, x: x}
-  )
+ )
 )
 
 ;; public functions
@@ -187,9 +187,9 @@
       (if (is-eq x u0) 
         (ok u0)
         (pow-priv x y)
-      )
-    )
-  )
+     )
+   )
+ )
 )
 
 ;; Natural exponentiation (e^x) with signed 18 decimal fixed point exponent.
@@ -203,8 +203,8 @@
       ;; Fixed point division requires multiplying by ONE_18.
       (ok (/ (* ONE_18 ONE_18) (unwrap-panic (exp-pos (* -1 x)))))
       (exp-pos x)
-    )
-  )
+   )
+ )
 )
 
 ;; Logarithm (log(arg, base), with signed 18 decimal fixed point base and argument.
@@ -214,9 +214,9 @@
     (
       (logBase (* (unwrap-panic (ln-priv base)) ONE_18))
       (logArg (* (unwrap-panic (ln-priv arg)) ONE_18))
-    )
+   )
     (ok (/ (* logArg ONE_18) logBase))
-  )
+ )
 )
 
 ;; Natural logarithm (ln(a)) with signed 18 decimal fixed point argument.
@@ -229,8 +229,8 @@
       ;; Fixed point division requires multiplying by ONE_18.
       (ok (- 0 (unwrap-panic (ln-priv (/ (* ONE_18 ONE_18) a)))))
       (ln-priv a)
-    )
-  )
+   )
+ )
 )
 
 (define-read-only (test)
@@ -247,7 +247,7 @@
       ;;(arg (* 8 (pow 10 18)))
       ;;(r (exp-pos arg))
       ;;(x_product (fold accumulate_product x_a_list {x: arg, product: ONE_18}))
-    )
+   )
     (ok (pow-fixed x y))
-  )
+ )
 )

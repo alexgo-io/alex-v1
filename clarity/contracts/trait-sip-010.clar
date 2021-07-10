@@ -24,5 +24,5 @@
 
     ;; an optional URI that represents metadata of this token
     (get-token-uri () (response (optional (string-utf8 256)) uint))
-  )
+ )
 )

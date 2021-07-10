@@ -32,5 +32,5 @@
 
         ;;(get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint) (response {x, y} uint))
         (get-position-given-burn (uint uint uint uint uint uint) (response {dx: uint, dy: uint} uint))
-    )
+   )
 )

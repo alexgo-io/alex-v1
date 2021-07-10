@@ -18,5 +18,5 @@
 
         ;; flash loan to flash loan user up to 3 tokens of amounts specified
         (flash-loan (<flash-loan-user-trait> (list 3 <ft-trait>) (list 3 uint)) (response bool uint))
-    )
+   )
 )

@@ -2,7 +2,7 @@
 
 Vault holds and manages the assets of all ALEX pools. The separation of pool and vault has many benefits including, among others, cheaper transaction costs for users and quicker learning curve for developers when building custom pools on ALEX.
 
-![Vault Use Case](https://yuml.me/diagram/scruffy/usecase/[Arbitrageur]-%28Go%20to%20Vault%29,%20[Flash%20Loan%20User]-%28Go%20to%20Vault%29,%20%28Go%20to%20Vault%29-%28Create%20Flash%20Loan%29,%20%28Go%20to%20Vault%29-%28Create%20Swap%20/%20Batch%20Swap%29,%20%28Create%20Swap%20/%20Batch%20Swap%29-%28Create%20Flash%20Loan%29,%20%28Create%20Swap%20/%20Batch%20Swap%29-%28Sell%20Token%29,%20%28Create%20Swap%20/%20Batch%20Swap%29-%28Buy%20Token%29)
+![Vault Use Case](https://yuml.me/diagram/scruffy/usecase/[Arbitrageur]-(Go to Vault), [Flash Loan User]-(Go to Vault), (Go to Vault)-(Create Flash Loan), (Go to Vault)-(Create Swap / Batch Swap), (Create Swap / Batch Swap)-(Create Flash Loan), (Create Swap / Batch Swap)-(Sell Token), (Create Swap / Batch Swap)-(Buy Token))
 
 ### Flash Loan
 

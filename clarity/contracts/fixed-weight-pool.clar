@@ -51,7 +51,7 @@
 )
 
 (define-data-var pool-count uint u0)
-(define-data-var pools-list (list 2000 uint) (list ))
+(define-data-var pools-list (list 2000 uint) (list))
 
 ;; private functions
 ;;
@@ -69,12 +69,12 @@
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
-        )
+       )
         (if (is-some pool)
             (ok pool)
             (err invalid-pool-err)
-        )
-    )
+       )
+   )
 )
 
 (define-read-only (get-pools)
@@ -88,12 +88,12 @@
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
             (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
-        )
+       )
         (if (is-some pool)
             (ok pool)
             (err invalid-pool-err)
-        )
-    )
+       )
+   )
 )
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
@@ -112,14 +112,14 @@
                 pool-token: (contract-of the-pool-token),
                 equation: (contract-of the-equation)
             })
-        )
+       )
         (asserts!
             (and
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
                 (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }))
-            )
+           )
             pool-already-exists-err
-        )
+       )
 
         (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-data)
@@ -129,7 +129,7 @@
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-equation the-pool-token the-vault dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
-    )
+   )
 )
 
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
@@ -149,7 +149,7 @@
                 balance-x: (+ balance-x dx),
                 balance-y: (+ balance-y new-dy)
             }))
-        )
+       )
 
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
@@ -162,7 +162,7 @@
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
-    )
+   )
 )    
 
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (percent uint))
@@ -183,8 +183,8 @@
                 balance-x: (- (get balance-x pool) dx),
                 balance-y: (- (get balance-y pool) dy)
                 })
-            )
-        )
+           )
+       )
 
         (asserts! (<= percent u100) percent-greater-than-one)
         (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
@@ -195,7 +195,7 @@
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: dy})
-    )
+   )
 )
 
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (dx uint))

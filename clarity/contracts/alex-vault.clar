@@ -10,9 +10,9 @@
 (define-constant INVALID-BALANCES u204)
 (define-constant FUNDING_ERR (err u205))
 
-(define-data-var tokens-list (list 2000 uint) (list ))
+(define-data-var tokens-list (list 2000 uint) (list))
 
-(define-data-var token-balances (list 2000 {token: (string-ascii 32), balance: uint}) (list ))
+(define-data-var token-balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
 
 (define-map token-data-map
@@ -55,9 +55,9 @@
         (
         (token-x (contract-of token-x-trait))   
         (token-data (unwrap! (map-get? token-data-map { token : token-x }) (err INVALID-TOKEN-ERR)))
-        )
+       )
     (ok (get balance token-data))
-    )
+   )
 )
 
 
@@ -83,10 +83,10 @@
 ;;         (token-x (contract-of token-x-trait))
 ;;         (token-y (contract-of token-y-trait))
 ;;         (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
-;;         )
+;;        )
 ;;     (ok (get name pair))
-;;     ) 
-;; )
+;;    ) 
+;;)
 
 ;; (define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
 ;;   (let
@@ -94,8 +94,8 @@
 ;;       (token-x (contract-of token-x-trait))
 ;;       (token-y (contract-of token-y-trait))
 ;;       (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
-;;     )
+;;    )
 ;;     (ok (list (get balance-x pair) (get balance-y pair)))
-;;   )
-;; )
+;;  )
+;;)
 
