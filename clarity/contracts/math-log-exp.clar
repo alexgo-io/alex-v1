@@ -25,14 +25,16 @@
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_18)))
 
-;; 18 decimal constants
 ;; Because largest exponent is 46, we start from 32
+;; The first several a_n are too large if stored as 18 decimal numbers, and could cause intermediate overflows.
+;; Instead we store them as plain integers, with 0 decimals.
 (define-constant x_a_list_no_deci (list 
 {x_pre: 32000000000000000000, a_pre: 78962960182681, use_deci: false} ;; x2 = 2^5, a2 = e^(x2)
 {x_pre: 16000000000000000000, a_pre: 8886111, use_deci: false} ;; x3 = 2^4, a3 = e^(x3)
 {x_pre: 8000000000000000000, a_pre: 2981, use_deci: false} ;; x4 = 2^3, a4 = e^(x4)
 {x_pre: 4000000000000000000, a_pre: 55, use_deci: false} ;; x5 = 2^2, a5 = e^(x5)
 ))
+;; 18 decimal constants
 (define-constant x_a_list (list 
 {x_pre: 2000000000000000000, a_pre: 7389056098930650227, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
 {x_pre: 1000000000000000000, a_pre: 2718281828459045235, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
@@ -116,17 +118,11 @@
   )
 )
 
-;; firstAN is always 1 so don't need to handle that
 (define-private (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
     (let
       (
-        ;; The first two a_n (e^(2^5) and e^(2^4)) are too large if stored as 18 decimal numbers, and could cause
-        ;; intermediate overflows. Instead we store them as plain integers, with 0 decimals.
-        ;; Additionally, x2 + x3 is larger than MAX_NATURAL_EXPONENT, which means they will not both be present in the
-        ;; decomposition.
-
         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
         ;; it and compute the accumulated product.
         (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
