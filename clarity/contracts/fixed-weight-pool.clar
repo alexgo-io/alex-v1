@@ -10,6 +10,8 @@
 
 ;; constants
 ;;
+(define-constant ONE_18 (pow u10 u18)) ;;18 decimal places
+
 (define-constant invalid-pool-err (err u201))
 (define-constant no-liquidity-err (err u61))
 (define-constant invalid-liquidity-err (err u202))
@@ -45,8 +47,7 @@
     fee-balance-x: uint,
     fee-balance-y: uint,
     fee-to-address: principal,
-    pool-token: principal,
-    equation: principal
+    pool-token: principal
   }
 )
 
@@ -96,7 +97,8 @@
    )
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
+;; TODO: shouldn't the pool token be created as part of create-pool?
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -110,7 +112,6 @@
                 fee-balance-y: u0,
                 fee-to-address: (contract-of the-pool-token),
                 pool-token: (contract-of the-pool-token),
-                equation: (contract-of the-equation)
             })
        )
         (asserts!
@@ -126,13 +127,13 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
-        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-equation the-pool-token the-vault dx dy))
+        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token the-vault dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
    )
 )
 
-(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -141,13 +142,13 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap-panic (contract-call? the-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
+            (add-data (unwrap-panic (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
-                total-supply: (+ new-supply (get total-supply pool)),
-                balance-x: (+ balance-x dx),
-                balance-y: (+ balance-y new-dy)
+                total-supply: (unwrap-panic (contract-call? .math-fixed-point add-fixed new-supply (get total-supply pool))),
+                balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)),
+                balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-y new-dy))
             }))
        )
 
@@ -165,7 +166,7 @@
    )
 )    
 
-(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (percent uint))
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (percent uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -173,20 +174,20 @@
             (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (shares (* (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) (/ percent u100)))
+            (shares (unwrap-panic (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent)))
             (total-supply (get total-supply pool))
-            (reduce-data (unwrap-panic (contract-call? the-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
+            (reduce-data (unwrap-panic (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
             (dx (get dx reduce-data))
             (dy (get dy reduce-data))
             (pool-updated (merge pool {
-                total-supply: (- total-supply shares),
-                balance-x: (- (get balance-x pool) dx),
-                balance-y: (- (get balance-y pool) dy)
+                total-supply: (unwrap-panic (contract-call? .math-fixed-point sub-fixed total-supply shares)),
+                balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
+                balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy))
                 })
            )
        )
 
-        (asserts! (<= percent u100) percent-greater-than-one)
+        (asserts! (<= percent ONE_18) percent-greater-than-one)
         (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 

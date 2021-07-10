@@ -76,43 +76,43 @@
 )
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
-    ;;(asserts! (is-eq (+ weight-x weight-y) u100) weight-sum-err)
+    (let
+        (
+            ;; if total-supply is zero
+            (dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
+            (dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
+            (invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
 
-    (ok
-        (if (is-eq total-supply u0)
-            ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
-            {token: (sqrti (* (pow dx (/ weight-x u100)) (pow dy (/ weight-y u100)))), dy: dy}
-            {token: (/ (* dx total-supply) balance-x), dy: (/ (* dx balance-y) balance-x)}
-       )
-   )   
+            (dx-supply (unwrap-panic (contract-call? .math-fixed-point mul-down dx total-supply)))
+            (token (unwrap-panic (contract-call? .math-fixed-point div-down dx-supply balance-x)))
+            (dx-baly (unwrap-panic (contract-call? .math-fixed-point mul-down dx balance-y)))
+            (new-dy (unwrap-panic (contract-call? .math-fixed-point div-down dx-baly balance-x)))
+        )
+        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)        
+        (ok
+            (if (is-eq total-supply u0)
+                ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
+                {token: (sqrti invariant), dy: dy}
+                {token: token, dy: new-dy}
+            )
+        )
+    )    
 )
 
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
-    ;;(asserts! (is-eq (+ weight-x weight-y) u100) weight-sum-err)
-
-    ;; need to ensure total-supply > 0
-    ;;(asserts! (> total-supply u0) no-liquidity-err)
-    (let 
+    (let
         (
-            (dx (* balance-x (/ token total-supply))) 
-            (dy (* dx (/ (/ weight-y u100) (/ weight-x u100))))
-       ) 
+            (token-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
+            (dx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x token-supply)))
+            (wy-wx (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)))
+            (dy (unwrap-panic (contract-call? .math-fixed-point mul-down dx wy-wx)))
+        )
+        (asserts! (> total-supply u0) no-liquidity-err)
+        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)       
         (ok {dx: dx, dy: dy})
    )
 )
 
 (define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
-    ;;(asserts! (is-eq (+ weight-x weight-y) u100) weight-sum-err)
-
-    ;; this is identical to get-position-given-mint. Can we reduce to one?
-
-    ;; need to ensure total-supply > 0
-    ;;(asserts! (> total-supply u0) no-liquidity-err)
-    (let 
-        (
-            (dx (* balance-x (/ token total-supply))) 
-            (dy (* dx (/ (/ weight-y u100) (/ weight-x u100))))
-       ) 
-        (ok {dx: dx, dy: dy})
-   )
+    (get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
 )
