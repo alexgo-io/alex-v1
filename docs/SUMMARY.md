@@ -7,15 +7,13 @@
 
 ## Protocol
 
----
-
-* [Overview](platform-architecture-that-supports-ecosystem-development.md)
-* [Collateral Rebalancing Pool](collateral-rebalancing-pool.md)
-* [Yield Token Pool](automated-market-making-designed-for-lending-protocols.md)
-* [Liquidity Bootstrapping Pool](liquidity-bootstrapping-pool.md)
-* [Vault](vault.md)
-* [Yield Farming on ALEX](yield-farming-on-alex.md)
-* [Diagrams](diagrams/README.md)
-  * [Class Diagram](diagrams/class-diagram.md)
-  * [Use Case](diagrams/protocol-use-case.md)
+* [Overview](protocol/platform-architecture-that-supports-ecosystem-development.md)
+* [Collateral Rebalancing Pool](protocol/collateral-rebalancing-pool.md)
+* [Yield Token Pool](protocol/automated-market-making-designed-for-lending-protocols.md)
+* [Liquidity Bootstrapping Pool](protocol/liquidity-bootstrapping-pool.md)
+* [Vault](protocol/vault.md)
+* [Yield Farming on ALEX](protocol/yield-farming-on-alex.md)
+* [Diagrams](protocol/diagrams/README.md)
+  * [Class Diagram](protocol/diagrams/class-diagram.md)
+  * [Use Case](protocol/diagrams/protocol-use-case.md)
 
