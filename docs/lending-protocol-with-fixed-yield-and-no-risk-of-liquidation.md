@@ -6,13 +6,13 @@ Buying of ayToken \(against Token\) equates to lending of Token at the rate impl
 
 ALEX provides a fixed schedule of maturities for each Token to allow liquidity aggregation. On a regular basis, a new ayToken is launched, whose liquidity is bootstrapped using Liquidity Bootstrapping Pool.
 
-![Lender Use Case](http://yuml.me/diagram/scruffy/usecase/[Lender]-%28Go%20to%20ayToken%20/%20Token%20Pool%29,%28Go%20to%20ayToken%20/%20Token%20Pool%29-%28Sell%20Token%29,%28Sell%20Token%29-%28Buy%20ayToken%29)
+![Lender Use Case](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-lender.svg)
 
 ## Borrowing at fixed yield for a fixed term with no risk of liquidation
 
 Minting of ayToken by adding eligible collateral to the pool and selling of ayToken against Token equates to the borrowing of Token at the rate implied by the price at which ayToken was sold.
 
-![Borrower Use Case](http://yuml.me/diagram/scruffy/usecase/[Borrower]-%28Go%20to%20ayToken%20/%20Collateral%20Pool%29,%28Go%20to%20ayToken%20/%20Collateral%20Pool%29-%28Deposit%20Collateral%29,%28Deposit%20Collateral%29-%28Mint%20ayToken%29,%28Mint%20ayToken%29-%28Go%20to%20ayToken%20/%20Token%20Pool%29,%28Go%20to%20ayToken%20/%20Token%20Pool%29-%28Sell%20ayToken%29,%28Sell%20ayToken%29-%28Buy%20Token%29)
+![Borrower Use Case](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower.svg)
 
 The collateral pool will dynamically rebalance between Token and eligible collateral to ensure the solvency of ayToken. The dynamic rebalancing of collateral is akin to a real-time margining of the loan, minimising counterparty risk.
 
