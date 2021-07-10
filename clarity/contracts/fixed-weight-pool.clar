@@ -10,7 +10,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_18 (pow u10 u18)) ;;18 decimal places
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant invalid-pool-err (err u201))
 (define-constant no-liquidity-err (err u61))
@@ -187,7 +187,7 @@
            )
        )
 
-        (asserts! (<= percent ONE_18) percent-greater-than-one)
+        (asserts! (<= percent ONE_8) percent-greater-than-one)
         (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 

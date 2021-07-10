@@ -5,7 +5,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_18 (pow u10 u18)) ;;18 decimal places
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant no-liquidity-err (err u61))
 (define-constant weight-sum-err (err u62))
@@ -32,10 +32,10 @@
             (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-x denominator)))
             (exponent (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)))
             (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
-            (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_18 power)))
+            (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))
         )
         (asserts! (< dx max-in) max-in-ratio-err)
-        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)
 
         (contract-call? .math-fixed-point mul-down balance-y complement)
     )
@@ -50,10 +50,10 @@
             (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-y denominator)))
             (exponent (unwrap-panic (contract-call? .math-fixed-point div-up weight-y weight-x)))
             (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
-            (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_18)))
+            (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))
         )
         (asserts! (< dy max-out) max-out-ratio-err)
-        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)
 
         (contract-call? .math-fixed-point mul-up balance-x ratio)
    )
@@ -68,9 +68,9 @@
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
             (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
             (power (unwrap-panic (contract-call? .math-fixed-point pow-up base weight-y)))
-            (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_18)))            
+            (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
         )
-        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)
         (contract-call? .math-fixed-point mul-up balance-x ratio)
    )
 )
@@ -88,7 +88,7 @@
             (dx-baly (unwrap-panic (contract-call? .math-fixed-point mul-down dx balance-y)))
             (new-dy (unwrap-panic (contract-call? .math-fixed-point div-down dx-baly balance-x)))
         )
-        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)        
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)        
         (ok
             (if (is-eq total-supply u0)
                 ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
@@ -108,7 +108,7 @@
             (dy (unwrap-panic (contract-call? .math-fixed-point mul-down dx wy-wx)))
         )
         (asserts! (> total-supply u0) no-liquidity-err)
-        (asserts! (is-eq (+ weight-x weight-y) ONE_18) weight-sum-err)       
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)       
         (ok {dx: dx, dy: dy})
    )
 )

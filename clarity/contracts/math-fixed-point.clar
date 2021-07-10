@@ -3,9 +3,11 @@
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
+;; TODO: overflow causes runtime error, should handle before operation rather than after
+
 ;; constants
 ;;
-(define-constant ONE_18 (pow u10 u18)) ;;18 decimal places
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 (define-constant SCALE_UP_OVERFLOW (err u10000))
 (define-constant SCALE_DOWN_OVERFLOW (err u10001))
 (define-constant ADD_OVERFLOW (err u10002))
@@ -20,16 +22,16 @@
 
 (define-read-only (scale-up (a uint))
   (let
-    ((r (* a ONE_18)))
-    (asserts! (is-eq (/ r ONE_18) a) (err SCALE_UP_OVERFLOW))
+    ((r (* a ONE_8)))
+    (asserts! (is-eq (/ r ONE_8) a) (err SCALE_UP_OVERFLOW))
     (ok r)
  )
 )
 
 (define-read-only (scale-down (a uint))
   (let
-    ((r (/ a ONE_18)))
-    (asserts! (is-eq (* r ONE_18) a) (err SCALE_DOWN_OVERFLOW))
+    ((r (/ a ONE_8)))
+    (asserts! (is-eq (* r ONE_8) a) (err SCALE_DOWN_OVERFLOW))
     (ok r)
  )
 )
@@ -54,7 +56,7 @@
         (
             (product (* a b))
        )
-        (ok (/ product ONE_18))
+        (ok (/ product ONE_8))
    )
 )
 
@@ -65,7 +67,7 @@
        )
         (if (is-eq product u0)
             (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_18)))
+            (ok (+ u1 (/ (- product u1) ONE_8)))
        )
    )
 )
@@ -73,7 +75,7 @@
 (define-read-only (div-down (a uint) (b uint))
     (let
         (
-            (a-inflated (* a ONE_18))
+            (a-inflated (* a ONE_8))
        )
         (if (is-eq a u0)
             (ok u0)
@@ -85,7 +87,7 @@
 (define-read-only (div-up (a uint) (b uint))
     (let
         (
-            (a-inflated (* a ONE_18))
+            (a-inflated (* a ONE_8))
        )
         (if (is-eq a u0)
             (ok u0)
