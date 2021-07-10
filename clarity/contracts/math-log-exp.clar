@@ -178,7 +178,7 @@
 ;;
 
 ;; Exponentiation (x^y) with unsigned 18 decimal fixed point base and exponent.
-(define-public (pow-fixed (x uint) (y uint))
+(define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) (err X_OUT_OF_BOUNDS))
@@ -198,7 +198,7 @@
 
 ;; Natural exponentiation (e^x) with signed 18 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-(define-public (exp-fixed (x int))
+(define-read-only (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
     (if (< x 0)
@@ -212,7 +212,7 @@
 )
 
 ;; Logarithm (log(arg, base), with signed 18 decimal fixed point base and argument.
-(define-public (log-fixed (arg int) (base int))
+(define-read-only (log-fixed (arg int) (base int))
   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
   (let
     (
@@ -224,7 +224,7 @@
 )
 
 ;; Natural logarithm (ln(a)) with signed 18 decimal fixed point argument.
-(define-public (ln-fixed (a int))
+(define-read-only (ln-fixed (a int))
   (begin
     (asserts! (> a 0) (err OUT_OF_BOUNDS))
     (if (< a ONE_18)
@@ -237,7 +237,7 @@
   )
 )
 
-(define-public (test)
+(define-read-only (test)
   (let
     (
       (x (* u7 (pow u10 u16)))

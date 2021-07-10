@@ -49,7 +49,7 @@
   )
 )
 
-(define-read-only (mulDown (a uint) (b uint))
+(define-read-only (mul-down (a uint) (b uint))
     (let 
         (
             (product (* a b))
@@ -58,7 +58,7 @@
     )
 )
 
-(define-read-only (mulUp (a uint) (b uint))
+(define-read-only (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -70,7 +70,7 @@
     )
 )
 
-(define-read-only (divDown (a uint) (b uint))
+(define-read-only (div-down (a uint) (b uint))
     (let
         (
             (a-inflated (* a ONE_18))
@@ -82,7 +82,7 @@
     )
 )
 
-(define-read-only (divUp (a uint) (b uint))
+(define-read-only (div-up (a uint) (b uint))
     (let
         (
             (a-inflated (* a ONE_18))
@@ -94,15 +94,26 @@
     )
 )
 
-(define-public (powDown (a uint) (b uint))    
+(define-read-only (pow-down (a uint) (b uint))    
     (let
         (
-            (raw (try! (contract-call? .math-log-exp pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mulUp raw MAX_POW_RELATIVE_ERROR))))
+            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (if (< raw max-error)
             (ok u0)
             (sub-fixed raw max-error)
         )
+    )
+)
+
+(define-read-only (pow-up (a uint) (b uint))
+    (let
+        (
+            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+        )
+
+        (add-fixed raw max-error)
     )
 )
