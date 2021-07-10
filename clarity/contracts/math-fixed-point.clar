@@ -13,7 +13,7 @@
 (define-constant MUL_OVERFLOW (err u10004))
 (define-constant DIV_OVERFLOW (err u10005))
 (define-constant POW_OVERFLOW (err u10006))
-(define-constant MAX_POW_RELATIVE_ERROR u10007) 
+(define-constant MAX_POW_RELATIVE_ERROR u10000) 
 
 ;; public functions
 ;;
@@ -94,15 +94,15 @@
     )
 )
 
-(define-read-only (powDown (a uint) (b uint))    
+(define-public (powDown (a uint) (b uint))    
     (let
         (
-            (raw (pow u2 (/ (* b (log2 a)) ONE_18)))
+            (raw (try! (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mulUp raw MAX_POW_RELATIVE_ERROR))))
         )
         (if (< raw max-error)
             (ok u0)
-            (ok (- raw max-error))
+            (sub-fixed raw max-error)
         )
     )
 )
