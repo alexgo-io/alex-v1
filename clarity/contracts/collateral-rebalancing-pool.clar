@@ -13,6 +13,8 @@
 
 ;; constants
 ;;
+(define-constant ONE_8 u100000000) ;; 8 decimal places
+
 (define-constant invalid-pool-err (err u201))
 (define-constant no-liquidity-err (err u61))
 (define-constant invalid-liquidity-err (err u202))
@@ -22,11 +24,10 @@
 (define-constant too-many-pools-err (err u68))
 (define-constant percent-greater-than-one (err u5))
 
-(define-constant a1 u278393)
-(define-constant a2 u230389)
-(define-constant a3 u972)
-(define-constant a4 u78108)
-(define-constant erf-div u1000000)
+(define-constant a1 u27839300)
+(define-constant a2 u23038900)
+(define-constant a3 u97200)
+(define-constant a4 u7810800)
 (define-constant oracle-src "nothing")
 
 ;; data maps and vars
@@ -68,11 +69,31 @@
 ;; private functions
 ;;
 
-;; x will be divided by erf-div
+;; Approximation of Error Function using Abramowitz and Stegun
+;; https://en.wikipedia.org/wiki/Error_function#Approximation_with_elementary_functions
 (define-private (erf (x uint))
-    (ok (- u1 (/ u1 (pow (+ u1 (* (/ a1 erf-div) (/ x erf-div)) (* (/ a2 erf-div) (pow (/ x erf-div) u2)) (* (/ a3 erf-div) (pow (/ x erf-div) u3)) (* (/ a4 erf-div) (pow (/ x erf-div) u4))) u4))))
+    (let
+        (
+            (a1x (unwrap-panic (contract-call? .math-fixed-point mul-down a1 x)))
+            (x2 (unwrap-panic (contract-call? .math-fixed-point pow-down x u200000000)))
+            (a2x (unwrap-panic (contract-call? .math-fixed-point mul-down a2 x2)))
+            (x3 (unwrap-panic (contract-call? .math-fixed-point pow-down x u300000000)))
+            (a3x (unwrap-panic (contract-call? .math-fixed-point mul-down a3 x3)))
+            (x4 (unwrap-panic (contract-call? .math-fixed-point pow-down x u400000000)))
+            (a4x (unwrap-panic (contract-call? .math-fixed-point mul-down a4 x4)))
+            (denom (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 a1x)))
+            (denom (unwrap-panic (contract-call? .math-fixed-point add-fixed denom a2x)))
+            (denom (unwrap-panic (contract-call? .math-fixed-point add-fixed denom a3x)))
+            (denom (unwrap-panic (contract-call? .math-fixed-point add-fixed denom a4x)))
+            (denom (unwrap-panic (contract-call? .math-fixed-point pow-down denom u400000000)))
+            (base (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 denom))))
+        )
+    )
+    
+    (contract-call? .math-fixed-point sub-fixed ONE_8 base)
 )
 
+;; BUG: sqrti needs re-written
 (define-private (get-weight-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-yield-token <yield-token-trait>))
     (let 
         (
@@ -86,20 +107,31 @@
 
             ;; use itself as price oracle, rather than using external
             ;; probably it doesn't work?
-            (spot (/ (* balance-x (/ weight-y u100)) (* balance-y (/ weight-x u100)))) 
+            (bxwy (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x weight-y)))
+            (bywx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y weight-x)))
+            (spot (unwrap-panic (contract-call? .math-fixed-point div-up bxwy bywx))
             ;;(symbol (concat (unwrap-panic (as-max-len? (unwrap-panic (contract-call? token-x-trait get-symbol)) u15)) 
             ;;        (concat "-" (unwrap-panic (as-max-len? (unwrap-panic (contract-call? token-y-trait get-symbol)) u15))))
             ;;(spot (contract-call? the-oracle oracle-src symbol))            
 
-            ;; TODO get-maturity returns uint which is not well defined
             (t (unwrap-panic (contract-call? the-yield-token get-maturity)))
-            ;; TODO APYs assumed zero
-            ;; TODO ln approximated
-            ;; TODO t multiplier of 100 makes sense? 
-            (d1 (/ (+ (- (/ spot strike) u1) (* t (/ (pow (/ bs-vol u100) u2) u2))) (* (/ bs-vol u100) (/ (sqrti (* t u100)) u10))))
+            ;; TODO APYs assumed zero            
+            (ln-spot (unwrap-panic (contract-call? .math-fixed-point div-up spot strike)))
+            (ln-spot (unwrap-panic (contract-call? .math-log-exp ln-fixed sk)))
+            (rand (unwrap-panic (contract-call? .math-fixed-point pow-down bs-vol u200000000)))
+            (rand (unwrap-panic (contract-call? .math-fixed-point div-up rand u200000000)))
+            (rand (unwrap-panic (contract-call? .math-fixed-point mul-up rand t)))
+            (numer (unwrap-panic (contract-call? .math-fixed-point add-fixed ln-spot rand)))
+            (sqrt-t (unwrap-panic (contract-call? .math-fixed-point pow-down t u50000000)))
+            (denom (unwrap-panic (contract-call? .math-fixed-point mul-down bs-vol sqrt-t)))
+            (d1 (unwrap-panic (contract-call? .math-fixed-point div-up numer denom)))
+            (sqrt-2 (unwrap-panic (contract-call? .math-fixed-point pow-down u200000000 u50000000)))
+            (d1 (unwrap-panic (contract-call? .math-fixed-point div-up d1 sqrt-2))) 
+            (d1 (unwrap-panic (erf d1)))           
+            (d1 (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 d1)))            
        )
-        (ok (/ (+ u1 (unwrap-panic (erf (* (/ d1 (/ (sqrti u200) u10)) erf-div)))) u2))
-   )
+       (contract-call? .math-fixed-point div-up d1 u200000000)        
+    )
 )
 
 ;; public functions
@@ -158,7 +190,6 @@
                 fee-balance-y: u0,
                 fee-to-address: (contract-of the-yield-token),
                 yield-token: (contract-of the-yield-token),
-                equation: (contract-of the-equation)
             })
        )
         (asserts!

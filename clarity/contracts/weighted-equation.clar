@@ -12,8 +12,8 @@
 (define-constant max-in-ratio-err (err u63))
 (define-constant max-out-ratio-err (err u64))
 
-(define-constant MAX_IN_RATIO (* u3 (pow u10 u17))) ;;0.3e18
-(define-constant MAX_OUT_RATIO (* u3 (pow u10 u17))) ;;0.3e18
+(define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8
+(define-constant MAX_OUT_RATIO (* u3 (pow u10 u7))) ;;0.3e8
 
 ;; data maps and vars
 ;;
@@ -92,7 +92,7 @@
         (ok
             (if (is-eq total-supply u0)
                 ;; burn a fraction of initial lp token to avoid attack as described in WP https://uniswap.org/whitepaper.pdf
-                {token: (sqrti invariant), dy: dy}
+                {token: (unwrap-panic (contract-call? .math-fixed-point pow-down invariant u50000000)), dy: dy}
                 {token: token, dy: new-dy}
             )
         )
