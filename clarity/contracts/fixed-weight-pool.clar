@@ -6,10 +6,7 @@
 (use-trait vault-trait .trait-vault.vault-trait)
 
 ;; fixed-weight-pool
-;; <add a description here>
-
-;; constants
-;;
+;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant invalid-pool-err (err u201))
@@ -24,7 +21,6 @@
 (define-constant invalid-token-err (err u7))
 
 ;; data maps and vars
-;;
 (define-map pools-map
   { pool-id: uint }
   {
@@ -55,12 +51,6 @@
 
 (define-data-var pool-count uint u0)
 (define-data-var pools-list (list 2000 uint) (list))
-
-;; private functions
-;;
-
-;; public functions
-;;
 
 ;; implement trait-pool
 (define-read-only (get-pool-count)
@@ -435,7 +425,6 @@
     )
     )
 
-    (ok {token: u0, y: u0})
 )
 
 (define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (token uint))
