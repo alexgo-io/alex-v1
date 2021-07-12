@@ -58,8 +58,7 @@
     fee-balance-x: uint,
     fee-balance-y: uint,
     fee-to-address: principal,
-    yield-token: principal,
-    equation: principal
+    yield-token: principal
   }
 )
 
@@ -71,6 +70,7 @@
 
 ;; Approximation of Error Function using Abramowitz and Stegun
 ;; https://en.wikipedia.org/wiki/Error_function#Approximation_with_elementary_functions
+;; Please note erf(x) equals -erf(-x)
 (define-private (erf (x uint))
     (let
         (
@@ -92,7 +92,6 @@
     )
 )
 
-;; BUG: sqrti needs re-written
 (define-private (get-weight-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-yield-token <yield-token-trait>))
     (let 
         (
@@ -112,25 +111,45 @@
             ;;(symbol (concat (unwrap-panic (as-max-len? (unwrap-panic (contract-call? token-x-trait get-symbol)) u15)) 
             ;;        (concat "-" (unwrap-panic (as-max-len? (unwrap-panic (contract-call? token-y-trait get-symbol)) u15))))
             ;;(spot (contract-call? the-oracle oracle-src symbol))            
-
+            
             (t (unwrap-panic (contract-call? the-yield-token get-maturity)))
-            ;; TODO APYs assumed zero            
-            ;; CURRENTLY BROKEN
-            (ln-spot (unwrap-panic (contract-call? .math-fixed-point div-up spot strike)))
-            (ln-spot1 (unwrap-panic (contract-call? .math-log-exp ln-fixed (to-int ln-spot))))
-            (rand (unwrap-panic (contract-call? .math-fixed-point pow-down bs-vol u200000000)))
-            (rand1 (unwrap-panic (contract-call? .math-fixed-point div-up rand u200000000)))
-            (rand2 (unwrap-panic (contract-call? .math-fixed-point mul-up rand1 t)))
-            (numer (unwrap-panic (contract-call? .math-fixed-point add-fixed ln-spot1 rand2)))
+            ;; TODO APYs need to be calculated from the prevailing yield token price.           
+            ;; TODO ln(S/K) approximated as (S/K - 1)
+
+            ;; we calculate d1 first
+            (spot-term (unwrap-panic (contract-call? .math-fixed-point div-up spot strike)))
+            (pow-bs-vol (unwrap-panic (contract-call? .math-fixed-point div-up 
+                            (unwrap-panic (contract-call? .math-fixed-point pow-down bs-vol u200000000)) u200000000)))
+            (vol-term (unwrap-panic (contract-call? .math-fixed-point mul-up t pow-bs-vol)))                       
             (sqrt-t (unwrap-panic (contract-call? .math-fixed-point pow-down t u50000000)))
-            (denom (unwrap-panic (contract-call? .math-fixed-point mul-down bs-vol sqrt-t)))
-            (input (unwrap-panic (contract-call? .math-fixed-point div-up numer denom)))
             (sqrt-2 (unwrap-panic (contract-call? .math-fixed-point pow-down u200000000 u50000000)))
-            (input1 (unwrap-panic (contract-call? .math-fixed-point div-up input sqrt-2))) 
-            (input2 (unwrap-panic (erf input1)))           
-            (input3 (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 input2)))            
-       )
-       (contract-call? .math-fixed-point div-up input3 u200000000)        
+            
+            (denominator (unwrap-panic (contract-call? .math-fixed-point mul-down bs-vol sqrt-t)))
+        )
+        
+        (if (> spot-term ONE_8)
+            (let
+                (
+                    (numerator (unwrap-panic (contract-call? .math-fixed-point add-fixed vol-term 
+                                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed spot-term ONE_8)))))
+                    (d1 (unwrap-panic (contract-call? .math-fixed-point div-up numerator denominator)))
+                    (erf-term (unwrap-panic (erf (unwrap-panic (contract-call? .math-fixed-point div-up d1 sqrt-2)))))
+                    (complement (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 erf-term)))
+                )
+                (contract-call? .math-fixed-point div-up complement u200000000)
+            )
+            (let
+                (
+                    (numerator (unwrap-panic (contract-call? .math-fixed-point add-fixed vol-term 
+                                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 spot-term)))))
+                    (d1 (unwrap-panic (contract-call? .math-fixed-point div-up numerator denominator)))
+                    (erf-term (unwrap-panic (erf (unwrap-panic (contract-call? .math-fixed-point div-up d1 sqrt-2)))))
+                    (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term)))
+                )
+                (contract-call? .math-fixed-point div-up complement u200000000)              
+            )
+        )
+        
     )
 )
 
@@ -174,7 +193,7 @@
    )
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -205,13 +224,13 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
-        (try! (add-to-position token-x-trait token-y-trait strike bs-vol the-equation the-yield-token the-vault dx dy))
+        (try! (add-to-position token-x-trait token-y-trait strike bs-vol the-yield-token the-vault dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
    )
 )
 
-(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -222,7 +241,7 @@
             (total-supply (get total-supply pool))
             (weight-x (unwrap-panic (get-weight-x token-x-trait token-y-trait strike bs-vol the-yield-token)))
             (weight-y (- u1 weight-x))
-            (add-data (unwrap-panic (contract-call? the-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
+            (add-data (unwrap-panic (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
@@ -248,7 +267,7 @@
    )
 )    
 
-(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-equation <equation-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (percent uint))
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (strike uint) (bs-vol uint) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (percent uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -260,7 +279,7 @@
             (total-supply (get total-supply pool))
             (weight-x (unwrap-panic (get-weight-x token-x-trait token-y-trait strike bs-vol the-yield-token)))
             (weight-y (- u1 weight-x))            
-            (reduce-data (unwrap-panic (contract-call? the-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
+            (reduce-data (unwrap-panic (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
             (dx (get dx reduce-data))
             (dy (get dy reduce-data))
             (pool-updated (merge pool {
