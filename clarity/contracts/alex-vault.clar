@@ -10,9 +10,9 @@
 (define-constant INVALID-BALANCES u204)
 (define-constant FUNDING_ERR (err u205))
 
-(define-data-var tokens-list (list 2000 uint) (list))
+(define-data-var tokens-list (list 2000 uint) (list ))
 
-(define-data-var token-balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
+(define-data-var token-balances (list 2000 {token: (string-ascii 32), balance: uint}) (list ))
 
 
 (define-map token-data-map
@@ -55,9 +55,9 @@
         (
         (token-x (contract-of token-x-trait))   
         (token-data (unwrap! (map-get? token-data-map { token : token-x }) (err INVALID-TOKEN-ERR)))
-       )
+        )
     (ok (get balance token-data))
-   )
+    )
 )
 
 
@@ -77,25 +77,42 @@
     (ok (var-get token-balances)) ;; 
 )
 
-;; (define-read-only (get-balance (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
+;; Flash Loan draft work - Sidney
+
+
+;; flash loan to flash loan user up to 3 tokens of amounts specified
+;; (define-public (flash-loan (loan-user <flash-loan-user-trait>) (token-list (list 3 <ft-trait>)) (amount-list (list 3 uint)))
+
+;;     ;; Basic Idea : for each token list and amount list, 
+;;     (begin
+;;         (token-length (len token-list))
+;;         (current-token (element-at token-list counter)) 
+;;         (current-amount (element-at amount-list counter))
+
+;;         token-list 
+;;         amount-list
+
+;;     ;; Basic Idea : for each token list and amount list, 
+
+;;     (unwrap! (as-contract (contract-call? current-token transfer current-amount tx-sender (contract-of loan-user))) FUNDING_ERR)
+    
 ;;     (let
-;;         (
-;;         (token-x (contract-of token-x-trait))
-;;         (token-y (contract-of token-y-trait))
-;;         (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
-;;        )
-;;     (ok (get name pair))
-;;    ) 
-;;)
+;;       (
+;;         (current-balance (stx-get-balance (as-contract tx-sender)))
+;;         ;; (fee (/ (* loan-amount loan-fee-num) loan-fee-den))  ;; INTEREST OF FLASH LOAN ??
+;;         ;; 
+;;       )
 
-;; (define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
-;;   (let
-;;     (
-;;       (token-x (contract-of token-x-trait))
-;;       (token-y (contract-of token-y-trait))
-;;       (pair (unwrap! (map-get? pairs-data-map { token-x: token-x, token-y: token-y }) (err INVALID-PAIR-ERR)))
-;;    )
-;;     (ok (list (get balance-x pair) (get balance-y pair)))
-;;  )
-;;)
+;;       ;; call the flash loan operation
+;;       (unwrap! (contract-call? loan-user execute loan-id (as-contract tx-sender) current-amount) loan-err)
 
+;;       ;; check transferred back with fee
+
+;;       (print "Executuon Result")
+;;       (print { amount: loan-amount, balance: balance, fee: fee, new-balance: (stx-get-balance (as-contract tx-sender)) })
+;;       ;; TODO : ASSERTING
+;;       ;; (ok Final Fee)
+;;     )
+;;     (ok (var-get token-balances)) ;; 
+;;     )
+;; )
