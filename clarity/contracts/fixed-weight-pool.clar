@@ -360,9 +360,9 @@
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
 
-        (balance-y-updated (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx))
+        (dy-updated (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx))
 
-        (ok balance-y-updated)
+        (ok dy-updated)
         (err invalid-balance-err)
         )
     )
@@ -378,9 +378,9 @@
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
 
-        (balance-x-updated (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy))
+        (dx-updated (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy))
 
-        (ok balance-x-updated)
+        (ok dx-updated)
         (err invalid-balance-err)
         )
     )
@@ -396,9 +396,9 @@
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
 
-        (balance-x-updated (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price))
+        (dx-updated (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price))
 
-        (ok balance-x-updated)
+        (ok dx-updated)
         (err invalid-balance-err)
         )
     )
