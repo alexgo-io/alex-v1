@@ -212,7 +212,7 @@
       (merge pool
         {
           balance-x: (+ balance-x dx), ;; balance-x-updated,
-          balance-y: (+ balance-y dy), ;; balance-y-updated,
+          balance-y: (- balance-y dy), ;; balance-y-updated,
           fee-balance-x: (+ fee (get fee-balance-x pool))
         }
       )
