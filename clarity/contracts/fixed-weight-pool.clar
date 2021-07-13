@@ -19,6 +19,8 @@
 (define-constant percent-greater-than-one (err u5))
 (define-constant invalid-balance-err (err u6))
 (define-constant invalid-token-err (err u7))
+(define-constant no-fee-x-err (err u8))
+(define-constant no-fee-y-err (err u9))
 
 ;; data maps and vars
 (define-map pools-map
@@ -191,7 +193,7 @@
    )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-vault <vault-trait>) (dx uint))
     
     (let
     (
@@ -205,14 +207,15 @@
     ;; TODO : Platform Fee imposing logic required.
     ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
     ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
-
+    (fee u0)
+    
     (dy (unwrap-panic (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx)))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (+ balance-x dx), ;; balance-x-updated,
-          balance-y: (+ balance-y dy), ;; balance-y-updated,
+          balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx)),
+          balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy)),
           fee-balance-x: (+ fee (get fee-balance-x pool))
         }
       )
@@ -229,8 +232,8 @@
     ;; when received token-y , token-y : vault  -> tx-sender
 
 
-    (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (as-contract tx-sender) none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? token-y-trait transfer dy (as-contract tx-sender) tx-sender none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
@@ -241,7 +244,7 @@
   )
 )
 
-(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-equation <equation-trait>) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-vault <vault-trait>) (dy uint))
 
     (let
     (
@@ -254,15 +257,15 @@
     ;; TODO : Platform Fee imposing logic required.
     ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
     ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
-
+    (fee u0)
     (dx (unwrap-panic (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy)))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (+ balance-x dx), ;; balance-x-updated,
-          balance-y: (+ balance-y dy), ;; balance-y-updated,
-          fee-balance-x: (+ fee (get fee-balance-x pool))
+          balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
+          balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy)),
+          fee-balance-y: (+ fee (get fee-balance-y pool))
         }
       )
     )
@@ -278,8 +281,8 @@
     ;; when received token-y , token-y : vault  -> tx-sender
 
 
-    (asserts! (is-ok (contract-call? token-x-trait transfer dx (as-contract tx-sender) tx-sender none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (as-contract tx-sender) none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
@@ -291,34 +294,45 @@
 )
 
 (define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (address principal))
-      (let 
-      (
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y weight-x: weight-x, weight-y: weight-y }))))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        )
 
         ;; TODO : Assertion for checking the right to set the platform fee.
         ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
 
-        (map-set pools-data-map
-        { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }
-        (merge pool { fee-to-address: address })
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-to-address: address })
         )
-        (ok true)
+        (ok true)     
     )
 )
 
 ;; return principal
 (define-read-only (get-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (let 
-    (
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) (err invalid-pool-err))))
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))                
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) (err invalid-pool-err)))
+        )
         (ok (get fee-to-address pool))
     )
 )
 
 (define-read-only (get-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (let
-    (
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) (err invalid-pool-err))))
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))              
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) (err invalid-pool-err)))
+        )
         (ok (list (get fee-balance-x pool) (get fee-balance-y pool)))
     )
 )
@@ -328,12 +342,12 @@
     
     (let
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
-        (address (get fee-to-address pool))
-        (fee-x (get fee-balance-x pool))
-        (fee-y (get fee-balance-y pool))
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+            (address (get fee-to-address pool))
+            (fee-x (get fee-balance-x pool))
+            (fee-y (get fee-balance-y pool))
         )
 
         (asserts! (is-eq fee-x u0) no-fee-x-err)
@@ -359,12 +373,8 @@
         (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
-
-        (balance-y-updated (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx))
-
-        (ok balance-y-updated)
-        (err invalid-balance-err)
         )
+        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
     )
 )
 
@@ -377,12 +387,8 @@
         (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
-
-        (balance-x-updated (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy))
-
-        (ok balance-x-updated)
-        (err invalid-balance-err)
         )
+        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
     )
 )
 
@@ -395,16 +401,12 @@
         (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
-
-        (balance-x-updated (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price))
-
-        (ok balance-x-updated)
-        (err invalid-balance-err)
         )
+        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
     )
 )
 
-(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (dy uint))
 
     (let 
         (
@@ -413,21 +415,14 @@
         (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
-
-        ;; TO DO : Check whether valid. total supply of V Should be from pool right?
-        ;; (total-supply(get total-supply pool))
-        (total-supply (try! (contract-call? the-pool-token get-total-supply)))
-
-        (token (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy))
-
-        (ok token)
-        (err invalid-token-err)
-    )
+        (total-supply (get total-supply pool))
+        )
+        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)
     )
 
 )
 
-(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (token uint))
+(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (token uint))
 
     (let 
         (
@@ -436,19 +431,13 @@
         (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
-
-        ;; TO DO : Check whether valid. total supply of V Should be from pool right?
-        ;; (total-supply(get total-supply pool))
-        (total-supply (try! (contract-call? the-pool-token get-total-supply)))
-
-        (position-data (unwrap-panic (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)))
-        (ok position-data)
-        (err invalid-balance-err)
+        (total-supply (get total-supply pool))        
         )
+        (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
     )
 )
 
-(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (token uint))
+(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (token uint))
     
     (let 
         (
@@ -457,14 +446,8 @@
         (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
-
-        ;; TO DO : Check whether valid. total supply of V Should be from pool right?
-        ;; (total-supply(get total-supply pool))
-        (total-supply (try! (contract-call? the-pool-token get-total-supply)))
-
-        (position-data (unwrap-panic (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)))
-        (ok position-data)
-        (err invalid-balance-err)
+        (total-supply (get total-supply pool))
         )
+        (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)
     )
 )

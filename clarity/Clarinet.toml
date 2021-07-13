@@ -56,3 +56,11 @@ depends_on = []
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
 depends_on = ["trait-equation", "math-fixed-point"]
+
+[contracts.yield-token-equation]
+path = "contracts/yield-token-equation.clar"
+depends_on = []
+
+[contracts.yield-token-pool]
+path = "contracts/yield-token-pool.clar"
+depends_on = []
