@@ -15,6 +15,15 @@ class FWPTestAgent1 {
     this.deployer = deployer;
   }
 
+  getPoolDetails(tokenX: string, tokenY: string, weightX: number, weightY: number) {
+    return this.chain.callReadOnlyFn("fixed-weight-pool", "get-pool-details", [
+      types.principal(tokenX),
+      types.principal(tokenY),
+      types.uint(weightX),
+      types.uint(weightY),
+    ], this.deployer.address);
+  }
+
   createPool(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, vault: string, balanceX: number, balanceY: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("fixed-weight-pool", "create-pool", [
@@ -31,7 +40,7 @@ class FWPTestAgent1 {
     return block.receipts[0].result;
   }
 
-  addToPosition(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, vault: string, balanceX: number, balanceY: number) {
+  addToPosition(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, vault: string, dX: number, dY: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("fixed-weight-pool", "add-to-position", [
         types.principal(tokenX),
@@ -40,8 +49,8 @@ class FWPTestAgent1 {
         types.uint(weightY),
         types.principal(pooltoken),
         types.principal(vault),
-        types.uint(balanceX * 1000000),
-        types.uint(balanceY * 1000000),
+        types.uint(dX * 1000000),
+        types.uint(dY * 1000000),
       ], user.address),
     ]);
     return block.receipts[0].result;
