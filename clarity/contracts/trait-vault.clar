@@ -12,10 +12,6 @@
         ;; returns list of {token, balance}
         (get-balances () (response (list 2000 {token: (string-ascii 32), balance: uint}) uint))
 
-        ;; don't think this makes sense.
-        ;;;; swap one token for another
-        ;;(swap-x-for-y (<ft-trait> <ft-trait> uint) (response uint uint))
-
         ;; flash loan to flash loan user up to 3 tokens of amounts specified
         (flash-loan (<flash-loan-user-trait> (list 3 <ft-trait>) (list 3 uint)) (response bool uint))
    )

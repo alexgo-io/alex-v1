@@ -135,6 +135,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
+            ;;(pool-token (get pool-token pool))
             (total-supply (get total-supply pool))
             (add-data (unwrap-panic (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
             (new-supply (get token add-data))
