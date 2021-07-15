@@ -2,7 +2,7 @@
 ;; testnet: (impl-trait 'STR8P3RD1EHA8AA37ERSSSZSWKS9T2GYQFGXNA4C.sip-010-trait-ft-standard.sip-010-trait)
 ;; (impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
-(impl-trait .alex-token-trait.dao-token-trait)
+(impl-trait .trait-alex-token.dao-token-trait)
 
 ;; Defines the USDA Stablecoin according to the SIP-010 Standard
 (define-fungible-token usda)

@@ -1,5 +1,5 @@
 (impl-trait .trait-sip-010.sip-010-trait)
-(impl-trait .alex-token-trait.dao-token-trait)
+(impl-trait .trait-alex-token.dao-token-trait)
 
 ;; Defines the Alex Governance Token according to the SRC20 Standard
 (define-fungible-token galex)
