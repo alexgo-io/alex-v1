@@ -1,14 +1,6 @@
 [project]
 name = "alex-v1"
 requirements = []
-[contracts.token-alex]
-path = "contracts/token-alex.clar"
-depends_on = ["trait-sip-010","trait-alex-token"]
-
-[contracts.trait-alex-token]
-path = "contracts/trait-alex-token.clar"
-depends_on = []
-
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user"]
@@ -27,6 +19,22 @@ depends_on = ["math-log-exp"]
 
 [contracts.math-log-exp]
 path = "contracts/math-log-exp.clar"
+depends_on = []
+
+[contracts.pool-token-alex-usda]
+path = "contracts/pool-token-alex-usda.clar"
+depends_on = ["trait-sip-010","trait-pool-token"]
+
+[contracts.token-alex]
+path = "contracts/token-alex.clar"
+depends_on = ["trait-sip-010", "trait-alex-token"]
+
+[contracts.token-usda]
+path = "contracts/token-usda.clar"
+depends_on = ["trait-sip-010", "trait-alex-token"]
+
+[contracts.trait-alex-token]
+path = "contracts/trait-alex-token.clar"
 depends_on = []
 
 [contracts.trait-equation]
@@ -60,10 +68,6 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 [contracts.trait-yield-token]
 path = "contracts/trait-yield-token.clar"
 depends_on = []
-
-[contracts.token-usda]
-path = "contracts/token-usda.clar"
-depends_on = ["trait-sip-010","trait-alex-token"]
 
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"

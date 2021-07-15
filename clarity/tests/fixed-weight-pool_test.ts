@@ -3,17 +3,24 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { 
-    fixedWeightPool,
+    FWPTestAgent1,
   } from './models/alex-tests-fixed-weight-pool.ts';
   
+
+const gAlexTokenAddress = "STSTW15D618BSZQB85R058DS46THH86YQQY6XCB7.token-alex"
+const usdaTokenAddress = "STSTW15D618BSZQB85R058DS46THH86YQQY6XCB7.token-usda"
+const gAlexUsdaPoolAddress = "STSTW15D618BSZQB85R058DS46THH86YQQY6XCB7.pool-token-alex-usda"
+const alexVaultAddress = "STSTW15D618BSZQB85R058DS46THH86YQQY6XCB7.alex-vault"
 Clarinet.test({
     name: "Fixed Weight Pool creation, adding values and swapping",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;
-        let fixedWeightPool = new fixedWeightPool(chain, deployer);
+        let FWPTestAgent = new FWPTestAgent1(chain, deployer);
         
-        
+        let result = FWPTestAgent.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, 0.5,0.5, gAlexUsdaPoolAddress, alexVaultAddress, "gALEX-USDA", 500, 100);
+        result.expectOk().expectBool(true);
+
         let block = chain.mineBlock([
             /* 
              * Add transactions with: 

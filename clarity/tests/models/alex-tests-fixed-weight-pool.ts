@@ -6,7 +6,7 @@ import {
   types,
 } from "https://deno.land/x/clarinet@v0.13.0/index.ts";
 
-class fixedWeightPool {
+class FWPTestAgent1 {
   chain: Chain;
   deployer: Account;
 
@@ -96,4 +96,4 @@ class fixedWeightPool {
 
 }
 
-export { fixedWeightPool };
+export { FWPTestAgent1 };
