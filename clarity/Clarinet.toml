@@ -21,6 +21,22 @@ depends_on = ["math-log-exp"]
 path = "contracts/math-log-exp.clar"
 depends_on = []
 
+[contracts.pool-token-alex-usda]
+path = "contracts/pool-token-alex-usda.clar"
+depends_on = ["trait-sip-010","trait-pool-token"]
+
+[contracts.token-alex]
+path = "contracts/token-alex.clar"
+depends_on = ["trait-sip-010", "trait-alex-token"]
+
+[contracts.token-usda]
+path = "contracts/token-usda.clar"
+depends_on = ["trait-sip-010", "trait-alex-token"]
+
+[contracts.trait-alex-token]
+path = "contracts/trait-alex-token.clar"
+depends_on = []
+
 [contracts.trait-equation]
 path = "contracts/trait-equation.clar"
 depends_on = []
@@ -56,11 +72,3 @@ depends_on = []
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
 depends_on = ["trait-equation", "math-fixed-point"]
-
-[contracts.yield-token-equation]
-path = "contracts/yield-token-equation.clar"
-depends_on = []
-
-[contracts.yield-token-pool]
-path = "contracts/yield-token-pool.clar"
-depends_on = []
