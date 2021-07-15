@@ -7,7 +7,7 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/collateral-rebalancing-pool.clar"
-depends_on = ["trait-equation", "trait-sip-010", "trait-yield-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault"]
+depends_on = ["trait-equation", "trait-sip-010", "trait-yield-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault", "open-oracle"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/fixed-weight-pool.clar"
@@ -21,9 +21,13 @@ depends_on = ["math-log-exp"]
 path = "contracts/math-log-exp.clar"
 depends_on = []
 
+[contracts.open-oracle]
+path = "contracts/open-oracle.clar"
+depends_on = ["trait-oracle"]
+
 [contracts.pool-token-alex-usda]
 path = "contracts/pool-token-alex-usda.clar"
-depends_on = ["trait-sip-010","trait-pool-token"]
+depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.token-alex]
 path = "contracts/token-alex.clar"

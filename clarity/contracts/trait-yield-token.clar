@@ -25,14 +25,16 @@
 
     ;; additional functions
 
-    ;;mint(principal uint):bool
+    ;; mint(principal uint):bool
     (mint (principal uint) (response bool uint))
     
-    ;;burn(principal uint):bool
+    ;; burn(principal uint):bool
     (burn (principal uint) (response bool uint))
 
+    ;; the underlying token
     (get-token () (response principal uint))
 
-    (get-maturity () (response uint uint))
+    ;; the expiry
+    (get-expiry () (response uint uint))
  )
 )

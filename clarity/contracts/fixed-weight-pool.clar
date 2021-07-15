@@ -217,7 +217,7 @@
         {
           balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx)),
           balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy)),
-          fee-balance-x: (+ fee (get fee-balance-x pool))
+          fee-balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)))
         }
       )
     )
@@ -266,7 +266,7 @@
         {
           balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
           balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy)),
-          fee-balance-y: (+ fee (get fee-balance-y pool))
+          fee-balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)))
         }
       )
     )
