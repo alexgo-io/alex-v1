@@ -249,12 +249,39 @@ Denote $$x_{a}$$, $$x_{v}$$, $$y_{a}$$ and $$y_{v}$$ balance of actual Token, vi
 
 The amount of Token an ayToken can be expressed as a function of L and current interest rate $$r_{c}=\frac{y_{a}+y_{v}}{x_{a}+x_{v}}$$.
 
-
-
 $$
 \begin{split}
 &x_{a}+x_{v}&=\left[\frac{L}{1+e^{(1-t)r_{c}}}\right]^{\frac{1}{1-t}}\\
 &y_{a}+y_{v}&=\left[\frac{L}{1+e^{-(1-t)r_{c}}}\right]^{\frac{1}{1-t}}
 \end{split}
 $$
+
+Intuitively, when $$r_{c}=r_{l}$$, ayToken is depleted; Similarly, when $$r_{c}=r_{u}$$, Token is used up. Therefore,
+
+
+
+$$
+\begin{split}
+&x_{v}=\left[\frac{L}{1+e^{(1-t)r_{u}}}\right]^{\frac{1}{1-t}}\\
+&y_{v}=\left[\frac{L}{1+e^{-(1-t)r_{l}}}\right]^{\frac{1}{1-t}}
+\end{split}
+$$
+
+See Appendix 3 for a detailed derivation of virtual, as well as actual token reserve.
+
+Similar to the case of 0% floor, minting or burning coins would result in invariant constant changing from $$L$$ to $$k^{1-t}L$$. Meanwhile, both actual and virtual Token and ayToken would grow proportionally by $$k$$, as they are linear function of $$L^{\frac{1}{1-t}}$$.
+
+#### Example
+
+We aim to show here how virtual token is able to assist liquidity providers to efficiently manage capital.
+
+![Figure 2](../.gitbook/assets/cectable2%20%281%29.png)
+
+In Figure 2, assume lower bound is 0%, whereas upper bound is 50%. We also set $$t$$= 0.5 and $$L$$= 20. If interest rate is 0%, $$L$$= 20 means holding equal amount of Token and ayToken of 100 each $$\left(100^{0.5}+100^{0.5}=20\right)$$. The figure compares actual holding of Token and ayToken with and without cap and floor.
+
+According to the figure, when current implied interest rate is 10%, without capital efficiency, liquidity provider is required to deposit 95.06 Token and 105.06 ayToken. This is in comparison with 18.39 Token and 5.06 ayToken after imposing cap and floor. In this example, the capital saving is at least 77%.
+
+## Appendex 1: Generalised Mean when d=2
+
+ALEX's invariant function is $$f(x_{1},x_{2};p)=x{_1}^{p}+x_{2}^{p}=L.$$ It can be rearranged as x_{2}=g\(x_{1}\)=\(L-x_{1}^{p}\)^{\frac{1}{p}}. x_{1} and x\_{2} should both be positive meaning the liquidity pool contains both tokens.
 
