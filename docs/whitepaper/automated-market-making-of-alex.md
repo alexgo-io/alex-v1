@@ -45,7 +45,7 @@ $$
 x_1^p+x_2^p=L
 $$
 
-This equation is regarded reasonable as AMM, because \(i\) function $$g$$ where $$x_2=g(x_1)$$ is monotonically decreasing and convex; and \(ii\) The boundary value of $$p=1$$ and $$p=0$$ corresponds to constant sum and constant product formula respectively. When $$p$$ increases from 0 to 1, price $$-\frac{dg(x_1)}{x_1}$$ gradually converges to 1. This is what ALEX hopes to achieve when forward becomes spot. This also means that $$p$$ is somehow related to time to maturity. Please refer to Appendix 1 for a detailed discussion.
+This equation is regarded reasonable as AMM, because \(i\) function $$g$$ where $$x_2=g(x_1)$$ is monotonically decreasing and convex; and \(ii\) The boundary value of $$p=1$$ and $$p=0$$ corresponds to constant sum and constant product formula respectively. When $$p$$ increases from 0 to 1, price $$-\frac{dg(x_1)}{x_1}$$ gradually converges to 1. This is what ALEX hopes to achieve when forward becomes spot. This also means that $$p$$ is somehow related to time to maturity. Please refer to [Appendix 1](automated-market-making-of-alex.md#appendix-1-generalised-mean-when-d-2) for a detailed discussion.
 
 In the benchmark research piece by [Yield Space](https://yield.is/YieldSpace.pdf), the invariant function above is formalised from the perspective of zero coupon bond. $$p$$ is replaced by $$1-t$$ where $$t$$ is time to maturity and $$L$$ is a function of $$t$$, so that
 
@@ -81,7 +81,7 @@ ALEX's implied interest rate is compound. Not only does the compound rate allow 
 
 Using notations above, the invariant function is rewritten as $$x^{1-t}+y^{1-t}=L$$ with the differential equation $$-\frac{dy}{dx}=\left(\frac{y}{x} \right)^t$$. Unless specified, we assume $$L$$ constant and call it invariant constant. This means that $$t$$ is fixed and there is no minting or burning coins. In practise, liquidity providers can add or reduce liquidity, and $$L$$ needs to be recalibrated daily when $$t$$ changes.
 
-Though purely theoretical at this stage, Appendix 2 maps $$L$$ to the liquidity distribution of [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf). This is motivated by an independent research from [Paradigm](https://www.paradigm.xyz/2021/06/uniswap-v3-the-universal-amm/).
+Though purely theoretical at this stage, [Appendix 2](automated-market-making-of-alex.md#appendix-2-liquidity-mapping-to-uniswap-v3) maps $$L$$ to the liquidity distribution of [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf). This is motivated by an independent research from [Paradigm](https://www.paradigm.xyz/2021/06/uniswap-v3-the-universal-amm/).
 
 ## Trading Formulae
 
@@ -267,7 +267,7 @@ $$
 \end{split}
 $$
 
-See Appendix 3 for a detailed derivation of virtual, as well as actual token reserve.
+See [Appendix 3](automated-market-making-of-alex.md#appendix-3-derivation-of-actual-and-virtual-token-reserve) for a detailed derivation of virtual, as well as actual token reserve.
 
 Similar to the case of 0% floor, minting or burning coins would result in invariant constant changing from $$L$$ to $$k^{1-t}L$$. Meanwhile, both actual and virtual Token and ayToken would grow proportionally by $$k$$, as they are linear function of $$L^{\frac{1}{1-t}}$$.
 
@@ -281,7 +281,146 @@ In Figure 2, assume lower bound is 0%, whereas upper bound is 50%. We also set $
 
 According to the figure, when current implied interest rate is 10%, without capital efficiency, liquidity provider is required to deposit 95.06 Token and 105.06 ayToken. This is in comparison with 18.39 Token and 5.06 ayToken after imposing cap and floor. In this example, the capital saving is at least 77%.
 
-## Appendex 1: Generalised Mean when d=2
+## Appendix 1: Generalised Mean when d=2
 
-ALEX's invariant function is $$f(x_{1},x_{2};p)=x{_1}^{p}+x_{2}^{p}=L.$$ It can be rearranged as x_{2}=g\(x_{1}\)=\(L-x_{1}^{p}\)^{\frac{1}{p}}. x_{1} and x\_{2} should both be positive meaning the liquidity pool contains both tokens.
+ALEX's invariant function is $$f(x_{1},x_{2};p)=x{_1}^{p}+x_{2}^{p}=L.$$ It can be rearranged as $$x{2}=g(x_{1})=(L-x_{1}^{p})^{\frac{1}{p}}$$. $$x_{1}$$ and $$x_{2}$$ should both be positive meaning the liquidity pool contains both tokens.
+
+#### Theorem
+
+When $$0<p<1$$, $$g\left(x_{1}\right)$$ is monotonically decreasing and convex.
+
+#### Proof
+
+This is equivalent to prove $$\frac{dg(x_{1})}{dx_{1}}<0$$ and $$\frac{d^{2}g(x_{1})}{dx_{1}^{2}}\geq0$$.
+
+$$
+\begin{split}
+&\frac{dg(x_{1})}{dx_{1}}=\frac{1}{p}(L-x_{1}^{p})^{\frac{1}{p}-1}\left(-px_{1}^{p-1}\right)=-\left(\frac{L-x_{1}^{p}}{x_{1}^{p}}\right)^{\frac{1-p}{p}}<0\\
+&\frac{d^{2}g(x_{1})}{dx_{1}^{2}}=-\frac{1-p}{p}\left(\frac{L-x_{1}^{p}}{x_{1}^{p}}\right)^{\frac{1-2p}{p}}\left[\frac{-px_{1}^{p-1}x_{1}^{p}-(L-x_{1}^{p})px^{p-1}}{x_{1}^{2}p}\right]\\
+&=L(1-p)\left(\frac{x_{2}}{x_{1}}\right)^{1-2p}x_{1}^{-p-1}\geq0
+\end{split}
+$$
+
+The last inequality holds because each component is positive.
+
+When $$p$$= 1, it is straightward to see that the invariant function is constant sum. To show that the invariant function converges to constant product when $$p$$= 0, we will show and prove an established result in a generalised $$d$$ dimensional setting.
+
+#### Theorem
+
+$$
+\lim_{p\rightarrow0}\left(\frac{1}{d}\sum_{i=1}^{d}x_{i}^{p}\right)^{\frac{1}{p}}=({\prod_{i=1}^{d}x_{i}})^{\frac{1}{d}}
+$$
+
+#### Proof
+
+$$\left(\frac{1}{d}\sum{i=1}^{d}x_{i}^{p}\right)^{\frac{1}{p}}=\text{exp}\left[\frac{\text{log}\left(\frac{1}{d}\sum{i=1}^{d}x_{i}^{p}\right)}{p}\right]$$. Applying _L'Hospital_ rule to the exponent,which is 0 in both denominator and nominator when $$p\rightarrow0$$, we have
+
+$$
+\lim_{p\rightarrow0}\frac{\text{log}\left(\frac{1}{d}\sum_{i=1}^{d}x_{i}^{p}\right)}{p}=\lim_{p\rightarrow0}\sum_{i=1}^{d}\frac{\text{log}(x_{i})}{\sum_{j=1}^{d}\left(\frac{x_{j}}{x_{i}}\right)^{p}}=\frac{\sum_{i=1}^{d}\text{log}(x_{i})}{d}
+$$
+
+Therefore
+
+$$
+\lim_{p\rightarrow0}\left(\frac{1}{d}\sum_{i=1}^{d}x_{i}^{p}\right)^{\frac{1}{p}}=\lim_{p\rightarrow0}\text{exp}\frac{\sum_{i=1}^{d}\text{log}(x_{i})}{d}=({\prod_{i=1}^{d}x_{i}})^{\frac{1}{d}}
+$$
+
+#### Corollary
+
+When d = 2,
+
+$$
+x_{1}x_{2}=\lim_{p\rightarrow0}\left[\frac{1}{2}(x_{1}^{p}+x_{2}^{p})\right]^{\frac{2}{p}}
+$$
+
+Proof of the corollary is trivial, as it is a direct application of the theorem. It shows that generalised mean AMM implies constant product AMM when $$p\rightarrow0$$.
+
+## Appendix 2: Liquidity Mapping to Uniswap v3
+
+As Uniswap v3 is able to simulate liquidity curve of any AMM, we are interested in exploring the connection between ALEX's AMM and that of _Uniswap_'s. Interesting questions include: what is the shape of the liquidity distribution? Which point\(s\) has the highest liquidity? We acknowledge that the section is more of a theoretical study for now.
+
+_Uniswap V3_ AMM can be expressed as a function of invariant constant $$L$$ with respect to price $$p$$, $$L_{\text{Uniswap}}=\frac{dy}{d\sqrt{p}}$$. In terms of ALEX, as price p=e^{rt}, where $$r$$ is the implied interest rate, we have
+
+$$
+L_{\text{Uniswap}}=\frac{dy}{d\sqrt{p}}=\frac{2}{t}e^{-\frac{1}{2}rt}\frac{dy}{dr}
+$$
+
+In the previous sections, we express $$y$$ as
+
+$$
+y=\left[\frac{L}{1+e^{-(1-t)r}}\right]^{\frac{1}{1-t}}
+$$
+
+Therefore
+
+$$
+\begin{split}
+&\frac{dy}{dr}=L^{\frac{1}{1-t}}\frac{e^{-(1-t)r}}{(1+e^{-(1-t)r})^{\frac{2-t}{1-t}}}\\
+&L_{\text{Uniswap}}=\frac{2}{t}L^{\frac{1}{1-t}}\left(e^{\frac{r(1-t)}{2}}+e^{\frac{-r(1-t)}{2}}\right)^{\frac{-2+t}{1-t}}\\
+&=\frac{2}{t}L^{\frac{1}{1-t}}\big\{2\cosh\left[\frac{r(1-t)}{2}\right]\big\}^{\frac{-2+t}{1-t}}
+\end{split}
+$$
+
+![Figure 3](../.gitbook/assets/liquidity%20%282%29.png)
+
+Figure 3 plots $$L_{\text{Uniswap}}$$ against interest rate $$r$$ regarding various levels of $$t$$. When $$0<t<1$$, $$L_{\text{Uniswap}}$$ is symmetric around 0% at which the maximum reaches . This is because
+
+1. $$\cosh\left[(\frac{r(1-t)}{2})\right]$$ is symmetric around $$r$$= 0% with minimum at 0% and the minimum value 1; 
+2. $$x^z$$ is a decreasing function of $$x$$ when $$x$$ is positive and power $$z$$ is negative. In our case, we have $$z=-2+t1-t<-1$$. Therefore, it is the maximum rather than minimum that $$L_{\text{Uniswap}}$$ achieves at 0. 
+
+Furthermore, the higher the $$t$$, the flatter the liquidity distribution is. When $$t$$ approaches 1, i.e. AMM converges to the constant product formula, the liquidity distribution is close to a flat line. When $$t$$ approaches 0, the distribution concentrates around 0%. This makes sense, as forward price starts to converge to spot price upon expiration.
+
+## Appendix 3: Derivation of Actual and Virtual Token Reserve
+
+On CEC, there are two boundary points \($$x_{b}$$,0\) and \(0,$$y_{b}$$\) corresponding to the lower and upper bound of interest rate $$r_{l}$$ and $$r_{u}$$ respectively. We assume $$L$$ is pre-determined, as liquidity provider knows the pool size. We aim to find $$x_{b}$$, $$y_{b}$$, $$x_{v}$$ and $$y_{v}$$ which satisfy the following equations
+
+
+
+$$
+\begin{split}
+&(x_{b}+x_{v})^{1-t}+y_{v}^{1-t}=L\\
+&x_{v}^{1-t}+(y_{b}+y_{v})^{1-t}=L\\
+&\frac{y_{v}}{x_{b}+x_{v}}=e^{r_{l}}\\
+&\frac{y_{b}+y_{v}}{x_{v}}=e^{r_{u}}
+\end{split}
+$$
+
+As there are four unknown variables with four equations, solutions can be expressed as below
+
+
+
+$$
+\begin{split}
+&x_{v}=\left[\frac{L}{1+e^{(1-t)r_{u}}}\right]^{\frac{1}{1-t}}\\
+&y_{v}=\left[\frac{L}{1+e^{-(1-t)r_{l}}}\right]^{\frac{1}{1-t}}\\
+&x_{b}=y_{v}e^{-r_{l}}-x_{v}=\left[\frac{L}{1+e^{r_{l}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{r_{u}(1-t)}}\right]^{\frac{1}{1-t}}\\
+&y_{b}=x_{v}e^{r_{u}}-y_{v}=\left[\frac{L}{1+e^{-r_{u}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{-r_{l}(1-t)}}\right]^{\frac{1}{1-t}}
+\end{split}
+$$
+
+When $$r_{l}=0$$, the pool is floored at 0%. This means that $$x_{v}=0$$, $$y_{v}=\left(\frac{1}{2}L\right)^{\frac{1}{1-t}}$$, $$x_{b}=y_{v}$$.
+
+When the current interest rate $$r_{c}$$ is known and $$r_{c}\in[r_{l},r_{u}]$$, we can calculate $$x_{a}$$ and $$y_{a}$$ satisfying the following equations. When $$r_{c} \notin[r_{l},r_{u}]$$, only one token exists and swapping activities are suspended.
+
+
+
+$$
+\begin{split}
+&(x_{v}+x_{a})^{1-t}+(y_{v}+y_{a})^{1-t}=L\\
+&\frac{y_{v}+y_{a}}{x_{v}+x_{a}}=e^{r_{c}}
+\end{split}
+$$
+
+Solution to above is
+
+
+
+$$
+\begin{split}
+&x_{a}=\left[\frac{L}{1+e^{r_{c}(1-t)}}\right]^{\frac{1}{1-t}}-x_{v}=\left[\frac{L}{1+e^{r_{c}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{r_{u}(1-t)}}\right]^{\frac{1}{1-t}}\\
+&y_{a}=\left[\frac{L}{1+e^{-r_{c}(1-t)}}\right]^{\frac{1}{1-t}}-y_{v}=\left[\frac{L}{1+e^{-r_{c}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{-r_{l}(1-t)}}\right]^{\frac{1}{1-t}}
+\end{split}
+$$
+
+At the boundary points, when $$r_{c}=r_{l}$$, $$x_{a}=x_{b}$$ and $$y_{a}=0$$; when $$r_{c}=r_{u}$$, $$x_{a}=0$$ and $$y_{a}=y_{b}$$.
 
