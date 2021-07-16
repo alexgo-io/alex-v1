@@ -1,6 +1,6 @@
 # Automated Market Making of ALEX
 
-## TL;DR
+## Abstract
 
 ALEX aims to provide a fixed rate borrowing and lending service with pre-determined maturity in the world of decentralised finance \(DeFi\). We include forward contracts in our trading pool, with Automated Market Making \(AMM\) engine in association with generalised mean. While we formalise the trading practise swapping forward contracts with underlying asset, we incorporate the latest innovation in the industry - concentrated liquidity. Consequently, liquidity provider of ALEX can save decent amount of capital by making markets on a selected range of interest rate.
 
