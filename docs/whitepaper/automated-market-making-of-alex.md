@@ -209,9 +209,7 @@ Balance of Token and ayToken, including both actual and virtual, still satisfy t
 
 Before liquidity expansion or reduction by minting or burning coins, assume that the old pool has Token $$x$$ and ayToken $$y$$ satisfying $$x^{1-t}+y^{1-t}=L$$, where $$y=y_a+y_v$$ and $$y_a$$ and $$y_v$$ are balance of actual and virtual ayToken respectively.
 
-Minting and Burning should not affect price and interest rate. This means that newly added or withdrawn coins would be in proportion to x and y. Denote new amount of Token and ayToken as $$x'=kx$$ and $$y'=ky$$ respectively. $$y'=y'_a+y'_v$$ where $$y'_a$$ is actual whereas $$y'_v$$ virtual. They satisfy the following
-
-
+Minting and burning should not affect price and interest rate. This means that newly added or withdrawn coins would be in proportion to x and y. Denote new amount of Token and ayToken as $$x'=kx$$ and $$y'=ky$$ respectively. $$y'=y'_a+y'_v$$ where $$y'_a$$ is actual whereas $$y'_v$$ virtual. They satisfy the following
 
 $$
 \begin{split}
@@ -221,8 +219,6 @@ $$
 $$
 
 Solution to the above equations is
-
-
 
 $$
 \begin{split}
@@ -257,8 +253,6 @@ $$
 $$
 
 Intuitively, when $$r_{c}=r_{l}$$, ayToken is depleted; Similarly, when $$r_{c}=r_{u}$$, Token is used up. Therefore,
-
-
 
 $$
 \begin{split}
@@ -374,8 +368,6 @@ Furthermore, the higher the $$t$$, the flatter the liquidity distribution is. Wh
 
 On CEC, there are two boundary points \($$x_{b}$$,0\) and \(0,$$y_{b}$$\) corresponding to the lower and upper bound of interest rate $$r_{l}$$ and $$r_{u}$$ respectively. We assume $$L$$ is pre-determined, as liquidity provider knows the pool size. We aim to find $$x_{b}$$, $$y_{b}$$, $$x_{v}$$ and $$y_{v}$$ which satisfy the following equations
 
-
-
 $$
 \begin{split}
 &(x_{b}+x_{v})^{1-t}+y_{v}^{1-t}=L\\
@@ -386,8 +378,6 @@ $$
 $$
 
 As there are four unknown variables with four equations, solutions can be expressed as below
-
-
 
 $$
 \begin{split}
@@ -402,8 +392,6 @@ When $$r_{l}=0$$, the pool is floored at 0%. This means that $$x_{v}=0$$, $$y_{v
 
 When the current interest rate $$r_{c}$$ is known and $$r_{c}\in[r_{l},r_{u}]$$, we can calculate $$x_{a}$$ and $$y_{a}$$ satisfying the following equations. When $$r_{c} \notin[r_{l},r_{u}]$$, only one token exists and swapping activities are suspended.
 
-
-
 $$
 \begin{split}
 &(x_{v}+x_{a})^{1-t}+(y_{v}+y_{a})^{1-t}=L\\
@@ -412,8 +400,6 @@ $$
 $$
 
 Solution to above is
-
-
 
 $$
 \begin{split}
