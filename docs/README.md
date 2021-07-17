@@ -1,15 +1,15 @@
 # What is ALEX?
 
-## ALEX is an open-source DeFi development company built on [Stacks Blockchain](https://www.stacks.co) modelled on the world’s financial markets.
+## ALEX is an open-source DeFi protocol built on [Stacks Blockchain](https://www.stacks.co) and modelled on the world’s financial markets.
 
-At ALEX, you can
+To start, at ALEX you can
 
 * Lend your BTC and earn fixed or variable interest
 * Borrow BTC without risk of liquidation
 * Mitigate risk with BTC short positions
 * Maximize upside with BTC leveraged long positions
 
-## Think of us as [Compound](https://compound.finance) / [AAVE](https://aave.com) with underlying technology like [Uniswap](https://www.uniswap.org) / [Balancer](https://balancer.finance), but user experience of [Robinhood](https://www.robinhood.com).
+## Think of us as [Compound](https://compound.finance) / [AAVE](https://aave.com) with underlying technology like [Uniswap](https://www.uniswap.org) / [Balancer](https://balancer.finance), and the user experience of [Robinhood](https://www.robinhood.com).
 
 Our initial focus \(v1\) is
 

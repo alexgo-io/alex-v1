@@ -1,12 +1,12 @@
-# Use Case
+# Automated Market Making of ALEX
 
-## TL;DR
+## Abstract
 
 ALEX aims to provide a fixed rate borrowing and lending service with pre-determined maturity in the world of decentralised finance \(DeFi\). We include forward contracts in our trading pool, with Automated Market Making \(AMM\) engine in association with generalised mean. While we formalise the trading practise swapping forward contracts with underlying asset, we incorporate the latest innovation in the industry - concentrated liquidity. Consequently, liquidity provider of ALEX can save decent amount of capital by making markets on a selected range of interest rate.
 
 ## Introduction
 
-ALEX stands for **A**utomated **L**iquidity **EX**change. It is a hybrid of automated marketing making and on-chain loanable fund built on Stacks blockchain network. While lenders and borrowers can minimise uncertainty by securing the loan with fixed rate and tenor, liquidity providers are able to take advantage of our capital efficiency mechanism by imposing cap and floor on the interest rate. This allows liquidity to be offered on parts of the curve that contains majority of trading activities and leads to efficient capital management.
+ALEX stands for **A**utomated **L**iquidity **EX**change. It is a hybrid of automated market making and on-chain loanable fund built on Stacks blockchain network. While lenders and borrowers can minimise uncertainty by securing the loan with fixed rate and tenor, liquidity providers are able to take advantage of our capital efficiency mechanism by imposing cap and floor on the interest rate. This allows liquidity to be offered on parts of the curve that contains majority of trading activities and leads to efficient capital management.
 
 On ALEX, lending and borrowing activities are facilitated by a forward contract based token “ayToken”. It is similar to an OTC bilateral forward contract in the conventional financial market, which specifies underlying asset “Token” and expiry date. This paper assumes ayToken is minted and ready to be exchanged. Lenders purchase ayToken at a discount to the spot Token price when the contract is initiated and reclaim underlying asset upon expiration when forward price converges to spot price. Borrowers sell ayToken in return for Token on day one and return Token upon expiration. Implied interest rate depends on how much discount that the forward price is to the spot price at the time of transaction, which is executed on AMM.
 
@@ -45,7 +45,7 @@ $$
 x_1^p+x_2^p=L
 $$
 
-This equation is regarded reasonable as AMM, because \(i\) function $$g$$ where $$x_2=g(x_1)$$ is monotonically decreasing and convex; and \(ii\) The boundary value of $$p=1$$ and $$p=0$$ corresponds to constant sum and constant product formula respectively. When $$p$$ increases from 0 to 1, price $$-\frac{dg(x_1)}{x_1}$$ gradually converges to 1. This is what ALEX hopes to achieve when forward becomes spot. This also means that $$p$$ is somehow related to time to maturity. Please refer to Appendix 1 for a detailed discussion.
+This equation is regarded reasonable as AMM, because \(i\) function $$g$$ where $$x_2=g(x_1)$$ is monotonically decreasing and convex; and \(ii\) The boundary value of $$p=1$$ and $$p=0$$ corresponds to constant sum and constant product formula respectively. When $$p$$ increases from 0 to 1, price $$-\frac{dg(x_1)}{x_1}$$ gradually converges to 1. This is what ALEX hopes to achieve when forward becomes spot. This also means that $$p$$ is somehow related to time to maturity. Please refer to [Appendix 1](automated-market-making-of-alex.md#appendix-1-generalised-mean-when-d-2) for a detailed discussion.
 
 In the benchmark research piece by [Yield Space](https://yield.is/YieldSpace.pdf), the invariant function above is formalised from the perspective of zero coupon bond. $$p$$ is replaced by $$1-t$$ where $$t$$ is time to maturity and $$L$$ is a function of $$t$$, so that
 
@@ -81,7 +81,7 @@ ALEX's implied interest rate is compound. Not only does the compound rate allow 
 
 Using notations above, the invariant function is rewritten as $$x^{1-t}+y^{1-t}=L$$ with the differential equation $$-\frac{dy}{dx}=\left(\frac{y}{x} \right)^t$$. Unless specified, we assume $$L$$ constant and call it invariant constant. This means that $$t$$ is fixed and there is no minting or burning coins. In practise, liquidity providers can add or reduce liquidity, and $$L$$ needs to be recalibrated daily when $$t$$ changes.
 
-Though purely theoretical at this stage, Appendix 2 maps $$L$$ to the liquidity distribution of [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf). This is motivated by an independent research from [Paradigm](https://www.paradigm.xyz/2021/06/uniswap-v3-the-universal-amm/).
+Though purely theoretical at this stage, [Appendix 2](automated-market-making-of-alex.md#appendix-2-liquidity-mapping-to-uniswap-v3) maps $$L$$ to the liquidity distribution of [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf). This is motivated by an independent research from [Paradigm](https://www.paradigm.xyz/2021/06/uniswap-v3-the-universal-amm/).
 
 ## Trading Formulae
 
@@ -195,7 +195,7 @@ $$
 
 Figure 1 illustrates the example above of $$t$$= 0.5 and $$L$$= 20 by displaying two sets of curves: Invariant Function Curve \(“IFC"\) satisfying $$x^{1-t}+y^{1-t}=L$$ and Capital Efficiency Curve \(“CEC"\) satisfying $$x^{1-t}+(y+y_v)^{1-t}=L$$. Intuitively CEC is attained by lowering IFC by $$y_v$$= 100.
 
-![Figure 1](../../.gitbook/assets/cecjing.png)
+![Figure 1](../.gitbook/assets/cecjing.png)
 
 #### Initialisation
 
@@ -209,9 +209,7 @@ Balance of Token and ayToken, including both actual and virtual, still satisfy t
 
 Before liquidity expansion or reduction by minting or burning coins, assume that the old pool has Token $$x$$ and ayToken $$y$$ satisfying $$x^{1-t}+y^{1-t}=L$$, where $$y=y_a+y_v$$ and $$y_a$$ and $$y_v$$ are balance of actual and virtual ayToken respectively.
 
-Minting and Burning should not affect price and interest rate. This means that newly added or withdrawn coins would be in proportion to x and y. Denote new amount of Token and ayToken as $$x'=kx$$ and $$y'=ky$$ respectively. $$y'=y'_a+y'_v$$ where $$y'_a$$ is actual whereas $$y'_v$$ virtual. They satisfy the following
-
-
+Minting and burning should not affect price and interest rate. This means that newly added or withdrawn coins would be in proportion to x and y. Denote new amount of Token and ayToken as $$x'=kx$$ and $$y'=ky$$ respectively. $$y'=y'_a+y'_v$$ where $$y'_a$$ is actual whereas $$y'_v$$ virtual. They satisfy the following
 
 $$
 \begin{split}
@@ -221,8 +219,6 @@ $$
 $$
 
 Solution to the above equations is
-
-
 
 $$
 \begin{split}
@@ -249,8 +245,6 @@ Denote $$x_{a}$$, $$x_{v}$$, $$y_{a}$$ and $$y_{v}$$ balance of actual Token, vi
 
 The amount of Token an ayToken can be expressed as a function of L and current interest rate $$r_{c}=\frac{y_{a}+y_{v}}{x_{a}+x_{v}}$$.
 
-
-
 $$
 \begin{split}
 &x_{a}+x_{v}&=\left[\frac{L}{1+e^{(1-t)r_{c}}}\right]^{\frac{1}{1-t}}\\
@@ -260,16 +254,14 @@ $$
 
 Intuitively, when $$r_{c}=r_{l}$$, ayToken is depleted; Similarly, when $$r_{c}=r_{u}$$, Token is used up. Therefore,
 
-
-
 $$
 \begin{split}
-&x_{v}&=\left[\frac{L}{1+e^{(1-t)r_{u}}}\right]^{\frac{1}{1-t}}\\
-&y_{v}&=\left[\frac{L}{1+e^{-(1-t)r_{l}}}\right]^{\frac{1}{1-t}}
+&x_{v}=\left[\frac{L}{1+e^{(1-t)r_{u}}}\right]^{\frac{1}{1-t}}\\
+&y_{v}=\left[\frac{L}{1+e^{-(1-t)r_{l}}}\right]^{\frac{1}{1-t}}
 \end{split}
 $$
 
-See Appendix 3 for a detailed derivation of virtual, as well as actual token reserve.
+See [Appendix 3](automated-market-making-of-alex.md#appendix-3-derivation-of-actual-and-virtual-token-reserve) for a detailed derivation of virtual, as well as actual token reserve.
 
 Similar to the case of 0% floor, minting or burning coins would result in invariant constant changing from $$L$$ to $$k^{1-t}L$$. Meanwhile, both actual and virtual Token and ayToken would grow proportionally by $$k$$, as they are linear function of $$L^{\frac{1}{1-t}}$$.
 
@@ -277,7 +269,7 @@ Similar to the case of 0% floor, minting or burning coins would result in invari
 
 We aim to show here how virtual token is able to assist liquidity providers to efficiently manage capital.
 
-![Figure 2](../../.gitbook/assets/cectable2.png)
+![Figure 2](../.gitbook/assets/cectable2%20%281%29.png)
 
 In Figure 2, assume lower bound is 0%, whereas upper bound is 50%. We also set $$t$$= 0.5 and $$L$$= 20. If interest rate is 0%, $$L$$= 20 means holding equal amount of Token and ayToken of 100 each $$\left(100^{0.5}+100^{0.5}=20\right)$$. The figure compares actual holding of Token and ayToken with and without cap and floor.
 
@@ -285,17 +277,15 @@ According to the figure, when current implied interest rate is 10%, without capi
 
 ## Appendix 1: Generalised Mean when d=2
 
-ALEX's invariant function is $$f(x_{1},x_{2};p)=x_{1}^{p}+x_{2}^{p}=L$$. It can be rearranged as $$x{2}=g(x_{1})=(L-x_{1}^{p})^{\frac{1}{p}}$$. $$x_{1}$$ and $$x_{2}$$ should both be positive meaning the liquidity pool contains both tokens.
+ALEX's invariant function is $$f(x_{1},x_{2};p)=x{_1}^{p}+x_{2}^{p}=L.$$ It can be rearranged as $$x{2}=g(x_{1})=(L-x_{1}^{p})^{\frac{1}{p}}$$. $$x_{1}$$ and $$x_{2}$$ should both be positive meaning the liquidity pool contains both tokens.
 
 #### Theorem
 
-When $$0<p<1$$, $$g(x_{1})$$ is monotonically decreasing and convex
+When $$0<p<1$$, $$g\left(x_{1}\right)$$ is monotonically decreasing and convex.
 
 #### Proof
 
-This is equivalent to prove $$\frac{dg(x_{1})}{dx_{1}}<0$$ and $$\frac{d^{2}g(x_{1})}{dx_{1}^{2}}\geq0$$
-
-
+This is equivalent to prove $$\frac{dg(x_{1})}{dx_{1}}<0$$ and $$\frac{d^{2}g(x_{1})}{dx_{1}^{2}}\geq0$$.
 
 $$
 \begin{split}
@@ -312,7 +302,7 @@ When $$p$$= 1, it is straightward to see that the invariant function is constant
 #### Theorem
 
 $$
-\lim_{p\rightarrow0}\left(\frac{1}{d}\sum{i=1}^{d}x_{i}^{p}\right)^{\frac{1}{p}}=({\prod{i=1}^{d}x_{i}})^{\frac{1}{d}}
+\lim_{p\rightarrow0}\left(\frac{1}{d}\sum_{i=1}^{d}x_{i}^{p}\right)^{\frac{1}{p}}=({\prod_{i=1}^{d}x_{i}})^{\frac{1}{d}}
 $$
 
 #### Proof
@@ -323,7 +313,7 @@ $$
 \lim_{p\rightarrow0}\frac{\text{log}\left(\frac{1}{d}\sum_{i=1}^{d}x_{i}^{p}\right)}{p}=\lim_{p\rightarrow0}\sum_{i=1}^{d}\frac{\text{log}(x_{i})}{\sum_{j=1}^{d}\left(\frac{x_{j}}{x_{i}}\right)^{p}}=\frac{\sum_{i=1}^{d}\text{log}(x_{i})}{d}
 $$
 
-Therefore,
+Therefore
 
 $$
 \lim_{p\rightarrow0}\left(\frac{1}{d}\sum_{i=1}^{d}x_{i}^{p}\right)^{\frac{1}{p}}=\lim_{p\rightarrow0}\text{exp}\frac{\sum_{i=1}^{d}\text{log}(x_{i})}{d}=({\prod_{i=1}^{d}x_{i}})^{\frac{1}{d}}
@@ -331,7 +321,7 @@ $$
 
 #### Corollary
 
-When $$d=2$$,
+When d = 2,
 
 $$
 x_{1}x_{2}=\lim_{p\rightarrow0}\left[\frac{1}{2}(x_{1}^{p}+x_{2}^{p})\right]^{\frac{2}{p}}
@@ -343,7 +333,7 @@ Proof of the corollary is trivial, as it is a direct application of the theorem.
 
 As Uniswap v3 is able to simulate liquidity curve of any AMM, we are interested in exploring the connection between ALEX's AMM and that of _Uniswap_'s. Interesting questions include: what is the shape of the liquidity distribution? Which point\(s\) has the highest liquidity? We acknowledge that the section is more of a theoretical study for now.
 
-_Uniswap V3_ AMM can be expressed as a function of invariant constant $$L$$ with respect to price $$p$$, $$L_{\text{Uniswap}}=\frac{dy}{d\sqrt{p}}$$. In terms of ALEX, as price $$p=e^{rt}$$, where $$r$$ is the implied interest rate, we have
+_Uniswap V3_ AMM can be expressed as a function of invariant constant $$L$$ with respect to price $$p$$, $$L_{\text{Uniswap}}=\frac{dy}{d\sqrt{p}}$$. In terms of ALEX, as price p=e^{rt}, where $$r$$ is the implied interest rate, we have
 
 $$
 L_{\text{Uniswap}}=\frac{dy}{d\sqrt{p}}=\frac{2}{t}e^{-\frac{1}{2}rt}\frac{dy}{dr}
@@ -355,9 +345,7 @@ $$
 y=\left[\frac{L}{1+e^{-(1-t)r}}\right]^{\frac{1}{1-t}}
 $$
 
-Therefore,
-
-
+Therefore
 
 $$
 \begin{split}
@@ -367,12 +355,12 @@ $$
 \end{split}
 $$
 
-![Figure 3](../../.gitbook/assets/liquidity.png)
+![Figure 3](../.gitbook/assets/liquidity%20%282%29.png)
 
-Figure 3 plots $$L_{\text{Uniswap}}$$ against interest rate r regarding various levels of $$t$$. When $$0<t<1$$, $$L_{\text{Uniswap}}$$ is symmetric around 0% at which the maximum reaches. This is because
+Figure 3 plots $$L_{\text{Uniswap}}$$ against interest rate $$r$$ regarding various levels of $$t$$. When $$0<t<1$$, $$L_{\text{Uniswap}}$$ is symmetric around 0% at which the maximum reaches . This is because
 
-1. $$\cosh\left[(\frac{r_{(1-t)}}{2})\right]$$ is symmetric around $$r$$= 0% with minimum at 0% and the minimum value 1;
-2. $$x^{z}$$ is a decreasing function of $$x$$ when $$x$$ is positive and power $$z$$ is negative. In our case, power $$z=\frac{-2+t}{1-t}<-1$$. Therefore, it is the maximum rather than minimum that $$L_{\text{Uniswap}}$$ achieves at 0%.
+1. $$\cosh\left[(\frac{r(1-t)}{2})\right]$$ is symmetric around $$r$$= 0% with minimum at 0% and the minimum value 1; 
+2. $$x^z$$ is a decreasing function of $$x$$ when $$x$$ is positive and power $$z$$ is negative. In our case, we have $$z=-2+t1-t<-1$$. Therefore, it is the maximum rather than minimum that $$L_{\text{Uniswap}}$$ achieves at 0. 
 
 Furthermore, the higher the $$t$$, the flatter the liquidity distribution is. When $$t$$ approaches 1, i.e. AMM converges to the constant product formula, the liquidity distribution is close to a flat line. When $$t$$ approaches 0, the distribution concentrates around 0%. This makes sense, as forward price starts to converge to spot price upon expiration.
 
@@ -396,13 +384,13 @@ $$
 &x_{v}=\left[\frac{L}{1+e^{(1-t)r_{u}}}\right]^{\frac{1}{1-t}}\\
 &y_{v}=\left[\frac{L}{1+e^{-(1-t)r_{l}}}\right]^{\frac{1}{1-t}}\\
 &x_{b}=y_{v}e^{-r_{l}}-x_{v}=\left[\frac{L}{1+e^{r_{l}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{r_{u}(1-t)}}\right]^{\frac{1}{1-t}}\\
-&y_{b}=x_{v}e^{r_{u}}-y_{v}=\left[\frac{L}{1+e^{-r_{u}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{-r_{l}(1-t)}}\right]^{\frac{1}{1-t}}\\
+&y_{b}=x_{v}e^{r_{u}}-y_{v}=\left[\frac{L}{1+e^{-r_{u}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{-r_{l}(1-t)}}\right]^{\frac{1}{1-t}}
 \end{split}
 $$
 
-When $$r_{l}$$= 0, the pool is floored at 0%. This means that $$x_{v}$$= 0, $$y_{v}=\left(\frac{1}{2}L\right)^{\frac{1}{1-t}}$$, $$x_{b}=y_{v}$$.
+When $$r_{l}=0$$, the pool is floored at 0%. This means that $$x_{v}=0$$, $$y_{v}=\left(\frac{1}{2}L\right)^{\frac{1}{1-t}}$$, $$x_{b}=y_{v}$$.
 
-When the current interest rate $$r_{c}$$ is known and $$r_{c}\in[r_{l},r_{u}]$$, we can calculate $$x_{a}$$ and $$y_{a}$$ satisfying the following equations. When $$r_{c}\notin[r_{l},r_{u}]$$, only one token exists and swapping activities are suspended.
+When the current interest rate $$r_{c}$$ is known and $$r_{c}\in[r_{l},r_{u}]$$, we can calculate $$x_{a}$$ and $$y_{a}$$ satisfying the following equations. When $$r_{c} \notin[r_{l},r_{u}]$$, only one token exists and swapping activities are suspended.
 
 $$
 \begin{split}
@@ -413,8 +401,6 @@ $$
 
 Solution to above is
 
-
-
 $$
 \begin{split}
 &x_{a}=\left[\frac{L}{1+e^{r_{c}(1-t)}}\right]^{\frac{1}{1-t}}-x_{v}=\left[\frac{L}{1+e^{r_{c}(1-t)}}\right]^{\frac{1}{1-t}}-\left[\frac{L}{1+e^{r_{u}(1-t)}}\right]^{\frac{1}{1-t}}\\
@@ -422,5 +408,5 @@ $$
 \end{split}
 $$
 
-At the boundary points, when $$r_{c}=r_{l}$$, $$x_{a}=x_{b}$$ and $$y_{a}=0$$; when $$r_{c}=r_{u}$$, $$x_{a}=0$$ and $$y_a=y_b$$ __
+At the boundary points, when $$r_{c}=r_{l}$$, $$x_{a}=x_{b}$$ and $$y_{a}=0$$; when $$r_{c}=r_{u}$$, $$x_{a}=0$$ and $$y_{a}=y_{b}$$.
 
