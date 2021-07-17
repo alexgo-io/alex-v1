@@ -62,7 +62,7 @@
        )
         (if (is-some pool)
             (ok pool)
-            (err invalid-pool-err)
+            invalid-pool-err
        )
    )
 )
@@ -80,7 +80,7 @@
        )
         (if (is-some pool)
             (ok pool)
-            (err invalid-pool-err)
+            invalid-pool-err
        )
    )
 )
@@ -305,7 +305,7 @@
     (let 
         (
             (token-x (contract-of token-x-trait))       
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
         )
         (ok (get fee-to-address pool))
     )
@@ -315,7 +315,7 @@
     (let
         (
             (token-x (contract-of token-x-trait))   
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
         )
         (ok (list (get fee-balance-x pool) (get fee-balance-y pool)))
     )
@@ -389,7 +389,7 @@
     )
 )
 
-(define-read-only (get-token-given-position (token-x-trait <yield-token-trait>) (dx uint) (dy uint))
+(define-read-only (get-token-given-position (token-x-trait <yield-token-trait>) (dx uint))
 
     (let 
         (
@@ -400,7 +400,7 @@
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))
         )
-        (contract-call? .yield-token-equation get-token-given-position balance-x balance-y expiry total-supply dx dy)
+        (contract-call? .yield-token-equation get-token-given-position balance-x balance-y expiry total-supply dx)
     )
 
 )

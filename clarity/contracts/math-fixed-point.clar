@@ -23,7 +23,7 @@
 (define-read-only (scale-up (a uint))
   (let
     ((r (* a ONE_8)))
-    (asserts! (is-eq (/ r ONE_8) a) (err SCALE_UP_OVERFLOW))
+    (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
     (ok r)
  )
 )
@@ -31,33 +31,36 @@
 (define-read-only (scale-down (a uint))
   (let
     ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) (err SCALE_DOWN_OVERFLOW))
+    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
     (ok r)
  )
 )
 
 (define-read-only (add-fixed (a uint) (b uint))
-  (let
-    ((c (+ a b)))
-    (asserts! (>= c a) (err ADD_OVERFLOW))
-    (ok c)
- )
+    (let
+        (
+            (c (+ a b))
+        )
+        (asserts! (>= c a) ADD_OVERFLOW)
+        (ok c)
+    )
 )
 
 (define-read-only (sub-fixed (a uint) (b uint))
-  (begin
-    (asserts! (<= b a) (err SUB_OVERFLOW))
-    (ok (- a b))
- )
+    (let
+        ()
+        (asserts! (<= b a) SUB_OVERFLOW)
+        (ok (- a b))
+    )
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let 
+    (let
         (
             (product (* a b))
-       )
+        )
         (ok (/ product ONE_8))
-   )
+    )
 )
 
 (define-read-only (mul-up (a uint) (b uint))

@@ -66,7 +66,7 @@
        )
         (if (is-some pool)
             (ok pool)
-            (err invalid-pool-err)
+            invalid-pool-err
        )
    )
 )
@@ -85,7 +85,7 @@
        )
         (if (is-some pool)
             (ok pool)
-            (err invalid-pool-err)
+            invalid-pool-err
        )
    )
 )
@@ -320,7 +320,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))                
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
         (ok (get fee-to-address pool))
     )
@@ -331,7 +331,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))              
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
         (ok (list (get fee-balance-x pool) (get fee-balance-y pool)))
     )

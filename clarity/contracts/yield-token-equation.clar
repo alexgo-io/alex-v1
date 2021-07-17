@@ -31,11 +31,10 @@
 
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (expiry uint) (dx uint))
     ;; TODO add fee
+    ;; TODO t needs to normalised relative to the current block height
     (let 
         (
-            (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
-            
-            ;; TODO t needs to normalised relative to the current block height
+            (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))            
             (t ONE_8)
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
@@ -45,17 +44,17 @@
             (term-pow (unwrap-panic (contract-call? .math-fixed-point pow-down term (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)))))
         )
         (asserts! (< dx max-in) max-in-ratio-err)        
+        
         (contract-call? .math-fixed-point sub-fixed balance-y term-pow)
     )
 )
 
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (expiry uint) (dy uint))
     ;; TODO add fee
+    ;; TODO t needs to normalised relative to the current block height
     (let 
         (
-            (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))
-            
-            ;; TODO t needs to normalised relative to the current block height
+            (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))            
             (t ONE_8)
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
