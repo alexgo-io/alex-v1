@@ -1,7 +1,7 @@
 ;; weighted-equation
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
-(impl-trait .trait-equation.equation-trait)
+;;(impl-trait .trait-equation.equation-trait)
 
 ;; constants
 ;;
@@ -12,6 +12,7 @@
 (define-constant max-in-ratio-err (err u63))
 (define-constant max-out-ratio-err (err u64))
 
+;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8
 (define-constant MAX_OUT_RATIO (* u3 (pow u10 u7))) ;;0.3e8
 

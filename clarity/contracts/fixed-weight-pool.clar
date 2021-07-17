@@ -1,6 +1,5 @@
 ;;(impl-trait .trait-pool.pool-trait)
 
-(use-trait equation-trait .trait-equation.equation-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait vault-trait .trait-vault.vault-trait)

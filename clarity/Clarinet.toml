@@ -13,6 +13,10 @@ depends_on = ["trait-equation", "trait-sip-010", "trait-yield-token", "trait-poo
 path = "contracts/fixed-weight-pool.clar"
 depends_on = ["trait-equation", "trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault"]
 
+[contracts.yield-token-pool]
+path = "contracts/yield-token-pool.clar"
+depends_on = ["trait-equation", "trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault", "math-fixed-point", "yield-token-equation", "alex-vault"]
+
 [contracts.math-fixed-point]
 path = "contracts/math-fixed-point.clar"
 depends_on = ["math-log-exp"]
@@ -75,4 +79,8 @@ depends_on = []
 
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
+depends_on = ["trait-equation", "math-fixed-point"]
+
+[contracts.yield-token-equation]
+path = "contracts/yield-token-equation.clar"
 depends_on = ["trait-equation", "math-fixed-point"]
