@@ -7,15 +7,15 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/collateral-rebalancing-pool.clar"
-depends_on = ["trait-equation", "trait-sip-010", "trait-yield-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault", "open-oracle"]
+depends_on = ["trait-sip-010", "trait-yield-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault", "open-oracle"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/fixed-weight-pool.clar"
-depends_on = ["trait-equation", "trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault", "math-fixed-point", "weighted-equation", "alex-vault"]
 
 [contracts.yield-token-pool]
 path = "contracts/yield-token-pool.clar"
-depends_on = ["trait-equation", "trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault", "math-fixed-point", "yield-token-equation", "alex-vault"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-pool", "trait-vault", "math-fixed-point", "yield-token-equation", "alex-vault"]
 
 [contracts.math-fixed-point]
 path = "contracts/math-fixed-point.clar"
@@ -79,8 +79,8 @@ depends_on = []
 
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
-depends_on = ["trait-equation", "math-fixed-point"]
+depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-equation]
 path = "contracts/yield-token-equation.clar"
-depends_on = ["trait-equation", "math-fixed-point"]
+depends_on = ["math-fixed-point"]
