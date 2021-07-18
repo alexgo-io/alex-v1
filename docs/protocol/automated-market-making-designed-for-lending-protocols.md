@@ -1,46 +1,54 @@
 # Yield Token Pool
 
-Yield Token Pool facilitates trading of between Yield Token and its base Token, and uses an AMM logic similar to [Yield Space](https://yield.is/YieldSpace.pdf), but suitably modified to allow for capital efficiency from liquidity provision perspective.
+Please refer to our [white paper](../whitepaper/automated-market-making-of-alex.md) for a more rigorous treatment on the subject.
 
-The AMM formula is constructed such that its liquidity distribution is optimal for the trading between Yield Token and its base Token, hence allowing a better fungibility between Pool Tokens, i.e. the token representing the proportional ownership of the pool. ALEX does not at the moment support a custom liquidity provision \(except for the limit orders\).
+## Lending and Borrowing Process
 
-The key of the AMM is **invariant function**, as it dynamically adjusts the price and the balances of Token and ayToken. As described in [Yield Space](https://yield.is/YieldSpace.pdf), invariant function is solution to the differential equation $$-\frac{dy}{dx}=\left(\frac{y}{x} \right)^t$$. $$y$$and $$x$$can then be solved and expressed as $$x^{1-t}+y^{1-t}=L$$ .
+The key product that ALEX offers is essentially a zero coupon bond in conventional finance. Different from most loanable fund, prior to entering the loan contract, borrowers and lenders secure the interest rate and tenor on ALEX. The pre-determined terms remove one layer of uncertainty and assist participants with better financial planning.
 
-## **Trading Formula**
+In practise, borrows and sellers enter the loan by swapping a forward contract based token called "ayToken" with "Token" - the underlying asset. On one hand, purchaser obtains ayToken at a discount price to Token when contract starts and deposits Token in the pool. Upon expiration, purchaser redeems the underlying asset at value par. On the other hand, seller sells ayToken in exchange for Token initially. Token must be returned when contract ends. Although price of ayToken with respect to Token fluctuates all the time, it converges to Token price at maturity, as forward becomes spot.
 
-The market transaction, which involves exchange of Token and ayToken, satisfies the invariant function. Fee is not returned to the pool, therefore $$L$$remains constant.
+As an example, Rachel has 100 USD. She wants to lend it out for a fixed term of three months. On ALEX, three month ayUSD is currently priced at 0.9 vs USD, meaning 1 ayUSD can be exchanged for 0.9 USD. This indicates an interest rate around 10%. Therefore, Rachael obtains around 110 ayUSD. In three months time, Rachel acquires 110 USD - a gain of 10 USD. Billy, who is the borrower, sells 110 ayUSD to Rachel in return for 100 USD at his disposal with a fixed interest rate and tenor. He returns 100 USD to Rachel when the contract expires.
 
-### Out-Given-In
+In mathematical terms, interest rate r is calculated as $$p_{t}=\frac{1}{e^{rt}}$$, where $$p_{t}$$ is the spot price of ayToken and the interest rate is assumed to be compound. The formula utilises one of the most fundamentals in asset pricing that the present value is the discounted future value. In our example, $$t$$= 1 and $$r=\log\frac{1}{0.9}\approx10\%$$.
 
-In order to purchase $$\Delta y$$ayToken from the pool, the buyer needs to deposit $$\Delta x$$Token, which can be expressed as
+## Automated Market Making \(AMM\) Protocol
 
-$$\Delta y=y-\left[x^{1-t}+y^{1-t} - (x+\Delta x)^{1-t}\right]^{\frac{1}{1-t}}$$
+When designing AMM, ALEX believes in the following:
 
-### **In-Given-Out**
+1. AMM is mathematically neat and reflects economic demand and supply. For example, price should increase when demand is high or supply is low; 
+2. AMM is a type of mean, which remains constant during trading activities. This is adopted by some popular platform, such as _Uniswap_ which employs algorithmic mean; and 
+3. AMM can be interpreted in modern finance theory. This would enable ALEX to grow and draw comparison with conventional finance.
 
-This is the opposite case to Out-Given-In. We are expressing $$\Delta x$$as a function of $$\Delta y$$
+After extensive research, our beliefs led us to the AMM firstly proposed by _YieldSpace_. While we appreciate the mathematical beauty of their derivation, we adapt it to be more suitable for ALEX. For instance, we replace simple interest rate by compound rate, which is more widely applied since Black-Scholes becomes the cornerstone in financial pricing and modelling. We also introduce capital efficiency scheme explained below.
 
-$$\Delta x= \left[x^{1-t}+y^{1-t} - (y-\Delta y)^{1-t}\right]^{\frac{1}{1-t}}-x$$
+In mathematical terms, our AMM is expressed as
 
-### In-Given-Price/Yield
+$$
+x^{1-t}+y^{1-t}=L
+$$
 
-Sometimes trader would like to adjust the price, perhaps due to deviation of AMM price to the market value. Denote $$p=\left( \frac{y}{x}\right)^t$$and $$p'=\left( \frac{y-\Delta y}{x + \Delta x}\right)^t$$pool price before and after the adjustment respectively, we can then express $$\Delta x$$as
+where $$x$$, $$y$$, $$t$$ and $$L$$ is the balance of Token, balance of ayToken, time to maturity and a constant term when $$t$$ is fixed respectively. Interest rate $$r$$ is defined as $$r=\log\left(\frac{y}{x}\right)$$, i.e. natural logarithm of the ratio of balance between ayToken and Token, and price of ayToken with respect to Token is $$\left(\frac{y}{x}\right)^{t}$$
 
-$$\Delta x=x\left[\left(\frac{1+p^{\frac{1-t}{t}}}{1+p'^{\frac{1-t}{t}}}\right)^{\frac{1}{1-t}}-1\right]$$
+In response to our design, this AMM is a form of generalised mean. It makes economics sense because the shape of the curve is decreasing and convex. It incorporates time to maturity $$t$$, which is explicitly built in to derive ayToken spot price. We refer readers to our [white paper](../whitepaper/automated-market-making-of-alex.md) for detail.
 
-Under continuous compounding, where $$p=e^{rt}$$, $$p'=e^{r't}$$and $$r$$ and $$r'$$ are the corresponding interest rate, we can then express$$\Delta x$$as a function of $$r$$ and $$r'$$
+## Liquidity Providers \(LP\) and Capital Efficiency
 
-$$\Delta x=x\left[\left(\frac{1+e^{r(1-t)}}{1+e^{r'(1-t)}}\right)^{\frac{1}{1-t}}-1\right]$$
+LP deposits both ayToken and Token to facilitate trading activities. While they are ready to make market on all possible scenarios of interest rate movement ranging from $$-\infty$$ to $$+\infty$$, part of the rates curve will never be considered by market participants such as negative interest rate. Although negative rate is introduced in the fiat world by central bankers as monetary policy tool, yield farmers in the crypto world is still longing everything positive. In ALEX, positive rate refers to spot price of ayToken not exceeding 1 and ayToken reserve is larger than Token.
 
-## Capital Efficiency - Concentrated Liquidity
+Inspired by _Uniswap v3_, ALEX employs virtual tokens - part of the assets that will never be touched, hence is not required to be held by LP.
 
-This is to allow liquidity to be concentrated on a fraction of the interest rate curve, rather than $$- \infty$$ to $$+ \infty$$. A typical example is to set the floor to $$0\%$$ so that negative interest rate is not permitted. Inspired by Uniswap V3. Concentrated liquidity is achieved by introducing virtual tokens to satisfy the invariant function $$(x+x_v)^{1-t}+(y+y_v)^{1-t}=L$$, where $$x_v$$and $$y_v$$are virtual balance of Token and ayToken respectively. As a result, actual balance of Token/ayToken that liquidity providers are required to maintain is reduced by $$x_v$$/$$y_v$$.
+![Figure 1](../.gitbook/assets/cecjing.png)
 
-Levels of $$x_v$$ and $$y_v$$ are related to the interest rate bounds imposed to the liquidity pool. Assume that the lower/upper interest rate bound is$$r_l$$/$$r_u$$. When interest rate falls out of the range $$[ r_l , r_u ]$$, only one token exists and the liquidity pool trading function ceases to operate. Virtual balance can then be expressed as $$x_v=\left [ \frac{L}{1+e^{(1-t)r_u}} \right ]^{\frac{1}{1-t}}$$and $$y_v=\left [ \frac{L}{1+e^{-(1-t)r_l}} \right ]^{\frac{1}{1-t}}$$
+Figure 1 illustrates an example of adopting virtual tokens in the event of positive interest rate. Blue line is the standard AMM. Blue dot represents equal balance of Token and ayToken of $$y_{v}$$ each, hence 0% interest rate. $$y_{v}$$ is the boundary amount, as any amount lower than it will never be touched by LP to avoid negative rate, which is represented by blue dashed line. Thus, $$y_{v}$$ is virtual token reserve. Effectively, LP is making market on red line, which shifts blue line lower by $$y_{v}$$. When ayToken is depleted as shown by red dashed line, trading activities are suspended.
 
-### Example: Floor of $$0\%$$
+In a numerical example, assume $$t$$= 0.5 and $$L$$= 20, when $$r$$= 10%, LP will deposit 95 token and 105 ayToken according to standard AMM. However, if the interest rate is floored at 0%, LP only needs to contribute 5 ayToken, as the rest 100 ayToken would be virtual. This is a decent saving more than 90%.
 
-Set $$t=0.5$$and $$L=20$$. In this case, virtual ayToken $$y_v$$is $$100$$. Assuming the current interest rate 10%, liquidity provider only needs to hold minimum $$5.06$$ fyTokens. Any larger amount would not be touched, as they would send the rate to negative territory. This is in contrast with$$105.06$$fyTokens without virtual reserve - a capital saving of 95%!
+## Yield Curve and Yield Farming
 
-![Table: Balance of liquidity pool with 0% floor, t=0.5 and L=20. Virtual ayToken is 100.](../.gitbook/assets/0floor.png)
+By expressing interest rate as $$p_{t}=\frac{1}{e^{rt}}$$, i.e. $$r=-\frac{1}{t}\log p_{t}$$, we can obtain a series of interest rate from trading pool price with respect to various maturities, based on which we are able to build yield curve. Yield curve is the benchmark tool for modelling risk-free rate in conventional finance. The shape of the curve dictates expectation of future interest rate path, which benefits market participants understand market behaviour and trend. Currently we might be able to build Bitcoin yield curve from Bitcoin future listed on Chicago Mercantile Exchange \(CME\). However, not only is the exchange heavily regulated, its trading volume is skewed to the very short dated front end contracts lasting several months only. ALEX aims to offer future contracts up to 1y when the platform goes live and extend to longer tenors should market mature.
+
+Yield farmers could benefit from understanding of the yield curve by purchasing ayToken whose tenor corresponds to high interest rate and selling ayToken whose tenor associates with low interest rate. This is a typical “carry" strategy.
+
+Last but not least, based on the development of yield curve and solid foundation work of AMM, ALEX is able to provide more derivatives, including options and structured products, by referring to large amount of literatures and applications in conventional finance.
 
