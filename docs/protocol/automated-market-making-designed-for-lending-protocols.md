@@ -8,29 +8,29 @@ ALEX's core product is essentially a zero coupon bond in conventional finance. A
 
 Here is a concrete example. Rachel has 100 USD. She wants to have increase her 100USD. She chooses to lend it out. She's ok with lending out her 100USD for a fixed term of three months. She goes to ALEX's interface. There, Rachel can see that "three month ayUSD" is currently priced at 0.9 vs USD. Put simply, 1 ayUSD gets her 0.9 USD. She takes her 100 USD and exchanges it for ayUSD. Given the current exchange rate, she gets about 110 ayUSD. Now she waits. Three months pass. Now, Rachel can exchange her 110ayUSD for USD again. The rate is 1 ayUSD to 1 USD. So Rachel gets 110 USD. That's a gain of 10 USD over 3 months. Pretty nice!
 
-Here is the abstract theory. Borrowers and lenders enter a loan contract. Specifically, they swap a forward contract based token called "ayToken" with "Token" - the underlying asset. For example, they swap ayUSD with USD. This means the following. On one hand, the lender lends out "Tokens" and obtains "ayToken" in return. The price of "Token" is lower than its par value. The contract starts when a lender deposits "Token" in an ALEX pool. Then, upon expiration, the lender redeems the underlying asset, "Token", at par value. Because the lender lent out their "Token" at discounted price some time ago, and now redeems "Token" for par value, there is a price. Pretty nice!
+Here is the abstract theory. Borrowers and lenders enter a loan contract. Specifically, they swap a forward contract based token called "ayToken" with "Token". "Token" is the underlying asset. For example, they swap ayUSD with USD. More generally, the lender lends out "Tokens" and obtains "ayToken" in return. The price of "Token" is lower than its par value. The contract starts when a lender deposits "Token" in an ALEX pool. Then, upon expiration, the lender redeems the underlying asset, "Token", at par value. Because the lender lent out their "Token" at discounted price some time ago, and now redeems "Token" for par value, there is a price. Pretty nice!
 
 In mathematical terms, the interest rate r is calculated as $$p_{t}=\frac{1}{e^{rt}}$$, where $$p_{t}$$ is the spot price of ayToken and the interest rate is assumed to compound. The formula utilises one of the most fundamental principles in asset pricing: an asset's present value is the asset's discounted future value. Thus, in our simplified example, $$t$$= 1 and $$r=\log\frac{1}{0.9}\approx10\%$$.
 
 ## Automated Market Making \(AMM\) Protocol
 
-When designing AMM, ALEX believes in the following:
+When designing the AMM protocol, ALEX believes the following:
 
-1. AMM is mathematically neat and reflects economic demand and supply. For example, price should increase when demand is high or supply is low; 
-2. AMM is a type of mean, which remains constant during trading activities. This is adopted by some popular platform, such as _Uniswap_ which employs algorithmic mean; and 
-3. AMM can be interpreted in modern finance theory. This would enable ALEX to grow and draw comparison with conventional finance.
+1. AMMs are mathematically neat and reflect economic demand and supply. For example, price should increase when demand is high or supply is low; 
+2. AMMs are a type of mean, which remains constant during trading activities. This approach is also adopted by popular platforms such as _Uniswap,_ which employ algorithmic means; and 
+3. AMMs can be interpreted through the lens of modern finance theory. Doing so enables ALEX to grow and draw comparisons with conventional finance.
 
-After extensive research, our beliefs led us to the AMM firstly proposed by _YieldSpace_. While we appreciate the mathematical beauty of their derivation, we adapt it to be more suitable for ALEX. For instance, we replace simple interest rate by compound rate, which is more widely applied since Black-Scholes becomes the cornerstone in financial pricing and modelling. We also introduce capital efficiency scheme explained below.
+After extensive research, our beliefs led us to an AMM first proposed by _YieldSpace_. While we appreciate the mathematical beauty of their derivation, we adapt it in several ways with _ALEX_. For example, we replace a simple interest rate with a compounding interest rate. This change is in line with standard uses in financial pricing and modelling since Black and Scholes. We also develop a new capital efficiency scheme, as explained below.
 
-In mathematical terms, our AMM is expressed as
+In mathematical terms, our AMM can be expressed as:
 
 $$
 x^{1-t}+y^{1-t}=L
 $$
 
-where $$x$$, $$y$$, $$t$$ and $$L$$ is the balance of Token, balance of ayToken, time to maturity and a constant term when $$t$$ is fixed respectively. Interest rate $$r$$ is defined as $$r=\log\left(\frac{y}{x}\right)$$, i.e. natural logarithm of the ratio of balance between ayToken and Token, and price of ayToken with respect to Token is $$\left(\frac{y}{x}\right)^{t}$$
+where $$x$$, $$y$$, $$t$$ and $$L$$ are, respectively, the balance of "Token", balance of "ayToken", time to maturity and a constant term when $$t$$ is fixed. The interest rate $$r$$ is defined as $$r=\log\left(\frac{y}{x}\right)$$, i.e. the natural logarithm of the ratio of balance between "ayToken" and "Token", while the price of "ayToken" with respect to "Token" is $$\left(\frac{y}{x}\right)^{t}$$.
 
-In response to our design, this AMM is a form of generalised mean. It makes economics sense because the shape of the curve is decreasing and convex. It incorporates time to maturity $$t$$, which is explicitly built in to derive ayToken spot price. We refer readers to our [white paper](../whitepaper/automated-market-making-of-alex.md) for detail.
+Our design depicts an AMM in the of a form of a generalised mean. It makes economic sense because the shape of the curve is decreasing and convex. It incorporates time to maturity $$t$$, which is explicitly built-in to derive ayToken's spot price. We refer readers to our [white paper](../whitepaper/automated-market-making-of-alex.md) for detail.
 
 ## Liquidity Providers \(LP\) and Capital Efficiency
 
