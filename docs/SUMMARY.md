@@ -17,10 +17,6 @@
   * [Class Diagram](protocol/diagrams/class-diagram.md)
   * [Use Case](protocol/diagrams/protocol-use-case.md)
 
-## Litepaper
-
-* [Untitled](litepaper/untitled.md)
-
 ## Whitepaper
 
 * [Automated Market Making of ALEX](whitepaper/automated-market-making-of-alex.md)
