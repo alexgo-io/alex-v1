@@ -42,7 +42,9 @@ Inspired by _Uniswap v3_, ALEX employs virtual tokens - part of the assets that 
 
 Figure 1 illustrates an example of adopting virtual tokens in the event of positive interest rate. Blue line is the standard AMM. Blue dot represents equal balance of Token and ayToken of $$y_{v}$$ each, hence 0% interest rate. $$y_{v}$$ is the boundary amount, as any amount lower than it will never be touched by LP to avoid negative rate, which is represented by blue dashed line. Thus, $$y_{v}$$ is virtual token reserve. Effectively, LP is making market on red line, which shifts blue line lower by $$y_{v}$$. When ayToken is depleted as shown by red dashed line, trading activities are suspended.
 
-In a numerical example, assume $$t$$= 0.5 and $$L$$= 20, when $$r$$= 10%, LP will deposit 95 token and 105 ayToken according to standard AMM. However, if the interest rate is floored at 0%, LP only needs to contribute 5 ayToken, as the rest 100 ayToken would be virtual. This is a decent saving more than 90%.
+A numerical example provided in Table 1 shows capital efficiency with respect to various interest rate assuming $$t$$= 0.5 and $$L$$= 20.  When the current interest rate$$r$$= 10%, LP is required to deposit 95 token and 105 ayToken according to standard AMM. However, if the interest rate is floored at 0%, LP only needs to contribute 5 ayToken, as the rest 100 ayToken would be virtual. This is a decent saving more than 90%.
+
+![Table 1: Capital Efficiency when Interest Rate is Floored at 0](../.gitbook/assets/cectable3.png)
 
 ## Yield Curve and Yield Farming
 
