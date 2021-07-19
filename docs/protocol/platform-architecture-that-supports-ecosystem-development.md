@@ -10,7 +10,7 @@ Equation triggers Pool rebalancing. This allows creation of any arbitrary rebala
 
 ### Weighted Equation
 
-Weighted Equation \("WE"\) is the most basic Equation of all and is a fork of [Balancer](https://balancer.fi/whitepaper.pdf), which generalised the constant product AMM popularised by Uniswap. WE implements the following formula:
+Weighted Equation \("WE"\) is the most basic Equation of all and is a fork of [Balancer](https://balancer.fi/whitepaper.pdf), which generalised the constant product AMM popularised by Uniswap. We implement the following formula:
 
 $$
 V=\prod_{i}B_{i}^{w_{i}}
@@ -28,7 +28,7 @@ For example, if a pool is configured to trade between 0% and 10% APY, the capita
 
 ## Pool
 
-Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity provider, representing a proportional ownership of that Pool.
+Pools handle the logic of dynamic trading strategies, whose token rebalancing are then handled by Vault. Rebalancing logic is driven by Equation. Pool issues Pool Token to liquidity providers. The number of Pool Tokens are determined based on a liquidity provider's relative contribution to the Pool. Pool Tokens thus represent proportional ownership of that Pool, or assets in that Pool.
 
 ### Fixed Weight Pool
 
@@ -36,7 +36,7 @@ Fixed Weight Pool \("FWP"\) is a fork of [Balancer Weighted Pool](https://docs.b
 
 ### Collateral Rebalancing Pool
 
-Collateral Rebalancing Pool \("CRP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and dynamically rebalances between ayToken and Collateral. CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remain solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\).
+Collateral Rebalancing Pool \("CRP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and dynamically rebalances between ayToken and Collateral. CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remains solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\).
 
 ### Yield Token Pool
 
