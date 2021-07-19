@@ -21,5 +21,5 @@ For example, ayBTC / USD pool \(i.e. borrow BTC against USD\) will implement a d
 * The main benefit is that we can be \(much\) more aggressive in LTV and remove liquidation entirely \(with appropriate LTV and reserve fund\). This also allows aggregation of all ayToken into a single pool \(rather than separate pool for each borrower\).
 * The main drawback is that the collateral received at the time of repayment will not be same in USD value as the original value \(due to rebalancing\).
 
-To those interested in understanding the mathematics behind it, please refer to Collateral Rebalancing Equation under [Platform built for developers](protocol/platform-architecture-that-supports-ecosystem-development.md#collateral-rebalancing-equation).
+To those interested in understanding the mathematics behind it, please refer to [Collateral Rebalancing Pool](protocol/collateral-rebalancing-pool.md).
 
