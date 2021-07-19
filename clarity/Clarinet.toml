@@ -3,7 +3,7 @@ name = "alex-v1"
 requirements = []
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
-depends_on = ["trait-sip-010", "trait-flash-loan-user"]
+depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user"]
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/collateral-rebalancing-pool.clar"
