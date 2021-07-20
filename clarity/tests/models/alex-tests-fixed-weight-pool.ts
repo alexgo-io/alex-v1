@@ -115,6 +115,43 @@ class FWPTestAgent1 {
     return block.receipts[0].result;
   }
 
+  setFeetoAddress(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, address: string) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("fixed-weight-pool", "set-fee-to-address", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.principal(address) 
+      ], user.address),
+    ]);
+    return block.receipts[0].result;
+  }
+
+  getFeetoAddress(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("fixed-weight-pool", "get-fee-to-address", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+      ], user.address),
+    ]);
+    return block.receipts[0].result;
+  }
+
+  collectFees(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("fixed-weight-pool", "collect-fees", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+      ], user.address),
+    ]);
+    return block.receipts[0].result;
+  }
+
 }
 
 export { FWPTestAgent1 };
