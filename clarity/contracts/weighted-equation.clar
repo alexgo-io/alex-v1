@@ -72,6 +72,7 @@
             (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
         )
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)
+
         (contract-call? .math-fixed-point mul-up balance-x ratio)
    )
 )

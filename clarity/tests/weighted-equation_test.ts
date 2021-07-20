@@ -31,35 +31,41 @@ Clarinet.test({
         //     types.uint(1000),
         //     types.uint(testWeightX),
         //     types.uint(testWeightY),
-        //     types.uint(0)], wallet_1.address);
+        //     types.uint(100)], wallet_1.address);
         // call.result.expectOk().expectUint(0)
 
-        // call = chain.callReadOnlyFn("weighted-equation", "get-token-given-position", [types.uint(1000),
-        //     types.uint(1000),
-        //     types.uint(testWeightX),
-        //     types.uint(testWeightY),
-        //     types.uint(2000),       //total-supply
-        //     types.uint(100),        //dX
-        //     types.uint(100)], wallet_1.address);
-        // call.result.expectOk().expectUint(112)
+        call = chain.callReadOnlyFn("weighted-equation", "get-token-given-position", [types.uint(1000),
+            types.uint(1000),
+            types.uint(testWeightX),
+            types.uint(testWeightY),
+            types.uint(1000000),       //total-supply
+            types.uint(100),        //dX
+            types.uint(100)], wallet_1.address);
+        let token:any= call.result.expectOk().expectTuple()
+            token['dy'].expectUint(0);
+            token['token'].expectUint(100000);
 
-        // call = chain.callReadOnlyFn("weighted-equation", "get-position-given-mint", [types.uint(1000),
-        //     types.uint(1000),
-        //     types.uint(testWeightX),
-        //     types.uint(testWeightY),
-        //     types.uint(2000),   //total-supply
-        //     types.uint(100)     //token
-        //     ], wallet_1.address);
-        // call.result.expectOk().expectUint(112)
+        call = chain.callReadOnlyFn("weighted-equation", "get-position-given-mint", [types.uint(1000),
+            types.uint(1000),
+            types.uint(testWeightX),
+            types.uint(testWeightY),
+            types.uint(2000),   //total-supply
+            types.uint(100)     //token
+            ], wallet_1.address);
+        let position:any= call.result.expectOk().expectTuple()
+            position['dx'].expectUint(50);
+            position['dy'].expectUint(50);
 
-        // call = chain.callReadOnlyFn("weighted-equation", "get-position-given-burn", [types.uint(1000),
-        //     types.uint(1000),
-        //     types.uint(testWeightX),
-        //     types.uint(testWeightY),
-        //     types.uint(2000),   //total-supply
-        //     types.uint(100)     //token
-        //     ], wallet_1.address);
-        // call.result.expectOk().expectUint(112)
+        call = chain.callReadOnlyFn("weighted-equation", "get-position-given-burn", [types.uint(1000),
+            types.uint(1000),
+            types.uint(testWeightX),
+            types.uint(testWeightY),
+            types.uint(2000),   //total-supply
+            types.uint(100)     //token
+            ], wallet_1.address);
+            position= call.result.expectOk().expectTuple()
+            position['dx'].expectUint(50);
+            position['dy'].expectUint(50);
     },
 });
 
