@@ -55,7 +55,7 @@
         )
         (asserts! (< dy max-out) max-out-ratio-err)
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)
-
+        ;;(ok power)
         (contract-call? .math-fixed-point mul-up balance-x ratio)
    )
 )
@@ -69,11 +69,11 @@
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
             (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
             (power (unwrap-panic (contract-call? .math-fixed-point pow-up base weight-y)))
-            (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
+            ;;(ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
         )
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) weight-sum-err)
-
-        (contract-call? .math-fixed-point mul-up balance-x ratio)
+        (ok power)
+        ;;(contract-call? .math-fixed-point mul-up balance-x ratio)
    )
 )
 

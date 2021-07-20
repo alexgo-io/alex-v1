@@ -119,6 +119,7 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
+        ;; Deployer should inject the initial coins to the pool
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token the-vault dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
