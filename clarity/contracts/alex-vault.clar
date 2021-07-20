@@ -3,10 +3,23 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
+(define-map token-data-map
+  { token : principal }
+  {
+    shares-total: uint,
+    balance: uint,
+    fee-balance: uint,
+    fee-to-address: principal,
+    swap-token: principal,
+    name: (string-ascii 32),
+  }
+)
+
 ;; returns the balance of token
 (define-read-only (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
-  (ok u0)
+  ;;(ft-get-balance token tx-sender)
+   (ok u0)
 )
 
 ;; returns list of {token, balance}
