@@ -7,8 +7,8 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
  *  deno script syntax can be found here : https://deno.land/x/clarinet
  */
 
-const testWeightX = 50000000
-const testWeightY = 50000000
+const testWeightX = 50000000    //0.5
+const testWeightY = 50000000    //0.5
 
 Clarinet.test({
     name: "weighted-equation test",
