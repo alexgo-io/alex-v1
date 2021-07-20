@@ -33,6 +33,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        
         let wallet_1 =accounts.get('wallet_1')!;
         let FWPTestAgent = new FWPTestAgent1(chain, deployer);
         
@@ -43,15 +44,15 @@ Clarinet.test({
         let call = await FWPTestAgent.getPoolDetails(gAlexTokenAddress, usdaTokenAddress,testWeightX, testWeightY);
         call.result.expectOk();
 
-        // // Add extra liquidity
-        // result = FWPTestAgent.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, alexVaultAddress, 500, 100);
-        // result.expectOk().expectBool(true);
+        // Add extra liquidity
+        result = FWPTestAgent.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, alexVaultAddress, 500, 100);
+        result.expectOk().expectBool(true);
 
-        // // Reduce liquidlity
-        // result = FWPTestAgent.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, alexVaultAddress, 100);
-        // result.expectOk().expectList()[0].expectUint(1000000000);
-        // // result.expectOk().expectList()[1].expectUint(200000000);
-        // // Recheck pool details
+        // Reduce liquidlity
+        result = FWPTestAgent.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, alexVaultAddress, 100);
+        let position:any =result.expectOk().expectTuple();
+            position['dx'].expectUint(990);
+            position['dy'].expectUint(990);
     },
 });
 

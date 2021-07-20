@@ -58,10 +58,10 @@
 )
 
 ;; ---------------------------------------------------------
-;; DAO token trait
+;; usda token trait
 ;; ---------------------------------------------------------
 
-;; Mint method for DAO
+;; Mint method for usda
 (define-public (mint-for-dao (amount uint) (recipient principal))
   (begin
     ;;(asserts! (is-eq contract-caller .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
@@ -69,7 +69,7 @@
   )
 )
 
-;; Burn method for DAO
+;; Burn method for usda
 (define-public (burn-for-dao (amount uint) (sender principal))
   (begin
     ;;(asserts! (is-eq contract-caller .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
@@ -82,6 +82,7 @@
 (begin
   ;; TODO: do not do this on testnet or mainnet
   (try! (ft-mint? usda u10 'STB2BWB0K5XZGS3FXVTG3TKS46CQVV66NAK3YVN8))
+  (try! (ft-mint? usda u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
   (try! (ft-mint? usda u1000000000000 'STSTW15D618BSZQB85R058DS46THH86YQQY6XCB7)) ;; 1 million USDA
   (try! (ft-mint? usda u1000000000000 'ST1QV6WVNED49CR34E58CRGA0V58X281FAS1TFBWF)) ;; 1 million USDA
   (try! (ft-mint? usda u1000000000000 'ST3EQ88S02BXXD0T5ZVT3KW947CRMQ1C6DMQY8H19)) ;; 1 million USDA
