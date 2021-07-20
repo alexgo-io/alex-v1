@@ -71,14 +71,13 @@ class FWPTestAgent1 {
     return block.receipts[0].result;
   }
 
-  swapXForY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, vault: string, dx: number) {
+  swapXForY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, vault: string, dx: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("fixed-weight-pool", "swap-x-for-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
         types.uint(weightY),
-        types.principal(pooltoken),
         types.principal(vault),
         types.uint(dx * 1000000) // 200
         //types.uint(dyMin * 1000000), // 38 (should get ~40)
@@ -98,6 +97,19 @@ class FWPTestAgent1 {
         types.principal(vault),
         types.uint(dy * 1000000) // 200
         //types.uint(dyMin * 1000000), // 38 (should get ~40)
+      ], user.address),
+    ]);
+    return block.receipts[0].result;
+  }
+
+  getYgivenX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dX: number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("fixed-weight-pool", "get-y-given-x", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(dX * 1000000) 
       ], user.address),
     ]);
     return block.receipts[0].result;
