@@ -30,17 +30,39 @@ Clarinet.test({
         
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let expiry = 52560; //  1 year
+        let expiry = 52560; //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
 
         // Deployer creates the pool
         let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
-        // Borrower adds collateral to the pool and mint ayToken
+        // Initial Balance After Creation of Pool : TODO : NEED TO CHANGE EXPIRY AFTER CHANGING HARD CODED PART
+        result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+        result.expectOk().expectList()[0].expectUint(5000000);
+        result.expectOk().expectList()[1].expectUint(10000000);   
+        
+        // Borrower adds liquidity to the pool and mint ayToken
         result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayTokenAddress,alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
-        // Check Borrower's Token status of gained ayToken and reduced Collateral.
+        // Liquidity Added to the pool
+        result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+        result.expectOk().expectList()[0].expectUint(10000000);
+        result.expectOk().expectList()[1].expectUint(20000000); 
+
+        // Reduce Liquidity
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayTokenAddress,alexVaultAddress, 100000);
+        let position:any =result.expectOk().expectTuple();
+            position['dx'].expectUint(9999);
+            position['dy'].expectUint(22431);
+            
+        // Liquidity Added to the pool
+        result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+        result.expectOk().expectList()[0].expectUint(9990001);
+        result.expectOk().expectList()[1].expectUint(19977569); 
+
+        // Check Minted ayToken
+
 
     },
 });

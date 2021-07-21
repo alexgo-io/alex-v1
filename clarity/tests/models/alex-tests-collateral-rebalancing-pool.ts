@@ -116,6 +116,18 @@ import {
         return block.receipts[0].result;
     }
 
+    getBalances(user: Account, token: string, collateral: string, expiry: number) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "get-balances", [
+            types.principal(token),
+            types.principal(collateral),
+            types.uint(expiry)
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+    }
+
+
     setFeetoAddress(user: Account, token: string, collateral: string, expiry: number, address: string) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "set-fee-to-address", [

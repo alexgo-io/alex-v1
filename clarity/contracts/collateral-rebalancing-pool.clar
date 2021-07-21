@@ -187,6 +187,18 @@
     )
 )
 
+;; get overall balances for the pair
+(define-public (get-balances (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+  (let
+    (
+      (token-x (contract-of token))
+      (token-y (contract-of collateral))
+      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+    )
+    (ok (list (get balance-x pool) (get balance-y pool)))
+  )
+)
+
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
     (let
         (
