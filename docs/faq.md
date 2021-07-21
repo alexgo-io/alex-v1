@@ -53,7 +53,7 @@ There are five actors on ALEX:
 * **Liquidity Provider**: Go to Yield Token Pool =&gt; Deposit ayToken & Token =&gt; Mint Yield Token Pool Token
 * **Arbitrageur / Flash Loan User**: Go to Vault =&gt; Create Flash Loan =&gt; Trade at Pools
 
-See [Use Case](protocol/diagrams/protocol-use-case.md).
+See [Use Case]().
 
 ## What Collateralization Ratio \(or Loan-to-Value\) can we expect on ALEX?
 

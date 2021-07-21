@@ -14,8 +14,8 @@
 * [Vault](protocol/vault.md)
 * [Yield Farming on ALEX](protocol/yield-farming-on-alex.md)
 * [Diagrams](protocol/diagrams/README.md)
-  * [Class Diagram](protocol/diagrams/class-diagram.md)
   * [Use Case](protocol/diagrams/protocol-use-case.md)
+  * [Class Diagram](protocol/diagrams/class-diagram.md)
 
 ## Whitepaper
 
