@@ -23,7 +23,7 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, token: string, collateral: string, yieldToken: string, vault: number, dX: number, dY: number) {
+    createPool(user: Account, token: string, collateral: string, yieldToken: string, vault: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
           types.principal(token),
@@ -37,7 +37,7 @@ import {
       return block.receipts[0].result;
     }
   
-    addToPosition(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, vault: number, dX: number, dY: number) {
+    addToPosition(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, vault: string, dX: number, dY: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool", "add-to-position", [
             types.principal(token),
@@ -52,7 +52,7 @@ import {
         return block.receipts[0].result;
       }
   
-      reducePosition(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, vault: number, percent: number) {
+      reducePosition(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, vault: string, percent: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool", "reduce-position", [
             types.principal(token),
