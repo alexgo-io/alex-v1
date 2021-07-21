@@ -18,9 +18,8 @@
 )
 
 ;; returns the balance of token
-(define-read-only (get-balance (token <ft-trait>))
+(define-public (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
-  ;;(asserts! (is-none token) invalid-token)
   ;;(ft-get-balance token tx-sender)
   (ok u0)
 )
