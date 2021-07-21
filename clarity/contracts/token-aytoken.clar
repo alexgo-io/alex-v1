@@ -1,5 +1,5 @@
 (impl-trait .trait-sip-010.sip-010-trait)
-;;(impl-trait .trait-yield-token.yield-token-trait) ;; To be discussed : ERROR
+(impl-trait .trait-yield-token.yield-token-trait) ;; To be discussed : ERROR
 
 ;; Defines ayToken which conforms sip010-trait and yield-token-trait. 
 

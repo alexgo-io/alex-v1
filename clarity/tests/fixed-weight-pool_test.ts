@@ -29,7 +29,7 @@ const testWeightY = 50000000 //0.5
  */
 
 Clarinet.test({
-    name: "Pool creation, adding values and reducing values",
+    name: "FWP : Pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -57,7 +57,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Swapping Token Test",
+    name: "FWP : Swapping Token Test",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;
@@ -80,7 +80,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Setting a Fee to principal",
+    name: "FWP : Setting a Fee to principal",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;

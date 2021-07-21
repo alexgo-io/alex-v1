@@ -262,7 +262,7 @@
         (asserts! (is-ok (contract-call? collateral transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-        (try! (contract-call? the-yield-token mint tx-sender new-supply))
+        (try! (contract-call? the-yield-token mint new-supply tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -296,7 +296,7 @@
         (asserts! (is-ok (contract-call? collateral transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-        (try! (contract-call? the-yield-token burn tx-sender shares))
+        (try! (contract-call? the-yield-token burn shares tx-sender))
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: dy})

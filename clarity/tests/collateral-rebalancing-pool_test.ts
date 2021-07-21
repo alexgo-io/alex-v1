@@ -25,16 +25,47 @@ import {
  
 
 Clarinet.test({
-    name: "collateral-rebalancing-pool Test",
+    name: "CRP : Creating Pool and Borrower use case",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
-        let borrower =accounts.get('wallet_1')!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        
+        let expiry = 52560; //  1 year
+
         // Deployer creates the pool
         let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
+        // Borrower adds collateral to the pool and mint ayToken
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayTokenAddress,alexVaultAddress, 5000000, 10000000);
+        result.expectOk().expectBool(true);
+
+        // Check Borrower's Token status of gained ayToken and reduced Collateral.
+
+    },
+});
+
+Clarinet.test({
+    name: "CRP : Setting a Fee to principal",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 =accounts.get('wallet_1')!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+        let expiry = 52560; //  1 year
+
+        // Deployer creates the pool
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
+        result.expectOk().expectBool(true);
+
+        // Fees will be transferred to wallet_1
+        result = CRPTest.setFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, wallet_1.address);
+        result.expectOk().expectBool(true);
+        
+       // Check whether it is correctly settled
+        result = CRPTest.getFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+        result.expectOk().expectPrincipal(wallet_1.address);
+
+        // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
+        
     },
 });
