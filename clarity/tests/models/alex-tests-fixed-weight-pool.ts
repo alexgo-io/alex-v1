@@ -134,7 +134,7 @@ class FWPTestAgent1 {
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
-        types.uint(weightY),
+        types.uint(weightY)
       ], user.address),
     ]);
     return block.receipts[0].result;
@@ -146,7 +146,7 @@ class FWPTestAgent1 {
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
-        types.uint(weightY),
+        types.uint(weightY)
       ], user.address),
     ]);
     return block.receipts[0].result;

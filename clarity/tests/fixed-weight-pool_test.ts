@@ -18,7 +18,7 @@ const testWeightX = 50000000 //0.5
 const testWeightY = 50000000 //0.5
 
 /**
- * Test Case Scenario 
+ * Fixed Weight Pool Test Cases  
  * 
  * 1. Create Pool, Add values to the pool and reduce values.
  * 
