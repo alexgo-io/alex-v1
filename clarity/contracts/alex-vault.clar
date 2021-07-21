@@ -3,6 +3,8 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
+(define-constant invalid-token (err u2001))
+
 (define-map token-data-map
   { token : principal }
   {
@@ -18,8 +20,9 @@
 ;; returns the balance of token
 (define-read-only (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
+  (asserts! (is-none token) invalid-token)
   ;;(ft-get-balance token tx-sender)
-   (ok u0)
+  (ok u0)
 )
 
 ;; returns list of {token, balance}
