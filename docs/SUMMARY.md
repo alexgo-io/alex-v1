@@ -15,7 +15,8 @@
 * [Yield Farming on ALEX](protocol/yield-farming-on-alex.md)
 * [Diagrams](protocol/diagrams/README.md)
   * [Class Diagram](protocol/diagrams/class-diagram.md)
-  * [Use Case](protocol/diagrams/protocol-use-case.md)
+* [Use Case](protocol/protocol-use-case/README.md)
+  * [Use Case](protocol/protocol-use-case/protocol-use-case.md)
 
 ## Whitepaper
 
