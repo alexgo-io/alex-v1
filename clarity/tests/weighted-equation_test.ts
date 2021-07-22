@@ -2,14 +2,19 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.10.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
-/**
- *  For equation testing
- *  deno script syntax can be found here : https://deno.land/x/clarinet
- */
 
 const testWeightX = 50000000    //0.5
 const testWeightY = 50000000    //0.5
 const testPrice = 2000000000    //200
+
+/**
+ *  Weighted Equation Test Cases
+ *  deno script syntax can be found here : https://deno.land/x/clarinet
+ * 
+ *  1. Checks whether equation is adequately returning the vaules. 
+ * 
+ */
+
 
 Clarinet.test({
     name: " WEIGHTED EQUATION :  weighted-equation test",

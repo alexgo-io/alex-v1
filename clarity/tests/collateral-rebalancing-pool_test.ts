@@ -7,23 +7,29 @@ import {
   } from './models/alex-tests-collateral-rebalancing-pool.ts';
   
 
-/**
- * Collateral Rebalancing Pool Test Cases
- * 
- * 1. Borrower adds Liquidity to the pool : puts collateral and mint ayusda
- *      collateral : usda
- *      ayToken : ayUSDA
- * 2. Set platform fee and collect
- */
-
+// Deployer Address Constants 
  const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
  const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
  const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-ayusda"
  const gAlexUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda"
  const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
  const Wallet1VaultAddress = "ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK.alex-vault"
- const expiry = 52560   //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
  
+ const expiry = 52560   //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
+
+/**
+ * Collateral Rebalancing Pool Test Cases
+ * 
+ * 1. Borrower adds Liquidity to the pool : puts collateral and mint ayusda
+ *      collateral : usda
+ *      ayToken : ayUSDA
+ * 
+ * 2. Arbitrageurs using collateral rebalancing pool for trading
+ * 
+ * 3. Set platform fee and collect
+ * 
+ */
+
 Clarinet.test({
     name: "CRP : Creating Pool and Borrower use case",
     async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -60,7 +66,6 @@ Clarinet.test({
         result.expectOk().expectList()[0].expectUint(9990001);
         result.expectOk().expectList()[1].expectUint(19977569); 
 
-        // Check Minted ayusda
 
 
     },
