@@ -27,40 +27,38 @@
 (define-read-only (get-balances)
   ;;Clarity doesn't support loop, so we need to maintain a list of tokens to apply map to get-balance
   ;;See get-pool-contracts and get-pools in fixed-weight-pool
-  ;; Step 1 : how do you know which tx-sender has which token? 
-  ;; Step 2 : use map funciton for get-balance and append at the list
   (ok (var-get balances))
 )
 
-;; (define-public (transfer-to-vault (amount uint) (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34)))
+(define-public (transfer-to-vault (amount uint) (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34)))
 
-;;   (let
+  (let
   
-;;     (
-;;     ;; recipient is tx-sender 
-;;     ;; Transfer of Token
-;;       ;;(token (token-trait))
-;;       ;;(token-symbol (unwrap-panic (contract-call? token-x-trait get-symbol)))
-;;       ;; get token name 
+    (
+    ;; recipient is tx-sender 
+    ;; Transfer of Token
+      ;; (token (token-trait))
+      ;; (token-symbol (unwrap-panic (contract-call? token-x-trait get-symbol)))
+      ;; ;; get token name 
 
-;;       (match (ft-transfer? token-trait amount sender recipient)
-;;         response (begin
-;;         (print memo)
-;;         (ok response))
+      ;; (match (ft-transfer? token-trait amount sender recipient)
+      ;;   response (begin
+      ;;   (print memo)
+      ;;   (ok response))
       
-;;         error (err error))
+      ;;   error (err error))
 
-;;         ;; This function to be called after every transaction.
-;;         ;; Check the list whether it has the token symbol already.
-;;         ;; Save token symbol to the list 
-;;       ;;(append balances token-symbol)
-;;       (ok true)
-;;     )
+      ;;   ;; This function to be called after every transaction.
+      ;;   ;; Check the list whether it has the token symbol already.
+      ;;   ;; Save token symbol to the list 
+      ;; ;;(append balances token-symbol)
+      (ok true)
+    )
   
-;;   )
+  )
 
-;; )
-;; )
+)
+)
 
 
 ;; flash loan to flash loan user up to 3 tokens of amounts specified
