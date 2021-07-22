@@ -2,6 +2,10 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
+(define-constant token-galex-name "Alex Token")
+(define-constant token-usda-name "USDA")
+(define-constant token-ayusda-name "ayUSDA")
+
 (define-constant insufficient-flash-loan-balance-err (err u528))
 (define-constant invalid-post-loan-balance-err (err u515))
 (define-constant user-execute-err (err u101))
@@ -16,6 +20,14 @@
 (define-data-var fee-amount uint u0)
 
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
+(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
+;; Initialize the tokens-balances map with all the three tokens' balance from 0
+(map-set tokens-balances {token: token-galex-name} { balance: u0})
+(map-set tokens-balances {token: token-usda-name} { balance: u0})
+(map-set tokens-balances {token: token-ayusda-name} { balance: u0})
+
+
+
 
 (define-public (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
@@ -23,18 +35,52 @@
   (ok (unwrap! (contract-call? token get-balance tx-sender) get-token-fail))
 )
 
+;; (define-map names-map { name: (string-ascii 10) } { id: int })
+;; (map-set names-map { name: "blockstack" } { id: 1337 })
+
 ;; returns list of {token, balance}
 (define-read-only (get-balances)
   ;;Clarity doesn't support loop, so we need to maintain a list of tokens to apply map to get-balance
   ;;See get-pool-contracts and get-pools in fixed-weight-pool
-  (ok (var-get balances))
-)
-
-(define-public (transfer-to-vault (amount uint) (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34)))
-
   (let
-  
     (
+      ;; (tb-1 (map-get? tokens-balances { token: token-galex-name }))
+      (tb-1 (default-to u0 (get balance (map-get? tokens-balances { token: token-galex-name }))))
+      (tb-2 (default-to u0 (get balance (map-get? tokens-balances { token: token-usda-name }))))
+      (tb-3 (default-to u0 (get balance (map-get? tokens-balances { token: token-ayusda-name }))))
+      (result (list {token: token-galex-name, balance: tb-1} 
+                    {token: token-usda-name, balance: tb-2} 
+                    {token: token-ayusda-name, balance: tb-3}))
+    )
+    (ok result)
+  )
+)
+(define-public (note-to-vault
+                (token-trait <ft-trait>))
+  (let
+    (
+      (token-name (unwrap-panic (contract-call? token-trait get-name)))
+      (token-balance (unwrap-panic (contract-call? token-trait get-balance tx-sender)))
+      (result (list))
+    )
+    (map-set tokens-balances { token: token-name } { balance: token-balance })
+    (ok result)
+  )
+)
+(define-public (transfer-to-vault 
+      (sender principal) 
+      (recipient principal) 
+      (amount uint) 
+      (token-trait <ft-trait>) 
+      (memo (optional (buff 34))))
+      ;; (let 
+      ;;   (
+      ;;     (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
+      ;;     (token-name (unwrap-panic (contract-call? token-trait get-name)))
+      ;;   )
+      ;;   (ok true)
+      ;; )
+      (ok true)
     ;; recipient is tx-sender 
     ;; Transfer of Token
       ;; (token (token-trait))
@@ -52,12 +98,6 @@
       ;;   ;; Check the list whether it has the token symbol already.
       ;;   ;; Save token symbol to the list 
       ;; ;;(append balances token-symbol)
-      (ok true)
-    )
-  
-  )
-
-)
 )
 
 
