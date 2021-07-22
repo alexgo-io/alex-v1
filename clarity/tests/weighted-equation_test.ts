@@ -12,7 +12,7 @@ const testWeightY = 50000000    //0.5
 const testPrice = 2000000000    //200
 
 Clarinet.test({
-    name: "weighted-equation test",
+    name: " WEIGHTED EQUATION :  weighted-equation test",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

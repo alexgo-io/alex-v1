@@ -22,15 +22,14 @@ import {
  const gAlexUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda"
  const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
  const Wallet1VaultAddress = "ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK.alex-vault"
+ const expiry = 52560   //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
  
-
 Clarinet.test({
     name: "CRP : Creating Pool and Borrower use case",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let expiry = 52560; //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
 
         // Deployer creates the pool
         let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
@@ -55,7 +54,7 @@ Clarinet.test({
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(9999);
             position['dy'].expectUint(22431);
-            
+
         // Liquidity Added to the pool
         result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
         result.expectOk().expectList()[0].expectUint(9990001);
@@ -68,12 +67,42 @@ Clarinet.test({
 });
 
 Clarinet.test({
+    name: "CRP : Arbitragers using CRP for commiting Swaps",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 =accounts.get('wallet_1')!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+
+        // Deployer creates the pool
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
+        result.expectOk().expectBool(true);
+        
+        // Get weight for testing swap - internal test
+        let call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-x", 
+            [types.principal(gAlexTokenAddress),
+            types.principal(usdaTokenAddress),
+            types.uint(expiry)
+            ], wallet_1.address);
+        call.result.expectOk().expectUint(30832099)
+        
+        // Check whether internal weighted equation is working well - internal test
+        result = CRPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 1000000);
+        result.expectOk().expectUint(779640)
+        
+        // Arbitrager swapping usda for ayToken 
+        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, alexVaultAddress,1000000);
+        result.expectOk().expectList()[0].expectUint(1000000); 
+        result.expectOk().expectList()[1].expectUint(779640); 
+
+    },
+});
+
+Clarinet.test({
     name: "CRP : Setting a Fee to principal",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let expiry = 52560; //  1 year
 
         // Deployer creates the pool
         let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);

@@ -15,9 +15,9 @@ import {
       this.deployer = deployer;
     }
     
-    getWeightX(tokenX: string, collateral: string, expiry: number) {
+    getWeightX(token: string, collateral: string, expiry: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-x", [
-        types.principal(tokenX),
+        types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
       ], this.deployer.address);
