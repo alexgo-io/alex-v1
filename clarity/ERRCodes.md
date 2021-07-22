@@ -1,11 +1,11 @@
-### This Document is for specifing error codes for development.
+# This Document is for specifing error codes for development.
 
 ## General Error
- # start with u1000
+ ### start with u1000
  - ERR-NOT-AUTHORIZED
 
 ## Pool Related Error
- - start with u2000
+ ### start with u2000
  - pool-already-exists-err
  - invalid-pool-err
  - no-liquidity-err
@@ -17,7 +17,7 @@
  - invalid-balance-err
    
 ## Vault Related Error 
- - start with u3000
+ ### start with u3000
  - transfer-failed-err
  - transfer-x-failed-err
  - transfer-y-failed-err
@@ -29,11 +29,11 @@
  - get-token-fail 
 
 ## Equation Related Error 
- - start with u4000
+ ### start with u4000
  - 
 
 ## Math Related Error
-- start with u5000
+### start with u5000
 - percent-greater-than-one
 - SCALE_UP_OVERFLOW (err u10000)
 - SCALE_DOWN_OVERFLOW (err u10001)
