@@ -1,7 +1,7 @@
 ### This Document is for specifing error codes for development.
 
 ## General Error
- - start with u1000
+ # start with u1000
  - ERR-NOT-AUTHORIZED
 
 ## Pool Related Error
