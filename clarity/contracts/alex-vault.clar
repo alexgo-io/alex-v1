@@ -42,14 +42,7 @@
 
 
 ;; flash loan to flash loan user up to 3 tokens of amounts specified
-(define-public (flash-loan 
-                (flash-loan-user <flash-loan-user-trait>) 
-                (token1 <ft-trait>)
-                (token2 <ft-trait>)
-                (token3  (optional <ft-trait>)) 
-                (amount1 uint)
-                (amount2 uint)
-                (amount3 (optional uint)))
+(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token1 <ft-trait>) (token2 <ft-trait>) (token3  (optional <ft-trait>)) (amount1 uint) (amount2 uint) (amount3 (optional uint)))
   
   (begin 
       ;; TODO: step 1 transfer tokens to user one by one
@@ -75,11 +68,8 @@
 )
 
 
-(define-private (transfer-to-user 
-                  (flash-loan-user <flash-loan-user-trait>) 
-                  (token <ft-trait>)
-                  (amount uint)
-                  )
+(define-private (transfer-to-user (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint))
+  
   (begin
     (var-set pre-loan-balance (unwrap-panic (contract-call? token get-balance tx-sender)))
     ;; TODO: calculate this fee later
@@ -91,10 +81,7 @@
     (ok true)
   )
 )
-(define-private (after-pay-back-check 
-                    (token <ft-trait>)
-                    (index uint)
-)
+(define-private (after-pay-back-check (token <ft-trait>) (index uint))
   (begin 
     (var-set post-loan-balance (unwrap-panic (contract-call? token get-balance tx-sender)))
     (var-set pre-loan-balance (unwrap-panic (element-at (var-get pre-loan-balances) index)))
