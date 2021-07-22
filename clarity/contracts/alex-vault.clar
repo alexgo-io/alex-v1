@@ -31,6 +31,16 @@
   (ok (var-get balances))
 )
 
+(define-public (set-token-on-vault (token-trait <ft-trait>))
+     
+        ;; This function to be called after every transaction.
+        ;; Check the list whether it has the token symbol already.
+        ;; Save token symbol to the list 
+    
+    (ok true)
+)
+
+
 ;; flash loan to flash loan user up to 3 tokens of amounts specified
 (define-public (flash-loan 
                 (flash-loan-user <flash-loan-user-trait>) 

@@ -162,6 +162,10 @@
 
         ;; send x to vault
         (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+        
+        ;; Experiment
+        ;;(asserts! (is-ok (contract-call? the-vault set-token-on-vault token-x-trait )) (err u11111))
+        
         ;; send y to vault
         (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
         ;; mint pool token and send to tx-sender
