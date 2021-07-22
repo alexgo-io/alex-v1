@@ -22,6 +22,7 @@
   ;; 
   (ok (unwrap! (contract-call? token get-balance tx-sender) get-token-fail))
 )
+
 ;; returns list of {token, balance}
 (define-read-only (get-balances)
   ;;Clarity doesn't support loop, so we need to maintain a list of tokens to apply map to get-balance
@@ -31,7 +32,7 @@
   (ok (var-get balances))
 )
 
-(define-public (set-token-on-vault (token-trait <ft-trait>))
+(define-public (transfer-to-vault (token-trait <ft-trait>))
      
         ;; This function to be called after every transaction.
         ;; Check the list whether it has the token symbol already.
@@ -81,6 +82,7 @@
     (ok true)
   )
 )
+
 (define-private (after-pay-back-check (token <ft-trait>) (index uint))
   (begin 
     (var-set post-loan-balance (unwrap-panic (contract-call? token get-balance tx-sender)))
