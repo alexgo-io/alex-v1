@@ -1,8 +1,13 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
+
+
 (define-constant transfer-failed-err (err u72))
+
 (define-map names-map { name: (string-ascii 12)} { id: int })
+
 (map-set names-map { name: "blockstack" } { id: 1337 })
+
 (define-public (execute 
                     (token1 <ft-trait>) 
                     (token2 <ft-trait>) 
