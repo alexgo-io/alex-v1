@@ -2,25 +2,32 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.10.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
-Clarinet.test({
-    name: "alex-vault Test",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let block = chain.mineBlock([
-            /* 
-             * Add transactions with: 
-             * Tx.contractCall(...)
-            */
-        ]);
-        assertEquals(block.receipts.length, 0);
-        assertEquals(block.height, 2);
 
-        block = chain.mineBlock([
-            /* 
-             * Add transactions with: 
-             * Tx.contractCall(...)
-            */
+const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
+const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-ayusda"
+const gAlexUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda"
+const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
+
+
+
+Clarinet.test({
+    name: " VAULT : get Balance ",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+ 
+        let user = accounts.get("deployer")!;
+
+        let block = chain.mineBlock([
+            
+            Tx.contractCall("alex-vault", "get-balance", [
+                types.principal(usdaTokenAddress)
+              ], user.address),
+            
+            // Tx.contractCall("alex-vault", "get-balances", [
+            //   ], user.address),
+
         ]);
-        assertEquals(block.receipts.length, 0);
-        assertEquals(block.height, 3);
+        block.receipts[0].result.expectOk().expectUint(1000000000000);
+        block.receipts[1].result.expectOk().expectUint(1000000000000);
     },
 });

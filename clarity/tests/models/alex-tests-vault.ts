@@ -16,7 +16,11 @@ import {
     }
   
     // get balance
-
+    getBalance(token: string) {
+        return this.chain.callReadOnlyFn("alex-vault", "get-balance", [
+          types.principal(token)
+        ], this.deployer.address);
+      }
     // get balances
 
     //flash loan
