@@ -1,9 +1,9 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 (impl-trait .trait-yield-token.yield-token-trait) ;; To be discussed : ERROR
 
-;; Defines ayToken which conforms sip010-trait and yield-token-trait. 
+;; Defines ayUSDA which conforms sip010-trait and yield-token-trait. 
 
-(define-fungible-token ayToken)
+(define-fungible-token ayUSDA)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var token-expiry uint u52560)  ;; 1 year 
@@ -17,11 +17,11 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-name)
-  (ok "ayTOKEN")
+  (ok "ayUSDA")
 )
 
 (define-read-only (get-symbol)
-  (ok "ayTOKEN")
+  (ok "ayUSDA")
 )
 
 (define-read-only (get-decimals)
@@ -29,11 +29,11 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance ayToken account))
+  (ok (ft-get-balance ayUSDA account))
 )
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply ayToken))
+  (ok (ft-get-supply ayUSDA))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -49,7 +49,7 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? ayToken amount sender recipient)
+  (match (ft-transfer? ayUSDA amount sender recipient)
     response (begin
       (print memo)
       (ok response)
@@ -59,29 +59,29 @@
 )
 
 ;; ---------------------------------------------------------
-;; ayToken token trait
+;; ayUSDA token trait
 ;; ---------------------------------------------------------
 
-;; Mint method for ayToken
+;; Mint method for ayUSDA
 (define-public (mint (amount uint) (recipient principal))
   (begin
     ;; TODO : Authorization Check
     ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? ayToken amount recipient)
+    (ft-mint? ayUSDA amount recipient)
   )
 )
 
-;; Burn method for ayToken
+;; Burn method for ayUSDA
 (define-public (burn (amount uint) (sender principal))
   (begin
     ;; TODO : Authorization Check
     ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? ayToken amount sender)
+    (ft-burn? ayUSDA amount sender)
   )
 )
 
 (define-public (get-token)
-    ;; TODO : What the current ayToken is against for. 
+    ;; TODO : What the current ayUSDA is against for. 
     (ok (as-contract tx-sender))    ;; Temporary return because this function is currently not used
 )
 

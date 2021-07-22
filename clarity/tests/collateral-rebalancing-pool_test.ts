@@ -10,15 +10,15 @@ import {
 /**
  * Collateral Rebalancing Pool Test Cases
  * 
- * 1. Borrower adds Liquidity to the pool : puts collateral and mint ayToken
+ * 1. Borrower adds Liquidity to the pool : puts collateral and mint ayusda
  *      collateral : usda
- *      ayToken : 
+ *      ayToken : ayUSDA
  * 2. Set platform fee and collect
  */
 
  const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
  const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
- const ayTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-aytoken"
+ const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-ayusda"
  const gAlexUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda"
  const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
  const Wallet1VaultAddress = "ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK.alex-vault"
@@ -32,7 +32,7 @@ Clarinet.test({
         let CRPTest = new CRPTestAgent1(chain, deployer);
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Initial Balance After Creation of Pool : TODO : NEED TO CHANGE EXPIRY AFTER CHANGING HARD CODED PART
@@ -40,8 +40,8 @@ Clarinet.test({
         result.expectOk().expectList()[0].expectUint(5000000);
         result.expectOk().expectList()[1].expectUint(10000000);   
         
-        // Borrower adds liquidity to the pool and mint ayToken
-        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayTokenAddress,alexVaultAddress, 5000000, 10000000);
+        // Borrower adds liquidity to the pool and mint ayusda
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Liquidity Added to the pool
@@ -50,7 +50,7 @@ Clarinet.test({
         result.expectOk().expectList()[1].expectUint(20000000); 
 
         // Reduce Liquidity
-        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayTokenAddress,alexVaultAddress, 100000);
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 100000);
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(9999);
             position['dy'].expectUint(22431);
@@ -60,7 +60,7 @@ Clarinet.test({
         result.expectOk().expectList()[0].expectUint(9990001);
         result.expectOk().expectList()[1].expectUint(19977569); 
 
-        // Check Minted ayToken
+        // Check Minted ayusda
 
 
     },
@@ -74,7 +74,7 @@ Clarinet.test({
         let CRPTest = new CRPTestAgent1(chain, deployer);
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
         
         // Get weight for testing swap - internal test
@@ -89,7 +89,7 @@ Clarinet.test({
         result = CRPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 1000000);
         result.expectOk().expectUint(779640)
         
-        // Arbitrager swapping usda for ayToken 
+        // Arbitrager swapping usda for ayusda 
         result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, alexVaultAddress,1000000);
         result.expectOk().expectList()[0].expectUint(1000000); 
         result.expectOk().expectList()[1].expectUint(779640); 
@@ -105,7 +105,7 @@ Clarinet.test({
         let CRPTest = new CRPTestAgent1(chain, deployer);
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayTokenAddress, alexVaultAddress, 5000000, 10000000);
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Fees will be transferred to wallet_1
