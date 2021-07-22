@@ -32,14 +32,35 @@
   (ok (var-get balances))
 )
 
-(define-public (transfer-to-vault (token-trait <ft-trait>))
-     
-        ;; This function to be called after every transaction.
-        ;; Check the list whether it has the token symbol already.
-        ;; Save token symbol to the list 
-    
-    (ok true)
-)
+;; (define-public (transfer-to-vault (amount uint) (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34)))
+
+;;   (let
+  
+;;     (
+;;     ;; recipient is tx-sender 
+;;     ;; Transfer of Token
+;;       ;;(token (token-trait))
+;;       ;;(token-symbol (unwrap-panic (contract-call? token-x-trait get-symbol)))
+;;       ;; get token name 
+
+;;       (match (ft-transfer? token-trait amount sender recipient)
+;;         response (begin
+;;         (print memo)
+;;         (ok response))
+      
+;;         error (err error))
+
+;;         ;; This function to be called after every transaction.
+;;         ;; Check the list whether it has the token symbol already.
+;;         ;; Save token symbol to the list 
+;;       ;;(append balances token-symbol)
+;;       (ok true)
+;;     )
+  
+;;   )
+
+;; )
+;; )
 
 
 ;; flash loan to flash loan user up to 3 tokens of amounts specified

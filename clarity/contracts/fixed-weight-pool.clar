@@ -165,6 +165,7 @@
         
         ;; Experiment
         ;; Transfer to vault
+        ;; asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of token-x-trait) none)) transfer-x-failed-err)
 
         ;; send y to vault
         (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
