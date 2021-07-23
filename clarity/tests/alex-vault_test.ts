@@ -27,13 +27,13 @@ Clarinet.test({
                 types.principal(gAlexTokenAddress)
               ], user.address),
 
-              Tx.contractCall("alex-vault", "update-token-balance", [
-                types.principal(usdaTokenAddress)
-              ], user.address),
+            //   Tx.contractCall("alex-vault", "update-token-balance", [
+            //     types.principal(usdaTokenAddress)
+            //   ], user.address),
 
-              Tx.contractCall("alex-vault", "update-token-balance", [
-                types.principal(gAlexTokenAddress)
-              ], user.address),
+            //   Tx.contractCall("alex-vault", "update-token-balance", [
+            //     types.principal(gAlexTokenAddress)
+            //   ], user.address),
 
               Tx.contractCall("alex-vault", "get-balances", [
               ], user.address),
@@ -43,9 +43,9 @@ Clarinet.test({
         ]);
         block.receipts[0].result.expectOk().expectUint(1000000000000);
         block.receipts[1].result.expectOk().expectUint(1000000000000);
-        block.receipts[2].result.expectOk();
-        block.receipts[3].result.expectOk();
-        block.receipts[4].result.expectOk().expectList();
+        // block.receipts[2].result.expectOk();
+        // block.receipts[3].result.expectOk();
+        block.receipts[2].result.expectOk().expectList();
         
     },
 });

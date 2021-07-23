@@ -73,7 +73,7 @@
   )
 )
 
-(define-public (update-token-balance
+(define-private (update-token-balance
                 (token-trait <ft-trait>))
   (let
     (

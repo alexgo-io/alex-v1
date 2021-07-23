@@ -15,7 +15,7 @@
         ;; flash loan to flash loan user up to 3 tokens of amounts specified
         (flash-loan (<flash-loan-user-trait> <ft-trait> <ft-trait> (optional <ft-trait>) uint uint (optional uint)) (response bool uint))
 
-        (update-token-balance (<ft-trait>) (response bool uint))
+;;        (update-token-balance (<ft-trait>) (response bool uint))
 
         (transfer-to-vault (uint principal principal <ft-trait> (optional (buff 34))) (response bool uint))
     
