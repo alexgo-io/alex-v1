@@ -2,7 +2,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 
-(define-constant transfer-failed-err (err u72))
+(define-constant transfer-failed-err (err u3000))
 
 (define-map names-map { name: (string-ascii 12)} { id: int })
 

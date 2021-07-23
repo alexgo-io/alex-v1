@@ -8,11 +8,11 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant ERR-NOT-AUTHORIZED u1401)
+(define-constant err-not-authorized u1000)
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) (err ERR-NOT-AUTHORIZED))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err err-not-authorized))
 
     (ok (var-set contract-owner owner))
   )
@@ -45,7 +45,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   (if (is-eq tx-sender (var-get contract-owner))
     (ok (var-set token-uri value))
-    (err ERR-NOT-AUTHORIZED)
+    (err err-not-authorized)
   )
 )
 

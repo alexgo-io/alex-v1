@@ -13,16 +13,16 @@
 ;;
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
-(define-constant invalid-pool-err (err u201))
-(define-constant no-liquidity-err (err u61))
-(define-constant invalid-liquidity-err (err u202))
-(define-constant transfer-x-failed-err (err u72))
-(define-constant transfer-y-failed-err (err u73))
-(define-constant pool-already-exists-err (err u69))
-(define-constant too-many-pools-err (err u68))
-(define-constant percent-greater-than-one (err u5))
-(define-constant no-fee-x-err (err u8))
-(define-constant no-fee-y-err (err u9))
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)

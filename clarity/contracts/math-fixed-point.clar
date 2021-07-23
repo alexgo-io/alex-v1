@@ -8,14 +8,14 @@
 ;; constants
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
-(define-constant SCALE_UP_OVERFLOW (err u10000))
-(define-constant SCALE_DOWN_OVERFLOW (err u10001))
-(define-constant ADD_OVERFLOW (err u10002))
-(define-constant SUB_OVERFLOW (err u10003))
-(define-constant MUL_OVERFLOW (err u10004))
-(define-constant DIV_OVERFLOW (err u10005))
-(define-constant POW_OVERFLOW (err u10006))
-(define-constant MAX_POW_RELATIVE_ERROR u10000) 
+(define-constant SCALE_UP_OVERFLOW (err u5001))
+(define-constant SCALE_DOWN_OVERFLOW (err u5002))
+(define-constant ADD_OVERFLOW (err u5003))
+(define-constant SUB_OVERFLOW (err u5004))
+(define-constant MUL_OVERFLOW (err u5005))
+(define-constant DIV_OVERFLOW (err u5006))
+(define-constant POW_OVERFLOW (err u5007))
+(define-constant MAX_POW_RELATIVE_ERROR u5008) 
 
 ;; public functions
 ;;
