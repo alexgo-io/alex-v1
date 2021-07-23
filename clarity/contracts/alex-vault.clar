@@ -19,8 +19,23 @@
 (define-data-var pre-loan-balances (list 3 uint) (list))
 (define-data-var fee-amount uint u0)
 
+;; This list does not make sense because all principal has different vault. - sidney
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
+
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
+
+
+(define-map new-balances 
+  { vault-owner: principal }
+  {
+    token-1: (string-ascii 32),
+    balances: uint
+    ;; Token and balances are keep inserted using map-insert 
+  }
+)
+
+
+
 ;; Initialize the tokens-balances map with all the three tokens' balance from 0
 (map-set tokens-balances {token: token-galex-name} { balance: u0})
 (map-set tokens-balances {token: token-usda-name} { balance: u0})
@@ -56,6 +71,7 @@
   )
 )
 
+;; Sets tx-sender's token-balance pair to the token-balance map structure 
 (define-public (note-to-vault
                 (token-trait <ft-trait>))
   (let
@@ -68,32 +84,35 @@
     (ok result)
   )
 )
+
+;; Called when the balance needs to be transfered to vault
+;; Part 1 : Token transferring 
+;; Part 2 : Add the token name and balance to the list 'balances' in the vault. 
 (define-public (transfer-to-vault 
       (sender principal) 
       (recipient principal) 
       (amount uint) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
-      ;; (let 
-      ;;   (
-      ;;     (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
-      ;;     (token-name (unwrap-panic (contract-call? token-trait get-name)))
-      ;;   )
-      ;;   (ok true)
-      ;; )
-      (ok true)
+      (let 
+        (
+          (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
+          (token-name (unwrap-panic (contract-call? token-trait get-name)))
+          (balance-list (unwrap-panic (map-get? new-balances { vault-owner: recipient }) )) ;; Leave as unwrap-panic
+        )
+        
+        ;; Transfering
+        ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
+        (asserts! (is-ok (contract-call? token-trait transfer amount tx-sender recipient none)) transfer-failed-err)
+        
+        ;; Now Put token-name and balance to the list
+        (map-insert new-balances { vault-owner : recipient } { token-1: token-name, balances : amount })
+        
+        (ok true)
+      )
+      ;;(ok true)
     ;; recipient is tx-sender 
     ;; Transfer of Token
-      ;; (token (token-trait))
-      ;; (token-symbol (unwrap-panic (contract-call? token-x-trait get-symbol)))
-      ;; ;; get token name 
-
-      ;; (match (ft-transfer? token-trait amount sender recipient)
-      ;;   response (begin
-      ;;   (print memo)
-      ;;   (ok response))
-      
-      ;;   error (err error))
 
       ;;   ;; This function to be called after every transaction.
       ;;   ;; Check the list whether it has the token symbol already.

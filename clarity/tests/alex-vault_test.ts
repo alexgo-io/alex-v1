@@ -23,8 +23,10 @@ Clarinet.test({
                 types.principal(usdaTokenAddress)
               ], user.address),
             
-            // Tx.contractCall("alex-vault", "get-balances", [
+            //   Tx.contractCall("alex-vault", "note-to-vault", [
+            //     types.principal(usdaTokenAddress)
             //   ], user.address),
+            
 
         ]);
         block.receipts[0].result.expectOk().expectUint(1000000000000);
