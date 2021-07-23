@@ -18,7 +18,6 @@
 
 ;; This list does not make sense because all principal has different vault. - sidney
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
-<<<<<<< HEAD
 
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
@@ -34,8 +33,7 @@
 
 
 
-=======
->>>>>>> cc204096ec798bba80e1b1a07d55d8435bdf5476
+
 ;; Initialize the tokens-balances map with all the three tokens' balance from 0
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 (map-set tokens-balances {token: token-galex-name} { balance: u0})
@@ -76,12 +74,8 @@
     (ok result)
   )
 )
-<<<<<<< HEAD
 
 ;; Sets tx-sender's token-balance pair to the token-balance map structure 
-=======
-;; Should call this function everytime when you change a token's balance
->>>>>>> cc204096ec798bba80e1b1a07d55d8435bdf5476
 (define-public (note-to-vault
                 (token-trait <ft-trait>))
   (let
@@ -93,14 +87,10 @@
     (ok true)
   )
 )
-<<<<<<< HEAD
 
 ;; Called when the balance needs to be transfered to vault
 ;; Part 1 : Token transferring 
 ;; Part 2 : Add the token name and balance to the list 'balances' in the vault. 
-=======
-;; We probably won't need this anymore
->>>>>>> cc204096ec798bba80e1b1a07d55d8435bdf5476
 (define-public (transfer-to-vault 
       (sender principal) 
       (recipient principal) 
@@ -118,6 +108,8 @@
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount tx-sender recipient none)) transfer-failed-err)
         
+        ;; Check whether the token is existing 
+
         ;; Now Put token-name and balance to the list
         (map-insert new-balances { vault-owner : recipient } { token-1: token-name, balances : amount })
         
