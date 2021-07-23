@@ -23,6 +23,6 @@
                         (optional uint)
                     ) (response bool uint))
 
-        (note-to-vault (<ft-trait>) (response bool uint))
+        (update-token-balance (<ft-trait>) (response bool uint))
     )
 )

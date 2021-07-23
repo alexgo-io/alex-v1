@@ -23,7 +23,7 @@ Clarinet.test({
                 types.principal(usdaTokenAddress)
               ], user.address),
             
-            //   Tx.contractCall("alex-vault", "note-to-vault", [
+            //   Tx.contractCall("alex-vault", "update-token-balance", [
             //     types.principal(usdaTokenAddress)
             //   ], user.address),
             
