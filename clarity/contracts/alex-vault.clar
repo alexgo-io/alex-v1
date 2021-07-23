@@ -19,9 +19,6 @@
 ;; This list does not make sense because all principal has different vault. - sidney
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
-(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
-
-
 (define-map new-balances 
   { vault-owner: principal }
   {
@@ -81,9 +78,9 @@
   (let
     (
       (token-name (unwrap-panic (contract-call? token-trait get-name)))
-      (token-balance (unwrap-panic (contract-call? token-trait get-balance tx-sender)))
+      (balance (unwrap-panic (get-balance token-trait)))
     )
-    (map-set tokens-balances { token: token-name } { balance: token-balance })
+    (map-set tokens-balances { token: token-name } { balance: balance })
     (ok true)
   )
 )
