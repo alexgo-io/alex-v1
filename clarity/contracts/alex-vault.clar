@@ -85,10 +85,10 @@
   )
 )
  
-(define-public (transfer-to-vault 
+(define-public (transfer-to-vault
+      (amount uint)  
       (sender principal) 
       (recipient principal) 
-      (amount uint) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
       (let 
