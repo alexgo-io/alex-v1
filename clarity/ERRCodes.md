@@ -6,21 +6,18 @@
 
 ## Pool Related Error
  ### start with u2000
- | Tables        | Are           | Cool  |
+ | Error        | Code         | Reference  |
 | ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
+| pool-already-exists-err    | 2000 | Pool Already Existing |
+| invalid-pool-err     | 2001      |  Accesing invalid Pool  |
+| no-liquidity-err | 2002      |   Liquidity insufficient |
+| invalid-liquidity-err | 2003      |  Accesing Invalid Liquidity feature |
+| too-many-pools-err | 2004      |  Exceeded maximum number of pool |
+| no-fee-x-err | 2005      |   Insufficient fee for Token-X  |
+| no-fee-y-err | 2006      |   Insufficient fee for Token-Y |
+| invalid-token-err | 2007      |  Accesing invalid Token |
+| invalid-balance-err | 2008      |  Accesing invalid balance |
 
- - pool-already-exists-err
- - invalid-pool-err
- - no-liquidity-err
- - invalid-liquidity-err
- - too-many-pools-err
- - no-fee-x-err
- - no-fee-y-err
- - invalid-token-err
- - invalid-balance-err
    
 ## Vault Related Error 
  ### start with u3000
