@@ -43,7 +43,10 @@
  ### start with u4000
   | Error        | Code         | Reference  |
 | ------------- |:-------------:| :-----:|
-| transfer-failed-err    | 4000 | Transfer failed  |
+| weight-sum-err    | 4000 | Sum of weight should be always 1  |
+| max-in-ratio-err    | 4001 | In ratio Error  |
+| max-out-ratio-err    | 4002 | Out ration Error |
+
 
 ## Math Related Error
 ### start with u5000
