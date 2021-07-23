@@ -2,7 +2,10 @@
 
 ## General Error
  ### start with u1000
- - ERR-NOT-AUTHORIZED
+
+ | Error        | Code         | Reference  |
+| ------------- |:-------------:| :-----:|
+| err-not-authorized    | 1000 | Inappropriate principal accessing  |
 
 ## Pool Related Error
  ### start with u2000
@@ -21,19 +24,26 @@
    
 ## Vault Related Error 
  ### start with u3000
- - transfer-failed-err
- - transfer-x-failed-err
- - transfer-y-failed-err
- - insufficient-flash-loan-balance-err 
- - invalid-post-loan-balance-err 
- - user-execute-err
- - transfer-one-by-one-err 
- - none-token-err 
- - get-token-fail 
+ 
+ | Error        | Code         | Reference  |
+| ------------- |:-------------:| :-----:|
+| transfer-failed-err    | 3000 | Transfer failed  |
+| transfer-x-failed-err     | 3001      |  Transfer of Token-X failed  |
+| transfer-y-failed-err | 3002      |   Transfer of Token-Y failed |
+| insufficient-flash-loan-balance-err  | 3003      |  Insufficient Flash Loan balance |
+| invalid-post-loan-balance-err  | 3004      |  Invalid Post loan balance |
+| user-execute-err | 3005      |   User execution error of Flashloan  |
+| transfer-one-by-one-err | 3006      |   Error on Transfer flash loan |
+| none-token-err  | 3007      |  Flash loan none token error |
+| get-token-fail | 3008      |  Token acquiring fail in flash loan |
+
+ 
 
 ## Equation Related Error 
  ### start with u4000
- - 
+  | Error        | Code         | Reference  |
+| ------------- |:-------------:| :-----:|
+| transfer-failed-err    | 4000 | Transfer failed  |
 
 ## Math Related Error
 ### start with u5000
