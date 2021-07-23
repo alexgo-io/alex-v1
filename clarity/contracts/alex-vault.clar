@@ -27,6 +27,11 @@
 (map-set tokens-balances {token: token-ayusda-name} { balance: u0})
 
 
+(define-map pre-loan-balances-map {token: (string-ascii 32) } { balance: uint})
+(map-set pre-loan-balances-map {token: token-galex-name} { balance: u0})
+(map-set pre-loan-balances-map {token: token-usda-name} { balance: u0})
+(map-set pre-loan-balances-map {token: token-ayusda-name} { balance: u0})
+
 
 
 (define-public (get-balance (token <ft-trait>))
@@ -102,54 +107,86 @@
 
 
 ;; flash loan to flash loan user up to 3 tokens of amounts specified
-(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token1 <ft-trait>) (token2 <ft-trait>) (token3  (optional <ft-trait>)) (amount1 uint) (amount2 uint) (amount3 (optional uint)))
+(define-public (flash-loan 
+                (flash-loan-user <flash-loan-user-trait>) 
+                (token1 <ft-trait>) 
+                (token2 <ft-trait>) 
+                (token3  (optional <ft-trait>)) 
+                (amount1 uint) 
+                (amount2 uint) 
+                (amount3 (optional uint)))
   
   (begin 
       ;; TODO: step 1 transfer tokens to user one by one
-      (asserts! (is-ok (transfer-to-user flash-loan-user token1 amount1)) transfer-one-by-one-err)  
-      (asserts! (is-ok (transfer-to-user flash-loan-user token2 amount2)) transfer-one-by-one-err)
+      ;; (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) (err u1000))
+      (asserts! (is-ok (transfer-to-user flash-loan-user token1 amount1)) (err u1001))  
+      (asserts! (is-ok (transfer-to-user flash-loan-user token2 amount2)) (err u1002))
       ;; At least It wouldn't been called when the token3 is none
       (if (and 
             (is-some token3)
             (is-some amount3)
           ) 
-        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) (unwrap-panic amount3))) transfer-one-by-one-err)
+        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) (unwrap-panic amount3))) (err u1003))
         false
        )
     ;; TODO: step 2 call user.execute. the one could do anything then pay the tokens back ,see test-flash-loan-user
       (asserts! (is-ok (contract-call? flash-loan-user execute token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
     ;; TODO: step 3 check if the balance is incorrect
-      (asserts! (is-ok (after-pay-back-check token1 u0)) transfer-one-by-one-err)
-      (asserts! (is-ok (after-pay-back-check token2 u1)) transfer-one-by-one-err)
+      (asserts! (is-ok (after-pay-back-check token1)) transfer-one-by-one-err)
+      (asserts! (is-ok (after-pay-back-check token2)) transfer-one-by-one-err)
       (if (is-some token3) 
         (asserts! (is-ok (after-pay-back-check (unwrap! token3 none-token-err) u2)) transfer-one-by-one-err)
         false
        )
-      ;; (asserts! (is-ok (after-pay-back-check (unwrap! token3 none-token-err) u2)) transfer-one-by-one-err)
       (ok true)
   )
 )
 
 
-(define-private (transfer-to-user (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint))
-  
+(define-private (transfer-to-user (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint)) 
   (begin
-    (var-set pre-loan-balance (unwrap-panic (contract-call? token get-balance tx-sender)))
-    ;; TODO: calculate this fee later
-    ;; (var-set fee-amount (calculateFlashLoanFeeAmount amount))
-    (append (var-get pre-loan-balances) (var-get pre-loan-balance))
-    ;;Make sure the token have enough balance to lend
-    (asserts! (>= (var-get pre-loan-balance) amount) insufficient-flash-loan-balance-err)
-    (asserts! (is-ok (contract-call? token transfer amount (as-contract tx-sender) (contract-of flash-loan-user) none)) transfer-failed-err)  
+    (let 
+      (
+        (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+        (token-name (unwrap-panic (contract-call? token get-name)))
+      )
+      (map-set pre-loan-balances-map { token: token-name } { balance: pre-b })
+      (asserts! (>= pre-b amount) insufficient-flash-loan-balance-err)
+    )
+    ;; (let 
+    ;;   (
+    ;;     (token-name (unwrap-panic (contract-call? token get-name)))
+    ;;     (tb-1 (default-to u0 (get balance (map-get? pre-loan-balances-map { token: token-name }))))
+    ;;   )
+    ;;   (print token-name)
+    ;;   (print tb-1)
+    ;; )
+    ;; ;; TODO: calculate this fee later
+    ;; ;; (var-set fee-amount (calculateFlashLoanFeeAmount amount))
+    
+    (asserts! (is-ok (contract-call? token transfer amount tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+    ;; (let 
+    ;;   (
+    ;;     (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+    ;;     (token-name (unwrap-panic (contract-call? token get-name)))
+    ;;   )
+    ;;   (print u"**********************************************")
+    ;;   (print pre-b)
+    ;; )  
     (ok true)
   )
 )
 
-(define-private (after-pay-back-check (token <ft-trait>) (index uint))
+(define-private (after-pay-back-check (token <ft-trait>))
   (begin 
-    (var-set post-loan-balance (unwrap-panic (contract-call? token get-balance tx-sender)))
-    (var-set pre-loan-balance (unwrap-panic (element-at (var-get pre-loan-balances) index)))
-    (asserts! (>= (var-get post-loan-balance) (var-get pre-loan-balance)) invalid-post-loan-balance-err)
+    (let 
+      (
+        (post-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+        (token-name (unwrap-panic (contract-call? token get-name)))
+        (pre-b (default-to u0 (get balance (map-get? pre-loan-balances-map { token: token-name }))))
+      )
+      (asserts! (>= post-b pre-b) invalid-post-loan-balance-err)
+    )
     (ok true)
   )
 )
