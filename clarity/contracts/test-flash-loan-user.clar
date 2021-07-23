@@ -1,8 +1,8 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(define-constant transfer-failed-err (err u72))
 (define-constant none-token-err (err u103))
+(define-constant transfer-failed-err (err u3000))
 
 (define-public (execute 
                     (token1 <ft-trait>) 

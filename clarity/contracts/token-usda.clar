@@ -10,7 +10,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 
 ;; errors
-(define-constant ERR-NOT-AUTHORIZED u14401)
+(define-constant err-not-authorized u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions

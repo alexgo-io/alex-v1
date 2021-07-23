@@ -8,18 +8,18 @@
 ;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant invalid-pool-err (err u201))
-(define-constant no-liquidity-err (err u61))
-(define-constant invalid-liquidity-err (err u202))
-(define-constant transfer-x-failed-err (err u72))
-(define-constant transfer-y-failed-err (err u73))
-(define-constant pool-already-exists-err (err u69))
-(define-constant too-many-pools-err (err u68))
-(define-constant percent-greater-than-one (err u5))
-(define-constant invalid-balance-err (err u6))
-(define-constant invalid-token-err (err u7))
-(define-constant no-fee-x-err (err u8))
-(define-constant no-fee-y-err (err u9))
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant invalid-balance-err (err u2008))
+(define-constant invalid-token-err (err u2007))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
 
 ;; data maps and vars
 (define-map pools-map
@@ -165,7 +165,7 @@
         
         ;; Experiment
         ;; Transfer to vault
-        ;; asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of token-x-trait) none)) transfer-x-failed-err)
+        ;; asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
 
         ;; send y to vault
         (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)

@@ -43,11 +43,11 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-(define-constant X_OUT_OF_BOUNDS (err u10100))
-(define-constant Y_OUT_OF_BOUNDS (err u10101))
-(define-constant PRODUCT_OUT_OF_BOUNDS (err u10102))
-(define-constant INVALID_EXPONENT (err u10103))
-(define-constant OUT_OF_BOUNDS (err u10104))
+(define-constant X_OUT_OF_BOUNDS (err u5009))
+(define-constant Y_OUT_OF_BOUNDS (err u5010))
+(define-constant PRODUCT_OUT_OF_BOUNDS (err u5011))
+(define-constant INVALID_EXPONENT (err u5012))
+(define-constant OUT_OF_BOUNDS (err u5013))
 
 ;; private functions
 ;;

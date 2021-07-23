@@ -7,7 +7,8 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant ERR-NOT-AUTHORIZED u1401)
+(define-constant err-not-authorized u1000)
+
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (match (ft-transfer? alex-usda amount sender recipient)
