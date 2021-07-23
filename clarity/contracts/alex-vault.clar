@@ -16,26 +16,14 @@
 
 (define-data-var fee-amount uint u0)
 
-;; This list does not make sense because all principal has different vault. - sidney
+;; This Vault should note all the transferred token balance 
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
 
-(define-map new-balances 
-  { vault-owner: principal }
-  {
-    token-1: (string-ascii 32),
-    balances: uint
-    ;; Token and balances are keep inserted using map-insert 
-  }
-)
-
-
-
-
 ;; Initialize the tokens-balances map with all the three tokens' balance from 0
-(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
+;;(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 (map-set tokens-balances {token: token-galex-name} { balance: u0})
 (map-set tokens-balances {token: token-usda-name} { balance: u0})
 (map-set tokens-balances {token: token-ayusda-name} { balance: u0})
@@ -75,7 +63,6 @@
   )
 )
 
-;; Sets tx-sender's token-balance pair to the token-balance map structure 
 (define-public (note-to-vault
                 (token-trait <ft-trait>))
   (let
@@ -101,17 +88,18 @@
         (
           (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
           (token-name (unwrap-panic (contract-call? token-trait get-name)))
-          (balance-list (unwrap-panic (map-get? new-balances { vault-owner: recipient }) )) ;; Leave as unwrap-panic
+          (vault-balances (var-get balances)) ;; list 
         )
         
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount tx-sender recipient none)) transfer-failed-err)
         
+        ;; Check the list 
         ;; Check whether the token is existing 
 
         ;; Now Put token-name and balance to the list
-        (map-insert new-balances { vault-owner : recipient } { token-1: token-name, balances : amount })
+        ;;(map-insert new-balances { vault-owner : recipient } { token-1: token-name, balances : amount })
         
         (ok true)
       )
