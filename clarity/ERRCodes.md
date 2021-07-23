@@ -7,7 +7,7 @@
 ## Pool Related Error
  ### start with u2000
  | Error        | Code         | Reference  |
-| ------------- |:-------------:| -----:|
+| ------------- |:-------------:| :-----:|
 | pool-already-exists-err    | 2000 | Pool Already Existing |
 | invalid-pool-err     | 2001      |  Accesing invalid Pool  |
 | no-liquidity-err | 2002      |   Liquidity insufficient |
