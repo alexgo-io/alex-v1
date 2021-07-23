@@ -14,19 +14,16 @@
 (define-constant none-token-err (err u3007))
 (define-constant get-token-fail (err u3008))
 
-(define-data-var pre-loan-balance uint u0)
-(define-data-var post-loan-balance uint u0)
-(define-data-var pre-loan-balances (list 3 uint) (list))
 (define-data-var fee-amount uint u0)
 
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
-(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 ;; Initialize the tokens-balances map with all the three tokens' balance from 0
+(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 (map-set tokens-balances {token: token-galex-name} { balance: u0})
 (map-set tokens-balances {token: token-usda-name} { balance: u0})
 (map-set tokens-balances {token: token-ayusda-name} { balance: u0})
 
-
+;; Initialize the pre-loan-balances-map map with all the three tokens' balance from 0
 (define-map pre-loan-balances-map {token: (string-ascii 32) } { balance: uint})
 (map-set pre-loan-balances-map {token: token-galex-name} { balance: u0})
 (map-set pre-loan-balances-map {token: token-usda-name} { balance: u0})
@@ -60,7 +57,7 @@
     (ok result)
   )
 )
-
+;; Should call this function everytime when you change a token's balance
 (define-public (note-to-vault
                 (token-trait <ft-trait>))
   (let
@@ -72,6 +69,7 @@
     (ok true)
   )
 )
+;; We probably won't need this anymore
 (define-public (transfer-to-vault 
       (sender principal) 
       (recipient principal) 
@@ -105,7 +103,6 @@
       ;; ;;(append balances token-symbol)
 )
 
-
 ;; flash loan to flash loan user up to 3 tokens of amounts specified
 (define-public (flash-loan 
                 (flash-loan-user <flash-loan-user-trait>) 
@@ -118,15 +115,14 @@
   
   (begin 
       ;; TODO: step 1 transfer tokens to user one by one
-      ;; (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) (err u1000))
-      (asserts! (is-ok (transfer-to-user flash-loan-user token1 amount1)) (err u1001))  
-      (asserts! (is-ok (transfer-to-user flash-loan-user token2 amount2)) (err u1002))
+      (asserts! (is-ok (transfer-to-user flash-loan-user token1 amount1)) transfer-one-by-one-err)  
+      (asserts! (is-ok (transfer-to-user flash-loan-user token2 amount2)) transfer-one-by-one-err)
       ;; At least It wouldn't been called when the token3 is none
       (if (and 
             (is-some token3)
             (is-some amount3)
           ) 
-        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) (unwrap-panic amount3))) (err u1003))
+        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) (unwrap-panic amount3))) transfer-one-by-one-err)
         false
        )
     ;; TODO: step 2 call user.execute. the one could do anything then pay the tokens back ,see test-flash-loan-user

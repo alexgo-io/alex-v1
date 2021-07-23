@@ -1,7 +1,7 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(define-constant none-token-err (err u103))
+(define-constant none-token-err (err u3007))
 (define-constant transfer-failed-err (err u3000))
 
 (define-public (execute 
@@ -32,10 +32,6 @@
             (asserts! (is-ok (transfer-to-user (unwrap! token3 none-token-err) (unwrap-panic amount3) the-vault)) transfer-failed-err)
             false
         )
-        ;; (match token3
-        ;;     (contract-call? token3 transfer amount3 (as-contract tx-sender) the-vault none)
-        ;;     err transfer-failed-err
-        ;; )
         (ok true)
     )
 )
