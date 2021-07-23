@@ -3,13 +3,13 @@
 ## General Error
  ### start with u1000
 
- | Error        | Code         | Reference  |
+ | Error        | Code         | Description  |
 | ------------- |:-------------:| :-----:|
 | err-not-authorized    | 1000 | Inappropriate principal accessing  |
 
 ## Pool Related Error
  ### start with u2000
- | Error        | Code         | Reference  |
+ | Error        | Code         | Description  |
 | ------------- |:-------------:| :-----:|
 | pool-already-exists-err    | 2000 | Pool Already Existing |
 | invalid-pool-err     | 2001      |  Accesing invalid Pool  |
@@ -25,7 +25,7 @@
 ## Vault Related Error 
  ### start with u3000
  
- | Error        | Code         | Reference  |
+ | Error        | Code         | Description  |
 | ------------- |:-------------:| :-----:|
 | transfer-failed-err    | 3000 | General transfer failed  |
 | transfer-x-failed-err     | 3001      |  Transfer of Token-X failed  |
@@ -41,7 +41,7 @@
 
 ## Equation Related Error 
  ### start with u4000
-  | Error        | Code         | Reference  |
+  | Error        | Code         | Description  |
 | ------------- |:-------------:| :-----:|
 | weight-sum-err    | 4000 | Sum of weight should be always 1  |
 | max-in-ratio-err    | 4001 | In ratio Error  |
@@ -50,7 +50,7 @@
 
 ## Math Related Error
 ### start with u5000
-  | Error        | Code         | Reference  |
+  | Error        | Code         | Description  |
 | ------------- |:-------------:| :-----:|
 | percent-greater-than-one    | 5000 | percent value exceeded 1  |
 | SCALE_UP_OVERFLOW    | 5001 | scale up overflow error  |
