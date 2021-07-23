@@ -27,7 +27,7 @@
  
  | Error        | Code         | Reference  |
 | ------------- |:-------------:| :-----:|
-| transfer-failed-err    | 3000 | Transfer failed  |
+| transfer-failed-err    | 3000 | General transfer failed  |
 | transfer-x-failed-err     | 3001      |  Transfer of Token-X failed  |
 | transfer-y-failed-err | 3002      |   Transfer of Token-Y failed |
 | insufficient-flash-loan-balance-err  | 3003      |  Insufficient Flash Loan balance |
@@ -50,17 +50,20 @@
 
 ## Math Related Error
 ### start with u5000
-- percent-greater-than-one
-- SCALE_UP_OVERFLOW (err u10000)
-- SCALE_DOWN_OVERFLOW (err u10001)
-- ADD_OVERFLOW (err u10002)
-- SUB_OVERFLOW (err u10003)
-- MUL_OVERFLOW (err u10004)
-- DIV_OVERFLOW (err u10005)
-- POW_OVERFLOW (err u10006)
-- MAX_POW_RELATIVE_ERROR (err u10000)
-- X_OUT_OF_BOUNDS (err u10100)
-- Y_OUT_OF_BOUNDS (err u10101)
-- PRODUCT_OUT_OF_BOUNDS (err u10102)
-- INVALID_EXPONENT (err u10103)
-- OUT_OF_BOUNDS (err u10104)
+  | Error        | Code         | Reference  |
+| ------------- |:-------------:| :-----:|
+| percent-greater-than-one    | 5000 | percent value exceeded 1  |
+| SCALE_UP_OVERFLOW    | 5001 | scale up overflow error  |
+| SCALE_DOWN_OVERFLOW    | 5002 | scale down overflow error |
+| ADD_OVERFLOW    | 5003 | addition overflow  |
+| SUB_OVERFLOW   | 5004 | subtraction overflow  |
+| MUL_OVERFLOW    | 5005 | multiplication overflow |
+| DIV_OVERFLOW    | 5006 | division overflow  |
+| POW_OVERFLOW    | 5007 | power operation overflow  |
+| MAX_POW_RELATIVE_ERROR   | 5008 | max pow relative error |
+| X_OUT_OF_BOUNDS     | 5009 | parameter x out of bounds |
+| Y_OUT_OF_BOUNDS    | 5010 | parameter y out of bounds  |
+| PRODUCT_OUT_OF_BOUNDS    | 5011 | product of x and y out of bounds  |
+| INVALID_EXPONENT   | 5012 | exponential error |
+| OUT_OF_BOUNDS   | 5003 | general out of bounds error |
+
