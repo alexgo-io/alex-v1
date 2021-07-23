@@ -1,12 +1,8 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-
+(define-constant none-token-err (err u3007))
 (define-constant transfer-failed-err (err u3000))
-
-(define-map names-map { name: (string-ascii 12)} { id: int })
-
-(map-set names-map { name: "blockstack" } { id: 1337 })
 
 (define-public (execute 
                     (token1 <ft-trait>) 
@@ -29,16 +25,19 @@
         ;; once you are done, return the loan
         (asserts! (is-ok (contract-call? token1 transfer amount1 (as-contract tx-sender) the-vault none)) transfer-failed-err)  
         (asserts! (is-ok (contract-call? token2 transfer amount2 (as-contract tx-sender) the-vault none)) transfer-failed-err)  
-        ;; (match token3
-        ;;     (contract-call? token3 transfer amount3 (as-contract tx-sender) the-vault none)
-        ;;     err transfer-failed-err
-        ;; )
+         (if (and 
+                (is-some token3)
+                (is-some amount3)
+            ) 
+            (asserts! (is-ok (transfer-to-user (unwrap! token3 none-token-err) (unwrap-panic amount3) the-vault)) transfer-failed-err)
+            false
+        )
         (ok true)
     )
 )
-(define-public (test (msg (optional (string-utf8 32)))) 
-    (begin 
-        (print msg) 
-        (ok true)
-    )
+(define-private (transfer-to-user (token <ft-trait>) (amount uint) (to principal))
+  (begin
+    (asserts! (is-ok (contract-call? token transfer amount (as-contract tx-sender) to none)) transfer-failed-err)  
+    (ok true)
+  )
 )

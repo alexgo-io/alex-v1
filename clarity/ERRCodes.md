@@ -65,5 +65,5 @@
 | Y_OUT_OF_BOUNDS    | 5010 | parameter y out of bounds  |
 | PRODUCT_OUT_OF_BOUNDS    | 5011 | product of x and y out of bounds  |
 | INVALID_EXPONENT   | 5012 | exponential error |
-| OUT_OF_BOUNDS   | 5003 | general out of bounds error |
+| OUT_OF_BOUNDS   | 5013 | general out of bounds error |
 
