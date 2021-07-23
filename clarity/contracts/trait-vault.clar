@@ -13,15 +13,7 @@
         (get-balances () (response (list 2000 {token: (string-ascii 32), balance: uint}) uint))
 
         ;; flash loan to flash loan user up to 3 tokens of amounts specified
-        (flash-loan (
-                        <flash-loan-user-trait> 
-                        <ft-trait> 
-                        <ft-trait> 
-                        (optional <ft-trait>) 
-                        uint 
-                        uint 
-                        (optional uint)
-                    ) (response bool uint))
+        (flash-loan (<flash-loan-user-trait> <ft-trait> <ft-trait> (optional <ft-trait>) uint uint (optional uint)) (response bool uint))
 
         (update-token-balance (<ft-trait>) (response bool uint))
     )
