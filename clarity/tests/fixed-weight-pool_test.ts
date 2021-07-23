@@ -69,12 +69,12 @@ Clarinet.test({
 
         // check whether weighted equation returns an appropriate value.
         result = FWPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 1000);
-        result.expectOk().expectUint(195097600)
+        result.expectOk().expectUint(195587000)
         
         // deployer swaps alextoken with usda token
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 200);
         result.expectOk().expectList()[0].expectUint(200000000); 
-        result.expectOk().expectList()[1].expectUint(38844200); 
+        result.expectOk().expectList()[1].expectUint(39341400); 
         // TODO : Operation illustration
 
     },

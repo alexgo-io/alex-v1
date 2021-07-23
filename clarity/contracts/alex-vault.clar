@@ -84,10 +84,7 @@
     (ok true)
   )
 )
-
-;; Called when the balance needs to be transfered to vault
-;; Part 1 : Token transferring 
-;; Part 2 : Add the token name and balance to the list 'balances' in the vault. 
+ 
 (define-public (transfer-to-vault 
       (sender principal) 
       (recipient principal) 
@@ -104,23 +101,10 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount tx-sender recipient none)) transfer-failed-err)
-        
-        ;; Check the list 
-        ;; Check whether the token is existing 
-
-        ;; Now Put token-name and balance to the list
-        ;;(map-insert new-balances { vault-owner : recipient } { token-1: token-name, balances : amount })
+        (asserts! (is-ok (update-token-balance token-trait)) transfer-failed-err)
         
         (ok true)
       )
-      ;;(ok true)
-    ;; recipient is tx-sender 
-    ;; Transfer of Token
-
-      ;;   ;; This function to be called after every transaction.
-      ;;   ;; Check the list whether it has the token symbol already.
-      ;;   ;; Save token symbol to the list 
-      ;; ;;(append balances token-symbol)
 )
 
 ;; flash loan to flash loan user up to 3 tokens of amounts specified

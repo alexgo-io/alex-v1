@@ -28,21 +28,21 @@ Clarinet.test({
             types.uint(testWeightX),
             types.uint(testWeightY),
             types.uint(20000000)], wallet_1.address);
-        call.result.expectOk().expectUint(16658325)
+        call.result.expectOk().expectUint(16662485)
 
         call = chain.callReadOnlyFn("weighted-equation", "get-x-given-y", [types.uint(100000000),
             types.uint(100000000),
             types.uint(testWeightX),
             types.uint(testWeightY),
             types.uint(20000000)], wallet_1.address);
-        call.result.expectOk().expectUint(25012494)
+        call.result.expectOk().expectUint(25006254)
     
         call = chain.callReadOnlyFn("weighted-equation", "get-x-given-price", [types.uint(100000000),
             types.uint(100000000),
             types.uint(testWeightX),
             types.uint(testWeightY),
             types.uint(testPrice)], wallet_1.address);
-        call.result.expectOk().expectUint(447258301)
+        call.result.expectOk().expectUint(447235976)
 
         call = chain.callReadOnlyFn("weighted-equation", "get-token-given-position", [types.uint(100000000),
             types.uint(100000000),

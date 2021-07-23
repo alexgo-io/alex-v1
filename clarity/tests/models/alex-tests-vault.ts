@@ -21,9 +21,7 @@ import {
           types.principal(token)
         ], this.deployer.address);
       }
-    // get balances
 
-    //flash loan
   
   }
   

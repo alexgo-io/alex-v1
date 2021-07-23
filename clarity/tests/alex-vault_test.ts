@@ -12,7 +12,7 @@ const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
 
 
 Clarinet.test({
-    name: " VAULT : get Balance ",
+    name: "VAULT : get Balance ",
     async fn(chain: Chain, accounts: Map<string, Account>) {
  
         let user = accounts.get("deployer")!;
@@ -22,14 +22,30 @@ Clarinet.test({
             Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(usdaTokenAddress)
               ], user.address),
+
+              Tx.contractCall("alex-vault", "get-balance", [
+                types.principal(gAlexTokenAddress)
+              ], user.address),
+
+              Tx.contractCall("alex-vault", "update-token-balance", [
+                types.principal(usdaTokenAddress)
+              ], user.address),
+
+              Tx.contractCall("alex-vault", "update-token-balance", [
+                types.principal(gAlexTokenAddress)
+              ], user.address),
+
+              Tx.contractCall("alex-vault", "get-balances", [
+              ], user.address),
             
-            //   Tx.contractCall("alex-vault", "update-token-balance", [
-            //     types.principal(usdaTokenAddress)
-            //   ], user.address),
             
 
         ]);
         block.receipts[0].result.expectOk().expectUint(1000000000000);
-        //block.receipts[1].result.expectOk().expectUint(1000000000000);
+        block.receipts[1].result.expectOk().expectUint(1000000000000);
+        block.receipts[2].result.expectOk();
+        block.receipts[3].result.expectOk();
+        block.receipts[4].result.expectOk().expectList();
+        
     },
 });
