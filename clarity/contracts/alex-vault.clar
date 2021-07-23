@@ -62,10 +62,9 @@
     (
       (token-name (unwrap-panic (contract-call? token-trait get-name)))
       (token-balance (unwrap-panic (contract-call? token-trait get-balance tx-sender)))
-      (result (list))
     )
     (map-set tokens-balances { token: token-name } { balance: token-balance })
-    (ok result)
+    (ok true)
   )
 )
 (define-public (transfer-to-vault 
@@ -110,8 +109,11 @@
       (asserts! (is-ok (transfer-to-user flash-loan-user token1 amount1)) transfer-one-by-one-err)  
       (asserts! (is-ok (transfer-to-user flash-loan-user token2 amount2)) transfer-one-by-one-err)
       ;; At least It wouldn't been called when the token3 is none
-      (if (is-some token3) 
-        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) amount2)) transfer-one-by-one-err)
+      (if (and 
+            (is-some token3)
+            (is-some amount3)
+          ) 
+        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) (unwrap-panic amount3))) transfer-one-by-one-err)
         false
        )
     ;; TODO: step 2 call user.execute. the one could do anything then pay the tokens back ,see test-flash-loan-user
