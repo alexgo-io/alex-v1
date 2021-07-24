@@ -19,7 +19,9 @@
 
 ## Developers
 
-* [UML Diagrams](developers/diagrams/README.md)
-  * [Use Case](developers/diagrams/protocol-use-case.md)
-  * [Class Diagram](developers/diagrams/class-diagram.md)
+* [Smart Contracts](developers/smart-contracts/README.md)
+  * [APIs](developers/smart-contracts/apis.md)
+  * [UML Diagrams](developers/smart-contracts/diagrams/README.md)
+    * [Use Case](developers/smart-contracts/diagrams/protocol-use-case.md)
+    * [Class Diagram](developers/smart-contracts/diagrams/class-diagram.md)
 
