@@ -23,7 +23,8 @@ Pool errors starts with 2000.
 | no-fee-y-err | 2006 | Insufficient fee for Token-Y |
 | invalid-token-err | 2007 | Accesing invalid Token |
 | invalid-balance-err | 2008 | Accesing invalid balance |
-| invalid-expiry | 2009 | expiry &gt; max-expiry |
+| invalid-expiry-err | 2009 | expiry &gt; max-expiry |
+| already-expiry-err | 2010 | current block-height &gt; expiry |
 
 ## Vault Error
 
