@@ -1,6 +1,6 @@
 # Overview
 
-ALEX allows for implementation of arbitrary trading strategies and borrows heavily from [Balancer V2](https://docs.balancer.fi).
+ALEX allows for implementation of arbitrary trading strategies and borrows from [Balancer V2](https://docs.balancer.fi).
 
 Equation abstracts rebalancing and market making logic, while Pool encapsulates the value of a strategy. Pool abstraction allows aggregation of the assets of all ALEX pools into a single vault, bringing many advantages over traditional DEX architecture.
 

@@ -2,8 +2,6 @@
 
 Vault holds and manages the assets of all ALEX pools. The separation of pool and vault has many benefits including, among others, cheaper transaction costs for users and quicker learning curve for developers when building custom pools on ALEX.
 
-![Vault Use Case](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-arbitrageur.svg)
-
 ## Flash Loan
 
 Aggregating the assets of all ALEX pools into a single vault allows for the offering of Flash Loan, [popularized by AAVE](https://aave.com/flash-loans/).

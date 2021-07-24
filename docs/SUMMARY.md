@@ -12,11 +12,14 @@
 * [Liquidity Bootstrapping Pool](protocol/liquidity-bootstrapping-pool.md)
 * [Vault](protocol/vault.md)
 * [Yield Farming on ALEX](protocol/yield-farming-on-alex.md)
-* [Diagrams](protocol/diagrams/README.md)
-  * [Use Case](protocol/diagrams/protocol-use-case.md)
-  * [Class Diagram](protocol/diagrams/class-diagram.md)
 
 ## Whitepaper
 
 * [Automated Market Making of ALEX](whitepaper/automated-market-making-of-alex.md)
+
+## Developers
+
+* [UML Diagrams](developers/diagrams/README.md)
+  * [Use Case](developers/diagrams/protocol-use-case.md)
+  * [Class Diagram](developers/diagrams/class-diagram.md)
 

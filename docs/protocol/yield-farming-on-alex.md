@@ -4,7 +4,7 @@ A high LTV \(even on a static collateral\) can be offered between ayTokens of di
 
 ![Yield Farming Use Case](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-yield-farming.svg)
 
-For example, 1. Rachel has 100 BTC. 2. Rachel spends 100 BTC and buys ayBTC-1y. She uses it as collateral to borrow ayBTC-O/N at 90% LTV. 3. She sells the borrowed ayBTC-O/N \(from \(2\)\) and buys ayBTC-1y. She uses it as collateral to borrow ayBTC-O/N at 90% LTV. 4. She repeats \(3\).
+For example, Rachel spends 100 BTC and buys ayBTC-1y. She uses it as collateral to borrow ayBTC-O/N at 90% LTV. She then sells the borrowed ayBTC-O/N and buys more ayBTC-1y. She uses it as collateral to borrow ayBTC-O/N at 90% LTV. She repeats this process.
 
 If 1y APY is 10% and O/N APY is 5%, the above "yield farming" results in APY approaching 55%.
 
