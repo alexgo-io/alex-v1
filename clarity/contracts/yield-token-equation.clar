@@ -28,6 +28,7 @@
 ;; TODO concentrated liquidity (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#concentrated-liquidity)
 ;; TODO add fee (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#transaction-cost-on-notional-and-yield)
 ;; TODO t needs to normalised relative to the current block height
+;; TODO get-x-given-yield
 
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (expiry uint) (dx uint))
     ;; TODO add fee
