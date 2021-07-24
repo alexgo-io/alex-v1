@@ -143,9 +143,13 @@
 
             ;; TODO use yield-token-pool as the price oracle
             ;; BUT wouldn't this be circular at inception?
-            (spot ONE_8)
-            ;; TODO t needs to normalised relative to the current block height
-            (t ONE_8)
+            (spot ONE_8)            
+            (now (unwrap-panic (contract-call? .math-fixed-point mul-down block-height ONE_8)))
+
+            ;; assume 10mins per block - something to be reviewed
+            (t (unwrap-panic (contract-call? .math-fixed-point div-down 
+                (unwrap-panic (contract-call? .math-fixed-point sub-fixed expiry now))  
+                (unwrap-panic (contract-call? .math-fixed-point mul-down u52560 ONE_8)))))            
 
             ;; TODO APYs need to be calculated from the prevailing yield token price.
             ;; TODO ln(S/K) approximated as (S/K - 1)

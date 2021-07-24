@@ -1,5 +1,3 @@
-;;(impl-trait .trait-pool.pool-trait)
-
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
@@ -20,7 +18,7 @@
 (define-constant invalid-token-err (err u2007))
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
-(define-constant invalid-expiry (err u2009))
+(define-constant invalid-expiry-err (err u2009))
 (define-constant fixed-point-err (err 5014))
 
 ;; data maps and vars
@@ -63,8 +61,8 @@
             ;;(now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) fixed-point-err)) ;; convert current block-height to fixed point integer
             (now (unwrap-panic (contract-call? .math-fixed-point mul-down block-height ONE_8))) ;; convert current block-height to fixed point integer
         )
-        (asserts! (> (var-get max-expiry) expiry) invalid-expiry)
-        (asserts! (> (var-get max-expiry) now) invalid-expiry)
+        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
 
         ;;(ok (unwrap! (contract-call? .math-fixed-point div-down 
         ;;        (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) fixed-point-err) 
