@@ -269,7 +269,7 @@ Similar to the case of 0% floor, minting or burning coins would result in invari
 
 We aim to show here how virtual token is able to assist liquidity providers to efficiently manage capital.
 
-![Figure 2](../.gitbook/assets/cectable2%20%281%29.png)
+![Figure 2](../.gitbook/assets/cectable2.png)
 
 In Figure 2, assume lower bound is 0%, whereas upper bound is 50%. We also set $$t$$= 0.5 and $$L$$= 20. If interest rate is 0%, $$L$$= 20 means holding equal amount of Token and ayToken of 100 each $$\left(100^{0.5}+100^{0.5}=20\right)$$. The figure compares actual holding of Token and ayToken with and without cap and floor.
 
@@ -355,7 +355,7 @@ $$
 \end{split}
 $$
 
-![Figure 3](../.gitbook/assets/liquidity%20%282%29.png)
+![Figure 3](../.gitbook/assets/liquidity%20%282%29%20%282%29.png)
 
 Figure 3 plots $$L_{\text{Uniswap}}$$ against interest rate $$r$$ regarding various levels of $$t$$. When $$0<t<1$$, $$L_{\text{Uniswap}}$$ is symmetric around 0% at which the maximum reaches . This is because
 
