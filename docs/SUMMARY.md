@@ -24,4 +24,5 @@
   * [UML Diagrams](developers/smart-contracts/diagrams/README.md)
     * [Use Case](developers/smart-contracts/diagrams/protocol-use-case.md)
     * [Class Diagram](developers/smart-contracts/diagrams/class-diagram.md)
+  * [Error Codes](developers/smart-contracts/error-codes.md)
 
