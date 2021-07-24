@@ -20,7 +20,10 @@
 ## Developers
 
 * [Smart Contracts](developers/smart-contracts/README.md)
-  * [APIs](developers/smart-contracts/apis.md)
+  * [APIs](developers/smart-contracts/apis/README.md)
+    * [Vault](developers/smart-contracts/apis/vault.md)
+    * [Equations](developers/smart-contracts/apis/equations.md)
+    * [Pools](developers/smart-contracts/apis/pools.md)
   * [UML Diagrams](developers/smart-contracts/diagrams/README.md)
     * [Use Case](developers/smart-contracts/diagrams/protocol-use-case.md)
     * [Class Diagram](developers/smart-contracts/diagrams/class-diagram.md)

@@ -23,6 +23,8 @@ Pool errors starts with 2000.
 | no-fee-y-err | 2006 | Insufficient fee for Token-Y |
 | invalid-token-err | 2007 | Accesing invalid Token |
 | invalid-balance-err | 2008 | Accesing invalid balance |
+| invalid-expiry-err | 2009 | expiry &gt; max-expiry |
+| already-expiry-err | 2010 | current block-height &gt; expiry |
 
 ## Vault Error
 
@@ -70,4 +72,8 @@ Math error starts with 5000.
 | PRODUCT\_OUT\_OF\_BOUNDS | 5011 | product of x and y out of bounds |
 | INVALID\_EXPONENT | 5012 | exponential error |
 | OUT\_OF\_BOUNDS | 5013 | general out of bounds error |
+| fixed-point-err | 5014 | catch-all for math-fixed-point errors |
+|  |  |  |
+
+
 
