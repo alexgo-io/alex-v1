@@ -27,16 +27,12 @@
 
 ;; TODO concentrated liquidity (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#concentrated-liquidity)
 ;; TODO add fee (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#transaction-cost-on-notional-and-yield)
-;; TODO t needs to normalised relative to the current block height
 ;; TODO get-x-given-yield
 
-(define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (expiry uint) (dx uint))
-    ;; TODO add fee
-    ;; TODO t needs to normalised relative to the current block height
+(define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
     (let 
         (
-            (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))            
-            (t ONE_8)
+            (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
@@ -50,13 +46,10 @@
     )
 )
 
-(define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (expiry uint) (dy uint))
-    ;; TODO add fee
-    ;; TODO t needs to normalised relative to the current block height
+(define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
     (let 
         (
             (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))            
-            (t ONE_8)
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
@@ -73,12 +66,10 @@
     )
 )
 
-(define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (expiry uint) (price uint))
+(define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (t uint) (price uint))
     ;; TODO add fee
     (let 
         (
-            ;; TODO t needs to normalised relative to the current block height
-            (t ONE_8)
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
             (numer (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 
                                     (unwrap-panic (contract-call? .math-fixed-point pow-down 
@@ -96,11 +87,9 @@
    )
 )
 
-(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (expiry uint) (total-supply uint) (dx uint))
+(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))
     (let
         (
-            ;; TODO t needs to normalised relative to the current block height
-            (t ONE_8)
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
 
             ;; if total-supply is zero, we initialise to balance-x == balance-y, i.e. r = 0%
@@ -128,7 +117,7 @@
 )
 
 ;; 
-(define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (expiry uint) (total-supply uint) (token uint))
+(define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
     (let
         (
             (token-div-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
@@ -140,6 +129,6 @@
    )
 )
 
-(define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (expiry uint) (total-supply uint) (token uint))
-    (get-position-given-mint balance-x balance-y expiry total-supply token)
+(define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
+    (get-position-given-mint balance-x balance-y t total-supply token)
 )
