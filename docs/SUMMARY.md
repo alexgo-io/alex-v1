@@ -21,13 +21,10 @@
 
 * [Smart Contracts](developers/smart-contracts/README.md)
   * [APIs](developers/smart-contracts/apis/README.md)
+    * [Pools](developers/smart-contracts/apis/pools.md)
     * [Vault](developers/smart-contracts/apis/vault.md)
   * [UML Diagrams](developers/smart-contracts/diagrams/README.md)
     * [Use Case](developers/smart-contracts/diagrams/protocol-use-case.md)
     * [Class Diagram](developers/smart-contracts/diagrams/class-diagram.md)
   * [Error Codes](developers/smart-contracts/error-codes.md)
-
----
-
-* [Pools](pools.md)
 
