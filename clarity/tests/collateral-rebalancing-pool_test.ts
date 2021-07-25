@@ -87,16 +87,16 @@ Clarinet.test({
             types.principal(usdaTokenAddress),
             types.uint(expiry)
             ], wallet_1.address);
-        call.result.expectOk().expectUint(30831275)
+        call.result.expectOk().expectUint(30831610)
         
         // Check whether internal weighted equation is working well - internal test
         result = CRPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 1000000);
-        result.expectOk().expectUint(780072)
+        result.expectOk().expectUint(780084)
         
         // Arbitrager swapping usda for ayusda 
         result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, alexVaultAddress,1000000);
         result.expectOk().expectList()[0].expectUint(1000000); 
-        result.expectOk().expectList()[1].expectUint(780072); 
+        result.expectOk().expectList()[1].expectUint(780089); 
 
     },
 });

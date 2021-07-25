@@ -161,14 +161,15 @@
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
-        
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+        ;; send y to vault
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
+               
         ;; Experiment
         ;; Transfer to vault
-        ;; (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
 
-        ;; send y to vault
-        (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
@@ -199,8 +200,16 @@
        )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
+        
+        ;; Direct Call from token-trait
         (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
+
+        ;; Transfer to vault
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
+
+
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -244,13 +253,14 @@
     ;; TODO : Implement case by case logic of token here bt branching with if statement
 
 
-    ;; Transfer 
-    ;; when received token-x , token-x -> vault
-    ;; when received token-y , token-y : vault  -> tx-sender
+    ;; Direct Call from token-trait
+    ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+    ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
+    ;; Swapping using transfer-to-vault
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy (contract-of the-vault) tx-sender token-y-trait none)) transfer-y-failed-err)
 
-    (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
@@ -297,9 +307,13 @@
     ;; when received token-x , token-x -> vault
     ;; when received token-y , token-y : vault  -> tx-sender
 
+    ;; Direct function call from token trait
+    ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
+    ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
 
-    (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
+    ;; Swapping using transfer-to-vault
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx (contract-of the-vault) tx-sender token-x-trait none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 

@@ -21,17 +21,7 @@
 ;; This Vault should note all the transferred token balance 
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
-;; This is not used anywhere.
-(define-map new-balances 
-  { vault-owner: principal }
-  {
-    token-1: (string-ascii 32),
-    balances: uint
-    ;; Token and balances are keep inserted using map-insert 
-  }
-)
-
-
+;; Sidney - Total Balance Should be saved here
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
 ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
@@ -49,16 +39,18 @@
 (map-set pre-loan-balances-map {token: token-ayusda-name} { balance: u0})
 
 
-<<<<<<< HEAD
-;;;;; wrong
-=======
 ;; get-balance should return the balance held by vault of the token, not how much tx-sender holds.
 ;; need fixed.
->>>>>>> f7ff27db5ec3fa0cb519e876329180efa5b4c607
 (define-public (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
-  ;; 
-  (ok (unwrap! (contract-call? token get-balance tx-sender) get-token-fail))
+  (let
+    (
+      (token-name (unwrap-panic (contract-call? token get-name)))
+      (target-balance (get balance (unwrap-panic (map-get? tokens-balances { token: token-name }))))
+    )
+    (ok target-balance)
+  )
+  ;;(ok (unwrap! (contract-call? token get-balance tx-sender) get-token-fail))
 )
 
 ;; (define-map names-map { name: (string-ascii 10) } { id: int })
@@ -112,7 +104,7 @@
         
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
-        (asserts! (is-ok (contract-call? token-trait transfer amount tx-sender recipient none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
         (asserts! (is-ok (update-token-balance token-trait)) transfer-failed-err)
         
         (ok true)
