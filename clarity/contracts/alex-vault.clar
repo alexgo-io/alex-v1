@@ -74,19 +74,20 @@
 
 ;; Temporarily changed to public for testing
 (define-public (add-token-balance
-                (token-trait <ft-trait>))
+                (token-trait <ft-trait>) (sender principal))
   (begin
     (let
       (
         (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))          
       )
       (map-insert tokens-balances { token: token-name } { balance: u0 })
+    
     )
   
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
-      (balance (unwrap! (get-balance token-trait) invalid-balance)) 
+      (balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) ;; TODO : when token map is not existing.
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
@@ -95,14 +96,17 @@
       }))
     )
 
-    (if (not (is-eq balance u0))
+    (if (is-eq balance u0)
       (begin
+        (print token-name)
         (append vault-token-list token-name)
         (var-set vault-owned-token vault-token-list)
         (map-set tokens-balances { token: token-name} updated-token-map )
-        (ok true)
-        ;;(ok (map-set tokens-balances { token: token-name} updated-token-map ))
+        (print updated-token-map)  
+        (print balance)
+        (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
+      ;;(err u1)
       (ok (map-set tokens-balances { token: token-name } updated-token-map ))
     )
 
@@ -143,7 +147,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
-        (asserts! (is-ok (add-token-balance token-trait)) transfer-failed-err)
+        (asserts! (is-ok (add-token-balance token-trait sender)) transfer-failed-err)
         
         (ok true)
       )

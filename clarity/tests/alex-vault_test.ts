@@ -17,12 +17,12 @@ Clarinet.test({
  
         let user = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
-
+    
         let block = chain.mineBlock([
             
             Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(usdaTokenAddress)
-              ], user.address),
+              ], wallet_1.address),
             
 
               // Must return empty list
@@ -31,24 +31,25 @@ Clarinet.test({
             //   ], user.address),
             
             Tx.contractCall("alex-vault", "add-token-balance", [
-                types.principal(usdaTokenAddress)
+                types.principal(ayusdaAddress),
+                types.principal(user.address),
               ], user.address),
 
           //  (transfer-to-vault (amount uint)  (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34))))
-            Tx.contractCall("alex-vault", "transfer-to-vault", [
-                types.uint(1000000),
-                types.principal(user.address),
-                types.principal(wallet_1.address),
-                types.principal(usdaTokenAddress),
-                types.none()
-            ], user.address),
+            // Tx.contractCall("alex-vault", "transfer-to-vault", [
+            //     types.uint(1000000),
+            //     types.principal(user.address),
+            //     types.principal(wallet_1.address),
+            //     types.principal(usdaTokenAddress),
+            //     types.none()
+            // ], wallet_1.address),
             
             Tx.contractCall("alex-vault", "get-tokenlist", [
               ], user.address),
 
-            Tx.contractCall("alex-vault", "get-balance", [
-                types.principal(usdaTokenAddress)
-              ], wallet_1.address),
+            // Tx.contractCall("alex-vault", "get-balance", [
+            //     types.principal(usdaTokenAddress)
+            //   ], wallet_1.address),
 
             //   // Added value of token should be returned
             //   Tx.contractCall("alex-vault", "get-balances", [
@@ -60,9 +61,9 @@ Clarinet.test({
         ]);
 
         block.receipts[0].result.expectOk().expectUint(0);
-        block.receipts[1].result.expectOk(),
-        block.receipts[2].result.expectOk(),
-        block.receipts[3].result.expectOk().expectUint(1000000);
+        block.receipts[1].result.expectOk();
+//        block.receipts[2].result.expectOk()
+        //block.receipts[3].result.expectOk().expectUint(1000000);
         // block.receipts[3].result.expectOk();
         // block.receipts[2].result.expectOk().expectList();
         
