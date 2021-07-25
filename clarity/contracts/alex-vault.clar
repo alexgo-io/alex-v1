@@ -19,20 +19,13 @@
 
 ;; This is redundant (replaced by tokens-balances below) - need removed.
 ;; This Vault should note all the transferred token balance 
-(define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
+;;(define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
-;; Name of Tokens
+;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
 
-;; Sidney - Total Balance Should be saved here
+;; token balances map owned by vault
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
-
-;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
-;; Initialize the tokens-balances map with all the three tokens' balance from 0
-;;(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
-(map-set tokens-balances {token: token-galex-name} { balance: u0})
-(map-set tokens-balances {token: token-usda-name} { balance: u0})
-(map-set tokens-balances {token: token-ayusda-name} { balance: u0})
 
 ;; pre-loan-balances-map should be inside flash-loan, not as a global variable.
 ;; Initialize the pre-loan-balances-map map with all the three tokens' balance from 0
@@ -53,46 +46,22 @@
     )
     (ok target-balance)
   )
-  ;;(ok (unwrap! (contract-call? token get-balance tx-sender) get-token-fail))
 )
-
-;; (define-map names-map { name: (string-ascii 10) } { id: int })
-;; (map-set names-map { name: "blockstack" } { id: 1337 })
 
 ;; returns list of {token, balance}
 (define-read-only (get-balances)
-  
-  ;; TODO : using map function, get all the token name from vault-owned-token. and return as list
-
   (ok (map get-tuple (var-get vault-owned-token)))
-  ;; (let
-  ;;   (
-  ;;     ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
-  ;;     ;; (tb-1 (map-get? tokens-balances { token: token-galex-name }))
-  ;;     (tb-1 (default-to u0 (get balance (map-get? tokens-balances { token: token-galex-name }))))
-  ;;     (tb-2 (default-to u0 (get balance (map-get? tokens-balances { token: token-usda-name }))))
-  ;;     (tb-3 (default-to u0 (get balance (map-get? tokens-balances { token: token-ayusda-name }))))
-  ;;     (result (list {token: token-galex-name, balance: tb-1} 
-  ;;                   {token: token-usda-name, balance: tb-2} 
-  ;;                   {token: token-ayusda-name, balance: tb-3}))
-  ;;   )
-  ;;   (ok result)
-  ;; )
 )
 
+;; Preprocessing function to make map value to tuple
 (define-private (get-tuple (token-name (string-ascii 32)))
-  
   (let
     (
-      ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
-      ;; (tb-1 (map-get? tokens-balances { token: token-galex-name }))
       (token-balance (default-to u0 (get balance (map-get? tokens-balances { token: token-name }))))
       (result {token: token-name, balance: token-balance})
     )
     result
   )    
-
-
 )
 
 (define-private (add-token-balance
@@ -105,25 +74,12 @@
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
+        balance: (unwrap-panic (contract-call? .math-fixed-point sub-fixed current-balance balance))
       }))
     )
 
-    (if (is-eq balance u0)
-      (begin
-        (append vault-token-list token-name)
-        (var-set vault-owned-token vault-token-list)
-        (map-set tokens-balances { token: token-name} updated-token-map )
-        (ok true)
-        ;;(ok (map-set tokens-balances { token: token-name} updated-token-map ))
-      )
-      (ok (map-set tokens-balances { token: token-name} updated-token-map ))
-    )
-
-    ;; (map-set tokens-balances { token: token-name} updated-token-map )
-
-    ;; ;;(map-set tokens-balances { token: token-name } { balance: balance })
-    ;; (ok true)
+     (map-set tokens-balances { token: token-name} updated-token-map )
+     (ok true)
     
   )
 )
@@ -142,13 +98,10 @@
       }))
     )
     (map-set tokens-balances { token: token-name} updated-token-map )
-
-    ;;(map-set tokens-balances { token: token-name } { balance: balance })
     (ok true)
   )
 )
 
-;; need to consioder 'transfer-from-vault' too.
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
@@ -159,7 +112,7 @@
         (
           (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
           (token-name (unwrap-panic (contract-call? token-trait get-name)))
-          (vault-balances (var-get balances)) ;; list 
+          ;;(vault-balances (var-get balances)) ;; list 
         )
         
         ;; Transfering
@@ -182,7 +135,7 @@
         (
           (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
           (token-name (unwrap-panic (contract-call? token-trait get-name)))
-          (vault-balances (var-get balances)) ;; list 
+          ;;(vault-balances (var-get balances)) ;; list 
         )
         
         ;; Transfering
