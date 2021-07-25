@@ -45,7 +45,7 @@
 (map-set pre-loan-balances-map {token: token-ayusda-name} { balance: u0})
 
 
-
+;;;;; wrong
 (define-public (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
   ;; 

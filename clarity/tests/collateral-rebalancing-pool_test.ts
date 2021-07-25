@@ -58,12 +58,12 @@ Clarinet.test({
         result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 100000);
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(9999);
-            position['dy'].expectUint(22432);
+            position['dy'].expectUint(22431);
 
         // Liquidity Added to the pool
         result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
         result.expectOk().expectList()[0].expectUint(9990001);
-        result.expectOk().expectList()[1].expectUint(19977568); 
+        result.expectOk().expectList()[1].expectUint(19977569); 
 
 
 
