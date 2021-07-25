@@ -45,12 +45,17 @@
   (let
     (
       (token-name (unwrap! (contract-call? token get-name) token-type-err))
-      (target-balance (get balance (unwrap! (map-get? tokens-balances { token: token-name }) token-absent)))
+      (target-balance (default-to u0 (get balance (map-get? tokens-balances { token: token-name }))))
     )
     (ok target-balance)
   )
 )
 
+;; For Debugging
+(define-read-only (get-tokenlist)
+
+    (var-get vault-owned-token)
+)
 ;; returns list of {token, balance}
 (define-read-only (get-balances)
   (ok (map get-tuple (var-get vault-owned-token)))
@@ -67,20 +72,30 @@
   )    
 )
 
+;; Temporarily changed to public for testing
 (define-public (add-token-balance
                 (token-trait <ft-trait>))
+  (begin
+    (let
+      (
+        (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))          
+      )
+      (map-insert tokens-balances { token: token-name } { balance: u0 })
+    )
+  
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
-      (balance (unwrap-panic (get-balance token-trait))) ;; Things to Check : if token doesnt exist does it returns 0?
-      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
+      (balance (unwrap! (get-balance token-trait) invalid-balance)) 
+      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) ;; TODO : when token map is not existing.
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
         balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
       }))
     )
-    (if (is-eq balance u0)
+
+    (if (not (is-eq balance u0))
       (begin
         (append vault-token-list token-name)
         (var-set vault-owned-token vault-token-list)
@@ -88,11 +103,10 @@
         (ok true)
         ;;(ok (map-set tokens-balances { token: token-name} updated-token-map ))
       )
-      (ok (map-set tokens-balances { token: token-name} updated-token-map ))
+      (ok (map-set tokens-balances { token: token-name } updated-token-map ))
     )
-    ;;  (map-set tokens-balances { token: token-name} updated-token-map )
-    ;;  (ok true)
-    
+
+  )
   )
 )
 
