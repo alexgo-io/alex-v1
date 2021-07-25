@@ -16,6 +16,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
  
         let user = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
 
         let block = chain.mineBlock([
             
@@ -26,26 +27,33 @@ Clarinet.test({
               Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(gAlexTokenAddress)
               ], user.address),
+            
 
-            //   Tx.contractCall("alex-vault", "update-token-balance", [
-            //     types.principal(usdaTokenAddress)
-            //   ], user.address),
-
-            //   Tx.contractCall("alex-vault", "update-token-balance", [
+              // Must return empty list
+            //   Tx.contractCall("alex-vault", "get-balances", [
             //     types.principal(gAlexTokenAddress)
             //   ], user.address),
 
-              Tx.contractCall("alex-vault", "get-balances", [
-              ], user.address),
+            //(transfer-to-vault (amount uint)  (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34))))
+            Tx.contractCall("alex-vault", "transfer-to-vault", [
+                types.uint(100000000),
+                types.principal(user.address),
+                types.principal(wallet_1.address),
+                types.principal(gAlexTokenAddress)
+            ], user.address),
+
+            //   // Added value of token should be returned
+            //   Tx.contractCall("alex-vault", "get-balances", [
+            //   ], wallet_1.address),
+              
             
             
 
         ]);
-        // Remove for now - 07/25
-        // block.receipts[0].result.expectOk().expectUint(1000000000000);
-        // block.receipts[1].result.expectOk().expectUint(1000000000000);
-        // // block.receipts[2].result.expectOk();
-        // // block.receipts[3].result.expectOk();
+        block.receipts[0].result.expectOk().expectUint(0);
+        block.receipts[1].result.expectOk().expectUint(0);
+        block.receipts[2].result.expectOk();
+        // block.receipts[3].result.expectOk();
         // block.receipts[2].result.expectOk().expectList();
         
     },

@@ -74,7 +74,7 @@
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point sub-fixed current-balance balance))
+        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
       }))
     )
 
