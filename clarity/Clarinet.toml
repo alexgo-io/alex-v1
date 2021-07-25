@@ -13,7 +13,7 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-p
 path = "contracts/fixed-weight-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation"]
 
-[contracts."liquidity-bootstrapping-pool"]
+[contracts.liquidity-bootstrapping-pool]
 path = "contracts/liquidity-bootstrapping-pool.clar"
 depends_on = []
 
