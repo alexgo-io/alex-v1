@@ -21,6 +21,9 @@
 ;; This Vault should note all the transferred token balance 
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
+;; Name of Tokens
+(define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
+
 ;; Sidney - Total Balance Should be saved here
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
@@ -58,8 +61,8 @@
 
 ;; returns list of {token, balance}
 (define-read-only (get-balances)
-  ;;Clarity doesn't support loop, so we need to maintain a list of tokens to apply map to get-balance
-  ;;See get-pool-contracts and get-pools in fixed-weight-pool
+  
+  ;; TODO : get all the map principal in tokens-balances map
   (let
     (
       ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
@@ -75,19 +78,58 @@
   )
 )
 
-;; this doesn't make sense. Once get-balance is fixed, this needs re-written.
-(define-private (update-token-balance
+(define-private (add-token-balance
                 (token-trait <ft-trait>))
   (let
     (
       (token-name (unwrap-panic (contract-call? token-trait get-name)))
       (balance (unwrap-panic (get-balance token-trait)))
+      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
+      (current-balance (get balance current-token-map))
+      (vault-token-list (var-get vault-owned-token))
+      (updated-token-map (merge current-token-map {
+        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
+      }))
     )
-    (map-set tokens-balances { token: token-name } { balance: balance })
+
+    ;; (if (is-eq balance u0)
+    ;;   (begin
+    ;;     ;;(append vault-token-list token-name)
+    ;;     (var-set vault-owned-token (append vault-owned-token token-name))
+    ;;     (map-set tokens-balances { token: token-name} updated-token-map )
+    ;;     (ok true)
+    ;;     (ok (map-set tokens-balances { token: token-name} updated-token-map ))
+    ;;   )
+    ;; )
+
+    (map-set tokens-balances { token: token-name} updated-token-map )
+
+    ;;(map-set tokens-balances { token: token-name } { balance: balance })
+    (ok true)
+    
+  )
+)
+
+(define-private (remove-token-balance
+                (token-trait <ft-trait>))
+  (let
+    (
+      (token-name (unwrap-panic (contract-call? token-trait get-name)))
+      (balance (unwrap-panic (get-balance token-trait)))
+      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
+      (current-balance (get balance current-token-map))
+
+      (updated-token-map (merge current-token-map {
+        balance: (unwrap-panic (contract-call? .math-fixed-point sub-fixed current-balance balance))
+      }))
+    )
+    (map-set tokens-balances { token: token-name} updated-token-map )
+
+    ;;(map-set tokens-balances { token: token-name } { balance: balance })
     (ok true)
   )
 )
- 
+
 ;; need to consioder 'transfer-from-vault' too.
 (define-public (transfer-to-vault
       (amount uint)  
@@ -105,11 +147,35 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
-        (asserts! (is-ok (update-token-balance token-trait)) transfer-failed-err)
+        (asserts! (is-ok (add-token-balance token-trait)) transfer-failed-err)
         
         (ok true)
       )
 )
+
+
+(define-public (transfer-from-vault
+      (amount uint)  
+      (sender principal) 
+      (recipient principal) 
+      (token-trait <ft-trait>) 
+      (memo (optional (buff 34))))
+      (let 
+        (
+          (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
+          (token-name (unwrap-panic (contract-call? token-trait get-name)))
+          (vault-balances (var-get balances)) ;; list 
+        )
+        
+        ;; Transfering
+        ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
+        (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
+        (asserts! (is-ok (remove-token-balance token-trait)) transfer-failed-err)
+        
+        (ok true)
+      )
+)
+
 
 ;; flash loan to flash loan user up to 3 tokens of amounts specified
 (define-public (flash-loan 

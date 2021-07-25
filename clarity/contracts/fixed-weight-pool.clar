@@ -202,12 +202,12 @@
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         
         ;; Direct Call from token-trait
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
         ;; Transfer to vault
-        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
-        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx (contract-of the-vault) tx-sender token-x-trait none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy (contract-of the-vault) tx-sender token-y-trait none)) transfer-y-failed-err)
 
 
 
