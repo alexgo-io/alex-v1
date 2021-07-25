@@ -62,20 +62,37 @@
 ;; returns list of {token, balance}
 (define-read-only (get-balances)
   
-  ;; TODO : get all the map principal in tokens-balances map
+  ;; TODO : using map function, get all the token name from vault-owned-token. and return as list
+
+  (ok (map get-tuple (var-get vault-owned-token)))
+  ;; (let
+  ;;   (
+  ;;     ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
+  ;;     ;; (tb-1 (map-get? tokens-balances { token: token-galex-name }))
+  ;;     (tb-1 (default-to u0 (get balance (map-get? tokens-balances { token: token-galex-name }))))
+  ;;     (tb-2 (default-to u0 (get balance (map-get? tokens-balances { token: token-usda-name }))))
+  ;;     (tb-3 (default-to u0 (get balance (map-get? tokens-balances { token: token-ayusda-name }))))
+  ;;     (result (list {token: token-galex-name, balance: tb-1} 
+  ;;                   {token: token-usda-name, balance: tb-2} 
+  ;;                   {token: token-ayusda-name, balance: tb-3}))
+  ;;   )
+  ;;   (ok result)
+  ;; )
+)
+
+(define-private (get-tuple (token-name (string-ascii 32)))
+  
   (let
     (
       ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
       ;; (tb-1 (map-get? tokens-balances { token: token-galex-name }))
-      (tb-1 (default-to u0 (get balance (map-get? tokens-balances { token: token-galex-name }))))
-      (tb-2 (default-to u0 (get balance (map-get? tokens-balances { token: token-usda-name }))))
-      (tb-3 (default-to u0 (get balance (map-get? tokens-balances { token: token-ayusda-name }))))
-      (result (list {token: token-galex-name, balance: tb-1} 
-                    {token: token-usda-name, balance: tb-2} 
-                    {token: token-ayusda-name, balance: tb-3}))
+      (token-balance (default-to u0 (get balance (map-get? tokens-balances { token: token-name }))))
+      (result {token: token-name, balance: token-balance})
     )
-    (ok result)
-  )
+    result
+  )    
+
+
 )
 
 (define-private (add-token-balance
@@ -83,7 +100,7 @@
   (let
     (
       (token-name (unwrap-panic (contract-call? token-trait get-name)))
-      (balance (unwrap-panic (get-balance token-trait)))
+      (balance (unwrap-panic (get-balance token-trait))) ;; Things to Check : if token doesnt exist does it returns 0?
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
@@ -92,20 +109,21 @@
       }))
     )
 
-    ;; (if (is-eq balance u0)
-    ;;   (begin
-    ;;     ;;(append vault-token-list token-name)
-    ;;     (var-set vault-owned-token (append vault-owned-token token-name))
-    ;;     (map-set tokens-balances { token: token-name} updated-token-map )
-    ;;     (ok true)
-    ;;     (ok (map-set tokens-balances { token: token-name} updated-token-map ))
-    ;;   )
-    ;; )
+    (if (is-eq balance u0)
+      (begin
+        (append vault-token-list token-name)
+        (var-set vault-owned-token vault-token-list)
+        (map-set tokens-balances { token: token-name} updated-token-map )
+        (ok true)
+        ;;(ok (map-set tokens-balances { token: token-name} updated-token-map ))
+      )
+      (ok (map-set tokens-balances { token: token-name} updated-token-map ))
+    )
 
-    (map-set tokens-balances { token: token-name} updated-token-map )
+    ;; (map-set tokens-balances { token: token-name} updated-token-map )
 
-    ;;(map-set tokens-balances { token: token-name } { balance: balance })
-    (ok true)
+    ;; ;;(map-set tokens-balances { token: token-name } { balance: balance })
+    ;; (ok true)
     
   )
 )
