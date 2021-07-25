@@ -2,6 +2,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
+;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
 (define-constant token-galex-name "Alex Token")
 (define-constant token-usda-name "USDA")
 (define-constant token-ayusda-name "ayUSDA")
@@ -16,9 +17,11 @@
 
 (define-data-var fee-amount uint u0)
 
+;; This is redundant (replaced by tokens-balances below) - need removed.
 ;; This Vault should note all the transferred token balance 
 (define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
+;; This is not used anywhere.
 (define-map new-balances 
   { vault-owner: principal }
   {
@@ -31,13 +34,14 @@
 
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
-
+;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
 ;; Initialize the tokens-balances map with all the three tokens' balance from 0
 ;;(define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 (map-set tokens-balances {token: token-galex-name} { balance: u0})
 (map-set tokens-balances {token: token-usda-name} { balance: u0})
 (map-set tokens-balances {token: token-ayusda-name} { balance: u0})
 
+;; pre-loan-balances-map should be inside flash-loan, not as a global variable.
 ;; Initialize the pre-loan-balances-map map with all the three tokens' balance from 0
 (define-map pre-loan-balances-map {token: (string-ascii 32) } { balance: uint})
 (map-set pre-loan-balances-map {token: token-galex-name} { balance: u0})
@@ -45,7 +49,8 @@
 (map-set pre-loan-balances-map {token: token-ayusda-name} { balance: u0})
 
 
-
+;; get-balance should return the balance held by vault of the token, not how much tx-sender holds.
+;; need fixed.
 (define-public (get-balance (token <ft-trait>))
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
   ;; 
@@ -61,6 +66,7 @@
   ;;See get-pool-contracts and get-pools in fixed-weight-pool
   (let
     (
+      ;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
       ;; (tb-1 (map-get? tokens-balances { token: token-galex-name }))
       (tb-1 (default-to u0 (get balance (map-get? tokens-balances { token: token-galex-name }))))
       (tb-2 (default-to u0 (get balance (map-get? tokens-balances { token: token-usda-name }))))
@@ -73,6 +79,7 @@
   )
 )
 
+;; this doesn't make sense. Once get-balance is fixed, this needs re-written.
 (define-private (update-token-balance
                 (token-trait <ft-trait>))
   (let
@@ -85,6 +92,7 @@
   )
 )
  
+;; need to consioder 'transfer-from-vault' too.
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
@@ -142,7 +150,7 @@
   )
 )
 
-
+;; this needs to move to inside flash-loan.
 (define-private (transfer-to-user (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint)) 
   (begin
     (let 
@@ -177,6 +185,7 @@
   )
 )
 
+;; this needs to move to inside flash-loan.
 (define-private (after-pay-back-check (token <ft-trait>))
   (begin 
     (let 
@@ -191,7 +200,7 @@
   )
 )
 
-
+;; this needs to move to inside flash-loan.
 (define-private (calculateFlashLoanFeeAmount (amount uint))
 ;;TODO: need to implement Flash loan fee amount, now just leave it 1%
     (/ amount u100)
