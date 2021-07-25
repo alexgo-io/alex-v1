@@ -14,6 +14,9 @@
 (define-constant transfer-failed-err (err u3000))
 (define-constant none-token-err (err u3007))
 (define-constant get-token-fail (err u3008))
+(define-constant token-type-err (err u3009))
+(define-constant token-absent (err u3010))
+(define-constant invalid-balance (err u3011))
 
 (define-data-var fee-amount uint u0)
 
@@ -41,8 +44,8 @@
   ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
   (let
     (
-      (token-name (unwrap-panic (contract-call? token get-name)))
-      (target-balance (get balance (unwrap-panic (map-get? tokens-balances { token: token-name }))))
+      (token-name (unwrap! (contract-call? token get-name) token-type-err))
+      (target-balance (get balance (unwrap! (map-get? tokens-balances { token: token-name }) token-absent)))
     )
     (ok target-balance)
   )
@@ -64,11 +67,11 @@
   )    
 )
 
-(define-private (add-token-balance
+(define-public (add-token-balance
                 (token-trait <ft-trait>))
   (let
     (
-      (token-name (unwrap-panic (contract-call? token-trait get-name)))
+      (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
       (balance (unwrap-panic (get-balance token-trait))) ;; Things to Check : if token doesnt exist does it returns 0?
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
       (current-balance (get balance current-token-map))
@@ -77,9 +80,18 @@
         balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
       }))
     )
-
-     (map-set tokens-balances { token: token-name} updated-token-map )
-     (ok true)
+    (if (is-eq balance u0)
+      (begin
+        (append vault-token-list token-name)
+        (var-set vault-owned-token vault-token-list)
+        (map-set tokens-balances { token: token-name} updated-token-map )
+        (ok true)
+        ;;(ok (map-set tokens-balances { token: token-name} updated-token-map ))
+      )
+      (ok (map-set tokens-balances { token: token-name} updated-token-map ))
+    )
+    ;;  (map-set tokens-balances { token: token-name} updated-token-map )
+    ;;  (ok true)
     
   )
 )
@@ -110,14 +122,13 @@
       (memo (optional (buff 34))))
       (let 
         (
-          (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
-          (token-name (unwrap-panic (contract-call? token-trait get-name)))
-          ;;(vault-balances (var-get balances)) ;; list 
+          (token-symbol (unwrap! (contract-call? token-trait get-symbol) get-token-fail))
+          (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
         )
         
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
-        (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
         (asserts! (is-ok (add-token-balance token-trait)) transfer-failed-err)
         
         (ok true)
