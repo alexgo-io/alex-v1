@@ -17,6 +17,8 @@
 (define-constant token-type-err (err u3009))
 (define-constant token-absent (err u3010))
 (define-constant invalid-balance (err u3011))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u2011))
 
 (define-data-var fee-amount uint u0)
 
@@ -26,7 +28,7 @@
 
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
-
+;; (define-data-var list-index uint u1)
 ;; token balances map owned by vault
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
@@ -80,6 +82,8 @@
       (
         (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))          
       )
+
+      
       (map-insert tokens-balances { token: token-name } { balance: u0 })
     
     )
@@ -92,23 +96,32 @@
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
+        balance: (unwrap! (contract-call? .math-fixed-point add-fixed current-balance balance) math-call-err)
       }))
+      ;;(new-token-list (append vault-token-list token-name)) ;; 2001 
     )
-
-    (if (is-eq balance u0)
+    (print token-name)
+    (print balance)
+    (if (is-eq current-balance u0)
       (begin
-        (print token-name)
-        (append vault-token-list token-name)
-        (var-set vault-owned-token vault-token-list)
+
+        ;;(append vault-token-list token-name)
+        ;;(unwrap! (as-max-len? (append vault-token-list token-name) u2000)
+        ;; To be fixed to : (var-set vault-owned-token new-token-list)
+        ;; var-set does not work because of maxlength is settled to 2000, but there is no way to erase elements.
+        (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
         (map-set tokens-balances { token: token-name} updated-token-map )
-        (print updated-token-map)  
-        (print balance)
+        ;; (print updated-token-map)
+        ;; (print token-name)
+        ;; (print vault-token-list)
         (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
       ;;(err u1)
+      (begin
+;;      (print current-token-map)
       (ok (map-set tokens-balances { token: token-name } updated-token-map ))
-    )
+      )
+  )
 
   )
   )
@@ -118,13 +131,13 @@
                 (token-trait <ft-trait>))
   (let
     (
-      (token-name (unwrap-panic (contract-call? token-trait get-name)))
-      (balance (unwrap-panic (get-balance token-trait)))
+      (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
+      (balance (unwrap! (get-balance token-trait) none-token-err))
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
       (current-balance (get balance current-token-map))
 
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point sub-fixed current-balance balance))
+        balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
       }))
     )
     (map-set tokens-balances { token: token-name} updated-token-map )
@@ -135,7 +148,7 @@
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
-      (recipient principal) 
+      (recipient principal) ;; (as-contract tx-sender) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
       (let 
@@ -156,14 +169,14 @@
 
 (define-public (transfer-from-vault
       (amount uint)  
-      (sender principal) 
+      (sender principal) ;; (as-contract tx-sender) 
       (recipient principal) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
       (let 
         (
-          (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
-          (token-name (unwrap-panic (contract-call? token-trait get-name)))
+          (token-symbol (unwrap! (contract-call? token-trait get-symbol) none-token-err))
+          (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
           ;;(vault-balances (var-get balances)) ;; list 
         )
         

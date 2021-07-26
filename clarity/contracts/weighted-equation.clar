@@ -11,6 +11,7 @@
 (define-constant weight-sum-err (err u4000))
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
+(define-constant math-call-err (err 4003))
 
 ;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8

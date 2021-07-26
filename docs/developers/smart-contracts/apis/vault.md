@@ -9,7 +9,7 @@ description: >-
 
 ## ALEX-Vault
 
- Vault is responsible for managing assets of all ALEX pools. Transaction in all the existing pools can be found in [Vault Protocol](https://docs.alexgo.io/protocol/vault).
+Vault is responsible for managing assets of all ALEX pools. Transaction in all the existing pools can be found in [Vault Protocol](https://docs.alexgo.io/protocol/vault).
 
 ### **get-balance**
 
