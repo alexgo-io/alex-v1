@@ -4,7 +4,8 @@
 
 (define-trait flash-loan-user-trait
   (
-    ;; (execute ((list 3 <ft-trait>) (list 3 uint)) (response bool uint))
     (execute (<ft-trait> <ft-trait> (optional <ft-trait>) uint uint (optional uint) principal) (response bool uint))
+    (execute-2 (<ft-trait> <ft-trait> uint uint principal) (response bool uint))
+    (execute-3 (<ft-trait> <ft-trait> <ft-trait> uint uint uint principal) (response bool uint))
   )
 )
