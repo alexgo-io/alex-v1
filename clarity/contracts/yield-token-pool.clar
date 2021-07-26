@@ -108,7 +108,6 @@
    )
 )
 
-;; TODO: shouldn't the pool token be created as part of create-pool?
 (define-public (create-pool (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
     (let
         (
