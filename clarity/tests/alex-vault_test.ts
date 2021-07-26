@@ -17,7 +17,8 @@ Clarinet.test({
  
         let user = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
-    
+        let vault = accounts.get("wallet_2")!;
+
         let block = chain.mineBlock([
             
             Tx.contractCall("alex-vault", "get-balance", [
@@ -30,22 +31,22 @@ Clarinet.test({
             //     types.principal(gAlexTokenAddress)
             //   ], user.address),
             
-            Tx.contractCall("alex-vault", "add-token-balance", [
-                types.principal(ayusdaAddress),
-                types.principal(user.address),
-              ], user.address),
-
-          //  (transfer-to-vault (amount uint)  (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34))))
-            // Tx.contractCall("alex-vault", "transfer-to-vault", [
-            //     types.uint(1000000),
+            // Tx.contractCall("alex-vault", "add-token-balance", [
+            //     types.principal(ayusdaAddress),
             //     types.principal(user.address),
-            //     types.principal(wallet_1.address),
-            //     types.principal(usdaTokenAddress),
-            //     types.none()
-            // ], wallet_1.address),
+            //   ], user.address),
+
+           //(transfer-to-vault (amount uint)  (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34))))
+            Tx.contractCall("alex-vault", "transfer-to-vault", [
+                types.uint(1000000),
+                types.principal(user.address),
+                types.principal(vault.address),
+                types.principal(usdaTokenAddress),
+                types.none()
+            ], vault.address),
             
-            Tx.contractCall("alex-vault", "get-tokenlist", [
-              ], user.address),
+            // Tx.contractCall("alex-vault", "get-tokenlist", [
+            //   ], user.address),
 
             // Tx.contractCall("alex-vault", "get-balance", [
             //     types.principal(usdaTokenAddress)

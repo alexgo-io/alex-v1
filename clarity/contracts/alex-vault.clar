@@ -26,7 +26,7 @@
 
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
-
+;; (define-data-var list-index uint u1)
 ;; token balances map owned by vault
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
@@ -80,6 +80,8 @@
       (
         (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))          
       )
+
+      
       (map-insert tokens-balances { token: token-name } { balance: u0 })
     
     )
@@ -94,21 +96,28 @@
       (updated-token-map (merge current-token-map {
         balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
       }))
+      ;;(new-token-list (append vault-token-list token-name)) ;; 2001 
     )
-
-    (if (is-eq balance u0)
+    (print token-name)
+    (print balance)
+    (if (is-eq current-balance u0)
       (begin
-        (print token-name)
+
         (append vault-token-list token-name)
+        ;; To be fixed to : (var-set vault-owned-token new-token-list)
         (var-set vault-owned-token vault-token-list)
         (map-set tokens-balances { token: token-name} updated-token-map )
-        (print updated-token-map)  
-        (print balance)
+        ;; (print updated-token-map)
+        ;; (print token-name)
+        ;; (print vault-token-list)
         (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
       ;;(err u1)
+      (begin
+;;      (print current-token-map)
       (ok (map-set tokens-balances { token: token-name } updated-token-map ))
-    )
+      )
+  )
 
   )
   )

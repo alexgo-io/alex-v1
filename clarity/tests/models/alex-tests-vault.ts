@@ -21,7 +21,24 @@ import {
           types.principal(token)
         ], this.deployer.address);
       }
+      getTokenBalance(token: string) {
+        return this.chain.callReadOnlyFn("alex-vault", "get-token-balance", [
+        ], this.deployer.address);
+      }
+      getBalances(token: string) {
+        return this.chain.callReadOnlyFn("alex-vault", "get-balances", [
+        ], this.deployer.address);
+      }
 
+      addTokenBalance(user: Account, token: string, sender: string) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("alex-vault", "add-token-balance", [
+            types.principal(token),
+            types.principal(sender)
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }
   
   }
   
