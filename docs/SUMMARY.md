@@ -13,10 +13,6 @@
 * [Vault](protocol/vault.md)
 * [Yield Farming on ALEX](protocol/yield-farming-on-alex.md)
 
-## Whitepaper
-
-* [Automated Market Making of ALEX](whitepaper/automated-market-making-of-alex.md)
-
 ## Developers
 
 * [Smart Contracts](developers/smart-contracts/README.md)
@@ -28,4 +24,8 @@
     * [Use Case](developers/smart-contracts/diagrams/protocol-use-case.md)
     * [Class Diagram](developers/smart-contracts/diagrams/class-diagram.md)
   * [Error Codes](developers/smart-contracts/error-codes.md)
+
+## Whitepaper
+
+* [Automated Market Making of Yield Token Pool](whitepaper/automated-market-making-of-alex.md)
 
