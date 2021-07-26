@@ -16,7 +16,7 @@
 
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
-
+;; (define-data-var list-index uint u1)
 ;; token balances map owned by vault
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
@@ -65,31 +65,40 @@
       )
       (map-insert tokens-balances { token: token-name } { balance: u0 })
     )
-    (let
-      (
-        (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
-        (balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
-        (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) ;; TODO : when token map is not existing.
-        (current-balance (get balance current-token-map))
-        (vault-token-list (var-get vault-owned-token))
-        (updated-token-map (merge current-token-map {
-          balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
-        }))
-      )
+  
+  (let
+    (
+      (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
+      (balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
+      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) ;; TODO : when token map is not existing.
+      (current-balance (get balance current-token-map))
+      (vault-token-list (var-get vault-owned-token))
+      (updated-token-map (merge current-token-map {
+        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
+      }))
+      ;;(new-token-list (append vault-token-list token-name)) ;; 2001 
+    )
+    (print token-name)
+    (print balance)
+    (if (is-eq current-balance u0)
+      (begin
 
-      (if (is-eq balance u0)
-        (begin
-          (print token-name)
-          (append vault-token-list token-name)
-          (var-set vault-owned-token vault-token-list)
-          (map-set tokens-balances { token: token-name} updated-token-map )
-          (print updated-token-map)  
-          (print balance)
-          (ok (map-set tokens-balances { token: token-name } updated-token-map ))
-        )
-        ;;(err u1)
+        (append vault-token-list token-name)
+        ;; To be fixed to : (var-set vault-owned-token new-token-list)
+        ;; var-set does not work because of maxlength is settled to 2000, but there is no way to erase elements.
+        (var-set vault-owned-token vault-token-list)
+        (map-set tokens-balances { token: token-name} updated-token-map )
+        ;; (print updated-token-map)
+        ;; (print token-name)
+        ;; (print vault-token-list)
         (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
+      ;;(err u1)
+      (begin
+;;      (print current-token-map)
+      (ok (map-set tokens-balances { token: token-name } updated-token-map ))
+      )
+  )
 
     )
   )
@@ -116,7 +125,7 @@
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
-      (recipient principal) 
+      (recipient principal) ;; (as-contract tx-sender) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
       (let 
@@ -137,7 +146,7 @@
 
 (define-public (transfer-from-vault
       (amount uint)  
-      (sender principal) 
+      (sender principal) ;; (as-contract tx-sender) 
       (recipient principal) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
