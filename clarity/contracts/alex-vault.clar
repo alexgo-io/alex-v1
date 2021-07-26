@@ -105,10 +105,11 @@
     (if (is-eq current-balance u0)
       (begin
 
-        (append vault-token-list token-name)
+        ;;(append vault-token-list token-name)
+        ;;(unwrap! (as-max-len? (append vault-token-list token-name) u2000)
         ;; To be fixed to : (var-set vault-owned-token new-token-list)
         ;; var-set does not work because of maxlength is settled to 2000, but there is no way to erase elements.
-        (var-set vault-owned-token vault-token-list)
+        (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
         (map-set tokens-balances { token: token-name} updated-token-map )
         ;; (print updated-token-map)
         ;; (print token-name)
