@@ -20,6 +20,9 @@
 (define-constant invalid-token-err (err u2007))
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
+(define-constant weighted-equation-call-err (err u2009))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u2011))
 
 ;; data maps and vars
 (define-map pools-map
@@ -59,7 +62,7 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-;;    (unwrap-panic (map-get? pools-map { pool-id: pool-id }))
+
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
@@ -148,13 +151,13 @@
             (balance-y (get balance-y pool))
             ;;(pool-token (get pool-token pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap-panic (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
+            (add-data (unwrap! (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy) weighted-equation-call-err))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
-                total-supply: (unwrap-panic (contract-call? .math-fixed-point add-fixed new-supply (get total-supply pool))),
-                balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)),
-                balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-y new-dy))
+                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply (get total-supply pool)) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
             }))
        )
 
@@ -183,18 +186,18 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (shares (unwrap-panic (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent)))
+            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap! (contract-call? the-pool-token get-balance tx-sender) math-call-err) percent) math-call-err))
             (total-supply (get total-supply pool))
-            (reduce-data (unwrap-panic (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
+            (reduce-data (unwrap! (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares) weighted-equation-call-err))
             (dx (get dx reduce-data))
             (dy (get dy reduce-data))
             (pool-updated (merge pool {
-                total-supply: (unwrap-panic (contract-call? .math-fixed-point sub-fixed total-supply shares)),
-                balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
-                balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy))
+                total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err)
                 })
            )
        )
@@ -225,7 +228,7 @@
     (
     (token-x (contract-of token-x-trait))
     (token-y (contract-of token-y-trait))
-    (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
     (balance-x (get balance-x pool))
     (balance-y (get balance-y pool))
 
@@ -235,14 +238,14 @@
     ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
     (fee u0)
     
-    (dy (unwrap-panic (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx)))
+    (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx) internal-function-call-err))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx)),
-          balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy)),
-          fee-balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)))
+          balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx) math-call-err),
+          balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
+          fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
         }
       )
     )
@@ -277,7 +280,7 @@
     (
     (token-x (contract-of token-x-trait))
     (token-y (contract-of token-y-trait))
-    (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
     (balance-x (get balance-x pool))
     (balance-y (get balance-y pool))
 
@@ -285,14 +288,14 @@
     ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
     ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
     (fee u0)
-    (dx (unwrap-panic (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy)))
+    (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy) internal-function-call-err))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
-          balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy)),
-          fee-balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)))
+          balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+          balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy) math-call-err),
+          fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
         }
       )
     )
@@ -329,7 +332,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))            
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
 
         ;; TODO : Assertion for checking the right to set the platform fee.
@@ -375,7 +378,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
@@ -401,7 +404,7 @@
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         )
@@ -415,7 +418,7 @@
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         )
@@ -429,7 +432,7 @@
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         )
@@ -443,7 +446,7 @@
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))
@@ -459,7 +462,7 @@
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))        
@@ -474,7 +477,7 @@
         (
         (token-x (contract-of token-x-trait))
         (token-y (contract-of token-y-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))
