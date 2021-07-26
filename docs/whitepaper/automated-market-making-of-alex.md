@@ -1,4 +1,4 @@
-# Automated Market Making of ALEX
+# Automated Market Making of Yield Token Pool
 
 ## Abstract
 
