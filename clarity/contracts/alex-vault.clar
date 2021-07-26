@@ -75,7 +75,7 @@
 )
 
 ;; Temporarily changed to public for testing
-(define-public (add-token-balance
+(define-private (add-token-balance
                 (token-trait <ft-trait>) (sender principal))
   (begin
     (let
@@ -160,7 +160,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
-        (asserts! (is-ok (add-token-balance token-trait sender)) transfer-failed-err)
+        (asserts! (is-ok (add-token-balance token-trait sender)) internal-function-call-err)
         
         (ok true)
       )
@@ -183,7 +183,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
-        (asserts! (is-ok (remove-token-balance token-trait)) transfer-failed-err)
+        (asserts! (is-ok (remove-token-balance token-trait)) internal-function-call-err)
         
         (ok true)
       )
