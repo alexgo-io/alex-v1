@@ -39,6 +39,20 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+      transferToVault(user: Account, amount:number, sender:string, recipient:string, token: string, memo:string) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("alex-vault", "transfer-to-vault", [
+            types.number(amount),
+            types.principal(sender),
+            types.principal(recipient),
+            types.principal(token),
+            types.string(memo),
+            
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }
   
   }
   
