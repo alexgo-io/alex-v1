@@ -105,6 +105,7 @@
 
         (append vault-token-list token-name)
         ;; To be fixed to : (var-set vault-owned-token new-token-list)
+        ;; var-set does not work because of maxlength is settled to 2000, but there is no way to erase elements.
         (var-set vault-owned-token vault-token-list)
         (map-set tokens-balances { token: token-name} updated-token-map )
         ;; (print updated-token-map)
