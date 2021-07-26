@@ -145,7 +145,7 @@
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
-      (recipient principal) 
+      (recipient principal) ;; (as-contract tx-sender) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
       (let 
@@ -166,7 +166,7 @@
 
 (define-public (transfer-from-vault
       (amount uint)  
-      (sender principal) 
+      (sender principal) ;; (as-contract tx-sender) 
       (recipient principal) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
