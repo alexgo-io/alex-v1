@@ -17,6 +17,8 @@
 (define-constant token-type-err (err u3009))
 (define-constant token-absent (err u3010))
 (define-constant invalid-balance (err u3011))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u2011))
 
 (define-data-var fee-amount uint u0)
 
@@ -94,7 +96,7 @@
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
+        balance: (unwrap! (contract-call? .math-fixed-point add-fixed current-balance balance) math-call-err)
       }))
       ;;(new-token-list (append vault-token-list token-name)) ;; 2001 
     )
@@ -128,13 +130,13 @@
                 (token-trait <ft-trait>))
   (let
     (
-      (token-name (unwrap-panic (contract-call? token-trait get-name)))
-      (balance (unwrap-panic (get-balance token-trait)))
+      (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
+      (balance (unwrap! (get-balance token-trait) none-token-err))
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
       (current-balance (get balance current-token-map))
 
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point sub-fixed current-balance balance))
+        balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
       }))
     )
     (map-set tokens-balances { token: token-name} updated-token-map )
@@ -172,8 +174,8 @@
       (memo (optional (buff 34))))
       (let 
         (
-          (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
-          (token-name (unwrap-panic (contract-call? token-trait get-name)))
+          (token-symbol (unwrap! (contract-call? token-trait get-symbol) none-token-err))
+          (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
           ;;(vault-balances (var-get balances)) ;; list 
         )
         
