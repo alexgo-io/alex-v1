@@ -9,7 +9,7 @@ description: >-
 
 * [Fixed Weight Pool](pools.md#fixed-weight-pool)
 * [Collateral Rebalancing Pool](pools.md#collateral-rebalancing-pool)
-* Yield Token Pool
+* [Yield Token Pool](pools.md#fixed-weight-pool-1)
 * Liquidity Bootstrapping Pool
 
 ## Fixed Weight Pool <a id="fixed-weight-pool"></a>
@@ -167,24 +167,6 @@ Allows swapping between the two tokens in a pool. With given dy, find the corres
 ```
 $ Usage
 ```
-
-
-
-### **collect-fees**
-
-**Prototype:**`(define-public (collect-fees (token-x-trait ) (token-y-trait ) (weight-x) (weight-y))`
-
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint`
-
-**Output:** `bool | uint`
-
-Collects the accrued platform fee. Transaction occurs from pool to designated fee-to-address principal. As a result, platform fees collected in pool \(fee-balance\) is reseted to zero.
-
-```
-$ Usage
-```
-
-### \*\*\*\*
 
 ### **get-x-given-y**
 
@@ -662,11 +644,13 @@ $ Usage
 $ Usage
 ```
 
+## 
+
+
+
 ## Yield Token Pool <a id="fixed-weight-pool"></a>
 
- Fixed weight pool is a tactical template which can be used as a reference for developers to use as a template on future works. Unlike Balancer or UniSwap, our weighted equation do allow dynamic weighting which depends on [Black & Scholes delta](https://en.wikipedia.org/wiki/Black–Scholes_model). Therefore, we have forked a fixed weight pool from Balancer, but appropriately modified solidity to clarity language :
-
-
+ Yield Token Pool is the main pool which all the entities \(Arbitrageurs, Borrower, Lender and LP\) exerts their own influence. On swapping in yield token pool, users should pay the platform fee which to the  pre-designated address. Each pair of tokens have its own unique yield token pool contract. For details please check our [whitepaper](https://docs.alexgo.io/whitepaper/automated-market-making-of-alex).
 
 ### **get-max-expiry**
 
@@ -848,33 +832,15 @@ Allows swapping between yield token and target token in pool. With given dy, fin
 $ Usage
 ```
 
+ **get-x-given-y**
 
+**Prototype:** `(define-read-only (get-x-given-y (token-x-trait) (dy))`
 
-### **collect-fees**
-
-**Prototype:**`(define-public (collect-fees (token-x-trait ) (token-y-trait ) (weight-x) (weight-y))`
-
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint`
+**Input:** `<yield-token-trait> uint`
 
 **Output:** `bool | uint`
 
-Collects the accrued platform fee. Transaction occurs from pool to designated fee-to-address principal. As a result, platform fees collected in pool \(fee-balance\) is reseted to zero.
-
-```
-$ Usage
-```
-
-### \*\*\*\*
-
-### **get-x-given-y**
-
-**Prototype:** `(define-read-only (get-x-given-y (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y) (dy))`
-
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, uint`
-
-**Output:** `bool | uint`
-
-Returns a dx which conforms the weighted equation using dy. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dy that corresponds to given dx. 
+Returns a dx which conforms the weighted equation using dy. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx that corresponds to given dy. 
 
 ```
 $ Usage
@@ -884,13 +850,13 @@ $ Usage
 
 ### **get-y-given-x**
 
-**Prototype:** `(define-read-only (get-x-given-y (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y) (dx))`
+**Prototype:**  `define-read-only (get-y-given-x (token-x-trait) (dx))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, uint`
+**Input:** `<yield-token-trait>, uint`
 
 **Output:** `bool | uint`
 
-Returns a dy which conforms the weighted equation using dx. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx that corresponds to given dy. 
+Returns a dy which conforms the weighted equation using dx. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dy that corresponds to given dx. 
 
 ```
 $ Usage
@@ -900,13 +866,13 @@ $ Usage
 
 ### **set-fee-to-address**
 
-**Prototype:** `(define-public (set-fee-to-address (token-x-trait ) (token-y-trait ) (weight-x) (weight-y) (address))`
+**Prototype:** `(define-public (set-fee-to-address (token-x-trait) (address))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, principal`
+**Input:** `<yield-token-trait>, principal`
 
 **Output:** `bool | uint`
 
- Set the platform fee collector address of given pool. Platform fee gathered on each pool action will be collected to the given address after execution.
+ Set the platform fee collector address of given yield token pool. Platform fee gathered on each pool action will be collected to the given address after execution.
 
 ```
 $ Usage
@@ -914,13 +880,13 @@ $ Usage
 
 ### **get-fee-to-address**
 
-**Prototype:** `(define-read-only (get-fee-to-address (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y))`
+**Prototype:** `(define-read-only (get-fee-to-address (token-x-trait))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint`
+**Input:** `<yield-token-trait>`
 
 **Output:** `bool | uint`
 
- Get the platform fee collector address which is currently set on the given pool. 
+ Get the platform fee collector address which is currently set on the yield token pool. 
 
 ```
 $ Usage
@@ -928,13 +894,13 @@ $ Usage
 
 ### **get-fees**
 
-**Prototype:** `(define-read-only (get-fees (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y))`
+**Prototype:** `(define-read-only (get-fees (token-x-trait))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint`
+**Input:** `<yield-token-trait>`
 
 **Output:** `bool | uint`
 
- Get the current platform fee of given pool.
+ Get the current platform fee of given yield token pool.
 
 ```
 $ Usage
@@ -942,9 +908,9 @@ $ Usage
 
 ### collect-fees
 
-**Prototype:** `(define-public (collect-fees (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y))`
+**Prototype:** `(define-public (collect-fees (token-x-trait) (token-xy-trait))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint`
+**Input:** `<yield-token-trait>, <ft-trait>`
 
 **Output:** `bool | uint`
 
@@ -956,13 +922,13 @@ $ Usage
 
 ### get-token-given-position
 
-**Prototype:** `(define-read-only (get-token-given-position (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y) (dx) (dy))`
+**Prototype:** `(define-read-only (get-token-given-position (token-x-trait) (dx))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, uint, uint`
+**Input:** `<yield-token-trait>, uint`
 
 **Output:** `bool | uint`
 
- Returns a token which conforms the weighted equation using dx and dy. This API is used to maintain the pool ratio using the equation and use to get token.
+ Returns a token which conforms the weighted equation using dx and yield token. This API is used to maintain the pool ratio using the yield token equation and use to get token.
 
 ```
 $ Usage
@@ -970,13 +936,13 @@ $ Usage
 
 ### get-x-given-price
 
-**Prototype:** `(define-read-only (get-x-given-price (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y) (price))`
+**Prototype:** `(define-read-only (get-x-given-price (token-x-trait) (price))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, uint`
+**Input:** `<yield-token-trait>, uint`
 
 **Output:** `bool | uint`
 
- Returns a dx which conforms the weighted equation using price. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx that corresponds to given price. 
+ Returns a dx which conforms the yield token equation using price. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx that corresponds to given price. 
 
 ```
 $ Usage
@@ -984,13 +950,13 @@ $ Usage
 
 ### get-position-given-mint
 
-**Prototype:** `(define-read-only (get-position-given-mint (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y) (token))`
+**Prototype:** `(define-read-only (get-position-given-mint (token-x-trait) (shares))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, uint`
+**Input:**`<yield-token-trait>, uint`
 
 **Output:** `bool | uint`
 
- Returns a position which conforms the weighted equation using mint token. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx and dy that corresponds to given token mint. Mainly wraps the weighted equation of 'get-position-given-mint' for the easy usage in smart contract.
+ Returns a position which conforms the yield token equation using amount of minted token. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx and dy that corresponds to given token mint. Mainly wraps the yield token equation of 'get-position-given-mint' for the easy usage in smart contract.
 
 ```
 $ Usage
@@ -998,19 +964,17 @@ $ Usage
 
 ### get-position-given-burn
 
-**Prototype:** `(define-read-only (get-position-given-burn (token-x-trait ) (token-y-trait ) (weight-x ) (weight-y) (token))`
+**Prototype:** `(define-read-only (get-position-given-burn (get-position-given-mint (token-x-trait) (shares))`
 
-**Input:** `<token-x-trait>, <token-y-trait>, uint, uint, uint`
+**Input:** `<yield-token-trait>, uint`
 
 **Output:** `bool | uint`
 
-  Returns a position which conforms the weighted equation using burnt token. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx and dy that corresponds to given token burn. Mainly wraps the weighted equation of 'get-position-given-burn' for the easy usage in smart contract.
+  Returns a position which conforms the yield token equation using amount of burnt token. This API is used to maintain the pool ratio using the equation and use to get an adequate amount of dx and dy that corresponds to given token burn. Mainly wraps the yield token equation of 'get-position-given-burn' for the easy usage in smart contract.
 
 ```
 $ Usage
 ```
-
-## 
 
 
 
