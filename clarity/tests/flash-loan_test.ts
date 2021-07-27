@@ -1,5 +1,6 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
+import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 
 const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
@@ -21,20 +22,22 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let block = chain.mineBlock([
-            Tx.contractCall("alex-vault", "flash-loan", [
+            Tx.contractCall("alex-vault", "flash-loan-1", [
+                types.principal(testFlashLoanUser),
+                types.principal(gAlexTokenAddress),
+                types.uint(10000),
+              ], deployer.address),
+              Tx.contractCall("alex-vault", "flash-loan-2", [
                 types.principal(testFlashLoanUser),
                 types.principal(gAlexTokenAddress),
                 types.principal(usdaTokenAddress),
-                types.none(),
                 types.uint(10000),
-                types.uint(10000),
-                types.none()
+                types.uint(20000),
               ], deployer.address)
-              
-            
             
         ]);
         block.receipts[0].result.expectOk()
+        block.receipts[1].result.expectOk()
 
     },
 });

@@ -211,6 +211,29 @@
   )
 )
 
+(define-public (flash-loan-1 
+                (flash-loan-user <flash-loan-user-trait>) 
+                (token <ft-trait>) 
+                (amount uint))
+  
+  (begin 
+      (let 
+        (
+          (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+        )
+        (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
+        (asserts! (is-ok (contract-call? token transfer amount tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount tx-sender)) user-execute-err)
+        (let 
+          (
+            (post-b (unwrap! (contract-call? token get-balance tx-sender) unwrap-err))
+          )
+          (asserts! (>= post-b pre-b) invalid-post-loan-balance-err)
+        )
+      )  
+      (ok true)
+  )
+)
 
 (define-public (flash-loan-2 
                 (flash-loan-user <flash-loan-user-trait>) 

@@ -42,7 +42,25 @@
   )
 )
 
+(define-public (execute-1 
+                    (token <ft-trait>) 
+                    (amount uint) 
+                    (the-vault principal))
+    (let 
+        (
+            (weight1 u50000000)
+            (weight2 u50000000)
+        )
 
+        ;; do whatever you want to do with the loan you have
+        ;; TODO: something is wrong on calling this swap-x-for-y , So I just commentted it by now.
+        ;; (asserts! (is-ok (contract-call? fixed-weight-pool swap-x-for-y token1 token2 weight1 weight2 the-vault amount1)))
+
+        ;; once you are done, return the loan
+        (asserts! (is-ok (contract-call? token transfer amount (as-contract tx-sender) the-vault none)) transfer-failed-err)
+        (ok true)
+    )
+)
 
 (define-public (execute-2 
                     (token1 <ft-trait>) 

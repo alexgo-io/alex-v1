@@ -14,6 +14,9 @@
 
         ;; flash loan to flash loan user up to 3 tokens of amounts specified
         (flash-loan (<flash-loan-user-trait> <ft-trait> <ft-trait> (optional <ft-trait>) uint uint (optional uint)) (response bool uint))
+        ;; Thought it is ugly to have three function with different numbers of parameters
+        ;; Have no other choices 
+        (flash-loan-1 (<flash-loan-user-trait> <ft-trait> uint) (response bool uint))
 
         (flash-loan-2 (<flash-loan-user-trait> <ft-trait> <ft-trait> uint uint) (response bool uint))
 

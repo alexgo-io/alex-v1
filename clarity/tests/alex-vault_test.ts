@@ -74,8 +74,6 @@ Clarinet.test({
           ], user.address),
 
             
-            
-
         ]);
 
         block.receipts[0].result.expectOk();
