@@ -126,10 +126,10 @@
     (t-value (unwrap! (get-t exp) internal-function-call-err))
     
     (price (unwrap! (contract-call? .math-fixed-point pow-up base t-value) math-call-err))
-    (inverse-price (unwrap! (contract-call? .math-fixed-point div-down ONE_8 price) math-call-err))
+    (aytoken-price (unwrap! (contract-call? .math-fixed-point div-down ONE_8 price) math-call-err))
     )
-  
-    (ok inverse-price)
+    ;; any assertions which can assure price to be valid ?
+    (ok aytoken-price)
     )
   
 )
