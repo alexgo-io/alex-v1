@@ -13,6 +13,14 @@
 (define-constant token-absent (err u3010))
 (define-constant invalid-balance (err u3011))
 (define-constant unwrap-err (err u3012))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u2011))
+
+(define-data-var fee-amount uint u0)
+
+;; This is redundant (replaced by tokens-balances below) - need removed.
+;; This Vault should note all the transferred token balance 
+;;(define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
 
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
@@ -56,7 +64,7 @@
 )
 
 ;; Temporarily changed to public for testing
-(define-public (add-token-balance
+(define-private (add-token-balance
                 (token-trait <ft-trait>) (sender principal))
   (begin
     (let
@@ -74,7 +82,7 @@
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point add-fixed current-balance balance))
+        balance: (unwrap! (contract-call? .math-fixed-point add-fixed current-balance balance) math-call-err)
       }))
       ;;(new-token-list (append vault-token-list token-name)) ;; 2001 
     )
@@ -83,10 +91,11 @@
     (if (is-eq current-balance u0)
       (begin
 
-        (append vault-token-list token-name)
+        ;;(append vault-token-list token-name)
+        ;;(unwrap! (as-max-len? (append vault-token-list token-name) u2000)
         ;; To be fixed to : (var-set vault-owned-token new-token-list)
         ;; var-set does not work because of maxlength is settled to 2000, but there is no way to erase elements.
-        (var-set vault-owned-token vault-token-list)
+        (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
         (map-set tokens-balances { token: token-name} updated-token-map )
         ;; (print updated-token-map)
         ;; (print token-name)
@@ -108,13 +117,13 @@
                 (token-trait <ft-trait>))
   (let
     (
-      (token-name (unwrap-panic (contract-call? token-trait get-name)))
-      (balance (unwrap-panic (get-balance token-trait)))
+      (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
+      (balance (unwrap! (get-balance token-trait) none-token-err))
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
       (current-balance (get balance current-token-map))
 
       (updated-token-map (merge current-token-map {
-        balance: (unwrap-panic (contract-call? .math-fixed-point sub-fixed current-balance balance))
+        balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
       }))
     )
     (map-set tokens-balances { token: token-name} updated-token-map )
@@ -137,7 +146,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
-        (asserts! (is-ok (add-token-balance token-trait sender)) transfer-failed-err)
+        (asserts! (is-ok (add-token-balance token-trait sender)) internal-function-call-err)
         
         (ok true)
       )
@@ -152,15 +161,15 @@
       (memo (optional (buff 34))))
       (let 
         (
-          (token-symbol (unwrap-panic (contract-call? token-trait get-symbol)))
-          (token-name (unwrap-panic (contract-call? token-trait get-name)))
+          (token-symbol (unwrap! (contract-call? token-trait get-symbol) none-token-err))
+          (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
           ;;(vault-balances (var-get balances)) ;; list 
         )
         
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
-        (asserts! (is-ok (remove-token-balance token-trait)) transfer-failed-err)
+        (asserts! (is-ok (remove-token-balance token-trait)) internal-function-call-err)
         
         (ok true)
       )
@@ -188,19 +197,6 @@
         (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
         (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        ;; (if (and 
-        ;;     (is-some token3)
-        ;;     (is-some amount3)
-        ;;   )
-        ;;   (let 
-        ;;     (
-        ;;       (t3 (unwrap! token3 unwrap-err))
-        ;;     )
-        ;;     (print expr)
-        ;;     (asserts! (is-ok (contract-call? token2 transfer (unwrap! amount3 unwrap-err) tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        ;;   )
-        ;;   false
-        ;; )
         (asserts! (is-ok (contract-call? flash-loan-user execute token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
         (let 
           (

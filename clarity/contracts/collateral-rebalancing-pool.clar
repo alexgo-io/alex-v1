@@ -23,6 +23,10 @@
 (define-constant percent-greater-than-one (err u5000))
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
+(define-constant weighted-equation-call-err (err u2009))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u2011))
+(define-constant internal-get-weight-err (err u2012))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -72,19 +76,19 @@
 (define-private (erf (x uint))
     (let
         (
-            (a1x (unwrap-panic (contract-call? .math-fixed-point mul-down a1 x)))
-            (x2 (unwrap-panic (contract-call? .math-fixed-point pow-down x u200000000)))
-            (a2x (unwrap-panic (contract-call? .math-fixed-point mul-down a2 x2)))
-            (x3 (unwrap-panic (contract-call? .math-fixed-point pow-down x u300000000)))
-            (a3x (unwrap-panic (contract-call? .math-fixed-point mul-down a3 x3)))
-            (x4 (unwrap-panic (contract-call? .math-fixed-point pow-down x u400000000)))
-            (a4x (unwrap-panic (contract-call? .math-fixed-point mul-down a4 x4)))
-            (denom (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 a1x)))
-            (denom1 (unwrap-panic (contract-call? .math-fixed-point add-fixed denom a2x)))
-            (denom2 (unwrap-panic (contract-call? .math-fixed-point add-fixed denom1 a3x)))
-            (denom3 (unwrap-panic (contract-call? .math-fixed-point add-fixed denom2 a4x)))
-            (denom4 (unwrap-panic (contract-call? .math-fixed-point pow-down denom3 u400000000)))
-            (base (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 denom4)))
+            (a1x (unwrap! (contract-call? .math-fixed-point mul-down a1 x) math-call-err))
+            (x2 (unwrap! (contract-call? .math-fixed-point pow-down x u200000000) math-call-err))
+            (a2x (unwrap! (contract-call? .math-fixed-point mul-down a2 x2) math-call-err))
+            (x3 (unwrap! (contract-call? .math-fixed-point pow-down x u300000000) math-call-err))
+            (a3x (unwrap! (contract-call? .math-fixed-point mul-down a3 x3) math-call-err))
+            (x4 (unwrap! (contract-call? .math-fixed-point pow-down x u400000000) math-call-err))
+            (a4x (unwrap! (contract-call? .math-fixed-point mul-down a4 x4) math-call-err))
+            (denom (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 a1x) math-call-err))
+            (denom1 (unwrap! (contract-call? .math-fixed-point add-fixed denom a2x) math-call-err))
+            (denom2 (unwrap! (contract-call? .math-fixed-point add-fixed denom1 a3x) math-call-err))
+            (denom3 (unwrap! (contract-call? .math-fixed-point add-fixed denom2 a4x) math-call-err))
+            (denom4 (unwrap! (contract-call? .math-fixed-point pow-down denom3 u400000000) math-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down ONE_8 denom4) math-call-err))
         )
         (contract-call? .math-fixed-point sub-fixed ONE_8 base)
     )
@@ -99,7 +103,6 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-;;    (unwrap-panic (map-get? pools-map { pool-id: pool-id }))
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
@@ -144,45 +147,45 @@
             ;; TODO use yield-token-pool as the price oracle
             ;; BUT wouldn't this be circular at inception?
             (spot ONE_8)            
-            (now (unwrap-panic (contract-call? .math-fixed-point mul-down block-height ONE_8)))
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
 
             ;; assume 10mins per block - something to be reviewed
-            (t (unwrap-panic (contract-call? .math-fixed-point div-down 
-                (unwrap-panic (contract-call? .math-fixed-point sub-fixed expiry now))  
-                (unwrap-panic (contract-call? .math-fixed-point mul-down u52560 ONE_8)))))            
+            (t (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err)  
+                (unwrap! (contract-call? .math-fixed-point mul-down u52560 ONE_8) math-call-err)) math-call-err))            
 
             ;; TODO APYs need to be calculated from the prevailing yield token price.
             ;; TODO ln(S/K) approximated as (S/K - 1)
 
             ;; we calculate d1 first
-            (spot-term (unwrap-panic (contract-call? .math-fixed-point div-up spot strike)))
-            (pow-bs-vol (unwrap-panic (contract-call? .math-fixed-point div-up 
-                            (unwrap-panic (contract-call? .math-fixed-point pow-down bs-vol u200000000)) u200000000)))
-            (vol-term (unwrap-panic (contract-call? .math-fixed-point mul-up t pow-bs-vol)))                       
-            (sqrt-t (unwrap-panic (contract-call? .math-fixed-point pow-down t u50000000)))
-            (sqrt-2 (unwrap-panic (contract-call? .math-fixed-point pow-down u200000000 u50000000)))
+            (spot-term (unwrap! (contract-call? .math-fixed-point div-up spot strike) math-call-err))
+            (pow-bs-vol (unwrap! (contract-call? .math-fixed-point div-up 
+                            (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
+            (vol-term (unwrap! (contract-call? .math-fixed-point mul-up t pow-bs-vol) math-call-err))                       
+            (sqrt-t (unwrap! (contract-call? .math-fixed-point pow-down t u50000000) math-call-err))
+            (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
             
-            (denominator (unwrap-panic (contract-call? .math-fixed-point mul-down bs-vol sqrt-t)))
+            (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
         )
         
         (if (> spot-term ONE_8)
             (let
                 (
-                    (numerator (unwrap-panic (contract-call? .math-fixed-point add-fixed vol-term 
-                                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed spot-term ONE_8)))))
-                    (d1 (unwrap-panic (contract-call? .math-fixed-point div-up numerator denominator)))
-                    (erf-term (unwrap-panic (erf (unwrap-panic (contract-call? .math-fixed-point div-up d1 sqrt-2)))))
-                    (complement (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 erf-term)))
+                    (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+                                    (unwrap! (contract-call? .math-fixed-point sub-fixed spot-term ONE_8) math-call-err)) math-call-err))
+                    (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
+                    (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
+                    (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
                 )
                 (contract-call? .math-fixed-point div-up complement u200000000)
             )
             (let
                 (
-                    (numerator (unwrap-panic (contract-call? .math-fixed-point add-fixed vol-term 
-                                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 spot-term)))))
-                    (d1 (unwrap-panic (contract-call? .math-fixed-point div-up numerator denominator)))
-                    (erf-term (unwrap-panic (erf (unwrap-panic (contract-call? .math-fixed-point div-up d1 sqrt-2)))))
-                    (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term)))
+                    (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+                                    (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 spot-term) math-call-err)) math-call-err))
+                    (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
+                    (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
+                    (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
                 )
                 (contract-call? .math-fixed-point div-up complement u200000000)              
             )
@@ -258,15 +261,15 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))            
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))
-            (add-data (unwrap-panic (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)))
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
+            (add-data (unwrap! (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy) weighted-equation-call-err))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
-                total-supply: (unwrap-panic (contract-call? .math-fixed-point add-fixed new-supply total-supply)),
-                balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)),
-                balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-y new-dy))
+                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
             }))
        )
 
@@ -289,20 +292,20 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (shares (unwrap-panic (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-yield-token get-balance tx-sender)) percent)))
+            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-yield-token get-balance tx-sender)) percent) math-call-err))
             (total-supply (get total-supply pool))
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))        
-            (reduce-data (unwrap-panic (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)))
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))        
+            (reduce-data (unwrap! (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares) weighted-equation-call-err))
             (dx (get dx reduce-data))
             (dy (get dy reduce-data))
             (pool-updated (merge pool {
-                total-supply: (unwrap-panic (contract-call? .math-fixed-point sub-fixed total-supply shares)),
-                balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-x dx)),
-                balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy))
+                total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-y dy) math-call-err)
                 })
            )
        )
@@ -324,7 +327,7 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))       
 
@@ -333,14 +336,14 @@
             ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
             (fee u0)
     
-            (dy (unwrap-panic (get-y-given-x token collateral expiry dx)))
+            (dy (unwrap! (get-y-given-x token collateral expiry dx) internal-function-call-err))
 
             (pool-updated
                 (merge pool
                     {
-                        balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)),
-                        balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)),
-                        fee-balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)))                      
+                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-y dy) math-call-err),
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)                      
                     }
                 )
             )
@@ -371,7 +374,7 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
 
@@ -379,14 +382,14 @@
             ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
             ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
             (fee u0)
-            (dx (unwrap-panic (get-x-given-y token collateral expiry dy)))
+            (dx (unwrap! (get-x-given-y token collateral expiry dy) internal-function-call-err))
 
             (pool-updated
                 (merge pool
                     {
-                        balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-x dx)),
-                        balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-y dy)),
-                        fee-balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool))),
+                        balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y dy) math-call-err),
+                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err),
                     }
                 )
             )
@@ -417,7 +420,7 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))            
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
 
         ;; TODO : Assertion for checking the right to set the platform fee.
@@ -460,7 +463,7 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
@@ -484,11 +487,11 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
         )
         (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
     )
@@ -499,11 +502,11 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
         )
         (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
     )
@@ -514,11 +517,11 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))            
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))            
         )
         (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
     )
@@ -529,12 +532,12 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))          
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))          
         )
         (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)
     )
@@ -545,12 +548,12 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))     
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))                         
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))                         
         )
         (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares)
     )
@@ -561,12 +564,12 @@
         (
             (token-x (contract-of token))
             (token-y (contract-of collateral))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
-            (weight-x (unwrap-panic (get-weight-x token collateral expiry)))
-            (weight-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x)))                  
+            (weight-x (unwrap! (get-weight-x token collateral expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))                  
         )
         (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)
     )

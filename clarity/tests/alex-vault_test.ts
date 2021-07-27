@@ -17,56 +17,72 @@ Clarinet.test({
  
         let user = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
-        let vault = accounts.get("wallet_2")!;
 
         let block = chain.mineBlock([
             
             Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(usdaTokenAddress)
-              ], wallet_1.address),
+              ], user.address),
             
-
               // Must return empty list
-            //   Tx.contractCall("alex-vault", "get-balances", [
-            //     types.principal(gAlexTokenAddress)
-            //   ], user.address),
+              Tx.contractCall("alex-vault", "get-balances", [
+              ], user.address),
             
-            // Tx.contractCall("alex-vault", "add-token-balance", [
-            //     types.principal(ayusdaAddress),
-            //     types.principal(user.address),
-            //   ], user.address),
-
-           //(transfer-to-vault (amount uint)  (sender principal) (recipient principal) (token-trait <ft-trait>) (memo (optional (buff 34))))
-            Tx.contractCall("alex-vault", "transfer-to-vault", [
+            // Transfer usda to Vault
+            // Since User is deployer, Vault address is User.vault 
+              Tx.contractCall("alex-vault", "transfer-to-vault", [
                 types.uint(1000000),
+                types.principal(wallet_1.address),
                 types.principal(user.address),
-                types.principal(vault.address),
                 types.principal(usdaTokenAddress),
                 types.none()
-            ], vault.address),
+            ], user.address),
+
+            // transfer galex to Vault
+            Tx.contractCall("alex-vault", "transfer-to-vault", [
+              types.uint(1000000),
+              types.principal(wallet_1.address),
+              types.principal(user.address),
+              types.principal(gAlexTokenAddress),
+              types.none()
+          ], user.address),
             
-            // Tx.contractCall("alex-vault", "get-tokenlist", [
-            //   ], user.address),
-
-            // Tx.contractCall("alex-vault", "get-balance", [
-            //     types.principal(usdaTokenAddress)
-            //   ], wallet_1.address),
-
-            //   // Added value of token should be returned
-            //   Tx.contractCall("alex-vault", "get-balances", [
-            //   ], wallet_1.address),
+            // should return (ok [{balance: u999999900000, token: "Alex Token"}, {balance: u999999900000, token: "USDA"}])
+            Tx.contractCall("alex-vault", "get-balances", [
+              ], user.address),
               
+              // transfer galex from Vault
+              Tx.contractCall("alex-vault", "transfer-from-vault", [
+                types.uint(1000000),
+                types.principal(user.address),
+                types.principal(wallet_1.address),
+                types.principal(gAlexTokenAddress),
+                types.none()
+            ], user.address),
+
+            // Transfer usda from vault
+            Tx.contractCall("alex-vault", "transfer-from-vault", [
+              types.uint(1000000),
+              types.principal(user.address),
+              types.principal(wallet_1.address),
+              types.principal(usdaTokenAddress),
+              types.none()
+          ], user.address),
+
+          // Should Return (ok [{balance: u0, token: "Alex Token"}, {balance: u0, token: "USDA"}])
+          Tx.contractCall("alex-vault", "get-balances", [
+          ], user.address),
+
             
             
 
         ]);
 
-        block.receipts[0].result.expectOk().expectUint(0);
+        block.receipts[0].result.expectOk();
         block.receipts[1].result.expectOk();
-//        block.receipts[2].result.expectOk()
-        //block.receipts[3].result.expectOk().expectUint(1000000);
-        // block.receipts[3].result.expectOk();
-        // block.receipts[2].result.expectOk().expectList();
-        
+        block.receipts[2].result.expectOk();
+        block.receipts[3].result.expectOk();
+        block.receipts[4].result.expectOk();
+
     },
 });
