@@ -26,7 +26,6 @@
 ;; public functions
 ;;
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
-    ;; TODO add fee
     (let 
         (
             (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
@@ -44,7 +43,6 @@
 )
 
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
-    ;; TODO add fee
     (let 
         (
             (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))
@@ -62,7 +60,6 @@
 )
 
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
-    ;; TODO add fee
     (let 
         (
             (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))

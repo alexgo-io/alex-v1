@@ -1,8 +1,6 @@
 ;; yield-token-equation
 ;; implementation of Yield Token AMM (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex)
 
-;; (impl-trait .trait-equation.equation-trait)
-
 ;; constants
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
