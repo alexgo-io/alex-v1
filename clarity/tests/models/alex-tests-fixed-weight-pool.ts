@@ -86,14 +86,13 @@ class FWPTestAgent1 {
     return block.receipts[0].result;
   }
 
-  swapYForX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, vault: string, dy: number) {
+  swapYForX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, vault: string, dy: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("fixed-weight-pool", "swap-y-for-x", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
         types.uint(weightY),
-        types.principal(pooltoken),
         types.principal(vault),
         types.uint(dy * 1000000) // 200
         //types.uint(dyMin * 1000000), // 38 (should get ~40)

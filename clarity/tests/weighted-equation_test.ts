@@ -81,3 +81,37 @@ Clarinet.test({
 
 
 
+Clarinet.test({
+    name: " WEIGHTED EQUATION :  Error Testing ",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 =accounts.get('wallet_1')!;
+        
+        // Weight Sum Error
+        let call = chain.callReadOnlyFn("weighted-equation", "get-y-given-x", [types.uint(100000000),
+            types.uint(100000000),
+            types.uint(49999999),
+            types.uint(testWeightY),
+            types.uint(20000000)], wallet_1.address);
+        call.result.expectErr().expectUint(4000)
+        
+        // Division By zero
+        // call = chain.callReadOnlyFn("weighted-equation", "get-x-given-y", [types.uint(100000000),
+        //     types.uint(100000000),
+        //     types.uint(testWeightX),
+        //     types.uint(testWeightY),
+        //     types.uint(100000000)], wallet_1.address);
+        // call.result.expectErr().expectUint(4000)
+
+        // Math library error which throws unwrap-panic
+        // call = chain.callReadOnlyFn("weighted-equation", "get-y-given-x", [types.uint(100000000),
+        //     types.uint(100000000),
+        //     types.uint(testWeightX),
+        //     types.uint(testWeightY),
+        //     types.uint(100000000)], wallet_1.address);
+        // call.result.expectErr().expectUint(4000)
+
+
+    },
+});

@@ -89,7 +89,7 @@ Clarinet.test({
         let wallet_1 =accounts.get('wallet_1')!;
         let FWPTest = new FWPTestAgent1(chain, deployer);
         
-        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, alexVaultAddress, 50000, 10000);
+        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, alexVaultAddress, 50000, 10000); // Internally 1M multiplied
         result.expectOk().expectBool(true);
 
         // Fees will be transferred to wallet_1
@@ -108,7 +108,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : Error Testing",
+    name: "FWP : General Error Testing",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;
@@ -153,9 +153,13 @@ Clarinet.test({
         // Internal Function call error due to max ratio error in weighted equation.
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 2000000);
         result.expectErr().expectUint(2011);
+        
+        // Transfer Fails because ft-transfer blocks if the balance is 0
+        result = FWPTest.swapYForX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
+        result.expectErr().expectUint(3002);
 
-        // result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
-        // result.expectErr().expectUint(2003);
+        // result = FWPTest.swapYFor(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
+        // result.expectOk().expectUint(2003);
 
     },
 });

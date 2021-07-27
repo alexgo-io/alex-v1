@@ -172,7 +172,6 @@
         ;; send y to vault
         ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
                
-        ;; Experiment
         ;; Transfer to vault
         (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
@@ -256,7 +255,7 @@
     )
   )
        
-    (asserts! (> dx u0) invalid-liquidity-err) 
+    ;;(asserts! (> dx u0) invalid-liquidity-err) 
     ;; TODO : Check whether dy or dx value is valid  
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
@@ -308,7 +307,7 @@
       )
     )
   )
-  (asserts! (> dy u0) invalid-liquidity-err)
+  ;;(asserts! (> dy u0) invalid-liquidity-err)
     ;; TODO : Check whether dy or dx value is valid  
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 

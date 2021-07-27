@@ -124,3 +124,51 @@ Clarinet.test({
         
     },
 });
+
+Clarinet.test({
+    name: "CRP : General Error Testing",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 =accounts.get('wallet_1')!;
+        let wallet_2 =accounts.get('wallet_2')!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+
+        // Deployer creates the pool
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        result.expectOk().expectBool(true);
+
+        // Existing Pool
+        result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        result.expectErr().expectUint(2000);
+
+        // Invalid Pool Access
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, 444, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result.expectErr().expectUint(2001);
+
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result.expectOk().expectBool(true);
+
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 0, 0);
+        result.expectErr().expectUint(2003);
+
+        result = CRPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result.expectErr().expectUint(3001);
+
+        // Transfer Error 
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 0);
+        result.expectErr().expectUint(3001);
+
+        // Math Error
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 10000000000);
+        result.expectErr().expectUint(2010);
+
+        // dY = 0 
+        // result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
+        // result.expectErr();
+
+        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, alexVaultAddress,200000000000);
+        result.expectErr().expectUint(2011);
+
+        
+    },
+});
