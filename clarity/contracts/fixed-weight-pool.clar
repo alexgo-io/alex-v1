@@ -488,3 +488,7 @@
         (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)
     )
 )
+
+(define-public (test)
+    (ok true)
+)
