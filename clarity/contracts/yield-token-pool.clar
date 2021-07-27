@@ -111,7 +111,7 @@
 )
 
 ;; get-price - input: token trait, expiry / output : price
-(define-public (get-price (token-x-trait <yield-token-trait>) (expiry uint))
+(define-public (get-price (token-x-trait <yield-token-trait>))
     
     (let
     (
