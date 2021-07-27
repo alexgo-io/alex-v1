@@ -222,7 +222,10 @@
    )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-vault <vault-trait>) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) 
+                            (token-y-trait <ft-trait>) 
+                            (weight-x uint) (weight-y uint) 
+                            (the-vault <vault-trait>) (dx uint))
     
     (let
     (

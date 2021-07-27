@@ -33,11 +33,21 @@ Clarinet.test({
                 types.principal(usdaTokenAddress),
                 types.uint(10000),
                 types.uint(20000),
+              ], deployer.address),
+              Tx.contractCall("alex-vault", "flash-loan-3", [
+                types.principal(testFlashLoanUser),
+                types.principal(gAlexTokenAddress),
+                types.principal(usdaTokenAddress),
+                types.principal(ayusdaAddress),
+                types.uint(10000),
+                types.uint(20000),
+                types.uint(30000),
               ], deployer.address)
             
         ]);
         block.receipts[0].result.expectOk()
         block.receipts[1].result.expectOk()
+        block.receipts[2].result.expectErr() // will trigger error cause there are not balance in ayusdaAddress
 
     },
 });
