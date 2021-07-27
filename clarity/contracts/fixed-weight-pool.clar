@@ -242,7 +242,7 @@
 
     ;; fee = dx * fee-rate-x / ONE_8
     (fee (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err) ONE_8)))
+                (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err) ONE_8) math-call-err))
     (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
     
     (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees) internal-function-call-err))
@@ -294,7 +294,7 @@
 
     ;; fee = dy * fee-rate-y / ONE_8
     (fee (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err) ONE_8)))
+                (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err) ONE_8) math-call-err))
     (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
 
     (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees) internal-function-call-err))
@@ -373,7 +373,7 @@
             { 
                 token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
             }
-            (merge pool { fee-rate-x: free-rate-x })
+            (merge pool { fee-rate-x: fee-rate-x })
         )
         (ok true)     
     )
@@ -394,7 +394,7 @@
             { 
                 token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
             }
-            (merge pool { fee-rate-y: free-rate-y })
+            (merge pool { fee-rate-y: fee-rate-y })
         )
         (ok true)     
     )
