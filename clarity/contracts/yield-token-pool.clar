@@ -20,7 +20,7 @@
 (define-constant no-fee-y-err (err u2006))
 (define-constant invalid-expiry-err (err u2009))
 (define-constant fixed-point-err (err 5014))
-
+(define-constant internal-function-call-err (err u2011))
 ;; data maps and vars
 (define-map pools-map
   { pool-id: uint }
@@ -106,6 +106,30 @@
             invalid-pool-err
        )
    )
+)
+
+;; get-price - input: token trait, expiry / output : price
+(define-public (get-price (token-x-trait <yield-token-trait>) (expiry uint))
+    
+    (let
+    (
+    (token-x (contract-of token-x-trait))
+    (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
+    ;;(exp (get expiry pool))
+    (exp (unwrap-panic (contract-call? token-x-trait get-expiry)))
+    (balance-x (get balance-x pool))
+    (balance-y (get balance-y pool))
+
+    (base (unwrap-panic (contract-call? .math-fixed-point div-down balance-y balance-x)))
+    (t-value (unwrap! (get-t exp) internal-function-call-err))
+    
+    (price (unwrap-panic (contract-call? .math-fixed-point pow-up base t-value)))
+    (inverse-price (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 price)))
+    )
+  
+    (ok inverse-price)
+    )
+  
 )
 
 ;; TODO: shouldn't the pool token be created as part of create-pool?
