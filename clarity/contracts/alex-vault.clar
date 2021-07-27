@@ -114,19 +114,22 @@
 )
 
 (define-private (remove-token-balance
-                (token-trait <ft-trait>))
+                (token-trait <ft-trait>) (sender principal))
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
-      (balance (unwrap! (get-balance token-trait) none-token-err))
-      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
-      (current-balance (get balance current-token-map))
+      ;;(balance (unwrap! (get-balance token-trait) none-token-err))
+      (updated-balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
+      ;; (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
+      ;; (current-balance (get balance current-token-map))
 
-      (updated-token-map (merge current-token-map {
-        balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
-      }))
+      ;; (updated-token-map (merge current-token-map {
+      ;;   balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
+      ;; }))
     )
-    (map-set tokens-balances { token: token-name} updated-token-map )
+    (map-set tokens-balances { token: token-name} { balance : updated-balance});;updated-token-map )
+    ;; (print balance)
+    ;; (print current-token-map)
     (ok true)
   )
 )
@@ -146,7 +149,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
-        (asserts! (is-ok (add-token-balance token-trait sender)) internal-function-call-err)
+        (asserts! (is-ok (add-token-balance token-trait recipient)) internal-function-call-err)
         
         (ok true)
       )
@@ -155,7 +158,7 @@
 
 (define-public (transfer-from-vault
       (amount uint)  
-      (sender principal) ;; (as-contract tx-sender) 
+      (sender principal) ;; Vault
       (recipient principal) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
@@ -169,7 +172,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
-        (asserts! (is-ok (remove-token-balance token-trait)) internal-function-call-err)
+        (asserts! (is-ok (remove-token-balance token-trait sender)) internal-function-call-err)
         
         (ok true)
       )
