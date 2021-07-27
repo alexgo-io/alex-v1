@@ -31,7 +31,7 @@ Clarinet.test({
             // Transfer usda to Vault
             // Since User is deployer, Vault address is User.vault 
               Tx.contractCall("alex-vault", "transfer-to-vault", [
-                types.uint(1000000),
+                types.uint(100000000),
                 types.principal(wallet_1.address),
                 types.principal(user.address),
                 types.principal(usdaTokenAddress),
@@ -40,25 +40,25 @@ Clarinet.test({
 
             // transfer galex to Vault
             Tx.contractCall("alex-vault", "transfer-to-vault", [
-              types.uint(1000000),
+              types.uint(100000000),
               types.principal(wallet_1.address),
               types.principal(user.address),
               types.principal(gAlexTokenAddress),
               types.none()
           ], user.address),
             
-            // should return (ok [{balance: u999999900000, token: "Alex Token"}, {balance: u999999900000, token: "USDA"}])
+            // should return (ok [{balance: u1000100000000, token: "Alex Token"}, {balance: u1000100000000, token: "USDA"}])
             Tx.contractCall("alex-vault", "get-balances", [
               ], user.address),
               
-              // u9999999000000
+              // u1000100000000
               Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(gAlexTokenAddress)
               ], user.address),
 
               // transfer galex from Vault
               Tx.contractCall("alex-vault", "transfer-from-vault", [
-                types.uint(1000000),
+                types.uint(100000000),
                 types.principal(user.address),
                 types.principal(wallet_1.address),
                 types.principal(gAlexTokenAddress),
@@ -67,18 +67,18 @@ Clarinet.test({
 
             // Transfer usda from vault
             Tx.contractCall("alex-vault", "transfer-from-vault", [
-              types.uint(1000000),
+              types.uint(100000000),
               types.principal(user.address),
               types.principal(wallet_1.address),
               types.principal(usdaTokenAddress),
               types.none()
           ], user.address),
 
-          // Should Return (ok [{balance: u0, token: "Alex Token"}, {balance: u0, token: "USDA"}])
+          // Should Return (ok [{balance: u1000000000000, token: "Alex Token"}, {balance: u1000000000000, token: "USDA"}])
           Tx.contractCall("alex-vault", "get-balances", [
           ], user.address),
 
-          // u999999900000
+          // u1000000000000
           Tx.contractCall("alex-vault", "get-balance", [
             types.principal(gAlexTokenAddress)
           ], user.address),
@@ -91,8 +91,8 @@ Clarinet.test({
         block.receipts[3].result.expectOk();
         let lists:any = block.receipts[4].result;//.result.expectOk();
         lists.expectOk().expectList() 
-        block.receipts[5].result.expectOk().expectUint(1000000100000);
-        block.receipts[9].result.expectOk().expectUint(0);
+        block.receipts[5].result.expectOk().expectUint(1000100000000);
+        block.receipts[9].result.expectOk().expectUint(1000000000000);
 
     },
 });
