@@ -75,12 +75,10 @@
             (weight1 u50000000)
             (weight2 u50000000)
         )
-
-        ;; do whatever you want to do with the loan you have
         ;; TODO: If I want to do someting with <vault-trait> I need to add it to trait-flash-loan-user's depends_on in Clarinet.toml
         ;; Because vault-trait already used trait-flash-loan-user in trait-vault, 
         ;; so if I add trait-vault to trait-flash-loan-user's depends_on, there will be a Error: cycling dependencies:
-        ;; Thus, I can't make a call below.
+        ;; Thus, I can't make a call below. <by Tiger>
 
         ;; (asserts! (is-ok (contract-call? 
         ;;                     .fixed-weight-pool 
