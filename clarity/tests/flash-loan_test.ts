@@ -1,7 +1,8 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
-
+import { 
+    FWPTestAgent1,
+  } from './models/alex-tests-fixed-weight-pool.ts';
 
 const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
 const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
@@ -16,12 +17,25 @@ const testFlashLoanUser = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.test-flash-
  * 
  * 2. User using Flashloan for 3 tokens (two different pools)
  */
-
+const testWeightX = 50000000 //0.5
+const testWeightY = 50000000 //0.5
+const balanceX = 500000
+const balanceY = 100000
 Clarinet.test({
     name: "VAULT : Flash Loan Test",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let block = chain.mineBlock([
+            Tx.contractCall('fixed-weight-pool', 'create-pool', [
+                types.principal(gAlexTokenAddress),
+                types.principal(usdaTokenAddress),
+                types.uint(testWeightX),
+                types.uint(testWeightY),
+                types.principal(gAlexUsdaPoolAddress),
+                types.principal(alexVaultAddress),
+                types.uint(balanceX * 1000000),
+                types.uint(balanceY * 1000000),
+            ],deployer.address),
             Tx.contractCall("alex-vault", "flash-loan-1", [
                 types.principal(testFlashLoanUser),
                 types.principal(gAlexTokenAddress),
@@ -45,9 +59,9 @@ Clarinet.test({
               ], deployer.address)
             
         ]);
-        block.receipts[0].result.expectOk()
+        block.receipts[0].result.expectOk().expectBool(true);
         block.receipts[1].result.expectOk()
-        block.receipts[2].result.expectErr() // will trigger error cause there are not balance in ayusdaAddress
-
+        block.receipts[2].result.expectErr() // will trigger error cause one of the token has been swapped
+        block.receipts[3].result.expectErr() // will trigger error cause there are not balance in ayusdaAddress
     },
 });
