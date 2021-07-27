@@ -7,7 +7,6 @@ General error starts with 1000.
 | Error | Code | Description |
 | :--- | :---: | :---: |
 | err-not-authorized | 1000 | Inappropriate principal accessing |
-| err-token-not-in-oracle | 1001 | Oracle price retrieving failure |
 
 ## Pool Error
 
@@ -26,10 +25,6 @@ Pool errors starts with 2000.
 | invalid-balance-err | 2008 | Accesing invalid balance |
 | invalid-expiry-err | 2009 | expiry &gt; max-expiry |
 | already-expiry-err | 2010 | current block-height &gt; expiry |
-| internal-function-call-err | 2011 | Function call inside same smart contract failed |
-| internal-get-weight-err | 2012 | Function call(get-weight) inside same smart contract failed |
-| get-expiry-fail-err | 2013 | Function call(get-expiry) inside same smart contract failed |
-| yield-token-equation-call-err | 2014 | yield token equation calling failed |
 
 ## Vault Error
 
