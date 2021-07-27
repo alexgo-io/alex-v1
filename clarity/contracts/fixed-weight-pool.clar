@@ -49,7 +49,9 @@
     fee-balance-x: uint,
     fee-balance-y: uint,
     fee-to-address: principal,
-    pool-token: principal
+    pool-token: principal,
+    fee-rate-x: uint,
+    fee-rate-y: uint
   }
 )
 
@@ -119,6 +121,8 @@
                 fee-balance-y: u0,
                 fee-to-address: (contract-of the-pool-token),
                 pool-token: (contract-of the-pool-token),
+                fee-rate-x: u0,
+                fee-rate-y: u0
             })
        )
         (asserts!
@@ -222,7 +226,10 @@
    )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-vault <vault-trait>) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) 
+                            (token-y-trait <ft-trait>) 
+                            (weight-x uint) (weight-y uint) 
+                            (the-vault <vault-trait>) (dx uint))
     
     (let
     (
@@ -231,19 +238,19 @@
     (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
     (balance-x (get balance-x pool))
     (balance-y (get balance-y pool))
+    (fee-rate-x (get fee-rate-x pool))
 
-
-    ;; TODO : Platform Fee imposing logic required.
-    ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
-    ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
-    (fee u0)
+    ;; fee = dx * fee-rate-x / ONE_8
+    (fee (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err) ONE_8)))
+    (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
     
-    (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx) internal-function-call-err))
+    (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees) internal-function-call-err))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx) math-call-err),
+          balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx-net-fees) math-call-err),
           balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
           fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
         }
@@ -261,7 +268,7 @@
     ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
     ;; Swapping using transfer-to-vault
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx-net-fees tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
     (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy (contract-of the-vault) tx-sender token-y-trait none)) transfer-y-failed-err)
 
 
@@ -270,7 +277,7 @@
     ;; post setting
     (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
     (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-    (ok (list dx dy))
+    (ok (list dx-net-fees dy))
   )
 )
 
@@ -283,18 +290,20 @@
     (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
     (balance-x (get balance-x pool))
     (balance-y (get balance-y pool))
+    (fee-rate-y (get fee-rate-y pool))
 
-    ;; TODO : Platform Fee imposing logic required.
-    ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
-    ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
-    (fee u0)
-    (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy) internal-function-call-err))
+    ;; fee = dy * fee-rate-y / ONE_8
+    (fee (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err) ONE_8)))
+    (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
+
+    (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees) internal-function-call-err))
 
     (pool-updated
       (merge pool
         {
           balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
-          balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy) math-call-err),
+          balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy-net-fees) math-call-err),
           fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
         }
       )
@@ -316,15 +325,79 @@
 
     ;; Swapping using transfer-to-vault
     (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx (contract-of the-vault) tx-sender token-x-trait none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy-net-fees tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
     ;; post setting
     (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
     (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-    (ok (list dx dy))
+    (ok (list dx dy-net-fees))
   )
+)
+
+(define-read-only (get-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+        (ok (get fee-rate-x pool))
+    )
+)
+
+(define-read-only (get-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+        (ok (get fee-rate-y pool))
+    )
+)
+
+(define-public (set-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (fee-rate-x uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+
+        ;; TODO : Assertion for checking the right to set the platform fee.
+        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-rate-x: free-rate-x })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (fee-rate-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+
+        ;; TODO : Assertion for checking the right to set the platform fee.
+        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-rate-y: free-rate-y })
+        )
+        (ok true)     
+    )
 )
 
 (define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (address principal))
@@ -484,4 +557,8 @@
         )
         (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)
     )
+)
+
+(define-public (test)
+    (ok true)
 )

@@ -3,7 +3,7 @@ name = "alex-v1"
 requirements = []
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
-depends_on = ["test-flash-loan-user", "trait-vault", "trait-sip-010", "trait-flash-loan-user"]
+depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user","math-fixed-point"]
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/collateral-rebalancing-pool.clar"
@@ -87,4 +87,4 @@ depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-pool]
 path = "contracts/yield-token-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "yield-token-equation"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault","trait-flash-loan-user", "math-fixed-point", "yield-token-equation"]

@@ -51,6 +51,11 @@ Clarinet.test({
             Tx.contractCall("alex-vault", "get-balances", [
               ], user.address),
               
+              // u9999999000000
+              Tx.contractCall("alex-vault", "get-balance", [
+                types.principal(gAlexTokenAddress)
+              ], user.address),
+
               // transfer galex from Vault
               Tx.contractCall("alex-vault", "transfer-from-vault", [
                 types.uint(1000000),
@@ -73,16 +78,21 @@ Clarinet.test({
           Tx.contractCall("alex-vault", "get-balances", [
           ], user.address),
 
+          // u999999900000
+          Tx.contractCall("alex-vault", "get-balance", [
+            types.principal(gAlexTokenAddress)
+          ], user.address),
             
-            
-
         ]);
 
         block.receipts[0].result.expectOk();
         block.receipts[1].result.expectOk();
         block.receipts[2].result.expectOk();
         block.receipts[3].result.expectOk();
-        block.receipts[4].result.expectOk();
+        let lists:any = block.receipts[4].result;//.result.expectOk();
+        lists.expectOk().expectList() 
+        block.receipts[5].result.expectOk().expectUint(1000000100000);
+        block.receipts[9].result.expectOk().expectUint(0);
 
     },
 });

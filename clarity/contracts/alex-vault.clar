@@ -2,11 +2,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
-;; These hard-coded constants need to be removed (into a dynamic list, as vault receives/sends tokens)
-(define-constant token-galex-name "Alex Token")
-(define-constant token-usda-name "USDA")
-(define-constant token-ayusda-name "ayUSDA")
-
 (define-constant insufficient-flash-loan-balance-err (err u3003))
 (define-constant invalid-post-loan-balance-err (err u3004))
 (define-constant user-execute-err (err u3005))
@@ -17,6 +12,7 @@
 (define-constant token-type-err (err u3009))
 (define-constant token-absent (err u3010))
 (define-constant invalid-balance (err u3011))
+(define-constant unwrap-err (err u3012))
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u2011))
 
@@ -32,12 +28,6 @@
 ;; token balances map owned by vault
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
-;; pre-loan-balances-map should be inside flash-loan, not as a global variable.
-;; Initialize the pre-loan-balances-map map with all the three tokens' balance from 0
-(define-map pre-loan-balances-map {token: (string-ascii 32) } { balance: uint})
-(map-set pre-loan-balances-map {token: token-galex-name} { balance: u0})
-(map-set pre-loan-balances-map {token: token-usda-name} { balance: u0})
-(map-set pre-loan-balances-map {token: token-ayusda-name} { balance: u0})
 
 
 ;; get-balance should return the balance held by vault of the token, not how much tx-sender holds.
@@ -55,7 +45,6 @@
 
 ;; For Debugging
 (define-read-only (get-tokenlist)
-
     (var-get vault-owned-token)
 )
 ;; returns list of {token, balance}
@@ -82,10 +71,7 @@
       (
         (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))          
       )
-
-      
       (map-insert tokens-balances { token: token-name } { balance: u0 })
-    
     )
   
   (let
@@ -123,24 +109,27 @@
       )
   )
 
-  )
+    )
   )
 )
 
 (define-private (remove-token-balance
-                (token-trait <ft-trait>))
+                (token-trait <ft-trait>) (sender principal))
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
-      (balance (unwrap! (get-balance token-trait) none-token-err))
-      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
-      (current-balance (get balance current-token-map))
+      ;;(balance (unwrap! (get-balance token-trait) none-token-err))
+      (updated-balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
+      ;; (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
+      ;; (current-balance (get balance current-token-map))
 
-      (updated-token-map (merge current-token-map {
-        balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
-      }))
+      ;; (updated-token-map (merge current-token-map {
+      ;;   balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
+      ;; }))
     )
-    (map-set tokens-balances { token: token-name} updated-token-map )
+    (map-set tokens-balances { token: token-name} { balance : updated-balance});;updated-token-map )
+    ;; (print balance)
+    ;; (print current-token-map)
     (ok true)
   )
 )
@@ -160,7 +149,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
-        (asserts! (is-ok (add-token-balance token-trait sender)) internal-function-call-err)
+        (asserts! (is-ok (add-token-balance token-trait recipient)) internal-function-call-err)
         
         (ok true)
       )
@@ -169,7 +158,7 @@
 
 (define-public (transfer-from-vault
       (amount uint)  
-      (sender principal) ;; (as-contract tx-sender) 
+      (sender principal) ;; Vault
       (recipient principal) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
@@ -183,7 +172,7 @@
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
-        (asserts! (is-ok (remove-token-balance token-trait)) internal-function-call-err)
+        (asserts! (is-ok (remove-token-balance token-trait sender)) internal-function-call-err)
         
         (ok true)
       )
@@ -201,82 +190,120 @@
                 (amount3 (optional uint)))
   
   (begin 
-      ;; TODO: step 1 transfer tokens to user one by one
-      (asserts! (is-ok (transfer-to-user flash-loan-user token1 amount1)) transfer-one-by-one-err)  
-      (asserts! (is-ok (transfer-to-user flash-loan-user token2 amount2)) transfer-one-by-one-err)
-      ;; At least It wouldn't been called when the token3 is none
-      (if (and 
-            (is-some token3)
-            (is-some amount3)
-          ) 
-        (asserts! (is-ok (transfer-to-user flash-loan-user (unwrap! token3 none-token-err) (unwrap-panic amount3))) transfer-one-by-one-err)
-        false
-       )
-    ;; TODO: step 2 call user.execute. the one could do anything then pay the tokens back ,see test-flash-loan-user
-      (asserts! (is-ok (contract-call? flash-loan-user execute token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
-    ;; TODO: step 3 check if the balance is incorrect
-      (asserts! (is-ok (after-pay-back-check token1)) transfer-one-by-one-err)
-      (asserts! (is-ok (after-pay-back-check token2)) transfer-one-by-one-err)
-      (if (is-some token3) 
-        (asserts! (is-ok (after-pay-back-check (unwrap! token3 none-token-err) u2)) transfer-one-by-one-err)
-        false
-       )
+      (let 
+        (
+          (pre-b-1 (unwrap-panic (contract-call? token1 get-balance tx-sender)))
+          (pre-b-2 (unwrap-panic (contract-call? token2 get-balance tx-sender)))
+          
+        )
+        (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
+        (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
+        (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
+        (let 
+          (
+            (post-b-1 (unwrap! (contract-call? token1 get-balance tx-sender) unwrap-err))
+            (post-b-2 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
+          )
+          (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
+          (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
+        )
+      )  
       (ok true)
   )
 )
 
-;; this needs to move to inside flash-loan.
-(define-private (transfer-to-user (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint)) 
-  (begin
-    (let 
-      (
-        (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
-        (token-name (unwrap-panic (contract-call? token get-name)))
-      )
-      (map-set pre-loan-balances-map { token: token-name } { balance: pre-b })
-      (asserts! (>= pre-b amount) insufficient-flash-loan-balance-err)
-    )
-    ;; (let 
-    ;;   (
-    ;;     (token-name (unwrap-panic (contract-call? token get-name)))
-    ;;     (tb-1 (default-to u0 (get balance (map-get? pre-loan-balances-map { token: token-name }))))
-    ;;   )
-    ;;   (print token-name)
-    ;;   (print tb-1)
-    ;; )
-    ;; ;; TODO: calculate this fee later
-    ;; ;; (var-set fee-amount (calculateFlashLoanFeeAmount amount))
-    
-    (asserts! (is-ok (contract-call? token transfer amount tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-    ;; (let 
-    ;;   (
-    ;;     (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
-    ;;     (token-name (unwrap-panic (contract-call? token get-name)))
-    ;;   )
-    ;;   (print u"**********************************************")
-    ;;   (print pre-b)
-    ;; )  
-    (ok true)
-  )
-)
-
-;; this needs to move to inside flash-loan.
-(define-private (after-pay-back-check (token <ft-trait>))
+(define-public (flash-loan-1 
+                (flash-loan-user <flash-loan-user-trait>) 
+                (token <ft-trait>) 
+                (amount uint))
+  
   (begin 
-    (let 
-      (
-        (post-b (unwrap-panic (contract-call? token get-balance tx-sender)))
-        (token-name (unwrap-panic (contract-call? token get-name)))
-        (pre-b (default-to u0 (get balance (map-get? pre-loan-balances-map { token: token-name }))))
-      )
-      (asserts! (>= post-b pre-b) invalid-post-loan-balance-err)
-    )
-    (ok true)
+      (let 
+        (
+          (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+        )
+        (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
+        (asserts! (is-ok (contract-call? token transfer amount tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount tx-sender)) user-execute-err)
+        (let 
+          (
+            (post-b (unwrap! (contract-call? token get-balance tx-sender) unwrap-err))
+          )
+          (asserts! (>= post-b pre-b) invalid-post-loan-balance-err)
+        )
+      )  
+      (ok true)
   )
 )
 
-;; this needs to move to inside flash-loan.
-(define-private (calculateFlashLoanFeeAmount (amount uint))
-;;TODO: need to implement Flash loan fee amount, now just leave it 1%
-    (/ amount u100)
+(define-public (flash-loan-2 
+                (flash-loan-user <flash-loan-user-trait>) 
+                (token1 <ft-trait>) 
+                (token2 <ft-trait>) 
+                (amount1 uint) 
+                (amount2 uint))
+  
+  (begin 
+      (let 
+        (
+          (pre-b-1 (unwrap-panic (contract-call? token1 get-balance tx-sender)))
+          (pre-b-2 (unwrap-panic (contract-call? token2 get-balance tx-sender)))
+          
+        )
+        (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
+        (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
+        (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-2 token1 token2 amount1 amount2 tx-sender)) user-execute-err)
+        (let 
+          (
+            (post-b-1 (unwrap! (contract-call? token1 get-balance tx-sender) unwrap-err))
+            (post-b-2 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
+          )
+          (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
+          (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
+        )
+      )  
+      (ok true)
+  )
+)
+
+(define-public (flash-loan-3 
+                (flash-loan-user <flash-loan-user-trait>) 
+                (token1 <ft-trait>) 
+                (token2 <ft-trait>)
+                (token3 <ft-trait>) 
+                (amount1 uint) 
+                (amount2 uint)
+                (amount3 uint))
+  
+  (begin 
+      (let 
+        (
+          (pre-b-1 (unwrap-panic (contract-call? token1 get-balance tx-sender)))
+          (pre-b-2 (unwrap-panic (contract-call? token2 get-balance tx-sender)))
+          (pre-b-3 (unwrap-panic (contract-call? token3 get-balance tx-sender)))
+        )
+        (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
+        (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
+        (asserts! (> pre-b-3 amount3) insufficient-flash-loan-balance-err)
+        (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token3 transfer amount3 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-3 token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
+        (let 
+          (
+            (post-b-1 (unwrap! (contract-call? token1 get-balance tx-sender) unwrap-err))
+            (post-b-2 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
+            (post-b-3 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
+          )
+          (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
+          (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
+          (asserts! (>= post-b-3 pre-b-3) invalid-post-loan-balance-err)
+        )
+      )  
+      (ok true)
+  )
 )

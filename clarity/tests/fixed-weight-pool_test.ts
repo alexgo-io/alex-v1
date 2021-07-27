@@ -80,6 +80,7 @@ Clarinet.test({
     },
 });
 
+
 Clarinet.test({
     name: "FWP : Setting a Fee to principal",
     async fn(chain: Chain, accounts: Map<string, Account>) {
