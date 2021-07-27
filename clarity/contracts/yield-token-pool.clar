@@ -20,7 +20,10 @@
 (define-constant no-fee-y-err (err u2006))
 (define-constant invalid-expiry-err (err u2009))
 (define-constant fixed-point-err (err 5014))
-
+(define-constant internal-function-call-err (err u2011))
+(define-constant math-call-err (err u2010))
+(define-constant get-expiry-fail-err (err u2013))
+(define-constant yield-token-equation-call-err (err u2014))
 ;; data maps and vars
 (define-map pools-map
   { pool-id: uint }
@@ -59,7 +62,7 @@
     (let
         (
             ;;(now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) fixed-point-err)) ;; convert current block-height to fixed point integer
-            (now (unwrap-panic (contract-call? .math-fixed-point mul-down block-height ONE_8))) ;; convert current block-height to fixed point integer
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
         )
         (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
         (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
@@ -67,9 +70,9 @@
         ;;(ok (unwrap! (contract-call? .math-fixed-point div-down 
         ;;        (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) fixed-point-err) 
         ;;        (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) fixed-point-err)) fixed-point-err))
-        (ok (unwrap-panic (contract-call? .math-fixed-point div-down 
+        (ok (unwrap! (contract-call? .math-fixed-point div-down 
                 (unwrap-panic (contract-call? .math-fixed-point sub-fixed expiry now)) 
-                (unwrap-panic (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now)))))                
+                (unwrap-panic (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now))) math-call-err))                
     )
 )
 
@@ -78,7 +81,6 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-;;    (unwrap-panic (map-get? pools-map { pool-id: pool-id }))
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
@@ -108,16 +110,40 @@
    )
 )
 
+;; get-price - input: token trait, expiry / output : price
+(define-public (get-price (token-x-trait <yield-token-trait>) (expiry uint))
+    
+    (let
+    (
+    (token-x (contract-of token-x-trait))
+    (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+    ;;(exp (get expiry pool)) I think it is safer to use below function.
+    (exp (unwrap! (contract-call? token-x-trait get-expiry) get-expiry-fail-err))
+    (balance-x (get balance-x pool))
+    (balance-y (get balance-y pool))
+
+    (base (unwrap! (contract-call? .math-fixed-point div-down balance-y balance-x) math-call-err))
+    (t-value (unwrap! (get-t exp) internal-function-call-err))
+    
+    (price (unwrap! (contract-call? .math-fixed-point pow-up base t-value) math-call-err))
+    (aytoken-price (unwrap! (contract-call? .math-fixed-point div-down ONE_8 price) math-call-err))
+    )
+    ;; any assertions which can assure price to be valid ?
+    (ok aytoken-price)
+    )
+  
+)
+
 ;; TODO: shouldn't the pool token be created as part of create-pool?
 (define-public (create-pool (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))            
             (pool-id (+ (var-get pool-count) u1))
-            (expiry (unwrap-panic (contract-call? token-x-trait get-expiry)))
+            (expiry (unwrap! (contract-call? token-x-trait get-expiry) get-expiry-fail-err))
             (pool-data {
                 expiry: expiry,
-                token-y: (unwrap-panic (contract-call? token-x-trait get-token)),
+                token-y: (unwrap! (contract-call? token-x-trait get-token) invalid-token-err),
                 total-supply: u0,
                 balance-x: u0,
                 balance-y: u0,
@@ -153,13 +179,13 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap-panic (contract-call? .yield-token-equation get-token-given-position balance-x balance-y expiry total-supply dx)))
+            (add-data (unwrap! (contract-call? .yield-token-equation get-token-given-position balance-x balance-y expiry total-supply dx) yield-token-equation-call-err))
             (new-supply (get token add-data))
             (new-dy (get dy add-data))
             (pool-updated (merge pool {
-                total-supply: (unwrap-panic (contract-call? .math-fixed-point add-fixed new-supply total-supply)),
-                balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)),
-                balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-y new-dy))
+                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
             }))
        )
 
@@ -181,19 +207,19 @@
     (let
         (
             (token-x (contract-of token-x-trait))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
             (expiry (get expiry pool))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (shares (unwrap-panic (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent)))
+            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent) math-call-err))
             (total-supply (get total-supply pool))
-            (reduce-data (unwrap-panic (contract-call? .yield-token-equation get-position-given-burn balance-x balance-y expiry total-supply shares)))
+            (reduce-data (unwrap! (contract-call? .yield-token-equation get-position-given-burn balance-x balance-y expiry total-supply shares) yield-token-equation-call-err))
             (dx (get dx reduce-data))
             (dy (get dy reduce-data))
             (pool-updated (merge pool {
-                total-supply: (unwrap-panic (contract-call? .math-fixed-point sub-fixed total-supply shares)),
-                balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
-                balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy))
+                total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err)
                 })
            )
        )
@@ -215,7 +241,7 @@
     (let
     (
     (token-x (contract-of token-x-trait))
-    (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
+    (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
     (expiry (get expiry pool))
     (balance-x (get balance-x pool))
     (balance-y (get balance-y pool))
@@ -225,14 +251,14 @@
     ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
     (fee u0)
     
-    (dy (unwrap-panic (get-y-given-x token-x-trait dx)))
+    (dy (unwrap! (get-y-given-x token-x-trait dx) internal-function-call-err))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx)),
-          balance-y: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy)),
-          fee-balance-x: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)))
+          balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx) math-call-err),
+          balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
+          fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
         }
       )
     )
@@ -265,7 +291,7 @@
     (let
     (
     (token-x (contract-of token-x-trait))
-    (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
+    (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
     (balance-x (get balance-x pool))
     (balance-y (get balance-y pool))
 
@@ -273,14 +299,14 @@
     ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
     ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
     (fee u0)
-    (dx (unwrap-panic (get-x-given-y token-x-trait dy)))
+    (dx (unwrap! (get-x-given-y token-x-trait dy) internal-function-call-err))
 
     (pool-updated
       (merge pool
         {
-          balance-x: (unwrap-panic (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx)),
-          balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy)),
-          fee-balance-y: (unwrap-panic (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)))
+          balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+          balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy) math-call-err),
+          fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
         }
       )
     )
@@ -312,7 +338,7 @@
     (let 
         (
             (token-x (contract-of token-x-trait))    
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
         )
 
         ;; TODO : Assertion for checking the right to set the platform fee.
@@ -355,7 +381,7 @@
     (let
         (
             (token-x (contract-of token-x-trait))
-            (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
@@ -380,8 +406,8 @@
     (let 
         (
         (token-x (contract-of token-x-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
-        (expiry (unwrap-panic (get-t (get expiry pool))))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+        (expiry (unwrap! (get-t (get expiry pool)) internal-function-call-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         )
@@ -394,8 +420,8 @@
     (let 
         (
         (token-x (contract-of token-x-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
-        (expiry (unwrap-panic (get-t (get expiry pool))))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+        (expiry (unwrap! (get-t (get expiry pool)) internal-function-call-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         )
@@ -408,8 +434,8 @@
     (let 
         (
         (token-x (contract-of token-x-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
-        (expiry (unwrap-panic (get-t (get expiry pool))))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+        (expiry (unwrap! (get-t (get expiry pool)) internal-function-call-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         )
@@ -422,8 +448,8 @@
     (let 
         (
         (token-x (contract-of token-x-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
-        (expiry (unwrap-panic (get-t (get expiry pool))))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+        (expiry (unwrap! (get-t (get expiry pool)) internal-function-call-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))
@@ -438,8 +464,8 @@
     (let 
         (
         (token-x (contract-of token-x-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
-        (expiry (unwrap-panic (get-t (get expiry pool))))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+        (expiry (unwrap! (get-t (get expiry pool)) internal-function-call-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))        
@@ -453,8 +479,8 @@
     (let 
         (
         (token-x (contract-of token-x-trait))
-        (pool (unwrap-panic (map-get? pools-data-map { token-x: token-x })))
-        (expiry (unwrap-panic (get-t (get expiry pool))))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+        (expiry (unwrap! (get-t (get expiry pool)) internal-function-call-err))
         (balance-x (get balance-x pool))
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))
