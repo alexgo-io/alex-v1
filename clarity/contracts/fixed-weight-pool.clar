@@ -186,6 +186,7 @@
 )    
 
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (percent uint))
+    
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -206,12 +207,12 @@
            )
        )
 
+        ;; This is not required for now, because aboce mul-up will throw an error due to overflow of uint128 bit.
+        ;; But for future possibility of change of uint size, lets keep this 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         
-        ;; Direct Call from token-trait
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
-
+        ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
+        
         ;; Transfer to vault
         (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx (contract-of the-vault) tx-sender token-x-trait none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy (contract-of the-vault) tx-sender token-y-trait none)) transfer-y-failed-err)
@@ -226,10 +227,7 @@
    )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) 
-                            (token-y-trait <ft-trait>) 
-                            (weight-x uint) (weight-y uint) 
-                            (the-vault <vault-trait>) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-vault <vault-trait>) (dx uint))
     
     (let
     (
@@ -257,12 +255,13 @@
       )
     )
   )
+       
+    (asserts! (> dx u0) invalid-liquidity-err) 
     ;; TODO : Check whether dy or dx value is valid  
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
     ;; TODO : Implement case by case logic of token here bt branching with if statement
-
-
+    
     ;; Direct Call from token-trait
     ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
     ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
@@ -309,6 +308,7 @@
       )
     )
   )
+  (asserts! (> dy u0) invalid-liquidity-err)
     ;; TODO : Check whether dy or dx value is valid  
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
