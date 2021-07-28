@@ -18,22 +18,15 @@
 
 (define-data-var fee-amount uint u0)
 
-;; This is redundant (replaced by tokens-balances below) - need removed.
-;; This Vault should note all the transferred token balance 
-;;(define-data-var balances (list 2000 {token: (string-ascii 32), balance: uint}) (list))
-
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
-;; (define-data-var list-index uint u1)
+
 ;; token balances map owned by vault
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
 
-
-;; get-balance should return the balance held by vault of the token, not how much tx-sender holds.
-;; need fixed.
+;; return balance of token held by vault
 (define-public (get-balance (token <ft-trait>))
-  ;;use https://docs.stacks.co/references/language-functions#ft-get-balance
   (let
     (
       (token-name (unwrap! (contract-call? token get-name) token-type-err))
@@ -59,11 +52,13 @@
       (token-balance (default-to u0 (get balance (map-get? tokens-balances { token: token-name }))))
       (result {token: token-name, balance: token-balance})
     )
-    result
+    (ok result)
   )    
 )
 
-;; Temporarily changed to public for testing
+;; bug: add-token-balance also pass the amount of tokens being added to balance
+;; bug: add-token-balance should first add token-name to the vault-owned-token if needed, 
+;;      before looking at the current balance held of that token by vault.
 (define-private (add-token-balance
                 (token-trait <ft-trait>) (sender principal))
   (begin
@@ -71,12 +66,15 @@
       (
         (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))          
       )
+
+      ;; bug: what if token-name already exists? wouldn't this reset balance to zero?
       (map-insert tokens-balances { token: token-name } { balance: u0 })
     )
   
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
+      ;; bug: balance = amount of tokens being added to current balance, not all the balance the sender holds in token.
       (balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) ;; TODO : when token map is not existing.
       (current-balance (get balance current-token-map))
@@ -88,6 +86,8 @@
     )
     (print token-name)
     (print balance)
+    ;; bug: this doesn't make sense. if token-name doesn't exist in vault-owned-token, it also shouldn't exist in token-balances. 
+    ;;      Therefore Line 77 should have already thrown get-token-fail.
     (if (is-eq current-balance u0)
       (begin
 
@@ -134,6 +134,7 @@
   )
 )
 
+;; bug: transfer-to-vault implies the tokens are sent from sender to vault. Therefore param should not include recipient.
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
@@ -148,6 +149,8 @@
         
         ;; Transfering
         ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
+        
+        ;; bug: why are we not hard-coding recipient to be vault?
         (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
         (asserts! (is-ok (add-token-balance token-trait recipient)) internal-function-call-err)
         
@@ -155,7 +158,7 @@
       )
 )
 
-
+;; bug: same as transfer-to-vault
 (define-public (transfer-from-vault
       (amount uint)  
       (sender principal) ;; Vault
@@ -222,13 +225,16 @@
   (begin 
       (let 
         (
+          ;; bug: why are we getting the balance of tx-sender, rather than that of vault?
           (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
         )
         (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
+        ;; bug: why are we sending amount of token from tx-sender to flash-loan-user, rather than from vault to flash-loan-user?
         (asserts! (is-ok (contract-call? token transfer amount tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount tx-sender)) user-execute-err)
         (let 
           (
+            ;; bug: same as above.
             (post-b (unwrap! (contract-call? token get-balance tx-sender) unwrap-err))
           )
           (asserts! (>= post-b pre-b) invalid-post-loan-balance-err)
