@@ -17,7 +17,7 @@
 (define-constant internal-function-call-err (err u2011))
 
 (define-data-var fee-amount uint u0)
-
+(define-data-var vault-address principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex)
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
 
@@ -52,7 +52,7 @@
       (token-balance (default-to u0 (get balance (map-get? tokens-balances { token: token-name }))))
       (result {token: token-name, balance: token-balance})
     )
-    (ok result)
+    result
   )    
 )
 
@@ -61,7 +61,7 @@
 ;;      before looking at the current balance held of that token by vault.
 ;; Ans : Seems not required because amount of tokens being added can be retreived through line 81 ??
 (define-private (add-token-balance
-                (token-trait <ft-trait>) (sender principal))
+                (token-trait <ft-trait>) (added-balance uint))
   (begin
     (let
       (
@@ -78,7 +78,6 @@
       (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
       ;; bug: balance = amount of tokens being added to current balance, not all the balance the sender holds in token.
       ;; Yes, It is but I think it makes confusion so I'll change the name
-      (added-balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) 
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
@@ -111,18 +110,10 @@
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
-      ;;(balance (unwrap! (get-balance token-trait) none-token-err))
       (updated-balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
-      ;; (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail))
-      ;; (current-balance (get balance current-token-map))
-
-      ;; (updated-token-map (merge current-token-map {
-      ;;   balance: (unwrap! (contract-call? .math-fixed-point sub-fixed current-balance balance) math-call-err)
-      ;; }))
     )
-    (map-set tokens-balances { token: token-name} { balance : updated-balance});;updated-token-map )
-    ;; (print balance)
-    ;; (print current-token-map)
+    (map-set tokens-balances { token: token-name} { balance : updated-balance})
+
     (ok true)
   )
 )
@@ -131,21 +122,19 @@
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
-      (recipient principal) ;; (as-contract tx-sender) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
       (let 
         (
           (token-symbol (unwrap! (contract-call? token-trait get-symbol) get-token-fail))
           (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
+          (vault (var-get vault-address))
         )
         
         ;; Transfering
-        ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
-        
         ;; bug: why are we not hard-coding recipient to be vault?
-        (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient memo)) transfer-failed-err)
-        (asserts! (is-ok (add-token-balance token-trait recipient)) internal-function-call-err)
+        (asserts! (is-ok (contract-call? token-trait transfer amount sender vault memo)) transfer-failed-err)
+        (asserts! (is-ok (add-token-balance token-trait amount)) internal-function-call-err)
         
         (ok true)
       )
@@ -154,7 +143,6 @@
 ;; bug: same as transfer-to-vault
 (define-public (transfer-from-vault
       (amount uint)  
-      (sender principal) ;; Vault
       (recipient principal) 
       (token-trait <ft-trait>) 
       (memo (optional (buff 34))))
@@ -162,13 +150,12 @@
         (
           (token-symbol (unwrap! (contract-call? token-trait get-symbol) none-token-err))
           (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
-          ;;(vault-balances (var-get balances)) ;; list 
+          (vault (var-get vault-address))
         )
         
         ;; Transfering
-        ;; Initially my idea was to implement transferring function here, but that implicits violating sip010 standard. 
-        (asserts! (is-ok (contract-call? token-trait transfer amount sender recipient none)) transfer-failed-err)
-        (asserts! (is-ok (remove-token-balance token-trait sender)) internal-function-call-err)
+        (asserts! (is-ok (contract-call? token-trait transfer amount vault recipient none)) transfer-failed-err)
+        (asserts! (is-ok (remove-token-balance token-trait vault)) internal-function-call-err)
         
         (ok true)
       )

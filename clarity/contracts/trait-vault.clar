@@ -24,9 +24,9 @@
 
 ;;        (update-token-balance (<ft-trait>) (response bool uint))
 
-        (transfer-to-vault (uint principal principal <ft-trait> (optional (buff 34))) (response bool uint))
+        (transfer-to-vault (uint principal <ft-trait> (optional (buff 34))) (response bool uint))
 
-        (transfer-from-vault (uint principal principal <ft-trait> (optional (buff 34))) (response bool uint))
+        (transfer-from-vault (uint principal <ft-trait> (optional (buff 34))) (response bool uint))
     
     )
 )

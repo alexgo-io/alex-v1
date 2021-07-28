@@ -80,15 +80,15 @@
         ;; so if I add trait-vault to trait-flash-loan-user's depends_on, there will be a Error: cycling dependencies:
         ;; Thus, I can't make a call below. <by Tiger>
         
-        (asserts! (is-ok (contract-call? 
-                            .fixed-weight-pool 
-                            swap-x-for-y 
-                            token1 
-                            token2 
-                            weight1 
-                            weight2 
-                            .alex-vault
-                            (* u200 u1000000))) user-execute-err)
+        ;; (asserts! (is-ok (contract-call? 
+        ;;                     .fixed-weight-pool 
+        ;;                     swap-x-for-y 
+        ;;                     token1 
+        ;;                     token2 
+        ;;                     weight1 
+        ;;                     weight2 
+        ;;                     .alex-vault
+        ;;                     (* u200 u1000000))) user-execute-err)
         ;; (asserts! (is-ok (contract-call? 
         ;;                     .fixed-weight-pool 
         ;;                     test)) user-execute-err)

@@ -280,8 +280,10 @@
         ;; send y to vault
         ;;(asserts! (is-ok (contract-call? collateral transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
  
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender (contract-of the-vault) collateral none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender (contract-of the-vault) collateral none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender token none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender collateral none)) transfer-y-failed-err)
 
 
 
@@ -320,8 +322,8 @@
         ;;(asserts! (is-ok (contract-call? token transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
         ;;(asserts! (is-ok (contract-call? collateral transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
-        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx (contract-of the-vault) tx-sender token none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy (contract-of the-vault) tx-sender collateral none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx tx-sender token none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy tx-sender collateral none)) transfer-y-failed-err)
 
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -369,8 +371,11 @@
 
         ;;(asserts! (is-ok (contract-call? token transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
         ;;(asserts! (is-ok (contract-call? collateral transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy (contract-of the-vault) tx-sender collateral none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dy (contract-of the-vault) tx-sender collateral none)) transfer-y-failed-err)
+        
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender token none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy tx-sender collateral none)) transfer-y-failed-err)
 
         ;; TODO : Burning STX at future if required. 
 
@@ -417,8 +422,10 @@
 
         ;;(asserts! (is-ok (contract-call? token transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
         ;;(asserts! (is-ok (contract-call? collateral transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx (contract-of the-vault) tx-sender token none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender (contract-of the-vault) collateral none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dx (contract-of the-vault) tx-sender token none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender (contract-of the-vault) collateral none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx tx-sender token none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy tx-sender collateral none)) transfer-y-failed-err)
 
         ;; TODO : Burning STX at future if required. 
 

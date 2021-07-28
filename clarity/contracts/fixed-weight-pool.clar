@@ -173,8 +173,8 @@
         ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
                
         ;; Transfer to vault
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender token-x-trait none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender token-y-trait none)) transfer-y-failed-err)
 
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
@@ -213,8 +213,8 @@
         ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
         
         ;; Transfer to vault
-        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx (contract-of the-vault) tx-sender token-x-trait none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy (contract-of the-vault) tx-sender token-y-trait none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx tx-sender token-x-trait none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy tx-sender token-y-trait none)) transfer-y-failed-err)
 
 
 
@@ -266,8 +266,8 @@
     ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
     ;; Swapping using transfer-to-vault
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx-net-fees tx-sender (contract-of the-vault) token-x-trait none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy (contract-of the-vault) tx-sender token-y-trait none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx-net-fees tx-sender token-x-trait none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy tx-sender token-y-trait none)) transfer-y-failed-err)
 
 
     ;; TODO : Burning STX at future if required. 
@@ -323,8 +323,8 @@
     ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
 
     ;; Swapping using transfer-to-vault
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx (contract-of the-vault) tx-sender token-x-trait none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy-net-fees tx-sender (contract-of the-vault) token-y-trait none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx tx-sender token-x-trait none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy-net-fees tx-sender token-y-trait none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
