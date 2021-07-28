@@ -183,8 +183,7 @@
   (begin 
       (let 
         (
-          ;; bug: why are we getting the balance of tx-sender, rather than that of vault?
-          ;; (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+          ;;Fixed bug: why are we getting the balance of tx-sender, rather than that of vault?
           (pre-b (unwrap! (get-balance token) get-balance-err))
         )
         (print "---------------------------")

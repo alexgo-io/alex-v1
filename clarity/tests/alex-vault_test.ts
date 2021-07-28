@@ -30,7 +30,7 @@ Clarinet.test({
             
             // Transfer usda to Vault
             // Since User is deployer, Vault address is User.vault 
-              Tx.contractCall("alex-vault", "transfer-to-vault", [
+            Tx.contractCall("alex-vault", "transfer-to-vault", [
                 types.uint(100000000),
                 types.principal(wallet_1.address),
                 types.principal(user.address),
