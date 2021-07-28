@@ -16,11 +16,17 @@ import {
     }
   
     // get balance
-    getBalance(token: string) {
-        return this.chain.callReadOnlyFn("alex-vault", "get-balance", [
-          types.principal(token)
-        ], this.deployer.address);
+      getBalance(user: Account, tokenX: string) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("fixed-weight-pool", "get-balance", [
+            types.principal(tokenX),
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
       }
+
+
+
       getTokenBalance(token: string) {
         return this.chain.callReadOnlyFn("alex-vault", "get-token-balance", [
         ], this.deployer.address);
@@ -40,14 +46,13 @@ import {
         return block.receipts[0].result;
       }
 
-      transferToVault(user: Account, amount:number, sender:string, recipient:string, token: string, memo:string) {
+      transferToVault(user: Account, amount:number, sender:string, token: string) {
         let block = this.chain.mineBlock([
           Tx.contractCall("alex-vault", "transfer-to-vault", [
-            types.number(amount),
+            types.uint(amount),
             types.principal(sender),
-            types.principal(recipient),
             types.principal(token),
-            types.string(memo),
+            types.ascii("none"),
             
           ], user.address),
         ]);

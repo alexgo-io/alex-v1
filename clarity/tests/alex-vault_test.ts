@@ -2,6 +2,10 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.10.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
+import { 
+  VaultAgent,
+} from './models/alex-tests-vault.ts';
+
 
 const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
 const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
@@ -89,4 +93,25 @@ Clarinet.test({
         block.receipts[9].result.expectOk().expectUint(0);  // Taken
 
     },
+});
+
+
+Clarinet.test({
+  name: "Vault : Error Test",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+      let deployer = accounts.get("deployer")!;
+      let wallet_1 =accounts.get('wallet_1')!;
+      let wallet_2 =accounts.get('wallet_2')!;
+      let VaultTest = new VaultAgent(chain, deployer);
+      
+      // panic errors
+      // Invalid Token Address
+      // let result = VaultTest.getBalance(deployer,alexVaultAddress);  
+      // result.expectErr().expectUint(3009);
+
+
+      // Insuffucuent Balance 
+      // let result = VaultTest.transferToVault(deployer,10000000,wallet_2.address, gAlexTokenAddress);
+      // result.expectErr().expectUint(3000);
+  },
 });
