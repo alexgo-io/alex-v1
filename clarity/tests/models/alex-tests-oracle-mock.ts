@@ -26,6 +26,14 @@ import {
       ]);
       return block.receipts[0].result;
     }
+
+    getPrice(oraclesrc:string, token: string) {
+      return this.chain.callReadOnlyFn("open-oracle", "get-price", [
+        types.ascii(oraclesrc),
+        types.ascii(token)
+      ], this.deployer.address);
+    }
+
   }
   export { OracleManager };
   
