@@ -69,11 +69,11 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // check whether weighted equation returns an appropriate value.
-        result = FWPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 1000);
+        result = FWPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 1000); //100
         result.expectOk().expectUint(195587000)
         
         // deployer swaps alextoken with usda token
-        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 200);
+        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 200); //20
         result.expectOk().expectList()[0].expectUint(200000000); 
         result.expectOk().expectList()[1].expectUint(39341400); 
         // TODO : Operation illustration
@@ -99,6 +99,17 @@ Clarinet.test({
        // Check whether it is correctly settled
         result = FWPTest.getFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
         result.expectOk().expectPrincipal(wallet_1.address);
+
+        result = FWPTest.setFeeRateX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
+        result.expectOk().expectBool(true);
+
+        result = FWPTest.setFeeRateY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
+        result.expectOk().expectBool(true);
+
+        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 200); //2
+        result.expectOk().expectList()[0].expectUint(190000000); 
+        result.expectOk().expectList()[1].expectUint(37356800); 
+
 
         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
         // result = FWPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);

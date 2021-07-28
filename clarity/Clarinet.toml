@@ -27,7 +27,7 @@ depends_on = []
 
 [contracts.open-oracle]
 path = "contracts/open-oracle.clar"
-depends_on = ["trait-oracle", "yield-token-pool"]
+depends_on = ["trait-oracle"]
 
 [contracts.pool-token-alex-usda]
 path = "contracts/pool-token-alex-usda.clar"

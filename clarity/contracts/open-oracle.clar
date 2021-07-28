@@ -53,6 +53,7 @@
 
 )
 
+
 ;; TODO: On future when oracle owner in block chain can be controlled, implementing is required.
 ;; (define-public (set-oracle-owner (address principal))
 ;;   (begin
