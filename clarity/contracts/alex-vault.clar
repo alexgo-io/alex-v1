@@ -59,6 +59,7 @@
 ;; bug: add-token-balance also pass the amount of tokens being added to balance
 ;; bug: add-token-balance should first add token-name to the vault-owned-token if needed, 
 ;;      before looking at the current balance held of that token by vault.
+;; Ans : Seems not required because amount of tokens being added can be retreived through line 81 ??
 (define-private (add-token-balance
                 (token-trait <ft-trait>) (sender principal))
   (begin
@@ -68,6 +69,7 @@
       )
 
       ;; bug: what if token-name already exists? wouldn't this reset balance to zero?
+      ;; Answer : It's Okay since map-insert only exerts when the token-name does not exist. Or else, its going to return false.
       (map-insert tokens-balances { token: token-name } { balance: u0 })
     )
   
@@ -75,36 +77,27 @@
     (
       (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
       ;; bug: balance = amount of tokens being added to current balance, not all the balance the sender holds in token.
-      (balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
-      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) ;; TODO : when token map is not existing.
+      ;; Yes, It is but I think it makes confusion so I'll change the name
+      (added-balance (unwrap! (contract-call? token-trait get-balance sender) invalid-balance)) 
+      (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) 
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
       (updated-token-map (merge current-token-map {
-        balance: (unwrap! (contract-call? .math-fixed-point add-fixed current-balance balance) math-call-err)
+        balance: (unwrap! (contract-call? .math-fixed-point add-fixed current-balance added-balance) math-call-err)
       }))
-      ;;(new-token-list (append vault-token-list token-name)) ;; 2001 
     )
-    (print token-name)
-    (print balance)
     ;; bug: this doesn't make sense. if token-name doesn't exist in vault-owned-token, it also shouldn't exist in token-balances. 
     ;;      Therefore Line 77 should have already thrown get-token-fail.
+    ;; Ans : It seems okay since token-name is just getting the name of token from token trait.
+    ;; If Token- Name does not exist, its going to pass the 'map-insert' above which sets balance 0.
     (if (is-eq current-balance u0)
       (begin
 
-        ;;(append vault-token-list token-name)
-        ;;(unwrap! (as-max-len? (append vault-token-list token-name) u2000)
-        ;; To be fixed to : (var-set vault-owned-token new-token-list)
-        ;; var-set does not work because of maxlength is settled to 2000, but there is no way to erase elements.
         (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
         (map-set tokens-balances { token: token-name} updated-token-map )
-        ;; (print updated-token-map)
-        ;; (print token-name)
-        ;; (print vault-token-list)
         (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
-      ;;(err u1)
       (begin
-;;      (print current-token-map)
       (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
   )
