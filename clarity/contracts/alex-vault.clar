@@ -16,8 +16,12 @@
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u2011))
 
+;; Fee
 (define-data-var fee-amount uint u0)
+
+;; Vault Address hardcoded
 (define-data-var vault-address principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex)
+
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
 
@@ -25,7 +29,7 @@
 (define-map tokens-balances {token: (string-ascii 32) } { balance: uint})
 
 
-;; return balance of token held by vault
+;; Return balance of token held by vault
 (define-public (get-balance (token <ft-trait>))
   (let
     (
@@ -36,11 +40,7 @@
   )
 )
 
-;; For Debugging
-(define-read-only (get-tokenlist)
-    (var-get vault-owned-token)
-)
-;; returns list of {token, balance}
+;; Returns list of {token, balance}
 (define-read-only (get-balances)
   (ok (map get-tuple (var-get vault-owned-token)))
 )
@@ -77,7 +77,7 @@
     (
       (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
       ;; bug: balance = amount of tokens being added to current balance, not all the balance the sender holds in token.
-      ;; Yes, It is but I think it makes confusion so I'll change the name
+      ;; Answer : Fixed 
       (current-token-map (unwrap! (map-get? tokens-balances { token: token-name }) get-token-fail)) 
       (current-balance (get balance current-token-map))
       (vault-token-list (var-get vault-owned-token))
@@ -105,11 +105,13 @@
   )
 )
 
-(define-private (remove-token-balance
-                (token-trait <ft-trait>) (vault principal))
+;; Refresh Token Balance
+(define-private (refresh-token-balance
+                (token-trait <ft-trait>))
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
+      (vault (var-get vault-address))
       ;; Refresh the map with current vault balance
       (updated-balance (unwrap! (contract-call? token-trait get-balance vault) invalid-balance)) 
     )
@@ -120,6 +122,7 @@
 )
 
 ;; bug: transfer-to-vault implies the tokens are sent from sender to vault. Therefore param should not include recipient.
+;; Answer : Fixed with hardcoded vault address
 (define-public (transfer-to-vault
       (amount uint)  
       (sender principal) 
@@ -134,6 +137,7 @@
         
         ;; Transfering
         ;; bug: why are we not hard-coding recipient to be vault?
+        ;; Answer : Fixed 
         (asserts! (is-ok (contract-call? token-trait transfer amount sender vault memo)) transfer-failed-err)
         (asserts! (is-ok (add-token-balance token-trait amount)) internal-function-call-err)
         
@@ -142,6 +146,7 @@
 )
 
 ;; bug: same as transfer-to-vault
+;; Answer : Fixed
 (define-public (transfer-from-vault
       (amount uint)  
       (recipient principal) 
@@ -156,7 +161,7 @@
         
         ;; Transfering
         (asserts! (is-ok (contract-call? token-trait transfer amount vault recipient none)) transfer-failed-err)
-        (asserts! (is-ok (remove-token-balance token-trait vault)) internal-function-call-err)
+        (asserts! (is-ok (refresh-token-balance token-trait)) internal-function-call-err)
         
         (ok true)
       )
