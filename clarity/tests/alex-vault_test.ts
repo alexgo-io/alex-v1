@@ -33,7 +33,6 @@ Clarinet.test({
             Tx.contractCall("alex-vault", "transfer-to-vault", [
                 types.uint(100000000),
                 types.principal(wallet_1.address),
-                types.principal(user.address),
                 types.principal(usdaTokenAddress),
                 types.none()
             ], user.address),
@@ -42,7 +41,6 @@ Clarinet.test({
             Tx.contractCall("alex-vault", "transfer-to-vault", [
               types.uint(100000000),
               types.principal(wallet_1.address),
-              types.principal(user.address),
               types.principal(gAlexTokenAddress),
               types.none()
           ], user.address),
@@ -59,7 +57,6 @@ Clarinet.test({
               // transfer galex from Vault
               Tx.contractCall("alex-vault", "transfer-from-vault", [
                 types.uint(100000000),
-                types.principal(user.address),
                 types.principal(wallet_1.address),
                 types.principal(gAlexTokenAddress),
                 types.none()
@@ -68,7 +65,6 @@ Clarinet.test({
             // Transfer usda from vault
             Tx.contractCall("alex-vault", "transfer-from-vault", [
               types.uint(100000000),
-              types.principal(user.address),
               types.principal(wallet_1.address),
               types.principal(usdaTokenAddress),
               types.none()
