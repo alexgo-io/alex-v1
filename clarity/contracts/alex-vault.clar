@@ -20,7 +20,7 @@
 (define-data-var fee-amount uint u0)
 
 ;; Vault Address hardcoded
-(define-data-var vault-address principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex)
+(define-data-var vault-address principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault)
 
 ;; List of tokens passed vault in history
 (define-data-var vault-owned-token (list 2000 (string-ascii 32)) (list))
