@@ -52,7 +52,7 @@
       (token-balance (default-to u0 (get balance (map-get? tokens-balances { token: token-name }))))
       (result {token: token-name, balance: token-balance})
     )
-    result
+    result  ;; Let's keep this for now. Internal function 'map' cannot crack if its wrapped.
   )    
 )
 
@@ -88,13 +88,11 @@
     ;; bug: this doesn't make sense. if token-name doesn't exist in vault-owned-token, it also shouldn't exist in token-balances. 
     ;;      Therefore Line 77 should have already thrown get-token-fail.
     ;; Ans : It seems okay since token-name is just getting the name of token from token trait.
-    ;; If Token- Name does not exist, its going to pass the 'map-insert' above which sets balance 0.
     (if (is-none (index-of vault-token-list token-name))
       (begin
           (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
           (ok (map-set tokens-balances { token: token-name } updated-token-map ))
         )
-      
       (begin
       (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )

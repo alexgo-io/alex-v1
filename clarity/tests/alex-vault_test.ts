@@ -45,11 +45,9 @@ Clarinet.test({
               types.none()
           ], user.address),
             
-            // should return (ok [{balance: u1000100000000, token: "Alex Token"}, {balance: u1000100000000, token: "USDA"}])
             Tx.contractCall("alex-vault", "get-balances", [
               ], user.address),
               
-              // u1000100000000
               Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(gAlexTokenAddress)
               ], user.address),
@@ -85,10 +83,10 @@ Clarinet.test({
         block.receipts[1].result.expectOk();
         block.receipts[2].result.expectOk();
         block.receipts[3].result.expectOk();
-        let lists:any = block.receipts[4].result;//.result.expectOk();
+        let lists:any = block.receipts[4].result;
         lists.expectOk().expectList() 
-        block.receipts[5].result.expectOk().expectUint(1000100000000);
-        block.receipts[9].result.expectOk().expectUint(1000000000000);
+        block.receipts[5].result.expectOk().expectUint(100000000); // Received
+        block.receipts[9].result.expectOk().expectUint(0);  // Taken
 
     },
 });
