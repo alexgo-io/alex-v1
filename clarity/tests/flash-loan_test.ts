@@ -54,9 +54,8 @@ Clarinet.test({
         [
           types.uint(100000000),
           types.principal(wallet_1.address),
-          types.principal(deployer.address),
           types.principal(usdaTokenAddress),
-          types.none(),
+          types.none()
         ],
         deployer.address
       ),
@@ -66,9 +65,8 @@ Clarinet.test({
         [
           types.uint(100000000),
           types.principal(wallet_1.address),
-          types.principal(deployer.address),
-          types.principal(gAlexTokenAddress),
-          types.none(),
+          types.principal(usdaTokenAddress),
+          types.none()
         ],
         deployer.address
       ),
