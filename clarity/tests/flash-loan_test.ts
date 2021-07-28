@@ -70,16 +70,16 @@ Clarinet.test({
         ],
         deployer.address
       ),
-      // Tx.contractCall(
-      //   'alex-vault',
-      //   'flash-loan-1',
-      //   [
-      //     types.principal(testFlashLoanUser),
-      //     types.principal(gAlexTokenAddress),
-      //     types.uint(10000),
-      //   ],
-      //   deployer.address
-      // ),
+      Tx.contractCall(
+        'alex-vault',
+        'flash-loan-1',
+        [
+          types.principal(testFlashLoanUser),
+          types.principal(gAlexTokenAddress),
+          types.uint(10000),
+        ],
+        deployer.address
+      ),
       // Tx.contractCall(
       //   'alex-vault',
       //   'flash-loan-2',
@@ -110,7 +110,7 @@ Clarinet.test({
     block.receipts[0].result.expectOk().expectBool(true);
     block.receipts[1].result.expectOk();
     block.receipts[2].result.expectOk();
-    // block.receipts[3].result.expectOk();
+    block.receipts[3].result.expectOk();
     // block.receipts[4].result.expectOk();
     // block.receipts[5].result.expectErr(); // will trigger error cause there are not balance in ayusdaAddress
   },

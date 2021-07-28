@@ -181,7 +181,7 @@
         (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
         ;; bug: why are we sending amount of token from tx-sender to flash-loan-user, rather than from vault to flash-loan-user?
         (asserts! (is-ok (contract-call? token transfer amount .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount tx-sender)) user-execute-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount .alex-vault)) user-execute-err)
         (let 
           (
             ;; bug: same as above.
