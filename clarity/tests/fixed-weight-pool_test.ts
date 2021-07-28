@@ -156,7 +156,7 @@ Clarinet.test({
         
         // Transfer Fails because ft-transfer blocks if the balance is 0
         result = FWPTest.swapYForX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
-        result.expectErr().expectUint(3002);
+        result.expectErr().expectUint(2003);
 
         // result = FWPTest.swapYFor(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
         // result.expectOk().expectUint(2003);

@@ -255,7 +255,7 @@
     )
   )
        
-    ;;(asserts! (> dx u0) invalid-liquidity-err) 
+    (asserts! (> dx u0) invalid-liquidity-err) 
     ;; TODO : Check whether dy or dx value is valid  
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
@@ -307,7 +307,7 @@
       )
     )
   )
-  ;;(asserts! (> dy u0) invalid-liquidity-err)
+    (asserts! (> dy u0) invalid-liquidity-err)
     ;; TODO : Check whether dy or dx value is valid  
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 

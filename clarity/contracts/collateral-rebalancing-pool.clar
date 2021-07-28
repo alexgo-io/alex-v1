@@ -362,7 +362,7 @@
         )
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
-
+        (asserts! (> dx u0) invalid-liquidity-err) 
         ;; TODO : Implement case by case logic of token here bt branching with if statement
 
         ;; Transfer 
@@ -413,7 +413,7 @@
         )
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
-
+        (asserts! (> dy u0) invalid-liquidity-err)
         ;; TODO : Implement case by case logic of token here bt branching with if statement
 
         ;; Transfer 
