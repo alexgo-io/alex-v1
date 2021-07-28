@@ -89,13 +89,12 @@
     ;;      Therefore Line 77 should have already thrown get-token-fail.
     ;; Ans : It seems okay since token-name is just getting the name of token from token trait.
     ;; If Token- Name does not exist, its going to pass the 'map-insert' above which sets balance 0.
-    (if (is-eq current-balance u0)
+    (if (is-none (index-of vault-token-list token-name))
       (begin
-
-        (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
-        (map-set tokens-balances { token: token-name} updated-token-map )
-        (ok (map-set tokens-balances { token: token-name } updated-token-map ))
-      )
+          (var-set vault-owned-token (unwrap-panic (as-max-len? (append vault-token-list token-name) u2000)))
+          (ok (map-set tokens-balances { token: token-name } updated-token-map ))
+        )
+      
       (begin
       (ok (map-set tokens-balances { token: token-name } updated-token-map ))
       )
