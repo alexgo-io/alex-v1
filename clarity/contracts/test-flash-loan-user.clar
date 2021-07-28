@@ -79,7 +79,6 @@
         ;; Because vault-trait already used trait-flash-loan-user in trait-vault, 
         ;; so if I add trait-vault to trait-flash-loan-user's depends_on, there will be a Error: cycling dependencies:
         ;; Thus, I can't make a call below. <by Tiger>
-<<<<<<< HEAD
         
         ;; (asserts! (is-ok (contract-call? 
         ;;                     .fixed-weight-pool 
@@ -90,8 +89,6 @@
         ;;                     weight2 
         ;;                     .alex-vault
         ;;                     (* u200 u1000000))) user-execute-err)
-=======
->>>>>>> 6f29b28dd35e6ac0932ebf5bac62f3b5646c437b
         ;; (asserts! (is-ok (contract-call? 
         ;;                     .fixed-weight-pool 
         ;;                     test)) user-execute-err)
