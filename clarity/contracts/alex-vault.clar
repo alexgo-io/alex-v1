@@ -12,6 +12,7 @@
 (define-constant token-type-err (err u3009))
 (define-constant token-absent (err u3010))
 (define-constant invalid-balance (err u3011))
+(define-constant get-balance-err (err u3012))
 (define-constant unwrap-err (err u3012))
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u2011))
@@ -161,42 +162,6 @@
       )
 )
 
-
-;; flash loan to flash loan user up to 3 tokens of amounts specified
-(define-public (flash-loan 
-                (flash-loan-user <flash-loan-user-trait>) 
-                (token1 <ft-trait>) 
-                (token2 <ft-trait>) 
-                (token3  (optional <ft-trait>)) 
-                (amount1 uint) 
-                (amount2 uint) 
-                (amount3 (optional uint)))
-  
-  (begin 
-      (let 
-        (
-          (pre-b-1 (unwrap-panic (contract-call? token1 get-balance tx-sender)))
-          (pre-b-2 (unwrap-panic (contract-call? token2 get-balance tx-sender)))
-          
-        )
-        (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
-        (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
-        (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? flash-loan-user execute token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
-        (let 
-          (
-            (post-b-1 (unwrap! (contract-call? token1 get-balance tx-sender) unwrap-err))
-            (post-b-2 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
-          )
-          (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
-          (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
-        )
-      )  
-      (ok true)
-  )
-)
-
 (define-public (flash-loan-1 
                 (flash-loan-user <flash-loan-user-trait>) 
                 (token <ft-trait>) 
@@ -205,17 +170,20 @@
   (begin 
       (let 
         (
-          ;; bug: why are we getting the balance of tx-sender, rather than that of vault?
-          (pre-b (unwrap-panic (contract-call? token get-balance tx-sender)))
+          ;;Fixed bug: why are we getting the balance of tx-sender, rather than that of vault?
+          (pre-b (unwrap! (get-balance token) get-balance-err))
         )
+        (print "---------------------------")
+        (print pre-b)
         (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
-        ;; bug: why are we sending amount of token from tx-sender to flash-loan-user, rather than from vault to flash-loan-user?
-        (asserts! (is-ok (contract-call? token transfer amount tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount tx-sender)) user-execute-err)
+        ;; Fixed: bug: why are we sending amount of token from tx-sender to flash-loan-user, rather than from vault to flash-loan-user?
+        (asserts! (is-ok (contract-call? token transfer amount .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount .alex-vault)) user-execute-err)
         (let 
           (
             ;; bug: same as above.
-            (post-b (unwrap! (contract-call? token get-balance tx-sender) unwrap-err))
+            ;; (post-b (unwrap! (contract-call? token get-balance tx-sender) unwrap-err))
+            (post-b (unwrap! (get-balance token) get-balance-err))
           )
           (asserts! (>= post-b pre-b) invalid-post-loan-balance-err)
         )
@@ -234,19 +202,18 @@
   (begin 
       (let 
         (
-          (pre-b-1 (unwrap-panic (contract-call? token1 get-balance tx-sender)))
-          (pre-b-2 (unwrap-panic (contract-call? token2 get-balance tx-sender)))
-          
+          (pre-b-1 (unwrap! (get-balance token1) get-balance-err))
+          (pre-b-2 (unwrap! (get-balance token2) get-balance-err))
         )
         (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
         (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
-        (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? flash-loan-user execute-2 token1 token2 amount1 amount2 tx-sender)) user-execute-err)
+        (asserts! (is-ok (contract-call? token1 transfer amount1 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token2 transfer amount2 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-2 token1 token2 amount1 amount2 .alex-vault)) user-execute-err)
         (let 
           (
-            (post-b-1 (unwrap! (contract-call? token1 get-balance tx-sender) unwrap-err))
-            (post-b-2 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
+            (post-b-1 (unwrap! (get-balance token1) get-balance-err))
+            (post-b-2 (unwrap! (get-balance token2) get-balance-err))
           )
           (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
           (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
@@ -268,22 +235,22 @@
   (begin 
       (let 
         (
-          (pre-b-1 (unwrap-panic (contract-call? token1 get-balance tx-sender)))
-          (pre-b-2 (unwrap-panic (contract-call? token2 get-balance tx-sender)))
-          (pre-b-3 (unwrap-panic (contract-call? token3 get-balance tx-sender)))
+          (pre-b-1 (unwrap! (get-balance token1) get-balance-err))
+          (pre-b-2 (unwrap! (get-balance token2) get-balance-err))
+          (pre-b-3 (unwrap! (get-balance token3) get-balance-err))
         )
         (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
         (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
         (asserts! (> pre-b-3 amount3) insufficient-flash-loan-balance-err)
-        (asserts! (is-ok (contract-call? token1 transfer amount1 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token2 transfer amount2 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token3 transfer amount3 tx-sender (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? flash-loan-user execute-3 token1 token2 token3 amount1 amount2 amount3 tx-sender)) user-execute-err)
+        (asserts! (is-ok (contract-call? token1 transfer amount1 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token2 transfer amount2 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? token3 transfer amount3 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (contract-call? flash-loan-user execute-3 token1 token2 token3 amount1 amount2 amount3 .alex-vault)) user-execute-err)
         (let 
           (
-            (post-b-1 (unwrap! (contract-call? token1 get-balance tx-sender) unwrap-err))
-            (post-b-2 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
-            (post-b-3 (unwrap! (contract-call? token2 get-balance tx-sender) unwrap-err))
+            (post-b-1 (unwrap! (get-balance token1) get-balance-err))
+            (post-b-2 (unwrap! (get-balance token2) get-balance-err))
+            (post-b-3 (unwrap! (get-balance token3) get-balance-err))
           )
           (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
           (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
