@@ -192,8 +192,11 @@
           (pre-b (unwrap! (get-balance token) invalid-balance))
         )
         (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
-        (asserts! (is-ok (contract-call? token transfer amount .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        ;; (asserts! (is-ok (contract-call? token transfer amount .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-from-vault amount (contract-of flash-loan-user) token none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount .alex-vault)) user-execute-err)
+        ;; should force the borrower transfer token back inside flash loan function
+        (asserts! (is-ok (transfer-to-vault amount (contract-of flash-loan-user) token none)) transfer-failed-err)
         (let 
           (
             ;; bug: same as above.
@@ -217,17 +220,22 @@
       (let 
         (
           (pre-b-1 (unwrap! (get-balance token1) invalid-balance))
-          (pre-b-2 (unwrap! (get-balance token1) invalid-balance))
+          (pre-b-2 (unwrap! (get-balance token2) invalid-balance))
         )
         (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
         (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
-        (asserts! (is-ok (contract-call? token1 transfer amount1 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token2 transfer amount2 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-from-vault amount1 (contract-of flash-loan-user) token1 none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-from-vault amount2 (contract-of flash-loan-user) token2 none)) transfer-failed-err)
+        ;; (asserts! (is-ok (contract-call? token1 transfer amount1 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        ;; (asserts! (is-ok (contract-call? token2 transfer amount2 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? flash-loan-user execute-2 token1 token2 amount1 amount2 .alex-vault)) user-execute-err)
+
+        (asserts! (is-ok (transfer-to-vault amount1 (contract-of flash-loan-user) token1 none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-to-vault amount2 (contract-of flash-loan-user) token2 none)) transfer-failed-err)
         (let 
           (
             (post-b-1 (unwrap! (get-balance token1) invalid-balance))
-            (post-b-2 (unwrap! (get-balance token1) invalid-balance))
+            (post-b-2 (unwrap! (get-balance token2) invalid-balance))
           )
           (asserts! (>= post-b-1 pre-b-1) invalid-post-loan-balance-err)
           (asserts! (>= post-b-2 pre-b-2) invalid-post-loan-balance-err)
@@ -256,10 +264,18 @@
         (asserts! (> pre-b-1 amount1) insufficient-flash-loan-balance-err)
         (asserts! (> pre-b-2 amount2) insufficient-flash-loan-balance-err)
         (asserts! (> pre-b-3 amount3) insufficient-flash-loan-balance-err)
-        (asserts! (is-ok (contract-call? token1 transfer amount1 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token2 transfer amount2 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token3 transfer amount3 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-from-vault amount1 (contract-of flash-loan-user) token1 none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-from-vault amount2 (contract-of flash-loan-user) token2 none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-from-vault amount3 (contract-of flash-loan-user) token3 none)) transfer-failed-err)
+        ;; (asserts! (is-ok (contract-call? token1 transfer amount1 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        ;; (asserts! (is-ok (contract-call? token2 transfer amount2 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+        ;; (asserts! (is-ok (contract-call? token3 transfer amount3 .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
+
         (asserts! (is-ok (contract-call? flash-loan-user execute-3 token1 token2 token3 amount1 amount2 amount3 .alex-vault)) user-execute-err)
+
+        (asserts! (is-ok (transfer-to-vault amount1 (contract-of flash-loan-user) token1 none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-to-vault amount2 (contract-of flash-loan-user) token2 none)) transfer-failed-err)
+        (asserts! (is-ok (transfer-to-vault amount3 (contract-of flash-loan-user) token3 none)) transfer-failed-err)
         (let 
           (
             (post-b-1 (unwrap! (get-balance token1) invalid-balance))

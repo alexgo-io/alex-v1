@@ -111,7 +111,7 @@ Clarinet.test({
     block.receipts[1].result.expectOk();
     block.receipts[2].result.expectOk();
     block.receipts[3].result.expectOk();
-    block.receipts[4].result.expectOk();
+    block.receipts[4].result.expectErr(); // will trigger error cause the token has been swapped 
     block.receipts[5].result.expectErr(); // will trigger error cause there are not balance in ayusdaAddress
   },
 });
