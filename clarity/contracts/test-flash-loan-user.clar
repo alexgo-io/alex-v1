@@ -118,6 +118,29 @@
         (asserts! (is-ok (contract-call? token1 transfer amount1 (as-contract tx-sender) the-vault none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? token2 transfer amount2 (as-contract tx-sender) the-vault none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? token3 transfer amount3 (as-contract tx-sender) the-vault none)) transfer-failed-err)
+        
+        ;; way 1 works
+        ;; (asserts! (is-ok (test token1)) transfer-failed-err)
+        ;; way 2 works
+        ;; (asserts! (is-ok (test token1 token2)) transfer-failed-err)
+        ;; way 3 works
+        ;; (asserts! (is-ok (test token1 (some token2))) transfer-failed-err)
+        
         (ok true)
     )
+)
+(define-public (test 
+                (token1 <ft-trait>) 
+                (token2 (optional <ft-trait>))  
+                ) 
+    (if (is-some token2)
+        (test2 token1 (unwrap-panic token2))
+        (test1 token1)
+    )
+)
+(define-private (test1 (token1 <ft-trait>))
+    (ok true)
+)
+(define-private (test2 (token1 <ft-trait>) (token2 <ft-trait>))
+    (ok true)
 )

@@ -8,7 +8,7 @@
     (   
         ;; returns the balance of token
         (get-balance (<ft-trait>) (response uint uint))
-
+        
         ;; returns list of {token, balance}
         (get-balances () (response (list 2000 {token: (string-ascii 32), balance: uint}) uint))
 

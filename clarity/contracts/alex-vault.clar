@@ -189,11 +189,9 @@
   (begin 
       (let 
         (
-          ;; bug: why are we getting the balance of tx-sender, rather than that of vault?
           (pre-b (unwrap! (get-balance token) invalid-balance))
         )
         (asserts! (> pre-b amount) insufficient-flash-loan-balance-err)
-        ;; bug: why are we sending amount of token from tx-sender to flash-loan-user, rather than from vault to flash-loan-user?
         (asserts! (is-ok (contract-call? token transfer amount .alex-vault (contract-of flash-loan-user) none)) transfer-failed-err)
         (asserts! (is-ok (contract-call? flash-loan-user execute-1 token amount .alex-vault)) user-execute-err)
         (let 
@@ -276,3 +274,18 @@
       (ok true)
   )
 )
+
+;; (define-public (flash-loan 
+;;                 (flash-loan-user <flash-loan-user-trait>) 
+;;                 (token1 <ft-trait>) 
+;;                 (token2 <ft-trait>)
+;;                 (token3 (optional <ft-trait>)) 
+;;                 (amount1 uint) 
+;;                 (amount2 uint)
+;;                 (amount3 uint))
+  
+;;   (begin 
+;;       () 
+;;       (ok true)
+;;   )
+;; )
