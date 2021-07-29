@@ -25,9 +25,9 @@
   }
 )
 
+;; For receiving yield token as symbol
 ;; (define-map yield-token-symbol-map
 ;;   { 
-;;     oracle-src: (string-ascii 32)
 ;;     symbol: (string-ascii 32) }
 ;;   {
 ;;     yield-token-principal: principal
@@ -80,6 +80,19 @@
 
 )
 
+;; For receiving yield token as symbol
+;; (define-public (get-yield-token-price (yield-token (symbol (string-ascii 32)))
+    
+;;     (let
+;;       (
+;;         (yield-token-symbol-map (unwrap! (map-get? yield-token-symbol-map {symbol: symbol}) err-token-not-in-oracle))
+       
+;;         (yield-token-price (unwrap! (contract-call? .yield-token-pool get-price yield-token) err-yield-token-price-err))
+;;       )
+;;       (ok yield-token-price)
+;;     )
+
+;; )
 
 
 ;; TODO: On future when oracle owner in block chain can be controlled, implementing is required.
