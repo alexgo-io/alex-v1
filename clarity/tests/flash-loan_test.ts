@@ -115,3 +115,26 @@ Clarinet.test({
     block.receipts[5].result.expectErr(); // will trigger error cause there are not balance in ayusdaAddress
   },
 });
+
+
+// Clarinet.test({
+//   name: "Flashloan : Experiment - Sidney ",
+//   async fn(chain: Chain, accounts: Map<string, Account>) {
+//       let deployer = accounts.get("deployer")!;
+//       let wallet_1 =accounts.get('wallet_1')!;
+//       let wallet_2 =accounts.get('wallet_2')!;
+//       let block = chain.mineBlock([
+
+//       Tx.contractCall(
+//         'test-flash-loan-user',
+//         'test',
+//         [
+//           types.principal(testFlashLoanUser),
+//           types.principal(gAlexTokenAddress),
+//           //types.principal(usdaTokenAddress),
+//         ],
+//         deployer.address
+//       ),
+//       ])
+//       }
+// });
