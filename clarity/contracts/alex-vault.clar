@@ -108,7 +108,7 @@
   (let
     (
       (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
-      (vault (var-get vault-address))
+      (vault (as-contract tx-sender));;(var-get vault-address))
       ;; Refresh the map with current vault balance
       (updated-balance (unwrap! (contract-call? token-trait get-balance vault) invalid-balance)) 
     )
@@ -129,7 +129,7 @@
         (
           (token-symbol (unwrap! (contract-call? token-trait get-symbol) get-token-fail))
           (token-name (unwrap! (contract-call? token-trait get-name) get-token-fail))
-          (vault (var-get vault-address))
+          (vault (as-contract tx-sender));;(var-get vault-address))
         )
         
         ;; Transfering
@@ -153,7 +153,7 @@
         (
           (token-symbol (unwrap! (contract-call? token-trait get-symbol) none-token-err))
           (token-name (unwrap! (contract-call? token-trait get-name) none-token-err))
-          (vault (var-get vault-address))
+          (vault (as-contract tx-sender));;(var-get vault-address))
         )
         
         ;; Transfering
