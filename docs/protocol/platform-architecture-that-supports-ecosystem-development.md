@@ -36,7 +36,7 @@ Fixed Weight Pool \("FWP"\) is a fork of [Balancer Weighted Pool](https://docs.b
 
 ### Collateral Rebalancing Pool
 
-Collateral Rebalancing Pool \("CRP"\) uses Weighted Equation and dynamically rebalances between ayToken and Collateral. CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remains solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\).
+Collateral Rebalancing Pool \("CRP"\) uses Weighted Equation and dynamically rebalances between Token and Collateral. CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remains solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\).
 
 ### Yield Token Pool
 
