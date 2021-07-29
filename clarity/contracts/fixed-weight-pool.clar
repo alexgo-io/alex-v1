@@ -1,5 +1,3 @@
-;;(impl-trait .trait-pool.pool-trait)
-
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait vault-trait .trait-vault.vault-trait)
@@ -168,13 +166,9 @@
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
         ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
-               
-        ;; Transfer to vault
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx tx-sender token-x-trait none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-to-vault new-dy tx-sender token-y-trait none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
 
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
@@ -212,11 +206,10 @@
         
         ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
         
-        ;; Transfer to vault
-        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx tx-sender token-x-trait none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy tx-sender token-y-trait none)) transfer-y-failed-err)
-
-
+        ;; send x from vault
+        (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
+        ;; send y from vault
+        (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -237,9 +230,8 @@
     (balance-y (get balance-y pool))
     (fee-rate-x (get fee-rate-x pool))
 
-    ;; fee = dx * fee-rate-x / ONE_8
-    (fee (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err) ONE_8) math-call-err))
+    ;; fee = dx * fee-rate-x
+    (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
     (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
     
     (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees) internal-function-call-err))
@@ -261,14 +253,10 @@
 
     ;; TODO : Implement case by case logic of token here bt branching with if statement
     
-    ;; Direct Call from token-trait
-    ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
-    ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
-
-    ;; Swapping using transfer-to-vault
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dx-net-fees tx-sender token-x-trait none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? the-vault transfer-from-vault dy tx-sender token-y-trait none)) transfer-y-failed-err)
-
+    ;; send x to vault
+    (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+    ;; send y from vault
+    (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
@@ -290,9 +278,8 @@
     (balance-y (get balance-y pool))
     (fee-rate-y (get fee-rate-y pool))
 
-    ;; fee = dy * fee-rate-y / ONE_8
-    (fee (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err) ONE_8) math-call-err))
+    ;; fee = dy * fee-rate-y
+    (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
     (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
 
     (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees) internal-function-call-err))
@@ -318,13 +305,10 @@
     ;; when received token-x , token-x -> vault
     ;; when received token-y , token-y : vault  -> tx-sender
 
-    ;; Direct function call from token trait
-    ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
-    ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
-
-    ;; Swapping using transfer-to-vault
-    (asserts! (is-ok (contract-call? the-vault transfer-from-vault dx tx-sender token-x-trait none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? the-vault transfer-to-vault dy-net-fees tx-sender token-y-trait none)) transfer-y-failed-err)
+    ;; send x from vault
+    (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
+    ;; send y to vault
+    (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 

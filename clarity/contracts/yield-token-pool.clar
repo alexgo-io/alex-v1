@@ -1,5 +1,3 @@
-(impl-trait .trait-yield-token-pool.yield-token-pool-trait)
-
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
@@ -136,7 +134,6 @@
   
 )
 
-;; TODO: shouldn't the pool token be created as part of create-pool?
 (define-public (create-pool (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
     (let
         (
@@ -270,12 +267,6 @@
 
     ;; TODO : Implement case by case logic of token here bt branching with if statement
 
-
-    ;; Transfer 
-    ;; when received token-x , token-x -> vault
-    ;; when received token-y , token-y : vault  -> tx-sender
-
-
     (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
     (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
 
@@ -317,12 +308,6 @@
     ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
     ;; TODO : Implement case by case logic of token here bt branching with if statement
-
-
-    ;; Transfer 
-    ;; when received token-x , token-x -> vault
-    ;; when received token-y , token-y : vault  -> tx-sender
-
 
     (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
     (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)

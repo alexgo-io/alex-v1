@@ -1,11 +1,7 @@
-(use-trait ft-trait .trait-sip-010.sip-010-trait)
-;; (use-trait vault-trait .trait-vault.vault-trait)
-
 (define-trait flash-loan-user-trait
   (
-    ;; (execute (<ft-trait> <ft-trait> (optional <ft-trait>) uint uint (optional uint) principal) (response bool uint))
-    (execute-1 (<ft-trait> uint principal) (response bool uint))
-    (execute-2 (<ft-trait> <ft-trait> uint uint principal) (response bool uint))
-    (execute-3 (<ft-trait> <ft-trait> <ft-trait> uint uint uint principal) (response bool uint))
+    ;; no need for params, as whoever implements this trait should know what he/she is doing
+    ;; see test-flash-loan-user
+    (execute () (response bool uint))
   )
 )

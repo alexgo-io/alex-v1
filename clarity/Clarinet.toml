@@ -35,7 +35,7 @@ depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.test-flash-loan-user]
 path = "contracts/test-flash-loan-user.clar"
-depends_on = ["trait-vault", "trait-flash-loan-user", "trait-sip-010", "trait-vault", "fixed-weight-pool"]
+depends_on = ["trait-flash-loan-user", "trait-vault","trait-sip-010", "alex-vault", "fixed-weight-pool","token-alex","token-usda"]
 
 [contracts.token-alex]
 path = "contracts/token-alex.clar"
@@ -77,10 +77,6 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 path = "contracts/trait-yield-token.clar"
 depends_on = []
 
-[contracts.trait-yield-token-pool]
-path = "contracts/trait-yield-token-pool.clar"
-depends_on = ["trait-yield-token"]
-
 [contracts.weighted-equation]
 path = "contracts/weighted-equation.clar"
 depends_on = ["math-fixed-point"]
@@ -91,4 +87,4 @@ depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-pool]
 path = "contracts/yield-token-pool.clar"
-depends_on = ["trait-yield-token-pool","trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation"]
