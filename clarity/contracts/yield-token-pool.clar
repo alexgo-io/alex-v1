@@ -1,3 +1,5 @@
+(impl-trait .trait-yield-token-pool.yield-token-pool-trait)
+
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
