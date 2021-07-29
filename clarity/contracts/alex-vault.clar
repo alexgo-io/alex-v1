@@ -164,6 +164,23 @@
       )
 )
 
+
+;; (define-public (flash-loan 
+;;                 (flash-loan-user <flash-loan-user-trait>) 
+;;                 (token-1 <ft-trait>)
+;;                 (token-2 <ft-trait>) 
+;;                 (token-3 (optional <ft-trait>)) 
+;;                 (amount1 uint)
+;;                 (amount2 (optional uint)))
+
+    
+;;     (if (is-some token-3)
+;;       (ok (flash-loan-3 flash-loan-user token-1 token-2 (unwrap-panic token-3) amount1 (unwrap-panic amount2)))
+;;       (ok (flash-loan-2 flash-loan-user token-1 token-2 amount1))
+;;     )
+   
+;; )
+
 (define-public (flash-loan-1 
                 (flash-loan-user <flash-loan-user-trait>) 
                 (token <ft-trait>) 
