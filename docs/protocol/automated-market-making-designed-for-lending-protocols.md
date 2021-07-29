@@ -1,6 +1,6 @@
 # Yield Token Pool
 
-Please refer to our [white paper](../whitepaper/automated-market-making-of-alex.md) for a more rigorous treatment on the subject.
+Please refer to our [white paper](https://docs.alexgo.io/whitepaper/automated-market-making-of-alex) for a more rigorous treatment on the subject.
 
 ## Lending and Borrowing Process
 
@@ -30,7 +30,7 @@ $$
 
 where $$x$$, $$y$$, $$t$$ and $$L$$ are, respectively, the balance of "Token", balance of "ayToken", time to maturity and a constant term when $$t$$ is fixed. The interest rate $$r$$ is defined as $$r=\log\left(\frac{y}{x}\right)$$, i.e. the natural logarithm of the ratio of balance between "ayToken" and "Token", while the price of "ayToken" with respect to "Token" is $$\left(\frac{y}{x}\right)^{t}$$.
 
-Our design depicts an AMM in the of a form of a generalised mean. It makes economic sense because the shape of the curve is decreasing and convex. It incorporates time to maturity $$t$$, which is explicitly built-in to derive ayToken's spot price. We refer readers to our [white paper](../whitepaper/automated-market-making-of-alex.md) for detail.
+Our design depicts an AMM in the of a form of a generalised mean. It makes economic sense because the shape of the curve is decreasing and convex. It incorporates time to maturity $$t$$, which is explicitly built-in to derive ayToken's spot price. We refer readers to our [white paper](https://docs.alexgo.io/whitepaper/automated-market-making-of-alex) for detail.
 
 ## Liquidity Providers \(LP\) and Capital Efficiency
 

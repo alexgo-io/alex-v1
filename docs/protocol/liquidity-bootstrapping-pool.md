@@ -1,6 +1,6 @@
 # Liquidity Bootstrapping Pool
 
-Liquidity Bootstrapping Pool \("LBP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and is designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
+Liquidity Bootstrapping Pool \("LBP"\) uses [Weighted Equation](https://docs.alexgo.io/protocol/platform-architecture-that-supports-ecosystem-development) and is designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
 
 LBP is used to initialise all Yield Token Pools \(with ayToken being the Base Token and Token being the Target Token\).
 
