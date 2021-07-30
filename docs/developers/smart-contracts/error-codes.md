@@ -90,5 +90,5 @@ Token error starts with 7000.
 
 | Error | Code | Description |
 | :--- | :---: | :---: |
-| get-price-fail-err | 7000 | get-price failed |
+| get-oracle-price-fail-err | 7000 | get-price failed |
 
