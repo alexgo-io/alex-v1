@@ -21,7 +21,7 @@
 (define-constant already-expiry-err (err u2010))
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant math-call-err (err u2010))
-(define-constant internal-function-call-err (err u2011))
+(define-constant internal-function-call-err (err u1001))
 (define-constant internal-get-weight-err (err u2012))
 ;; data maps and vars
 ;;

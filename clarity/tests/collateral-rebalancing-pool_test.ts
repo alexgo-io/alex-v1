@@ -6,14 +6,18 @@ import {
     CRPTestAgent1,
   } from './models/alex-tests-collateral-rebalancing-pool.ts';
   
+  import { 
+    OracleManager,
+  } from './models/alex-tests-oracle-mock.ts';
+  
+  
 
 // Deployer Address Constants 
  const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
  const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
  const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-ayusda"
  const gAlexUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda"
- const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
-
+ 
  const expiry = 52560   //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
 
 /**
@@ -35,9 +39,16 @@ Clarinet.test({
         
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"ALEX","nothing",500000000);
+        oracleresult.expectOk()
+
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",500000000);
+        oracleresult.expectOk()
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Initial Balance After Creation of Pool : TODO : NEED TO CHANGE EXPIRY AFTER CHANGING HARD CODED PART
@@ -46,7 +57,7 @@ Clarinet.test({
         result.expectOk().expectList()[1].expectUint(10000000);   
         
         // Borrower adds liquidity to the pool and mint ayusda
-        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Liquidity Added to the pool
@@ -55,15 +66,15 @@ Clarinet.test({
         result.expectOk().expectList()[1].expectUint(20000000); 
 
         // Reduce Liquidity
-        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 100000);
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 100000);
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(9999);
-            position['dy'].expectUint(22431);
+            position['dy'].expectUint(14917);
 
         // Liquidity Added to the pool
         result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
         result.expectOk().expectList()[0].expectUint(9990001);
-        result.expectOk().expectList()[1].expectUint(19977569); 
+        result.expectOk().expectList()[1].expectUint(19985083); 
 
 
 
@@ -76,9 +87,16 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"ALEX","nothing",500000000);
+        oracleresult.expectOk()
+
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",500000000);
+        oracleresult.expectOk()
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
         result.expectOk().expectBool(true);
         
         // Get weight for testing swap - internal test
@@ -87,16 +105,16 @@ Clarinet.test({
             types.principal(usdaTokenAddress),
             types.uint(expiry)
             ], wallet_1.address);
-        call.result.expectOk().expectUint(30831610)
+        call.result.expectOk().expectUint(40129062)
         
         // Check whether internal weighted equation is working well - internal test
         result = CRPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 1000000);
-        result.expectOk().expectUint(780084)
+        result.expectOk().expectUint(1149866)
         
         // Arbitrager swapping usda for ayusda 
-        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, alexVaultAddress,1000000);
+        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 1000000);
         result.expectOk().expectList()[0].expectUint(1000000); 
-        result.expectOk().expectList()[1].expectUint(780089); 
+        result.expectOk().expectList()[1].expectUint(1149871); 
 
     },
 });
@@ -107,9 +125,16 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 =accounts.get('wallet_1')!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"ALEX","nothing",500000000);
+        oracleresult.expectOk()
+
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",500000000);
+        oracleresult.expectOk()
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Fees will be transferred to wallet_1
@@ -132,42 +157,53 @@ Clarinet.test({
         let wallet_1 =accounts.get('wallet_1')!;
         let wallet_2 =accounts.get('wallet_2')!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+
+        // Price not in Otacle Error
+        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
+        result.expectErr().expectUint(7000);
+
+        let oracleresult = Oracle.updatePrice(deployer,"ALEX","nothing",500000000);
+        oracleresult.expectOk()
+
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",500000000);
+        oracleresult.expectOk()
 
         // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
         result.expectOk().expectBool(true);
 
         // Existing Pool
-        result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, alexVaultAddress, 5000000, 10000000);
+        result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
         result.expectErr().expectUint(2000);
 
         // Invalid Pool Access
-        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, 444, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, gAlexUsdaPoolAddress, ayusdaAddress, 5000000, 10000000);
         result.expectErr().expectUint(2001);
 
-        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 5000000, 10000000);
         result.expectOk().expectBool(true);
 
-        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 0, 0);
+        result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 0, 0);
         result.expectErr().expectUint(2003);
 
-        result = CRPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 5000000, 10000000);
+        result = CRPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 5000000, 10000000);
         result.expectErr().expectUint(3001);
 
         // Transfer Error 
-        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 0);
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 0);
         result.expectErr().expectUint(3001);
 
         // Math Error
-        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, ayusdaAddress,alexVaultAddress, 10000000000);
+        result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 10000000000);
         result.expectErr().expectUint(2010);
 
         // dY = 0 
-        // result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, alexVaultAddress, 0);
+        // result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY,  0);
         // result.expectErr();
 
-        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, alexVaultAddress,200000000000);
-        result.expectErr().expectUint(2011);
+        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 200000000000);
+        result.expectErr().expectUint(1001);
 
         
     },

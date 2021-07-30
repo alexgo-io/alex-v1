@@ -24,61 +24,20 @@ Clarinet.test({
 
         let block = chain.mineBlock([
             
+          // must return zero 
             Tx.contractCall("alex-vault", "get-balance", [
                 types.principal(usdaTokenAddress)
               ], user.address),
             
-              // Must return empty list
-              Tx.contractCall("alex-vault", "get-balances", [
-              ], user.address),
             
-            // Transfer usda to Vault
-            // Since User is deployer, Vault address is User.vault 
-            Tx.contractCall("alex-vault", "transfer-to-vault", [
-                types.uint(100000000),
-                types.principal(wallet_1.address),
-                types.principal(usdaTokenAddress),
-                types.none()
-            ], user.address),
-
-            // transfer galex to Vault
-            Tx.contractCall("alex-vault", "transfer-to-vault", [
-              types.uint(100000000),
-              types.principal(wallet_1.address),
-              types.principal(gAlexTokenAddress),
-              types.none()
-          ], user.address),
-            
-            Tx.contractCall("alex-vault", "get-balances", [
-              ], user.address),
-              
-              Tx.contractCall("alex-vault", "get-balance", [
-                types.principal(gAlexTokenAddress)
-              ], user.address),
-
-              // transfer galex from Vault
-              Tx.contractCall("alex-vault", "transfer-from-vault", [
-                types.uint(100000000),
-                types.principal(wallet_1.address),
-                types.principal(gAlexTokenAddress),
-                types.none()
-            ], user.address),
-
-            // Transfer usda from vault
-            Tx.contractCall("alex-vault", "transfer-from-vault", [
-              types.uint(100000000),
-              types.principal(wallet_1.address),
-              types.principal(usdaTokenAddress),
-              types.none()
-          ], user.address),
-
-          // Should Return (ok [{balance: u1000000000000, token: "Alex Token"}, {balance: u1000000000000, token: "USDA"}])
-          Tx.contractCall("alex-vault", "get-balances", [
-          ], user.address),
-
           // u1000000000000
           Tx.contractCall("alex-vault", "get-balance", [
             types.principal(gAlexTokenAddress)
+          ], user.address),
+
+          // Must Return zero
+          Tx.contractCall("alex-vault", "get-balance", [
+            types.principal(gAlexUsdaPoolAddress)
           ], user.address),
             
         ]);
@@ -86,32 +45,9 @@ Clarinet.test({
         block.receipts[0].result.expectOk();
         block.receipts[1].result.expectOk();
         block.receipts[2].result.expectOk();
-        block.receipts[3].result.expectOk();
-        let lists:any = block.receipts[4].result;
-        lists.expectOk().expectList() 
-        block.receipts[5].result.expectOk().expectUint(100000000); // Received
-        block.receipts[9].result.expectOk().expectUint(0);  // Taken
+
 
     },
 });
 
 
-Clarinet.test({
-  name: "Vault : Error Test",
-  async fn(chain: Chain, accounts: Map<string, Account>) {
-      let deployer = accounts.get("deployer")!;
-      let wallet_1 =accounts.get('wallet_1')!;
-      let wallet_2 =accounts.get('wallet_2')!;
-      let VaultTest = new VaultAgent(chain, deployer);
-      
-      // panic errors
-      // Invalid Token Address
-      // let result = VaultTest.getBalance(deployer,alexVaultAddress);  
-      // result.expectErr().expectUint(3009);
-
-
-      // Insuffucuent Balance 
-      // let result = VaultTest.transferToVault(deployer,10000000,wallet_2.address, gAlexTokenAddress);
-      // result.expectErr().expectUint(3000);
-  },
-});
