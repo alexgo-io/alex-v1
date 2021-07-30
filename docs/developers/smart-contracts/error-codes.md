@@ -7,8 +7,7 @@ General error starts with 1000.
 | Error | Code | Description |
 | :--- | :---: | :---: |
 | err-not-authorized | 1000 | Inappropriate principal accessing |
-| err-token-not-in-oracle | 1001 | Token cannot be found on given oracle source |
-| internal-function-call-err | 1002 | function call error in the same contract |
+| internal-function-call-err | 1001 | function call error in the same contract |
 
 ## Pool Error
 
@@ -96,4 +95,5 @@ Token error starts with 7000.
 | Error | Code | Description |
 | :--- | :---: | :---: |
 | get-oracle-price-fail-err | 7000 | get-price failed |
+| err-token-not-in-oracle | 7001 | Token cannot be found on given oracle source |
 
