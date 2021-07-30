@@ -25,6 +25,7 @@ Pool errors starts with 2000.
 | invalid-balance-err | 2008 | Accesing invalid balance |
 | invalid-expiry-err | 2009 | expiry &gt; max-expiry |
 | already-expiry-err | 2010 | current block-height &gt; expiry |
+| get-price-err | 2015 | get-price error |
 
 ## Vault Error
 
