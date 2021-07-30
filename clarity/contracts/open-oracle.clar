@@ -1,5 +1,4 @@
 (impl-trait .trait-oracle.oracle-trait)
-(use-trait yield-token .trait-yield-token.yield-token-trait)
 
 ;; Open-Oracle for local Clarinet and RegTest
 ;; Oracle-Owner is set to deployer. It is currently hard coded but need to change to 
@@ -11,7 +10,6 @@
 
 (define-constant err-not-authorized (err u1000))
 (define-constant err-token-not-in-oracle (err u1001))
-(define-constant err-yield-token-price-err (err u2015))
 
 ;; Let's keep oracle-owner to deployer for now.
 (define-data-var oracle-owner principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)
@@ -25,17 +23,8 @@
   }
 )
 
-;; For receiving yield token as symbol
-;; (define-map yield-token-symbol-map
-;;   { 
-;;     symbol: (string-ascii 32) }
-;;   {
-;;     yield-token-principal: principal
-;;   }
-;; )
-
-
-;;For Testing Purpose, need for mocking oracle. 
+;; For Testing Purpose, need for mocking oracle. 
+;; price must be in fixed point integer
 (define-public (update-price (symbol (string-ascii 32)) (oracle-src (string-ascii 32)) (price uint))
   (if (is-eq tx-sender (var-get oracle-owner))
     (begin
@@ -46,54 +35,18 @@
   )
 )
 
-
-
 ;; oracle-src : Source of Oracle, lets keep for test-oracle for now. 
 ;; symbol : Token Symbol
 (define-read-only (get-price (oracle-src (string-ascii 32)) (symbol (string-ascii 32)))
-    
-    ;;(contract-call? 'SPZ0RAC1EFTH949T4W2SYY6YBHJRMAF4ECT5A7DD.oracle-v1 get-price oracle-src symbol)
-    (let
-      (
+  (let
+    (
       (price-map (unwrap! (map-get? prices {symbol: symbol, oracle-src: oracle-src }) err-token-not-in-oracle))
       (last-price (get last-price-in-cents price-map))
       (last-block (get last-block price-map))
     )
-      (ok last-price)
-    )
-
+    (ok last-price)
+  )
 )
-
-
-;; But it is better to put parameter as symbol to match consistency with price oracle right?
-
-(define-public (get-yield-token-price (yield-token <yield-token>))
-    
-    (let
-      (
-      ;;(oracle-src "yield-token-pool")
-      ;;(yield-token-symbol-map (unwrap! (map-get? yield-token-symbol-map {symbol: symbol, oracle-src: oracle-src }) err-token-not-in-oracle))
-        (yield-token-price (unwrap! (contract-call? .yield-token-pool get-price yield-token) err-yield-token-price-err))
-      )
-      (ok yield-token-price)
-    )
-
-)
-
-;; For receiving yield token as symbol
-;; (define-public (get-yield-token-price (yield-token (symbol (string-ascii 32)))
-    
-;;     (let
-;;       (
-;;         (yield-token-symbol-map (unwrap! (map-get? yield-token-symbol-map {symbol: symbol}) err-token-not-in-oracle))
-       
-;;         (yield-token-price (unwrap! (contract-call? .yield-token-pool get-price yield-token) err-yield-token-price-err))
-;;       )
-;;       (ok yield-token-price)
-;;     )
-
-;; )
-
 
 ;; TODO: On future when oracle owner in block chain can be controlled, implementing is required.
 ;; (define-public (set-oracle-owner (address principal))

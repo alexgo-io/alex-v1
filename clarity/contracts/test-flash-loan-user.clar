@@ -9,7 +9,7 @@
             (weight-2 u50000000)
         )
         
-        (asserts! (is-ok (contract-call? .fixed-weight-pool swap-x-for-y .token-alex .token-usda weight-1 weight-2 .alex-vault (* u200 u1000000))) user-execute-err)
+        (asserts! (is-ok (contract-call? .fixed-weight-pool swap-x-for-y .token-alex .token-usda weight-1 weight-2 (* u200 u1000000))) user-execute-err)
         (ok true)
     )
 )
