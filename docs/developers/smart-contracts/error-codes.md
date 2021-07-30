@@ -76,5 +76,13 @@ Math error starts with 5000.
 | fixed-point-err | 5014 | catch-all for math-fixed-point errors |
 |  |  |  |
 
+## Token Error
+
+Token error starts with 6000.
+
+| Error | Code | Description |
+| :--- | :---: | :---: |
+| get-symbol-fail-err | 6000 | get-symbol failed |
+
 
 
