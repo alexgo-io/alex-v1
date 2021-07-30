@@ -84,5 +84,11 @@ Token error starts with 6000.
 | :--- | :---: | :---: |
 | get-symbol-fail-err | 6000 | get-symbol failed |
 
+## Oracle Error
 
+Token error starts with 7000.
+
+| Error | Code | Description |
+| :--- | :---: | :---: |
+| get-price-fail-err | 7000 | get-price failed |
 
