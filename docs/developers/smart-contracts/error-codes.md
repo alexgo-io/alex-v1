@@ -7,6 +7,8 @@ General error starts with 1000.
 | Error | Code | Description |
 | :--- | :---: | :---: |
 | err-not-authorized | 1000 | Inappropriate principal accessing |
+| err-token-not-in-oracle | 1001 | Token cannot be found on given oracle source |
+| internal-function-call-err | 1002 | function call error in the same contract |
 
 ## Pool Error
 
@@ -25,6 +27,9 @@ Pool errors starts with 2000.
 | invalid-balance-err | 2008 | Accesing invalid balance |
 | invalid-expiry-err | 2009 | expiry &gt; max-expiry |
 | already-expiry-err | 2010 | current block-height &gt; expiry |
+| internal-get-weight-err | 2012 | get-weight fail on pool logic|
+| get-expiry-fail-err | 2013 | get-expiry fail on pool logic|
+| yield-token-equation-call-err | 2014 | yield token equation calling error|
 | get-price-fail-err | 2015 | get-price error |
 
 ## Vault Error
@@ -52,7 +57,7 @@ Equation error starts with 4000.
 | weight-sum-err | 4000 | Sum of weight should be always 1 |
 | max-in-ratio-err | 4001 | In ratio Error |
 | max-out-ratio-err | 4002 | Out ration Error |
-
+| math-call-err | 4003 | Error while calling math functions on library |
 ## Math Error
 
 Math error starts with 5000.
