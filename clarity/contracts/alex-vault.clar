@@ -16,7 +16,7 @@
 (define-constant invalid-balance (err u3011))
 (define-constant unwrap-err (err u3012))
 (define-constant math-call-err (err u2010))
-(define-constant internal-function-call-err (err u2011))
+(define-constant internal-function-call-err (err u1001))
 
 ;; flash loan fee rate
 (define-data-var flash-loan-fee-rate uint u0)
