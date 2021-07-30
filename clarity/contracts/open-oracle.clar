@@ -9,7 +9,7 @@
 ;;(contract-call? 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.open-oracle get-price "alextestoracle" "USDA")
 
 (define-constant err-not-authorized (err u1000))
-(define-constant err-token-not-in-oracle (err u1001))
+(define-constant err-token-not-in-oracle (err u7001))
 
 ;; Let's keep oracle-owner to deployer for now.
 (define-data-var oracle-owner principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)

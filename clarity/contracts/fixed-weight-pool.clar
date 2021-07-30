@@ -19,7 +19,7 @@
 (define-constant no-fee-y-err (err u2006))
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant math-call-err (err u2010))
-(define-constant internal-function-call-err (err u2011))
+(define-constant internal-function-call-err (err u1001))
 
 ;; data maps and vars
 (define-map pools-map
