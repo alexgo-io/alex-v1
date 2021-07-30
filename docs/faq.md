@@ -53,7 +53,7 @@ There are five actors on ALEX:
 * **Liquidity Provider**: Go to Yield Token Pool =&gt; Deposit ayToken & Token =&gt; Mint Yield Token Pool Token
 * **Arbitrageur / Flash Loan User**: Go to Vault =&gt; Create Flash Loan =&gt; Trade at Pools
 
-See [Use Case](developers/smart-contracts/diagrams/protocol-use-case.md).
+See[ Use Case](https://docs.alexgo.io/developers/smart-contracts/diagrams/protocol-use-case).
 
 ## What Collateralization Ratio \(or Loan-to-Value\) can we expect on ALEX?
 
@@ -65,7 +65,7 @@ All of this is made possible by our [Collateral Rebalancing Pool](protocol/colla
 
 ## What kind of transaction fee and speed do you require?
 
-The design of our [Collateral Rebalancing Pool](protocol/collateral-rebalancing-pool.md) requires low transaction fee. The transaction fee on Stacks at the moment is negligible.
+The design of our [Collateral Rebalancing Pool ](https://docs.alexgo.io/protocol/collateral-rebalancing-pool)requires low transaction fee. The transaction fee on Stacks at the moment is negligible.
 
 The Bitcoin block time is too slow to support decentralized apps like ALEX. To work around Bitcoin's limited speed, Stacks uses microblocks that result in near-instant confirmation on the Stacks blockchain. At the rate of the Bitcoin block time, these blocks will settle from Stacks to Bitcoin to provide the finality and security of Bitcoin.
 
@@ -73,9 +73,9 @@ Scaling independently of Bitcoin ensures that Stacks transactions are fast enoug
 
 ## Will you provide cross chain capability?
 
-Yes, we will develop cross chain capability in the future. Our [core architecture](protocol/platform-architecture-that-supports-ecosystem-development.md) is not tied to Stacks.
+Yes, we will develop cross chain capability in the future. Our [core architecture](https://docs.alexgo.io/protocol/platform-architecture-that-supports-ecosystem-development) is not tied to Stacks.
 
 ## What’s your borrowing rate right now?
 
-Our lending and borrowing rates are [market driven](protocol/automated-market-making-designed-for-lending-protocols.md).
+Our lending and borrowing rates are [market driven](https://docs.alexgo.io/protocol/automated-market-making-designed-for-lending-protocols).
 

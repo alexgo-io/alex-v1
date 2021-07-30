@@ -25,6 +25,7 @@ Pool errors starts with 2000.
 | invalid-balance-err | 2008 | Accesing invalid balance |
 | invalid-expiry-err | 2009 | expiry &gt; max-expiry |
 | already-expiry-err | 2010 | current block-height &gt; expiry |
+| get-price-fail-err | 2015 | get-price error |
 
 ## Vault Error
 
@@ -75,5 +76,19 @@ Math error starts with 5000.
 | fixed-point-err | 5014 | catch-all for math-fixed-point errors |
 |  |  |  |
 
+## Token Error
 
+Token error starts with 6000.
+
+| Error | Code | Description |
+| :--- | :---: | :---: |
+| get-symbol-fail-err | 6000 | get-symbol failed |
+
+## Oracle Error
+
+Token error starts with 7000.
+
+| Error | Code | Description |
+| :--- | :---: | :---: |
+| get-oracle-price-fail-err | 7000 | get-price failed |
 

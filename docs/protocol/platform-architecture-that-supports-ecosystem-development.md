@@ -22,7 +22,7 @@ As the price of each token changes, arbitrageurs rebalance the pool by making tr
 
 ### Yield Token Equation
 
-Yield Token Equation \("YTE"\) drives [Yield Token Pool](automated-market-making-designed-for-lending-protocols.md). It follows [Yield Space](https://yield.is/YieldSpace.pdf) and is designed specifically to facilitate efficient trading between ayToken and Token. Our main contribution is to extend the model to allow for capital efficiency from liquidity provision perspective \(inspired by [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf)\).
+Yield Token Equation \("YTE"\) drives [Yield Token Pool](https://docs.alexgo.io/protocol/automated-market-making-designed-for-lending-protocols). It follows [Yield Space](https://yield.is/YieldSpace.pdf) and is designed specifically to facilitate efficient trading between ayToken and Token. Our main contribution is to extend the model to allow for capital efficiency from liquidity provision perspective \(inspired by [Uniswap V3](https://uniswap.org/whitepaper-v3.pdf)\).
 
 For example, if a pool is configured to trade between 0% and 10% APY, the capital efficiency can improve to 40x compared to when the yield can trade between $$-\infty$$ and $$+\infty$$.
 
@@ -36,15 +36,15 @@ Fixed Weight Pool \("FWP"\) is a fork of [Balancer Weighted Pool](https://docs.b
 
 ### Collateral Rebalancing Pool
 
-Collateral Rebalancing Pool \("CRP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and dynamically rebalances between ayToken and Collateral. CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remains solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\).
+Collateral Rebalancing Pool \("CRP"\) uses Weighted Equation and dynamically rebalances between Token and Collateral. CRP dynamically rebalances collateral to ensure the ayToken minted \(i.e. the loan\) remains solvent especially in an adverse market environment \(i.e. the value of the loan does not exceed the value of collateral\).
 
 ### Yield Token Pool
 
-Yield Token Pool \("YTP"\) uses[ Yield Token Equation](platform-architecture-that-supports-ecosystem-development.md#yield-token-equation) and is designed specifically to facilitate efficient trading between ayToken and Token.
+Yield Token Pool \("YTP"\) uses Yield Token Equation and is designed specifically to facilitate efficient trading between ayToken and Token.
 
 ### Liquidity Bootstrapping Pool
 
-Liquidity Bootstrapping Pool \("LBP"\) uses [Weighted Equation](platform-architecture-that-supports-ecosystem-development.md#weighted-equation) and is designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
+Liquidity Bootstrapping Pool \("LBP"\) uses Weighted Equation and is designed to facilitate a capital efficient launch of a token \(the "Base Token"\) relative to another token \(the "Target Token"\).
 
 LBP is used to initialise all Yield Token Pools \(with ayToken being the Base Token and Token being the Target Token\).
 

@@ -1,9 +1,6 @@
-(impl-trait .trait-yield-token-pool.yield-token-pool-trait)
-
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
-(use-trait vault-trait .trait-vault.vault-trait)
 
 ;; yield-token-pool
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -26,6 +23,7 @@
 (define-constant math-call-err (err u2010))
 (define-constant get-expiry-fail-err (err u2013))
 (define-constant yield-token-equation-call-err (err u2014))
+
 ;; data maps and vars
 (define-map pools-map
   { pool-id: uint }
@@ -114,30 +112,30 @@
 
 ;; get-price - input: token trait, expiry / output : price
 (define-public (get-price (token-x-trait <yield-token-trait>))
-    
     (let
-    (
-    (token-x (contract-of token-x-trait))
-    (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
-    ;;(exp (get expiry pool)) I think it is safer to use below function.
-    (exp (unwrap! (contract-call? token-x-trait get-expiry) get-expiry-fail-err))
-    (balance-x (get balance-x pool))
-    (balance-y (get balance-y pool))
+        (
+            (token-x (contract-of token-x-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x }) invalid-pool-err))
+            ;;(exp (get expiry pool)) I think it is safer to use below function.
+            (exp (unwrap! (contract-call? token-x-trait get-expiry) get-expiry-fail-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
 
-    (base (unwrap! (contract-call? .math-fixed-point div-down balance-y balance-x) math-call-err))
-    (t-value (unwrap! (get-t exp) internal-function-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down balance-y balance-x) math-call-err))
+            (t-value (unwrap! (get-t exp) internal-function-call-err))
     
-    (price (unwrap! (contract-call? .math-fixed-point pow-up base t-value) math-call-err))
-    (aytoken-price (unwrap! (contract-call? .math-fixed-point div-down ONE_8 price) math-call-err))
-    )
-    ;; any assertions which can assure price to be valid ?
-    (ok aytoken-price)
+            (price (unwrap! (contract-call? .math-fixed-point pow-up base t-value) math-call-err))
+            (aytoken-price (unwrap! (contract-call? .math-fixed-point div-down ONE_8 price) math-call-err))
+        )
+
+        ;; TODO: need to assert aytoken < token
+
+        (ok aytoken-price)
     )
   
 )
 
-;; TODO: shouldn't the pool token be created as part of create-pool?
-(define-public (create-pool (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))            
@@ -166,13 +164,13 @@
         ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry.
         (var-set max-expiry (if (< (var-get max-expiry) expiry) expiry (var-get max-expiry)))
 
-        (try! (add-to-position token-x-trait token-y-trait the-pool-token the-vault dx dy))
+        (try! (add-to-position token-x-trait token-y-trait the-pool-token dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
    )
 )
 
-(define-public (add-to-position (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (dx uint))
+(define-public (add-to-position (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -194,9 +192,9 @@
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         ;; send y to vault
-        (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x } pool-updated)
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
@@ -205,7 +203,7 @@
    )
 )    
 
-(define-public (reduce-position (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (the-vault <vault-trait>) (percent uint))
+(define-public (reduce-position (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -227,8 +225,8 @@
        )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
         (map-set pools-data-map { token-x: token-x } pool-updated)
         (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -238,7 +236,7 @@
    )
 )
 
-(define-public (swap-x-for-y (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-vault <vault-trait>) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (dx uint))
     
     (let
     (
@@ -270,14 +268,8 @@
 
     ;; TODO : Implement case by case logic of token here bt branching with if statement
 
-
-    ;; Transfer 
-    ;; when received token-x , token-x -> vault
-    ;; when received token-y , token-y : vault  -> tx-sender
-
-
-    (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender (contract-of the-vault) none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? token-y-trait transfer dy (contract-of the-vault) tx-sender none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 
@@ -288,7 +280,7 @@
   )
 )
 
-(define-public (swap-y-for-x (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (the-vault <vault-trait>) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <yield-token-trait>) (token-y-trait <ft-trait>) (dy uint))
 
     (let
     (
@@ -318,14 +310,8 @@
 
     ;; TODO : Implement case by case logic of token here bt branching with if statement
 
-
-    ;; Transfer 
-    ;; when received token-x , token-x -> vault
-    ;; when received token-y , token-y : vault  -> tx-sender
-
-
-    (asserts! (is-ok (contract-call? token-x-trait transfer dx (contract-of the-vault) tx-sender none)) transfer-x-failed-err)
-    (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender (contract-of the-vault) none)) transfer-y-failed-err)
+    (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+    (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
 
     ;; TODO : Burning STX at future if required. 
 

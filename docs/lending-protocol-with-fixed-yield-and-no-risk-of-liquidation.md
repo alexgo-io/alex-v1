@@ -18,5 +18,5 @@ The main benefit of such dynamic rebalancing is that we can be \(much\) more agg
 
 The main drawback is that the collateral received at the time of repayment will not be same in USD value as the original value \(due to rebalancing\).
 
-To those interested in understanding the mathematics behind it, please refer to [Collateral Rebalancing Pool](protocol/collateral-rebalancing-pool.md).
+To those interested in understanding the mathematics behind it, please refer to [Collateral Rebalancing Pool](https://docs.alexgo.io/protocol/collateral-rebalancing-pool).
 
