@@ -26,9 +26,9 @@ Pool errors starts with 2000.
 | invalid-balance-err | 2008 | Accesing invalid balance |
 | invalid-expiry-err | 2009 | expiry &gt; max-expiry |
 | already-expiry-err | 2010 | current block-height &gt; expiry |
-| internal-get-weight-err | 2012 | get-weight fail on pool logic|
-| get-expiry-fail-err | 2013 | get-expiry fail on pool logic|
-| yield-token-equation-call-err | 2014 | yield token equation calling error|
+| internal-get-weight-err | 2012 | get-weight fail on pool logic |
+| get-expiry-fail-err | 2013 | get-expiry fail on pool logic |
+| yield-token-equation-call-err | 2014 | yield token equation calling error |
 | get-price-fail-err | 2015 | get-price error |
 
 ## Vault Error
@@ -57,6 +57,7 @@ Equation error starts with 4000.
 | max-in-ratio-err | 4001 | In ratio Error |
 | max-out-ratio-err | 4002 | Out ration Error |
 | math-call-err | 4003 | Error while calling math functions on library |
+
 ## Math Error
 
 Math error starts with 5000.
