@@ -154,6 +154,53 @@ import {
       ]);
       return block.receipts[0].result;
     }
+
+    setFeeRateX(user: Account, token: string, collateral: string, expiry: number, feerate:number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-fee-rate-x", [
+          types.principal(token),
+          types.principal(collateral),
+          types.uint(expiry),
+          types.uint(feerate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+  
+    setFeeRateY(user: Account, token: string, collateral: string, expiry: number, feerate:number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-fee-rate-y", [
+          types.principal(token),
+          types.principal(collateral),
+          types.uint(expiry),
+          types.uint(feerate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRateX(user: Account, token: string, collateral: string, expiry: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "get-fee-rate-x", [
+          types.principal(token),
+          types.principal(collateral),
+          types.uint(expiry)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRateY(user: Account, token: string, collateral: string, expiry: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "get-fee-rate-y", [
+          types.principal(token),
+          types.principal(collateral),
+          types.uint(expiry)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
   
   }
   

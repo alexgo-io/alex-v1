@@ -65,6 +65,7 @@
     )
 )
 
+
 (define-read-only (mul-up (a uint) (b uint))
     (let
         (
@@ -76,6 +77,24 @@
        )
    )
 )
+
+;; (define-read-only (mul-upp (a uint) (b uint))
+;;     (begin
+
+;;         (if (or (is-eq a u0) (is-eq b u0))
+;;             (ok u0)
+
+;;     (let
+;;         (   
+;;             (a-divided (/ a ONE_8))
+;;             (product (* a-divided b))
+;;         )
+;;             (ok product)
+;;        )
+;;    )
+;;     ))
+
+
 
 (define-read-only (div-down (a uint) (b uint))
     (let

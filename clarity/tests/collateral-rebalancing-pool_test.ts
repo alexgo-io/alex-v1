@@ -145,6 +145,24 @@ Clarinet.test({
         result = CRPTest.getFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
         result.expectOk().expectPrincipal(wallet_1.address);
 
+        // Set X fee rate to 5%
+        result = CRPTest.setFeeRateX(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 5000000); // 0.05 
+        result.expectOk().expectBool(true);
+
+        // Set Y fee rate to 5%
+        result = CRPTest.setFeeRateY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 5000000); // 0.05
+        result.expectOk().expectBool(true);  
+        
+        // Swapping actions
+        result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 300000);
+        result.expectOk().expectList()[0].expectUint(1000000); 
+        result.expectOk().expectList()[1].expectUint(1149871);         
+
+       // Check whether it is correctly collected
+       result = CRPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+       result.expectOk()
+
+
         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
         
     },

@@ -63,7 +63,9 @@
     fee-to-address: principal,
     yield-token: principal,
     strike: uint,
-    bs-vol: uint    
+    bs-vol: uint,
+    fee-rate-x: uint,
+    fee-rate-y: uint    
   }
 )
 
@@ -237,7 +239,9 @@
                 fee-to-address: (contract-of the-yield-token),
                 yield-token: (contract-of the-yield-token),
                 strike: strike,
-                bs-vol: bs-vol
+                bs-vol: bs-vol,
+                fee-rate-x: u0,
+                fee-rate-y: u0
             })
         )
         (asserts!
@@ -341,18 +345,17 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))       
-
-            ;; TODO : Platform Fee imposing logic required.
-            ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
-            ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
-            (fee u0)
-    
-            (dy (unwrap! (get-y-given-x token collateral expiry dx) internal-function-call-err))
+            (fee-rate-x (get fee-rate-x pool))
+            
+            ;; fee = dx * fee-rate-x
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
+            (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))    
+            (dy (unwrap! (get-y-given-x token collateral expiry dx-net-fees) internal-function-call-err))
 
             (pool-updated
                 (merge pool
                     {
-                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx-net-fees) math-call-err),
                         balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-y dy) math-call-err),
                         fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)                      
                     }
@@ -384,18 +387,18 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
+            (fee-rate-y (get fee-rate-y pool))
 
-            ;; TODO : Platform Fee imposing logic required.
-            ;; (dx-with-fees (/ (* u997 dx) u1000)) ;; 0.3% fee for LPs 
-            ;; (fee (/ (* u5 dx) u10000)) ;; 0.05% fee for protocol
-            (fee u0)
-            (dx (unwrap! (get-x-given-y token collateral expiry dy) internal-function-call-err))
+            ;; fee = dy * fee-rate-y
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
+            (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
+            (dx (unwrap! (get-x-given-y token collateral expiry dy-net-fees) internal-function-call-err))
 
             (pool-updated
                 (merge pool
                     {
                         balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx) math-call-err),
-                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y dy) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y dy-net-fees) math-call-err),
                         fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err),
                     }
                 )
@@ -416,6 +419,70 @@
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
         (ok (list dx dy))
   )
+)
+
+(define-read-only (get-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token))
+            (token-y (contract-of collateral))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+        (ok (get fee-rate-x pool))
+    )
+)
+
+(define-read-only (get-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token))
+            (token-y (contract-of collateral))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+        (ok (get fee-rate-y pool))
+    )
+)
+
+(define-public (set-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-x uint))
+    (let 
+        (
+            (token-x (contract-of token))
+            (token-y (contract-of collateral))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        ;; TODO : Assertion for checking the right to set the platform fee.
+        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry 
+            }
+            (merge pool { fee-rate-x: fee-rate-x })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-y uint))
+    (let 
+        (
+            (token-x (contract-of token))
+            (token-y (contract-of collateral))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        ;; TODO : Assertion for checking the right to set the platform fee.
+        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry
+            }
+            (merge pool { fee-rate-y: fee-rate-y })
+        )
+        (ok true)     
+    )
 )
 
 (define-public (set-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (address principal))
