@@ -10,7 +10,7 @@
 
 ## Borrower repaying a loan
 
-
+![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower-repay.svg)
 
 ## Liquidity Provider
 
@@ -19,6 +19,10 @@
 ## Arbitrageur
 
 ![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-arbitrageur.svg)
+
+## Fee Collector
+
+![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-fee.svg)
 
 ## Putting them all together
 
