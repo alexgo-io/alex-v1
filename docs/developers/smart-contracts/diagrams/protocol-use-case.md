@@ -4,9 +4,13 @@
 
 ![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-lender.svg)
 
-## Borrower
+## Borrower creating a loan
 
 ![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower.svg)
+
+## Borrower repaying a loan
+
+
 
 ## Liquidity Provider
 
