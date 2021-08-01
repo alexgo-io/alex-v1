@@ -2,8 +2,8 @@
 
 # first install cli for yuml (https://github.com/wandernauta/yuml)
 
-class_list='class-diagram'
-usecase_list='use-case-back-end use-case-arbitrageur use-case-lender use-case-borrower use-case-lp use-case-fee use-case-yield-farming'
+class_list=''
+usecase_list='use-case-back-end use-case-arbitrageur use-case-lender use-case-borrower use-case-lp use-case-fee use-case-yield-farming use-case-borrower-repay'
 
 for i in $class_list; do
     yuml -i $i.yuml -t class -s nofunky -f svg -o $i.svg
