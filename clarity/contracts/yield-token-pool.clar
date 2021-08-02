@@ -182,9 +182,9 @@
         ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry.
         (var-set max-expiry (if (< (var-get max-expiry) expiry) expiry (var-get max-expiry)))
 
-        (try! (add-to-position the-aytoken the-token the-pool-token dx dy))
-        ;;(try! (add-to-position the-aytoken the-token the-pool-token dx))
-        ;;(try! (add-to-position the-aytoken the-token the-pool-token dy))
+        ;;(try! (add-to-position the-aytoken the-token the-pool-token dx dy))
+        (try! (add-to-position the-aytoken the-token the-pool-token dx))
+
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
    )

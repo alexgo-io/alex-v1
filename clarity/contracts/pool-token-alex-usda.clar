@@ -36,6 +36,10 @@
   (ok (ft-get-balance alex-usda owner))
 )
 
+(define-read-only (get-expiry)
+  (ok 52560)
+)
+
 (define-read-only (get-total-supply)
   (ok (ft-get-supply alex-usda))
 )
