@@ -170,8 +170,9 @@
                 fee-rate-token: u0                
             })
         )
+        (print "Hii")
         (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) pool-already-exists-err)
-
+        
         (map-set pools-map { pool-id: pool-id } { aytoken: aytoken })
         (map-set pools-data-map { aytoken: aytoken } pool-data)
         
@@ -182,6 +183,8 @@
         (var-set max-expiry (if (< (var-get max-expiry) expiry) expiry (var-get max-expiry)))
 
         (try! (add-to-position the-aytoken the-token the-pool-token dx dy))
+        ;;(try! (add-to-position the-aytoken the-token the-pool-token dx))
+        ;;(try! (add-to-position the-aytoken the-token the-pool-token dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
    )

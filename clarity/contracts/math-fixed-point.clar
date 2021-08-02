@@ -78,21 +78,22 @@
    )
 )
 
-;; (define-read-only (mul-upp (a uint) (b uint))
-;;     (begin
+(define-read-only (mul-up-floating-point (a uint) (b uint))
+    (begin
 
-;;         (if (or (is-eq a u0) (is-eq b u0))
-;;             (ok u0)
+        (if (or (is-eq a u0) (is-eq b u0))
+            (ok u0)
 
-;;     (let
-;;         (   
-;;             (a-divided (/ a ONE_8))
-;;             (product (* a-divided b))
-;;         )
-;;             (ok product)
-;;        )
-;;    )
-;;     ))
+        (let
+            (   
+                (a-divided (/ a ONE_8))
+                (product (* a-divided b))
+            )
+                (ok product)
+        )
+        )
+    )
+)
 
 
 

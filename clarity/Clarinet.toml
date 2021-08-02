@@ -27,15 +27,19 @@ depends_on = []
 
 [contracts.open-oracle]
 path = "contracts/open-oracle.clar"
-depends_on = ["trait-yield-token","yield-token-pool","trait-oracle","trait-sip-010"]
+depends_on = ["trait-yield-token", "yield-token-pool", "trait-oracle", "trait-sip-010"]
 
 [contracts.pool-token-alex-usda]
 path = "contracts/pool-token-alex-usda.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
+[contracts.pool-token-usda-ayusda]
+path = "contracts/pool-token-usda-ayusda.clar"
+depends_on = ["trait-sip-010", "trait-pool-token"]
+
 [contracts.test-flash-loan-user]
 path = "contracts/test-flash-loan-user.clar"
-depends_on = ["trait-flash-loan-user", "trait-vault","trait-sip-010", "alex-vault", "fixed-weight-pool","token-alex","token-usda"]
+depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vault", "fixed-weight-pool", "token-alex", "token-usda"]
 
 [contracts.token-alex]
 path = "contracts/token-alex.clar"
