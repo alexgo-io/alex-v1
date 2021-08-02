@@ -1,4 +1,5 @@
 [Liquidity Provider]-(Go to Yield Token Pool)
 (Go to Yield Token Pool)-(Deposit ayToken & Token)
 (Deposit ayToken & Token)-(Mint Yield Token Pool Token)
+(Deposit ayToken & Token)<(Mint ayToken)
 (Mint Yield Token Pool Token)-(note: represent proportional ownership of Yield Token Pool and accrue LP reward{bg:pink})
