@@ -4,11 +4,19 @@
 
 Buying of ayToken \(against Token\) equates to lending of Token at the rate implied by the price of ayToken until T. Holding ayToken until T allows the holder to accrue, with certainty, at a fixed rate \(as implied by the price at which holder bought ayToken\). Selling of ayToken before T could result in a profit or loss, depending on the prevailing price of ayToken.
 
+![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-lender.svg)
+
 ALEX provides a fixed schedule of maturities for each Token to allow liquidity aggregation. On a regular basis, a new ayToken is launched, whose liquidity is bootstrapped using Liquidity Bootstrapping Pool.
 
 ## Borrowing at fixed yield for a fixed term with no risk of liquidation
 
 Minting of ayToken by adding eligible collateral to a collateral pool and selling of ayToken against Token equates to the borrowing of Token at the rate implied by the price at which ayToken was sold.
+
+### Creating a loan
+![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower.svg)
+
+### Repaying a loan
+![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower-repay.svg)
 
 The collateral pool will dynamically rebalance between Token and eligible collateral to ensure the solvency of ayToken. The dynamic rebalancing of collateral is akin to a real-time margining of the loan, minimising counterparty risk.
 
