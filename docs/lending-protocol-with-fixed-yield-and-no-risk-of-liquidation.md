@@ -13,9 +13,11 @@ ALEX provides a fixed schedule of maturities for each Token to allow liquidity a
 Minting of ayToken by adding eligible collateral to a collateral pool and selling of ayToken against Token equates to the borrowing of Token at the rate implied by the price at which ayToken was sold.
 
 ### Creating a loan
+
 ![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower.svg)
 
 ### Repaying a loan
+
 ![](https://raw.githubusercontent.com/alexgo-io/alex-v1/main/diagrams/use-case-borrower-repay.svg)
 
 The collateral pool will dynamically rebalance between Token and eligible collateral to ensure the solvency of ayToken. The dynamic rebalancing of collateral is akin to a real-time margining of the loan, minimising counterparty risk.

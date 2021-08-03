@@ -154,28 +154,30 @@ In the previous sections, fee is in proportion to the notional amount. This is c
 The formula below expresses $$\lambda$$ regarding bid/offer imposed on interest rate $$r$$, so that conversion in between the two is possible. Denote $$r_m$$ as the mid rate calculated from AMM
 
 $$
-e^{r_m}=\frac{y-\Delta y}{x+\lambda\Delta x}
+e^{r_m}=\frac{\Delta y}{\lambda\Delta x}
 $$
 
-However, trader deposits $$x+\Delta x$$ rather than $$x+\lambda\Delta x$$. Therefore, the bid rate $$r_b$$ when purchasing ayToken satisfies
+However, trader deposits $$\Delta x$$ rather than $$\lambda\Delta x$$. Therefore, the bid rate $$r_b$$ when purchasing ayToken satisfies
 
 $$
-e^{r_b}=\frac{y-\Delta y}{x+\Delta x}
+e^{r_b}=\frac{\Delta y}{\Delta x}
 $$
 
 $$\Delta r_b=r_m-r_b$$ is then the fee charged to the purchaser in the yield space, 
 
 $$
-e^{\Delta r_b}=\frac{x+\Delta x}{x+\lambda\Delta x}
+e^{\Delta r_b}=\frac{1}{\lambda}
 $$
 
 Hence, $$\lambda$$ can be expressed as a function of $$\Delta r_b$$ 
 
 $$
-\lambda=\frac{\Delta x+x(1-e^{\Delta r_b})}{\Delta xe^{\Delta r_b}}
+\lambda=e^{-\Delta r_b}
 $$
 
-It can be shown that the above equality also holds when redeeming ayToken for Token, except $$\Delta r_b$$ replaced by $$\Delta r_o=r_o-r_m$$, where $$e^{r_m}=\frac{y+\lambda\Delta y}{x-\Delta x}$$ and $$e^{r_o}=\frac{y+\Delta y}{x-\Delta x}$$. Here, $$r_o$$ is the offer rate when selling ayToken and $$\Delta r_o$$ is the corresponding fee charged to the seller in the yield space.
+Actual fee is  $$1- \lambda=1-e^{-\Delta r_b} \approx \Delta r_b$$ using Taylor expansion to the first order. Thus $$\lambda  \approx 1-\Delta r_b$$ .
+
+It can be shown that the above equality also holds when redeeming ayToken for Token, except $$\Delta r_b$$ replaced by $$\Delta r_o=r_o-r_m$$, where $$e^{r_m}=\frac{\lambda\Delta y}{\Delta x}$$ and $$e^{r_o}=\frac{\Delta y}{\Delta x}$$. Here, $$r_o$$ is the offer rate when selling ayToken and $$\Delta r_o$$ is the corresponding fee charged to the seller in the yield space.
 
 ## Concentrated Liquidity
 
@@ -355,7 +357,7 @@ $$
 \end{split}
 $$
 
-![Figure 3](../.gitbook/assets/liquidity%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29.png)
+![Figure 3](../.gitbook/assets/liquidity%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29.png)
 
 Figure 3 plots $$L_{\text{Uniswap}}$$ against interest rate $$r$$ regarding various levels of $$t$$. When $$0<t<1$$, $$L_{\text{Uniswap}}$$ is symmetric around 0% at which the maximum reaches . This is because
 
