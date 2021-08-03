@@ -72,10 +72,9 @@
                 (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-up base weight-y)))
-                ;;(ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
+                (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
             )
-            (ok power)
-            ;;(contract-call? .math-fixed-point mul-up balance-x ratio)
+            (contract-call? .math-fixed-point mul-up balance-x ratio)
         )
         weight-sum-err    
     )   
@@ -92,7 +91,7 @@
                         (dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
                         (invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
                     )                    
-                    {token: (unwrap-panic (contract-call? .math-fixed-point pow-down invariant u50000000)), dy: dy}
+                    {token: invariant dy: dy}
                 )
                 (let
                     (
