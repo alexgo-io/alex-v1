@@ -202,14 +202,14 @@
 
 ;; get overall balances for the pair
 (define-public (get-balances (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-  (let
-    (
-      (token-x (contract-of token))
-      (token-y (contract-of collateral))
-      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+    (let
+        (
+            (token-x (contract-of token))
+            (token-y (contract-of collateral))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+        )
+        (ok (list (get balance-x pool) (get balance-y pool)))
     )
-    (ok (list (get balance-x pool) (get balance-y pool)))
-  )
 )
 
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (dx uint) (dy uint)) 
@@ -365,12 +365,9 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dx u0) invalid-liquidity-err) 
-        ;; TODO : Implement case by case logic of token here bt branching with if statement
 
         (asserts! (is-ok (contract-call? token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? collateral transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
-
-        ;; TODO : Burning STX at future if required. 
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -407,12 +404,9 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) invalid-liquidity-err)
-        ;; TODO : Implement case by case logic of token here bt branching with if statement
 
         (asserts! (is-ok (contract-call? token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? collateral transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
-
-        ;; TODO : Burning STX at future if required. 
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -451,9 +445,6 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
 
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, expiry: expiry 
@@ -472,9 +463,6 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
 
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, expiry: expiry
@@ -492,9 +480,6 @@
             (token-y (contract-of collateral))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
-
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
 
         (map-set pools-data-map 
             { 

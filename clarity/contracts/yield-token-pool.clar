@@ -223,35 +223,37 @@
 )    
 
 (define-public (reduce-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
-    (let
-        (
-            (aytoken (contract-of the-aytoken))
-            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-            (balance-aytoken (get balance-aytoken pool))
-            (balance-token (get balance-token pool))
-            (total-supply (get total-supply pool))
-            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent) math-call-err))
-            (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) internal-function-call-err))
-            (dx (get dx reduce-data))
-            (dy (get dy reduce-data))
-            (pool-updated (merge pool {
-                total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
-                balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-aytoken dx) math-call-err),
-                balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-token dy) math-call-err)
-                })
-           )
-       )
+    (if (<= percent ONE_8)
+        (let
+            (
+                (aytoken (contract-of the-aytoken))
+                (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+                (balance-aytoken (get balance-aytoken pool))
+                (balance-token (get balance-token pool))
+                (total-supply (get total-supply pool))
+                (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent) math-call-err))
+                (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) internal-function-call-err))
+                (dx (get dx reduce-data))
+                (dy (get dy reduce-data))
+                (pool-updated (merge pool {
+                    total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                    balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-aytoken dx) math-call-err),
+                    balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-token dy) math-call-err)
+                    })
+                )
+            )
 
-        (asserts! (<= percent ONE_8) percent-greater-than-one)
-        (asserts! (is-ok (contract-call? the-aytoken transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-token transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+            (asserts! (is-ok (contract-call? the-aytoken transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+            (asserts! (is-ok (contract-call? the-token transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
-        (map-set pools-data-map { aytoken: aytoken } pool-updated)
-        (try! (contract-call? the-pool-token burn tx-sender shares))
+            (map-set pools-data-map { aytoken: aytoken } pool-updated)
+            (try! (contract-call? the-pool-token burn tx-sender shares))
 
-        (print { object: "pool", action: "liquidity-removed", data: pool-updated })
-        (ok {dx: dx, dy: dy})
-   )
+            (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+            (ok {dx: dx, dy: dy})
+        )    
+        percent-greater-than-one
+    )    
 )
 
 (define-public (swap-x-for-y (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dx uint))
@@ -264,15 +266,10 @@
             (balance-aytoken (get balance-aytoken pool))
             (fee-rate-aytoken (get fee-rate-aytoken pool))
 
-            ;; lambda = (dx + balance-aytoken * (1 - exp(yield * fee-rate-aytoken))) / dx / exp(yield * fee-rate-aytoken)
+            ;; lambda ~= 1 - fee-rate-aytoken * yield
             (yield (unwrap! (get-yield the-aytoken) internal-function-call-err))
             (fee-yield (unwrap! (contract-call? .math-fixed-point mul-down yield fee-rate-aytoken) math-call-err))
-            (exp-fee-yield (to-uint (unwrap! (contract-call? .math-log-exp exp-fixed (to-int fee-yield)) math-call-err)))
-            (lambda-numer (unwrap! (contract-call? .math-fixed-point add-fixed dx 
-                            (unwrap! (contract-call? .math-fixed-point mul-up balance-aytoken 
-                                (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 exp-fee-yield) math-call-err)) math-call-err)) math-call-err))
-            (lambda-denom (unwrap! (contract-call? .math-fixed-point mul-down dx exp-fee-yield) math-call-err))
-            (lambda (unwrap! (contract-call? .math-fixed-point div-up lambda-numer lambda-denom) math-call-err))
+            (lambda (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 fee-yield) math-call-err))
             (dx-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dx lambda) math-call-err))
             (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-net-fees) math-call-err))
 
@@ -291,12 +288,8 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;; TODO : Implement case by case logic of token here bt branching with if statement
-
         (asserts! (is-ok (contract-call? the-aytoken transfer dx-net-fees tx-sender .alex-vault none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? the-token transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
-
-        ;; TODO : Burning STX at future if required. 
 
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -314,15 +307,10 @@
             (balance-token (get balance-token pool))
             (fee-rate-token (get fee-rate-token pool))
 
-            ;; lambda = (dy + balance-token * (1 - exp(yield * fee-rate-token))) / dy / exp(yield * fee-rate-aytoken)
+            ;; lambda ~= 1 - fee-rate-token * yield
             (yield (unwrap! (get-yield the-aytoken) internal-function-call-err))
             (fee-yield (unwrap! (contract-call? .math-fixed-point mul-down yield fee-rate-token) math-call-err))
-            (exp-fee-yield (to-uint (unwrap! (contract-call? .math-log-exp exp-fixed (to-int fee-yield)) math-call-err)))
-            (lambda-numer (unwrap! (contract-call? .math-fixed-point add-fixed dy 
-                            (unwrap! (contract-call? .math-fixed-point mul-up balance-token 
-                                (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 exp-fee-yield) math-call-err)) math-call-err)) math-call-err))
-            (lambda-denom (unwrap! (contract-call? .math-fixed-point mul-down dy exp-fee-yield) math-call-err))
-            (lambda (unwrap! (contract-call? .math-fixed-point div-up lambda-numer lambda-denom) math-call-err))
+            (lambda (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 fee-yield) math-call-err))
             (dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dy lambda) math-call-err))
             (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-net-fees) math-call-err))
 
@@ -341,12 +329,8 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;; TODO : Implement case by case logic of token here bt branching with if statement
-
         (asserts! (is-ok (contract-call? the-aytoken transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? the-token transfer dy-net-fees tx-sender .alex-vault none)) transfer-y-failed-err)
-
-        ;; TODO : Burning STX at future if required. 
 
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -382,9 +366,6 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
 
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true) 
     )
@@ -397,9 +378,6 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
 
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
@@ -411,9 +389,6 @@
             (aytoken (contract-of the-aytoken))    
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
 
         (map-set pools-data-map 
             { 

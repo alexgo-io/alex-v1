@@ -24,7 +24,6 @@
 ;;
 
 ;; TODO concentrated liquidity (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#concentrated-liquidity)
-;; TODO add fee (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#transaction-cost-on-notional-and-yield)
 ;; TODO get-x-given-yield
 
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
@@ -65,7 +64,6 @@
 )
 
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (t uint) (price uint))
-    ;; TODO add fee
     (let 
         (
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
@@ -89,42 +87,45 @@
     (let
         (
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
-
             ;; if total-supply is zero, we initialise to balance-x == balance-y, i.e. r = 0%
             (dx-pow-t (unwrap-panic (contract-call? .math-fixed-point pow-down dx t-comp)))
             (invariant (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-pow-t dx-pow-t)))
-
-            ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-            (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y 
-                    (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
-            (dx-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
-                        (unwrap-panic (contract-call? .math-fixed-point add-fixed dx balance-x)) t-comp)))
-            (dy-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
-                        (unwrap-panic (contract-call? .math-fixed-point add-fixed dy balance-y)) t-comp)))
-            (token (unwrap-panic (contract-call? .math-fixed-point sub-fixed 
-                        (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-term dy-term)) total-supply)))
         )
-  
         (ok
-            (if (is-eq total-supply u0)                
+            (if (is-eq total-supply u0)
                 {token: invariant, dy: dx}
-                {token: token, dy: dy}
-            )
+                (let
+                    (
+                        ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
+                        (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y 
+                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
+                        (dx-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
+                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dx balance-x)) t-comp)))
+                        (dy-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
+                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dy balance-y)) t-comp)))
+                        (token (unwrap-panic (contract-call? .math-fixed-point sub-fixed 
+                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-term dy-term)) total-supply)))
+                    )
+                    {token: token, dy: dy}
+                )
+            )            
         )
     )    
 )
 
 ;; 
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
-    (let
-        (
-            (token-div-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
-            (dx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x token-div-supply)))
-            (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y token-div-supply)))
+    (if (> total-supply u0) 
+        (let
+            (
+                (token-div-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
+                (dx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x token-div-supply)))
+                (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y token-div-supply)))
+            )                
+            (ok {dx: dx, dy: dy})
         )
-        (asserts! (> total-supply u0) no-liquidity-err)        
-        (ok {dx: dx, dy: dy})
-   )
+        no-liquidity-err
+    )
 )
 
 (define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
