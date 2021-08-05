@@ -26,6 +26,14 @@
 ;; TODO concentrated liquidity (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#concentrated-liquidity)
 ;; TODO get-x-given-yield
 
+;; d_x = dx
+;; d_y = dy 
+;; b_x = balance-x
+;; b_y = balance-y
+;; w_x = weight-x 
+;; w_y = weight-y
+;;
+;; d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
     (let 
         (
@@ -43,6 +51,14 @@
     )
 )
 
+;; d_x = dx
+;; d_y = dy 
+;; b_x = balance-x
+;; b_y = balance-y
+;; w_x = weight-x 
+;; w_y = weight-y
+;;
+;; d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
     (let 
         (
@@ -63,6 +79,15 @@
     )
 )
 
+;; d_x = dx
+;; d_y = dy 
+;; b_x = balance-x
+;; b_y = balance-y
+;; w_x = weight-x 
+;; w_y = weight-y
+;; 
+;; spot = (b_y / b_x) ^ t
+;; d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (t uint) (price uint))
     (let 
         (
@@ -87,13 +112,17 @@
     (let
         (
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
-            ;; if total-supply is zero, we initialise to balance-x == balance-y, i.e. r = 0%
-            (dx-pow-t (unwrap-panic (contract-call? .math-fixed-point pow-down dx t-comp)))
-            (invariant (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-pow-t dx-pow-t)))
         )
         (ok
             (if (is-eq total-supply u0)
-                {token: invariant, dy: dx}
+                (let
+                    (                        
+                        ;; if total-supply is zero, we initialise to balance-x == balance-y, i.e. r = 0%
+                        (dx-pow-t (unwrap-panic (contract-call? .math-fixed-point pow-down dx t-comp)))
+                        (invariant (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-pow-t dx-pow-t)))
+                    )
+                    {token: invariant, dy: dx}
+                )                
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x

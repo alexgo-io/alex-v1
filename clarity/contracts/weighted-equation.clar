@@ -26,6 +26,14 @@
 
 ;; public functions
 ;;
+;;
+;; get-y-given-x
+;; d_y = dy
+;; b_y = balance-y
+;; b_x = balance-x                /      /            b_x             \    (w_x / w_y) \           
+;; d_x = dx          d_y = b_y * |  1 - | ---------------------------  | ^             |          
+;; w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
+;; w_y = weight-y                                                                       
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
@@ -45,6 +53,12 @@
     )    
 )
 
+;; d_y = dy                                                                            
+;; b_y = balance-y
+;; b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
+;; d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
+;; w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; w_y = weight-y                                                           
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
@@ -63,6 +77,14 @@
     )
 )
 
+;; d_x = dx
+;; d_y = dy 
+;; b_x = balance-x
+;; b_y = balance-y
+;; w_x = weight-x 
+;; w_y = weight-y
+;; spot = b_x * w_y / b_y / w_x
+;; d_x = b_x * ((price / spot) ^ w_y - 1)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
@@ -87,6 +109,9 @@
                 (let
                     (
                         ;; if total-supply is zero
+                        ;;
+                        ;; invariant = (b_x ^ w_x) * (b_y ^ w_y)
+                        ;;
                         (dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
                         (dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
                         (invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
@@ -96,6 +121,9 @@
                 (let
                     (
                         ;; if total-supply > zero
+                        ;;
+                        ;; token = invariant * (d_x / b_x)
+                        ;; new d_y = b_y * (d_x / b_x)
                         (dx-supply (unwrap-panic (contract-call? .math-fixed-point mul-down dx total-supply)))
                         (token (unwrap-panic (contract-call? .math-fixed-point div-down dx-supply balance-x)))
                         (dx-baly (unwrap-panic (contract-call? .math-fixed-point mul-down dx balance-y)))
@@ -113,9 +141,12 @@
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (if (> total-supply u0)
             (let
-                (
+                (   
+                    ;; first calculate what % you need to mint
                     (token-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
+                    ;; calculate dx as % of balance-x corresponding to % you need to mint
                     (dx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x token-supply)))
+                    ;; calculate dy using weight ratio
                     (wy-wx (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)))
                     (dy (unwrap-panic (contract-call? .math-fixed-point mul-down dx wy-wx)))
                 )
