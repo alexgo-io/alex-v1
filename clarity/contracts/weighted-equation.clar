@@ -91,7 +91,7 @@
                         (dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
                         (invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
                     )                    
-                    {token: invariant dy: dy}
+                    {token: invariant, dy: dy}
                 )
                 (let
                     (
