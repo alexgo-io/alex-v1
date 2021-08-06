@@ -154,8 +154,9 @@ Clarinet.test({
         result.expectErr().expectUint(3001);
 
         // Math calling error 
-        result = FWPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 10000000000);
-        result.expectErr().expectUint(2010);
+        // Used to be math calling error but on the update version of clarinet, it seems like it can find the error of math call, which is percent greater than one.
+        result = FWPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 1000000000000);
+        result.expectErr().expectUint(5000);
 
         result = FWPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 99999);
         result.expectOk();

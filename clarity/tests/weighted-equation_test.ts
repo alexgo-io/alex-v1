@@ -42,7 +42,7 @@ Clarinet.test({
             types.uint(testWeightX),
             types.uint(testWeightY),
             types.uint(testPrice)], wallet_1.address);
-        call.result.expectOk().expectUint(447235976)
+        call.result.expectOk().expectUint(347235976)
 
         call = chain.callReadOnlyFn("weighted-equation", "get-token-given-position", [types.uint(100000000),
             types.uint(100000000),

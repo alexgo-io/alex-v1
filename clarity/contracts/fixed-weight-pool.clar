@@ -5,6 +5,7 @@
 ;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
+(define-constant authorisation-err (err u1000))
 (define-constant invalid-pool-err (err u2001))
 (define-constant no-liquidity-err (err u2002))
 (define-constant invalid-liquidity-err (err u2003))
@@ -206,6 +207,7 @@
             (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+
             (try! (contract-call? the-pool-token burn tx-sender shares))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
@@ -470,7 +472,6 @@
 )
 
 (define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (dy uint))
-
     (let 
         (
         (token-x (contract-of token-x-trait))
