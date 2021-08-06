@@ -357,7 +357,7 @@ $$
 \end{split}
 $$
 
-![Figure 3](../.gitbook/assets/liquidity%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29.png)
+![Figure 3](../.gitbook/assets/liquidity%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29%20%282%29.png)
 
 Figure 3 plots $$L_{\text{Uniswap}}$$ against interest rate $$r$$ regarding various levels of $$t$$. When $$0<t<1$$, $$L_{\text{Uniswap}}$$ is symmetric around 0% at which the maximum reaches . This is because
 
