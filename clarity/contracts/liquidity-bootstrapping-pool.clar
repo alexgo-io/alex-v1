@@ -281,16 +281,8 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;; TODO : Implement case by case logic of token-x here bt branching with if statement
-
-        ;; Transfer 
-        ;; when received token-x , token-x -> vault
-        ;; when received token-y , token-y : vault  -> tx-sender
-
         (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
-
-        ;; TODO : Burning STX at future if required. 
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -327,16 +319,8 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;; TODO : Implement case by case logic of token-x here bt branching with if statement
-
-        ;; Transfer 
-        ;; when received token-x , token-x -> vault
-        ;; when received token-y , token-y : vault  -> tx-sender
-
         (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
-
-        ;; TODO : Burning STX at future if required. 
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -376,9 +360,6 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
 
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, expiry: expiry 
@@ -397,9 +378,6 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
 
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, expiry: expiry
@@ -417,9 +395,6 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
-
-        ;; TODO : Assertion for checking the right to set the platform fee.
-        ;; (asserts! (is-eq tx-sender .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
 
         (map-set pools-data-map 
             { 
