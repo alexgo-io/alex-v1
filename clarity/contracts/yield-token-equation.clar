@@ -23,15 +23,10 @@
 ;; public functions
 ;;
 
-;; TODO concentrated liquidity (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex#concentrated-liquidity)
-;; TODO get-x-given-yield
-
 ;; d_x = dx
 ;; d_y = dy 
 ;; b_x = balance-x
 ;; b_y = balance-y
-;; w_x = weight-x 
-;; w_y = weight-y
 ;;
 ;; d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
@@ -55,8 +50,6 @@
 ;; d_y = dy 
 ;; b_x = balance-x
 ;; b_y = balance-y
-;; w_x = weight-x 
-;; w_y = weight-y
 ;;
 ;; d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
@@ -83,8 +76,6 @@
 ;; d_y = dy 
 ;; b_x = balance-x
 ;; b_y = balance-y
-;; w_x = weight-x 
-;; w_y = weight-y
 ;; 
 ;; spot = (b_y / b_x) ^ t
 ;; d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
@@ -106,6 +97,16 @@
 
         (contract-call? .math-fixed-point mul-up balance-x term)
    )
+)
+
+(define-read-only (get-x-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
+    (let 
+        (
+            (t-yield (unwrap-panic (contract-call? .math-fixed-point mul-up t yield)))
+            (price (to-uint (unwrap-panic (contract-call? .math-log-exp exp-fixed (to-int t-yield)))))
+        )
+        (get-x-given-price balance-x balance-y t price)
+    )
 )
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))
