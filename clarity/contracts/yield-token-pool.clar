@@ -292,7 +292,7 @@
                     {
                         balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-token pool) dx-net-fees) math-call-err),
                         balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) dy) math-call-err),
-                        fee-balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-token pool)) math-call-err)
+                        fee-balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-token pool) fee) math-call-err)
                     }
                 )
             )
@@ -300,7 +300,7 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        (asserts! (is-ok (contract-call? the-token transfer dx-net-fees tx-sender .alex-vault none)) transfer-x-failed-err)
+        (asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         (asserts! (is-ok (contract-call? the-aytoken transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
         ;; post setting
@@ -332,7 +332,7 @@
                     {
                         balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-token pool) dx) math-call-err),                        
                         balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-aytoken pool) dy-net-fees) math-call-err),
-                        fee-balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-aytoken pool)) math-call-err)
+                        fee-balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-aytoken pool) fee) math-call-err)
                     }
                 )
             )
@@ -341,7 +341,7 @@
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
         (asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-aytoken transfer dy-net-fees tx-sender .alex-vault none)) transfer-y-failed-err)
+        (asserts! (is-ok (contract-call? the-aytoken transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
 
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -444,10 +444,8 @@
             (fee-y (get fee-balance-token pool))
         )
 
-        (asserts! (is-eq fee-x u0) no-fee-x-err)
-        (asserts! (is-ok (contract-call? the-aytoken transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
-        (asserts! (is-eq fee-y u0) no-fee-y-err)
-        (asserts! (is-ok (contract-call? the-token transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
+        (and (> fee-x u0) (unwrap! (contract-call? the-token transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? the-aytoken transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
         (map-set pools-data-map
         { aytoken: aytoken}

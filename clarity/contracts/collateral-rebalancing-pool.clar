@@ -357,7 +357,7 @@
                     {
                         balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx-net-fees) math-call-err),
                         balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-y dy) math-call-err),
-                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)                      
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-x pool) fee) math-call-err)                      
                     }
                 )
             )
@@ -396,7 +396,7 @@
                     {
                         balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx) math-call-err),
                         balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y dy-net-fees) math-call-err),
-                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err),
+                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-y pool) fee) math-call-err),
                     }
                 )
             )
@@ -524,10 +524,8 @@
             (fee-y (get fee-balance-y pool))
         )
 
-        (asserts! (is-eq fee-x u0) no-fee-x-err)
-        (asserts! (is-ok (contract-call? token transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
-        (asserts! (is-eq fee-y u0) no-fee-y-err)
-        (asserts! (is-ok (contract-call? collateral transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
+        (and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
         (map-set pools-data-map
             { token-x: token-x, token-y: token-y, expiry: expiry}

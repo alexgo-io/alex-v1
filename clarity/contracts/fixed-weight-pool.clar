@@ -415,10 +415,8 @@
             (fee-y (get fee-balance-y pool))
         )
 
-        (asserts! (is-eq fee-x u0) no-fee-x-err)
-        (asserts! (is-ok (contract-call? token-x-trait transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
-        (asserts! (is-eq fee-y u0) no-fee-y-err)
-        (asserts! (is-ok (contract-call? token-y-trait transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
+        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
