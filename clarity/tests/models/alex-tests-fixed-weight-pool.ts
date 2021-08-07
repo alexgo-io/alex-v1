@@ -163,7 +163,7 @@ class FWPTestAgent1 {
 
   setFeeRateY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, feerate:number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("fixed-weight-pool", "set-fee-rate-x", [
+      Tx.contractCall("fixed-weight-pool", "set-fee-rate-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
