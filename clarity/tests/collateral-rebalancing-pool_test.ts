@@ -163,8 +163,6 @@ Clarinet.test({
        result = CRPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
        result.expectOk().expectList()[0].expectUint(15000) // 5% of 30000 collected. 
 
-
-        // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
         
     },
 });

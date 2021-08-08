@@ -9,6 +9,7 @@
 (define-constant weight-sum-err (err u4000))
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
+(define-constant math-call-err (err u4003))
 
 ;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8
@@ -133,8 +134,8 @@
                                     (unwrap-panic (contract-call? .math-fixed-point add-fixed dx balance-x)) t-comp)))
                         (dy-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
                                     (unwrap-panic (contract-call? .math-fixed-point add-fixed dy balance-y)) t-comp)))
-                        (token (unwrap-panic (contract-call? .math-fixed-point sub-fixed 
-                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-term dy-term)) total-supply)))
+                        (token (unwrap! (contract-call? .math-fixed-point sub-fixed 
+                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-term dy-term)) total-supply) math-call-err))
                     )
                     {token: token, dy: dy}
                 )

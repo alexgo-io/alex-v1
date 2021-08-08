@@ -289,9 +289,13 @@
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        (asserts! (is-ok (contract-call? token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+;;        (asserts! (is-ok (contract-call? token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         ;; send y to vault
-        (asserts! (is-ok (contract-call? collateral transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
+;;        (asserts! (is-ok (contract-call? collateral transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
+
+        (unwrap! (contract-call? token transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? collateral transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
+
 
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -326,8 +330,12 @@
         )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
-        (asserts! (is-ok (contract-call? token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? collateral transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+;;        (asserts! (is-ok (contract-call? token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+;;        (asserts! (is-ok (contract-call? collateral transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+
+        (unwrap! (contract-call? token transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? collateral transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-yield-token burn shares tx-sender))
@@ -366,8 +374,10 @@
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dx u0) invalid-liquidity-err) 
 
-        (asserts! (is-ok (contract-call? token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? collateral transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? collateral transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        (unwrap! (contract-call? token transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? collateral transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -405,8 +415,12 @@
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) invalid-liquidity-err)
 
-        (asserts! (is-ok (contract-call? token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? collateral transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? collateral transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+
+        (unwrap! (contract-call? token transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? collateral transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
+
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)

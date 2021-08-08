@@ -260,8 +260,10 @@
                 )
             )
 
-            (asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-            (asserts! (is-ok (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none)) transfer-y-failed-err)
+            ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+            ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none)) transfer-y-failed-err)
+            (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+            (unwrap! (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none) transfer-y-failed-err)
 
             (map-set pools-data-map { aytoken: aytoken } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -304,8 +306,10 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        (asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-aytoken transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? the-aytoken transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
 
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -344,8 +348,10 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        (asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        (asserts! (is-ok (contract-call? the-aytoken transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
 
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -527,7 +533,12 @@
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
         )
-        
+        ;; (print balance-token)
+        ;; (print balance-aytoken)
+        ;; (print expiry)
+        ;; (print total-supply)
+        ;; (print dx)
+        ;;(ok {token: u0, dy: u0})
         (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken expiry total-supply dx)
     )
 
