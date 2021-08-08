@@ -156,15 +156,13 @@ Clarinet.test({
         
         // Swapping actions
         result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 300000);
-        result.expectOk().expectList()[0].expectUint(300000); 
+        result.expectOk().expectList()[0].expectUint(285000); 
         result.expectOk().expectList()[1].expectUint(364260);         
 
-       // Check whether it is correctly collected
-    //    result = CRPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
-    //    result.expectOk()
+       //Check whether it is correctly collected
+       result = CRPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+       result.expectOk().expectList()[0].expectUint(15000) // 5% of 30000 collected. 
 
-
-        // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
         
     },
 });
@@ -206,12 +204,13 @@ Clarinet.test({
         result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 0, 0);
         result.expectErr().expectUint(2003);
 
+       
         result = CRPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 5000000, 10000000);
         result.expectErr().expectUint(3001);
 
         // Transfer Error 
         result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 0);
-        result.expectErr().expectUint(3001);
+        result.expectErr().expectUint(1);
 
         // dY = 0 
         // result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY,  0);

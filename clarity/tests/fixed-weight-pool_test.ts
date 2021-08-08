@@ -37,7 +37,7 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);
         
         // Deployer creating a pool, initial tokens injected to the pool
-        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000, 100000);
+        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000000000, 100000000000);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
@@ -45,7 +45,7 @@ Clarinet.test({
         call.result.expectOk();
 
         // Add extra liquidity
-        result = FWPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000, 100000);
+        result = FWPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000000000, 100000000000);
         result.expectOk().expectBool(true);
 
         // Reduce liquidlity
@@ -64,15 +64,15 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);
         
         // deployer creates pool
-        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000, 10000);
+        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000000000, 10000000000);
         result.expectOk().expectBool(true);
 
         // check whether weighted equation returns an appropriate value.
-        result = FWPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 1000); //100
+        result = FWPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 1000000000); //100
         result.expectOk().expectUint(195587000)
         
         // deployer swaps alextoken with usda token
-        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200); //20
+        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //20
         result.expectOk().expectList()[0].expectUint(200000000); 
         result.expectOk().expectList()[1].expectUint(39341400); 
         // TODO : Operation illustration
@@ -88,7 +88,7 @@ Clarinet.test({
         let wallet_1 =accounts.get('wallet_1')!;
         let FWPTest = new FWPTestAgent1(chain, deployer);
         
-        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000, 10000); // Internally 1M multiplied
+        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000000000, 10000000000); // Internally 1M multiplied
         result.expectOk().expectBool(true);
 
         // Fees will be transferred to wallet_1
@@ -105,14 +105,14 @@ Clarinet.test({
         result = FWPTest.setFeeRateY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
         result.expectOk().expectBool(true);
 
-        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200); //2
+        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //2
         result.expectOk().expectList()[0].expectUint(190000000); 
         result.expectOk().expectList()[1].expectUint(37356800); 
 
 
         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
-        // result = FWPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
-        // result.expectOk()
+        result = FWPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
+        result.expectOk().expectList()[0].expectUint(10000000)  // 5% of 200
     },
 });
 
@@ -126,19 +126,19 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);
         
         // Create Pool
-        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000, 10000);
+        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000000000, 10000000000);
         result.expectOk().expectBool(true);
 
         // Create Pool Error : pool-already-exists
-        result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000, 10000);
+        result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000000000, 10000000000);
         result.expectErr().expectUint(2000);
 
         // Add to Position : Invalid Pool Access
-        result = FWPTest.addToPosition(deployer, ayusdaAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000, 100000);
+        result = FWPTest.addToPosition(deployer, ayusdaAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000000000, 100000000000);
         result.expectErr().expectUint(2001);
 
         // Add to Liquidity
-        result = FWPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000, 100000);
+        result = FWPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000000000, 100000000000);
         result.expectOk().expectBool(true);
 
         // Invalid Liquidity - Edge case
@@ -146,11 +146,11 @@ Clarinet.test({
         result.expectErr().expectUint(2003);
 
         // Invalid Liquidity for checking assertion of dy, doesnt matter because it passes eqation and outputs new-dy.
-        result = FWPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 1, 0);
+        result = FWPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 1000000, 0);
         result.expectOk();
 
         // Transfer Error due to lack of balance on sender
-        result = FWPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000, 100000);
+        result = FWPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 500000000000, 100000000000);
         result.expectErr().expectUint(3001);
 
         // Math calling error 
@@ -162,7 +162,7 @@ Clarinet.test({
         result.expectOk();
 
         // Internal Function call error due to max ratio error in weighted equation.
-        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 2000000);
+        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 2000000000000);
         result.expectErr().expectUint(1001);
         
         // Transfer Fails because ft-transfer blocks if the balance is 0
