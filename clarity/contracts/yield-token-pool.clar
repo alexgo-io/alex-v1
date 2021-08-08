@@ -211,16 +211,20 @@
                 total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
                 balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed balance-token dx) math-call-err),
                 balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed balance-aytoken new-dy-act) math-call-err),
-                balance-virtual: (unwrap! (contract-call? .math-fixed-point add-fixed balance-virtual new-dy-vir) math-call-err)                
+                balance-virtual: (unwrap! (contract-call? .math-fixed-point add-fixed balance-virtual new-dy-vir) math-call-err)   
             }))
         )
 
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        (asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-aytoken transfer dx tx-sender .alex-vault none) transfer-y-failed-err))
+
         ;; send y to vault
-        (asserts! (is-ok (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none)) transfer-y-failed-err)
+        (and (> new-dy-act u0) (unwrap! (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none) transfer-y-failed-err))
+        
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
@@ -523,6 +527,7 @@
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
         )
+        
         (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken expiry total-supply dx)
     )
 

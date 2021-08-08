@@ -372,7 +372,7 @@
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-        (ok (list dx dy))
+        (ok (list dx-net-fees dy))
     )
 )
 
@@ -411,7 +411,7 @@
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-        (ok (list dx dy))
+        (ok (list dx dy-net-fees))
   )
 )
 

@@ -156,12 +156,12 @@ Clarinet.test({
         
         // Swapping actions
         result = CRPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, expiry, 300000);
-        result.expectOk().expectList()[0].expectUint(300000); 
+        result.expectOk().expectList()[0].expectUint(285000); 
         result.expectOk().expectList()[1].expectUint(364260);         
 
-       // Check whether it is correctly collected
-    //    result = CRPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
-    //    result.expectOk()
+       //Check whether it is correctly collected
+       result = CRPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
+       result.expectOk().expectList()[0].expectUint(15000) // 5% of 30000 collected. 
 
 
         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION

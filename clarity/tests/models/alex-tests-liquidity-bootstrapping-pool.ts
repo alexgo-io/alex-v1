@@ -47,7 +47,9 @@ import {
       ]);
       return block.receipts[0].result;
     }
-  
+    
+
+    // Private Function 
     addToPosition(user: Account, tokenX: string, tokenY: string, expiry: number, pooltoken: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "add-to-position", [
@@ -81,8 +83,7 @@ import {
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(expiry),
-          types.uint(dx) // 200
-          //types.uint(dyMin * 1000000), // 38 (should get ~40)
+          types.uint(dx) 
         ], user.address),
       ]);
       return block.receipts[0].result;
