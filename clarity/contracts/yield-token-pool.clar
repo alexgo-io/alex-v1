@@ -23,6 +23,7 @@
 (define-constant math-call-err (err u2010))
 (define-constant get-expiry-fail-err (err u2013))
 (define-constant aytoken-equation-call-err (err u2014))
+(define-constant dy-bigger-than-available-err (err u2016))
 
 ;; data maps and vars
 (define-map pools-map
@@ -68,8 +69,8 @@
         (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
 
         (ok (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap-panic (contract-call? .math-fixed-point sub-fixed expiry now)) 
-                (unwrap-panic (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now))) math-call-err))                
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
     )
 )
 
@@ -464,9 +465,13 @@
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (balance-aytoken (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-y (unwrap! (contract-call? .math-fixed-point add-fixed balance-aytoken balance-virtual) math-call-err))
         (balance-token (get balance-token pool))
+        (dy (unwrap! (contract-call? .yield-token-equation get-y-given-x balance-token balance-aytoken expiry dx) aytoken-equation-call-err))
         )
-        (contract-call? .yield-token-equation get-y-given-x balance-token balance-aytoken expiry dx)
+        (asserts! (> balance-aytoken dy) dy-bigger-than-available-err)
+        (ok dy)
     )
 )
 
@@ -519,7 +524,7 @@
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
-        (balance-aytoken (get balance-aytoken pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
         )
