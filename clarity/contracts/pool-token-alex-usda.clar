@@ -87,3 +87,9 @@
     (ft-burn? alex-usda amount recipient)
   )
 )
+
+;; (begin
+;;   ;; TODO: Erase on testnet or mainnet
+;;   (try! (ft-mint? alex-usda u10000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
+;;   (try! (ft-mint? alex-usda u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
+;; )

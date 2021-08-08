@@ -204,12 +204,13 @@ Clarinet.test({
         result = CRPTest.addToPosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 0, 0);
         result.expectErr().expectUint(2003);
 
+       
         result = CRPTest.addToPosition(wallet_2, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 5000000, 10000000);
         result.expectErr().expectUint(3001);
 
         // Transfer Error 
         result = CRPTest.reducePosition(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress, 0);
-        result.expectErr().expectUint(3001);
+        result.expectErr().expectUint(1);
 
         // dY = 0 
         // result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY,  0);

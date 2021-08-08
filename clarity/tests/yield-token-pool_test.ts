@@ -45,15 +45,15 @@ Clarinet.test({
         let call = await YTPTest.getPoolDetails(ayusdaAddress);
         call.result.expectOk();
 
-        // Add extra liquidity
-        //result = YTPTest.addToPosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 50000000);
-        //result.expectOk().expectBool(true);
+        //Add extra liquidity
+        result = YTPTest.addToPosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 1000000000);
+        result.expectOk().expectBool(true);
 
         // Reduce liquidlity
-        // result = YTPTest.reducePosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 100000000);
-        // let position:any =result.expectOk().expectTuple();
-        //     position['dx'].expectUint(99990000);
-        //     position['dy'].expectUint(99990000);
+        result = YTPTest.reducePosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 100000000);
+        let position:any =result.expectOk().expectTuple();
+            position['dx'].expectUint(2000000000);
+            position['dy'].expectUint(0);
     },
 });
 
@@ -82,11 +82,11 @@ Clarinet.test({
         call.result.expectOk().expectUint(95129190)
         
         // Check whether internal weighted equation is working well - internal test
-        // result = YTPTest.getYgivenX(deployer, ayusdaAddress,1000000);
-        // result.expectOk().expectUint(1149866)
+        result = YTPTest.getYgivenX(deployer, ayusdaAddress,1000000);
+        result.expectOk().expectUint(1100192)
         
         // Arbitrager swapping usda for ayusda 
-        // result = YTPTest.swapXForY(deployer, ayusdaAddress, usdaTokenAddress, 1000000);
+        // result = YTPTest.swapYForX(deployer, ayusdaAddress, usdaTokenAddress, 1000000);
         // result.expectOk().expectList()[0].expectUint(1000000); 
         // result.expectOk().expectList()[1].expectUint(1149871); 
     },
