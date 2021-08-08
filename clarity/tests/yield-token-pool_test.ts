@@ -81,13 +81,20 @@ Clarinet.test({
             ], wallet_1.address);
         call.result.expectOk().expectUint(95129190)
         
-        // Check whether internal weighted equation is working well - internal test
+        //Error
         result = YTPTest.getYgivenX(deployer, ayusdaAddress,1000000);
-        result.expectOk().expectUint(1100192)
+        result.expectErr().expectUint(2016)
         
-        // Arbitrager swapping usda for ayusda 
-        // result = YTPTest.swapYForX(deployer, ayusdaAddress, usdaTokenAddress, 1000000);
-        // result.expectOk().expectList()[0].expectUint(1000000); 
-        // result.expectOk().expectList()[1].expectUint(1149871); 
+        //Check whether internal weighted equation is working well - internal test
+        result = YTPTest.getYgivenX(deployer, ayusdaAddress,1000000000);
+        result.expectErr().expectUint(2014)
+
+        // //Check whether internal weighted equation is working well - internal test
+        // result = YTPTest.getYgivenX(deployer, ayusdaAddress,100000000);
+        // result.expectOk().expectUint(1100192)
+        //Arbitrager swapping usda for ayusda 
+        result = YTPTest.swapYForX(deployer, ayusdaAddress, usdaTokenAddress, 1000000);
+        result.expectOk().expectList()[0].expectUint(1000000); 
+        result.expectOk().expectList()[1].expectUint(1149871); 
     },
 });
