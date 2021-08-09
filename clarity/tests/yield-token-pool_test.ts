@@ -94,7 +94,8 @@ Clarinet.test({
         // result.expectOk().expectUint(1100192)
         //Arbitrager swapping usda for ayusda 
         result = YTPTest.swapYForX(deployer, ayusdaAddress, usdaTokenAddress, 1000000);
-        result.expectOk().expectList()[0].expectUint(1000000); 
-        result.expectOk().expectList()[1].expectUint(1149871); 
+        result.expectErr().expectUint(2010)
+        // result.expectOk().expectList()[0].expectUint(1000000); 
+        // result.expectOk().expectList()[1].expectUint(1149871); 
     },
 });

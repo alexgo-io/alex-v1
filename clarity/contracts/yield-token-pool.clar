@@ -119,7 +119,7 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
             (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
             (balance-token (get balance-token pool))            
-            (balance-aytoken (get balance-aytoken pool))
+            (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
             (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
         )
 
@@ -140,9 +140,8 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
             ;;(exp (get expiry pool)) I think it is safer to use below function.
             (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
-            (balance-token (get balance-token pool))            
-            (balance-aytoken (get balance-aytoken pool))
-
+            (balance-token (get balance-token pool)) 
+            (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
             (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
             (t-value (unwrap! (get-t expiry) internal-function-call-err))
     
