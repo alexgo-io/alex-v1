@@ -493,6 +493,7 @@
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
+        (asserts! (> (get balance-aytoken pool) dy) dy-bigger-than-available-err)
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken expiry dy)
     )
 )
