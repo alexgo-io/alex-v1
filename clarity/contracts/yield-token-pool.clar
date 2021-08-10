@@ -297,8 +297,8 @@
             (pool-updated
                 (merge pool
                     {
-                        balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-token pool) dx-net-fees) math-call-err),
-                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) dy) math-call-err),
+                        balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-token pool) dx-net-fees) math-call-err),
+                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-aytoken pool) dy) math-call-err),
                         fee-balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-token pool) fee) math-call-err)
                     }
                 )
@@ -339,8 +339,8 @@
             (pool-updated
                 (merge pool
                     {
-                        balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-token pool) dx) math-call-err),                        
-                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-aytoken pool) dy-net-fees) math-call-err),
+                        balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-token pool) dx) math-call-err),                        
+                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) dy-net-fees) math-call-err),
                         fee-balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-aytoken pool) fee) math-call-err)
                     }
                 )
