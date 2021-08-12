@@ -150,8 +150,8 @@
             (bs-vol (get bs-vol pool))
 
             ;; determine spot using open oracle
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? token get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))            
+            (token-price u500000000);;(unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? token get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))
+            (collateral-price u500000000);;(unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))            
             (spot (unwrap! (contract-call? .math-fixed-point div-down collateral-price token-price) math-call-err))
             
             (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
@@ -222,8 +222,8 @@
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
 
             ;; determine strike using open oracle
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? token get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))            
+            (token-price u500000000);;(token-price (unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? token get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))
+            (collateral-price u500000000);;(collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err)) get-oracle-price-fail-err))            
             (strike (unwrap! (contract-call? .math-fixed-point div-down collateral-price token-price) math-call-err))
 
             ;; TODO: setter / getter of bs-vol
@@ -257,7 +257,7 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
-        (try! (add-to-position token collateral the-yield-token dx dy))
+        ;;(try! (add-to-position token collateral the-yield-token dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
    )

@@ -41,13 +41,13 @@ Clarinet.test({
         let result = YTPTest.createPool(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 1000000000, 100000000);
         result.expectOk().expectBool(true);
 
-        // // Check pool details and print
-        // let call = await YTPTest.getPoolDetails(ayusdaAddress);
-        // call.result.expectOk();
+        // Check pool details and print
+        let call = await YTPTest.getPoolDetails(ayusdaAddress);
+        call.result.expectOk();
 
-        // //Add extra liquidity
-        // result = YTPTest.addToPosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 1000000000);
-        // result.expectOk().expectBool(true);
+        //Add extra liquidity
+        result = YTPTest.addToPosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 1000000000);
+        result.expectOk().expectBool(true);
 
         // // Reduce liquidlity
         // result = YTPTest.reducePosition(deployer, ayusdaAddress, usdaTokenAddress, ayUsdaPoolAddress, 100000000);
