@@ -123,8 +123,6 @@
   )
   (let (
     (proposer-balance (unwrap-panic (contract-call? .pool-token-usda-ayusda get-balance tx-sender)))
-    ;;(diko-init-balance (unwrap-panic (contract-call? .pool-token-usda-ayusda get-balance .arkadiko-diko-init)))
-    ;;(supply (- (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)) diko-init-balance))
     (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
