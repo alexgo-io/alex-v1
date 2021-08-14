@@ -498,7 +498,9 @@
                         yield-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-y yield-dy) math-call-err),
                         key-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-x key-dx-net-fees) math-call-err),
                         key-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-y key-dy) math-call-err),
-                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-x pool) fee) math-call-err)                      
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-x pool) fee) math-call-err),
+                        weight-x: weight-x,
+                        weight-y: weight-y                    
                     }
                 )
             )
@@ -555,6 +557,8 @@
                         key-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-x key-dx) math-call-err),
                         key-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-y key-dy-net-fees) math-call-err),                        
                         fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-y pool) fee) math-call-err),
+                        weight-x: weight-x,
+                        weight-y: weight-y                        
                     }
                 )
             )
