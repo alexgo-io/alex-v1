@@ -63,7 +63,7 @@
 ;; ---------------------------------------------------------
 
 ;; Mint method for ayUSDA-Aug2021
-(define-public (mint (amount uint) (recipient principal))
+(define-public (mint (recipient principal) (amount uint))
   (begin
     ;; TODO : Authorization Check
     ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
@@ -72,7 +72,7 @@
 )
 
 ;; Burn method for ayUSDA-Aug2021
-(define-public (burn (amount uint) (sender principal))
+(define-public (burn (sender principal) (amount uint))
   (begin
     ;; TODO : Authorization Check
     ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))

@@ -20,6 +20,11 @@
 ;; public functions
 ;;
 
+(define-read-only (get_one)
+    (ok ONE_8)
+
+)
+
 (define-read-only (scale-up (a uint))
     (let
         (

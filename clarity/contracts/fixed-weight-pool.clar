@@ -3,6 +3,9 @@
 
 ;; fixed-weight-pool
 ;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
+;;
+;; TODO: token-x/token-y pool == token-y/token-x pool
+
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant authorisation-err (err u1000))
@@ -101,7 +104,7 @@
       (token-y (contract-of token-y-trait))
       (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) (err invalid-pool-err)))
     )
-    (ok (list (get balance-x pool) (get balance-y pool)))
+    (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
   )
 )
 
@@ -266,7 +269,7 @@
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-        (ok (list dx-net-fees dy))
+        (ok {dx: dx-net-fees, dy: dy})
     )
 )
 
@@ -311,7 +314,7 @@
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-        (ok (list dx dy-net-fees))
+        (ok {dx: dx, dy: dy-net-fees})
     )
 )
 
@@ -410,7 +413,7 @@
             (token-y (contract-of token-y-trait))              
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
-        (ok (list (get fee-balance-x pool) (get fee-balance-y pool)))
+        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
     )
 )
 
@@ -434,9 +437,8 @@
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
         (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
         )
-        (ok (list fee-x fee-y)
-        )
-  )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
 )
 
 (define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
@@ -453,8 +455,7 @@
     )
 )
 
-(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
-    
+(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint)) 
     (let 
         (
         (token-x (contract-of token-x-trait))

@@ -310,7 +310,7 @@
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-        (ok (list dx-net-fees dy))
+        (ok {dx: dx-net-fees, dy: dy})
     )
 )
 
@@ -351,7 +351,7 @@
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-        (ok (list dx dy-net-fees))
+        (ok {dx: dx, dy: dy-net-fees})
     )
 )
 
@@ -433,7 +433,7 @@
             (aytoken (contract-of the-aytoken))   
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (ok (list (get fee-balance-aytoken pool) (get fee-balance-token pool)))
+        (ok {fee-balance-aytoken: (get fee-balance-aytoken pool), fee-balance-token: (get fee-balance-token pool)})
     )
 )
 
@@ -456,9 +456,8 @@
         { aytoken: aytoken}
         (merge pool { fee-balance-aytoken: u0, fee-balance-token: u0 })
         )
-        (ok (list fee-x fee-y)
-        )
-  )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
 )
 
 (define-public (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))

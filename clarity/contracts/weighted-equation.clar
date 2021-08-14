@@ -27,6 +27,18 @@
 ;; public functions
 ;;
 ;;
+
+;; get-invariant
+;; invariant = b_x ^ w_x * b_y ^ w_y 
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (ok (unwrap-panic (contract-call? .math-fixed-point mul-down 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x weight-x)) 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y weight-y)))))
+        weight-sum-err
+    )
+)
+
 ;; get-y-given-x
 ;; d_y = dy
 ;; b_y = balance-y
@@ -112,9 +124,10 @@
                         ;;
                         ;; invariant = (b_x ^ w_x) * (b_y ^ w_y)
                         ;;
-                        (dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
-                        (dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
-                        (invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
+                        ;;(dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
+                        ;;(dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
+                        ;;(invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
+                        (invariant (unwrap-panic (get-invariant dx dy weight-x weight-y)))
                     )                    
                     {token: invariant, dy: dy}
                 )

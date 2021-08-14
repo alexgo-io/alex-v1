@@ -175,7 +175,7 @@
       (token-y (contract-of token-y-trait))
       (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
     )
-    (ok (list (get balance-x pool) (get balance-y pool)))
+    (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
   )
 )
 
@@ -296,7 +296,7 @@
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-        (ok (list dx-net-fees dy))
+        (ok {dx: dx-net-fees, dy: dy})
     )
 )
 
@@ -337,7 +337,7 @@
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-        (ok (list dx dy-net-fees))
+        (ok {dx: dx, dy: dy-net-fees})
   )
 )
 
@@ -436,7 +436,7 @@
             (token-y (contract-of token-y-trait))              
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
         )
-        (ok (list (get fee-balance-x pool) (get fee-balance-y pool)))
+        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
     )
 )
 
@@ -463,7 +463,7 @@
             { token-x: token-x, token-y: token-y, expiry: expiry}
             (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
         )
-        (ok (list fee-x fee-y))
+        (ok {fee-x: fee-x, fee-y: fee-y})
     )
 )
 
