@@ -20,6 +20,8 @@
 (define-constant authorisation-err (err u1000))
 (define-constant status-ok u10000)
 
+(define-constant ONE_8 u100000000)
+
 ;; Constants
 (define-constant DEFAULT_OWNER tx-sender)
 
@@ -110,7 +112,7 @@
 
 
 ;; Start a proposal
-;; Requires 1% of the supply in your wallet
+;; Requires 10% of the supply in your wallet
 ;; Default voting period is 10 days (144 * 10 blocks)
 (define-public (propose
     (start-block-height uint)
@@ -128,7 +130,7 @@
   )
 
     ;; Requires 1% of the supply 
-    (asserts! (>= (* proposer-balance u100) total-supply) not-enough-balance-err)
+    (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -163,9 +165,9 @@
   )
 
     ;; Can vote with corresponding pool token
-    (asserts! (is-eq (is-token-accepted token) true) invalid-pool-token)
+    (asserts! (is-token-accepted token) invalid-pool-token)
     ;; Proposal should be open for voting
-    (asserts! (is-eq (get is-open proposal) true) authorisation-err)
+    (asserts! (get is-open proposal) authorisation-err)
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
     
@@ -197,9 +199,9 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    ;;(asserts! (is-eq (is-token-accepted token) true) invalid-pool-token)
+    (asserts! (is-token-accepted token) invalid-pool-token)
     ;; Proposal should be open for voting
-    (asserts! (is-eq (get is-open proposal) true) authorisation-err)
+    (asserts! (get is-open proposal) authorisation-err)
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
     ;; Voter should stake the corresponding pool token to the vote contract. 
@@ -225,20 +227,18 @@
         (threshold-percent (var-get threshold))
         (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
   )
 
     (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id
-    (asserts! (is-eq (get is-open proposal) true) authorisation-err)
+    (asserts! (get is-open proposal) authorisation-err)
     (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
 
     (map-set proposals
       { id: proposal-id }
       (merge proposal { is-open: false }))
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (if (> (get yes-votes proposal) threshold-count)
-      (try! (execute-proposal proposal-id token aytoken))
-      false
-    )
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
     (ok status-ok))
 )
 
@@ -249,8 +249,8 @@
     (proposal (get-proposal-by-id proposal-id))
   )
 
-    (asserts! (is-eq (is-token-accepted token) true) invalid-pool-token)
-    (asserts! (is-eq (get is-open proposal) false) authorisation-err)
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (not (get is-open proposal)) authorisation-err)
     (asserts! (>= block-height (get end-block-height proposal)) authorisation-err)
 
     ;; Return the pool token
@@ -269,7 +269,7 @@
   ) 
   
     ;; Setting for Yield Token Pool
-    (try! (contract-call? .yield-token-pool set-fee-rate-token token new-fee-rate-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-token aytoken new-fee-rate-token))
     (try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))
     (try! (contract-call? .yield-token-pool set-fee-to-address aytoken collector-address))
     
