@@ -24,6 +24,7 @@
 (define-constant get-expiry-fail-err (err u2013))
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
+(define-constant authorisation-err (err u1000))
 
 ;; data maps and vars
 (define-map pools-map
@@ -65,8 +66,8 @@
         (
             (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
         )
-        (asserts! (>= (var-get max-expiry) expiry) invalid-expiry-err)
-        (asserts! (>= (var-get max-expiry) now) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
 
         (ok (unwrap! (contract-call? .math-fixed-point div-down 
                 (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
@@ -227,7 +228,7 @@
         
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
-        ;;(print new-supply)
+        ;; Failure. 
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
@@ -381,9 +382,11 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-
+        
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
-        (ok true) 
+        (ok true)
+    
     )
 )
 
@@ -393,7 +396,7 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
@@ -405,7 +408,7 @@
             (aytoken (contract-of the-aytoken))    
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map 
             { 
                 aytoken: aytoken 

@@ -1,6 +1,11 @@
 [project]
 name = "alex-v1"
 requirements = []
+
+[contracts.alex-ytp-multisig-vote]
+path = "contracts/alex-ytp-multisig-vote.clar"
+depends_on = ["trait-multisig-vote","pool-token-usda-ayusda","yield-token-pool"]
+
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
 depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fixed-point"]
@@ -65,6 +70,10 @@ depends_on = []
 path = "contracts/trait-flash-loan-user.clar"
 depends_on = []
 
+[contracts.trait-multisig-vote]
+path = "contracts/trait-multisig-vote.clar"
+depends_on = ["trait-sip-010"]
+
 [contracts.trait-oracle]
 path = "contracts/trait-oracle.clar"
 depends_on = []
@@ -95,4 +104,4 @@ depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-pool]
 path = "contracts/yield-token-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation", "trait-yield-token"]

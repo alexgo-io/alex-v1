@@ -47,9 +47,9 @@ Clarinet.test({
         oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",500000000);
         oracleresult.expectOk()
 
-        // Deployer creates the pool
-        let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
-        result.expectOk().expectBool(true);
+        // // Deployer creates the pool
+        // let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
+        // result.expectOk().expectBool(true);
 
         // // Initial Balance After Creation of Pool : TODO : NEED TO CHANGE EXPIRY AFTER CHANGING HARD CODED PART
         // result = CRPTest.getBalances(deployer, gAlexTokenAddress, usdaTokenAddress, expiry);
