@@ -117,25 +117,14 @@
         )
         (ok
             (if (is-eq total-supply u0)
-                (let
-                    (                        
-                        ;; if total-supply is zero, we initialise to balance-x == balance-y, i.e. r = 0%
-                        (dx-pow-t (unwrap-panic (contract-call? .math-fixed-point pow-down dx t-comp)))
-                        (invariant (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-pow-t dx-pow-t)))
-                    )
-                    {token: invariant, dy: dx}
-                )                
+                {token: dx, dy: dx}
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
                         (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y 
                                 (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
-                        (dx-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
-                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dx balance-x)) t-comp)))
-                        (dy-term (unwrap-panic (contract-call? .math-fixed-point pow-down 
-                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dy balance-y)) t-comp)))
-                        (token (unwrap! (contract-call? .math-fixed-point sub-fixed 
-                                    (unwrap-panic (contract-call? .math-fixed-point add-fixed dx-term dy-term)) total-supply) math-call-err))
+                        (token (unwrap-panic (contract-call? .math-fixed-point mul-down total-supply  
+                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
                     )
                     {token: token, dy: dy}
                 )

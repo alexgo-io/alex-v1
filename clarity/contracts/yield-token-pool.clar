@@ -25,6 +25,8 @@
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
 (define-constant authorisation-err (err u1000))
+(define-constant get-oracle-price-fail-err (err u7000))
+(define-constant get-symbol-fail-err (err u6000))
 
 ;; data maps and vars
 (define-map pools-map
@@ -107,6 +109,22 @@
             invalid-pool-err
        )
    )
+)
+
+(define-read-only (get-pool-value (the-aytoken <yield-token-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (map-get? pools-data-map { aytoken: aytoken }))
+            (balance-token (get balance-token pool))
+            (balance-aytoken (get balance-aytoken pool))
+            (token-symbol (unwrap! (contract-call? token get-symbol)) get-symbol-fail-err)
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol)) get-oracle-price-fail-err)
+            (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) math-call-err))
+        )
+
+        (contract-call? .math-fixed-point mul-up balance token-price)
+    )
 )
 
 ;; note yield is not annualised

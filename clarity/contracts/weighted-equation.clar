@@ -133,16 +133,13 @@
                 )
                 (let
                     (
-                        ;; if total-supply > zero
-                        ;;
-                        ;; token = invariant * (d_x / b_x)
-                        ;; new d_y = b_y * (d_x / b_x)
-                        (dx-supply (unwrap-panic (contract-call? .math-fixed-point mul-down dx total-supply)))
-                        (token (unwrap-panic (contract-call? .math-fixed-point div-down dx-supply balance-x)))
-                        (dx-baly (unwrap-panic (contract-call? .math-fixed-point mul-down dx balance-y)))
-                        (new-dy (unwrap-panic (contract-call? .math-fixed-point div-down dx-baly balance-x)))
+                        ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
+                        (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y 
+                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
+                        (token (unwrap-panic (contract-call? .math-fixed-point mul-down total-supply  
+                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
                     )
-                    {token: token, dy: new-dy}
+                    {token: token, dy: dy}
                 )   
             )
         )
