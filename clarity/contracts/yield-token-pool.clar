@@ -28,6 +28,9 @@
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant get-symbol-fail-err (err u6000))
 
+;; TODO: need to be defined properly
+(define-constant oracle-src "nothing")
+
 ;; data maps and vars
 (define-map pools-map
   { pool-id: uint }
@@ -102,24 +105,21 @@
     (let 
         (
             (aytoken (contract-of the-aytoken))            
-            (pool (map-get? pools-data-map { aytoken: aytoken }))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
        )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-       )
-   )
+        (ok pool)
+    )
 )
 
-(define-read-only (get-pool-value (the-aytoken <yield-token-trait>))
+(define-public (get-pool-value (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
     (let
         (
             (aytoken (contract-of the-aytoken))
-            (pool (map-get? pools-data-map { aytoken: aytoken }))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
             (balance-token (get balance-token pool))
             (balance-aytoken (get balance-aytoken pool))
-            (token-symbol (unwrap! (contract-call? token get-symbol)) get-symbol-fail-err)
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol)) get-oracle-price-fail-err)
+            (token-symbol (unwrap! (contract-call? the-token get-symbol) get-symbol-fail-err))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
             (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) math-call-err))
         )
 
