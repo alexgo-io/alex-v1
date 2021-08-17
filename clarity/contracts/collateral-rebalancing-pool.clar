@@ -3,8 +3,7 @@
 
 ;; collateral-rebalancing-pool
 ;; <add a description here>
-;; delta update happens every time contract is called
-;; currently it does not support single asset liquidity provision
+;;
 
 ;; constants
 ;;
@@ -117,15 +116,7 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-    (let
-        (
-            (pool (map-get? pools-map {pool-id: pool-id}))
-        )
-        (if (is-some pool)
-            (ok pool)
-            (err invalid-pool-err)
-        )
-    )
+    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) invalid-pool-err))
 )
 
 (define-read-only (get-pools)
@@ -142,7 +133,7 @@
         )
         (if (is-some pool)
             (ok pool)
-            (err invalid-pool-err)
+            invalid-pool-err
         )
     )
 )
@@ -160,20 +151,31 @@
     )
 )
 
-;; LTV is capped at 1
+(define-public (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))            
+            (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
+            (balance-x (get balance-x balances))
+            (balance-y (get balance-y balances))            
+            (spot (unwrap-panic (get-spot token collateral)))
+            (balance-y-in-x (unwrap! (contract-call? .math-fixed-point mul-down balance-y spot) math-call-err))
+        )
+        (contract-call? .math-fixed-point add-fixed balance-x balance-y-in-x)
+    )
+)
+
 (define-public (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))            
-            (spot (unwrap-panic (get-spot token collateral)))                        
-            (ltv (unwrap-panic (contract-call? .math-fixed-point mul-down (get ltv-0 pool) (unwrap-panic (contract-call? .math-fixed-point div-down spot (get strike pool))))))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))            
+            (pool-value (unwrap! (get-pool-value-in-collateral token collateral expiry) internal-function-call-err))
         )
-        (if (> ltv ONE_8)
-            (ok ONE_8)
-            (ok ltv)
-        )
+        (contract-call? .math-fixed-point mul-down (get ltv-0 pool) (unwrap-panic (contract-call? .math-fixed-point div-down pool-value (get strike pool))))
     )
 
 )
@@ -235,7 +237,7 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
             (yield-bal-x (get yield-bal-x pool))
             (yield-bal-y (get yield-bal-y pool))
             (key-bal-x (get key-bal-x pool))
@@ -310,6 +312,9 @@
 
 ;; note single-sided liquidity
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))
+    ;;(asserts! (> dx u0) invalid-liquidity-err)
+    ;; mint is possible only if ltv < 1
+    ;;(asserts! (> ONE_8 (unwrap! (get-ltv token collateral expiry) internal-function-call-err)) invalid-pool-err)
     (let
         (
             (token-x (contract-of collateral))
@@ -356,9 +361,7 @@
 
             (dx-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dx-weighted key-dx-weighted) math-call-err))
             (dy-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dy-weighted key-dy-weighted) math-call-err))
-        )
-
-        (asserts! (> dx u0) invalid-liquidity-err)     
+        )     
 
         (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) transfer-x-failed-err)
         (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) transfer-y-failed-err)
@@ -374,6 +377,7 @@
 )    
 
 ;; note single sided liquidity
+;; TODO: currently the position returned is not guaranteed 
 (define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
     (let
         (
@@ -418,6 +422,7 @@
 )
 
 ;; note single-sided liquidity
+;; TODO: currently the position returned is not floored
 (define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
     (let
         (
@@ -658,7 +663,7 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))                
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
         (ok (get fee-to-address pool))
     )
@@ -669,7 +674,7 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))              
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
         (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
     )

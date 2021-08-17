@@ -71,12 +71,18 @@
         (
             (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
         )
-        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
-        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
+        (asserts! (>= (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (>= (var-get max-expiry) now) invalid-expiry-err)
 
-        (ok (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
-                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
+        ;; add a small number to make sure get-t < 1
+        (let
+            (
+                (max-expiry-delta (unwrap! (contract-call? .math-fixed-point add-fixed (var-get max-expiry) u1) math-call-err))
+            )
+            (ok (unwrap! (contract-call? .math-fixed-point div-down 
+                    (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                    (unwrap! (contract-call? .math-fixed-point sub-fixed max-expiry-delta now) math-call-err)) math-call-err))
+        )
     )
 )
 
@@ -85,15 +91,7 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-    (let
-        (
-            (pool (map-get? pools-map {pool-id: pool-id}))
-       )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-       )
-   )
+    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) invalid-pool-err))
 )
 
 (define-read-only (get-pools)
@@ -111,7 +109,7 @@
     )
 )
 
-(define-public (get-pool-value (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+(define-public (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
     (let
         (
             (aytoken (contract-of the-aytoken))
