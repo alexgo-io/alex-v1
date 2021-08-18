@@ -7,6 +7,10 @@ import {
   } from './models/alex-tests-collateral-rebalancing-pool.ts';
   
   import { 
+    FWPTestAgent1,
+  } from './models/alex-tests-fixed-weight-pool.ts';
+  
+  import { 
     OracleManager,
   } from './models/alex-tests-oracle-mock.ts';
   
@@ -14,10 +18,13 @@ import {
 
 // Deployer Address Constants 
  const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
+ const wBTCTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
  const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
  const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-ayusda"
- const gAlexUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda"
- 
+ const ayUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-usda-ayusda"
+ const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ayusda-wbtc-4380"
+ const keyUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.keyusda-wbtc-4380"
+
  const expiry = 52560//1853000000000   //  1 year  : Currently For Testing, Yield Token Expiry is hard coded to 52560
 
 /**
@@ -41,14 +48,20 @@ Clarinet.test({
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"ALEX","nothing",500000000);
+        let oracleresult = Oracle.updatePrice(deployer,"ALEX","nothing",4000000000000);
         oracleresult.expectOk()
 
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",500000000);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",100000000);
         oracleresult.expectOk()
+
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        
+        // Deployer creating a pool, initial tokens injected to the pool
+        let result = FWPTest.createPool(deployer, usdaTokenAddress, wBTCTokenAddress, 50000000, 50000000, ayUsdaPoolAddress, 500000000000, 100000000000);
+        result.expectOk().expectBool(true);
 
         // // Deployer creates the pool
-        // let result = CRPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, ayusdaAddress,  5000000, 10000000);
+        // result = CRPTest.createPool(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, keyUsda4380TokenAddress, 10000000000);
         // result.expectOk().expectBool(true);
 
         // // Initial Balance After Creation of Pool : TODO : NEED TO CHANGE EXPIRY AFTER CHANGING HARD CODED PART

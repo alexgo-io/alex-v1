@@ -178,6 +178,7 @@
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        ;;(try! (contract-call? .alex-multisig-registry mint-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -219,6 +220,7 @@
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
             (try! (contract-call? the-pool-token burn tx-sender shares))
+            ;;(try! (contract-call? .alex-multisig-registry burn-token new-supply tx-sender))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})

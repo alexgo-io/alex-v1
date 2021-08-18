@@ -143,9 +143,14 @@
         (
             (token-symbol (unwrap-panic (contract-call? token get-symbol)))
             (collateral-symbol (unwrap-panic (contract-call? collateral get-symbol)))
-            (token-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src token-symbol)))
-            (collateral-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src collateral-symbol)))            
+            ;;(token-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src token-symbol)))
+            ;;(collateral-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src collateral-symbol)))            
+            ;;(spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
+        
+            (token-price u100000000)
+            (collateral-price u4000000000000)
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
+
         )
         (ok spot)
     )
