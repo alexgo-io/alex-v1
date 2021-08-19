@@ -35,7 +35,7 @@ Clarinet.test({
             types.uint(50000000)], wallet_1.address);
         let token:any= call.result.expectOk().expectTuple()
              token['dy'].expectUint(50000000);
-             token['token'].expectUint(19799497688);
+             token['token'].expectUint(10000);
 
          call = chain.callReadOnlyFn("yield-token-equation", "get-position-given-mint", 
         [types.uint(testbalanceX),

@@ -23,14 +23,14 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, token: string, collateral: string, yieldToken: string, dX: number, dY: number) {
+    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, dX: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
           types.principal(token),
           types.principal(collateral),
           types.principal(yieldToken),
-          types.uint(dX),
-          types.uint(dY)
+          types.principal(keyToken),
+          types.uint(dX)
         ], user.address),
       ]);
       return block.receipts[0].result;

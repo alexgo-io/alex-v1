@@ -23,92 +23,94 @@ const testFlashLoanUser =
  *
  * 2. User using Flashloan for 3 tokens (two different pools)
  */
-const testWeightX = 50000000; //0.5
-const testWeightY = 50000000; //0.5
-const balanceX = 500000;
-const balanceY = 100000;
-Clarinet.test({
-  name: 'VAULT : Flash Loan Test',
-  async fn(chain: Chain, accounts: Map<string, Account>) {
-    let deployer = accounts.get('deployer')!;
-    let wallet_1 = accounts.get('wallet_1')!;
-    let block = chain.mineBlock([
-      Tx.contractCall(
-        'fixed-weight-pool',
-        'create-pool',
-        [
-          types.principal(gAlexTokenAddress),
-          types.principal(usdaTokenAddress),
-          types.uint(testWeightX),
-          types.uint(testWeightY),
-          types.principal(gAlexUsdaPoolAddress),
-          types.uint(balanceX * 1000000),
-          types.uint(balanceY * 1000000),
-        ],
-        deployer.address
-      ),
-      Tx.contractCall(
-        'token-alex',
-        'transfer',
-        [
-          types.uint(100000000),
-          types.principal(deployer.address),
-          types.principal(alexVaultAddress),
-          types.none()
-        ],
-        deployer.address
-      ),
-      Tx.contractCall(
-        'token-usda',
-        'transfer',
-        [
-          types.uint(100000000),
-          types.principal(deployer.address),
-          types.principal(alexVaultAddress),
-          types.none()
-        ],
-        deployer.address
-      ),
-      Tx.contractCall(
-        'token-ayusda',
-        'mint',
-        [
-          types.uint(100000000),
-          types.principal(deployer.address),
-        ],
-        deployer.address
-      ),
 
-      Tx.contractCall(
-        'token-ayusda',
-        'transfer',
-        [
-          types.uint(100000000),
-          types.principal(deployer.address),
-          types.principal(alexVaultAddress),
-          types.none()
-        ],
-        deployer.address
-      ),
-      Tx.contractCall(
-        'alex-vault',
-        'flash-loan',
-        [
-          types.principal(testFlashLoanUser),
-          types.principal(gAlexTokenAddress),
-          types.principal(usdaTokenAddress),
-          types.principal(ayusdaAddress),
-          types.uint(10000),
-          types.uint(20000),
-          types.uint(30000),
-        ],
-        deployer.address
-      ),
-    ]);
-    block.receipts.forEach(r => {
-      r.result.expectOk();
-    });
-  },
-});
+
+// const testWeightX = 50000000; //0.5
+// const testWeightY = 50000000; //0.5
+// const balanceX = 500000;
+// const balanceY = 100000;
+// Clarinet.test({
+//   name: 'VAULT : Flash Loan Test',
+//   async fn(chain: Chain, accounts: Map<string, Account>) {
+//     let deployer = accounts.get('deployer')!;
+//     let wallet_1 = accounts.get('wallet_1')!;
+//     let block = chain.mineBlock([
+//       Tx.contractCall(
+//         'fixed-weight-pool',
+//         'create-pool',
+//         [
+//           types.principal(gAlexTokenAddress),
+//           types.principal(usdaTokenAddress),
+//           types.uint(testWeightX),
+//           types.uint(testWeightY),
+//           types.principal(gAlexUsdaPoolAddress),
+//           types.uint(balanceX * 1000000),
+//           types.uint(balanceY * 1000000),
+//         ],
+//         deployer.address
+//       ),
+//       Tx.contractCall(
+//         'token-alex',
+//         'transfer',
+//         [
+//           types.uint(100000000),
+//           types.principal(deployer.address),
+//           types.principal(alexVaultAddress),
+//           types.none()
+//         ],
+//         deployer.address
+//       ),
+//       Tx.contractCall(
+//         'token-usda',
+//         'transfer',
+//         [
+//           types.uint(100000000),
+//           types.principal(deployer.address),
+//           types.principal(alexVaultAddress),
+//           types.none()
+//         ],
+//         deployer.address
+//       ),
+//       Tx.contractCall(
+//         'token-ayusda',
+//         'mint',
+//         [
+//           types.uint(100000000),
+//           types.principal(deployer.address),
+//         ],
+//         deployer.address
+//       ),
+
+//       Tx.contractCall(
+//         'token-ayusda',
+//         'transfer',
+//         [
+//           types.uint(100000000),
+//           types.principal(deployer.address),
+//           types.principal(alexVaultAddress),
+//           types.none()
+//         ],
+//         deployer.address
+//       ),
+//       Tx.contractCall(
+//         'alex-vault',
+//         'flash-loan',
+//         [
+//           types.principal(testFlashLoanUser),
+//           types.principal(gAlexTokenAddress),
+//           types.principal(usdaTokenAddress),
+//           types.principal(ayusdaAddress),
+//           types.uint(10000),
+//           types.uint(20000),
+//           types.uint(30000),
+//         ],
+//         deployer.address
+//       ),
+//     ]);
+//     block.receipts.forEach(r => {
+//       r.result.expectOk();
+//     });
+//   },
+// });
 
 

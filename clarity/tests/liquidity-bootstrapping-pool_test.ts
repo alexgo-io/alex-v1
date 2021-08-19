@@ -74,9 +74,9 @@ Clarinet.test({
         
         // deployer swaps alextoken with usda token
         result = LBPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 200000000); //20
-        result.expectOk().expectList()[0].expectUint(200000000); 
-        result.expectOk().expectList()[1].expectUint(16662485); 
-       
+        let position:any =result.expectOk().expectTuple();
+            position['dx'].expectUint(200000000);
+            position['dy'].expectUint(16662485);
 
     },
 });
@@ -108,16 +108,20 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         result = LBPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 200000000); 
-        result.expectOk().expectList()[0].expectUint(190000000); 
-        result.expectOk().expectList()[1].expectUint(15962171); 
+        let position:any =result.expectOk().expectTuple();
+        position['dx'].expectUint(190000000);
+        position['dy'].expectUint(15962171);
 
         result = LBPTest.swapYForX(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 10000000); 
-        result.expectOk().expectList()[0].expectUint(151735080); 
-        result.expectOk().expectList()[1].expectUint(9500000); 
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(151735080);
+        position['dy'].expectUint(9500000);
 
         // Collect Fees - Fee Collection Floating Point
         result = LBPTest.collectFees(wallet_1, gAlexTokenAddress, usdaTokenAddress, testExpiry);
-        result.expectOk().expectList()[0].expectUint(10000000)  
+        position =result.expectOk().expectTuple();
+        position['fee-x'].expectUint(10000000);
+        position['fee-y'].expectUint(500000);
     },
 });
 

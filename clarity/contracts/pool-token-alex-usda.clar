@@ -37,7 +37,7 @@
 )
 
 (define-read-only (get-expiry)
-  (ok 52560)
+  (ok 438000000000)
 )
 
 (define-read-only (get-total-supply)

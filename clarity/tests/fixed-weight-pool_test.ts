@@ -73,9 +73,10 @@ Clarinet.test({
         
         // deployer swaps alextoken with usda token
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //20
-        result.expectOk().expectList()[0].expectUint(200000000); 
-        result.expectOk().expectList()[1].expectUint(39341400); 
-        // TODO : Operation illustration
+        
+        let position:any =result.expectOk().expectTuple();
+            position['dx'].expectUint(200000000);
+            position['dy'].expectUint(39341400);
 
     },
 });
@@ -106,13 +107,16 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //2
-        result.expectOk().expectList()[0].expectUint(190000000); 
-        result.expectOk().expectList()[1].expectUint(37356800); 
+        let position:any =result.expectOk().expectTuple();
+            position['dx'].expectUint(190000000);
+            position['dy'].expectUint(37356800);
 
 
         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
         result = FWPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
-        result.expectOk().expectList()[0].expectUint(10000000)  // 5% of 200
+        position =result.expectOk().expectTuple();
+        position['fee-x'].expectUint(10000000); // 5% of 200
+        position['fee-y'].expectUint(0);
     },
 });
 

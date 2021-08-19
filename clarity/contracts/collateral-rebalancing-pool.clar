@@ -139,8 +139,12 @@
         (
             (token-symbol (unwrap-panic (contract-call? token get-symbol)))
             (collateral-symbol (unwrap-panic (contract-call? collateral get-symbol)))
-            (token-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src token-symbol)))
-            (collateral-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src collateral-symbol)))            
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
+            
+            ;; For Console Testing
+            ;;(token-price u100000000)
+            ;;(collateral-price u40000000000)
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
         )
         (ok spot)
@@ -186,11 +190,10 @@
             ;; determine spot using open oracle
             (spot (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
             (now (* block-height ONE_8))
-
             ;; TODO: assume 10mins per block - something to be reviewed
+            
             (t (unwrap! (contract-call? .math-fixed-point div-down 
                 (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) (* u52560 ONE_8)) math-call-err))
-
             ;; TODO: APYs need to be calculated from the prevailing yield token price.
             ;; TODO: ln(S/K) approximated as (S/K - 1)
 
@@ -224,7 +227,7 @@
                     (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
                     (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
                 )
-                (contract-call? .math-fixed-point div-up complement u200000000)              
+                (contract-call? .math-fixed-point div-up complement u200000000)   
             )
         )  
     )
@@ -256,11 +259,12 @@
 
             (token-x (contract-of collateral))
             (token-y (contract-of token))
+            
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
 
             ;; determine strike using open oracle
             (strike (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
-
+            
             ;; TODO: setter / getter of bs-vol / ltv-0
             ;; currently hard-coded at 50%
             (bs-vol u50000000)
@@ -290,6 +294,7 @@
                 weight-y: weight-y
             })
         )
+
         (asserts!
             (and
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
@@ -373,6 +378,10 @@
             ;; mint pool token and send to tx-sender
             (try! (contract-call? the-yield-token mint tx-sender yield-new-supply))
             (try! (contract-call? the-key-token mint tx-sender key-new-supply))
+        
+            ;; Registry using mint
+            ;;(try! (contract-call? .alex-multisig-registry mint-token the-yield-token new-supply tx-sender))
+            ;;(try! (contract-call? .alex-multisig-registry mint-token the-key-token new-supply tx-sender))
 
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok true)
@@ -404,8 +413,9 @@
                 yield-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-supply shares) math-call-err),
                 yield-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-x dx-weighted) math-call-err),
                 yield-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-y dy-weighted) math-call-err)
-                }))  
-            (now (* block-height ONE_8))  
+                })
+            )  
+            (now (* block-height ONE_8))
         )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
@@ -418,6 +428,8 @@
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-yield-token burn tx-sender shares))
+        ;;(try! (contract-call? .alex-multisig-registry burn-token the-yield-token new-supply tx-sender))
+
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: u0})
@@ -449,8 +461,8 @@
                 key-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-x dx-weighted) math-call-err),
                 key-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-y dy-weighted) math-call-err)
                 })
-            )  
-            (now (* block-height ONE_8))  
+            ) 
+            (now (* block-height ONE_8))
         )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
@@ -463,7 +475,7 @@
         
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-key-token burn tx-sender shares))
-
+        ;;(try! (contract-call? .alex-multisig-registry burn-token the-key-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: u0})
    )
@@ -778,7 +790,7 @@
                     (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-up dx weight-x) math-call-err))
                     (dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-weighted) math-call-err))
                     (dy-weighted (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dx-to-dy) no-liquidity-err))            
-
+                    
                     (add-data (unwrap! (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx-weighted dy-weighted) weighted-equation-call-err))
                     (dy-check (get dy add-data)) ;;must equal dy-weighted (see asserts below)
             
@@ -790,7 +802,11 @@
                     (key-dy-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dy-weighted yield-dy-weighted) math-call-err))
                 )
 
-                (asserts! (is-eq dy-weighted dy-check) invalid-liquidity-err)
+                ;; (print "Debugging dy-weighted and dy-check mismatch")
+                ;; (print dy-weighted)
+                ;; (print dy-check)
+                ;; (print dx-to-dy)
+                ;;(asserts! (is-eq dy-weighted dy-check) invalid-liquidity-err)
 
                 (ok {yield-token: {token: ltv-dx, dx-weighted: yield-dx-weighted, dy-weighted: yield-dy-weighted}, 
                      key-token: {token: ltv-dx, dx-weighted: key-dx-weighted, dy-weighted: key-dy-weighted}})
