@@ -143,12 +143,12 @@
         (
             (token-symbol (unwrap-panic (contract-call? token get-symbol)))
             (collateral-symbol (unwrap-panic (contract-call? collateral get-symbol)))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
+            ;;(token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            ;;(collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
             
             ;; For Console Testing
-            ;;(token-price u100000000)
-            ;;(collateral-price u40000000000)
+            (token-price u100000000)
+            (collateral-price u40000000000)
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
         )
         (ok spot)
@@ -377,7 +377,11 @@
         ;; mint pool token and send to tx-sender
         (try! (contract-call? the-yield-token mint tx-sender yield-new-supply))
         (try! (contract-call? the-key-token mint tx-sender key-new-supply))
-       
+        
+        ;; Registry using mint
+        ;;(try! (contract-call? .alex-multisig-registry mint-token the-yield-token new-supply tx-sender))
+        ;;(try! (contract-call? .alex-multisig-registry mint-token the-key-token new-supply tx-sender))
+
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -422,6 +426,8 @@
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-yield-token burn tx-sender shares))
+        ;;(try! (contract-call? .alex-multisig-registry burn-token the-yield-token new-supply tx-sender))
+
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: u0})
@@ -467,7 +473,7 @@
         
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-key-token burn tx-sender shares))
-
+        ;;(try! (contract-call? .alex-multisig-registry burn-token the-key-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: u0})
    )

@@ -147,5 +147,21 @@
     }
   )
 
+    (map-set contracts
+    { name: "liquidity-bootstrapping-pool" }
+    {
+      address: 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE,
+      qualified-name: 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.liquidity-bootstrapping-pool
+    }
+  )
+    (map-set contracts-data
+    { qualified-name: 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.liquidity-bootstrapping-pool }
+    {
+      can-mint: true,
+      can-burn: true
+    }
+  )
+
+
 
 )
