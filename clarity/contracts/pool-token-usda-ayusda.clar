@@ -28,6 +28,10 @@
   (ok "AYUSDAUSDA")
 )
 
+(define-read-only (get-expiry)
+  (ok 438000000000)
+)
+
 (define-read-only (get-decimals)
   (ok u6)
 )
