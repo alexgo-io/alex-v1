@@ -129,12 +129,8 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))
-            (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
         )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-        )
+        (ok (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
     )
 )
 
@@ -151,7 +147,7 @@
     )
 )
 
-(define-public (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-public (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
             (token-x (contract-of collateral))
@@ -161,9 +157,9 @@
             (balance-x (get balance-x balances))
             (balance-y (get balance-y balances))            
             (spot (unwrap-panic (get-spot token collateral)))
-            (balance-y-in-x (unwrap! (contract-call? .math-fixed-point mul-down balance-y spot) math-call-err))
+            (balance-x-in-y (unwrap! (contract-call? .math-fixed-point div-down balance-x spot) math-call-err))
         )
-        (contract-call? .math-fixed-point add-fixed balance-x balance-y-in-x)
+        (contract-call? .math-fixed-point add-fixed balance-x-in-y balance-y)
     )
 )
 
@@ -173,11 +169,15 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))            
-            (pool-value (unwrap! (get-pool-value-in-collateral token collateral expiry) internal-function-call-err))
+            (yield-supply (get yield-supply pool)) ;; in token
+            (pool-value (unwrap! (get-pool-value-in-token token collateral expiry) internal-function-call-err)) ;; also in token
         )
-        (contract-call? .math-fixed-point mul-down (get ltv-0 pool) (unwrap-panic (contract-call? .math-fixed-point div-down pool-value (get strike pool))))
+        ;; if no liquidity in the pool, return ltv-0
+        (if (is-eq yield-supply u0)
+            (ok (get ltv-0 pool))
+            (contract-call? .math-fixed-point div-down yield-supply pool-value)
+        )
     )
-
 )
 
 (define-public (get-weight-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
@@ -185,12 +185,11 @@
         (
             ;; determine spot using open oracle
             (spot (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))
 
             ;; TODO: assume 10mins per block - something to be reviewed
             (t (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err)  
-                (unwrap! (contract-call? .math-fixed-point mul-down u52560 ONE_8) math-call-err)) math-call-err))            
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) (* u52560 ONE_8)) math-call-err))
 
             ;; TODO: APYs need to be calculated from the prevailing yield token price.
             ;; TODO: ln(S/K) approximated as (S/K - 1)
@@ -311,69 +310,74 @@
 )
 
 ;; note single-sided liquidity
-(define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))
-    ;;(asserts! (> dx u0) invalid-liquidity-err)
-    ;; mint is possible only if ltv < 1
-    ;;(asserts! (> ONE_8 (unwrap! (get-ltv token collateral expiry) internal-function-call-err)) invalid-pool-err)
+(define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
-            (yield-bal-x (get yield-bal-x pool))
-            (yield-bal-y (get yield-bal-y pool))
-            (key-bal-x (get key-bal-x pool))
-            (key-bal-y (get key-bal-y pool))
-            (yield-supply (get yield-supply pool))   
-            (key-supply (get key-supply pool))
-
             (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
-            (yield-dx (unwrap! (contract-call? .math-fixed-point mul-down ltv dx) math-call-err))
-            (key-dx (unwrap! (contract-call? .math-fixed-point sub-fixed dx yield-dx) math-call-err))                 
+        )
+        (asserts! (> dx u0) invalid-liquidity-err)
+        ;; mint is possible only if ltv < 1
+        (asserts! (> ONE_8 ltv) invalid-pool-err)
+        
+        (let
+            (
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))                    
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+                (yield-bal-x (get yield-bal-x pool))
+                (yield-bal-y (get yield-bal-y pool))
+                (key-bal-x (get key-bal-x pool))
+                (key-bal-y (get key-bal-y pool))
+                (yield-supply (get yield-supply pool))   
+                (key-supply (get key-supply pool))
 
-            (add-data (unwrap! (get-token-given-position token collateral expiry dx) internal-function-call-err))
-            (add-yield-data (get yield-token add-data))
-            (add-key-data (get key-token add-data))
+                (yield-dx (unwrap! (contract-call? .math-fixed-point mul-down ltv dx) math-call-err))
+                (key-dx (unwrap! (contract-call? .math-fixed-point sub-fixed dx yield-dx) math-call-err))                 
 
-            (yield-new-supply (get token add-yield-data))
-            (yield-dx-weighted (get dx-weighted add-yield-data))                   
-            (yield-dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed yield-dx yield-dx-weighted) math-call-err))     
+                (add-data (unwrap! (get-token-given-position token collateral expiry dx) internal-function-call-err))
+                (add-yield-data (get yield-token add-data))
+                (add-key-data (get key-token add-data))
+
+                (yield-new-supply (get token add-yield-data))
+                (yield-dx-weighted (get dx-weighted add-yield-data))                   
+                (yield-dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed yield-dx yield-dx-weighted) math-call-err))     
             
-            ;; TODO: a more efficient way to convert?
-            (yield-dy-weighted (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 yield-dx-to-dy) no-liquidity-err)))
+                ;; TODO: a more efficient way to convert?
+                (yield-dy-weighted (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 yield-dx-to-dy) no-liquidity-err)))
 
-            (key-new-supply (get token add-key-data))
-            (key-dx-weighted (get dx-weighted add-key-data))    
-            (key-dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed key-dx key-dx-weighted) math-call-err))    
+                (key-new-supply (get token add-key-data))
+                (key-dx-weighted (get dx-weighted add-key-data))    
+                (key-dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed key-dx key-dx-weighted) math-call-err))    
 
-            ;; TODO: a more efficient way to convert?      
-            (key-dy-weighted (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 key-dx-to-dy) no-liquidity-err)))
+                ;; TODO: a more efficient way to convert?      
+                (key-dy-weighted (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 key-dx-to-dy) no-liquidity-err)))
 
-            (pool-updated (merge pool {
-                yield-supply: (unwrap! (contract-call? .math-fixed-point add-fixed yield-new-supply yield-supply) math-call-err),
-                key-supply: (unwrap! (contract-call? .math-fixed-point add-fixed key-new-supply key-supply) math-call-err),
-                yield-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-x yield-dx-weighted) math-call-err),
-                yield-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-y yield-dy-weighted) math-call-err),
-                key-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-x key-dx-weighted) math-call-err),
-                key-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-y key-dy-weighted) math-call-err)
-            }))
+                (pool-updated (merge pool {
+                    yield-supply: (unwrap! (contract-call? .math-fixed-point add-fixed yield-new-supply yield-supply) math-call-err),
+                    key-supply: (unwrap! (contract-call? .math-fixed-point add-fixed key-new-supply key-supply) math-call-err),
+                    yield-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-x yield-dx-weighted) math-call-err),
+                    yield-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-y yield-dy-weighted) math-call-err),
+                    key-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-x key-dx-weighted) math-call-err),
+                    key-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-y key-dy-weighted) math-call-err)
+                }))
 
-            (dx-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dx-weighted key-dx-weighted) math-call-err))
-            (dy-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dy-weighted key-dy-weighted) math-call-err))
-        )     
+                (dx-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dx-weighted key-dx-weighted) math-call-err))
+                (dy-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dy-weighted key-dy-weighted) math-call-err))
+            )     
 
-        (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) transfer-x-failed-err)
-        (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) transfer-y-failed-err)
+            (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) transfer-x-failed-err)
+            (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) transfer-y-failed-err)
 
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-        ;; mint pool token and send to tx-sender
-        (try! (contract-call? the-yield-token mint tx-sender yield-new-supply))
-        (try! (contract-call? the-key-token mint tx-sender key-new-supply))
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+            ;; mint pool token and send to tx-sender
+            (try! (contract-call? the-yield-token mint tx-sender yield-new-supply))
+            (try! (contract-call? the-key-token mint tx-sender key-new-supply))
 
-        (print { object: "pool", action: "liquidity-added", data: pool-updated })
-        (ok true)
-   )
+            (print { object: "pool", action: "liquidity-added", data: pool-updated })
+            (ok true)
+        )
+    )
 )    
 
 ;; note single sided liquidity
@@ -400,9 +404,8 @@
                 yield-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-supply shares) math-call-err),
                 yield-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-x dx-weighted) math-call-err),
                 yield-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-y dy-weighted) math-call-err)
-                })
-            )  
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))  
+                }))  
+            (now (* block-height ONE_8))  
         )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
@@ -447,7 +450,7 @@
                 key-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-y dy-weighted) math-call-err)
                 })
             )  
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))  
+            (now (* block-height ONE_8))  
         )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
@@ -754,7 +757,7 @@
 (define-public (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
     (let 
         (
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))
         )
         (if (< now expiry) ;; mint supported until, but excl., expiry
             (let 
@@ -801,7 +804,7 @@
 (define-private (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))
         )
         (if (< now expiry) ;; mint supported until, but excl., expiry
             (let 
@@ -846,7 +849,7 @@
 (define-public (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))
         )
         (if (>= now expiry)
             (let 
@@ -881,7 +884,7 @@
 (define-public (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))
         )
         (if (>= now expiry)
             (let 
@@ -903,8 +906,7 @@
                     ;; always convert to collateral ccy
                     (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dy-weighted) no-liquidity-err))
                     
-                    (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
-                    
+                    (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))   
                 )
                 (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
             )
