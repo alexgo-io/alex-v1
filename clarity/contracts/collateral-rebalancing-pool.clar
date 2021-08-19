@@ -86,7 +86,7 @@
 ;; Approximation of Error Function using Abramowitz and Stegun
 ;; https://en.wikipedia.org/wiki/Error_function#Approximation_with_elementary_functions
 ;; Please note erf(x) equals -erf(-x)
-(define-public (erf (x uint))
+(define-private (erf (x uint))
     (let
         (
             (a1x (unwrap! (contract-call? .math-fixed-point mul-down a1 x) math-call-err))
@@ -143,12 +143,12 @@
         (
             (token-symbol (unwrap-panic (contract-call? token get-symbol)))
             (collateral-symbol (unwrap-panic (contract-call? collateral get-symbol)))
-            ;;(token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            ;;(collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
             
             ;; For Console Testing
-            ;; (token-price u100000000)
-            ;;  (collateral-price u40000000000)
+            ;;(token-price u100000000)
+            ;;(collateral-price u40000000000)
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
         )
         (ok spot)
@@ -310,7 +310,7 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
-        (try! (add-to-position token collateral the-yield-token the-key-token dx))
+        ;;(try! (add-to-position token collateral the-yield-token the-key-token dx))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
     )
