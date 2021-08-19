@@ -69,7 +69,8 @@
 (define-read-only (get-t (expiry uint))
     (let
         (
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
+            ;;(now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
+            (now (* block-height ONE_8))
         )
         (asserts! (>= (var-get max-expiry) expiry) invalid-expiry-err)
         (asserts! (>= (var-get max-expiry) now) invalid-expiry-err)
