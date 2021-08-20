@@ -111,10 +111,10 @@
       (y-int (to-int y))
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) ONE_8))
-   )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) (err PRODUCT_OUT_OF_BOUNDS))
+    )
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) PRODUCT_OUT_OF_BOUNDS)
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
- )
+  )
 )
 
 (define-private (exp-pos (x int))
@@ -172,14 +172,22 @@
 ;; public functions
 ;;
 
+(define-read-only (get-max-exp)
+  (ok MAX_NATURAL_EXPONENT)
+)
+
+(define-read-only (get-min-exp)
+  (ok MIN_NATURAL_EXPONENT)
+)
+
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) (err X_OUT_OF_BOUNDS))
+    (asserts! (< x (pow u2 u127)) X_OUT_OF_BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) (err Y_OUT_OF_BOUNDS))
+    (asserts! (< y MILD_EXPONENT_BOUND) Y_OUT_OF_BOUNDS)
 
     (if (is-eq y u0) 
       (ok (to-uint ONE_8))

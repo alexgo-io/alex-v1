@@ -21,6 +21,13 @@
 ;; private functions
 ;;
 
+(define-private (min (x uint) (y uint))
+    (if (< x y)
+        (ok x)
+        (ok y)
+    )
+)
+
 ;; public functions
 ;;
 
@@ -35,15 +42,15 @@
         (
             (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
+            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))))            
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
             (x-dx-pow (unwrap-panic (contract-call? .math-fixed-point pow-down (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)) t-comp)))
             (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point add-fixed x-pow y-pow)) x-dx-pow)))
-            (term-pow (unwrap-panic (contract-call? .math-fixed-point pow-down term (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)))))
         )
-        (asserts! (< dx max-in) max-in-ratio-err)        
-        
-        (contract-call? .math-fixed-point sub-fixed balance-y term-pow)
+        (asserts! (< dx max-in) max-in-ratio-err)     
+
+        (contract-call? .math-fixed-point sub-fixed balance-y (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)))
     )
 )
 
@@ -58,18 +65,15 @@
         (
             (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))            
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
+            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))))            
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
-            (y-dy-pow (unwrap-panic (contract-call? .math-fixed-point pow-down
-                                        (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)) t-comp)))
-            (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed 
-                                        (unwrap-panic (contract-call? .math-fixed-point add-fixed x-pow y-pow)) y-dy-pow)))
-            (term-pow (unwrap-panic (contract-call? .math-fixed-point pow-down term 
-                                        (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)))))
+            (y-dy-pow (unwrap-panic (contract-call? .math-fixed-point pow-down (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)) t-comp)))
+            (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point add-fixed x-pow y-pow)) y-dy-pow)))            
         )
-        (asserts! (< dy max-out) max-out-ratio-err)        
+        (asserts! (< dy max-out) max-out-ratio-err)
 
-        (contract-call? .math-fixed-point sub-fixed term-pow balance-x)
+        (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)) balance-x) 
     )
 )
 
@@ -84,19 +88,20 @@
     (let 
         (
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
+            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))))            
+            (max-exp (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))
             (numer (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 
                                     (unwrap-panic (contract-call? .math-fixed-point pow-down 
                                     (unwrap-panic (contract-call? .math-fixed-point div-down balance-y balance-x)) t-comp)))))
             (denom (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8
                                     (unwrap-panic (contract-call? .math-fixed-point pow-down 
                                     price (unwrap-panic (contract-call? .math-fixed-point div-down t-comp t)))))))
-            (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed 
-                                    (unwrap-panic (contract-call? .math-fixed-point pow-down 
-                                    (unwrap-panic (contract-call? .math-fixed-point div-down numer denom)) 
-                                    (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)))) ONE_8)))           
         )
 
-        (contract-call? .math-fixed-point mul-up balance-x term)
+        (contract-call? .math-fixed-point mul-up balance-x 
+            (unwrap-panic (contract-call? .math-fixed-point sub-fixed 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down 
+                (unwrap-panic (contract-call? .math-fixed-point div-down numer denom)) t-comp-num)) ONE_8)))                                 
    )
 )
 
