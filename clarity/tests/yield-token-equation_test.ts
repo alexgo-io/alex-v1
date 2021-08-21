@@ -17,7 +17,7 @@ Clarinet.test({
             types.uint(testbalanceY),
             types.uint(testTvalue),
             types.uint(50000000)], wallet_1.address);
-        call.result.expectOk().expectUint(200410892)
+        call.result.expectOk().expectUint(50300539)
 
 
         call = chain.callReadOnlyFn("yield-token-equation", "get-x-given-price", 
@@ -25,7 +25,7 @@ Clarinet.test({
             types.uint(testbalanceY),
             types.uint(testTvalue),
             types.uint(50000000)], wallet_1.address);
-        call.result.expectOk().expectUint(777658720000)
+        call.result.expectOk().expectUint(777777340000)
     
         call = chain.callReadOnlyFn("yield-token-equation", "get-token-given-position", 
         [types.uint(testbalanceX),
@@ -68,15 +68,21 @@ Clarinet.test({
                 let deployer = accounts.get("deployer")!;
                 let wallet_1 =accounts.get('wallet_1')!;
                 
+
             // SubTraction overflow triggered by void value
             let call = chain.callReadOnlyFn("yield-token-equation", "get-x-given-y", 
             [types.uint(testbalanceX),
                 types.uint(testbalanceY),
-                types.uint(1000000),
-                types.uint(1000000)], wallet_1.address);
-            call.result.expectErr().expectUint(5004)
+                types.uint(testTvalue),
+                types.uint(testbalanceY)], wallet_1.address);
+            call.result.expectErr().expectUint(4002)
                 
- 
+            call = chain.callReadOnlyFn("yield-token-equation", "get-x-given-y", 
+            [types.uint(testbalanceX),
+                types.uint(testbalanceY),
+                types.uint(testTvalue),
+                types.uint(testbalanceY+5)], wallet_1.address);
+            call.result.expectErr().expectUint(7003)
         
         
             },

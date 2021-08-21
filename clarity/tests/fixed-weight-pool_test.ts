@@ -69,14 +69,14 @@ Clarinet.test({
 
         // check whether weighted equation returns an appropriate value.
         result = FWPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 1000000000); //100
-        result.expectOk().expectUint(195587000)
+        result.expectOk().expectUint(196078600)
         
         // deployer swaps alextoken with usda token
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //20
         
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(200000000);
-            position['dy'].expectUint(39341400);
+            position['dy'].expectUint(39840900);
 
     },
 });
@@ -109,7 +109,7 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //2
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(190000000);
-            position['dy'].expectUint(37356800);
+            position['dy'].expectUint(37856400);
 
 
         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
@@ -168,12 +168,8 @@ Clarinet.test({
         // Internal Function call error due to max ratio error in weighted equation.
         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 2000000000000);
         result.expectErr().expectUint(1001);
-        
-        // Transfer Fails because ft-transfer blocks if the balance is 0
-        result = FWPTest.swapYForX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 0);
-        result.expectErr().expectUint(2003);
 
-        // result = FWPTest.swapYFor(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 0);
+        // result = FWPTest.swapYForX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 0);
         // result.expectOk().expectUint(2003);
 
     },

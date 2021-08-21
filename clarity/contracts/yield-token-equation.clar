@@ -10,6 +10,7 @@
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
 (define-constant math-call-err (err u4003))
+(define-constant insufficient-balance-err (err u7003))
 
 ;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8
@@ -38,6 +39,7 @@
 ;;
 ;; d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
+    (if (>= balance-x dx)
     (let 
         (
             (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
@@ -52,6 +54,8 @@
 
         (contract-call? .math-fixed-point sub-fixed balance-y (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)))
     )
+    insufficient-balance-err
+    )
 )
 
 ;; d_x = dx
@@ -61,6 +65,7 @@
 ;;
 ;; d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
+    (if (>= balance-y dy)
     (let 
         (
             (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))            
@@ -74,6 +79,8 @@
         (asserts! (< dy max-out) max-out-ratio-err)
 
         (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)) balance-x) 
+    )
+    insufficient-balance-err
     )
 )
 

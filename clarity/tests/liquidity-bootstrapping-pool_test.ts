@@ -70,13 +70,13 @@ Clarinet.test({
 
         // check whether weighted equation returns an appropriate value.
         result = LBPTest.getYgivenX(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 10000000); //0.1
-        result.expectOk().expectUint(985138)
+        result.expectOk().expectUint(990103)
         
         // deployer swaps alextoken with usda token
         result = LBPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 200000000); //20
         let position:any =result.expectOk().expectTuple();
             position['dx'].expectUint(200000000);
-            position['dy'].expectUint(16662485);
+            position['dy'].expectUint(16666665);
 
     },
 });
@@ -110,11 +110,11 @@ Clarinet.test({
         result = LBPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 200000000); 
         let position:any =result.expectOk().expectTuple();
         position['dx'].expectUint(190000000);
-        position['dy'].expectUint(15962171);
+        position['dy'].expectUint(15966386);
 
         result = LBPTest.swapYForX(deployer, gAlexTokenAddress, usdaTokenAddress, testExpiry, 10000000); 
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(151735080);
+        position['dx'].expectUint(151676389);
         position['dy'].expectUint(9500000);
 
         // Collect Fees - Fee Collection Floating Point
