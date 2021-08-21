@@ -172,12 +172,8 @@
 ;; public functions
 ;;
 
-(define-read-only (get-max-exp)
-  (ok MAX_NATURAL_EXPONENT)
-)
-
-(define-read-only (get-min-exp)
-  (ok MIN_NATURAL_EXPONENT)
+(define-read-only (get-exp-bound)
+  (ok MILD_EXPONENT_BOUND)
 )
 
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
@@ -194,9 +190,9 @@
       (if (is-eq x u0) 
         (ok u0)
         (pow-priv x y)
-     )
-   )
- )
+      )
+    )
+  )
 )
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
@@ -210,8 +206,8 @@
       ;; Fixed point division requires multiplying by ONE_8.
       (ok (/ (* ONE_8 ONE_8) (unwrap-panic (exp-pos (* -1 x)))))
       (exp-pos x)
-   )
- )
+    )
+  )
 )
 
 ;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.

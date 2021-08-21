@@ -42,7 +42,7 @@
         (
             (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
-            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))))            
+            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))            
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
             (x-dx-pow (unwrap-panic (contract-call? .math-fixed-point pow-down (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)) t-comp)))
@@ -65,7 +65,7 @@
         (
             (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))            
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
-            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))))            
+            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))            
             (x-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x t-comp)))
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
             (y-dy-pow (unwrap-panic (contract-call? .math-fixed-point pow-down (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)) t-comp)))
@@ -88,8 +88,8 @@
     (let 
         (
             (t-comp (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 t)))
-            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))))            
-            (max-exp (to-uint (unwrap-panic (contract-call? .math-log-exp get-max-exp))))
+            (t-comp-num (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down ONE_8 t-comp)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))            
+            (max-exp (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
             (numer (unwrap-panic (contract-call? .math-fixed-point add-fixed ONE_8 
                                     (unwrap-panic (contract-call? .math-fixed-point pow-down 
                                     (unwrap-panic (contract-call? .math-fixed-point div-down balance-y balance-x)) t-comp)))))

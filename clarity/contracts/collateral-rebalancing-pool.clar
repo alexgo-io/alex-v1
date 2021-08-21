@@ -83,6 +83,20 @@
 ;; private functions
 ;;
 
+(define-private (min (x uint) (y uint))
+    (if (< x y)
+        (ok x)
+        (ok y)
+    )
+)
+
+(define-private (max (x uint) (y uint))
+    (if (< x y)
+        (ok y)
+        (ok x)
+    )
+)
+
 ;; Approximation of Error Function using Abramowitz and Stegun
 ;; https://en.wikipedia.org/wiki/Error_function#Approximation_with_elementary_functions
 ;; Please note erf(x) equals -erf(-x)
@@ -217,7 +231,8 @@
                     (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
                     (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
                 )
-                (contract-call? .math-fixed-point div-up complement u200000000)
+                ;; make sure weight-x > 0 so it works with weighted-equation
+                (max (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err) u1)
             )
             (let
                 (
@@ -227,7 +242,8 @@
                     (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
                     (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
                 )
-                (contract-call? .math-fixed-point div-up complement u200000000)   
+                ;; make sure weight-x > 0 so it works with weighted-equation
+                (max (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err) u1)
             )
         )  
     )

@@ -24,6 +24,13 @@
 ;; private functions
 ;;
 
+(define-private (min (x uint) (y uint))
+    (if (< x y)
+        (ok x)
+        (ok y)
+    )
+)
+
 ;; public functions
 ;;
 ;;
@@ -53,7 +60,7 @@
                 (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-x denominator)))
-                (exponent (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)))
+                (exponent (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
                 (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))
             )
@@ -78,7 +85,7 @@
                 (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-y denominator)))
-                (exponent (unwrap-panic (contract-call? .math-fixed-point div-up weight-y weight-x)))
+                (exponent (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
                 (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))
             )
