@@ -66,7 +66,7 @@
 ;; Mint method for yield-usda-wbtc-4380
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-token-usda-pool-4380) (err err-not-authorized))
+    (asserts! (is-eq contract-caller .yield-token-pool-usda-wbtc) (err err-not-authorized))
     (ft-mint? yield-usda-wbtc-4380 amount recipient)
   )
 )
@@ -74,7 +74,7 @@
 ;; Burn method for yield-usda-wbtc-4380
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-token-usda-pool-4380) (err err-not-authorized))
+    (asserts! (is-eq contract-caller .yield-token-pool-usda-wbtc) (err err-not-authorized))
     (ft-burn? yield-usda-wbtc-4380 amount sender)
   )
 )

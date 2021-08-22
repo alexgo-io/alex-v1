@@ -44,8 +44,8 @@
     no-votes: uint,
     fee-collector: principal,
     new-fee-rate-token: uint,
-    new-fee-rate-aytoken: uint,
-    contract-changes: (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool)))
+    new-fee-rate-aytoken: uint
+    ;;contract-changes: (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool)))
   }
 )
 
@@ -87,6 +87,9 @@
 ;; Get proposal
 
 ;; Q: any particular reason why we fall back to default, rather than throw err?
+;; a : I thought it is better to keep like this since proposal needs to be voted for execution. 
+;;     Much more monotonous than adding all error for each elements.
+;;     If I don't set it, clarinet is going to throw an automatically error which blocks the contract deployment.
 (define-read-only (get-proposal-by-id (proposal-id uint))
   (default-to
     {
@@ -99,7 +102,6 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      contract-changes: (list { name: "", address: DEFAULT_OWNER, qualified-name: DEFAULT_OWNER, can-mint: false, can-burn: false} ),
       fee-collector: DEFAULT_OWNER,
       new-fee-rate-token: u0,    ;; Default token feerate
       new-fee-rate-aytoken: u0  ;; default aytoken feerate
@@ -110,7 +112,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <yield-token-trait>))
-    (is-eq (contract-of token) .pool-token-usda-ayusda)
+    (is-eq (contract-of token) .pool-token-ayusda-wbtc)
 )
 
 
@@ -121,6 +123,7 @@
     (start-block-height uint)
     (title (string-utf8 256))
     (url (string-utf8 256))
+    ;; Contract-Change to be removed after discussion
     (contract-changes (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
     (fee-collector principal)
     (new-fee-rate-token uint)
@@ -147,7 +150,6 @@
         end-block-height: (+ start-block-height u1440),
         yes-votes: u0,
         no-votes: u0,
-        contract-changes: contract-changes,
         fee-collector: fee-collector,
         new-fee-rate-token: new-fee-rate-token,
         new-fee-rate-aytoken: new-fee-rate-aytoken
@@ -267,7 +269,7 @@
 (define-private (execute-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
   (let (
     (proposal (get-proposal-by-id proposal-id))
-    (contract-changes (get contract-changes proposal))
+    ;;(contract-changes (get contract-changes proposal))
     (new-fee-rate-token (get new-fee-rate-token proposal))
     (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))
     (collector-address (get fee-collector proposal))
@@ -278,53 +280,56 @@
     (try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))
     (try! (contract-call? .yield-token-pool set-fee-to-address aytoken collector-address))
     
-    (if (> (len contract-changes) u0)
-      (begin
-        (map execute-proposal-change-contract contract-changes)
-        (ok true)
-      )
-      ;; Q: throwing err because no contract-changes is wrong?
-      no-contract-changes-err
-    )
+    ;; (if (> (len contract-changes) u0)
+    ;;   (begin
+    ;;     (map execute-proposal-change-contract contract-changes)
+    ;;     (ok true)
+    ;;   )
+    ;;   ;; Q: throwing err because no contract-changes is wrong?
+    ;;   ;; A: because there is no contract changes occured so it throws error. 
+    ;;   no-contract-changes-err
+    ;; )
     ;; (and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
     ;; (ok true)
     ;; no-contract-changes-err
+    (ok true)
   )
 )
 
 ;; Helper to execute proposal and change contracts
-(define-private (execute-proposal-change-contract (change (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
-  (let (
-    (name (get name change))
-    (address (get address change))
-    (qualified-name (get qualified-name change))
-    (can-mint (get can-mint change))
-    (can-burn (get can-burn change))
-  )
-    (if (not (is-eq name "")) ;; Q: shouln't this trow an err, rather than (ok false)?
-      (begin
-        (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
-        (ok true)
-      )
-      (ok false)
-    )
-  )
-)
+;; (define-private (execute-proposal-change-contract (change (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+;;   (let (
+;;     (name (get name change))
+;;     (address (get address change))
+;;     (qualified-name (get qualified-name change))
+;;     (can-mint (get can-mint change))
+;;     (can-burn (get can-burn change))
+;;   )
+;;     (if (not (is-eq name "")) ;; Q: shouln't this trow an err, rather than (ok false)? A : Agree, but seems like not required anymore.
+;;       (begin
+;;         (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+;;         (ok true)
+;;       )
+;;       (ok false)
+;;     )
+;;   )
+;; )
 
 ;; Q: who can call this?
+;; A : Should have been discussed whether it should be selected by vote or some admin principal. But not required if there is no registry.
 ;; adds a new contract, only new ones allowed
 ;; Things to be discussed
-(define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))
-  (begin
-    ;; Who can add the contract to the registry
-    ;;(asserts! (is-eq tx-sender (contract-call? .alex-multisig-dao get-dao-owner)) (err authorisation-err))
+;; (define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))
+;;   (begin
+;;     ;; Who can add the contract to the registry
+;;     ;;(asserts! (is-eq tx-sender (contract-call? .alex-multisig-dao get-dao-owner)) (err authorisation-err))
 
-    (if (is-some (contract-call? .alex-multisig-registry get-contract-address-by-name name))
-      (ok false)
-      (begin
-        (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
-        (ok true)
-      )
-    )
-  )
-)
+;;     (if (is-some (contract-call? .alex-multisig-registry get-contract-address-by-name name))
+;;       (ok false)
+;;       (begin
+;;         (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+;;         (ok true)
+;;       )
+;;     )
+;;   )
+;; )
