@@ -77,7 +77,13 @@
             (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point add-fixed x-pow y-pow)) y-dy-pow)))            
         )
         (asserts! (< dy max-out) max-out-ratio-err)
-
+        ;; (print x-pow)
+        ;; (print y-pow)
+        ;; (print y-dy-pow)
+        ;; (print term)
+        ;; (print t-comp-num)
+        ;; (print balance-x)
+        ;; (ok u1)
         (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)) balance-x) 
     )
     insufficient-balance-err

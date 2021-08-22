@@ -2,8 +2,7 @@
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 
-;; yield-token-pool for ayUSDA / USDA 
-
+;; yield-token-pool
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant invalid-pool-err (err u2001))
@@ -26,6 +25,11 @@
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
 (define-constant authorisation-err (err u1000))
+(define-constant get-oracle-price-fail-err (err u7000))
+(define-constant get-symbol-fail-err (err u6000))
+
+;; TODO: need to be defined properly
+(define-constant oracle-src "nothing")
 
 ;; data maps and vars
 (define-map pools-map
@@ -65,14 +69,20 @@
 (define-read-only (get-t (expiry uint))
     (let
         (
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
+            (now (* block-height ONE_8)) ;; convert current block-height to fixed point integer
         )
-        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
-        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
+        (asserts! (>= (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (>= (var-get max-expiry) now) invalid-expiry-err)
 
-        (ok (unwrap! (contract-call? .math-fixed-point div-down 
-                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
-                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
+        ;; add a small number to make sure get-t < 1
+        (let
+            (
+                (max-expiry-delta (unwrap! (contract-call? .math-fixed-point add-fixed (var-get max-expiry) u1) math-call-err))
+            )
+            (ok (unwrap! (contract-call? .math-fixed-point div-down 
+                    (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                    (unwrap! (contract-call? .math-fixed-point sub-fixed max-expiry-delta now) math-call-err)) math-call-err))
+        )
     )
 )
 
@@ -81,15 +91,7 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-    (let
-        (
-            (pool (map-get? pools-map {pool-id: pool-id}))
-       )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-       )
-   )
+    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) invalid-pool-err))
 )
 
 (define-read-only (get-pools)
@@ -101,13 +103,26 @@
     (let 
         (
             (aytoken (contract-of the-aytoken))            
-            (pool (map-get? pools-data-map { aytoken: aytoken }))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
        )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-       )
-   )
+        (ok pool)
+    )
+)
+
+(define-public (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (balance-token (get balance-token pool))
+            (balance-aytoken (get balance-aytoken pool))
+            (token-symbol (unwrap! (contract-call? the-token get-symbol) get-symbol-fail-err))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) math-call-err))
+        )
+
+        (contract-call? .math-fixed-point mul-up balance token-price)
+    )
 )
 
 ;; note yield is not annualised
@@ -231,6 +246,7 @@
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         ;; Failure. 
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        ;;(try! (contract-call? .alex-multisig-registry mint-token the-pool-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -266,7 +282,7 @@
 
             (map-set pools-data-map { aytoken: aytoken } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
-
+            ;;(try! (contract-call? .alex-multisig-registry burn-token the-pool-token new-supply tx-sender))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
         )    
@@ -492,6 +508,9 @@
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
+        ;; (print balance-token)
+        ;; (print balance-aytoken)
+        ;; (ok u1)
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
     )
 )
