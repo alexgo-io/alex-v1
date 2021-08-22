@@ -283,7 +283,7 @@
       )
       no-contract-changes-err
     )
-    ;;(and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
+    ;; (and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
     ;; (ok true)
     ;; no-contract-changes-err
   )

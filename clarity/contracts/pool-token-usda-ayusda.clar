@@ -45,7 +45,7 @@
 )
 
 (define-read-only (get-token-uri)
-  (ok (some u"https://arkadiko.finance/tokens/diko-usda-token.json"))
+  (ok (some u"https://docs.alexgo.io/"))
 )
 
 
