@@ -85,6 +85,8 @@
 )
 
 ;; Get proposal
+
+;; Q: any particular reason why we fall back to default, rather than throw err?
 (define-read-only (get-proposal-by-id (proposal-id uint))
   (default-to
     {
@@ -281,6 +283,7 @@
         (map execute-proposal-change-contract contract-changes)
         (ok true)
       )
+      ;; Q: throwing err because no contract-changes is wrong?
       no-contract-changes-err
     )
     ;;(and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
@@ -298,7 +301,7 @@
     (can-mint (get can-mint change))
     (can-burn (get can-burn change))
   )
-    (if (not (is-eq name ""))
+    (if (not (is-eq name "")) ;; Q: shouln't this trow an err, rather than (ok false)?
       (begin
         (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
         (ok true)
@@ -308,6 +311,7 @@
   )
 )
 
+;; Q: who can call this?
 ;; adds a new contract, only new ones allowed
 ;; Things to be discussed
 (define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))

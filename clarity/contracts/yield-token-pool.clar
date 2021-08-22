@@ -71,18 +71,12 @@
         (
             (now (* block-height ONE_8)) ;; convert current block-height to fixed point integer
         )
-        (asserts! (>= (var-get max-expiry) expiry) invalid-expiry-err)
-        (asserts! (>= (var-get max-expiry) now) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
 
-        ;; add a small number to make sure get-t < 1
-        (let
-            (
-                (max-expiry-delta (unwrap! (contract-call? .math-fixed-point add-fixed (var-get max-expiry) u1) math-call-err))
-            )
-            (ok (unwrap! (contract-call? .math-fixed-point div-down 
-                    (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
-                    (unwrap! (contract-call? .math-fixed-point sub-fixed max-expiry-delta now) math-call-err)) math-call-err))
-        )
+        (ok (unwrap! (contract-call? .math-fixed-point div-down
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
     )
 )
 
@@ -198,8 +192,8 @@
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
 
-        ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry.
-        (var-set max-expiry (if (< (var-get max-expiry) expiry) expiry (var-get max-expiry)))
+        ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
+        (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (contract-call? .math-fixed-point add-fixed expiry ONE_8) math-call-err) (var-get max-expiry)))
 
         ;;(print dx)
         (try! (add-to-position the-aytoken the-token the-pool-token dx))
