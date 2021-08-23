@@ -194,8 +194,6 @@
 
         ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
         (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (contract-call? .math-fixed-point add-fixed expiry ONE_8) math-call-err) (var-get max-expiry)))
-        (print expiry)
-        (print (var-get max-expiry))
         (try! (add-to-position the-aytoken the-token the-pool-token dx))
 
         (print { object: "pool", action: "created", data: pool-data })
@@ -360,7 +358,6 @@
         (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
         (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err))
 
-        (print dy)
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })

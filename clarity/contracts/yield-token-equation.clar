@@ -75,7 +75,6 @@
             (y-pow (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y t-comp)))
             (y-dy-pow (unwrap-panic (contract-call? .math-fixed-point pow-down (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)) t-comp)))
             (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point add-fixed x-pow y-pow)) y-dy-pow)))            
-            (check (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)))
         )
         (asserts! (< dy max-out) max-out-ratio-err)
         (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)) balance-x) 
