@@ -71,18 +71,12 @@
         (
             (now (* block-height ONE_8)) ;; convert current block-height to fixed point integer
         )
-        (asserts! (>= (var-get max-expiry) expiry) invalid-expiry-err)
-        (asserts! (>= (var-get max-expiry) now) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
 
-        ;; add a small number to make sure get-t < 1
-        (let
-            (
-                (max-expiry-delta (unwrap! (contract-call? .math-fixed-point add-fixed (var-get max-expiry) u1) math-call-err))
-            )
-            (ok (unwrap! (contract-call? .math-fixed-point div-down 
-                    (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
-                    (unwrap! (contract-call? .math-fixed-point sub-fixed max-expiry-delta now) math-call-err)) math-call-err))
-        )
+        (ok (unwrap! (contract-call? .math-fixed-point div-down
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
     )
 )
 
@@ -198,10 +192,10 @@
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
         (var-set pool-count pool-id)
 
-        ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry.
-        (var-set max-expiry (if (< (var-get max-expiry) expiry) expiry (var-get max-expiry)))
-
-        ;;(print dx)
+        ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
+        (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (contract-call? .math-fixed-point add-fixed expiry ONE_8) math-call-err) (var-get max-expiry)))
+        (print expiry)
+        (print (var-get max-expiry))
         (try! (add-to-position the-aytoken the-token the-pool-token dx))
 
         (print { object: "pool", action: "created", data: pool-data })
@@ -366,6 +360,7 @@
         (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
         (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err))
 
+        (print dy)
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
@@ -400,7 +395,6 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
         
-        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true)
     
@@ -413,7 +407,6 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
@@ -425,7 +418,6 @@
             (aytoken (contract-of the-aytoken))    
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map 
             { 
                 aytoken: aytoken 
@@ -508,9 +500,10 @@
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
-        ;; (print balance-token)
-        ;; (print balance-aytoken)
-        ;; (ok u1)
+         ;;(print balance-token)
+         ;;(print balance-aytoken)
+         ;;(print normalized-expiry)
+         ;;(ok u1)
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
     )
 )
