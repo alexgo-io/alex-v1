@@ -69,7 +69,7 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;;(asserts! (is-eq contract-caller .yield-token-pool-usda-wbtc) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
     (ft-mint? ayusda-wbtc amount recipient)
   )
 )
@@ -83,7 +83,7 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;;(asserts! (is-eq contract-caller .yield-token-pool-usda-wbtc) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
     (ft-burn? ayusda-wbtc amount recipient)
   )
 )
