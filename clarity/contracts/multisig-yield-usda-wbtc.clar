@@ -112,7 +112,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <yield-token-trait>))
-    (is-eq (contract-of token) .pool-token-ayusda-wbtc)
+    (is-eq (contract-of token) .pool-token-yield-usda-wbtc-4380)
 )
 
 

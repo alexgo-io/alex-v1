@@ -10,11 +10,8 @@ import {
 
 // Deployer Address Constants 
 const wBTCTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
-const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
-const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-alex-18530"
-const ayUsdawBTCPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-ayusda-wbtc"
-const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-wbtc-4380"
-const keyUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-wbtc-4380"
+const ayUsdawBTCPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-yield-usda-wbtc"
+const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-4380"
 
 const ONE_8 = 100000000
 const expiry = 4380 * ONE_8  // 1 month  
@@ -85,7 +82,7 @@ Clarinet.test({
         call.result.expectOk();
 
         // Get weight for testing swap - internal test
-        call = chain.callReadOnlyFn("yield-token-pool-usda-wbtc", "get-t", 
+        call = chain.callReadOnlyFn("yield-usda-pool", "get-t", 
             [types.uint(testExpiry)
             ], wallet_1.address);
         call.result.expectOk().expectUint(99977163)
@@ -95,7 +92,7 @@ Clarinet.test({
         result.expectErr().expectUint(2016)
         
         // get Yield - internal
-        call = chain.callReadOnlyFn("yield-token-pool-usda-wbtc", "get-yield", 
+        call = chain.callReadOnlyFn("yield-usda-pool", "get-yield", 
             [types.principal(ayUsda4380TokenAddress)
             ], wallet_1.address);
         call.result.expectOk().expectUint(0)
@@ -111,7 +108,7 @@ Clarinet.test({
             position['dy'].expectUint(100000000);
 
         // Then now the yield is non-zero
-        call = chain.callReadOnlyFn("yield-token-pool-usda-wbtc", "get-yield", 
+        call = chain.callReadOnlyFn("yield-usda-pool", "get-yield", 
         [types.principal(ayUsda4380TokenAddress)
         ], wallet_1.address);
         call.result.expectOk().expectUint(1788650)
@@ -166,7 +163,7 @@ Clarinet.test({
             position['dy'].expectUint(1000000000);
 
         // Then now the yield is non-zero
-        call = chain.callReadOnlyFn("yield-token-pool-usda-wbtc", "get-yield", 
+        call = chain.callReadOnlyFn("yield-usda-pool", "get-yield", 
         [types.principal(ayUsda4380TokenAddress)
         ], wallet_1.address);
         call.result.expectOk().expectUint(19193578)
