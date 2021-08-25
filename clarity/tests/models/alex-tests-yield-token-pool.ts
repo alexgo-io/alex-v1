@@ -16,32 +16,32 @@ import {
     }
     
     getT(expiry: number) {
-      return this.chain.callReadOnlyFn("yield-usda-pool", "get-t", [
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-t", [
         types.uint(expiry)
       ], this.deployer.address);
     }
 
     getYield(aytoken: string) {
-        return this.chain.callReadOnlyFn("yield-usda-pool", "get-yield", [
+        return this.chain.callReadOnlyFn("yield-token-pool", "get-yield", [
           types.principal(aytoken)
         ], this.deployer.address);
       }
 
     getPrice(aytoken: string) {
-        return this.chain.callReadOnlyFn("yield-usda-pool", "get-price", [
+        return this.chain.callReadOnlyFn("yield-token-pool", "get-price", [
           types.principal(aytoken)
         ], this.deployer.address);
       }
 
       getPoolDetails(aytoken: string) {
-        return this.chain.callReadOnlyFn("yield-usda-pool", "get-pool-details", [
+        return this.chain.callReadOnlyFn("yield-token-pool", "get-pool-details", [
           types.principal(aytoken)
         ], this.deployer.address);
       }
 
     createPool(user: Account, aytoken: string, token: string, pooltoken: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "create-pool", [
+        Tx.contractCall("yield-token-pool", "create-pool", [
           types.principal(aytoken),
           types.principal(token),
           types.principal(pooltoken),
@@ -54,7 +54,7 @@ import {
   
     addToPosition(user: Account, aytoken: string, token: string, pooltoken: string, dX: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("yield-usda-pool", "add-to-position", [
+          Tx.contractCall("yield-token-pool", "add-to-position", [
             types.principal(aytoken),
             types.principal(token),
             types.principal(pooltoken),
@@ -66,7 +66,7 @@ import {
   
       reducePosition(user: Account, aytoken: string, token: string, pooltoken: string, percent: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("yield-usda-pool", "reduce-position", [
+          Tx.contractCall("yield-token-pool", "reduce-position", [
             types.principal(aytoken),
             types.principal(token),
             types.principal(pooltoken),
@@ -78,7 +78,7 @@ import {
   
     swapXForY(user: Account, aytoken: string, token: string, dX: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "swap-x-for-y", [
+        Tx.contractCall("yield-token-pool", "swap-x-for-y", [
           types.principal(aytoken),
           types.principal(token),
           types.uint(dX)
@@ -89,7 +89,7 @@ import {
   
     swapYForX(user: Account, aytoken: string, token: string, dY: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("yield-usda-pool", "swap-y-for-x", [
+          Tx.contractCall("yield-token-pool", "swap-y-for-x", [
             types.principal(aytoken),
             types.principal(token),
             types.uint(dY)
@@ -100,7 +100,7 @@ import {
   
     getYgivenX(user: Account, aytoken: string, dX: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "get-y-given-x", [
+        Tx.contractCall("yield-token-pool", "get-y-given-x", [
           types.principal(aytoken),
           types.uint(dX)
         ], user.address),
@@ -110,7 +110,7 @@ import {
     
     getXgivenY(user: Account, aytoken: string, dY: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("yield-usda-pool", "get-x-given-y", [
+          Tx.contractCall("yield-token-pool", "get-x-given-y", [
             types.principal(aytoken),
             types.uint(dY)
           ], user.address),
@@ -121,7 +121,7 @@ import {
 
     setFeetoAddress(user: Account, aytoken: string, address: string) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "set-fee-to-address", [
+        Tx.contractCall("yield-token-pool", "set-fee-to-address", [
           types.principal(aytoken),
           types.principal(address) 
         ], user.address),
@@ -131,7 +131,7 @@ import {
   
     getFeetoAddress(user: Account, aytoken: string) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "get-fee-to-address", [
+        Tx.contractCall("yield-token-pool", "get-fee-to-address", [
           types.principal(aytoken)
         ], user.address),
       ]);
@@ -140,7 +140,7 @@ import {
   
     collectFees(user: Account, aytoken: string, token: string) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "collect-fees", [
+        Tx.contractCall("yield-token-pool", "collect-fees", [
             types.principal(aytoken),
             types.principal(token),
         ], user.address),
@@ -150,7 +150,7 @@ import {
 
     setFeeRateToken(user: Account, aytoken: string, feerate:number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "set-fee-rate-token", [
+        Tx.contractCall("yield-token-pool", "set-fee-rate-token", [
           types.principal(aytoken),
           types.uint(feerate)
         ], user.address),
@@ -160,7 +160,7 @@ import {
   
     setFeeRateayToken(user: Account, aytoken: string, feerate:number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "set-fee-rate-aytoken", [
+        Tx.contractCall("yield-token-pool", "set-fee-rate-aytoken", [
           types.principal(aytoken),
           types.uint(feerate)
         ], user.address),
@@ -170,7 +170,7 @@ import {
 
     getFeeRateToken(user: Account, aytoken: string) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "get-fee-rate-token", [
+        Tx.contractCall("yield-token-pool", "get-fee-rate-token", [
           types.principal(aytoken)
         ], user.address),
       ]);
@@ -179,7 +179,7 @@ import {
 
     getFeeRateayToken(user: Account, aytoken: string) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("yield-usda-pool", "get-fee-rate-aytoken", [
+        Tx.contractCall("yield-token-pool", "get-fee-rate-aytoken", [
           types.principal(aytoken)
         ], user.address),
       ]);

@@ -82,7 +82,7 @@ Clarinet.test({
         call.result.expectOk();
 
         // Get weight for testing swap - internal test
-        call = chain.callReadOnlyFn("yield-usda-pool", "get-t", 
+        call = chain.callReadOnlyFn("yield-token-pool", "get-t", 
             [types.uint(testExpiry)
             ], wallet_1.address);
         call.result.expectOk().expectUint(99977163)
@@ -92,7 +92,7 @@ Clarinet.test({
         result.expectErr().expectUint(2016)
         
         // get Yield - internal
-        call = chain.callReadOnlyFn("yield-usda-pool", "get-yield", 
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
             [types.principal(ayUsda4380TokenAddress)
             ], wallet_1.address);
         call.result.expectOk().expectUint(0)
@@ -108,7 +108,7 @@ Clarinet.test({
             position['dy'].expectUint(100000000);
 
         // Then now the yield is non-zero
-        call = chain.callReadOnlyFn("yield-usda-pool", "get-yield", 
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
         [types.principal(ayUsda4380TokenAddress)
         ], wallet_1.address);
         call.result.expectOk().expectUint(1788650)
@@ -163,7 +163,7 @@ Clarinet.test({
             position['dy'].expectUint(1000000000);
 
         // Then now the yield is non-zero
-        call = chain.callReadOnlyFn("yield-usda-pool", "get-yield", 
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
         [types.principal(ayUsda4380TokenAddress)
         ], wallet_1.address);
         call.result.expectOk().expectUint(19193578)
