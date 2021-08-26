@@ -361,6 +361,7 @@
         (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
         (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err))
 
+        (print dy)
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
@@ -395,7 +396,6 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
         
-        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true)
     
@@ -408,7 +408,6 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
@@ -420,7 +419,6 @@
             (aytoken (contract-of the-aytoken))    
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
         (map-set pools-data-map 
             { 
                 aytoken: aytoken 
@@ -503,6 +501,10 @@
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
+         ;;(print balance-token)
+         ;;(print balance-aytoken)
+         ;;(print normalized-expiry)
+         ;;(ok u1)
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
     )
 )

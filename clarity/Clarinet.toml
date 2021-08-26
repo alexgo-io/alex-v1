@@ -124,7 +124,3 @@ depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-l
 [contracts.multisig-yield-usda-wbtc]
 path = "contracts/multisig-yield-usda-wbtc.clar"
 depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool"]
-
-[contracts.yield-usda-pool]
-path = "contracts/yield-usda-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation", "trait-yield-token"]
