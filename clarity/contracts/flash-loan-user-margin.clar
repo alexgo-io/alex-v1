@@ -25,9 +25,6 @@
 (define-constant expiry-err (err u2017))
 (define-constant get-balance-fail-err (err u6001))
 
-;; flash loan fee rate
-(define-data-var flash-loan-fee-rate uint u100000) ;;0.001%
-
 (define-public (execute-margin-trade (token <ft-trait>) (collateral <ft-trait>) (yield-token <yield-token-trait>) (key-token <yield-token-trait>) (expiry uint) (dx uint))
     (let
         (
@@ -36,7 +33,8 @@
             (borrow (unwrap! (contract-call? .math-fixed-point mul-up dx ltv) math-call-err))
             (margin (unwrap! (contract-call? .math-fixed-point sub-fixed dx borrow) math-call-err))
             (pre-bal-borrow (try! (contract-call? collateral get-balance (as-contract .alex-vault))))
-            (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) math-call-err))
+            (fee (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))
+            (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 fee) math-call-err))
             (borrow-with-fee (unwrap! (contract-call? .math-fixed-point mul-up borrow fee-with-principal) math-call-err))
         )
 

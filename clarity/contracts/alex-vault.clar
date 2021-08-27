@@ -19,7 +19,16 @@
 (define-constant internal-function-call-err (err u1001))
 
 ;; flash loan fee rate
-(define-data-var flash-loan-fee-rate uint u0)
+(define-data-var flash-loan-fee-rate uint u100000) ;;0.001%
+
+(define-read-only (get-flash-loan-fee-rate)
+  (ok (var-get flash-loan-fee-rate))
+)
+
+;; TODO: multisig
+(define-public (set-flash-loan-fee-rate (fee uint))
+  (ok (var-set flash-loan-fee-rate fee))
+)
 
 ;; return token balance held by vault
 (define-public (get-balance (token <ft-trait>))
