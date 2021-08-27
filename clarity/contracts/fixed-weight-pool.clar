@@ -56,6 +56,8 @@
   }
 )
 
+(define-data-var rebate-rate uint u50000000) ;;50%
+
 (define-data-var pool-count uint u0)
 (define-data-var pools-list (list 2000 uint) (list))
 
@@ -426,10 +428,14 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
+            ;; determine spot-token-x-in-ALEX
+            ;; determine spot-token-y-in-ALEX
+            ;; determine rebate-in-ALEX
         )
 
-        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault address none) transfer-y-failed-err))
+        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault .alex-reserve-pool none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault .alex-reserve-pool none) transfer-y-failed-err))
+        ;;(and (or (> fee-x u0) (> fee-y u0)) (contract-call? .token-alex mint rebate-in-alex address))
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
@@ -523,4 +529,13 @@
         )
         (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)
     )
+)
+
+(define-read-only (get-rebate-rate)
+    (ok (var-get rebate-rate))
+)
+
+;; TODO: only ALEX multisig is authorised
+(define-public (set-rebate-rate (rate uint))
+    (ok (var-set rebate-rate rate))
 )
