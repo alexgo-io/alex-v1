@@ -1,0 +1,1277 @@
+
+Unfinished stack: 1 items remaining starting at (128, 1)
+Error: Parsing error: List expressions (..) left opened.
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+
+;; yield-token-pool
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant invalid-balance-err (err u2008))
+(define-constant invalid-token-err (err u2007))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
+(define-constant invalid-expiry-err (err u2009))
+(define-constant fixed-point-err (err 5014))
+(define-constant internal-function-call-err (err u1001))
+(define-constant math-call-err (err u2010))
+(define-constant get-expiry-fail-err (err u2013))
+(define-constant aytoken-equation-call-err (err u2014))
+(define-constant dy-bigger-than-available-err (err u2016))
+(define-constant authorisation-err (err u1000))
+(define-constant get-oracle-price-fail-err (err u7000))
+(define-constant get-symbol-fail-err (err u6000))
+
+;; TODO: need to be defined properly
+(define-constant oracle-src "nothing")
+
+;; data maps and vars
+(define-map pools-map
+  { pool-id: uint }
+  {
+    aytoken: principal, ;; aytoken, dy
+  }
+)
+
+(define-map pools-data-map
+  {
+    aytoken: principal    
+  }
+  {
+    total-supply: uint,    
+    balance-token: uint, ;; dx    
+    balance-aytoken: uint, ;; dy_actual
+    balance-virtual: uint, ;; dy_virtual
+    fee-balance-token: uint,    
+    fee-balance-aytoken: uint,
+    fee-to-address: principal,
+    pool-token: principal,
+    fee-rate-token: uint,    
+    fee-rate-aytoken: uint,
+    token-symbol: (string-ascii 32),
+    expiry: uint
+  }
+)
+
+(define-data-var pool-count uint u0)
+(define-data-var pools-list (list 2000 uint) (list))
+
+(define-data-var max-expiry uint u0)
+
+(define-read-only (get-max-expiry)
+    (ok (var-get max-expiry))
+)
+
+(define-read-only (get-t (expiry uint))
+    (let
+        (
+            (now (* block-height ONE_8)) ;; convert current block-height to fixed point integer
+        )
+        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
+
+        (ok (unwrap! (contract-call? .math-fixed-point div-down
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
+    )
+)
+
+(define-read-only (get-pool-count)
+    (ok (var-get pool-count))
+)
+
+(define-read-only (get-pool-contracts (pool-id uint))
+    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) invalid-pool-err))
+)
+
+(define-read-only (get-pools)
+    (ok (map get-pool-contracts (var-get pools-list)))
+)
+
+;; additional functions
+(define-read-only (get-pool-details (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))            
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+       )
+        (ok pool)
+    )
+)
+
+(define-read-only (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (balance-token (get balance-token pool))
+            (balance-aytoken (get balance-aytoken pool))
+            (token-symbol (get token-symbol pool))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) math-call-err))
+        )
+
+        (contract-call? .math-fixed-point mul-up balance token-price)
+    )
+)
+
+;; note yield is not annualised
+;; b_y = balance-aytoken
+;; b_x = balance-token
+;; yield = ln(b_y/b_x)
+(define-read-only (get-yield (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (expiry (get expiry pool)
+            (balance-token (get balance-token pool))            
+            (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
+        )
+
+        (asserts! (>= balance-aytoken balance-token) invalid-balance-err)
+
+        (ok (to-uint (unwrap! (contract-call? .math-log-exp ln-fixed (to-int base)) math-call-err)))
+    )
+)
+
+;; get-price
+;; b_y = balance-aytoken
+;; b_x = balance-token
+;; price = (b_y / b_x) ^ t
+(define-read-only (get-price (the-aytoken <yield-token-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (expiry (get expiry pool))
+            (balance-token (get balance-token pool)) 
+            (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
+            (t-value (unwrap! (get-t expiry) internal-function-call-err))
+    
+            (price (unwrap! (contract-call? .math-fixed-point pow-up base t-value) math-call-err))
+        )
+
+        (asserts! (> balance-aytoken balance-token) invalid-balance-err)
+
+        (ok price)
+    )
+)
+
+(define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+    (let
+        (
+            (aytoken (contract-of the-aytoken))            
+            (pool-id (+ (var-get pool-count) u1))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (pool-data {
+                total-supply: u0,
+                balance-token: u0,                
+                balance-aytoken: u0,
+                balance-virtual: u0,
+                fee-balance-aytoken: u0,
+                fee-balance-token: u0,
+                fee-to-address: (contract-of the-pool-token),
+                pool-token: (contract-of the-pool-token),
+                fee-rate-aytoken: u0,
+                fee-rate-token: u0,
+                token-symbol: (unwrap! (contract-call? the-token get-symbol) get-symbol-fail-err),
+                expiry: (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err)           
+            })
+        )
+        (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) pool-already-exists-err)
+        
+        (map-set pools-map { pool-id: pool-id } { aytoken: aytoken })
+        (map-set pools-data-map { aytoken: aytoken } pool-data)
+        
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pool-count pool-id)
+
+        ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
+        (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (contract-call? .math-fixed-point add-fixed expiry ONE_8) math-call-err) (var-get max-expiry)))
+        (try! (add-to-position the-aytoken the-token the-pool-token dx))
+
+        (print { object: "pool", action: "created", data: pool-data })
+        (ok true)
+   )
+)
+
+(define-public (add-to-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (balance-token (get balance-token pool))            
+            (balance-aytoken (get balance-aytoken pool))
+            (balance-virtual (get balance-virtual pool))
+            (total-supply (get total-supply pool))
+            (add-data (unwrap! (get-token-given-position the-aytoken dx) internal-function-call-err))
+            (new-supply (get token add-data))
+            (new-dy-act (get dy-act add-data))
+            (new-dy-vir (get dy-vir add-data))
+            (pool-updated (merge pool {
+                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
+                balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed balance-token dx) math-call-err),
+                balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed balance-aytoken new-dy-act) math-call-err),
+                balance-virtual: (unwrap! (contract-call? .math-fixed-point add-fixed balance-virtual new-dy-vir) math-call-err)   
+            }))
+        )
+
+        ;; dx must be greater than zero
+        ;; at least one of dy must be greater than zero
+        (asserts! (and (> dx u0) (or (> new-dy-act u0) (> new-dy-vir u0))) invalid-liquidity-err)
+
+        ;; send x to vault
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err))
+
+        ;; send y to vault
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none)) transfer-y-failed-err)
+        (and (> new-dy-act u0) (unwrap! (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none) transfer-y-failed-err))
+        
+        ;; mint pool token and send to tx-sender
+        (map-set pools-data-map { aytoken: aytoken } pool-updated)
+        ;; Failure. 
+        (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        ;;(try! (contract-call? .alex-multisig-registry mint-token the-pool-token new-supply tx-sender))
+        (print { object: "pool", action: "liquidity-added", data: pool-updated })
+        (ok true)
+   )
+)    
+
+(define-public (reduce-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
+    (if (<= percent ONE_8)
+        (let
+            (
+                (aytoken (contract-of the-aytoken))
+                (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+                (balance-token (get balance-token pool))
+                (balance-aytoken (get balance-aytoken pool))
+                (balance-virtual (get balance-virtual pool))                
+                (total-supply (get total-supply pool))
+                (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent) math-call-err))
+                (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) internal-function-call-err))
+                (dx (get dx reduce-data))
+                (dy-act (get dy-act reduce-data))
+                (dy-vir (get dy-vir reduce-data))
+                (pool-updated (merge pool {
+                    total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                    balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-token dx) math-call-err),
+                    balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-aytoken dy-act) math-call-err),                    
+                    balance-virtual: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-virtual dy-vir) math-call-err),                    
+                    })
+                )
+            )
+            ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+            ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none)) transfer-y-failed-err)
+            (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+            (and (> dy-act u0) (unwrap! (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none) transfer-y-failed-err))
+
+            (map-set pools-data-map { aytoken: aytoken } pool-updated)
+            (try! (contract-call? the-pool-token burn tx-sender shares))
+            ;;(try! (contract-call? .alex-multisig-registry burn-token the-pool-token new-supply tx-sender))
+            (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+            (ok {dx: dx, dy: dy-act})
+        )    
+        percent-greater-than-one
+    )    
+)
+
+(define-public (swap-x-for-y (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dx uint))
+    
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (fee-rate-aytoken (get fee-rate-aytoken pool))
+
+            ;; lambda ~= 1 - fee-rate-aytoken * yield
+            (yield (unwrap! (get-yield the-aytoken) internal-function-call-err))
+            (fee-yield (unwrap! (contract-call? .math-fixed-point mul-down yield fee-rate-aytoken) math-call-err))
+            (lambda (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 fee-yield) math-call-err))
+            (dx-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dx lambda) math-call-err))
+            (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-net-fees) math-call-err))
+
+            (dy (unwrap! (get-y-given-x the-aytoken dx-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-token pool) dx-net-fees) math-call-err),
+                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-aytoken pool) dy) math-call-err),
+                        fee-balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-token pool) fee) math-call-err)
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err))
+        (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy .alex-vault tx-sender none) transfer-y-failed-err))
+
+        ;; post setting
+        (map-set pools-data-map { aytoken: aytoken } pool-updated)
+        (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+        (ok {dx: dx-net-fees, dy: dy})
+    )
+)
+
+(define-public (swap-y-for-x (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dy uint))
+
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (fee-rate-token (get fee-rate-token pool))
+
+            ;; lambda ~= 1 - fee-rate-token * yield
+            (yield (unwrap! (get-yield the-aytoken) internal-function-call-err))
+            (fee-yield (unwrap! (contract-call? .math-fixed-point mul-down yield fee-rate-token) math-call-err))
+            (lambda (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 fee-yield) math-call-err))
+            (dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dy lambda) math-call-err))
+            (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-net-fees) math-call-err))
+
+            (dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-token pool) dx) math-call-err),                        
+                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) dy-net-fees) math-call-err),
+                        fee-balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-aytoken pool) fee) math-call-err)
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+        (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err))
+
+        ;; post setting
+        (map-set pools-data-map { aytoken: aytoken } pool-updated)
+        (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+        (ok {dx: dx, dy: dy-net-fees})
+    )
+)
+
+(define-read-only (get-fee-rate-aytoken (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok (get fee-rate-aytoken pool))
+    )
+)
+
+(define-read-only (get-fee-rate-token (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok (get fee-rate-token pool))
+    )
+)
+
+(define-public (set-fee-rate-aytoken (the-aytoken <yield-token-trait>) (fee-rate-aytoken uint))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
+        (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
+        (ok true)
+    
+    )
+)
+
+(define-public (set-fee-rate-token (the-aytoken <yield-token-trait>) (fee-rate-token uint))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
+        (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
+        (ok true) 
+    )
+)
+
+(define-public (set-fee-to-address (the-aytoken <yield-token-trait>) (address principal))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))    
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
+        (map-set pools-data-map 
+            { 
+                aytoken: aytoken 
+            }
+            (merge pool { fee-to-address: address })
+        )
+        (ok true)     
+    )
+)
+
+;; return principal
+(define-read-only (get-fee-to-address (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))       
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok (get fee-to-address pool))
+    )
+)
+
+(define-read-only (get-fees (the-aytoken <yield-token-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))   
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok {fee-balance-aytoken: (get fee-balance-aytoken pool), fee-balance-token: (get fee-balance-token pool)})
+    )
+)
+
+;; Returns the fee of current x and y and make balance to 0.
+(define-public (collect-fees (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+    
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (address (get fee-to-address pool))
+            (fee-x (get fee-balance-aytoken pool))
+            (fee-y (get fee-balance-token pool))
+        )
+
+        (and (> fee-x u0) (unwrap! (contract-call? the-token transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? the-aytoken transfer fee-y .alex-vault address none) transfer-y-failed-err))
+
+        (map-set pools-data-map
+        { aytoken: aytoken}
+        (merge pool { fee-balance-aytoken: u0, fee-balance-token: u0 })
+        )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
+)
+
+(define-read-only (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
+    
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        (dy (unwrap! (contract-call? .yield-token-equation get-y-given-x balance-token balance-aytoken normalized-expiry dx) aytoken-equation-call-err))
+        )
+        (asserts! (> (get balance-aytoken pool) dy) dy-bigger-than-available-err)
+        (ok dy)
+    )
+)
+
+(define-read-only (get-x-given-y (the-aytoken <yield-token-trait>) (dy uint))
+    
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
+    )
+)
+
+(define-read-only (get-x-given-price (the-aytoken <yield-token-trait>) (price uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-x-given-price balance-token balance-aytoken normalized-expiry price)
+    )
+)
+
+(define-read-only (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-x-given-yield balance-token balance-aytoken normalized-expiry yield)
+    )
+)
+
+(define-read-only (get-token-given-position (the-aytoken <yield-token-trait>) (dx uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-actual (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed balance-actual balance-virtual) math-call-err))
+        (balance-token (get balance-token pool))
+        (total-supply (get total-supply pool))
+        (data (unwrap! (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken normalized-expiry total-supply dx) aytoken-equation-call-err))
+        (token (get token data))
+        (dy (get dy data))
+        (percent-act (unwrap! (contract-call? .math-fixed-point div-up balance-actual balance-aytoken) math-call-err))
+        (dy-act (unwrap! (contract-call? .math-fixed-point mul-up dy percent-act) math-call-err))
+        (dy-vir (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-act) math-call-err))
+        )        
+        (ok {token: token, dy-act: dy-act, dy-vir: dy-vir})
+    )
+
+)
+
+(define-read-only (get-position-given-mint (the-aytoken <yield-token-trait>) (token uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-actual (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed balance-actual balance-virtual) math-call-err))
+        (balance-token (get balance-token pool))
+        (total-supply (get total-supply pool))
+        (data (unwrap! (contract-call? .yield-token-equation get-position-given-mint balance-token balance-aytoken normalized-expiry total-supply token) aytoken-equation-call-err))   
+        (dx (get dx data))
+        (dy (get dy data))
+        (percent-act (unwrap! (contract-call? .math-fixed-point div-up balance-actual balance-aytoken) math-call-err))
+        (dy-act (unwrap! (contract-call? .math-fixed-point mul-up dy percent-act) math-call-err))
+        (dy-vir (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-act) math-call-err))
+        )
+        (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
+    )
+)
+
+(define-read-only (get-position-given-burn (the-aytoken <yield-token-trait>) (token uint))
+    
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (get expiry pool))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-actual (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed balance-actual balance-virtual) math-call-err))
+        (balance-token (get balance-token pool))
+        (total-supply (get total-supply pool))
+        (data (unwrap! (contract-call? .yield-token-equation get-position-given-burn balance-token balance-aytoken normalized-expiry total-supply token) aytoken-equation-call-err))   
+        (dx (get dx data))
+        (dy (get dy data))
+        (percent-act (unwrap! (contract-call? .math-fixed-point div-up balance-actual balance-aytoken) math-call-err))
+        (dy-act (unwrap! (contract-call? .math-fixed-point mul-up dy percent-act) math-call-err))
+        (dy-vir (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-act) math-call-err))
+        )
+        (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
+    )
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-token-pool'
+;;(impl-trait .trait-multisig-vote.multisig-vote-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait ft-token .trait-sip-010.sip-010-trait)
+
+
+;; Alex voting for MultiSig DAO
+;; 
+;; Voting and proposing the proposals 
+;; A proposal will just update the DAO with new contracts.
+
+;; Voting can be done by locking up the corresponding pool token. 
+;; This prototype is for ayusda-usda pool token. 
+;; Common Trait and for each pool, implementation is required. 
+;; 
+
+;; Errors
+(define-constant not-enough-balance-err (err u8000))
+(define-constant no-contract-changes-err (err u8001))
+(define-constant invalid-pool-token (err u8002))
+(define-constant block-height-not-reached (err u8003))
+(define-constant authorisation-err (err u1000))
+(define-constant status-ok u10000)
+
+(define-constant ONE_8 u100000000)
+
+;; Constants
+(define-constant DEFAULT_OWNER tx-sender)
+
+;; Proposal variables
+;; With Vote, we can set :
+;; 1. contract to have right to mint/burn token 
+;; 2. Set Feerate / Fee address / Collect Fees 
+(define-map proposals
+  { id: uint }
+  {
+    id: uint,
+    proposer: principal,
+    title: (string-utf8 256),
+    url: (string-utf8 256),
+    is-open: bool,
+    start-block-height: uint,
+    end-block-height: uint,
+    yes-votes: uint,
+    no-votes: uint,
+    fee-collector: principal,
+    new-fee-rate-token: uint,
+    new-fee-rate-aytoken: uint,
+    contract-changes: (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool)))
+  }
+)
+
+(define-data-var proposal-count uint u0)
+(define-data-var proposal-ids (list 100 uint) (list u0))
+(define-data-var threshold uint u75000000)    ;; 75%
+
+(define-data-var total-supply-of-token uint u0)
+(define-data-var threshold-percentage uint u0)
+
+(define-map votes-by-member { proposal-id: uint, member: principal } { vote-count: uint })
+(define-map tokens-by-member { proposal-id: uint, member: principal, token: principal } { amount: uint })
+
+;; Get all proposals in detail
+(define-read-only (get-proposals)
+  (ok (map get-proposal-by-id (var-get proposal-ids)))
+)
+
+;; Get all proposal ID in list
+(define-read-only (get-proposal-ids)
+  (ok (var-get proposal-ids))
+)
+
+;; Get votes for a member on proposal
+(define-read-only (get-votes-by-member-by-id (proposal-id uint) (member principal))
+  (default-to 
+    { vote-count: u0 }
+    (map-get? votes-by-member { proposal-id: proposal-id, member: member })
+  )
+)
+
+(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <yield-token-trait>))
+  (default-to 
+    { amount: u0 }
+    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token) }) 
+  )
+)
+
+;; Get proposal
+(define-read-only (get-proposal-by-id (proposal-id uint))
+  (default-to
+    {
+      id: u0,
+      proposer: DEFAULT_OWNER,
+      title: u"",
+      url: u"",
+      is-open: false,
+      start-block-height: u0,
+      end-block-height: u0,
+      yes-votes: u0,
+      no-votes: u0,
+      contract-changes: (list { name: "", address: DEFAULT_OWNER, qualified-name: DEFAULT_OWNER, can-mint: false, can-burn: false} ),
+      fee-collector: DEFAULT_OWNER,
+      new-fee-rate-token: u0,    ;; Default token feerate
+      new-fee-rate-aytoken: u0  ;; default aytoken feerate
+    }
+    (map-get? proposals { id: proposal-id })
+  )
+)
+
+;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
+(define-read-only (is-token-accepted (token <yield-token-trait>))
+    (is-eq (contract-of token) .pool-token-usda-ayusda)
+)
+
+
+;; Start a proposal
+;; Requires 10% of the supply in your wallet
+;; Default voting period is 10 days (144 * 10 blocks)
+(define-public (propose
+    (start-block-height uint)
+    (title (string-utf8 256))
+    (url (string-utf8 256))
+    (contract-changes (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+    (fee-collector principal)
+    (new-fee-rate-token uint)
+    (new-fee-rate-aytoken uint)
+  )
+  (let (
+    (proposer-balance (unwrap-panic (contract-call? .pool-token-usda-ayusda get-balance tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+    (proposal-id (+ u1 (var-get proposal-count)))
+  )
+
+    ;; Requires 10% of the supply 
+    (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      {
+        id: proposal-id,
+        proposer: tx-sender,
+        title: title,
+        url: url,
+        is-open: true,
+        start-block-height: start-block-height,
+        end-block-height: (+ start-block-height u1440),
+        yes-votes: u0,
+        no-votes: u0,
+        contract-changes: contract-changes,
+        fee-collector: fee-collector,
+        new-fee-rate-token: new-fee-rate-token,
+        new-fee-rate-aytoken: new-fee-rate-aytoken
+      }
+    )
+    (var-set proposal-count proposal-id)
+    (var-set proposal-ids (unwrap-panic (as-max-len? (append (var-get proposal-ids) proposal-id) u100)))
+    (ok true)
+  )
+)
+
+(define-public (vote-for (token <yield-token-trait>) (proposal-id uint) (amount uint))
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
+    
+  )
+
+    ;; Can vote with corresponding pool token
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    ;; Proposal should be open for voting
+    (asserts! (get is-open proposal) authorisation-err)
+    ;; Vote should be casted after the start-block-height
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
+    
+    ;; Voter should stake the corresponding pool token to the vote contract. 
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
+    (map-set votes-by-member 
+      { proposal-id: proposal-id, member: tx-sender }
+      { vote-count: (+ vote-count amount) })
+    (map-set tokens-by-member
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (+ token-count amount) })
+
+    (ok status-ok)
+    
+    )
+  )
+
+
+
+
+(define-public (vote-against (token <yield-token-trait>) (proposal-id uint) (amount uint))
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
+  )
+    ;; Can vote with corresponding pool token
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    ;; Proposal should be open for voting
+    (asserts! (get is-open proposal) authorisation-err)
+    ;; Vote should be casted after the start-block-height
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
+    ;; Voter should stake the corresponding pool token to the vote contract. 
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
+    (map-set votes-by-member 
+      { proposal-id: proposal-id, member: tx-sender }
+      { vote-count: (+ vote-count amount) })
+    (map-set tokens-by-member
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (+ token-count amount) })
+    (ok status-ok)
+    )
+    
+    )
+
+(define-public (end-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
+  (let ((proposal (get-proposal-by-id proposal-id))
+        (threshold-percent (var-get threshold))
+        (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
+  )
+
+    (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id
+    (asserts! (get is-open proposal) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
+
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { is-open: false }))
+
+    ;; Execute the proposal when the yes-vote passes threshold-count.
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
+    (ok status-ok))
+)
+
+;; Return votes to voter(member)
+;; This function needs to be called for all members
+(define-public (return-votes-to-member (token <yield-token-trait>) (proposal-id uint) (member principal))
+  (let (
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id member token)))
+    (proposal (get-proposal-by-id proposal-id))
+  )
+
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (not (get is-open proposal)) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) authorisation-err)
+
+    ;; Return the pool token
+    (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none))
+  )
+)
+
+;; Make needed contract changes on DAO
+(define-private (execute-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
+  ([1;[1;4;31m4;31mlet[0m ([0m
+[1;4;31m    (proposal (get-proposal-by-id proposal-id))[0m
+[1;4;31m    (contract-changes (get contract-changes proposal))[0m
+[1;4;31m    (new-fee-rate-token (get new-fee-rate-token proposal))[0m
+[1;4;31m    (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))[0m
+[1;4;31m    (collector-address (get fee-collector proposal))[0m
+[1;4;31m  )[0m 
+  
+    ;; Setting for Yield Token Pool
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-rate-token aytoken new-fee-rate-token))[0m
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))[0m
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-to-address aytoken collector-address))[0m
+    
+    [1;4;31m(if (> (len contract-changes) u0)[0m
+[1;4;31m      (begin[0m
+[1;4;31m        (map execute-proposal-change-contract contract-changes)[0m
+[1;4;31m        (ok true)[0m
+[1;4;31m      )[0m
+[1;4;31m      no-contract-changes-err[0m
+[1;4;31m    )[0m
+    ;; (and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
+    ;; (ok true)
+    ;; no-contract-changes-err
+  )
+)
+
+;; Helper to execute proposal and change contracts
+(define-private (execute-proposal-change-contract (change (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+  (let (
+    (name (get name change))
+    (address (get address change))
+    (qualified-name (get qualified-name change))
+    (can-mint (get can-mint change))
+    (can-burn (get can-burn change))
+  )
+    (if (not (is-eq name ""))
+      (begin
+        (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+        (ok true)
+      )
+      (ok false)
+    )
+  )
+)
+
+;; adds a new contract, only new ones allowed
+;; Things to be discussed
+(define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))
+  (begin
+    ;; Who can add the contract to the registry
+    ;;(asserts! (is-eq tx-sender (contract-call? .alex-multisig-dao get-dao-owner)) (err authorisation-err))
+
+    (if (is-some (contract-call? .alex-multisig-registry get-contract-address-by-name name))
+      (ok false)
+      (begin
+        (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+        (ok true)
+      )
+    )
+  )
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-token-pool'
+;;(impl-trait .trait-multisig-vote.multisig-vote-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait ft-token .trait-sip-010.sip-010-trait)
+
+
+;; Alex voting for MultiSig DAO
+;; 
+;; Voting and proposing the proposals 
+;; A proposal will just update the DAO with new contracts.
+
+;; Voting can be done by locking up the corresponding pool token. 
+;; This prototype is for ayusda-usda pool token. 
+;; Common Trait and for each pool, implementation is required. 
+;; 
+
+;; Errors
+(define-constant not-enough-balance-err (err u8000))
+(define-constant no-contract-changes-err (err u8001))
+(define-constant invalid-pool-token (err u8002))
+(define-constant block-height-not-reached (err u8003))
+(define-constant authorisation-err (err u1000))
+(define-constant status-ok u10000)
+
+(define-constant ONE_8 u100000000)
+
+;; Constants
+(define-constant DEFAULT_OWNER tx-sender)
+
+;; Proposal variables
+;; With Vote, we can set :
+;; 1. contract to have right to mint/burn token 
+;; 2. Set Feerate / Fee address / Collect Fees 
+(define-map proposals
+  { id: uint }
+  {
+    id: uint,
+    proposer: principal,
+    title: (string-utf8 256),
+    url: (string-utf8 256),
+    is-open: bool,
+    start-block-height: uint,
+    end-block-height: uint,
+    yes-votes: uint,
+    no-votes: uint,
+    fee-collector: principal,
+    new-fee-rate-token: uint,
+    new-fee-rate-aytoken: uint
+    ;;contract-changes: (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool)))
+  }
+)
+
+(define-data-var proposal-count uint u0)
+(define-data-var proposal-ids (list 100 uint) (list u0))
+(define-data-var threshold uint u75000000)    ;; 75%
+
+(define-data-var total-supply-of-token uint u0)
+(define-data-var threshold-percentage uint u0)
+
+(define-map votes-by-member { proposal-id: uint, member: principal } { vote-count: uint })
+(define-map tokens-by-member { proposal-id: uint, member: principal, token: principal } { amount: uint })
+
+;; Get all proposals in detail
+(define-read-only (get-proposals)
+  (ok (map get-proposal-by-id (var-get proposal-ids)))
+)
+
+;; Get all proposal ID in list
+(define-read-only (get-proposal-ids)
+  (ok (var-get proposal-ids))
+)
+
+;; Get votes for a member on proposal
+(define-read-only (get-votes-by-member-by-id (proposal-id uint) (member principal))
+  (default-to 
+    { vote-count: u0 }
+    (map-get? votes-by-member { proposal-id: proposal-id, member: member })
+  )
+)
+
+(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <yield-token-trait>))
+  (default-to 
+    { amount: u0 }
+    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token) }) 
+  )
+)
+
+;; Get proposal
+
+;; Q: any particular reason why we fall back to default, rather than throw err?
+;; a : I thought it is better to keep like this since proposal needs to be voted for execution. 
+;;     Much more monotonous than adding all error for each elements.
+;;     If I don't set it, clarinet is going to throw an automatically error which blocks the contract deployment.
+(define-read-only (get-proposal-by-id (proposal-id uint))
+  (default-to
+    {
+      id: u0,
+      proposer: DEFAULT_OWNER,
+      title: u"",
+      url: u"",
+      is-open: false,
+      start-block-height: u0,
+      end-block-height: u0,
+      yes-votes: u0,
+      no-votes: u0,
+      fee-collector: DEFAULT_OWNER,
+      new-fee-rate-token: u0,    ;; Default token feerate
+      new-fee-rate-aytoken: u0  ;; default aytoken feerate
+    }
+    (map-get? proposals { id: proposal-id })
+  )
+)
+
+;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
+(define-read-only (is-token-accepted (token <yield-token-trait>))
+    (is-eq (contract-of token) .pool-token-ayusda-wbtc)
+)
+
+
+;; Start a proposal
+;; Requires 10% of the supply in your wallet
+;; Default voting period is 10 days (144 * 10 blocks)
+(define-public (propose
+    (start-block-height uint)
+    (title (string-utf8 256))
+    (url (string-utf8 256))
+    ;; Contract-Change to be removed after discussion
+    (contract-changes (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+    (fee-collector principal)
+    (new-fee-rate-token uint)
+    (new-fee-rate-aytoken uint)
+  )
+  (let (
+    (proposer-balance (unwrap-panic (contract-call? .pool-token-usda-ayusda get-balance tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+    (proposal-id (+ u1 (var-get proposal-count)))
+  )
+
+    ;; Requires 10% of the supply 
+    (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      {
+        id: proposal-id,
+        proposer: tx-sender,
+        title: title,
+        url: url,
+        is-open: true,
+        start-block-height: start-block-height,
+        end-block-height: (+ start-block-height u1440),
+        yes-votes: u0,
+        no-votes: u0,
+        fee-collector: fee-collector,
+        new-fee-rate-token: new-fee-rate-token,
+        new-fee-rate-aytoken: new-fee-rate-aytoken
+      }
+    )
+    (var-set proposal-count proposal-id)
+    (var-set proposal-ids (unwrap-panic (as-max-len? (append (var-get proposal-ids) proposal-id) u100)))
+    (ok true)
+  )
+)
+
+(define-public (vote-for (token <yield-token-trait>) (proposal-id uint) (amount uint))
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
+    
+  )
+
+    ;; Can vote with corresponding pool token
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    ;; Proposal should be open for voting
+    (asserts! (get is-open proposal) authorisation-err)
+    ;; Vote should be casted after the start-block-height
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
+    
+    ;; Voter should stake the corresponding pool token to the vote contract. 
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
+    (map-set votes-by-member 
+      { proposal-id: proposal-id, member: tx-sender }
+      { vote-count: (+ vote-count amount) })
+    (map-set tokens-by-member
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (+ token-count amount) })
+
+    (ok status-ok)
+    
+    )
+  )
+
+
+
+
+(define-public (vote-against (token <yield-token-trait>) (proposal-id uint) (amount uint))
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
+  )
+    ;; Can vote with corresponding pool token
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    ;; Proposal should be open for voting
+    (asserts! (get is-open proposal) authorisation-err)
+    ;; Vote should be casted after the start-block-height
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
+    ;; Voter should stake the corresponding pool token to the vote contract. 
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
+    (map-set votes-by-member 
+      { proposal-id: proposal-id, member: tx-sender }
+      { vote-count: (+ vote-count amount) })
+    (map-set tokens-by-member
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (+ token-count amount) })
+    (ok status-ok)
+    )
+    
+    )
+
+(define-public (end-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
+  (let ((proposal (get-proposal-by-id proposal-id))
+        (threshold-percent (var-get threshold))
+        (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
+  )
+
+    (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id
+    (asserts! (get is-open proposal) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
+
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { is-open: false }))
+
+    ;; Execute the proposal when the yes-vote passes threshold-count.
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
+    (ok status-ok))
+)
+
+;; Return votes to voter(member)
+;; This function needs to be called for all members
+(define-public (return-votes-to-member (token <yield-token-trait>) (proposal-id uint) (member principal))
+  (let (
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id member token)))
+    (proposal (get-proposal-by-id proposal-id))
+  )
+
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (not (get is-open proposal)) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) authorisation-err)
+
+    ;; Return the pool token
+    (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none))
+  )
+)
+
+;; Make needed contract changes on DAO
+(define-private (execute-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
+  ([1;[1;4;31m4;31mlet[0m ([0m
+[1;4;31m    (proposal (get-proposal-by-id proposal-id))[0m
+[1;4;31m    ;;(contract-changes (get contract-changes proposal))[0m
+[1;4;31m    (new-fee-rate-token (get new-fee-rate-token proposal))[0m
+[1;4;31m    (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))[0m
+[1;4;31m    (collector-address (get fee-collector proposal))[0m
+[1;4;31m  )[0m 
+  
+    ;; Setting for Yield Token Pool
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-rate-token aytoken new-fee-rate-token))[0m
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))[0m
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-to-address aytoken collector-address))[0m
+    
+    ;; (if (> (len contract-changes) u0)
+    ;;   (begin
+    ;;     (map execute-proposal-change-contract contract-changes)
+    ;;     (ok true)
+    ;;   )
+    ;;   ;; Q: throwing err because no contract-changes is wrong?
+    ;;   ;; A: because there is no contract changes occured so it throws error. 
+    ;;   no-contract-changes-err
+    ;; )
+    ;; (and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
+    ;; (ok true)
+    ;; no-contract-changes-err
+    [1;4;31m(ok true)[0m
+  )
+)
+
+;; Helper to execute proposal and change contracts
+;; (define-private (execute-proposal-change-contract (change (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+;;   (let (
+;;     (name (get name change))
+;;     (address (get address change))
+;;     (qualified-name (get qualified-name change))
+;;     (can-mint (get can-mint change))
+;;     (can-burn (get can-burn change))
+;;   )
+;;     (if (not (is-eq name "")) ;; Q: shouln't this trow an err, rather than (ok false)? A : Agree, but seems like not required anymore.
+;;       (begin
+;;         (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+;;         (ok true)
+;;       )
+;;       (ok false)
+;;     )
+;;   )
+;; )
+
+;; Q: who can call this?
+;; A : Should have been discussed whether it should be selected by vote or some admin principal. But not required if there is no registry.
+;; adds a new contract, only new ones allowed
+;; Things to be discussed
+;; (define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))
+;;   (begin
+;;     ;; Who can add the contract to the registry
+;;     ;;(asserts! (is-eq tx-sender (contract-call? .alex-multisig-dao get-dao-owner)) (err authorisation-err))
+
+;;     (if (is-some (contract-call? .alex-multisig-registry get-contract-address-by-name name))
+;;       (ok false)
+;;       (begin
+;;         (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+;;         (ok true)
+;;       )
+;;     )
+;;   )
+;; )

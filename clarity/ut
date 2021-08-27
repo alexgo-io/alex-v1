@@ -1,0 +1,3132 @@
+
+Error: Analysis error: invalid syntax binding
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+
+;; yield-token-pool
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant invalid-balance-err (err u2008))
+(define-constant invalid-token-err (err u2007))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
+(define-constant invalid-expiry-err (err u2009))
+(define-constant fixed-point-err (err 5014))
+(define-constant internal-function-call-err (err u1001))
+(define-constant math-call-err (err u2010))
+(define-constant get-expiry-fail-err (err u2013))
+(define-constant aytoken-equation-call-err (err u2014))
+(define-constant dy-bigger-than-available-err (err u2016))
+(define-constant authorisation-err (err u1000))
+(define-constant get-oracle-price-fail-err (err u7000))
+(define-constant get-symbol-fail-err (err u6000))
+
+;; data maps and vars
+(define-map pools-map
+  { pool-id: uint }
+  {
+    aytoken: principal, ;; aytoken, dy
+  }
+)
+
+(define-map pools-data-map
+  {
+    aytoken: principal    
+  }
+  {
+    total-supply: uint,    
+    balance-token: uint, ;; dx    
+    balance-aytoken: uint, ;; dy_actual
+    balance-virtual: uint, ;; dy_virtual
+    fee-balance-token: uint,    
+    fee-balance-aytoken: uint,
+    fee-to-address: principal,
+    pool-token: principal,
+    fee-rate-token: uint,    
+    fee-rate-aytoken: uint
+  }
+)
+
+(define-data-var pool-count uint u0)
+(define-data-var pools-list (list 2000 uint) (list))
+
+(define-data-var max-expiry uint u0)
+
+(define-read-only (get-max-expiry)
+    (ok (var-get max-expiry))
+)
+
+(define-read-only (get-t (expiry uint))
+    (let
+        (
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err)) ;; convert current block-height to fixed point integer
+        )
+        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
+
+        (ok (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) now) math-call-err)) math-call-err))
+    )
+)
+
+(define-read-only (get-pool-count)
+    (ok (var-get pool-count))
+)
+
+(define-read-only (get-pool-contracts (pool-id uint))
+    (let
+        (
+            (pool (map-get? pools-map {pool-id: pool-id}))
+       )
+        (if (is-some pool)
+            (ok pool)
+            invalid-pool-err
+       )
+   )
+)
+
+(define-read-only (get-pools)
+    (ok (map get-pool-contracts (var-get pools-list)))
+)
+
+;; additional functions
+(define-read-only (get-pool-details (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))            
+            (pool (map-get? pools-data-map { aytoken: aytoken }))
+       )
+        (if (is-some pool)
+            (ok pool)
+            invalid-pool-err
+       )
+   )
+)
+
+(define-read-only (get-pool-value (the-aytoken <yield-token-trait>))
+    ([1;4;31mlet[0m
+        [1;4;31m([0m
+[1;4;31m            (aytoken (contract-of the-aytoken))[0m
+[1;4;31m            (pool (map-get? pools-data-map { aytoken: aytoken }))[0m
+[1;4;31m            (balance-token (get balance-token pool))[0m
+[1;4;31m            (balance-aytoken (get balance-aytoken pool))[0m
+[1;4;31m            (token-symbol (unwrap! (contract-call? token get-symbol)) get-symbol-fail-err)[0m
+[1;4;31m            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol)) get-oracle-price-fail-err)[0m
+[1;4;31m            (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) math-call-err))[0m
+[1;4;31m        )[0m
+
+[1;4;31m        (contract-call? .math-fixed-point mul-up balance toke[0mn-price)
+    )
+)
+
+;; note yield is not annualised
+;; b_y = balance-aytoken
+;; b_x = balance-token
+;; yield = ln(b_y/b_x)
+(define-public (get-yield (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (balance-token (get balance-token pool))            
+            (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
+        )
+
+        (asserts! (>= balance-aytoken balance-token) invalid-balance-err)
+
+        (ok (to-uint (unwrap! (contract-call? .math-log-exp ln-fixed (to-int base)) math-call-err)))
+    )
+)
+
+;; get-price
+;; b_y = balance-aytoken
+;; b_x = balance-token
+;; price = (b_y / b_x) ^ t
+(define-public (get-price (the-aytoken <yield-token-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            ;;(exp (get expiry pool)) I think it is safer to use below function.
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (balance-token (get balance-token pool)) 
+            (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
+            (t-value (unwrap! (get-t expiry) internal-function-call-err))
+    
+            (price (unwrap! (contract-call? .math-fixed-point pow-up base t-value) math-call-err))
+        )
+
+        (asserts! (> balance-aytoken balance-token) invalid-balance-err)
+
+        (ok price)
+    )
+)
+
+(define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+    (let
+        (
+            (aytoken (contract-of the-aytoken))            
+            (pool-id (+ (var-get pool-count) u1))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (pool-data {
+                total-supply: u0,
+                balance-token: u0,                
+                balance-aytoken: u0,
+                balance-virtual: u0,
+                fee-balance-aytoken: u0,
+                fee-balance-token: u0,
+                fee-to-address: (contract-of the-pool-token),
+                pool-token: (contract-of the-pool-token),
+                fee-rate-aytoken: u0,
+                fee-rate-token: u0                
+            })
+        )
+        (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) pool-already-exists-err)
+        
+        (map-set pools-map { pool-id: pool-id } { aytoken: aytoken })
+        (map-set pools-data-map { aytoken: aytoken } pool-data)
+        
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pool-count pool-id)
+
+        ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry.
+        (var-set max-expiry (if (< (var-get max-expiry) expiry) expiry (var-get max-expiry)))
+
+        ;;(print dx)
+        (try! (add-to-position the-aytoken the-token the-pool-token dx))
+
+        (print { object: "pool", action: "created", data: pool-data })
+        (ok true)
+   )
+)
+
+(define-public (add-to-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (balance-token (get balance-token pool))            
+            (balance-aytoken (get balance-aytoken pool))
+            (balance-virtual (get balance-virtual pool))
+            (total-supply (get total-supply pool))
+            (add-data (unwrap! (get-token-given-position the-aytoken dx) internal-function-call-err))
+            (new-supply (get token add-data))
+            (new-dy-act (get dy-act add-data))
+            (new-dy-vir (get dy-vir add-data))
+            (pool-updated (merge pool {
+                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
+                balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed balance-token dx) math-call-err),
+                balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed balance-aytoken new-dy-act) math-call-err),
+                balance-virtual: (unwrap! (contract-call? .math-fixed-point add-fixed balance-virtual new-dy-vir) math-call-err)   
+            }))
+        )
+
+        ;; dx must be greater than zero
+        ;; at least one of dy must be greater than zero
+        (asserts! (and (> dx u0) (or (> new-dy-act u0) (> new-dy-vir u0))) invalid-liquidity-err)
+
+        ;; send x to vault
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err))
+
+        ;; send y to vault
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none)) transfer-y-failed-err)
+        (and (> new-dy-act u0) (unwrap! (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none) transfer-y-failed-err))
+        
+        ;; mint pool token and send to tx-sender
+        (map-set pools-data-map { aytoken: aytoken } pool-updated)
+        ;; Failure. 
+        (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        (print { object: "pool", action: "liquidity-added", data: pool-updated })
+        (ok true)
+   )
+)    
+
+(define-public (reduce-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
+    (if (<= percent ONE_8)
+        (let
+            (
+                (aytoken (contract-of the-aytoken))
+                (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+                (balance-token (get balance-token pool))
+                (balance-aytoken (get balance-aytoken pool))
+                (balance-virtual (get balance-virtual pool))                
+                (total-supply (get total-supply pool))
+                (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent) math-call-err))
+                (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) internal-function-call-err))
+                (dx (get dx reduce-data))
+                (dy-act (get dy-act reduce-data))
+                (dy-vir (get dy-vir reduce-data))
+                (pool-updated (merge pool {
+                    total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                    balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-token dx) math-call-err),
+                    balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-aytoken dy-act) math-call-err),                    
+                    balance-virtual: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-virtual dy-vir) math-call-err),                    
+                    })
+                )
+            )
+            ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+            ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none)) transfer-y-failed-err)
+            (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+            (and (> dy-act u0) (unwrap! (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none) transfer-y-failed-err))
+
+            (map-set pools-data-map { aytoken: aytoken } pool-updated)
+            (try! (contract-call? the-pool-token burn tx-sender shares))
+
+            (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+            (ok {dx: dx, dy: dy-act})
+        )    
+        percent-greater-than-one
+    )    
+)
+
+(define-public (swap-x-for-y (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dx uint))
+    
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (fee-rate-aytoken (get fee-rate-aytoken pool))
+
+            ;; lambda ~= 1 - fee-rate-aytoken * yield
+            (yield (unwrap! (get-yield the-aytoken) internal-function-call-err))
+            (fee-yield (unwrap! (contract-call? .math-fixed-point mul-down yield fee-rate-aytoken) math-call-err))
+            (lambda (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 fee-yield) math-call-err))
+            (dx-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dx lambda) math-call-err))
+            (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-net-fees) math-call-err))
+
+            (dy (unwrap! (get-y-given-x the-aytoken dx-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-token pool) dx-net-fees) math-call-err),
+                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-aytoken pool) dy) math-call-err),
+                        fee-balance-token: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-token pool) fee) math-call-err)
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err))
+        (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy .alex-vault tx-sender none) transfer-y-failed-err))
+
+        ;; post setting
+        (map-set pools-data-map { aytoken: aytoken } pool-updated)
+        (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+        (ok {dx: dx-net-fees, dy: dy})
+    )
+)
+
+(define-public (swap-y-for-x (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dy uint))
+
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (fee-rate-token (get fee-rate-token pool))
+
+            ;; lambda ~= 1 - fee-rate-token * yield
+            (yield (unwrap! (get-yield the-aytoken) internal-function-call-err))
+            (fee-yield (unwrap! (contract-call? .math-fixed-point mul-down yield fee-rate-token) math-call-err))
+            (lambda (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 fee-yield) math-call-err))
+            (dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dy lambda) math-call-err))
+            (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-net-fees) math-call-err))
+
+            (dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        balance-token: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-token pool) dx) math-call-err),                        
+                        balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) dy-net-fees) math-call-err),
+                        fee-balance-aytoken: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-aytoken pool) fee) math-call-err)
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+        (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err))
+
+        ;; post setting
+        (map-set pools-data-map { aytoken: aytoken } pool-updated)
+        (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+        (ok {dx: dx, dy: dy-net-fees})
+    )
+)
+
+(define-read-only (get-fee-rate-aytoken (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok (get fee-rate-aytoken pool))
+    )
+)
+
+(define-read-only (get-fee-rate-token (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok (get fee-rate-token pool))
+    )
+)
+
+(define-public (set-fee-rate-aytoken (the-aytoken <yield-token-trait>) (fee-rate-aytoken uint))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
+        (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
+        (ok true)
+    
+    )
+)
+
+(define-public (set-fee-rate-token (the-aytoken <yield-token-trait>) (fee-rate-token uint))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
+        (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
+        (ok true) 
+    )
+)
+
+(define-public (set-fee-to-address (the-aytoken <yield-token-trait>) (address principal))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))    
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) authorisation-err)
+        (map-set pools-data-map 
+            { 
+                aytoken: aytoken 
+            }
+            (merge pool { fee-to-address: address })
+        )
+        (ok true)     
+    )
+)
+
+;; return principal
+(define-read-only (get-fee-to-address (the-aytoken <yield-token-trait>))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))       
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok (get fee-to-address pool))
+    )
+)
+
+(define-read-only (get-fees (the-aytoken <yield-token-trait>))
+    (let
+        (
+            (aytoken (contract-of the-aytoken))   
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (ok {fee-balance-aytoken: (get fee-balance-aytoken pool), fee-balance-token: (get fee-balance-token pool)})
+    )
+)
+
+;; Returns the fee of current x and y and make balance to 0.
+(define-public (collect-fees (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+    
+    (let
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (address (get fee-to-address pool))
+            (fee-x (get fee-balance-aytoken pool))
+            (fee-y (get fee-balance-token pool))
+        )
+
+        (and (> fee-x u0) (unwrap! (contract-call? the-token transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? the-aytoken transfer fee-y .alex-vault address none) transfer-y-failed-err))
+
+        (map-set pools-data-map
+        { aytoken: aytoken}
+        (merge pool { fee-balance-aytoken: u0, fee-balance-token: u0 })
+        )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
+)
+
+(define-public (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
+    
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        (dy (unwrap! (contract-call? .yield-token-equation get-y-given-x balance-token balance-aytoken normalized-expiry dx) aytoken-equation-call-err))
+        )
+        (asserts! (> (get balance-aytoken pool) dy) dy-bigger-than-available-err)
+        (ok dy)
+    )
+)
+
+(define-public (get-x-given-y (the-aytoken <yield-token-trait>) (dy uint))
+    
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
+    )
+)
+
+(define-public (get-x-given-price (the-aytoken <yield-token-trait>) (price uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-x-given-price balance-token balance-aytoken normalized-expiry price)
+    )
+)
+
+(define-public (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-x-given-yield balance-token balance-aytoken normalized-expiry yield)
+    )
+)
+
+(define-public (get-token-given-position (the-aytoken <yield-token-trait>) (dx uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-actual (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed balance-actual balance-virtual) math-call-err))
+        (balance-token (get balance-token pool))
+        (total-supply (get total-supply pool))
+        (data (unwrap! (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken normalized-expiry total-supply dx) aytoken-equation-call-err))
+        (token (get token data))
+        (dy (get dy data))
+        (percent-act (unwrap! (contract-call? .math-fixed-point div-up balance-actual balance-aytoken) math-call-err))
+        (dy-act (unwrap! (contract-call? .math-fixed-point mul-up dy percent-act) math-call-err))
+        (dy-vir (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-act) math-call-err))
+        )        
+        (ok {token: token, dy-act: dy-act, dy-vir: dy-vir})
+    )
+
+)
+
+(define-public (get-position-given-mint (the-aytoken <yield-token-trait>) (token uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-actual (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed balance-actual balance-virtual) math-call-err))
+        (balance-token (get balance-token pool))
+        (total-supply (get total-supply pool))
+        (data (unwrap! (contract-call? .yield-token-equation get-position-given-mint balance-token balance-aytoken normalized-expiry total-supply token) aytoken-equation-call-err))   
+        (dx (get dx data))
+        (dy (get dy data))
+        (percent-act (unwrap! (contract-call? .math-fixed-point div-up balance-actual balance-aytoken) math-call-err))
+        (dy-act (unwrap! (contract-call? .math-fixed-point mul-up dy percent-act) math-call-err))
+        (dy-vir (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-act) math-call-err))
+        )
+        (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
+    )
+)
+
+(define-public (get-position-given-burn (the-aytoken <yield-token-trait>) (token uint))
+    
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+        (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
+        (balance-actual (get balance-aytoken pool))
+        (balance-virtual (get balance-virtual pool))
+        (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed balance-actual balance-virtual) math-call-err))
+        (balance-token (get balance-token pool))
+        (total-supply (get total-supply pool))
+        (data (unwrap! (contract-call? .yield-token-equation get-position-given-burn balance-token balance-aytoken normalized-expiry total-supply token) aytoken-equation-call-err))   
+        (dx (get dx data))
+        (dy (get dy data))
+        (percent-act (unwrap! (contract-call? .math-fixed-point div-up balance-actual balance-aytoken) math-call-err))
+        (dy-act (unwrap! (contract-call? .math-fixed-point mul-up dy percent-act) math-call-err))
+        (dy-vir (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-act) math-call-err))
+        )
+        (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
+    )
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-token-pool'
+;;(impl-trait .trait-multisig-vote.multisig-vote-trait)
+(use-trait ft-trait .trait-yield-token.yield-token-trait)
+
+
+;; Alex voting for MultiSig DAO
+;; 
+;; Voting and proposing the proposals 
+;; A proposal will just update the DAO with new contracts.
+
+;; Voting can be done by locking up the corresponding pool token. 
+;; This prototype is for ayusda-usda pool token. 
+;; Common Trait and for each pool, implementation is required. 
+;; 
+
+;; Errors
+(define-constant not-enough-balance-err (err u8000))
+(define-constant no-contract-changes-err (err u8001))
+(define-constant invalid-pool-token (err u8002))
+(define-constant block-height-not-reached (err u8003))
+(define-constant authorisation-err (err u1000))
+(define-constant status-ok u10000)
+
+(define-constant ONE_8 u100000000)
+
+;; Constants
+(define-constant DEFAULT_OWNER tx-sender)
+
+;; Proposal variables
+;; With Vote, we can set :
+;; 1. contract to have right to mint/burn token 
+;; 2. Set Feerate / Fee address / Collect Fees 
+(define-map proposals
+  { id: uint }
+  {
+    id: uint,
+    proposer: principal,
+    title: (string-utf8 256),
+    url: (string-utf8 256),
+    is-open: bool,
+    start-block-height: uint,
+    end-block-height: uint,
+    yes-votes: uint,
+    no-votes: uint,
+    fee-collector: principal,
+    new-fee-rate-token: uint,
+    new-fee-rate-aytoken: uint,
+    contract-changes: (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool)))
+  }
+)
+
+(define-data-var proposal-count uint u0)
+(define-data-var proposal-ids (list 100 uint) (list u0))
+(define-data-var threshold uint u75000000)    ;; 75%
+
+(define-data-var total-supply-of-token uint u0)
+(define-data-var threshold-percentage uint u0)
+
+(define-map votes-by-member { proposal-id: uint, member: principal } { vote-count: uint })
+(define-map tokens-by-member { proposal-id: uint, member: principal, token: principal } { amount: uint })
+
+;; Get all proposals in detail
+(define-read-only (get-proposals)
+  (ok (map get-proposal-by-id (var-get proposal-ids)))
+)
+
+;; Gt all proposal ID in list
+(define-read-only (get-proposal-ids)
+  (ok (var-get proposal-ids))
+)
+
+;; Get votes for a member on proposal
+(define-read-only (get-votes-by-member-by-id (proposal-id uint) (member principal))
+  (default-to 
+    { vote-count: u0 }
+    (map-get? votes-by-member { proposal-id: proposal-id, member: member })
+  )
+)
+
+(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <ft-trait>))
+  (default-to 
+    { amount: u0 }
+    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token) }) 
+  )
+)
+
+;; Get proposal
+(define-read-only (get-proposal-by-id (proposal-id uint))
+  (default-to
+    {
+      id: u0,
+      proposer: DEFAULT_OWNER,
+      title: u"",
+      url: u"",
+      is-open: false,
+      start-block-height: u0,
+      end-block-height: u0,
+      yes-votes: u0,
+      no-votes: u0,
+      contract-changes: (list { name: "", address: DEFAULT_OWNER, qualified-name: DEFAULT_OWNER, can-mint: false, can-burn: false} ),
+      fee-collector: DEFAULT_OWNER,
+      new-fee-rate-token: u0,    ;; Default token feerate
+      new-fee-rate-aytoken: u0  ;; default aytoken feerate
+    }
+    (map-get? proposals { id: proposal-id })
+  )
+)
+
+;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
+(define-read-only (is-token-accepted (token <ft-trait>))
+    (is-eq (contract-of token) .pool-token-usda-ayusda)
+)
+
+
+;; Start a proposal
+;; Requires 10% of the supply in your wallet
+;; Default voting period is 10 days (144 * 10 blocks)
+(define-public (propose
+    (start-block-height uint)
+    (title (string-utf8 256))
+    (url (string-utf8 256))
+    (contract-changes (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+    (fee-collector principal)
+    (new-fee-rate-token uint)
+    (new-fee-rate-aytoken uint)
+  )
+  (let (
+    (proposer-balance (unwrap-panic (contract-call? .pool-token-usda-ayusda get-balance tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+    (proposal-id (+ u1 (var-get proposal-count)))
+  )
+
+    ;; Requires 1% of the supply 
+    (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      {
+        id: proposal-id,
+        proposer: tx-sender,
+        title: title,
+        url: url,
+        is-open: true,
+        start-block-height: start-block-height,
+        end-block-height: (+ start-block-height u1440),
+        yes-votes: u0,
+        no-votes: u0,
+        contract-changes: contract-changes,
+        fee-collector: fee-collector,
+        new-fee-rate-token: new-fee-rate-token,
+        new-fee-rate-aytoken: new-fee-rate-aytoken
+      }
+    )
+    (var-set proposal-count proposal-id)
+    (var-set proposal-ids (unwrap-panic (as-max-len? (append (var-get proposal-ids) proposal-id) u100)))
+    (ok true)
+  )
+)
+
+(define-public (vote-for (token <ft-trait>) (proposal-id uint) (amount uint))
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
+    
+  )
+
+    ;; Can vote with corresponding pool token
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    ;; Proposal should be open for voting
+    (asserts! (get is-open proposal) authorisation-err)
+    ;; Vote should be casted after the start-block-height
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
+    
+    ;; Voter should stake the corresponding pool token to the vote contract. 
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
+    (map-set votes-by-member 
+      { proposal-id: proposal-id, member: tx-sender }
+      { vote-count: (+ vote-count amount) })
+    (map-set tokens-by-member
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (+ token-count amount) })
+
+    (ok status-ok)
+    
+    )
+  )
+
+
+
+
+(define-public (vote-against (token <ft-trait>) (proposal-id uint) (amount uint))
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
+  )
+    ;; Can vote with corresponding pool token
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    ;; Proposal should be open for voting
+    (asserts! (get is-open proposal) authorisation-err)
+    ;; Vote should be casted after the start-block-height
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
+    ;; Voter should stake the corresponding pool token to the vote contract. 
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+
+    ;; Mutate
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
+    (map-set votes-by-member 
+      { proposal-id: proposal-id, member: tx-sender }
+      { vote-count: (+ vote-count amount) })
+    (map-set tokens-by-member
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (+ token-count amount) })
+    (ok status-ok)
+    )
+    
+    )
+
+(define-public (end-proposal (proposal-id uint) (token <ft-trait>) (aytoken <ft-trait>))
+  (let ((proposal (get-proposal-by-id proposal-id))
+        (threshold-percent (var-get threshold))
+        (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
+  )
+
+    (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id
+    (asserts! (get is-open proposal) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
+
+    (map-set proposals
+      { id: proposal-id }
+      (merge proposal { is-open: false }))
+    ;; Execute the proposal when the yes-vote passes threshold-count.
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
+    (ok status-ok))
+)
+
+;; Return votes to voter(member)
+(define-public (return-votes-to-member (token <ft-trait>) (proposal-id uint) (member principal))
+  (let (
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id member token)))
+    (proposal (get-proposal-by-id proposal-id))
+  )
+
+    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (not (get is-open proposal)) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) authorisation-err)
+
+    ;; Return the pool token
+    (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none))
+  )
+)
+
+;; Make needed contract changes on DAO
+(define-private (execute-proposal (proposal-id uint) (token <ft-trait>) (aytoken <ft-trait>))
+  ([1;[1;4;31m4;31mlet[0m ([0m
+[1;4;31m    (proposal (get-proposal-by-id proposal-id))[0m
+[1;4;31m    (contract-changes (get contract-changes proposal))[0m
+[1;4;31m    (new-fee-rate-token (get new-fee-rate-token proposal))[0m
+[1;4;31m    (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))[0m
+[1;4;31m    (collector-address (get fee-collector proposal))[0m
+[1;4;31m  )[0m 
+  
+    ;; Setting for Yield Token Pool
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-rate-token aytoken new-fee-rate-token))[0m
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))[0m
+    [1;4;31m(try! (contract-call? .yield-token-pool set-fee-to-address aytoken collector-address))[0m
+    
+    ;; (if (> (len contract-changes) u0)
+    ;;   (begin
+    ;;     ;;(map execute-proposal-change-contract contract-changes)
+    ;;     (ok true)
+    ;;   )
+    ;;   (err no-contract-changes-err)
+    ;; )
+    [1;4;31m(ok true)[0m
+  
+  )
+)
+
+;; ;; Helper to execute proposal and change contracts
+;; (define-private (execute-proposal-change-contract (change (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+;;   (let (
+;;     (name (get name change))
+;;     (address (get address change))
+;;     (qualified-name (get qualified-name change))
+;;     (can-mint (get can-mint change))
+;;     (can-burn (get can-burn change))
+;;   )
+;;     (if (not (is-eq name ""))
+;;       (begin
+;;         (try! (contract-call? .alex-multisig-dao set-contract-address name address qualified-name can-mint can-burn))
+;;         (ok true)
+;;       )
+;;       (ok false)
+;;     )
+;;   )
+;; )
+
+;; ;; adds a new contract, only new ones allowed
+;; (define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))
+;;   (begin
+;;     (asserts! (is-eq tx-sender (contract-call? .alex-multisig-dao get-dao-owner)) (err authorisation-err))
+
+;;     (if (is-some (contract-call? .alex-multisig-dao get-contract-address-by-name name))
+;;       (ok false)
+;;       (begin
+;;         (try! (contract-call? .alex-multisig-dao set-contract-address name address qualified-name can-mint can-burn))
+;;         (ok true)
+;;       )
+;;     )
+;;   )
+;; )
+Analysis error: defining 'dy' conflicts with previous value
+;; weighted-equation
+;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
+
+;;(impl-trait .trait-equation.equation-trait)
+
+;; constants
+;;
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+
+(define-constant no-liquidity-err (err u2002))
+(define-constant weight-sum-err (err u4000))
+(define-constant max-in-ratio-err (err u4001))
+(define-constant max-out-ratio-err (err u4002))
+(define-constant math-call-err (err 4003))
+
+;; max in/out as % of liquidity
+;; TODO: we may want to remove this. Too arbitrary
+(define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8
+(define-constant MAX_OUT_RATIO (* u3 (pow u10 u7))) ;;0.3e8
+
+;; data maps and vars
+;;
+
+;; private functions
+;;
+
+;; public functions
+;;
+;;
+
+;; get-invariant
+;; invariant = b_x ^ w_x * b_y ^ w_y 
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (ok (unwrap-panic (contract-call? .math-fixed-point mul-down 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x weight-x)) 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y weight-y)))))
+        weight-sum-err
+    )
+)
+
+;; get-y-given-x
+;; d_y = dy
+;; b_y = balance-y
+;; b_x = balance-x                /      /            b_x             \    (w_x / w_y) \           
+;; d_x = dx          d_y = b_y * |  1 - | ---------------------------  | ^             |          
+;; w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
+;; w_y = weight-y                                                                       
+(define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (let 
+            (
+                (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
+                (denominator (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-x denominator)))
+                (exponent (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
+                (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))
+            )
+            (asserts! (< dx max-in) max-in-ratio-err)
+
+            (contract-call? .math-fixed-point mul-down balance-y complement)
+        )
+        weight-sum-err
+    )    
+)
+
+;; d_y = dy                                                                            
+;; b_y = balance-y
+;; b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
+;; d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
+;; w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; w_y = weight-y                                                           
+(define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (let 
+            (
+                (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))
+                (denominator (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-y denominator)))
+                (exponent (unwrap-panic (contract-call? .math-fixed-point div-up weight-y weight-x)))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
+                (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))
+            )
+            (asserts! (< dy max-out) max-out-ratio-err)
+            (contract-call? .math-fixed-point mul-up balance-x ratio)
+        )
+        weight-sum-err
+    )
+)
+
+;; d_x = dx
+;; d_y = dy 
+;; b_x = balance-x
+;; b_y = balance-y
+;; w_x = weight-x 
+;; w_y = weight-y
+;; spot = b_x * w_y / b_y / w_x
+;; d_x = b_x * ((price / spot) ^ w_y - 1)
+(define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (let 
+            (
+                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
+                (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
+                (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base weight-y)))
+                (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
+            )
+            (contract-call? .math-fixed-point mul-up balance-x ratio)
+        )
+        weight-sum-err    
+    )   
+)
+
+(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (ok
+            (if (is-eq total-supply u0)
+                (let
+                    (
+                        ;; if total-supply is zero
+                        ;;
+                        ;; invariant = (b_x ^ w_x) * (b_y ^ w_y)
+                        ;;
+                        ;;(dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
+                        ;;(dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
+                        ;;(invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
+                        (invariant (unwrap-panic (get-invariant dx dy weight-x weight-y)))
+                    )                    
+                    {token: invariant, dy: dy}
+                )
+                [1;4;31m(let[0m
+[1;4;31m                    ([0m
+[1;4;31m                        ;; if total-supply > zero, we calculate dy proportional to dx / balance-x[0m
+[1;4;31m                        (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y [0m
+[1;4;31m                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))[0m
+[1;4;31m                        (token (unwrap-panic (contract-call? .math-fixed-point mul-down total-supply  [0m
+[1;4;31m                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))[0m
+[1;4;31m                    )[0m
+[1;4;31m                    {token: token, dy: dy}[0m
+[1;4;31m                )[0m   
+            )
+        )
+        weight-sum-err    
+    )    
+)
+
+(define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (if (> total-supply u0)
+            (let
+                (   
+                    ;; first calculate what % you need to mint
+                    (token-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
+                    ;; calculate dx as % of balance-x corresponding to % you need to mint
+                    (dx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x token-supply)))
+                    ;; calculate dy using weight ratio
+                    (wy-wx (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)))
+                    (dy (unwrap-panic (contract-call? .math-fixed-point mul-down dx wy-wx)))
+                )
+                (ok {dx: dx, dy: dy})
+            )
+            no-liquidity-err
+        )
+        weight-sum-err
+    )
+)
+
+(define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    (get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.weighted-equation'
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+
+;; fixed-weight-pool
+;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
+;;
+;; TODO: token-x/token-y pool == token-y/token-x pool
+
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+
+(define-constant authorisation-err (err u1000))
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant invalid-balance-err (err u2008))
+(define-constant invalid-token-err (err u2007))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
+(define-constant weighted-equation-call-err (err u2009))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u1001))
+
+;; data maps and vars
+(define-map pools-map
+  { pool-id: uint }
+  {
+    token-x: principal,
+    token-y: principal,
+    weight-x: uint,
+    weight-y: uint
+  }
+)
+
+(define-map pools-data-map
+  {
+    token-x: principal,
+    token-y: principal,
+    weight-x: uint,
+    weight-y: uint
+  }
+  {
+    total-supply: uint,
+    balance-x: uint,
+    balance-y: uint,
+    fee-balance-x: uint,
+    fee-balance-y: uint,
+    fee-to-address: principal,
+    pool-token: principal,
+    fee-rate-x: uint,
+    fee-rate-y: uint
+  }
+)
+
+(define-data-var pool-count uint u0)
+(define-data-var pools-list (list 2000 uint) (list))
+
+;; implement trait-pool
+(define-read-only (get-pool-count)
+    (ok (var-get pool-count))
+)
+
+(define-read-only (get-pool-contracts (pool-id uint))
+
+    (let
+        (
+            (pool (map-get? pools-map {pool-id: pool-id}))
+       )
+        (if (is-some pool)
+            (ok pool)
+            invalid-pool-err
+       )
+   )
+)
+
+(define-read-only (get-pools)
+    (ok (map get-pool-contracts (var-get pools-list)))
+)
+
+;; additional functions
+(define-read-only (get-pool-details (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
+       )
+        (if (is-some pool)
+            (ok pool)
+            invalid-pool-err
+       )
+   )
+)
+
+;; get overall balances for the pair
+(define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+  (let
+    (
+      (token-x (contract-of token-x-trait))
+      (token-y (contract-of token-y-trait))
+      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) (err invalid-pool-err)))
+    )
+    (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
+  )
+)
+
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool-id (+ (var-get pool-count) u1))
+            (pool-data {
+                total-supply: u0,
+                balance-x: u0,
+                balance-y: u0,
+                fee-balance-x: u0,
+                fee-balance-y: u0,
+                fee-to-address: (contract-of the-pool-token),
+                pool-token: (contract-of the-pool-token),
+                fee-rate-x: u0,
+                fee-rate-y: u0
+            })
+       )
+        (asserts!
+            (and
+                (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
+                (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }))
+           )
+            pool-already-exists-err
+       )
+
+        (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-data)
+        
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pool-count pool-id)
+        ;; Deployer should inject the initial coins to the pool
+        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx dy))
+        (print { object: "pool", action: "created", data: pool-data })
+        (ok true)
+   )
+)
+
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (total-supply (get total-supply pool))
+            (add-data (unwrap! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy) internal-function-call-err))
+            (new-supply (get token add-data))
+            (new-dy (get dy add-data))
+            (pool-updated (merge pool {
+                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
+            }))
+       )
+
+        (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
+
+        ;; send x to vault
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;; send y to vault
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        
+        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
+
+        ;; mint pool token and send to tx-sender
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        (print { object: "pool", action: "liquidity-added", data: pool-updated })
+        (ok true)
+   )
+)    
+
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (percent uint))
+    (if (<= percent ONE_8)
+        (let
+            (
+                (token-x (contract-of token-x-trait))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+                (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap! (contract-call? the-pool-token get-balance tx-sender) math-call-err) percent) math-call-err))
+                (total-supply (get total-supply pool))
+                (reduce-data (unwrap! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares) internal-function-call-err))
+                (dx (get dx reduce-data))
+                (dy (get dy reduce-data))
+                (pool-updated (merge pool {
+                    total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                    balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+                    balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err)
+                    })
+                )
+            )
+        
+            ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
+        
+            ;; send x from vault
+            ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+            ;; send y from vault
+            ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+
+            (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+            (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+
+            (try! (contract-call? the-pool-token burn tx-sender shares))
+
+            (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+            (ok {dx: dx, dy: dy})
+        )
+        percent-greater-than-one
+    )
+)
+
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))    
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (fee-rate-x (get fee-rate-x pool))
+
+            ;; fee = dx * fee-rate-x
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
+            (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
+    
+            (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                    balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx-net-fees) math-call-err),
+                    balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
+                    fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
+                    }
+                )
+            )
+        )
+       
+        (asserts! (> dx u0) invalid-liquidity-err) 
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+    
+        ;; send x to vault
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;; send y from vault
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        
+        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+        ;; post setting
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+        (ok {dx: dx-net-fees, dy: dy})
+    )
+)
+
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
+
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (fee-rate-y (get fee-rate-y pool))
+
+            ;; fee = dy * fee-rate-y
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
+            (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
+
+            (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                    balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+                    balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy-net-fees) math-call-err),
+                    fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
+                    }
+                )
+            )
+        )
+        (asserts! (> dy u0) invalid-liquidity-err)
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+
+        ;; send x from vault
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;; send y to vault
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
+
+        ;; post setting
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+        (ok {dx: dx, dy: dy-net-fees})
+    )
+)
+
+(define-read-only (get-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+        (ok (get fee-rate-x pool))
+    )
+)
+
+(define-read-only (get-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+        (ok (get fee-rate-y pool))
+    )
+)
+
+(define-public (set-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (fee-rate-x uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-rate-x: fee-rate-x })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (fee-rate-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-rate-y: fee-rate-y })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (address principal))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-to-address: address })
+        )
+        (ok true)     
+    )
+)
+
+;; return principal
+(define-read-only (get-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))                
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+        (ok (get fee-to-address pool))
+    )
+)
+
+(define-read-only (get-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))              
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
+        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
+    )
+)
+
+;; Returns the fee of current x and y and make balance to 0.
+(define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+            (address (get fee-to-address pool))
+            (fee-x (get fee-balance-x pool))
+            (fee-y (get fee-balance-y pool))
+        )
+
+        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault address none) transfer-y-failed-err))
+
+        (map-set pools-data-map
+        { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
+        (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
+        )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
+)
+
+(define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
+    
+    (let 
+        (
+        (token-x (contract-of token-x-trait))
+        (token-y (contract-of token-y-trait))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        (balance-x (get balance-x pool))
+        (balance-y (get balance-y pool))
+        )
+        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+    )
+)
+
+(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint)) 
+    (let 
+        (
+        (token-x (contract-of token-x-trait))
+        (token-y (contract-of token-y-trait))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        (balance-x (get balance-x pool))
+        (balance-y (get balance-y pool))
+        )
+        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
+    )
+)
+
+(define-read-only (get-x-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (price uint))
+
+    (let 
+        (
+        (token-x (contract-of token-x-trait))
+        (token-y (contract-of token-y-trait))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        (balance-x (get balance-x pool))
+        (balance-y (get balance-y pool))
+        )
+        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (dy uint))
+    ([1;4;31mlet[0m 
+        [1;4;31m([0m
+[1;4;31m        (token-x (contract-of token-x-trait))[0m
+[1;4;31m        (token-y (contract-of token-y-trait))[0m
+[1;4;31m        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))[0m
+[1;4;31m        (balance-x (get balance-x pool))[0m
+[1;4;31m        (balance-y (get balance-y pool))[0m
+[1;4;31m        (total-supply (get total-supply pool))[0m
+[1;4;31m        )[0m
+        [1;4;31m(contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)[0m
+    )
+
+)
+
+(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (token uint))
+
+    (let 
+        (
+        (token-x (contract-of token-x-trait))
+        (token-y (contract-of token-y-trait))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        (balance-x (get balance-x pool))
+        (balance-y (get balance-y pool))
+        (total-supply (get total-supply pool))        
+        )
+        (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
+    )
+)
+
+(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (token uint))
+    
+    (let 
+        (
+        (token-x (contract-of token-x-trait))
+        (token-y (contract-of token-y-trait))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        (balance-x (get balance-x pool))
+        (balance-y (get balance-y pool))
+        (total-supply (get total-supply pool))
+        )
+        (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)
+    )
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.weighted-equation'
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+
+;; collateral-rebalancing-pool
+;; <add a description here>
+;; delta update happens every time contract is called
+;; currently it does not support single asset liquidity provision
+
+;; constants
+;;
+(define-constant ONE_8 u100000000) ;; 8 decimal places
+
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
+(define-constant weighted-equation-call-err (err u2009))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u1001))
+(define-constant get-weight-fail-err (err u2012))
+(define-constant get-expiry-fail-err (err u2013))
+(define-constant get-price-fail-err (err u2015))
+(define-constant get-symbol-fail-err (err u6000))
+(define-constant get-oracle-price-fail-err (err u7000))
+(define-constant expiry-err (err u2017))
+(define-constant get-balance-fail-err (err u6001))
+
+(define-constant a1 u27839300)
+(define-constant a2 u23038900)
+(define-constant a3 u97200)
+(define-constant a4 u7810800)
+
+;; TODO: need to be defined properly
+(define-constant oracle-src "nothing")
+
+;; data maps and vars
+;;
+(define-map pools-map
+  { pool-id: uint }
+  {
+    token-x: principal, ;; collateral
+    token-y: principal, ;; token
+    expiry: uint    
+  }
+)
+
+(define-map pools-data-map
+  {
+    token-x: principal,
+    token-y: principal,
+    expiry: uint
+  }
+  {
+    yield-supply: uint,
+    key-supply: uint,
+    yield-bal-x: uint,
+    yield-bal-y: uint,
+    key-bal-x: uint,
+    key-bal-y: uint,
+    fee-balance-x: uint,
+    fee-balance-y: uint,
+    fee-to-address: principal,
+    yield-token: principal,
+    key-token: principal,
+    strike: uint,
+    bs-vol: uint,
+    ltv-0: uint,
+    fee-rate-x: uint,
+    fee-rate-y: uint,
+    weight-x: uint,
+    weight-y: uint  
+  }
+)
+
+(define-data-var pool-count uint u0)
+(define-data-var pools-list (list 2000 uint) (list))
+
+;; private functions
+;;
+
+;; Approximation of Error Function using Abramowitz and Stegun
+;; https://en.wikipedia.org/wiki/Error_function#Approximation_with_elementary_functions
+;; Please note erf(x) equals -erf(-x)
+(define-private (erf (x uint))
+    (let
+        (
+            (a1x (unwrap! (contract-call? .math-fixed-point mul-down a1 x) math-call-err))
+            (x2 (unwrap! (contract-call? .math-fixed-point pow-down x u200000000) math-call-err))
+            (a2x (unwrap! (contract-call? .math-fixed-point mul-down a2 x2) math-call-err))
+            (x3 (unwrap! (contract-call? .math-fixed-point pow-down x u300000000) math-call-err))
+            (a3x (unwrap! (contract-call? .math-fixed-point mul-down a3 x3) math-call-err))
+            (x4 (unwrap! (contract-call? .math-fixed-point pow-down x u400000000) math-call-err))
+            (a4x (unwrap! (contract-call? .math-fixed-point mul-down a4 x4) math-call-err))
+            (denom (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 a1x) math-call-err))
+            (denom1 (unwrap! (contract-call? .math-fixed-point add-fixed denom a2x) math-call-err))
+            (denom2 (unwrap! (contract-call? .math-fixed-point add-fixed denom1 a3x) math-call-err))
+            (denom3 (unwrap! (contract-call? .math-fixed-point add-fixed denom2 a4x) math-call-err))
+            (denom4 (unwrap! (contract-call? .math-fixed-point pow-down denom3 u400000000) math-call-err))
+            (base (unwrap! (contract-call? .math-fixed-point div-down ONE_8 denom4) math-call-err))
+        )
+        (contract-call? .math-fixed-point sub-fixed ONE_8 base)
+    )
+)
+
+;; public functions
+;;
+
+;; implement trait-pool
+(define-read-only (get-pool-count)
+    (ok (var-get pool-count))
+)
+
+(define-read-only (get-pool-contracts (pool-id uint))
+    (let
+        (
+            (pool (map-get? pools-map {pool-id: pool-id}))
+        )
+        (if (is-some pool)
+            (ok pool)
+            (err invalid-pool-err)
+        )
+    )
+)
+
+(define-read-only (get-pools)
+    (ok (map get-pool-contracts (var-get pools-list)))
+)
+
+;; additional functions
+(define-read-only (get-pool-details (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
+        )
+        (if (is-some pool)
+            (ok pool)
+            (err invalid-pool-err)
+        )
+    )
+)
+
+(define-public (get-spot (token <ft-trait>) (collateral <ft-trait>))
+    (let 
+        (
+            (token-symbol (unwrap-panic (contract-call? token get-symbol)))
+            (collateral-symbol (unwrap-panic (contract-call? collateral get-symbol)))
+            (token-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src token-symbol)))
+            (collateral-price (unwrap-panic (contract-call? .open-oracle get-price oracle-src collateral-symbol)))            
+            (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
+        )
+        (ok spot)
+    )
+)
+
+;; LTV is capped at 1
+(define-public (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))            
+            (spot (unwrap-panic (get-spot token collateral)))                        
+            (ltv (unwrap-panic (contract-call? .math-fixed-point mul-down (get ltv-0 pool) (unwrap-panic (contract-call? .math-fixed-point div-down spot (get strike pool))))))
+        )
+        (if (> ltv ONE_8)
+            (ok ONE_8)
+            (ok ltv)
+        )
+    )
+
+)
+
+(define-public (get-weight-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
+    (let 
+        (
+            ;; determine spot using open oracle
+            (spot (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+
+            ;; TODO: assume 10mins per block - something to be reviewed
+            (t (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err)  
+                (unwrap! (contract-call? .math-fixed-point mul-down u52560 ONE_8) math-call-err)) math-call-err))            
+
+            ;; TODO: APYs need to be calculated from the prevailing yield token price.
+            ;; TODO: ln(S/K) approximated as (S/K - 1)
+
+            ;; we calculate d1 first
+            (spot-term (unwrap! (contract-call? .math-fixed-point div-up spot strike) math-call-err))
+            (pow-bs-vol (unwrap! (contract-call? .math-fixed-point div-up 
+                            (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
+            (vol-term (unwrap! (contract-call? .math-fixed-point mul-up t pow-bs-vol) math-call-err))                       
+            (sqrt-t (unwrap! (contract-call? .math-fixed-point pow-down t u50000000) math-call-err))
+            (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
+            
+            (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
+        )
+        
+        (if (> spot-term ONE_8)
+            (let
+                (
+                    (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+                                    (unwrap! (contract-call? .math-fixed-point sub-fixed spot-term ONE_8) math-call-err)) math-call-err))
+                    (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
+                    (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
+                    (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
+                )
+                (contract-call? .math-fixed-point div-up complement u200000000)
+            )
+            (let
+                (
+                    (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+                                    (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 spot-term) math-call-err)) math-call-err))
+                    (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
+                    (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
+                    (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
+                )
+                (contract-call? .math-fixed-point div-up complement u200000000)              
+            )
+        )  
+    )
+)
+
+;; get overall balances for the pair
+(define-public (get-balances (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+            (yield-bal-x (get yield-bal-x pool))
+            (yield-bal-y (get yield-bal-y pool))
+            (key-bal-x (get key-bal-x pool))
+            (key-bal-y (get key-bal-y pool))
+            (balance-x (unwrap-panic (contract-call? .math-fixed-point add-fixed yield-bal-x key-bal-x)))
+            (balance-y (unwrap-panic (contract-call? .math-fixed-point add-fixed yield-bal-y key-bal-y)))
+        )
+        (ok {balance-x: balance-x, balance-y: balance-y})
+    )
+)
+
+;; single sided liquidity
+(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint)) 
+    (let
+        (
+            (pool-id (+ (var-get pool-count) u1))
+
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
+
+            ;; determine strike using open oracle
+            (strike (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
+
+            ;; TODO: setter / getter of bs-vol / ltv-0
+            ;; currently hard-coded at 50%
+            (bs-vol u50000000)
+            (ltv-0 u80000000)
+
+            (weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
+
+            (pool-data {
+                yield-supply: u0,
+                key-supply: u0,
+                yield-bal-x: u0,
+                yield-bal-y: u0,
+                key-bal-x: u0,
+                key-bal-y: u0,
+                fee-balance-x: u0,
+                fee-balance-y: u0,
+                fee-to-address: (contract-of the-key-token), ;; keytoken holder accrues fee
+                yield-token: (contract-of the-yield-token),
+                key-token: (contract-of the-key-token),
+                strike: strike,
+                bs-vol: bs-vol,
+                fee-rate-x: u0,
+                fee-rate-y: u0,
+                ltv-0: ltv-0,
+                weight-x: weight-x,
+                weight-y: weight-y
+            })
+        )
+        (asserts!
+            (and
+                (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
+                (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, expiry: expiry }))
+            )
+            pool-already-exists-err
+        )
+
+        (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
+        
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pool-count pool-id)
+        (try! (add-to-position token collateral the-yield-token the-key-token dx))
+        (print { object: "pool", action: "created", data: pool-data })
+        (ok true)
+    )
+)
+
+;; note single-sided liquidity
+(define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (yield-bal-x (get yield-bal-x pool))
+            (yield-bal-y (get yield-bal-y pool))
+            (key-bal-x (get key-bal-x pool))
+            (key-bal-y (get key-bal-y pool))
+            (yield-supply (get yield-supply pool))   
+            (key-supply (get key-supply pool))
+
+            (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+            (yield-dx (unwrap! (contract-call? .math-fixed-point mul-down ltv dx) math-call-err))
+            (key-dx (unwrap! (contract-call? .math-fixed-point sub-fixed dx yield-dx) math-call-err))                 
+
+            (add-data (unwrap! (get-token-given-position token collateral expiry dx) internal-function-call-err))
+            (add-yield-data (get yield-token add-data))
+            (add-key-data (get key-token add-data))
+
+            (yield-new-supply (get token add-yield-data))
+            (yield-dx-weighted (get dx-weighted add-yield-data))                   
+            (yield-dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed yield-dx yield-dx-weighted) math-call-err))     
+            
+            ;; TODO: a more efficient way to convert?
+            (yield-dy-weighted (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 yield-dx-to-dy) no-liquidity-err)))
+
+            (key-new-supply (get token add-key-data))
+            (key-dx-weighted (get dx-weighted add-key-data))    
+            (key-dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed key-dx key-dx-weighted) math-call-err))    
+
+            ;; TODO: a more efficient way to convert?      
+            (key-dy-weighted (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 key-dx-to-dy) no-liquidity-err)))
+
+            (pool-updated (merge pool {
+                yield-supply: (unwrap! (contract-call? .math-fixed-point add-fixed yield-new-supply yield-supply) math-call-err),
+                key-supply: (unwrap! (contract-call? .math-fixed-point add-fixed key-new-supply key-supply) math-call-err),
+                yield-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-x yield-dx-weighted) math-call-err),
+                yield-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-y yield-dy-weighted) math-call-err),
+                key-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-x key-dx-weighted) math-call-err),
+                key-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-y key-dy-weighted) math-call-err)
+            }))
+
+            (dx-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dx-weighted key-dx-weighted) math-call-err))
+            (dy-weighted (unwrap! (contract-call? .math-fixed-point add-fixed yield-dy-weighted key-dy-weighted) math-call-err))
+        )
+
+        (asserts! (> dx u0) invalid-liquidity-err)     
+
+        (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) transfer-y-failed-err)
+
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        ;; mint pool token and send to tx-sender
+        (try! (contract-call? the-yield-token mint tx-sender yield-new-supply))
+        (try! (contract-call? the-key-token mint tx-sender key-new-supply))
+
+        (print { object: "pool", action: "liquidity-added", data: pool-updated })
+        (ok true)
+   )
+)    
+
+;; note single sided liquidity
+(define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (yield-bal-x (get yield-bal-x pool))
+            (yield-bal-y (get yield-bal-y pool))
+            (yield-supply (get yield-supply pool))   
+            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap! (contract-call? the-yield-token get-balance tx-sender) get-balance-fail-err) percent) math-call-err))
+            (reduce-data (unwrap! (get-position-given-burn-yield token collateral expiry shares) internal-function-call-err))
+            (dx-weighted (get dx-weighted reduce-data))
+            (dy-weighted (get dy-weighted reduce-data))
+
+            ;; TODO: a more efficient way to convert?
+            (dy-to-dx (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dy-weighted) no-liquidity-err)))
+            (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
+            (pool-updated (merge pool {
+                yield-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-supply shares) math-call-err),
+                yield-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-x dx-weighted) math-call-err),
+                yield-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-y dy-weighted) math-call-err)
+                })
+            )  
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))  
+        )
+
+        (asserts! (<= percent ONE_8) percent-greater-than-one)
+        ;; burn supported only at maturity
+        (asserts! (>= now expiry) expiry-err)
+        
+        ;; all dy converted into dx, so zero dy to transfer.
+        (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        ;;(unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (try! (contract-call? the-yield-token burn tx-sender shares))
+
+        (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+        (ok {dx: dx, dy: u0})
+   )
+)
+
+;; note single-sided liquidity
+(define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (expiry (unwrap! (contract-call? the-key-token get-expiry) get-expiry-fail-err))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (key-bal-x (get key-bal-x pool))
+            (key-bal-y (get key-bal-y pool))            
+            (key-supply (get key-supply pool))            
+            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap! (contract-call? the-key-token get-balance tx-sender) get-balance-fail-err) percent) math-call-err))
+            (reduce-data (unwrap! (get-position-given-burn-key token collateral expiry shares) internal-function-call-err))
+            (dx-weighted (get dx-weighted reduce-data))
+            (dy-weighted (get dy-weighted reduce-data))
+
+            ;; TODO: a more efficient way to convert?
+            (dy-to-dx (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dy-weighted) no-liquidity-err)))
+            (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
+            (pool-updated (merge pool {
+                key-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed key-supply shares) math-call-err),
+                key-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-x dx-weighted) math-call-err),
+                key-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-y dy-weighted) math-call-err)
+                })
+            )  
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))  
+        )
+
+        (asserts! (<= percent ONE_8) percent-greater-than-one)
+        ;; burn supported only at maturity
+        (asserts! (>= now expiry) expiry-err)
+        
+        ;; all dy converted into dx, so zero dy to transfer.
+        (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        ;;(unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (try! (contract-call? the-key-token burn tx-sender shares))
+
+        (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+        (ok {dx: dx, dy: u0})
+   )
+)
+
+;; split of balance to yield and key is transparent to traders
+(define-public (swap-x-for-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (strike (get strike pool))
+            (bs-vol (get bs-vol pool)) 
+            (fee-rate-x (get fee-rate-x pool))
+            (yield-bal-x (get yield-bal-x pool))
+            (yield-bal-y (get yield-bal-y pool))
+            (key-bal-x (get key-bal-x pool))
+            (key-bal-y (get key-bal-y pool))       
+
+            ;; every swap call updates the weights
+            (weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))            
+            
+            ;; fee = dx * fee-rate-x
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
+            (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))    
+            (dy (unwrap! (get-y-given-x token collateral expiry dx-net-fees) internal-function-call-err))
+
+            (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+            (yield-dx-net-fees (unwrap! (contract-call? .math-fixed-point mul-up ltv dx-net-fees) math-call-err))
+            (yield-dy (unwrap! (contract-call? .math-fixed-point mul-up ltv dy) math-call-err))
+            (key-dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx-net-fees yield-dx-net-fees) math-call-err))
+            (key-dy (unwrap! (contract-call? .math-fixed-point sub-fixed dy yield-dy) math-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        yield-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-x yield-dx-net-fees) math-call-err),
+                        yield-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-y yield-dy) math-call-err),
+                        key-bal-x: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-x key-dx-net-fees) math-call-err),
+                        key-bal-y: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-y key-dy) math-call-err),
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-x pool) fee) math-call-err),
+                        weight-x: weight-x,
+                        weight-y: weight-y                    
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        (asserts! (> dx u0) invalid-liquidity-err) 
+
+        (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+        ;; post setting
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+        (ok {dx: dx-net-fees, dy: dy})
+    )
+)
+
+;; split of balance to yield and key is transparent to traders
+(define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (strike (get strike pool))
+            (bs-vol (get bs-vol pool)) 
+            (fee-rate-y (get fee-rate-y pool))
+            (yield-bal-x (get yield-bal-x pool))
+            (yield-bal-y (get yield-bal-y pool))
+            (key-bal-x (get key-bal-x pool))
+            (key-bal-y (get key-bal-y pool))  
+
+            ;; every swap call updates the weights
+            (weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))   
+
+            ;; fee = dy * fee-rate-y
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
+            (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
+            (dx (unwrap! (get-x-given-y token collateral expiry dy-net-fees) internal-function-call-err))
+
+            (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+            (yield-dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-up ltv dy-net-fees) math-call-err))
+            (yield-dx (unwrap! (contract-call? .math-fixed-point mul-up ltv dx) math-call-err))
+            (key-dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy-net-fees yield-dy-net-fees) math-call-err))
+            (key-dx (unwrap! (contract-call? .math-fixed-point sub-fixed dx yield-dx) math-call-err))            
+
+            (pool-updated
+                (merge pool
+                    {
+                        yield-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-x yield-dx) math-call-err),
+                        yield-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed yield-bal-y yield-dy-net-fees) math-call-err),
+                        key-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed key-bal-x key-dx) math-call-err),
+                        key-bal-y: (unwrap! (contract-call? .math-fixed-point add-fixed key-bal-y key-dy-net-fees) math-call-err),                        
+                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get fee-balance-y pool) fee) math-call-err),
+                        weight-x: weight-x,
+                        weight-y: weight-y                        
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        (asserts! (> dy u0) invalid-liquidity-err)
+
+        (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
+
+        ;; post setting
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+        (ok {dx: dx, dy: dy-net-fees})
+    )
+)
+
+(define-read-only (get-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+        (ok (get fee-rate-x pool))
+    )
+)
+
+(define-read-only (get-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+        (ok (get fee-rate-y pool))
+    )
+)
+
+(define-public (set-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-x uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry 
+            }
+            (merge pool { fee-rate-x: fee-rate-x })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-y uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry
+            }
+            (merge pool { fee-rate-y: fee-rate-y })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (address principal))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry 
+            }
+            (merge pool { fee-to-address: address })
+        )
+        (ok true)     
+    )
+)
+
+(define-read-only (get-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))                
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+        )
+        (ok (get fee-to-address pool))
+    )
+)
+
+(define-read-only (get-fees (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))              
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+        )
+        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
+    )
+)
+
+(define-public (collect-fees (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (address (get fee-to-address pool))
+            (fee-x (get fee-balance-x pool))
+            (fee-y (get fee-balance-y pool))
+        )
+
+        (and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
+
+        (map-set pools-data-map
+            { token-x: token-x, token-y: token-y, expiry: expiry}
+            (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
+        )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
+)
+
+(define-public (get-y-given-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
+            (balance-x (get balance-x balances))
+            (balance-y (get balance-y balances))
+            (weight-x (get weight-x pool))
+            (weight-y (get weight-y pool))
+        )
+        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+    )
+)
+
+(define-public (get-x-given-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
+            (balance-x (get balance-x balances))
+            (balance-y (get balance-y balances))
+            (weight-x (get weight-x pool))
+            (weight-y (get weight-y pool))
+        )
+        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
+    )
+)
+
+(define-public (get-x-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
+            (balance-x (get balance-x balances))
+            (balance-y (get balance-y balances))
+            (weight-x (get weight-x pool))
+            (weight-y (get weight-y pool))         
+        )
+        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
+;; single sided liquidity
+(define-public (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+    (let 
+        (
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+        )
+        (if (< now expiry) ;; mint supported until, but excl., expiry
+            (let 
+                (
+                    (token-x (contract-of collateral))
+                    (token-y (contract-of token))
+                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+                    (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
+                    (balance-x (get balance-x balances))
+                    (balance-y (get balance-y balances))
+                    (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
+                    (weight-x (get weight-x pool))
+                    (weight-y (get weight-y pool))
+
+                    (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+
+                    ;; we split dx to dx-weighted and dy-weighted using on-chain AMM
+                    (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-up dx weight-x) math-call-err))
+                    (dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-weighted) math-call-err))
+                    (dy-weighted (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dx-to-dy) no-liquidity-err))            
+
+                    (add-data (unwrap! (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx-weighted dy-weighted) weighted-equation-call-err))
+                    (dy-check (get dy add-data)) ;;must equal dy-weighted (see asserts below)
+            
+                    (ltv-dx (unwrap! (contract-call? .math-fixed-point mul-down ltv dx) math-call-err))
+
+                    (yield-dx-weighted (unwrap! (contract-call? .math-fixed-point mul-down ltv dx-weighted) math-call-err))
+                    (yield-dy-weighted (unwrap! (contract-call? .math-fixed-point mul-down ltv dy-weighted) math-call-err))
+                    (key-dx-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dx-weighted yield-dx-weighted) math-call-err))
+                    (key-dy-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dy-weighted yield-dy-weighted) math-call-err))
+                )
+
+                (asserts! (is-eq dy-weighted dy-check) invalid-liquidity-err)
+
+                (ok {yield-token: {token: ltv-dx, dx-weighted: yield-dx-weighted, dy-weighted: yield-dy-weighted}, 
+                     key-token: {token: ltv-dx, dx-weighted: key-dx-weighted, dy-weighted: key-dy-weighted}})
+            )
+            expiry-err
+        )
+    )
+)
+
+;; single sided liquidity
+(define-private (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+    (let 
+        (
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+        )
+        (if (< now expiry) ;; mint supported until, but excl., expiry
+            (let 
+                (
+                    (token-x (contract-of collateral))
+                    (token-y (contract-of token))
+                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+                    (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
+                    (balance-x (get balance-x balances))
+                    (balance-y (get balance-y balances))         
+                    (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
+                    (weight-x (get weight-x pool))
+                    (weight-y (get weight-y pool))
+            
+                    (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+
+                    (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) weighted-equation-call-err))
+
+                    (dx-weighted (get dx pos-data))
+                    (dy-weighted (get dy pos-data))
+                    (yield-dx-weighted (unwrap! (contract-call? .math-fixed-point mul-up ltv dx-weighted) math-call-err))
+                    (yield-dy-weighted (unwrap! (contract-call? .math-fixed-point mul-up ltv dy-weighted) math-call-err))
+                    (key-dx-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dx-weighted yield-dx-weighted) math-call-err))
+                    (key-dy-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dy-weighted yield-dy-weighted) math-call-err))
+
+                    ;; always convert to collateral ccy
+                    (yield-dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 yield-dy-weighted) no-liquidity-err))
+                    (key-dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 key-dy-weighted) no-liquidity-err))
+                    
+                    (yield-dx (unwrap! (contract-call? .math-fixed-point add-fixed yield-dx-weighted yield-dy-to-dx) math-call-err))
+                    (key-dx (unwrap! (contract-call? .math-fixed-point add-fixed key-dx-weighted key-dy-to-dx) math-call-err))
+                    
+                )
+                (ok {yield-token: {dx: yield-dx, dx-weighted: yield-dx-weighted, dy-weighted: yield-dy-weighted}, 
+                    key-token: {dx: key-dx, dx-weighted: key-dx-weighted, dy-weighted: key-dy-weighted}})
+            )
+            expiry-err
+        )
+    )
+)
+
+(define-public (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+    ([1;4;31mlet[0m 
+        [1;4;31m([0m
+[1;4;31m            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))[0m
+[1;4;31m        )[0m
+        [1;4;31m(if (>= now expiry)[0m
+[1;4;31m            (let [0m
+[1;4;31m                ([0m
+[1;4;31m                    (token-x (contract-of collateral))[0m
+[1;4;31m                    (token-y (contract-of token))[0m
+[1;4;31m                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))[0m
+[1;4;31m                    (yield-bal-x (get yield-bal-x pool))[0m
+[1;4;31m                    (yield-bal-y (get yield-bal-y pool))                    [0m
+[1;4;31m                    (yield-supply (get yield-supply pool))[0m
+[1;4;31m                    (weight-x (get weight-x pool))[0m
+[1;4;31m                    (weight-y (get weight-y pool))[0m
+
+[1;4;31m                    (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-burn yield-bal-x yield-bal-y weight-x weight-y yield-supply shares) weighted-equation-call-err))[0m
+[1;4;31m                    [0m
+[1;4;31m                    (dx-weighted (get dx pos-data))[0m
+[1;4;31m                    (dy-weighted (get dy pos-data))                    [0m
+
+[1;4;31m                    ;; always convert to collateral ccy[0m
+[1;4;31m                    (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dy-weighted) no-liquidity-err))             [0m
+[1;4;31m                    [0m
+[1;4;31m                    (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))[0m
+[1;4;31m                    [0m
+[1;4;31m                )[0m
+[1;4;31m                (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})[0m
+[1;4;31m            )[0m
+[1;4;31m            expiry-err[0m
+[1;4;31m        )[0m
+    )
+)
+
+(define-public (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+    (let 
+        (
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+        )
+        (if (>= now expiry)
+            (let 
+                (
+                    (token-x (contract-of collateral))
+                    (token-y (contract-of token))
+                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+                    (key-bal-x (get yield-bal-x pool))
+                    (key-bal-y (get yield-bal-y pool))                    
+                    (key-supply (get yield-supply pool))
+                    (weight-x (get weight-x pool))
+                    (weight-y (get weight-y pool))
+
+                    (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-burn key-bal-x key-bal-y weight-x weight-y key-supply shares) weighted-equation-call-err))
+                    
+                    (dx-weighted (get dx pos-data))
+                    (dy-weighted (get dy pos-data))                    
+
+                    ;; always convert to collateral ccy
+                    (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dy-weighted) no-liquidity-err))
+                    
+                    (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
+                    
+                )
+                (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
+            )
+            expiry-err
+        )
+    )
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.weighted-equation'
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+
+;; liquidity-bootstrapping-pool
+;; <add a description here>
+
+;; constants
+;;
+(define-constant ONE_8 u100000000) ;; 8 decimal places
+
+(define-constant invalid-pool-err (err u2001))
+(define-constant no-liquidity-err (err u2002))
+(define-constant invalid-liquidity-err (err u2003))
+(define-constant transfer-x-failed-err (err u3001))
+(define-constant transfer-y-failed-err (err u3002))
+(define-constant pool-already-exists-err (err u2000))
+(define-constant too-many-pools-err (err u2004))
+(define-constant percent-greater-than-one (err u5000))
+(define-constant no-fee-x-err (err u2005))
+(define-constant no-fee-y-err (err u2006))
+(define-constant already-expiry-err (err u2010))
+(define-constant weighted-equation-call-err (err u2009))
+(define-constant math-call-err (err u2010))
+(define-constant internal-function-call-err (err u1001))
+(define-constant internal-get-weight-err (err u2012))
+;; data maps and vars
+;;
+(define-map pools-map
+  { pool-id: uint }
+  {
+    token-x: principal,
+    token-y: principal,
+    expiry: uint
+  }
+)
+
+(define-map pools-data-map
+  {
+    token-x: principal,
+    token-y: principal,
+    expiry: uint
+  }
+  {
+    total-supply: uint,
+    balance-x: uint,
+    balance-y: uint,
+    fee-balance-x: uint,
+    fee-balance-y: uint,
+    fee-to-address: principal,
+    pool-token: principal,
+    listed: uint,
+    weight-x-0: uint,
+    weight-x-1: uint,
+    fee-rate-x: uint,
+    fee-rate-y: uint       
+  }
+)
+
+(define-data-var pool-count uint u0)
+(define-data-var pools-list (list 2000 uint) (list))
+
+;; private functions
+;;
+(define-private (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
+    ([1;4;31mlet[0m
+        [1;4;31m([0m
+[1;4;31m            (token-x (contract-of token-x-trait))[0m
+[1;4;31m            (token-y (contract-of token-y-trait))[0m
+[1;4;31m            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))[0m
+[1;4;31m            (balance-x (get balance-x pool))[0m
+[1;4;31m            (balance-y (get balance-y pool))[0m
+[1;4;31m            (total-supply (get total-supply pool))            [0m
+[1;4;31m            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err))[0m
+[1;4;31m            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))[0m
+[1;4;31m            (add-data (unwrap! (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy) weighted-equation-call-err))[0m
+[1;4;31m            (new-supply (get token add-data))[0m
+[1;4;31m            (new-dy (get dy add-data))[0m
+[1;4;31m            (pool-updated (merge pool {[0m
+[1;4;31m                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),[0m
+[1;4;31m                balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),[0m
+[1;4;31m                balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)[0m
+[1;4;31m            }))[0m
+[1;4;31m       )[0m
+
+[1;4;31m        (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquid[0mity-err)
+
+        ;; send x to vault
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        [1;4;31m(unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)[0m
+
+        ;; send y to vault
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        [1;4;31m(unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)[0m
+        
+        
+        ;; mint pool token-x and send to tx-sender
+        [1;4;31m(map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)[0m
+        [1;4;31m(try! (contract-call? the-pool-token mint tx-sender new-supply))[0m
+        [1;4;31m(print { object: "pool", action: "liquidity-added", data: pool-updated })[0m
+        [1;4;31m(ok true)[0m
+   )
+) 
+
+;; public functions
+;;
+
+;; implement trait-pool
+(define-read-only (get-pool-count)
+    (ok (var-get pool-count))
+)
+
+(define-read-only (get-pool-contracts (pool-id uint))
+    (let
+        (
+            (pool (map-get? pools-map {pool-id: pool-id}))
+       )
+        (if (is-some pool)
+            (ok pool)
+            (err invalid-pool-err)
+       )
+   )
+)
+
+(define-read-only (get-pools)
+    (ok (map get-pool-contracts (var-get pools-list)))
+)
+
+;; additional functions
+(define-read-only (get-pool-details (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
+       )
+        (if (is-some pool)
+            (ok pool)
+            (err invalid-pool-err)
+       )
+   )
+)
+
+(define-read-only (get-weight-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))                  
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x-0 (get weight-x-0 pool))
+            (weight-x-1 (get weight-x-1 pool))
+            (listed (get listed pool))
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+        )
+
+        (asserts! (< now expiry) already-expiry-err)
+
+        ;; weight-x-0 - (block-height - listed) * (weight-x-0 - weight-x-1) / expiry
+        (ok (unwrap! (contract-call? .math-fixed-point sub-fixed 
+                            weight-x-0 
+                            (unwrap-panic (contract-call? .math-fixed-point div-down 
+                                (unwrap-panic (contract-call? .math-fixed-point mul-down 
+                                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed now listed)) 
+                                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed weight-x-0 weight-x-1)))) 
+                                expiry))) math-call-err))
+    )
+)
+
+;; get overall balances for the pair
+(define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+  (let
+    (
+      (token-x (contract-of token-x-trait))
+      (token-y (contract-of token-y-trait))
+      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+    )
+    (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
+  )
+)
+
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+    (let
+        (
+            (pool-id (+ (var-get pool-count) u1))
+
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+
+            (pool-data {
+                total-supply: u0,
+                balance-x: u0,
+                balance-y: u0,
+                fee-balance-x: u0,
+                fee-balance-y: u0,
+                fee-to-address: (contract-of the-pool-token),
+                pool-token: (contract-of the-pool-token),
+                listed: now,
+                weight-x-0: weight-x-0,
+                weight-x-1: weight-x-1,
+                fee-rate-x: u0,
+                fee-rate-y: u0
+            })
+        )
+        (asserts!
+            (and
+                (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
+                (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, expiry: expiry }))
+            )
+            pool-already-exists-err
+        )
+
+        (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
+        
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pool-count pool-id)
+        (try! (add-to-position token-x-trait token-y-trait expiry the-pool-token dx dy))
+        (print { object: "pool", action: "created", data: pool-data })
+        (ok true)
+   )
+)   
+
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <pool-token-trait>) (percent uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)) percent) math-call-err))
+            (total-supply (get total-supply pool))
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))        
+            (reduce-data (unwrap! (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares) weighted-equation-call-err))
+            (dx (get dx reduce-data))
+            (dy (get dy reduce-data))
+            (pool-updated (merge pool {
+                total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
+                balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx) math-call-err),
+                balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-y dy) math-call-err)
+                })
+           )
+       )
+
+        (asserts! (<= percent ONE_8) percent-greater-than-one)
+;;        (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+;;        (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (try! (contract-call? the-pool-token burn tx-sender shares))
+
+        (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+        (ok {dx: dx, dy: dy})
+   )
+)
+
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))       
+            (fee-rate-x (get fee-rate-x pool))
+
+            ;; fee = dx * fee-rate-x
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
+            (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
+    
+            (dy (unwrap! (get-y-given-x token-x-trait token-y-trait expiry dx-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx-net-fees) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-y dy) math-call-err),
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)                      
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+        ;; post setting
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+        (ok {dx: dx-net-fees, dy: dy})
+    )
+)
+
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (fee-rate-y (get fee-rate-y pool))  
+
+            ;; fee = dy * fee-rate-y
+            (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
+            (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
+            (dx (unwrap! (get-x-given-y token-x-trait token-y-trait expiry dy-net-fees) internal-function-call-err))
+
+            (pool-updated
+                (merge pool
+                    {
+                        balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y dy-net-fees) math-call-err),
+                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err),
+                    }
+                )
+            )
+        )
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
+
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
+
+
+        ;; post setting
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+        (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+        (ok {dx: dx, dy: dy-net-fees})
+  )
+)
+
+
+(define-read-only (get-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+        (ok (get fee-rate-x pool))
+    )
+)
+
+(define-read-only (get-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+        (ok (get fee-rate-y pool))
+    )
+)
+
+(define-public (set-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (fee-rate-x uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry 
+            }
+            (merge pool { fee-rate-x: fee-rate-x })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (fee-rate-y uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry
+            }
+            (merge pool { fee-rate-y: fee-rate-y })
+        )
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (address principal))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+        )
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, expiry: expiry 
+            }
+            (merge pool { fee-to-address: address })
+        )
+        (ok true)     
+    )
+)
+
+(define-read-only (get-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))                
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+        )
+        (ok (get fee-to-address pool))
+    )
+)
+
+(define-read-only (get-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))              
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) (err invalid-pool-err)))
+        )
+        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
+    )
+)
+
+(define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+    (let
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (address (get fee-to-address pool))
+            (fee-x (get fee-balance-x pool))
+            (fee-y (get fee-balance-y pool))
+        )
+
+        ;; (asserts! (is-eq fee-x u0) no-fee-x-err)
+        ;; (asserts! (is-ok (contract-call? token-x-trait transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
+        ;; (asserts! (is-eq fee-y u0) no-fee-y-err)
+        ;; (asserts! (is-ok (contract-call? token-y-trait transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
+        
+        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-x .alex-vault address none) transfer-y-failed-err))
+
+        (map-set pools-data-map
+            { token-x: token-x, token-y: token-y, expiry: expiry}
+            (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
+        )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
+)
+
+(define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err ))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
+        )
+        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+    )
+)
+
+(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err ))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
+        )
+        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
+    )
+)
+
+(define-read-only (get-x-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (price uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err ))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))            
+        )
+        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint) (dy uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (total-supply (get total-supply pool))
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err ))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))          
+        )
+        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)
+    )
+)
+
+(define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (shares uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (total-supply (get total-supply pool))     
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))                         
+        )
+        (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares)
+    )
+)
+
+(define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (shares uint))
+    (let 
+        (
+            (token-x (contract-of token-x-trait))
+            (token-y (contract-of token-y-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (total-supply (get total-supply pool))
+            (weight-x (unwrap! (get-weight-x token-x-trait token-y-trait expiry) internal-get-weight-err ))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))                  
+        )
+        (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)
+    )
+)
+Analysis error: use of unresolved contract 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool'
+(impl-trait .trait-flash-loan-user.flash-loan-user-trait)
+
+(define-constant user-execute-err (err u3005))
+
+(define-public (execute)
+    ([1;4;31mlet[0m 
+        [1;4;31m([0m
+[1;4;31m            (weight-1 u50000000)[0m
+[1;4;31m            (weight-2 u50000000)[0m
+[1;4;31m        )[0m
+        
+        [1;4;31m(asserts! (is-ok (contract-call? .fixed-weight-pool swap-x-for-y .token-alex .token-usda weight-1 weight-2 (* u200 u1000000))) user-execute-err)[0m
+        [1;4;31m(ok true)[0m
+    )
+)
+
