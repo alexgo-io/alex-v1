@@ -29,6 +29,7 @@
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant expiry-err (err u2017))
 (define-constant get-balance-fail-err (err u6001))
+(define-constant err-not-authorized (err u1000))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -295,7 +296,7 @@
                 key-bal-y: u0,
                 fee-balance-x: u0,
                 fee-balance-y: u0,
-                fee-to-address: (contract-of the-key-token), ;; keytoken holder accrues fee
+                fee-to-address: .alex-crp-multisig-vote, ;; multisig is the fee collector
                 yield-token: (contract-of the-yield-token),
                 key-token: (contract-of the-key-token),
                 strike: strike,
@@ -640,7 +641,9 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (fee-collector (get fee-to-address pool))
         )
+        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
 
         (map-set pools-data-map 
             { 
@@ -658,7 +661,10 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (fee-collector (get fee-to-address pool))
         )
+
+        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
 
         (map-set pools-data-map 
             { 
@@ -670,23 +676,24 @@
     )
 )
 
-(define-public (set-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (address principal))
-    (let 
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
-        )
+;; This should be deprecated
+;; (define-public (set-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (address principal))
+;;     (let 
+;;         (
+;;             (token-x (contract-of collateral))
+;;             (token-y (contract-of token))            
+;;             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+;;         )
 
-        (map-set pools-data-map 
-            { 
-                token-x: token-x, token-y: token-y, expiry: expiry 
-            }
-            (merge pool { fee-to-address: address })
-        )
-        (ok true)     
-    )
-)
+;;         (map-set pools-data-map 
+;;             { 
+;;                 token-x: token-x, token-y: token-y, expiry: expiry 
+;;             }
+;;             (merge pool { fee-to-address: address })
+;;         )
+;;         (ok true)     
+;;     )
+;; )
 
 (define-read-only (get-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let 
@@ -719,8 +726,11 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
+            (fee-collector (get fee-to-address pool))
         )
-
+        
+        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
+        
         (and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
         (and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
@@ -816,12 +826,6 @@
                     (key-dx-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dx-weighted yield-dx-weighted) math-call-err))
                     (key-dy-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dy-weighted yield-dy-weighted) math-call-err))
                 )
-
-                ;; (print "Debugging dy-weighted and dy-check mismatch")
-                ;; (print dy-weighted)
-                ;; (print dy-check)
-                ;; (print dx-to-dy)
-                ;;(asserts! (is-eq dy-weighted dy-check) invalid-liquidity-err)
 
                 (ok {yield-token: {token: ltv-dx, dx-weighted: yield-dx-weighted, dy-weighted: yield-dy-weighted}, 
                      key-token: {token: ltv-dx, dx-weighted: key-dx-weighted, dy-weighted: key-dy-weighted}})

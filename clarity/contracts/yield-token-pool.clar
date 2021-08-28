@@ -27,6 +27,7 @@
 (define-constant authorisation-err (err u1000))
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant get-symbol-fail-err (err u6000))
+(define-constant err-not-authorized (err u1000))
 
 ;; TODO: need to be defined properly
 (define-constant oracle-src "nothing")
@@ -178,7 +179,7 @@
                 balance-virtual: u0,
                 fee-balance-aytoken: u0,
                 fee-balance-token: u0,
-                fee-to-address: (contract-of the-pool-token),
+                fee-to-address: .alex-ytp-multisig-vote,
                 pool-token: (contract-of the-pool-token),
                 fee-rate-aytoken: u0,
                 fee-rate-token: u0                
@@ -391,8 +392,10 @@
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (fee-collector (get fee-to-address pool))
         )
-        
+
+        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true)
     
@@ -404,27 +407,30 @@
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+            (fee-collector (get fee-to-address pool))
         )
+
+        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
 )
 
-(define-public (set-fee-to-address (the-aytoken <yield-token-trait>) (address principal))
-    (let 
-        (
-            (aytoken (contract-of the-aytoken))    
-            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        )
-        (map-set pools-data-map 
-            { 
-                aytoken: aytoken 
-            }
-            (merge pool { fee-to-address: address })
-        )
-        (ok true)     
-    )
-)
+;; (define-public (set-fee-to-address (the-aytoken <yield-token-trait>) (address principal))
+;;     (let 
+;;         (
+;;             (aytoken (contract-of the-aytoken))    
+;;             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+;;         )
+;;         (map-set pools-data-map 
+;;             { 
+;;                 aytoken: aytoken 
+;;             }
+;;             (merge pool { fee-to-address: address })
+;;         )
+;;         (ok true)     
+;;     )
+;; )
 
 ;; return principal
 (define-read-only (get-fee-to-address (the-aytoken <yield-token-trait>))
@@ -457,8 +463,10 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-aytoken pool))
             (fee-y (get fee-balance-token pool))
+            (fee-collector (get fee-to-address pool))
+            
         )
-
+        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
         (and (> fee-x u0) (unwrap! (contract-call? the-token transfer fee-x .alex-vault address none) transfer-x-failed-err))
         (and (> fee-y u0) (unwrap! (contract-call? the-aytoken transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
@@ -498,10 +506,6 @@
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
-         ;;(print balance-token)
-         ;;(print balance-aytoken)
-         ;;(print normalized-expiry)
-         ;;(ok u1)
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
     )
 )
