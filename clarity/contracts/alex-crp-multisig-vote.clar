@@ -22,8 +22,7 @@
 
 ;; Proposal variables
 ;; With Vote, we can set :
-;; 1. contract to have right to mint/burn token 
-;; 2. Set Feerate / Fee address / Collect Fees 
+;; 1. Set Feerate / Collect Fees 
 (define-map proposals
   { id: uint }
   {
@@ -126,8 +125,8 @@
 
     ;; Requires 10% of the supply 
     ;; Q. For Now, proposer should have both 10% of yield and key. Discussion is Required. 
-    (asserts! (>= (* proposer-yield-balance u10) total-yield-supply) not-enough-balance-err)
-    (asserts! (>= (* proposer-key-balance u10) total-key-supply) not-enough-balance-err)
+    (asserts! (or (>= (* proposer-yield-balance u10) total-yield-supply) (>= (* proposer-key-balance u10) total-key-supply)) not-enough-balance-err)
+    ;;(asserts! (>= (* proposer-key-balance u10) total-key-supply) not-enough-balance-err)
     
     ;; Mutate
     (map-set proposals
