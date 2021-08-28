@@ -416,22 +416,6 @@
     )
 )
 
-;; (define-public (set-fee-to-address (the-aytoken <yield-token-trait>) (address principal))
-;;     (let 
-;;         (
-;;             (aytoken (contract-of the-aytoken))    
-;;             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-;;         )
-;;         (map-set pools-data-map 
-;;             { 
-;;                 aytoken: aytoken 
-;;             }
-;;             (merge pool { fee-to-address: address })
-;;         )
-;;         (ok true)     
-;;     )
-;; )
-
 ;; return principal
 (define-read-only (get-fee-to-address (the-aytoken <yield-token-trait>))
     (let 

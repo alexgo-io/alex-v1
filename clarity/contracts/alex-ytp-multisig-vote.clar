@@ -223,7 +223,7 @@
         (threshold-percent (var-get threshold))
         (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
-        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
+        (yes-votes (get yes-votes proposal))
   )
 
     (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id

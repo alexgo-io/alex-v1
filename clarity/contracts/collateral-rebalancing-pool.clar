@@ -676,25 +676,6 @@
     )
 )
 
-;; This should be deprecated
-;; (define-public (set-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (address principal))
-;;     (let 
-;;         (
-;;             (token-x (contract-of collateral))
-;;             (token-y (contract-of token))            
-;;             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
-;;         )
-
-;;         (map-set pools-data-map 
-;;             { 
-;;                 token-x: token-x, token-y: token-y, expiry: expiry 
-;;             }
-;;             (merge pool { fee-to-address: address })
-;;         )
-;;         (ok true)     
-;;     )
-;; )
-
 (define-read-only (get-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let 
         (

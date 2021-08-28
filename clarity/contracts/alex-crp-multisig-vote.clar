@@ -99,7 +99,6 @@
 
 ;; To check which tokens are accepted as votes,
 ;; Only relevant Yield Token and Key Token can be regarded as vote. 
-;; Q. But Should each vote treated equally ?
 (define-read-only (is-token-accepted (vote-token <yield-token-trait>))
     (or (is-eq (contract-of vote-token) .yield-usda-4380) (is-eq (contract-of vote-token) .key-usda-wbtc-4380))
 )
@@ -124,9 +123,7 @@
   )
 
     ;; Requires 10% of the supply 
-    ;; Q. For Now, proposer should have both 10% of yield and key. Discussion is Required. 
     (asserts! (or (>= (* proposer-yield-balance u10) total-yield-supply) (>= (* proposer-key-balance u10) total-key-supply)) not-enough-balance-err)
-    ;;(asserts! (>= (* proposer-key-balance u10) total-key-supply) not-enough-balance-err)
     
     ;; Mutate
     (map-set proposals

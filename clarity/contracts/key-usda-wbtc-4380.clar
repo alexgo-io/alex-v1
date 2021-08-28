@@ -6,6 +6,7 @@
 
 (define-fungible-token key-usda-wbtc-4380)
 
+;; Let's keep this for now, seems like I can't fetch constant values using contract-call
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var token-expiry uint u438000000000)  ;; 4380 * 10e8, where 52560(One year mainnet block height)/12 = 4380 
 (define-data-var underlying-token principal .token-usda)
