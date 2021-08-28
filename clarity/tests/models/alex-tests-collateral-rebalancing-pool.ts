@@ -23,38 +23,50 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, token: string, collateral: string, yieldToken: string, dX: number, dY: number) {
+    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, dX: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
           types.principal(token),
           types.principal(collateral),
           types.principal(yieldToken),
-          types.uint(dX),
-          types.uint(dY)
+          types.principal(keyToken),
+          types.uint(dX)
         ], user.address),
       ]);
       return block.receipts[0].result;
     }
   
-    addToPosition(user: Account, token: string, collateral: string, yieldToken: string, dX: number, dY: number) {
+    addToPosition(user: Account, token: string, collateral: string, yieldToken: string, keyToken:string, dX: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool", "add-to-position", [
             types.principal(token),
             types.principal(collateral),
             types.principal(yieldToken),
-            types.uint(dX),
-            types.uint(dY)
+            types.principal(keyToken),
+            types.uint(dX)
           ], user.address),
         ]);
         return block.receipts[0].result;
       }
   
-      reducePosition(user: Account, token: string, collateral: string, yieldToken: string, percent: number) {
+      reducePositionYield(user: Account, token: string, collateral: string, yieldToken: string, percent: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "reduce-position", [
+          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-yield", [
             types.principal(token),
             types.principal(collateral),
             types.principal(yieldToken),
+            types.uint(percent)
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }
+
+      reducePositionKey(user: Account, token: string, collateral: string, keyToken: string, percent: number) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key", [
+            types.principal(token),
+            types.principal(collateral),
+            types.principal(keyToken),
             types.uint(percent)
           ], user.address),
         ]);

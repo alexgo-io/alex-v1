@@ -24,9 +24,28 @@
 ;; private functions
 ;;
 
+(define-private (min (x uint) (y uint))
+    (if (< x y)
+        (ok x)
+        (ok y)
+    )
+)
+
 ;; public functions
 ;;
 ;;
+
+;; get-invariant
+;; invariant = b_x ^ w_x * b_y ^ w_y 
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (ok (unwrap-panic (contract-call? .math-fixed-point mul-down 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x weight-x)) 
+                (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y weight-y)))))
+        weight-sum-err
+    )
+)
+
 ;; get-y-given-x
 ;; d_y = dy
 ;; b_y = balance-y
@@ -41,8 +60,8 @@
                 (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-x denominator)))
-                (exponent (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)))
-                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
+                (exponent (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-down base exponent)))
                 (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))
             )
             (asserts! (< dx max-in) max-in-ratio-err)
@@ -66,8 +85,8 @@
                 (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-y denominator)))
-                (exponent (unwrap-panic (contract-call? .math-fixed-point div-up weight-y weight-x)))
-                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
+                (exponent (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-down base exponent)))
                 (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))
             )
             (asserts! (< dy max-out) max-out-ratio-err)
@@ -93,7 +112,7 @@
                 (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
                 (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
-                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base weight-y)))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))
                 (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
             )
             (contract-call? .math-fixed-point mul-up balance-x ratio)
@@ -112,22 +131,20 @@
                         ;;
                         ;; invariant = (b_x ^ w_x) * (b_y ^ w_y)
                         ;;
-                        (dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
-                        (dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
-                        (invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
+                        ;;(dy-wy (unwrap-panic (contract-call? .math-fixed-point pow-down dy weight-y)))
+                        ;;(dx-wx (unwrap-panic (contract-call? .math-fixed-point pow-down dx weight-x)))
+                        ;;(invariant (unwrap-panic (contract-call? .math-fixed-point mul-down dx-wx dy-wy)))
+                        (invariant (unwrap-panic (get-invariant dx dy weight-x weight-y)))
                     )                    
                     {token: invariant, dy: dy}
                 )
                 (let
                     (
-                        ;; if total-supply > zero
-                        ;;
-                        ;; token = invariant * (d_x / b_x)
-                        ;; new d_y = b_y * (d_x / b_x)
-                        (dx-supply (unwrap-panic (contract-call? .math-fixed-point mul-down dx total-supply)))
-                        (token (unwrap-panic (contract-call? .math-fixed-point div-down dx-supply balance-x)))
-                        (dx-baly (unwrap-panic (contract-call? .math-fixed-point mul-down dx balance-y)))
-                        (new-dy (unwrap-panic (contract-call? .math-fixed-point div-down dx-baly balance-x)))
+                        ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
+                        (new-dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y 
+                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
+                        (token (unwrap-panic (contract-call? .math-fixed-point mul-down total-supply  
+                                (unwrap-panic (contract-call? .math-fixed-point div-down dx balance-x)))))
                     )
                     {token: token, dy: new-dy}
                 )   

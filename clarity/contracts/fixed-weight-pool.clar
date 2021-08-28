@@ -3,6 +3,9 @@
 
 ;; fixed-weight-pool
 ;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
+;;
+;; TODO: token-x/token-y pool == token-y/token-x pool
+
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant authorisation-err (err u1000))
@@ -101,7 +104,7 @@
       (token-y (contract-of token-y-trait))
       (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) (err invalid-pool-err)))
     )
-    (ok (list (get balance-x pool) (get balance-y pool)))
+    (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
   )
 )
 
@@ -165,13 +168,17 @@
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
 
         ;; send x to vault
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         ;; send y to vault
-        (asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        
+        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
 
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
+        ;;(try! (contract-call? .alex-multisig-registry mint-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -202,13 +209,18 @@
             ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
         
             ;; send x from vault
-            (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+            ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
             ;; send y from vault
-            (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+            ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+
+            (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+            (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
             (try! (contract-call? the-pool-token burn tx-sender shares))
+            ;;(try! (contract-call? .alex-multisig-registry burn-token new-supply tx-sender))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
@@ -249,14 +261,17 @@
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
     
         ;; send x to vault
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         ;; send y from vault
-        (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
+        
+        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-        (ok (list dx-net-fees dy))
+        (ok {dx: dx-net-fees, dy: dy})
     )
 )
 
@@ -292,14 +307,16 @@
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
         ;; send x from vault
-        (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
         ;; send y to vault
-        (asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
+        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-        (ok (list dx dy-net-fees))
+        (ok {dx: dx, dy: dy-net-fees})
     )
 )
 
@@ -398,7 +415,7 @@
             (token-y (contract-of token-y-trait))              
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
-        (ok (list (get fee-balance-x pool) (get fee-balance-y pool)))
+        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
     )
 )
 
@@ -415,18 +432,15 @@
             (fee-y (get fee-balance-y pool))
         )
 
-        (asserts! (is-eq fee-x u0) no-fee-x-err)
-        (asserts! (is-ok (contract-call? token-x-trait transfer fee-x (as-contract tx-sender) address none)) transfer-x-failed-err)
-        (asserts! (is-eq fee-y u0) no-fee-y-err)
-        (asserts! (is-ok (contract-call? token-y-trait transfer fee-y (as-contract tx-sender) address none)) transfer-y-failed-err)
+        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
         (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
         )
-        (ok (list fee-x fee-y)
-        )
-  )
+        (ok {fee-x: fee-x, fee-y: fee-y})
+    )
 )
 
 (define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
@@ -443,8 +457,7 @@
     )
 )
 
-(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
-    
+(define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint)) 
     (let 
         (
         (token-x (contract-of token-x-trait))

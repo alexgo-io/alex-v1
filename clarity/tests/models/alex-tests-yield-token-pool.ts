@@ -23,15 +23,21 @@ import {
 
     getYield(aytoken: string) {
         return this.chain.callReadOnlyFn("yield-token-pool", "get-yield", [
-          types.uint(aytoken)
+          types.principal(aytoken)
         ], this.deployer.address);
       }
 
     getPrice(aytoken: string) {
         return this.chain.callReadOnlyFn("yield-token-pool", "get-price", [
-          types.uint(aytoken)
+          types.principal(aytoken)
         ], this.deployer.address);
-      }  
+      }
+
+      getPoolDetails(aytoken: string) {
+        return this.chain.callReadOnlyFn("yield-token-pool", "get-pool-details", [
+          types.principal(aytoken)
+        ], this.deployer.address);
+      }
 
     createPool(user: Account, aytoken: string, token: string, pooltoken: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([

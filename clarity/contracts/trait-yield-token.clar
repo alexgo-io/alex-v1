@@ -28,15 +28,21 @@
     ;; additional functions
 
     ;; mint(principal uint):bool
-    (mint (uint principal) (response bool uint))
+    (mint (principal uint) (response bool uint))
     
     ;; burn(principal uint):bool
-    (burn (uint principal) (response bool uint))
+    (burn (principal uint) (response bool uint))
 
     ;; the underlying token
     (get-token () (response principal uint))
 
     ;; the expiry
     (get-expiry () (response uint uint))
+
+    ;; ;; Mint
+    ;; (mint-from-registry (uint principal) (response bool uint))
+
+    ;; ;; Burn
+    ;; (burn-from-registry (uint principal) (response bool uint))
  )
 )

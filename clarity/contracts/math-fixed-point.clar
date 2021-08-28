@@ -15,10 +15,18 @@
 (define-constant MUL_OVERFLOW (err u5005))
 (define-constant DIV_OVERFLOW (err u5006))
 (define-constant POW_OVERFLOW (err u5007))
-(define-constant MAX_POW_RELATIVE_ERROR u5008) 
+
+;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
+;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
+;; (i.e. the last digit of the result may be completely lost to this error).
+(define-constant MAX_POW_RELATIVE_ERROR u4) 
 
 ;; public functions
 ;;
+
+(define-read-only (get_one)
+    (ok ONE_8)
+)
 
 (define-read-only (scale-up (a uint))
     (let
@@ -78,25 +86,6 @@
    )
 )
 
-(define-read-only (mul-up-floating-point (a uint) (b uint))
-    (begin
-
-        (if (or (is-eq a u0) (is-eq b u0))
-            (ok u0)
-
-        (let
-            (   
-                (a-divided (/ a ONE_8))
-                (product (* a-divided b))
-            )
-                (ok product)
-        )
-        )
-    )
-)
-
-
-
 (define-read-only (div-down (a uint) (b uint))
     (let
         (
@@ -126,12 +115,12 @@
         (
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
-       )
+        )
         (if (< raw max-error)
             (ok u0)
             (sub-fixed raw max-error)
-       )
-   )
+        )
+    )
 )
 
 (define-read-only (pow-up (a uint) (b uint))
@@ -139,8 +128,7 @@
         (
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
-       )
-
+        )
         (add-fixed raw max-error)
-   )
+    )
 )

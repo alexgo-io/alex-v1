@@ -25,7 +25,7 @@ for i in $class_list; do
 done
 
 for i in $usecase_list; do
-    yuml -i $i.yuml -t usecase -s nofunky -f svg -o $i.svg
+    yuml -i $i.yuml -t usecase -s nofunky -f png -o $i.png
 done
 
 

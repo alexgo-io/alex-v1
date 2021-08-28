@@ -12,6 +12,7 @@
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 8 decimal fixed point numbers.
 (define-constant ONE_8 (pow 10 8))
+(define-constant ONE_10 (pow 10 10))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^8, 
@@ -111,10 +112,10 @@
       (y-int (to-int y))
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) ONE_8))
-   )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) (err PRODUCT_OUT_OF_BOUNDS))
+    )
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) PRODUCT_OUT_OF_BOUNDS)
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
- )
+  )
 )
 
 (define-private (exp-pos (x int))
@@ -172,23 +173,27 @@
 ;; public functions
 ;;
 
+(define-read-only (get-exp-bound)
+  (ok MILD_EXPONENT_BOUND)
+)
+
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) (err X_OUT_OF_BOUNDS))
+    (asserts! (< x (pow u2 u127)) X_OUT_OF_BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) (err Y_OUT_OF_BOUNDS))
+    (asserts! (< y MILD_EXPONENT_BOUND) Y_OUT_OF_BOUNDS)
 
     (if (is-eq y u0) 
       (ok (to-uint ONE_8))
       (if (is-eq x u0) 
         (ok u0)
         (pow-priv x y)
-     )
-   )
- )
+      )
+    )
+  )
 )
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
@@ -202,8 +207,8 @@
       ;; Fixed point division requires multiplying by ONE_8.
       (ok (/ (* ONE_8 ONE_8) (unwrap-panic (exp-pos (* -1 x)))))
       (exp-pos x)
-   )
- )
+    )
+  )
 )
 
 ;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.

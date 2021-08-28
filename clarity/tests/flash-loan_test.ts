@@ -7,12 +7,11 @@ import {
 } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
 
-const gAlexTokenAddress =
-  'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex';
-const usdaTokenAddress = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda';
-const ayusdaAddress = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-ayusda';
-const gAlexUsdaPoolAddress =
-  'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-alex-usda';
+const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
+const wBTCTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
+const ayUsdawBTCPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-yield-usda-wbtc"
+const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-4380"
+
 const alexVaultAddress = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault';
 const testFlashLoanUser =
   'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.test-flash-loan-user';
@@ -23,6 +22,8 @@ const testFlashLoanUser =
  *
  * 2. User using Flashloan for 3 tokens (two different pools)
  */
+
+
 const testWeightX = 50000000; //0.5
 const testWeightY = 50000000; //0.5
 const balanceX = 500000;
@@ -38,10 +39,10 @@ Clarinet.test({
         'create-pool',
         [
           types.principal(gAlexTokenAddress),
-          types.principal(usdaTokenAddress),
+          types.principal(wBTCTokenAddress),
           types.uint(testWeightX),
           types.uint(testWeightY),
-          types.principal(gAlexUsdaPoolAddress),
+          types.principal(ayUsdawBTCPoolTokenAddress),
           types.uint(balanceX * 1000000),
           types.uint(balanceY * 1000000),
         ],
@@ -70,17 +71,17 @@ Clarinet.test({
         deployer.address
       ),
       Tx.contractCall(
-        'token-ayusda',
+        'yield-usda-4380',
         'mint',
         [
-          types.uint(100000000),
           types.principal(deployer.address),
+          types.uint(100000000),
         ],
         deployer.address
       ),
 
       Tx.contractCall(
-        'token-ayusda',
+        'yield-usda-4380',
         'transfer',
         [
           types.uint(100000000),
@@ -96,8 +97,8 @@ Clarinet.test({
         [
           types.principal(testFlashLoanUser),
           types.principal(gAlexTokenAddress),
-          types.principal(usdaTokenAddress),
-          types.principal(ayusdaAddress),
+          types.principal(wBTCTokenAddress),
+          types.principal(ayUsda4380TokenAddress),
           types.uint(10000),
           types.uint(20000),
           types.uint(30000),

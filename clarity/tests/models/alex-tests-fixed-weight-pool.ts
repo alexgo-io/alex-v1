@@ -32,8 +32,8 @@ class FWPTestAgent1 {
         types.uint(weightX),
         types.uint(weightY),
         types.principal(pooltoken),
-        types.uint(balanceX * 1000000),
-        types.uint(balanceY * 1000000),
+        types.uint(balanceX),
+        types.uint(balanceY),
       ], user.address),
     ]);
     return block.receipts[0].result;
@@ -47,8 +47,8 @@ class FWPTestAgent1 {
         types.uint(weightX),
         types.uint(weightY),
         types.principal(pooltoken),
-        types.uint(dX * 1000000),
-        types.uint(dY * 1000000),
+        types.uint(dX),
+        types.uint(dY),
       ], user.address),
     ]);
     return block.receipts[0].result;
@@ -75,8 +75,7 @@ class FWPTestAgent1 {
         types.principal(tokenY),
         types.uint(weightX),
         types.uint(weightY),
-        types.uint(dx * 1000000) // 200
-        //types.uint(dyMin * 1000000), // 38 (should get ~40)
+        types.uint(dx) 
       ], user.address),
     ]);
     return block.receipts[0].result;
@@ -89,8 +88,7 @@ class FWPTestAgent1 {
         types.principal(tokenY),
         types.uint(weightX),
         types.uint(weightY),
-        types.uint(dy * 1000000) // 200
-        //types.uint(dyMin * 1000000), // 38 (should get ~40)
+        types.uint(dy) 
       ], user.address),
     ]);
     return block.receipts[0].result;
@@ -103,7 +101,7 @@ class FWPTestAgent1 {
         types.principal(tokenY),
         types.uint(weightX),
         types.uint(weightY),
-        types.uint(dX * 1000000) 
+        types.uint(dX) 
       ], user.address),
     ]);
     return block.receipts[0].result;
@@ -163,7 +161,7 @@ class FWPTestAgent1 {
 
   setFeeRateY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, feerate:number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("fixed-weight-pool", "set-fee-rate-x", [
+      Tx.contractCall("fixed-weight-pool", "set-fee-rate-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
