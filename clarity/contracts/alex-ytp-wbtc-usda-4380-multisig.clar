@@ -2,18 +2,25 @@
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-;; This CRP MultiSig is for 
-;; - CRP that mines yield-usda-4380 and key-usda-wbtc-4380
-;; - Q : On the future, I think helper function which can manage different expiry should be implemented. Any idea on it ? 
+
+;; Alex voting for MultiSig DAO
+;; 
+;; Voting and proposing the proposals 
+;; A proposal will just update the DAO with new contracts.
+
+;; Voting can be done by locking up the corresponding pool token. 
+;; This prototype is for ayusda-usda pool token. 
+;; Common Trait and for each pool, implementation is required. 
+;; 
 
 ;; Errors
 (define-constant not-enough-balance-err (err u8000))
 (define-constant no-contract-changes-err (err u8001))
-(define-constant invalid-vote-token (err u8005))
+(define-constant invalid-pool-token (err u8002))
 (define-constant block-height-not-reached (err u8003))
 (define-constant authorisation-err (err u1000))
 (define-constant status-ok u10000)
-(define-constant get-expiry-fail-err (err u2013))
+(define-constant math-call-err (err u2010))
 
 (define-constant ONE_8 u100000000)
 
@@ -22,7 +29,8 @@
 
 ;; Proposal variables
 ;; With Vote, we can set :
-;; 1. Set Feerate / Collect Fees 
+;; 1. contract to have right to mint/burn token 
+;; 2. Set Feerate / Fee address / Collect Fees 
 (define-map proposals
   { id: uint }
   {
@@ -37,8 +45,8 @@
     no-votes: uint,
     fee-collector: principal,
     new-fee-rate-token: uint,
-    new-fee-rate-collateral: uint,
-  }
+    new-fee-rate-aytoken: uint
+   }
 )
 
 (define-data-var proposal-count uint u0)
@@ -69,10 +77,10 @@
   )
 )
 
-(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (vote-token <yield-token-trait>))
+(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <yield-token-trait>))
   (default-to 
     { amount: u0 }
-    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of vote-token) }) 
+    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token) }) 
   )
 )
 
@@ -89,18 +97,17 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      fee-collector: .alex-crp-multisig-vote,   ;; Fee Collecting is done by multisig. 
+      fee-collector: .alex-ytp-multisig-vote,
       new-fee-rate-token: u0,    ;; Default token feerate
-      new-fee-rate-collateral: u0  ;; default key-token feerate
+      new-fee-rate-aytoken: u0  ;; default aytoken feerate
     }
     (map-get? proposals { id: proposal-id })
   )
 )
 
-;; To check which tokens are accepted as votes,
-;; Only relevant Yield Token and Key Token can be regarded as vote. 
-(define-read-only (is-token-accepted (vote-token <yield-token-trait>))
-    (or (is-eq (contract-of vote-token) .yield-usda-4380) (is-eq (contract-of vote-token) .key-usda-wbtc-4380))
+;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
+(define-read-only (is-token-accepted (token <yield-token-trait>))
+    (is-eq (contract-of token) .pool-token-usda-ayusda)
 )
 
 
@@ -112,19 +119,16 @@
     (title (string-utf8 256))
     (url (string-utf8 256))
     (new-fee-rate-token uint)
-    (new-fee-rate-collateral uint)
+    (new-fee-rate-aytoken uint)
   )
   (let (
-    (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda-4380 get-balance tx-sender)))
-    (proposer-key-balance (unwrap-panic (contract-call? .key-usda-wbtc-4380 get-balance tx-sender)))
-    (total-yield-supply (unwrap-panic (contract-call? .yield-usda-4380 get-total-supply)))
-    (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc-4380 get-total-supply)))
+    (proposer-balance (unwrap-panic (contract-call? .pool-token-usda-ayusda get-balance tx-sender)))
+    (total-supply (* (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)) ONE_8))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
     ;; Requires 10% of the supply 
-    (asserts! (or (>= (* proposer-yield-balance u10) total-yield-supply) (>= (* proposer-key-balance u10) total-key-supply)) not-enough-balance-err)
-    
+    (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -138,9 +142,9 @@
         end-block-height: (+ start-block-height u1440),
         yes-votes: u0,
         no-votes: u0,
-        fee-collector: .alex-crp-multisig-vote,
+        fee-collector: .alex-ytp-multisig-vote,
         new-fee-rate-token: new-fee-rate-token,
-        new-fee-rate-collateral: new-fee-rate-collateral
+        new-fee-rate-aytoken: new-fee-rate-aytoken
       }
     )
     (var-set proposal-count proposal-id)
@@ -149,33 +153,34 @@
   )
 )
 
-(define-public (vote-for (vote-token <yield-token-trait>) (proposal-id uint) (amount uint))
+(define-public (vote-for (token <yield-token-trait>) (proposal-id uint) (amount uint))
   (let (
     (proposal (get-proposal-by-id proposal-id))
     (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
-    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender vote-token)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
     
   )
 
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted vote-token) invalid-vote-token)
+    (asserts! (is-token-accepted token) invalid-pool-token)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) authorisation-err)
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? vote-token transfer amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
+      (merge proposal { yes-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get yes-votes proposal)) math-call-err) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (+ vote-count amount) })
+      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
     (map-set tokens-by-member
-      { proposal-id: proposal-id, member: tx-sender, token: (contract-of vote-token) }
-      { amount: (+ token-count amount) })
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
+
 
     (ok status-ok)
     
@@ -185,46 +190,45 @@
 
 
 
-(define-public (vote-against (vote-token <yield-token-trait>) (proposal-id uint) (amount uint))
+(define-public (vote-against (token <yield-token-trait>) (proposal-id uint) (amount uint))
   (let (
     (proposal (get-proposal-by-id proposal-id))
     (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
-    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender vote-token)))
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted vote-token) invalid-vote-token)
+    (asserts! (is-token-accepted token) invalid-pool-token)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) authorisation-err)
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? vote-token transfer amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
 
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
+      (merge proposal { no-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get no-votes proposal)) math-call-err) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (+ vote-count amount) })
+      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
     (map-set tokens-by-member
-      { proposal-id: proposal-id, member: tx-sender, token: (contract-of vote-token) }
-      { amount: (+ token-count amount) })
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
+      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
     (ok status-ok)
-    )    
-)
+    )
+    
+    )
 
-(define-public (end-proposal (proposal-id uint) (token <ft-trait>) (collateral <ft-trait>) (yield-token <yield-token-trait>) (key-token <yield-token-trait>))
+(define-public (end-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-yield-supply (unwrap-panic (contract-call? .yield-usda-4380 get-total-supply)))
-        (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc-4380 get-total-supply)))
-        (total-yield-key (+ total-yield-supply total-key-supply))
-        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-yield-key threshold-percent)))
-        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
+        (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (yes-votes (* (get yes-votes proposal) ONE_8))
   )
 
-    (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  
+    (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id
     (asserts! (get is-open proposal) authorisation-err)
     (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
 
@@ -233,7 +237,7 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token collateral yield-token key-token)))
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
     (ok status-ok))
 )
 
@@ -245,7 +249,7 @@
     (proposal (get-proposal-by-id proposal-id))
   )
 
-    (asserts! (is-token-accepted token) invalid-vote-token)
+    (asserts! (is-token-accepted token) invalid-pool-token)
     (asserts! (not (get is-open proposal)) authorisation-err)
     (asserts! (>= block-height (get end-block-height proposal)) authorisation-err)
 
@@ -255,17 +259,16 @@
 )
 
 ;; Make needed contract changes on DAO
-(define-private (execute-proposal (proposal-id uint) (token <ft-trait>) (collateral <ft-trait>) (yield-token <yield-token-trait>) (key-token <yield-token-trait>))
+(define-private (execute-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
   (let (
     (proposal (get-proposal-by-id proposal-id))
     (new-fee-rate-token (get new-fee-rate-token proposal))
-    (new-fee-rate-collateral (get new-fee-rate-collateral proposal))
-    (token-expiry (unwrap! (contract-call? yield-token get-expiry) get-expiry-fail-err))
+    (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))
   ) 
   
-    ;; Setting for Collateral Rebalancing Pool
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x token collateral token-expiry new-fee-rate-token))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y token collateral token-expiry new-fee-rate-collateral))
+    ;; Setting for Yield Token Pool
+    (try! (contract-call? .yield-token-pool set-fee-rate-token token new-fee-rate-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))
     
     (ok true)
   )
