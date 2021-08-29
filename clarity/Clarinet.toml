@@ -7,7 +7,7 @@ depends_on = ["trait-yield-token", "trait-sip-010"]
 
 [contracts."alex-reserve-pool"]
 path = "contracts/alex-reserve-pool.clar"
-depends_on = []
+depends_on = ["fixed-weight-pool", "trait-sip-010", "alex-vault"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
@@ -23,7 +23,7 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-p
 
 [contracts.fixed-weight-pool]
 path = "contracts/fixed-weight-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "open-oracle","alex-reserve-pool"]
 
 [contracts.key-usda-wbtc-4380]
 path = "contracts/key-usda-wbtc-4380.clar"
@@ -51,15 +51,15 @@ depends_on = ["trait-yield-token", "trait-oracle", "trait-sip-010"]
 
 [contracts.pool-token-alex-usda]
 path = "contracts/pool-token-alex-usda.clar"
-depends_on = ["trait-sip-010", "trait-pool-token"]
+depends_on = ["trait-pool-token"]
 
 [contracts.pool-token-usda-ayusda]
 path = "contracts/pool-token-usda-ayusda.clar"
-depends_on = ["trait-sip-010", "trait-pool-token"]
+depends_on = ["trait-pool-token"]
 
 [contracts.pool-token-yield-usda-wbtc]
 path = "contracts/pool-token-yield-usda-wbtc.clar"
-depends_on = ["trait-sip-010", "trait-pool-token"]
+depends_on = ["trait-pool-token"]
 
 [contracts.test-flash-loan-user]
 path = "contracts/test-flash-loan-user.clar"
@@ -67,19 +67,15 @@ depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vau
 
 [contracts.token-alex]
 path = "contracts/token-alex.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
+depends_on = ["trait-pool-token"]
 
 [contracts.token-usda]
 path = "contracts/token-usda.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
+depends_on = ["trait-pool-token"]
 
 [contracts.token-wbtc]
 path = "contracts/token-wbtc.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
-
-[contracts.trait-alex-token]
-path = "contracts/trait-alex-token.clar"
-depends_on = []
+depends_on = ["trait-pool-token"]
 
 [contracts.trait-flash-loan-user]
 path = "contracts/trait-flash-loan-user.clar"

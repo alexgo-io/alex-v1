@@ -24,6 +24,10 @@
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u1001))
+(define-constant get-oracle-price-fail-err (err u7000))
+
+(define-constant alex-symbol "alex")
+(define-constant oracle-src "nothing")
 
 ;; data maps and vars
 (define-map pools-map
@@ -52,7 +56,9 @@
     fee-to-address: principal,
     pool-token: principal,
     fee-rate-x: uint,
-    fee-rate-y: uint
+    fee-rate-y: uint,
+    token-x-symbol: (string-ascii 32),
+    token-y-symbol: (string-ascii 32)
   }
 )
 
@@ -121,7 +127,9 @@
                 fee-to-address: (contract-of the-pool-token),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-x: u0,
-                fee-rate-y: u0
+                fee-rate-y: u0,
+                token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
+                token-y-symbol: (try! (contract-call? token-y-trait get-symbol))
             })
        )
         (asserts!
@@ -164,11 +172,6 @@
        )
 
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
-
-        ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
         
         (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
@@ -203,13 +206,6 @@
                     })
                 )
             )
-        
-            ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
-        
-            ;; send x from vault
-            ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-            ;; send y from vault
-            ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
             (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
             (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
@@ -257,11 +253,6 @@
         (asserts! (> dx u0) invalid-liquidity-err) 
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
-    
-        ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;; send y from vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
         
         (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
@@ -304,10 +295,6 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;; send x from vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
         (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
 
@@ -417,6 +404,7 @@
     )
 )
 
+
 ;; Returns the fee of current x and y and make balance to 0.
 (define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     
@@ -428,14 +416,24 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
-            ;; determine spot-token-x-in-ALEX
-            ;; determine spot-token-y-in-ALEX
-            ;; determine rebate-in-ALEX
+            (token-x-price (unwrap! (contract-call? .open-oracle get-price oracle-src (get token-x-symbol pool)) get-oracle-price-fail-err))
+            (token-y-price (unwrap! (contract-call? .open-oracle get-price oracle-src (get token-y-symbol pool)) get-oracle-price-fail-err))
+            (alex-price (unwrap! (contract-call? .open-oracle get-price oracle-src alex-symbol) get-oracle-price-fail-err))
+            
+            ;; rebate-in-alex = rebate-rate / alex-price * ( fee-x * token-x-price + fee-y * token-y-price)
+            (fee-in-base (unwrap! (contract-call? .math-fixed-point add-fixed 
+                                (unwrap! (contract-call? .math-fixed-point mul-down fee-x token-x-price) math-call-err) 
+                                (unwrap! (contract-call? .math-fixed-point mul-down fee-y token-y-price) math-call-err)) math-call-err))
+            (fee-in-alex (unwrap! (contract-call? .math-fixed-point div-down fee-in-base alex-price) math-call-err))
+            (rebate-in-alex (unwrap! (contract-call? .math-fixed-point mul-down (var-get rebate-rate) fee-in-alex) math-call-err))
         )
 
-        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault .alex-reserve-pool none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault .alex-reserve-pool none) transfer-y-failed-err))
-        ;;(and (or (> fee-x u0) (> fee-y u0)) (contract-call? .token-alex mint rebate-in-alex address))
+        ;; (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault .alex-reserve-pool none) transfer-x-failed-err))
+        ;; (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault .alex-reserve-pool none) transfer-y-failed-err))
+        (and (> fee-x u0) (unwrap! (contract-call? .alex-reserve-pool transfer-in token-x-trait fee-x) transfer-x-failed-err))
+        (and (> fee-y u0) (unwrap! (contract-call? .alex-reserve-pool transfer-in token-y-trait fee-y) transfer-y-failed-err))
+        
+        (and (or (> fee-x u0) (> fee-y u0)) (try! (contract-call? .token-alex mint address rebate-in-alex)))
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}

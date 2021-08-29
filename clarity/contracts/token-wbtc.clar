@@ -1,5 +1,4 @@
-(impl-trait .trait-sip-010.sip-010-trait)
-(impl-trait .trait-alex-token.dao-token-trait)
+(impl-trait .trait-pool-token.pool-token-trait)
 
 ;; Defines the wBTC according to the SIP-010 Standard
 (define-fungible-token wbtc)
@@ -54,12 +53,7 @@
   )
 )
 
-;; ---------------------------------------------------------
-;; wbtc token trait
-;; ---------------------------------------------------------
-
-;; Mint method for wbtc
-(define-public (mint-for-dao (amount uint) (recipient principal))
+(define-public (mint (recipient principal) (amount uint))
   (begin
     ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
     (ft-mint? wbtc amount recipient)
@@ -67,7 +61,7 @@
 )
 
 ;; Burn method for wbtc
-(define-public (burn-for-dao (amount uint) (sender principal))
+(define-public (burn (sender principal) (amount uint))
   (begin
     ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
     (ft-burn? wbtc amount sender)

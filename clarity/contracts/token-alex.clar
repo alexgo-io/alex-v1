@@ -1,8 +1,6 @@
-(impl-trait .trait-sip-010.sip-010-trait)
-(impl-trait .trait-alex-token.dao-token-trait)
+(impl-trait .trait-pool-token.pool-token-trait)
 
-;; Defines the Alex Governance Token according to the SRC20 Standard
-(define-fungible-token galex)
+(define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -23,11 +21,11 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply galex))
+  (ok (ft-get-supply alex))
 )
 
 (define-read-only (get-name)
-  (ok "Alex Token")
+  (ok "ALEX")
 )
 
 (define-read-only (get-symbol)
@@ -39,7 +37,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance galex account))
+  (ok (ft-get-balance alex account))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -54,7 +52,7 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? galex amount sender recipient)
+  (match (ft-transfer? alex amount sender recipient)
     response (begin
       (print memo)
       (ok response)
@@ -63,23 +61,17 @@
   )
 )
 
-;; ---------------------------------------------------------
-;; alex token trait
-;; ---------------------------------------------------------
-
-;; Mint method for glaex
-(define-public (mint-for-dao (amount uint) (recipient principal))
+(define-public (mint (recipient principal) (amount uint))
   (begin
     ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? galex amount recipient)
+    (ft-mint? alex amount recipient)
   )
 )
 
-;; Burn method for DAO
-(define-public (burn-for-dao (amount uint) (sender principal))
+(define-public (burn (sender principal) (amount uint))
   (begin
     ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? galex amount sender)
+    (ft-burn? alex amount sender)
   )
 )
 
@@ -87,6 +79,6 @@
 ;; Initialize the contract for Testing.
 (begin
   ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? galex u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-  (try! (ft-mint? galex u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
+  (try! (ft-mint? alex u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
+  (try! (ft-mint? alex u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
 )
