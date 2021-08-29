@@ -152,7 +152,7 @@
             (weight-x-0 (get weight-x-0 pool))
             (weight-x-1 (get weight-x-1 pool))
             (listed (get listed pool))
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))        
         )
 
         (asserts! (< now expiry) already-expiry-err)
@@ -169,7 +169,7 @@
 )
 
 ;; get overall balances for the pair
-(define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+(define-read-only (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
   (let
     (
       (token-x (contract-of token-x-trait))
@@ -187,7 +187,7 @@
 
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (now (unwrap! (contract-call? .math-fixed-point mul-down block-height ONE_8) math-call-err))
+            (now (* block-height ONE_8))
 
             (pool-data {
                 total-supply: u0,
@@ -247,14 +247,11 @@
        )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
-;;        (asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-;;        (asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
         (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-pool-token burn tx-sender shares))
-        ;;(try! (contract-call? .alex-multisig-registry burn-token the-pool-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: dy})
    )
@@ -289,8 +286,6 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
         (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
 
