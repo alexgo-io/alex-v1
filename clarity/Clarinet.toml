@@ -2,11 +2,11 @@
 name = "alex-v1"
 requirements = []
 [contracts.alex-crp-wbtc-usda-4380-multisig]
-path = "contracts/alex-crp-wbtc-usda-4380-multisig.clar"
+path = "contracts/multisig/alex-crp-wbtc-usda-4380-multisig.clar"
 depends_on = ["yield-usda-4380","key-usda-wbtc-4380", "collateral-rebalancing-pool","trait-sip-010"]
 
 [contracts.alex-multisig-registry]
-path = "contracts/alex-multisig-registry.clar"
+path = "contracts/multisig/alex-multisig-registry.clar"
 depends_on = ["trait-yield-token", "trait-sip-010"]
 
 [contracts.alex-vault]
@@ -14,31 +14,31 @@ path = "contracts/alex-vault.clar"
 depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fixed-point"]
 
 [contracts.alex-ytp-wbtc-usda-4380-multisig]
-path = "contracts/alex-ytp-wbtc-usda-4380-multisig.clar"
+path = "contracts/multisig/alex-ytp-wbtc-usda-4380-multisig.clar"
 depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool"]
 
 [contracts.collateral-rebalancing-pool]
-path = "contracts/collateral-rebalancing-pool.clar"
+path = "contracts/pool/collateral-rebalancing-pool.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool"]
 
 [contracts.fixed-weight-pool]
-path = "contracts/fixed-weight-pool.clar"
+path = "contracts/pool/fixed-weight-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation"]
 
 [contracts.key-usda-wbtc-4380]
-path = "contracts/key-usda-wbtc-4380.clar"
+path = "contracts/key-token/key-usda-wbtc-4380.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
 
 [contracts.liquidity-bootstrapping-pool]
-path = "contracts/liquidity-bootstrapping-pool.clar"
+path = "contracts/pool/liquidity-bootstrapping-pool.clar"
 depends_on = []
 
 [contracts.math-fixed-point]
-path = "contracts/math-fixed-point.clar"
+path = "contracts/lib/math-fixed-point.clar"
 depends_on = ["math-log-exp"]
 
 [contracts.math-log-exp]
-path = "contracts/math-log-exp.clar"
+path = "contracts/lib/math-log-exp.clar"
 depends_on = []
 
 [contracts.open-oracle]
@@ -46,15 +46,15 @@ path = "contracts/open-oracle.clar"
 depends_on = ["trait-yield-token", "trait-oracle", "trait-sip-010"]
 
 [contracts.pool-token-alex-usda]
-path = "contracts/pool-token-alex-usda.clar"
+path = "contracts/pool-token/pool-token-alex-usda.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.pool-token-usda-ayusda]
-path = "contracts/pool-token-usda-ayusda.clar"
+path = "contracts/pool-token/pool-token-usda-ayusda.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.pool-token-yield-usda-wbtc]
-path = "contracts/pool-token-yield-usda-wbtc.clar"
+path = "contracts/pool-token/pool-token-yield-usda-wbtc.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.test-flash-loan-user]
@@ -62,65 +62,65 @@ path = "contracts/test-flash-loan-user.clar"
 depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vault", "fixed-weight-pool", "token-alex", "token-wbtc"]
 
 [contracts.token-alex]
-path = "contracts/token-alex.clar"
+path = "contracts/token/token-alex.clar"
 depends_on = ["trait-sip-010", "trait-alex-token"]
 
 [contracts.token-usda]
-path = "contracts/token-usda.clar"
+path = "contracts/token/token-usda.clar"
 depends_on = ["trait-sip-010", "trait-alex-token"]
 
 [contracts.token-wbtc]
-path = "contracts/token-wbtc.clar"
+path = "contracts/token/token-wbtc.clar"
 depends_on = ["trait-sip-010", "trait-alex-token"]
 
 [contracts.trait-alex-token]
-path = "contracts/trait-alex-token.clar"
+path = "contracts/traits/trait-alex-token.clar"
 depends_on = []
 
 [contracts.trait-flash-loan-user]
-path = "contracts/trait-flash-loan-user.clar"
+path = "contracts/traits/trait-flash-loan-user.clar"
 depends_on = []
 
 [contracts.trait-multisig-vote]
-path = "contracts/trait-multisig-vote.clar"
+path = "contracts/traits/trait-multisig-vote.clar"
 depends_on = ["trait-sip-010"]
 
 [contracts.trait-oracle]
-path = "contracts/trait-oracle.clar"
+path = "contracts/traits/trait-oracle.clar"
 depends_on = []
 
 [contracts.trait-pool-token]
-path = "contracts/trait-pool-token.clar"
+path = "contracts/traits/trait-pool-token.clar"
 depends_on = []
 
 [contracts.trait-sip-010]
-path = "contracts/trait-sip-010.clar"
+path = "contracts/traits/trait-sip-010.clar"
 depends_on = []
 
 [contracts.trait-vault]
-path = "contracts/trait-vault.clar"
+path = "contracts/traits/trait-vault.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 
 [contracts.trait-yield-token]
-path = "contracts/trait-yield-token.clar"
+path = "contracts/traits/trait-yield-token.clar"
 depends_on = []
 
 [contracts.weighted-equation]
-path = "contracts/weighted-equation.clar"
+path = "contracts/equations/weighted-equation.clar"
 depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-equation]
-path = "contracts/yield-token-equation.clar"
+path = "contracts/equations/yield-token-equation.clar"
 depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-pool]
-path = "contracts/yield-token-pool.clar"
+path = "contracts/pool/yield-token-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation", "trait-yield-token", "open-oracle"]
 
 [contracts.yield-usda-18530]
-path = "contracts/yield-usda-18530.clar"
+path = "contracts/yield-token/yield-usda-18530.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
 
 [contracts.yield-usda-4380]
-path = "contracts/yield-usda-4380.clar"
+path = "contracts/yield-token/yield-usda-4380.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
