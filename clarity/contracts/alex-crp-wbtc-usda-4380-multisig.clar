@@ -227,7 +227,7 @@
         (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc-4380 get-total-supply)))
         (total-yield-key (+ total-yield-supply total-key-supply))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-yield-key threshold-percent)))
-        (yes-votes (* (get yes-votes proposal) ONE_8))
+        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
   )
 
     (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  
