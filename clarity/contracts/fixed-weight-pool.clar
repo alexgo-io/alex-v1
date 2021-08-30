@@ -27,6 +27,7 @@
 (define-constant get-oracle-price-fail-err (err u7000))
 
 (define-constant alex-symbol "alex")
+(define-constant reserve-usdc-symbol "usdc")
 (define-constant oracle-src "nothing")
 
 ;; data maps and vars
@@ -61,8 +62,6 @@
     token-y-symbol: (string-ascii 32)
   }
 )
-
-(define-data-var rebate-rate uint u50000000) ;;50%
 
 (define-data-var pool-count uint u0)
 (define-data-var pools-list (list 2000 uint) (list))
@@ -416,24 +415,32 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
-            (token-x-price (unwrap! (contract-call? .open-oracle get-price oracle-src (get token-x-symbol pool)) get-oracle-price-fail-err))
-            (token-y-price (unwrap! (contract-call? .open-oracle get-price oracle-src (get token-y-symbol pool)) get-oracle-price-fail-err))
-            (alex-price (unwrap! (contract-call? .open-oracle get-price oracle-src alex-symbol) get-oracle-price-fail-err))
-            
-            ;; rebate-in-alex = rebate-rate / alex-price * ( fee-x * token-x-price + fee-y * token-y-price)
-            (fee-in-base (unwrap! (contract-call? .math-fixed-point add-fixed 
-                                (unwrap! (contract-call? .math-fixed-point mul-down fee-x token-x-price) math-call-err) 
-                                (unwrap! (contract-call? .math-fixed-point mul-down fee-y token-y-price) math-call-err)) math-call-err))
-            (fee-in-alex (unwrap! (contract-call? .math-fixed-point div-down fee-in-base alex-price) math-call-err))
-            (rebate-in-alex (unwrap! (contract-call? .math-fixed-point mul-down (var-get rebate-rate) fee-in-alex) math-call-err))
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))
         )
 
-        ;; (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault .alex-reserve-pool none) transfer-x-failed-err))
-        ;; (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault .alex-reserve-pool none) transfer-y-failed-err))
-        (and (> fee-x u0) (unwrap! (contract-call? .alex-reserve-pool transfer-in token-x-trait fee-x) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? .alex-reserve-pool transfer-in token-y-trait fee-y) transfer-y-failed-err))
-        
-        (and (or (> fee-x u0) (> fee-y u0)) (try! (contract-call? .token-alex mint address rebate-in-alex)))
+        ;; TODO need to check if token-x-trait == token-alex or token-usda
+        (and (> fee-x u0) 
+            (and 
+                ;; first transfer fee-x to this contract
+                (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault (as-contract tx-sender) none) transfer-x-failed-err)                
+                ;; convert rebate amount to alex and send to fee-to-address
+                (unwrap! (contract-call? .token-alex transfer (get dx (try! (swap-y-for-x .token-alex token-x-trait u50000000 u50000000 fee-x-rebate))) (as-contract tx-sender) address none) transfer-x-failed-err) 
+                ;; convert the balance to stablecoin and send to reserve pool
+                (unwrap! (contract-call? .token-usda transfer (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x-net))) (as-contract tx-sender) .alex-reserve-pool none) transfer-x-failed-err) 
+            )
+        )
+
+        (and (> fee-y u0) 
+            (and 
+                (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault (as-contract tx-sender) none) transfer-y-failed-err)                        
+                (unwrap! (contract-call? .token-alex transfer (get dx (try! (swap-y-for-x .token-alex token-y-trait u50000000 u50000000 fee-y-rebate))) (as-contract tx-sender) address none) transfer-y-failed-err) 
+                (unwrap! (contract-call? .token-usda transfer (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y-net))) (as-contract tx-sender) .alex-reserve-pool none) transfer-y-failed-err) 
+            )
+        )        
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
@@ -527,13 +534,4 @@
         )
         (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply token)
     )
-)
-
-(define-read-only (get-rebate-rate)
-    (ok (var-get rebate-rate))
-)
-
-;; TODO: only ALEX multisig is authorised
-(define-public (set-rebate-rate (rate uint))
-    (ok (var-set rebate-rate rate))
 )

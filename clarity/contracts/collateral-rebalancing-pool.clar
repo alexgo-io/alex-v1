@@ -446,7 +446,17 @@
         (asserts! (>= now expiry) expiry-err)
         
         ;; if shares > dy, then transfer the shortfall from reserve.
-        (and (< dy shares) (try! (contract-call? .alex-reserve-pool transfer-out token (unwrap! (contract-call? .math-fixed-point shares dy) math-call-err))))
+        (and (< dy shares) 
+            (let
+                (
+                    (amount (unwrap! (contract-call? .math-fixed-point sub-fixed shares dy) math-call-err))
+                    (amount-to-swap (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
+                )
+                (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool (as-contract tx-sender) none) transfer-y-failed-err)
+                (unwrap! (contract-call? token transfer (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap))) (as-contract tx-sender) .alex-vault none) transfer-y-failed-err)
+            )
+        )       
+        
         ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
         (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) transfer-y-failed-err)
 
@@ -456,7 +466,7 @@
 
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
-        (ok {dx: dx, dy: u0})
+        (ok {dx: u0, dy: dy})
    )
 )
 
@@ -728,10 +738,35 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))            
         )
 
-        (and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
+        ;;(and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
+        ;;(and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
+
+        ;; TODO need to check if token-x-trait == token-alex or token-usda
+        (and (> fee-x u0) 
+            (and 
+                ;; first transfer fee-x to this contract
+                (unwrap! (contract-call? collateral transfer fee-x .alex-vault (as-contract tx-sender) none) transfer-x-failed-err)                
+                ;; convert rebate amount to alex and send to fee-to-address
+                (unwrap! (contract-call? .token-alex transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-alex collateral u50000000 u50000000 fee-x-rebate))) (as-contract tx-sender) address none) transfer-x-failed-err) 
+                ;; convert the balance to stablecoin and send to reserve pool
+                (unwrap! (contract-call? .token-usda transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x-net))) (as-contract tx-sender) .alex-reserve-pool none) transfer-x-failed-err) 
+            )
+        )
+
+        (and (> fee-y u0) 
+            (and 
+                (unwrap! (contract-call? token transfer fee-y .alex-vault (as-contract tx-sender) none) transfer-y-failed-err)                        
+                (unwrap! (contract-call? .token-alex transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-alex token u50000000 u50000000 fee-y-rebate))) (as-contract tx-sender) address none) transfer-y-failed-err) 
+                (unwrap! (contract-call? .token-usda transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y-net))) (as-contract tx-sender) .alex-reserve-pool none) transfer-y-failed-err) 
+            )
+        )          
 
         (map-set pools-data-map
             { token-x: token-x, token-y: token-y, expiry: expiry}

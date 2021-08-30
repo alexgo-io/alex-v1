@@ -1,5 +1,3 @@
-(use-trait ft-trait .trait-sip-010.sip-010-trait)
-
 ;; alex-reserve-pool
 ;; <add a description here>
 
@@ -15,21 +13,13 @@
 ;; public functions
 ;;
 
-(define-public (transfer-in (token <ft-trait>) (amount uint))
-    (begin
-        (try! (contract-call? token transfer .alex-vault (as-contract tx-sender) amount))
-        (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-wbtc token u50000000 u50000000 amount))
-    )
+(define-data-var rebate-rate uint u50000000) ;;50%
+
+(define-read-only (get-rebate-rate)
+    (ok (var-get rebate-rate))
 )
 
-(define-public (transfer-out (token <ft-trait>) (amount uint))
-    (let
-        (
-            (amount-to-wbtc (try! (contract-call? .fixed-weight-pool get-x-given-y .token-wbtc token u50000000 u50000000 amount)))
-            (swapped-amount (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-wbtc token u50000000 u50000000 amount-to-wbtc)))
-            (dy (get dy swapped-amount))
-        )
-        
-        (try! (contract-call? token transfer (as-contract tx-sender) .alex-vault dy))
-    )
+;; TODO: access control
+(define-public (set-rebate-rate (rate uint))
+    (ok (var-set rebate-rate rate))
 )

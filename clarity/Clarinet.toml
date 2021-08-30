@@ -7,7 +7,7 @@ depends_on = ["trait-yield-token", "trait-sip-010"]
 
 [contracts."alex-reserve-pool"]
 path = "contracts/alex-reserve-pool.clar"
-depends_on = ["fixed-weight-pool", "trait-sip-010", "alex-vault"]
+depends_on = []
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
@@ -19,11 +19,11 @@ depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/collateral-rebalancing-pool.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool"]
+depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool","token-usda","token-alex"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/fixed-weight-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "open-oracle","alex-reserve-pool"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "open-oracle","alex-reserve-pool", "token-usda"]
 
 [contracts.key-usda-wbtc-4380]
 path = "contracts/key-usda-wbtc-4380.clar"
@@ -115,7 +115,7 @@ depends_on = ["math-fixed-point"]
 
 [contracts.yield-token-pool]
 path = "contracts/yield-token-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation", "trait-yield-token", "open-oracle"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation", "trait-yield-token", "open-oracle","token-alex","token-usda","fixed-weight-pool"]
 
 [contracts.yield-usda-18530]
 path = "contracts/yield-usda-18530.clar"
