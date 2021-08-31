@@ -76,7 +76,9 @@
     weight-x: uint,
     weight-y: uint,
     token-symbol: (string-ascii 32),
-    collateral-symbol: (string-ascii 32)  
+    collateral-symbol: (string-ascii 32),
+    moving-average: uint,
+    conversion-ltv: uint  
   }
 )
 
@@ -204,6 +206,14 @@
 (define-read-only (get-weight-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
     (let 
         (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (weight-x (get weight-x pool))
+            (moving-average (get moving-average pool))
+            (conversion-ltv (get conversion-ltv pool))
+            (ma-comp (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 moving-average) math-call-err))
+
             ;; determine spot using open oracle
             (spot (unwrap! (get-spot token collateral expiry) get-oracle-price-fail-err))
             (now (* block-height ONE_8))
@@ -223,32 +233,31 @@
             (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
             
             (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
+
+            (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
         )
-        
-        (if (> spot-term ONE_8)
+
+        ;; if current ltv > conversion-ltv, then pool converts to 100% token (i.e. weight-x = 0)
+        (if (> ltv conversion-ltv)
+            (ok u1)                    
             (let
                 (
                     (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
-                                    (unwrap! (contract-call? .math-fixed-point sub-fixed spot-term ONE_8) math-call-err)) math-call-err))
+                                    (unwrap! (contract-call? .math-fixed-point sub-fixed 
+                                        (unwrap! (max spot-term ONE_8) internal-function-call-err) 
+                                        (unwrap! (min spot-term ONE_8) internal-function-call-err)) math-call-err)) math-call-err))
                     (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
                     (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
-                    (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
+                    (complement (if (> spot-term ONE_8) (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err) (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err)))
+                    (weight-t (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err))
+                    (weighted (unwrap! (contract-call? .math-fixed-point add-fixed 
+                                (unwrap! (contract-call? .math-fixed-point mul-down moving-average weight-x) math-call-err) 
+                                (unwrap! (contract-call? .math-fixed-point mul-down ma-comp weight-t) math-call-err)) math-call-err))
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
-                (max (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err) u1)
-            )
-            (let
-                (
-                    (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
-                                    (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 spot-term) math-call-err)) math-call-err))
-                    (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
-                    (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
-                    (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
-                )
-                ;; make sure weight-x > 0 so it works with weighted-equation
-                (max (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err) u1)
-            )
-        )  
+                (max weighted u1)
+            )     
+        )
     )
 )
 
@@ -285,9 +294,11 @@
             (strike (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
             
             ;; TODO: setter / getter of bs-vol / ltv-0
-            ;; currently hard-coded at 50%
-            (bs-vol u50000000)
+            ;; currently hard-coded at 80%
+            (bs-vol u80000000)
             (ltv-0 u80000000)
+            (conversion-ltv u85000000) ;;conversion margin of ~7%
+            (moving-average u95000000)
 
             (weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
             (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
@@ -312,7 +323,9 @@
                 weight-x: weight-x,
                 weight-y: weight-y,
                 token-symbol: (unwrap! (contract-call? token get-symbol) get-symbol-fail-err),
-                collateral-symbol: (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err)
+                collateral-symbol: (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err),
+                moving-average: moving-average,
+                conversion-ltv: conversion-ltv
             })
         )
 
