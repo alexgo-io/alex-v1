@@ -1,0 +1,167 @@
+{
+    "Contracts": [
+        {
+            "name": "math-log-exp",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x3b9b680baf5a2a439ea0b1bf3ef09bfe8f709767062947afd3fc79f11e7c8bbf"
+        },
+        {
+            "name": "math-fixed-point",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x6f8a79ee728ca200ad0568195554fd4154ec5b9f79a2be494c5100945a174d46"
+        },
+        {
+            "name": "trait-alex-token",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x4011f7f91bd8727cdeebcf319b06518b4ade253dc21208a636841c87028484f8"
+        },
+        {
+            "name": "trait-sip-010",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x5d7c401d1873b53a683a16819ef83318b2e685782e86dcc6d237768ed27a2f40"
+        },
+        {
+            "name": "trait-yield-token",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x4e9de256e0c786b296ff0d9bfa5e06377e093cde6ef053723ca40ae6e9f971c4"
+        },
+        {
+            "name": "trait-pool-token",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x1448b658d3d85a84f213ce519d727d3dc3a3fb9293405f45a3e26f79454afcc0"
+        },
+        {
+            "name": "trait-flash-loan-user",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x983bad8d8c13706fc969f97f2d782b43a44ae604a2f1c4457139512e07ceb881"
+        },
+        {
+            "name": "trait-oracle",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x3348109f8b74c7883b6310334cf62ceb386ae555731e9a76724c93c5459e0c54"
+        },
+        {
+            "name": "token-wbtc",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x9468ed8ef7d89f7031f56d7b445ec1b4bd2d7df1095fb2fd70230769f1833307"
+        },
+        {
+            "name": "trait-vault",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xc6d440d612ae9e6e2c808b62cb110b616544e5bff8b4de60ed1fcb948d1ce437"
+        },
+        {
+            "name": "token-usda",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x99619a0664671033e85af3aeffd70d56f3967743fc3ad09b25952b557f3272bd"
+        },
+        {
+            "name": "token-alex",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x8295ea670084fc71d9323ad6b929ca107c82f3c9757b2db01364a5e099d2ead0"
+        },
+        {
+            "name": "yield-usda-4380",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xc3d1dd3a5e91eccb306c132d1ea5cc3d1235ab3d5cd2ed270619dbcd76e6b308"
+        },
+        {
+            "name": "yield-usda-18530",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x5c49ef63aa7cf0b2a95c72da97906de32a52b151da2614428dcc70541c2d3219"
+        },
+        {
+            "name": "pool-token-yield-usda-wbtc",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x735e90c07c8c02e87c0a1a751e28ffc136cb886b559927018b1cb6af73a97da6"
+        },
+        {
+            "name": "pool-token-usda-ayusda",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x0d142e389bcb4e5c44e5a5e33925fa5115c26d365747597a2cd63e5e02e0d22a"
+        },
+        {
+            "name": "pool-token-alex-usda",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x3a553a3845044ab8b5378af651120df9d877b74fb5f8797abb14a29434dddef7"
+        },
+        {
+            "name": "key-usda-wbtc-4380",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xb53f4a44a05a23984862fba234ccb1bfed355fe5efec1354e04d78b14bbdb5fd"
+        },
+        {
+            "name": "weighted-equation",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x7beb7c06269c254645e2fffa38d62115d6b77eaed0d0744fd6c0b28877ed77f9"
+        },
+        {
+            "name": "alex-vault",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x6a9542b3bd53f81b01b904ad282c8066dd0d03e54417fc6f5266cabbe34afe41"
+        },
+        {
+            "name": "open-oracle",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xca462fd7a1f80d13bb0bd25ea4d553d7a1c225553d1618965c0a2a415cf59a51"
+        },
+        {
+            "name": "yield-token-equation",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xeacf66fde743eb3352b0ac07b7b2cffde7a15b9f42057097948a7cb35ee33966"
+        },
+        {
+            "name": "fixed-weight-pool",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xdf0f31830db99e87564f8b0adca0203dc2ec893a40a8846eaed528b054dcd1ea"
+        },
+        {
+            "name": "yield-token-pool",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x3bf655e44244c633a974126e18f5f25173e2a542db34cd7a8ad211a735f06da0"
+        },
+        {
+            "name": "collateral-rebalancing-pool",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0x892399f12d34a2b29a0fbba6f1bbf941aa2c05365f7265deb5ca4396271e216f"
+        },
+        {
+            "name": "liquidity-bootstrapping-pool",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xdb5b73fda45ad2f590f075ed79b60d5929057dc17c52770e61b94c9258241286"
+        },
+        {
+            "name": "test-flash-loan-user",
+            "version": "1",
+            "deployer": "ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ",
+            "txid": "0xf980fe22b91c2001d56c322069acd159a6db34bcc86bbc4cbe394df989ccecbe"
+        }
+
+    ]
+}
