@@ -29,6 +29,10 @@
   (ok u8)
 )
 
+(define-read-only (get-underlying-token)
+  (ok (var-get underlying-token))
+)
+
 (define-read-only (get-balance (account principal))
   (ok (ft-get-balance yield-usda-4380 account))
 )

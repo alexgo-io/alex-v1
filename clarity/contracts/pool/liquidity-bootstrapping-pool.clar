@@ -151,7 +151,7 @@
             (weight-x-0 (get weight-x-0 pool))
             (weight-x-1 (get weight-x-1 pool))
             (listed (get listed pool))
-            (now (* block-height ONE_8))
+            (now (* block-height ONE_8))        
         )
 
         (asserts! (< now expiry) already-expiry-err)
@@ -251,7 +251,6 @@
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-pool-token burn tx-sender shares))
-
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: dy})
    )

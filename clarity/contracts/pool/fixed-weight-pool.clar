@@ -69,10 +69,10 @@
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
-        )
+       )
         (asserts! (is-some pool) invalid-pool-err)
         (ok pool)
-    )
+   )
 )
 
 (define-read-only (get-pools)
@@ -86,7 +86,7 @@
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
             (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
-        )
+       )
         (asserts! (is-some pool) invalid-pool-err)
         (ok pool)
    )
