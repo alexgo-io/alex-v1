@@ -1,5 +1,6 @@
 ;; alex-reserve-pool
 ;; <add a description here>
+;; TODO: alex-reserve-pool as a dynamic weight pool, that changes weight as balance changes?
 
 ;; constants
 ;;
