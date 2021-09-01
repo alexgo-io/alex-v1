@@ -1,0 +1,10 @@
+{
+    "Contracts": [
+        {
+            "name": "math-fixed-point",
+            "version": "2",
+            "deployer": "ST3HMH4K45BW5C5A1S3R3ZN0M0SZWZSVHKKXKQ965",
+            "txid": "0x3756e89698e211fb4e8c52ed98fa93c4e76e1e72991233343bd33ab3f444531d"
+        }
+    ]
+}

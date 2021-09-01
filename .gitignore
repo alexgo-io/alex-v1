@@ -2,3 +2,6 @@
 clarity/history.txt
 
 deploy-keychain.json
+**/contract-records/
+**/hex-files/
+**/staged-contracts/
