@@ -64,6 +64,7 @@
         (asserts! (> pre-bal-borrow borrow) insufficient-flash-loan-balance-err)
         
         ;; make flash loan
+        ;; can this be called without authorisation from .alex-vault?
         (try! (contract-call? collateral transfer borrow (as-contract .alex-vault) tx-sender none))
 
         (let
