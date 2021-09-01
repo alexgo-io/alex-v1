@@ -164,6 +164,9 @@
             (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
             (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
             
+            ;; For Console Testing
+            ;;(token-price u100000000)
+            ;;(collateral-price u40000000000)
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
         )
         (ok spot)
@@ -467,8 +470,6 @@
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: u0})
-        ;;  (print shares)
-        ;;  (ok {dx: u0, dy: u0})
    )
 )
 
@@ -882,7 +883,7 @@
     )
 )
 
-(define-public (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
             (now (* block-height ONE_8))
@@ -917,7 +918,7 @@
     )
 )
 
-(define-public (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
             (now (* block-height ONE_8))
