@@ -52,6 +52,11 @@
         "deployer":"ST20F5HAX0W3AEG8M5C9J2880132CQTP6TZFAT3YF"
     },
     {
+        "name":"yield-usda-18530",
+        "version":"0.1",
+        "deployer":"ST20F5HAX0W3AEG8M5C9J2880132CQTP6TZFAT3YF"
+    },
+    {
         "name":"alex-vault",
         "version":"0.1",
         "deployer":"ST20F5HAX0W3AEG8M5C9J2880132CQTP6TZFAT3YF"
