@@ -283,7 +283,7 @@
 )
 
 ;; single sided liquidity
-(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint)) 
+(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -294,14 +294,8 @@
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
 
             ;; determine strike using open oracle
+            ;; currently support at-the-money only
             (strike (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
-            
-            ;; TODO: setter / getter of bs-vol / ltv-0
-            ;; currently hard-coded at 80%
-            (bs-vol u80000000)
-            (ltv-0 u80000000)
-            (conversion-ltv u85000000) ;;conversion margin of ~7%
-            (moving-average u95000000)
 
             (weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
             (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
