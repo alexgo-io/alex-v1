@@ -2,9 +2,8 @@
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 
 ;; fixed-weight-pool
-;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
+;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;;
-;; TODO: token-x/token-y pool == token-y/token-x pool
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -162,11 +161,6 @@
        )
 
         (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
-
-        ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
         
         (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
@@ -201,17 +195,9 @@
                     })
                 )
             )
-        
-            ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
-        
-            ;; send x from vault
-            ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-            ;; send y from vault
-            ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
             (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
             (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
-
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
@@ -255,11 +241,6 @@
         (asserts! (> dx u0) invalid-liquidity-err) 
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
-    
-        ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;; send y from vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
         
         (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
@@ -302,10 +283,6 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        ;; send x from vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
         (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
 
