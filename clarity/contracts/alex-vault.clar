@@ -36,58 +36,25 @@
 )
 
 ;; perform flash loan
-(define-public (flash-loan
-                (flash-loan-user <flash-loan-user-trait>) 
-                (token-1 <ft-trait>) 
-                (token-2 <ft-trait>) 
-                (token-3 <ft-trait>) 
-                (amount-1 uint) 
-                (amount-2 uint)
-                (amount-3 uint))
-  
-  (begin 
-      (let 
-        (
-          (pre-bal-1 (unwrap! (get-balance token-1) invalid-balance))
-          (pre-bal-2 (unwrap! (get-balance token-2) invalid-balance))
-          (pre-bal-3 (unwrap! (get-balance token-3) invalid-balance))
-          (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) math-call-err))
-          (amount-with-fee-1 (unwrap! (contract-call? .math-fixed-point mul-up amount-1 fee-with-principal) math-call-err))
-          (amount-with-fee-2 (unwrap! (contract-call? .math-fixed-point mul-up amount-2 fee-with-principal) math-call-err))
-          (amount-with-fee-3 (unwrap! (contract-call? .math-fixed-point mul-up amount-3 fee-with-principal) math-call-err))
-        )
+(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint))
+  (let 
+    (
+      (pre-bal (unwrap! (get-balance token) invalid-balance))
+      (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) math-call-err))
+      (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) math-call-err))
+    )
 
-        ;; make sure current balance > loan amount
-        (asserts! (> pre-bal-1 amount-1) insufficient-flash-loan-balance-err)
-        (asserts! (> pre-bal-2 amount-2) insufficient-flash-loan-balance-err)
-        (asserts! (> pre-bal-3 amount-3) insufficient-flash-loan-balance-err)
+    ;; make sure current balance > loan amount
+    (asserts! (> pre-bal amount) insufficient-flash-loan-balance-err)
 
-        ;; transfer loan to flash-loan-user
-        (asserts! (is-ok (contract-call? token-1 transfer amount-1 (as-contract tx-sender) (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token-2 transfer amount-2 (as-contract tx-sender) (contract-of flash-loan-user) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token-3 transfer amount-3 (as-contract tx-sender) (contract-of flash-loan-user) none)) transfer-failed-err)
+    ;; transfer loan to flash-loan-user
+    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) (contract-of flash-loan-user) none) transfer-failed-err)
 
-        ;; flash-loan-user executes with loan received
-        (asserts! (is-ok (contract-call? flash-loan-user execute)) user-execute-err)
+    ;; flash-loan-user executes with loan received
+    (unwrap! (contract-call? flash-loan-user execute) user-execute-err)
 
-        ;; return the loan + fee
-        (asserts! (is-ok (contract-call? token-1 transfer amount-with-fee-1 (contract-of flash-loan-user) (as-contract tx-sender) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token-2 transfer amount-with-fee-2 (contract-of flash-loan-user) (as-contract tx-sender) none)) transfer-failed-err)
-        (asserts! (is-ok (contract-call? token-3 transfer amount-with-fee-3 (contract-of flash-loan-user) (as-contract tx-sender) none)) transfer-failed-err)
-        
-        ;; make sure the loan + fee are returned to vault
-        ;; do we need this given the above?
-        (let
-          (
-            (post-bal-1 (unwrap! (get-balance token-1) invalid-balance))
-            (post-bal-2 (unwrap! (get-balance token-1) invalid-balance))
-            (post-bal-3 (unwrap! (get-balance token-3) invalid-balance))
-          )
-          (asserts! (>= post-bal-1 pre-bal-1) invalid-post-loan-balance-err)
-          (asserts! (>= post-bal-2 pre-bal-2) invalid-post-loan-balance-err)
-          (asserts! (>= post-bal-3 pre-bal-3) invalid-post-loan-balance-err)
-        )
-      )  
-      (ok true)
+    ;; return the loan + fee
+    (unwrap! (contract-call? token transfer amount-with-fee (contract-of flash-loan-user) (as-contract tx-sender) none) transfer-failed-err) 
+    (ok true)
   )
 )
