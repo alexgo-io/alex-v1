@@ -2,9 +2,8 @@
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 
 ;; fixed-weight-pool
-;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
+;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;;
-;; TODO: token-x/token-y pool == token-y/token-x pool
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -208,7 +207,6 @@
 
             (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
             (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
-
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
