@@ -460,28 +460,33 @@
 
         (and (> fee-x u0) 
             (and 
-                ;; first transfer fee-x to this contract
-                (unwrap! (contract-call? the-aytoken transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)                
-                ;; convert rebate amount to alex and send to fee-to-address
-                (unwrap! (contract-call? .token-alex transfer 
-                    (if (is-eq aytoken .token-alex) fee-x-rebate (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-alex the-aytoken u50000000 u50000000 fee-x-rebate)))) 
-                    tx-sender address none) transfer-x-failed-err) 
-                ;; convert the balance to stablecoin and send to reserve pool
-                (unwrap! (contract-call? .token-usda transfer 
-                    (if (is-eq aytoken .token-usda) fee-x-net (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-aytoken u50000000 u50000000 fee-x-net)))) 
-                    tx-sender .alex-reserve-pool none) transfer-x-failed-err) 
+                ;; first transfer fee-x to tx-sender
+                (unwrap! (contract-call? the-aytoken transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; send fee-x to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq aytoken .token-usda) 
+                            fee-x 
+                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-aytoken u50000000 u50000000 fee-x)))
+                        )
+                    )
+                )
             )
         )
 
         (and (> fee-y u0) 
             (and 
-                (unwrap! (contract-call? the-token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)                        
-                (unwrap! (contract-call? .token-alex transfer 
-                    (if (is-eq token .token-alex) fee-y-rebate (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-alex the-token u50000000 u50000000 fee-y-rebate)))) 
-                    tx-sender address none) transfer-y-failed-err) 
-                (unwrap! (contract-call? .token-usda transfer 
-                    (if (is-eq token .token-usda) fee-y-net (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y-net)))) 
-                    tx-sender .alex-reserve-pool none) transfer-y-failed-err) 
+                ;; first transfer fee-y to tx-sender
+                (unwrap! (contract-call? the-token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; send fee-y to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token .token-usda) 
+                            fee-y 
+                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y)))
+                        )
+                    )
+                )
             )
         )         
 
