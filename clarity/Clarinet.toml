@@ -25,9 +25,9 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-p
 path = "contracts/pool/fixed-weight-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation"]
 
-[contracts.flash-loan-user-margin]
-path = "contracts/flash-loan-user-margin.clar"
-depends_on = []
+[contracts.flash-loan-user-margin-usda-wbtc-4380]
+path = "contracts/flash-loan-user-margin-usda-wbtc-4380.clar"
+depends_on = ["token-usda","token-wbtc","yield-usda-4380","key-usda-wbtc-4380"]
 
 [contracts.flash-loan-user-test]
 path = "contracts/flash-loan-user-test.clar"
@@ -49,10 +49,6 @@ depends_on = ["math-log-exp"]
 path = "contracts/lib/math-log-exp.clar"
 depends_on = []
 
-[contracts.multisig-yield-usda-wbtc]
-path = "contracts/multisig-yield-usda-wbtc.clar"
-depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool"]
-
 [contracts.open-oracle]
 path = "contracts/open-oracle.clar"
 depends_on = ["trait-yield-token", "trait-oracle", "trait-sip-010"]
@@ -62,19 +58,11 @@ path = "contracts/pool-token/pool-token-alex-usda.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.pool-token-usda-ayusda]
-<<<<<<< HEAD
-path = "contracts/pool-token-usda-ayusda.clar"
-=======
 path = "contracts/pool-token/pool-token-usda-ayusda.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.pool-token-yield-usda-wbtc]
 path = "contracts/pool-token/pool-token-yield-usda-wbtc.clar"
->>>>>>> d936a4af77c8ec563cc40f11134083cdacd3ceb4
-depends_on = ["trait-sip-010", "trait-pool-token"]
-
-[contracts.pool-token-yield-usda-wbtc]
-path = "contracts/pool-token-yield-usda-wbtc.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.token-alex]
@@ -134,17 +122,9 @@ path = "contracts/pool/yield-token-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "trait-flash-loan-user", "math-fixed-point", "yield-token-equation", "trait-yield-token", "open-oracle"]
 
 [contracts.yield-usda-18530]
-<<<<<<< HEAD
-path = "contracts/yield-usda-18530.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
-
-[contracts.yield-usda-4380]
-path = "contracts/yield-usda-4380.clar"
-=======
 path = "contracts/yield-token/yield-usda-18530.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
 
 [contracts.yield-usda-4380]
 path = "contracts/yield-token/yield-usda-4380.clar"
->>>>>>> d936a4af77c8ec563cc40f11134083cdacd3ceb4
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
