@@ -240,9 +240,9 @@
             (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
         )
 
-        ;; if current ltv > conversion-ltv, then pool converts to 100% token (i.e. weight-x = 0)
-        (if (> ltv conversion-ltv)
-            (ok u1)                    
+        ;; if current ltv > conversion-ltv, then pool converts to (almost) 100% token (i.e. weight-x = 0)
+        (if (or (> ltv conversion-ltv) (is-eq now expiry)
+            (ok u99900000)                    
             (let
                 (
                     (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
@@ -258,7 +258,7 @@
                                 (unwrap! (contract-call? .math-fixed-point mul-down ma-comp weight-t) math-call-err)) math-call-err))
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
-                (max weighted u1)
+                (max weighted u100000)
             )     
         )
     )
@@ -451,7 +451,7 @@
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         ;; burn supported only at maturity
-        (asserts! (>= now expiry) expiry-err)
+        (asserts! (> now expiry) expiry-err)
         
         ;; all dy converted into dx, so zero dy to transfer.
         (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
@@ -498,7 +498,7 @@
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         ;; burn supported only at maturity
-        (asserts! (>= now expiry) expiry-err)
+        (asserts! (> now expiry) expiry-err)
         
         ;; all dy converted into dx, so zero dy to transfer.
         (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
@@ -882,7 +882,7 @@
         (
             (now (* block-height ONE_8))
         )
-        (if (>= now expiry)
+        (if (> now expiry)
             (let 
                 (
                     (token-x (contract-of collateral))
@@ -917,7 +917,7 @@
         (
             (now (* block-height ONE_8))
         )
-        (if (>= now expiry)
+        (if (> now expiry)
             (let 
                 (
                     (token-x (contract-of collateral))
