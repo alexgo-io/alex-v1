@@ -23,6 +23,11 @@
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u1001))
+(define-constant get-oracle-price-fail-err (err u7000))
+
+(define-constant alex-symbol "alex")
+(define-constant reserve-usdc-symbol "usdc")
+(define-constant oracle-src "nothing")
 
 ;; data maps and vars
 (define-map pools-map
@@ -51,7 +56,9 @@
     fee-to-address: principal,
     pool-token: principal,
     fee-rate-x: uint,
-    fee-rate-y: uint
+    fee-rate-y: uint,
+    token-x-symbol: (string-ascii 32),
+    token-y-symbol: (string-ascii 32)
   }
 )
 
@@ -118,7 +125,9 @@
                 fee-to-address: (contract-of the-pool-token),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-x: u0,
-                fee-rate-y: u0
+                fee-rate-y: u0,
+                token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
+                token-y-symbol: (try! (contract-call? token-y-trait get-symbol))
             })
        )
         (asserts!
@@ -392,6 +401,7 @@
     )
 )
 
+
 ;; Returns the fee of current x and y and make balance to 0.
 (define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     
@@ -403,10 +413,44 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))
         )
 
-        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault address none) transfer-y-failed-err))
+        (and (> fee-x u0) 
+            (and 
+                ;; first transfer fee-x to tx-sender
+                (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; send fee-x to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-x .token-usda) 
+                            fee-x 
+                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
+                        )
+                    )
+                )
+            )
+        )
+
+        (and (> fee-y u0) 
+            (and 
+                ;; first transfer fee-y to tx-sender
+                (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; send fee-y to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-y .token-usda) 
+                            fee-y 
+                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
+                        )
+                    )
+                )
+            )
+        )    
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}

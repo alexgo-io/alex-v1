@@ -438,8 +438,8 @@
             (dy-weighted (get dy-weighted reduce-data))
 
             ;; TODO: a more efficient way to convert?
-            (dy-to-dx (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dy-weighted) no-liquidity-err)))
-            (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
+            (dx-to-dy (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 dx-weighted) no-liquidity-err)))
+            (dy (unwrap! (contract-call? .math-fixed-point add-fixed dy-weighted dx-to-dy) math-call-err))
             (pool-updated (merge pool {
                 yield-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-supply shares) math-call-err),
                 yield-bal-x: (unwrap! (contract-call? .math-fixed-point sub-fixed yield-bal-x dx-weighted) math-call-err),
@@ -453,9 +453,21 @@
         ;; burn supported only at maturity
         (asserts! (>= now expiry) expiry-err)
         
-        ;; all dy converted into dx, so zero dy to transfer.
-        (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
-        ;;(unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        ;; if shares > dy, then transfer the shortfall from reserve.
+        ;; TODO: this goes through swapping, so the amount received is actually slightly less than the shortfall
+        (and (< dy shares) 
+            (let
+                (
+                    (amount (unwrap! (contract-call? .math-fixed-point sub-fixed shares dy) math-call-err))
+                    (amount-to-swap (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
+                )
+                (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                (unwrap! (contract-call? token transfer (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap))) (as-contract tx-sender) .alex-vault none) transfer-y-failed-err)
+            )
+        )       
+        
+        ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
+        (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) transfer-y-failed-err)
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-yield-token burn tx-sender shares))
@@ -463,7 +475,7 @@
 
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
-        (ok {dx: dx, dy: u0})
+        (ok {dx: u0, dy: dy})
    )
 )
 
@@ -722,13 +734,44 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
-            (fee-collector (get fee-to-address pool))
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))            
         )
-        
-        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
-        
-        (and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
+
+        (and (> fee-x u0) 
+            (and 
+                ;; first transfer fee-x to tx-sender
+                (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; send fee-x to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-x .token-usda) 
+                            fee-x 
+                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x)))
+                        )
+                    )
+                )
+            )
+        )
+
+        (and (> fee-y u0) 
+            (and 
+                ;; first transfer fee-y to tx-sender
+                (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; send fee-y to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-y .token-usda) 
+                            fee-y 
+                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y)))
+                        )
+                    )
+                )
+            )
+        )          
 
         (map-set pools-data-map
             { token-x: token-x, token-y: token-y, expiry: expiry}
@@ -899,13 +942,13 @@
                     (dx-weighted (get dx pos-data))
                     (dy-weighted (get dy pos-data))                    
 
-                    ;; always convert to collateral ccy
-                    (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dy-weighted) no-liquidity-err))             
+                    ;; always convert to token ccy
+                    (dx-to-dy (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dx-weighted) no-liquidity-err))             
                     
-                    (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
+                    (dy (unwrap! (contract-call? .math-fixed-point add-fixed dy-weighted dx-to-dy) math-call-err))
                     
                 )
-                (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
+                (ok {dy: dy, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
             )
             expiry-err
         )
