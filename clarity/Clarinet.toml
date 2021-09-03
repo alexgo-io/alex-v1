@@ -5,10 +5,6 @@ requirements = []
 path = "contracts/multisig/alex-crp-wbtc-usda-4380-multisig.clar"
 depends_on = ["yield-usda-4380","key-usda-wbtc-4380", "collateral-rebalancing-pool","trait-sip-010"]
 
-[contracts.alex-multisig-registry]
-path = "contracts/multisig/alex-multisig-registry.clar"
-depends_on = ["trait-yield-token", "trait-sip-010"]
-
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
 depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fixed-point"]
