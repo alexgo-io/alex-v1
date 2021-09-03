@@ -63,19 +63,15 @@ depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vau
 
 [contracts.token-alex]
 path = "contracts/token/token-alex.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
+depends_on = ["trait-sip-010"]
 
 [contracts.token-usda]
 path = "contracts/token/token-usda.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
+depends_on = ["trait-sip-010"]
 
 [contracts.token-wbtc]
 path = "contracts/token/token-wbtc.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
-
-[contracts.trait-alex-token]
-path = "contracts/traits/trait-alex-token.clar"
-depends_on = []
+depends_on = ["trait-sip-010"]
 
 [contracts.trait-flash-loan-user]
 path = "contracts/traits/trait-flash-loan-user.clar"

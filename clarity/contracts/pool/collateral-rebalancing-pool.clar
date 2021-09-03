@@ -241,7 +241,7 @@
         )
 
         ;; if current ltv > conversion-ltv, then pool converts to (almost) 100% token (i.e. weight-x = 0)
-        (if (or (> ltv conversion-ltv) (is-eq now expiry)
+        (if (or (> ltv conversion-ltv) (is-eq now expiry))
             (ok u99900000)                    
             (let
                 (
