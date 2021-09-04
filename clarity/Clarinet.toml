@@ -5,10 +5,6 @@ requirements = []
 path = "contracts/multisig/alex-crp-wbtc-usda-4380-multisig.clar"
 depends_on = ["yield-usda-4380","key-usda-wbtc-4380", "collateral-rebalancing-pool","trait-sip-010"]
 
-[contracts.alex-multisig-registry]
-path = "contracts/multisig/alex-multisig-registry.clar"
-depends_on = ["trait-yield-token", "trait-sip-010"]
-
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
 depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fixed-point"]
@@ -63,19 +59,15 @@ depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vau
 
 [contracts.token-alex]
 path = "contracts/token/token-alex.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
+depends_on = ["trait-sip-010"]
 
 [contracts.token-usda]
 path = "contracts/token/token-usda.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
+depends_on = ["trait-sip-010"]
 
 [contracts.token-wbtc]
 path = "contracts/token/token-wbtc.clar"
-depends_on = ["trait-sip-010", "trait-alex-token"]
-
-[contracts.trait-alex-token]
-path = "contracts/traits/trait-alex-token.clar"
-depends_on = []
+depends_on = ["trait-sip-010"]
 
 [contracts.trait-flash-loan-user]
 path = "contracts/traits/trait-flash-loan-user.clar"
