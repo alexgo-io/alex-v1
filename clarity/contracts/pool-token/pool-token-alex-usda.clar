@@ -11,12 +11,15 @@
 
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? alex-usda amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
+  (begin 
+    (asserts! (is-eq tx-sender sender) (err err-not-authorized))
+    (match (ft-transfer? alex-usda amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
     )
-    error (err error)
   )
 )
 
@@ -88,8 +91,8 @@
   )
 )
 
-;; (begin
-;;   ;; TODO: Erase on testnet or mainnet
-;;   (try! (ft-mint? alex-usda u10000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-;;   (try! (ft-mint? alex-usda u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-;; )
+(begin
+  ;; TODO: Erase on testnet or mainnet
+  (try! (ft-mint? alex-usda u10000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
+  (try! (ft-mint? alex-usda u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
+)

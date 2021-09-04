@@ -4,6 +4,7 @@
 ;; Defines the Alex Governance Token according to the SRC20 Standard
 (define-fungible-token galex)
 
+
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 
@@ -54,6 +55,8 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+(begin 
+  (asserts! (is-eq tx-sender sender) (err err-not-authorized))
   (match (ft-transfer? galex amount sender recipient)
     response (begin
       (print memo)
@@ -61,6 +64,7 @@
     )
     error (err error)
   )
+)
 )
 
 ;; ---------------------------------------------------------
