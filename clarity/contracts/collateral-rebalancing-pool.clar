@@ -384,9 +384,12 @@
 ;; note single-sided liquidity
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
-        (
+        ;; Just for Validation of initial parameters
+        (   
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
-            (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+            (pool-check (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) invalid-pool-err))
+            (yield-supply-check (get yield-supply pool-check))
+            (ltv (if (is-eq yield-supply-check u0) (get ltv-0 pool-check) (unwrap! (get-ltv token collateral expiry) internal-function-call-err)))
         )
         (asserts! (> dx u0) invalid-liquidity-err)
         ;; mint is possible only if ltv < 1
@@ -847,8 +850,10 @@
                     (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
                     (weight-x (get weight-x pool))
                     (weight-y (get weight-y pool))
+                    (yield-supply (get yield-supply pool))
 
-                    (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+                    ;;(ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+                    (ltv (if (is-eq yield-supply u0) (get ltv-0 pool) (unwrap! (get-ltv token collateral expiry) internal-function-call-err)))
 
                     ;; we split dx to dx-weighted and dy-weighted using on-chain AMM
                     (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-up dx weight-x) math-call-err))
