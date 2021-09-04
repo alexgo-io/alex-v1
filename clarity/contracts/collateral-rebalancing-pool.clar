@@ -184,29 +184,6 @@
     )
 )
 
-;; (define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-;;     (let
-;;         (
-;;             (token-x (contract-of collateral))
-;;             (token-y (contract-of token))
-;;             (token-symbol (unwrap! (contract-call? token get-symbol) get-symbol-fail-err))
-;;             (collateral-symbol (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err))
-            
-;;             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))            
-;;             (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
-;;             (balance-x (get balance-x balances))
-;;             (balance-y (get balance-y balances))            
-;;             (spot (unwrap! (get-spot token collateral expiry) internal-function-call-err))
-
-;;             ;; (spot (if (is-err (get-spot token collateral expiry) 
-;;             ;; (unwrap-panic (contract-call? .math-fixed-point div-down (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err) (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))) 
-;;             ;; (unwrap! (get-spot token collateral expiry) internal-function-call-err)) ))
-;;             (balance-x-in-y (unwrap! (contract-call? .math-fixed-point div-down balance-x spot) math-call-err))
-;;         )
-;;         (contract-call? .math-fixed-point add-fixed balance-x-in-y balance-y)
-;;     )
-;; )
-
 (define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
@@ -323,14 +300,14 @@
             (t (unwrap! (contract-call? .math-fixed-point div-down 
                 (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) (* u52560 ONE_8)) math-call-err))
 
-            ;;(spot-term (unwrap! (contract-call? .math-fixed-point div-up spot strike) math-call-err))
+            (spot-term (unwrap! (contract-call? .math-fixed-point div-up strike strike) math-call-err))
             (pow-bs-vol (unwrap! (contract-call? .math-fixed-point div-up 
             (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
             (vol-term (unwrap! (contract-call? .math-fixed-point mul-up t pow-bs-vol) math-call-err))                       
             (sqrt-t (unwrap! (contract-call? .math-fixed-point pow-down t u50000000) math-call-err))
             (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
             (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
-            (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term ONE_8) math-call-err))
+            (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term spot-term) math-call-err))
             (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
             (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
             (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
