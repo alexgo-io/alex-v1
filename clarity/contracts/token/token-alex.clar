@@ -8,11 +8,11 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) (err err-not-authorized))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err not-authorized-err))
 
     (ok (var-set contract-owner owner))
   )
@@ -45,7 +45,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   (if (is-eq tx-sender (var-get contract-owner))
     (ok (var-set token-uri value))
-    (err err-not-authorized)
+    (err not-authorized-err)
   )
 )
 
@@ -70,7 +70,7 @@
 ;; Mint method for glaex
 (define-public (mint-for-dao (amount uint) (recipient principal))
   (begin
-    ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
+    ;; (asserts! (is-eq contract-caller .dao) (err not-authorized-err))
     (ft-mint? galex amount recipient)
   )
 )
@@ -78,7 +78,7 @@
 ;; Burn method for DAO
 (define-public (burn-for-dao (amount uint) (sender principal))
   (begin
-    ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
+    ;; (asserts! (is-eq contract-caller .dao) (err not-authorized-err))
     (ft-burn? galex amount sender)
   )
 )

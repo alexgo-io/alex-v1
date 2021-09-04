@@ -7,7 +7,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -36,7 +36,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   ;;(if (is-eq tx-sender (contract-call? . get-dao-owner))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -61,7 +61,7 @@
 ;; Mint method for wbtc
 (define-public (mint-for-dao (amount uint) (recipient principal))
   (begin
-    ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
+    ;;(asserts! (is-eq contract-caller .) (err not-authorized-err))
     (ft-mint? wbtc amount recipient)
   )
 )
@@ -69,7 +69,7 @@
 ;; Burn method for wbtc
 (define-public (burn-for-dao (amount uint) (sender principal))
   (begin
-    ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
+    ;;(asserts! (is-eq contract-caller .) (err not-authorized-err))
     (ft-burn? wbtc amount sender)
   )
 )

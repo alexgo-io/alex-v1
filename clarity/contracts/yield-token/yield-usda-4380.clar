@@ -11,7 +11,7 @@
 (define-data-var underlying-token principal .token-usda)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -45,7 +45,7 @@
   ;; TODO : Authorization Check
   ;;(if (is-eq tx-sender (contract-call? .OWNER))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -70,7 +70,7 @@
 ;; Mint method for yield-usda-4380
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err not-authorized-err))
     (ft-mint? yield-usda-4380 amount recipient)
   )
 )
@@ -78,7 +78,7 @@
 ;; Burn method for yield-usda-4380
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err not-authorized-err))
     (ft-burn? yield-usda-4380 amount sender)
   )
 )

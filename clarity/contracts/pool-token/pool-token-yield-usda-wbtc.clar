@@ -7,7 +7,7 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
@@ -69,7 +69,7 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err not-authorized-err))
     (ft-mint? ayusda-wbtc amount recipient)
   )
 )
@@ -83,7 +83,7 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err not-authorized-err))
     (ft-burn? ayusda-wbtc amount recipient)
   )
 )

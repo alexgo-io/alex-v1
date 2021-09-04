@@ -10,7 +10,7 @@
 (define-data-var underlying-token principal .token-usda)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -44,7 +44,7 @@
   ;; TODO : Authorization Check
   ;;(if (is-eq tx-sender (contract-call? .OWNER))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -70,7 +70,7 @@
 (define-public (mint (recipient principal) (amount uint))
   (begin
     ;; TODO : Authorization Check
-    ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
+    ;;(asserts! (is-eq contract-caller .OWNER) (err not-authorized-err))
     (ft-mint? ayUSDA-Aug2021 amount recipient)
   )
 )
@@ -79,7 +79,7 @@
 (define-public (burn (sender principal) (amount uint))
   (begin
     ;; TODO : Authorization Check
-    ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
+    ;;(asserts! (is-eq contract-caller .OWNER) (err not-authorized-err))
     (ft-burn? ayUSDA-Aug2021 amount sender)
   )
 )
@@ -88,7 +88,7 @@
 ;; (define-public (mint-from-registry (amount uint) (recipient principal))
 ;;   (begin
 ;;     ;; TODO : Authorization Check
-;;     ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
+;;     ;;(asserts! (is-eq contract-caller .OWNER) (err not-authorized-err))
 ;;     (ft-mint? ayUSDA-Aug2021 amount recipient)
 ;;   )
 ;; )
@@ -97,7 +97,7 @@
 ;; (define-public (burn-from-registry (amount uint) (recipient principal))
 ;;   (begin
 ;;     ;; TODO : Authorization Check
-;;     ;;(asserts! (is-eq contract-caller .OWNER) (err ERR-NOT-AUTHORIZED))
+;;     ;;(asserts! (is-eq contract-caller .OWNER) (err not-authorized-err))
 ;;     (ft-mint? ayUSDA-Aug2021 amount recipient)
 ;;   )
 ;; )

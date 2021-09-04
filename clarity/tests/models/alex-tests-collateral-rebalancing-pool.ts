@@ -23,13 +23,14 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, dX: number) {
+    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, dX: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
           types.principal(token),
           types.principal(collateral),
           types.principal(yieldToken),
           types.principal(keyToken),
+          types.principal(multiSig),
           types.uint(dX)
         ], user.address),
       ]);
@@ -130,19 +131,6 @@ import {
           ], user.address),
         ]);
         return block.receipts[0].result;
-    }
-
-
-    setFeetoAddress(user: Account, token: string, collateral: string, expiry: number, address: string) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-fee-to-address", [
-          types.principal(token),
-          types.principal(collateral),
-          types.uint(expiry),
-          types.principal(address) 
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
     }
   
     getFeetoAddress(user: Account, token: string, collateral: string, expiry: number) {
