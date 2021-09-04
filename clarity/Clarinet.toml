@@ -3,7 +3,7 @@ name = "alex-v1"
 requirements = []
 [contracts.alex-crp-wbtc-usda-4380-multisig]
 path = "contracts/multisig/alex-crp-wbtc-usda-4380-multisig.clar"
-depends_on = ["yield-usda-4380","key-usda-wbtc-4380", "collateral-rebalancing-pool","trait-sip-010"]
+depends_on = ["yield-usda-4380", "key-usda-wbtc-4380", "collateral-rebalancing-pool", "trait-sip-010"]
 
 [contracts.alex-multisig-registry]
 path = "contracts/multisig/alex-multisig-registry.clar"
@@ -56,6 +56,10 @@ depends_on = ["trait-sip-010", "trait-pool-token"]
 [contracts.pool-token-yield-usda-wbtc]
 path = "contracts/pool-token/pool-token-yield-usda-wbtc.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
+
+[contracts.stacked-poxl-pool]
+path = "contracts/stacked-poxl-pool.clar"
+depends_on = []
 
 [contracts.test-flash-loan-user]
 path = "contracts/test-flash-loan-user.clar"
