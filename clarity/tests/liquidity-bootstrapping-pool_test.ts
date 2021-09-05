@@ -13,9 +13,10 @@ const gAlexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
 const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const ayUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-usda-ayusda"
 
+const ONE_8 = 100000000
 const testWeightX0 = 50000000 //0.5
 const testWeightX1 = 50000000 //0.5
-const testExpiry = 100000000
+const testExpiry = 4380 * ONE_8//100000000
 
 
 Clarinet.test({
