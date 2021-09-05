@@ -26,6 +26,7 @@ os.mkdir(f'../hex-files/{version_folder}')
 nonce = expected_nonce
 contracts = r'../staged-contracts'
 for file in os.listdir(contracts):
+    print(file)
     clarity_name = file.split('.')[0]
     res1 = subprocess.check_output(f"stx deploy_contract -x -t ./{contracts}/{file} {clarity_name} 70000 {nonce} $(cat ./deploy-keychain.json | jq -r .keyInfo.privateKey) > ../hex-files/{version_folder}/{clarity_name}.hex", shell=True)
     txid = subprocess.check_output(f"cat ../hex-files/{version_folder}/{clarity_name}.hex | xxd -p -r | curl -H \"Content-Type: application/octet-stream\" -X POST --data-binary @- https://stacks-node-api.regtest.stacks.co/v2/transactions", shell=True)

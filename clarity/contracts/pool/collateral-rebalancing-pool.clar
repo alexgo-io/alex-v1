@@ -307,9 +307,9 @@
             (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
             (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
             (weighted (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err))                
-            (weight-y (if (> weighted u100000) weighted u100000))
+            (weight-x (if (> weighted u100000) weighted u100000))
 
-            (weight-x (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-y) math-call-err))
+            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
 
             (pool-data {
                 yield-supply: u0,
