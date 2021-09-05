@@ -154,13 +154,13 @@
     (let 
         (
             (token-x (contract-of collateral))
-            (token-y (contract-of collateral))
+            (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))                        
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
             (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
             (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
-            
+
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
         )
         (ok spot)
@@ -283,11 +283,10 @@
 
             ;; determine strike using open oracle
             ;; create-pool is always executed on initial level
-            ;;(strike (unwrap! (get-spot token collateral expiry) get-oracle-price-fail-err))
             (token-symbol (unwrap! (contract-call? token get-symbol) get-symbol-fail-err))
             (collateral-symbol (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err))
             (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))   
             (strike (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
             
             ;; TODO: setter / getter of bs-vol / ltv-0
@@ -381,7 +380,7 @@
         (asserts! (> dx u0) invalid-liquidity-err)
         ;; mint is possible only if ltv < 1
         (asserts! (> ONE_8 ltv) invalid-pool-err)
-        
+        (print ltv)
         (let
             (
                 (token-x (contract-of collateral))
@@ -857,13 +856,6 @@
                     (key-dx-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dx-weighted yield-dx-weighted) math-call-err))
                     (key-dy-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dy-weighted yield-dy-weighted) math-call-err))
                 )
-
-                ;; (print "Debugging dy-weighted and dy-check mismatch")
-                ;; (print dy-weighted)
-                ;; (print dy-check)
-                ;; (print dx-to-dy)
-                ;;(asserts! (is-eq dy-weighted dy-check) invalid-liquidity-err)
-
                 (ok {yield-token: {token: ltv-dx, dx-weighted: yield-dx-weighted, dy-weighted: yield-dy-weighted}, 
                      key-token: {token: ltv-dx, dx-weighted: key-dx-weighted, dy-weighted: key-dy-weighted}})
             )

@@ -73,41 +73,41 @@ Clarinet.test({
         // Rebalancing occurs based on internal logic.
         result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
         let position:any =result.expectOk().expectTuple();
-            position['balance-x'].expectUint(4717475200);
-            position['balance-y'].expectUint(1045463537);
+            position['balance-x'].expectUint(5282524800);
+            position['balance-y'].expectUint(934680567);
         
         // Borrower adds liquidity to the pool and mint ayusda and keyusda, using wBTC as collateral
         // If attempt to add more than fixed weight pool has, it will throw an no-liquidity error
         result = CRPTest.addToPosition(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, keyUsda4380TokenAddress, 100*ONE_8);
         result.expectOk().expectBool(true);
 
-        // // Liquidity Added to the pool
-        // result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
-        //     position =result.expectOk().expectTuple();
-        //     position['balance-x'].expectUint(9434950600);
-        //     position['balance-y'].expectUint(2069294167);
+        // Liquidity Added to the pool
+        result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
+            position =result.expectOk().expectTuple();
+            position['balance-x'].expectUint(10565049600);
+            position['balance-y'].expectUint(1852052805);
 
-        // // Time machine to maturity
-        // chain.mineEmptyBlockUntil(4381)
+        // Time machine to maturity
+        chain.mineEmptyBlockUntil(4381)
 
-        // // Reduce Liquidity
-        // // Reduce 1% of total yield token. 
-        // result = CRPTest.reducePositionYield(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
-        //     position=result.expectOk().expectTuple();
-        //     position['dx'].expectUint(258137417);
-        //     position['dy'].expectUint(0);
+        // Reduce Liquidity
+        // Reduce 1% of total yield token. 
+        result = CRPTest.reducePositionYield(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
+            position=result.expectOk().expectTuple();
+            position['dx'].expectUint(238195975);
+            position['dy'].expectUint(0);
 
-        // // Manually Reduce 1& of total key token
-        // result = CRPTest.reducePositionKey(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
-        //     position=result.expectOk().expectTuple();
-        //     position['dx'].expectUint(255368272);
-        //     position['dy'].expectUint(0);
+        // Manually Reduce 1& of total key token
+        result = CRPTest.reducePositionKey(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
+            position=result.expectOk().expectTuple();
+            position['dx'].expectUint(235671181);
+            position['dy'].expectUint(0);
 
-        //     // 1 % of each token and collateral has been removed. 
-        //     result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
-        //     position =result.expectOk().expectTuple();
-        //     position['balance-x'].expectUint(9359844452);
-        //     position['balance-y'].expectUint(1985191962);
+            // 1 % of each token and collateral has been removed. 
+            result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
+            position =result.expectOk().expectTuple();
+            position['balance-x'].expectUint(10480947868);
+            position['balance-y'].expectUint(1776947086);
 
 
 
@@ -151,13 +151,13 @@ Clarinet.test({
         
         // Check whether internal weighted equation is working well - internal test
         result = CRPTest.getYgivenX(deployer, usdaTokenAddress, wBTCTokenAddress, expiry, 10*ONE_8);
-        result.expectOk().expectUint(164931208)
+        result.expectOk().expectUint(164926218)
         
         // Arbitrager swapping usda for wBTC
         result = CRPTest.swapXForY(deployer, usdaTokenAddress, wBTCTokenAddress, expiry, 10*ONE_8);
         let position:any =result.expectOk().expectTuple();
           position['dx'].expectUint(10*ONE_8);
-          position['dy'].expectUint(164931208);
+          position['dy'].expectUint(164926218);
 
     },
 });
@@ -243,7 +243,7 @@ Clarinet.test({
 
         // Invalid Pool Access
         result = CRPTest.addToPosition(deployer, usdaTokenAddress, wBTCTokenAddress, ayusdaAddress, keyUsda4380TokenAddress, 100*ONE_8);
-        result.expectErr().expectUint(1001);
+        result.expectErr().expectUint(2001);
 
         result = CRPTest.addToPosition(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, keyUsda4380TokenAddress, 100*ONE_8);
         result.expectOk().expectBool(true);
