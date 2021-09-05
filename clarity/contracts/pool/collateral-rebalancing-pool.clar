@@ -283,25 +283,33 @@
             
             ;;(weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
 
-            (now (* block-height ONE_8))            
+            (spot strike)
+            (now (* block-height ONE_8))
+            ;; TODO: assume 10mins per block - something to be reviewed
             (t (unwrap! (contract-call? .math-fixed-point div-down 
                 (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) (* u52560 ONE_8)) math-call-err))
+            ;; TODO: APYs need to be calculated from the prevailing yield token price.
+            ;; TODO: ln(S/K) approximated as (S/K - 1)
 
-            (spot-term (unwrap! (contract-call? .math-fixed-point div-up strike strike) math-call-err))
+            ;; we calculate d1 first
+            (spot-term (unwrap! (contract-call? .math-fixed-point div-up spot strike) math-call-err))
             (pow-bs-vol (unwrap! (contract-call? .math-fixed-point div-up 
-            (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
+                            (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
             (vol-term (unwrap! (contract-call? .math-fixed-point mul-up t pow-bs-vol) math-call-err))                       
             (sqrt-t (unwrap! (contract-call? .math-fixed-point pow-down t u50000000) math-call-err))
             (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
+            
             (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
-            (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term spot-term) math-call-err))
+            
+            (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+            (unwrap! (contract-call? .math-fixed-point sub-fixed spot-term ONE_8) math-call-err)) math-call-err))
             (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
             (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
-            (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
-            (weighted (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err))
-            (weight-x (if (> weighted u100000) weighted u100000))
+            (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
+            (weighted (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err))                
+            (weight-y (if (> weighted u100000) weighted u100000))
 
-            (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
+            (weight-x (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-y) math-call-err))
 
             (pool-data {
                 yield-supply: u0,
