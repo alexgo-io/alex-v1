@@ -415,7 +415,7 @@
             ;;(try! (contract-call? .alex-multisig-registry mint-token the-key-token new-supply tx-sender))
 
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
-            (ok true)
+            (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
     )
 )    
