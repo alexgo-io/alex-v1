@@ -142,7 +142,7 @@
     (let 
         (
             (token-x (contract-of collateral))
-            (token-y (contract-of collateral))
+            (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))                        
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))

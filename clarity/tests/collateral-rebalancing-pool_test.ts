@@ -83,13 +83,8 @@ Clarinet.test({
         // Rebalancing occurs based on internal logic.
         result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
         let position:any =result.expectOk().expectTuple();
-<<<<<<< HEAD
             position['balance-x'].expectUint(52825248000);
             position['balance-y'].expectUint(8621517449);
-=======
-            position['balance-x'].expectUint(4717475200);
-            position['balance-y'].expectUint(1045463537);
->>>>>>> 5e3a5f6 (working..)
         
         // Borrower adds liquidity to the pool and mint ayusda and keyusda, using wBTC as collateral
         // If attempt to add more than fixed weight pool has, it will throw an no-liquidity error
@@ -103,7 +98,6 @@ Clarinet.test({
         position['dx'].expectUint(99040322);
         position['dy'].expectUint(122353982);
 
-<<<<<<< HEAD
 
         // Liquidity Added to the pool
         result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
@@ -132,35 +126,22 @@ Clarinet.test({
             position =result.expectOk().expectTuple();
             position['balance-x'].expectUint(57266791292);
             position['balance-y'].expectUint(8651584241);
-=======
-        // // Liquidity Added to the pool
-        // result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
-        //     position =result.expectOk().expectTuple();
-        //     position['balance-x'].expectUint(9434950600);
-        //     position['balance-y'].expectUint(2069294167);
 
-        // // Time machine to maturity
-        // chain.mineEmptyBlockUntil(4381)
+        // Time machine to maturity
+        chain.mineEmptyBlockUntil(4381)
 
-        // // Reduce Liquidity
-        // // Reduce 1% of total yield token. 
-        // result = CRPTest.reducePositionYield(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
-        //     position=result.expectOk().expectTuple();
-        //     position['dx'].expectUint(258137417);
-        //     position['dy'].expectUint(0);
+        // Reduce Liquidity
+        // Reduce 1% of total yield token. 
+        result = CRPTest.reducePositionYield(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
+            position=result.expectOk().expectTuple();
+            position['dx'].expectUint(238195975);
+            position['dy'].expectUint(0);
 
-        // // Manually Reduce 1& of total key token
-        // result = CRPTest.reducePositionKey(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
-        //     position=result.expectOk().expectTuple();
-        //     position['dx'].expectUint(255368272);
-        //     position['dy'].expectUint(0);
-
-        //     // 1 % of each token and collateral has been removed. 
-        //     result = CRPTest.getBalances(deployer, usdaTokenAddress, wBTCTokenAddress, expiry);
-        //     position =result.expectOk().expectTuple();
-        //     position['balance-x'].expectUint(9359844452);
-        //     position['balance-y'].expectUint(1985191962);
->>>>>>> 5e3a5f6 (working..)
+        // Manually Reduce 1& of total key token
+        result = CRPTest.reducePositionKey(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
+            position=result.expectOk().expectTuple();
+            position['dx'].expectUint(235671181);
+            position['dy'].expectUint(0);
 
 
 
