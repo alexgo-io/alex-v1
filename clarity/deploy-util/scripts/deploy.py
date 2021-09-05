@@ -26,6 +26,7 @@ os.mkdir(f'../hex-files/{version_folder}')
 nonce = expected_nonce
 contracts = r'../staged-contracts'
 for file in os.listdir(contracts):
+    print(file)
     clarity_name = file.split('.')[0]
     print(clarity_name)
     res1 = subprocess.check_output(f"stx deploy_contract -x -t ./{contracts}/{file} {clarity_name} 70000 {nonce} $(cat ./deploy-keychain.json | jq -r .keyInfo.privateKey) > ../hex-files/{version_folder}/{clarity_name}.hex", shell=True)
