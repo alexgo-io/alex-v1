@@ -12,7 +12,7 @@
 (define-constant err-token-not-in-oracle (err u7001))
 
 ;; Let's keep oracle-owner to deployer for now.
-(define-data-var oracle-owner principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)
+(define-data-var oracle-owner principal tx-sender)
 
 (define-map prices
   { oracle-src: (string-ascii 32),
