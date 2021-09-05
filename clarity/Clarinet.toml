@@ -19,7 +19,7 @@ depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/pool/collateral-rebalancing-pool.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool"]
+depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool","trait-multisig-vote"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/pool/fixed-weight-pool.clar"
@@ -58,7 +58,7 @@ path = "contracts/pool-token/pool-token-yield-usda-wbtc.clar"
 depends_on = ["trait-sip-010", "trait-pool-token"]
 
 [contracts.stacked-poxl-pool]
-path = "contracts/stacked-poxl-pool.clar"
+path = "contracts/pool/stacked-poxl-pool.clar"
 depends_on = []
 
 [contracts.test-flash-loan-user]
