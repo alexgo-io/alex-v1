@@ -12,7 +12,7 @@
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin 
-    (asserts! (is-eq tx-sender sender) (err err-not-authorized))
+    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
     (match (ft-transfer? ayusda-wbtc amount sender recipient)
       response (begin
         (print memo)
