@@ -73,24 +73,6 @@
             "txid": "0xec225229757bba95c6e6a87fa3050d0f1789070c1e4b06172f9b7286a7320acb"
         },
         {
-            "name": "key-usda-wbtc-4380",
-            "version": "2",
-            "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
-            "txid": "0x{\"error\":\"transaction rejected\",\"reason\":\"ConflictingNonceInMempool\",\"txid\":\"eac24762b1545b8feea622b9d1353666b5000de256f00b1912ed2f8019083dcb\"}"
-        },
-        {
-            "name": "pool-token-usda-4380-usda",
-            "version": "2",
-            "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
-            "txid": "0x{\"error\":\"transaction rejected\",\"reason\":\"ConflictingNonceInMempool\",\"txid\":\"1b545ae04c727d54eb3ade0da1676c5c1f4705e231ffbbe4844c133d77539358\"}"
-        },
-        {
-            "name": "pool-token-alex-usda",
-            "version": "2",
-            "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
-            "txid": "0x{\"error\":\"transaction rejected\",\"reason\":\"ConflictingNonceInMempool\",\"txid\":\"3b73d4a9ca54cde73eee7eff23ae2580c739eb07985fb54e4507d7dcfedf06ca\"}"
-        },
-        {
             "name": "yield-usda-18530",
             "version": "2",
             "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
