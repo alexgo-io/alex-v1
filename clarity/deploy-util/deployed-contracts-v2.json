@@ -73,12 +73,6 @@
             "txid": "0xec225229757bba95c6e6a87fa3050d0f1789070c1e4b06172f9b7286a7320acb"
         },
         {
-            "name": "yield-usda-18530",
-            "version": "2",
-            "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
-            "txid": "0x{\"error\":\"transaction rejected\",\"reason\":\"ConflictingNonceInMempool\",\"txid\":\"2d7d5985f032fcd1a89ade762296884995a558f699f6cce8935eee0ba3c8180f\"}"
-        },
-        {
             "name": "pool-token-usda-59760-usda",
             "version": "2",
             "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
