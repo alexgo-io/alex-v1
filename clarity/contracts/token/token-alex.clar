@@ -3,6 +3,7 @@
 ;; Defines the Alex Governance Token according to the SRC20 Standard
 (define-fungible-token alex)
 
+
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 
