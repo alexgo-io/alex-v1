@@ -73,7 +73,9 @@
     fee-rate-x: uint,
     fee-rate-y: uint,
     weight-x: uint,
-    weight-y: uint  
+    weight-y: uint,
+    token-symbol: (string-ascii 32),
+    collateral-symbol: (string-ascii 32)
   }
 )
 
@@ -148,21 +150,25 @@
     )
 )
 
-(define-public (get-spot (token <ft-trait>) (collateral <ft-trait>))
+(define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let 
         (
-            (token-symbol (unwrap-panic (contract-call? token get-symbol)))
-            (collateral-symbol (unwrap-panic (contract-call? collateral get-symbol)))
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))                        
+            (token-symbol (get token-symbol pool))
+            (collateral-symbol (get collateral-symbol pool))
             (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
             (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
-            
+
             (spot (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
         )
         (ok spot)
     )
 )
 
-(define-public (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+
+(define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
             (token-x (contract-of collateral))
@@ -171,14 +177,14 @@
             (balances (unwrap! (get-balances token collateral expiry) internal-function-call-err))
             (balance-x (get balance-x balances))
             (balance-y (get balance-y balances))            
-            (spot (unwrap-panic (get-spot token collateral)))
+            (spot (unwrap! (get-spot token collateral expiry) internal-function-call-err))
             (balance-x-in-y (unwrap! (contract-call? .math-fixed-point div-down balance-x spot) math-call-err))
         )
         (contract-call? .math-fixed-point add-fixed balance-x-in-y balance-y)
     )
 )
 
-(define-public (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
             (token-x (contract-of collateral))
@@ -195,11 +201,11 @@
     )
 )
 
-(define-public (get-weight-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
+(define-read-only (get-weight-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
     (let 
         (
             ;; determine spot using open oracle
-            (spot (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
+            (spot (unwrap! (get-spot token collateral expiry) get-oracle-price-fail-err))
             (now (* block-height ONE_8))
             ;; TODO: assume 10mins per block - something to be reviewed
             
@@ -247,7 +253,7 @@
 )
 
 ;; get overall balances for the pair
-(define-public (get-balances (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-balances (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
             (token-x (contract-of collateral))
@@ -276,14 +282,46 @@
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
 
             ;; determine strike using open oracle
-            (strike (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
+            ;; create-pool is always executed on initial level
+            (token-symbol (unwrap! (contract-call? token get-symbol) get-symbol-fail-err))
+            (collateral-symbol (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))   
+            (strike (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
             
             ;; TODO: setter / getter of bs-vol / ltv-0
             ;; currently hard-coded at 50%
             (bs-vol u50000000)
             (ltv-0 u80000000)
+            ;;(weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
 
-            (weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
+            (spot strike)
+            (now (* block-height ONE_8))
+            ;; TODO: assume 10mins per block - something to be reviewed
+            (t (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) (* u52560 ONE_8)) math-call-err))
+            ;; TODO: APYs need to be calculated from the prevailing yield token price.
+            ;; TODO: ln(S/K) approximated as (S/K - 1)
+
+            ;; we calculate d1 first
+            (spot-term (unwrap! (contract-call? .math-fixed-point div-up spot strike) math-call-err))
+            (pow-bs-vol (unwrap! (contract-call? .math-fixed-point div-up 
+                            (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
+            (vol-term (unwrap! (contract-call? .math-fixed-point mul-up t pow-bs-vol) math-call-err))                       
+            (sqrt-t (unwrap! (contract-call? .math-fixed-point pow-down t u50000000) math-call-err))
+            (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
+            
+            (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
+            
+            (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+            (unwrap! (contract-call? .math-fixed-point sub-fixed spot-term ONE_8) math-call-err)) math-call-err))
+            (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
+            (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
+            (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
+                
+                ;; make sure weight-x > 0 so it works with weighted-equation
+            (weight-x (unwrap! (max (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err) u1) internal-function-call-err))
+
             (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
 
             (pool-data {
@@ -304,7 +342,9 @@
                 fee-rate-y: u0,
                 ltv-0: ltv-0,
                 weight-x: weight-x,
-                weight-y: weight-y
+                weight-y: weight-y,
+                token-symbol: (unwrap! (contract-call? token get-symbol) get-symbol-fail-err),
+                collateral-symbol: (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err)
             })
         )
 
@@ -330,14 +370,17 @@
 ;; note single-sided liquidity
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
-        (
+        ;; Just for Validation of initial parameters
+        (   
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
-            (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+            (pool-check (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) invalid-pool-err))
+            (yield-supply-check (get yield-supply pool-check))
+            (ltv (if (is-eq yield-supply-check u0) (get ltv-0 pool-check) (unwrap! (get-ltv token collateral expiry) internal-function-call-err)))
         )
         (asserts! (> dx u0) invalid-liquidity-err)
         ;; mint is possible only if ltv < 1
         (asserts! (> ONE_8 ltv) invalid-pool-err)
-        
+        (print ltv)
         (let
             (
                 (token-x (contract-of collateral))
@@ -354,6 +397,7 @@
                 (key-dx (unwrap! (contract-call? .math-fixed-point sub-fixed dx yield-dx) math-call-err))                 
 
                 (add-data (unwrap! (get-token-given-position token collateral expiry dx) internal-function-call-err))
+                ;;(add-data {yield-token : {token : u0, dx-weighted : u0 }, key-token : {token : u0, dx-weighted : u0 }})
                 (add-yield-data (get yield-token add-data))
                 (add-key-data (get key-token add-data))
 
@@ -392,10 +436,6 @@
             (try! (contract-call? the-yield-token mint tx-sender yield-new-supply))
             (try! (contract-call? the-key-token mint tx-sender key-new-supply))
         
-            ;; Registry using mint
-            ;;(try! (contract-call? .alex-multisig-registry mint-token the-yield-token new-supply tx-sender))
-            ;;(try! (contract-call? .alex-multisig-registry mint-token the-key-token new-supply tx-sender))
-
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok true)
         )
@@ -446,8 +486,6 @@
 
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: u0})
-        ;;  (print shares)
-        ;;  (ok {dx: u0, dy: u0})
    )
 )
 
@@ -732,7 +770,7 @@
     )
 )
 
-(define-public (get-y-given-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+(define-read-only (get-y-given-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
     (let 
         (
             (token-x (contract-of collateral))
@@ -748,7 +786,7 @@
     )
 )
 
-(define-public (get-x-given-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
+(define-read-only (get-x-given-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
     (let 
         (
             (token-x (contract-of collateral))
@@ -764,7 +802,7 @@
     )
 )
 
-(define-public (get-x-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
+(define-read-only (get-x-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
     (let 
         (
             (token-x (contract-of collateral))
@@ -781,7 +819,7 @@
 )
 
 ;; single sided liquidity
-(define-public (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+(define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
     (let 
         (
             (now (* block-height ONE_8))
@@ -798,8 +836,10 @@
                     (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
                     (weight-x (get weight-x pool))
                     (weight-y (get weight-y pool))
+                    (yield-supply (get yield-supply pool))
 
-                    (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+                    ;;(ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
+                    (ltv (if (is-eq yield-supply u0) (get ltv-0 pool) (unwrap! (get-ltv token collateral expiry) internal-function-call-err)))
 
                     ;; we split dx to dx-weighted and dy-weighted using on-chain AMM
                     (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-up dx weight-x) math-call-err))
@@ -816,13 +856,6 @@
                     (key-dx-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dx-weighted yield-dx-weighted) math-call-err))
                     (key-dy-weighted (unwrap! (contract-call? .math-fixed-point sub-fixed dy-weighted yield-dy-weighted) math-call-err))
                 )
-
-                ;; (print "Debugging dy-weighted and dy-check mismatch")
-                ;; (print dy-weighted)
-                ;; (print dy-check)
-                ;; (print dx-to-dy)
-                ;;(asserts! (is-eq dy-weighted dy-check) invalid-liquidity-err)
-
                 (ok {yield-token: {token: ltv-dx, dx-weighted: yield-dx-weighted, dy-weighted: yield-dy-weighted}, 
                      key-token: {token: ltv-dx, dx-weighted: key-dx-weighted, dy-weighted: key-dy-weighted}})
             )
@@ -832,7 +865,7 @@
 )
 
 ;; single sided liquidity
-(define-private (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
             (now (* block-height ONE_8))
@@ -877,7 +910,7 @@
     )
 )
 
-(define-public (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
             (now (* block-height ONE_8))
@@ -912,7 +945,7 @@
     )
 )
 
-(define-public (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
             (now (* block-height ONE_8))
