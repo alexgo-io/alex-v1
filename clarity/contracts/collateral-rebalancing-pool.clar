@@ -367,6 +367,15 @@
     )
 )
 
+(define-public (add-to-position-and-switch (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))
+    (let
+        (
+            (minted-yield-token (get yield-token (try! (add-to-position token collateral the-yield-token the-key-token dx))))
+        )
+        (contract-call? .yield-token-pool swap-y-for-x the-yield-token token minted-yield-token)
+    )
+)
+
 ;; note single-sided liquidity
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
@@ -437,7 +446,7 @@
             (try! (contract-call? the-key-token mint tx-sender key-new-supply))
         
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
-            (ok true)
+            (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
     )
 )    
@@ -845,9 +854,6 @@
                     (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-up dx weight-x) math-call-err))
                     (dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-weighted) math-call-err))
                     (dy-weighted (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dx-to-dy) no-liquidity-err))            
-                    
-                    (add-data (unwrap! (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx-weighted dy-weighted) weighted-equation-call-err))
-                    (dy-check (get dy add-data)) ;;must equal dy-weighted (see asserts below)
             
                     (ltv-dx (unwrap! (contract-call? .math-fixed-point mul-down ltv dx) math-call-err))
 

@@ -342,7 +342,8 @@
             (dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dy lambda) math-call-err))
             (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-net-fees) math-call-err))
 
-            (dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
+            ;;(dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
+            (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
             (pool-updated
                 (merge pool

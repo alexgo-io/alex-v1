@@ -48,6 +48,19 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+      addToPositionAndSwitch(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, dX: number) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch", [
+            types.principal(token),
+            types.principal(collateral),
+            types.principal(yieldToken),
+            types.principal(keyToken),
+            types.uint(dX)
+          ], user.address),
+        ]);
+        return block.receipts[0].result;        
+      }
   
       reducePositionYield(user: Account, token: string, collateral: string, yieldToken: string, percent: number) {
         let block = this.chain.mineBlock([
