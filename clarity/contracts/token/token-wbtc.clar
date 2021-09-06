@@ -1,5 +1,4 @@
 (impl-trait .trait-sip-010.sip-010-trait)
-(impl-trait .trait-alex-token.dao-token-trait)
 
 ;; Defines the wBTC according to the SIP-010 Standard
 (define-fungible-token wbtc)
@@ -7,7 +6,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -36,7 +35,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   ;;(if (is-eq tx-sender (contract-call? . get-dao-owner))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -45,38 +44,17 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin 
-    (asserts! (is-eq tx-sender sender) (err err-not-authorized))
+  (begin
+    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
     (match (ft-transfer? wbtc amount sender recipient)
       response (begin
         (print memo)
         (ok response)
       )
       error (err error)
-    )
+    )  
   )
 )
-
-;; ---------------------------------------------------------
-;; wbtc token trait
-;; ---------------------------------------------------------
-
-;; Mint method for wbtc
-(define-public (mint-for-dao (amount uint) (recipient principal))
-  (begin
-    ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? wbtc amount recipient)
-  )
-)
-
-;; Burn method for wbtc
-(define-public (burn-for-dao (amount uint) (sender principal))
-  (begin
-    ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? wbtc amount sender)
-  )
-)
-
 
 ;; Initialize the contract for Testing.
 (begin

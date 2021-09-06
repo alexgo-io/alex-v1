@@ -7,7 +7,7 @@
 ;; implementation of calling this contract in burn/mint is required. 
 
 ;; Errors
-(define-constant authorisation-err (err u1000))
+(define-constant not-authorized-err (err u1000))
 
 ;; Contract addresses
 (define-map contracts
@@ -34,7 +34,7 @@
     (begin
     ;; Discussion Required
     ;; Better to save all the multisig contracts to the map in registry contract.
-      (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) (err authorisation-err))
+      (asserts! (is-eq contract-caller .alex-ytp-multisig-vote) (err not-authorized-err))
 
       (map-set contracts { name: name } { address: address, qualified-name: qualified-name })
       (if (is-some current-contract)
@@ -71,7 +71,7 @@
 ;; Discussion Required -> Need to make another token trait which all token will implement. 
 ;; (define-public (mint-token (token <yield-token-trait>) (amount uint) (recipient principal))
 ;;   (begin
-;;     (asserts! (is-eq (get-contract-can-mint-by-qualified-name contract-caller) true) authorisation-err)
+;;     (asserts! (is-eq (get-contract-can-mint-by-qualified-name contract-caller) true) not-authorized-err)
 ;;     (contract-call? token mint-from-registry amount recipient)
 ;;   )
 ;; )
@@ -79,7 +79,7 @@
 
 ;; (define-public (burn-token (token <yield-token-trait>) (amount uint) (recipient principal))
 ;;   (begin
-;;     (asserts! (is-eq (get-contract-can-burn-by-qualified-name contract-caller) true) authorisation-err)
+;;     (asserts! (is-eq (get-contract-can-burn-by-qualified-name contract-caller) true) not-authorized-err)
 ;;     (contract-call? token burn-from-registry amount recipient)
 ;;   )
 ;; )

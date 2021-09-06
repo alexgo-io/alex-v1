@@ -7,12 +7,12 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin 
-    (asserts! (is-eq tx-sender sender) (err err-not-authorized))
+    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
     (match (ft-transfer? ayusda-usda amount sender recipient)
       response (begin
         (print memo)
@@ -72,7 +72,7 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err ERR-NOT-AUTHORIZED))
+    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err not-authorized-err))
     (ft-mint? ayusda-usda amount recipient)
   )
 )
@@ -86,7 +86,7 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err ERR-NOT-AUTHORIZED))
+    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err not-authorized-err))
     (ft-burn? ayusda-usda amount recipient)
   )
 )
