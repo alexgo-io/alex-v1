@@ -1,6 +1,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; yield-token-pool
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -24,10 +25,9 @@
 (define-constant get-expiry-fail-err (err u2013))
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
-(define-constant authorisation-err (err u1000))
+(define-constant not-authorized-err (err u1000))
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant get-symbol-fail-err (err u6000))
-(define-constant err-not-authorized (err u1000))
 
 ;; TODO: need to be defined properly
 (define-constant oracle-src "nothing")
@@ -167,7 +167,7 @@
     )
 )
 
-(define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (let
         (
             (aytoken (contract-of the-aytoken))            
@@ -180,7 +180,7 @@
                 balance-virtual: u0,
                 fee-balance-aytoken: u0,
                 fee-balance-token: u0,
-                fee-to-address: .alex-ytp-multisig-vote,
+                fee-to-address: (contract-of multisig-vote),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-aytoken: u0,
                 fee-rate-token: u0,
@@ -395,10 +395,9 @@
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-            (fee-collector (get fee-to-address pool))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
-        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true)
     
@@ -410,10 +409,9 @@
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-            (fee-collector (get fee-to-address pool))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
-        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
@@ -457,6 +455,8 @@
             (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
             (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))            
         )
+        
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (and (> fee-x u0) 
             (and 
@@ -488,7 +488,7 @@
                     )
                 )
             )
-        )         
+        )
 
         (map-set pools-data-map
         { aytoken: aytoken}

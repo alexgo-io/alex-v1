@@ -1,5 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; fixed-weight-pool
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
@@ -7,7 +8,7 @@
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant authorisation-err (err u1000))
+(define-constant not-authorized-err (err u1000))
 (define-constant invalid-pool-err (err u2001))
 (define-constant no-liquidity-err (err u2002))
 (define-constant invalid-liquidity-err (err u2003))
@@ -110,7 +111,7 @@
   )
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -122,7 +123,7 @@
                 balance-y: u0,
                 fee-balance-x: u0,
                 fee-balance-y: u0,
-                fee-to-address: (contract-of the-pool-token),
+                fee-to-address: (contract-of multisig-vote),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-x: u0,
                 fee-rate-y: u0,
@@ -331,6 +332,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
@@ -349,30 +351,13 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
             }
             (merge pool { fee-rate-y: fee-rate-y })
-        )
-        (ok true)     
-    )
-)
-
-(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (address principal))
-    (let 
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-        )
-
-        (map-set pools-data-map 
-            { 
-                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
-            }
-            (merge pool { fee-to-address: address })
         )
         (ok true)     
     )
@@ -396,7 +381,7 @@
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))              
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-        )
+        )        
         (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
     )
 )
@@ -435,6 +420,7 @@
                 )
             )
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (and (> fee-y u0) 
             (and 

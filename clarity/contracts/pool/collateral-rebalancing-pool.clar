@@ -1,5 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; collateral-rebalancing-pool
 ;; <add a description here>
@@ -29,7 +30,7 @@
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant expiry-err (err u2017))
 (define-constant get-balance-fail-err (err u6001))
-(define-constant err-not-authorized (err u1000))
+(define-constant not-authorized-err (err u1000))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -240,9 +241,9 @@
             (ltv (unwrap! (get-ltv token collateral expiry) internal-function-call-err))
         )
 
-        ;; if current ltv > conversion-ltv, then pool converts to 100% token (i.e. weight-x = 0)
-        (if (> ltv conversion-ltv)
-            (ok u1)                    
+        ;; if current ltv > conversion-ltv, then pool converts to (almost) 100% token (i.e. weight-x = 0)
+        (if (or (> ltv conversion-ltv) (is-eq now expiry))
+            (ok u99900000)                    
             (let
                 (
                     (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
@@ -258,7 +259,7 @@
                                 (unwrap! (contract-call? .math-fixed-point mul-down ma-comp weight-t) math-call-err)) math-call-err))
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
-                (max weighted u1)
+                (max weighted u100000)
             )     
         )
     )
@@ -283,7 +284,7 @@
 )
 
 ;; single sided liquidity
-(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
+(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -309,7 +310,7 @@
                 key-bal-y: u0,
                 fee-balance-x: u0,
                 fee-balance-y: u0,
-                fee-to-address: .alex-crp-multisig-vote, ;; multisig is the fee collector
+                fee-to-address: (contract-of multisig-vote),
                 yield-token: (contract-of the-yield-token),
                 key-token: (contract-of the-key-token),
                 strike: strike,
@@ -415,7 +416,7 @@
             ;;(try! (contract-call? .alex-multisig-registry mint-token the-key-token new-supply tx-sender))
 
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
-            (ok true)
+            (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
     )
 )    
@@ -451,7 +452,7 @@
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         ;; burn supported only at maturity
-        (asserts! (>= now expiry) expiry-err)
+        (asserts! (> now expiry) expiry-err)
         
         ;; if shares > dy, then transfer the shortfall from reserve.
         ;; TODO: this goes through swapping, so the amount received is actually slightly less than the shortfall
@@ -517,7 +518,7 @@
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         ;; burn supported only at maturity
-        (asserts! (>= now expiry) expiry-err)
+        (asserts! (> now expiry) expiry-err)
         
         ;; all dy converted into dx, so zero dy to transfer.
         (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
@@ -675,9 +676,8 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
-            (fee-collector (get fee-to-address pool))
         )
-        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
@@ -695,10 +695,8 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
-            (fee-collector (get fee-to-address pool))
         )
-
-        (asserts! (is-eq contract-caller fee-collector) err-not-authorized)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
@@ -747,6 +745,8 @@
             (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
             (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))            
         )
+        
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (and (> fee-x u0) 
             (and 
@@ -932,7 +932,7 @@
         (
             (now (* block-height ONE_8))
         )
-        (if (>= now expiry)
+        (if (> now expiry)
             (let 
                 (
                     (token-x (contract-of collateral))
@@ -967,7 +967,7 @@
         (
             (now (* block-height ONE_8))
         )
-        (if (>= now expiry)
+        (if (> now expiry)
             (let 
                 (
                     (token-x (contract-of collateral))

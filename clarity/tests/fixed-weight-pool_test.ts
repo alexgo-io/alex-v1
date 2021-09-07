@@ -82,43 +82,43 @@ Clarinet.test({
 });
 
 
-Clarinet.test({
-    name: "FWP : Setting a Fee to principal",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let wallet_1 =accounts.get('wallet_1')!;
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+// Clarinet.test({
+//     name: "FWP : Setting a Fee to principal",
+//     async fn(chain: Chain, accounts: Map<string, Account>) {
+//         let deployer = accounts.get("deployer")!;
+//         let wallet_1 =accounts.get('wallet_1')!;
+//         let FWPTest = new FWPTestAgent1(chain, deployer);
         
-        let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000000000, 10000000000); // Internally 1M multiplied
-        result.expectOk().expectBool(true);
+//         let result = FWPTest.createPool(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, gAlexUsdaPoolAddress, 50000000000, 10000000000); // Internally 1M multiplied
+//         result.expectOk().expectBool(true);
 
-        // Fees will be transferred to wallet_1
-        result = FWPTest.setFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, wallet_1.address);
-        result.expectOk().expectBool(true);
+//         // Fees will be transferred to wallet_1
+//         result = FWPTest.setFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, wallet_1.address);
+//         result.expectOk().expectBool(true);
         
-       // Check whether it is correctly settled
-        result = FWPTest.getFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
-        result.expectOk().expectPrincipal(wallet_1.address);
+//        // Check whether it is correctly settled
+//         result = FWPTest.getFeetoAddress(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
+//         result.expectOk().expectPrincipal(wallet_1.address);
 
-        result = FWPTest.setFeeRateX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
-        result.expectOk().expectBool(true);
+//         result = FWPTest.setFeeRateX(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
+//         result.expectOk().expectBool(true);
 
-        result = FWPTest.setFeeRateY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
-        result.expectOk().expectBool(true);
+//         result = FWPTest.setFeeRateY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 5000000);
+//         result.expectOk().expectBool(true);
 
-        result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //2
-        let position:any =result.expectOk().expectTuple();
-            position['dx'].expectUint(190000000);
-            position['dy'].expectUint(37856400);
+//         result = FWPTest.swapXForY(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY, 200000000); //2
+//         let position:any =result.expectOk().expectTuple();
+//             position['dx'].expectUint(190000000);
+//             position['dy'].expectUint(37856400);
 
 
-        // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
-        result = FWPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
-        position =result.expectOk().expectTuple();
-        position['fee-x'].expectUint(10000000); // 5% of 200
-        position['fee-y'].expectUint(0);
-    },
-});
+//         // // Collect Fees - TO BE IMPLEMENTED AFTER FEE COLLECTOR IMPLEMENTATION
+//         result = FWPTest.collectFees(deployer, gAlexTokenAddress, usdaTokenAddress, testWeightX, testWeightY);
+//         position =result.expectOk().expectTuple();
+//         position['fee-x'].expectUint(10000000); // 5% of 200
+//         position['fee-y'].expectUint(0);
+//     },
+// });
 
 
 Clarinet.test({

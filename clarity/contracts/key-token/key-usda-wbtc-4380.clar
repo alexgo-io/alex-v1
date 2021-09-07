@@ -13,7 +13,7 @@
 (define-data-var underlying-collateral principal .token-wbtc)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -51,7 +51,7 @@
   ;; TODO : Authorization Check
   ;;(if (is-eq tx-sender (contract-call? .OWNER))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -76,7 +76,7 @@
 ;; Mint method for key-usda-wbtc-4380
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err not-authorized-err))
     (ft-mint? key-usda-wbtc-4380 amount recipient)
   )
 )
@@ -84,7 +84,7 @@
 ;; Burn method for key-usda-wbtc-4380
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err not-authorized-err))
     (ft-burn? key-usda-wbtc-4380 amount sender)
   )
 )

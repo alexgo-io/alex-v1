@@ -6,7 +6,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -35,7 +35,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   ;;(if (is-eq tx-sender (contract-call? . get-dao-owner))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -55,8 +55,14 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? wbtc amount recipient)
+    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
+    (match (ft-transfer? wbtc amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
+    )  
   )
 )
 
@@ -67,7 +73,6 @@
     (ft-burn? wbtc amount sender)
   )
 )
-
 
 ;; Initialize the contract for Testing.
 (begin
