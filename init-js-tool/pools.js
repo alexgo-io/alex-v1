@@ -39,7 +39,7 @@ const createFWP = async () => {
         console.log(error);
     }
 }
-const createCRP = async (yiedToken, keyToken) => {
+const createCRP = async (yieldToken, keyToken) => {
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -50,7 +50,7 @@ const createCRP = async (yiedToken, keyToken) => {
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, 'token-usda'),
             // contractPrincipalCV(process.env.ACCOUNT_ADDRESS, 'yield-usda-59760'),
             // contractPrincipalCV(process.env.ACCOUNT_ADDRESS, 'key-usda-wbtc-59760'),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
             uintCV(10*1e8),
         ],
@@ -68,14 +68,14 @@ const createCRP = async (yiedToken, keyToken) => {
         console.log(error);
     }
 }
-const createYTP = async (yiedToken, token, poolToken) => {
+const createYTP = async (yieldToken, token, poolToken) => {
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'create-pool',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
             uintCV(10*1e8),
