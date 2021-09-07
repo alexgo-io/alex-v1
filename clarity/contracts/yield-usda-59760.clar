@@ -91,6 +91,6 @@
 ;; Initialize the contract for Testing.
 (begin
   ;; TODO: Erase on testnet or mainnet
-  ;;(try! (ft-mint? yield-usda-59760 u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-  (try! (ft-mint? yield-usda-59760 u1000000000000 'ST20ATRN26N9P05V2F1RHFRV24X8C8M3W54E427B2)) ;; Wallet 2
+  (try! (ft-mint? yield-usda-59760 u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
+  ;;(try! (ft-mint? yield-usda-59760 u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; Wallet 2
 )
