@@ -1,4 +1,4 @@
-(impl-trait .trait-pool-token.pool-token-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
 
 ;; Defines the wBTC according to the SIP-010 Standard
 (define-fungible-token wbtc)
@@ -44,16 +44,6 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? wbtc amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
-    )
-    error (err error)
-  )
-)
-
-(define-public (mint (recipient principal) (amount uint))
   (begin
     (asserts! (is-eq tx-sender sender) (err not-authorized-err))
     (match (ft-transfer? wbtc amount sender recipient)
@@ -63,14 +53,6 @@
       )
       error (err error)
     )  
-  )
-)
-
-;; Burn method for wbtc
-(define-public (burn (sender principal) (amount uint))
-  (begin
-    ;;(asserts! (is-eq contract-caller .) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? wbtc amount sender)
   )
 )
 
