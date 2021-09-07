@@ -1,6 +1,8 @@
-(impl-trait .trait-pool-token.pool-token-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
 
+;; Defines the Alex Governance Token according to the SRC20 Standard
 (define-fungible-token alex)
+
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -25,7 +27,7 @@
 )
 
 (define-read-only (get-name)
-  (ok "ALEX")
+  (ok "Alex Token")
 )
 
 (define-read-only (get-symbol)
@@ -52,26 +54,15 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? alex amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
-    )
-    error (err error)
-  )
-)
-
-(define-public (mint (recipient principal) (amount uint))
   (begin
-    ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? alex amount recipient)
-  )
-)
-
-(define-public (burn (sender principal) (amount uint))
-  (begin
-    ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? alex amount sender)
+    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
+    (match (ft-transfer? alex amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
+    )  
   )
 )
 

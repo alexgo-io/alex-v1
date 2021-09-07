@@ -1,4 +1,7 @@
-(impl-trait .trait-pool-token.pool-token-trait)
+;;;;;;;;;;;;;;;;;;;;; SIP 010 ;;;;;;;;;;;;;;;;;;;;;;
+;; testnet: (impl-trait 'STR8P3RD1EHA8AA37ERSSSZSWKS9T2GYQFGXNA4C.sip-010-trait-ft-standard.sip-010-trait)
+;; (impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
 
 ;; Defines the USDA Stablecoin according to the SIP-010 Standard
 (define-fungible-token usda)
@@ -44,16 +47,6 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? usda amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
-    )
-    error (err error)
-  )
-)
-
-(define-public (mint (recipient principal) (amount uint))
   (begin
     (asserts! (is-eq tx-sender sender) (err not-authorized-err))
     (match (ft-transfer? usda amount sender recipient)
@@ -63,13 +56,6 @@
       )
       error (err error)
     )  
-  )
-)
-
-(define-public (burn (sender principal) (amount uint))
-  (begin
-    ;;(asserts! (is-eq contract-caller .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? usda amount sender)
   )
 )
 
