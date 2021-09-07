@@ -32,7 +32,7 @@ import {
       ], this.deployer.address);
     }
     
-    createPool(user: Account, tokenX: string, tokenY: string, weightX0 : number, weightX1: number,expiry: number, pooltoken: string, dX: number, dY: number) {
+    createPool(user: Account, tokenX: string, tokenY: string, weightX0 : number, weightX1: number,expiry: number, pooltoken: string, multiSig: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "create-pool", [
           types.principal(tokenX),
@@ -41,6 +41,7 @@ import {
           types.uint(weightX1),
           types.uint(expiry),
           types.principal(pooltoken),
+          types.principal(multiSig),
           types.uint(dX),
           types.uint(dY),
         ], user.address),
@@ -108,18 +109,6 @@ import {
           types.principal(tokenY),
           types.uint(expiry),
           types.uint(dX) 
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-  
-    setFeetoAddress(user: Account, tokenX: string, tokenY: string, expiry: number, address: string) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "set-fee-to-address", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-          types.principal(address) 
         ], user.address),
       ]);
       return block.receipts[0].result;
