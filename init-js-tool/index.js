@@ -10,6 +10,8 @@ const {
 } = require('@stacks/transactions');
 const { StacksRegtest } = require('@stacks/network');
 const { generateWallet } = require('@stacks/wallet-sdk');
+const network = new StacksRegtest();
+//Use CoinGeckoClient to fetch current prices of btc & usdc
 const initCoinPrice = async () => {
   const btc = await CoinGeckoClient.coins.fetch('bitcoin', {
     vs_currency: 'usd',
@@ -25,7 +27,7 @@ const initCoinPrice = async () => {
   const btcPrice = btc.data.market_data.current_price.usd * 1e8;
   return { usdc: usdcPrice, btc: btcPrice };
 };
-const network = new StacksRegtest();
+//Call open-oracle to set price
 const setOpenOracle = async (symbol, src, price) => {
   console.log('Updating coin market price...', symbol, src, price);
   
@@ -61,7 +63,8 @@ const setOpenOracle = async (symbol, src, price) => {
 };
 async function run(){
     const {usdc, btc} = await initCoinPrice()
-    // await setOpenOracle('WBTC','CoinGecko', btc);
+    //Need to call it one by one, or you'll receive 'ConflictingNonceInMempool' Error
+    await setOpenOracle('WBTC','CoinGecko', btc);
     // await setOpenOracle('USDA','CoinGecko', usdc);
 }
 run();
