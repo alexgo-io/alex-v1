@@ -67,10 +67,10 @@
             "txid": "0xa2c8db53b2fd8ffcae97f4062099539c0ca201c19dfa3312f9e6045d1208e581"
         },
         {
-            "name": "token-alex",
+            "name": "token-wbtc",
             "version": "2",
             "deployer": "ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY",
-            "txid": "0xec225229757bba95c6e6a87fa3050d0f1789070c1e4b06172f9b7286a7320acb"
+            "txid": "0xa3968dc906ea2ac0ce0b61afa4ebed809bd92d8abf711c785763d770244defab"
         },
         {
             "name": "pool-token-usda-59760-usda",

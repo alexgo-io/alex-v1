@@ -41,8 +41,8 @@ depends_on = ["math-log-exp"]
 path = "contracts/math-log-exp.clar"
 depends_on = []
 
-[contracts.multisig-yield-usda-wbtc]
-path = "contracts/multisig-yield-usda-wbtc.clar"
+[contracts.multisig-yield-usda-4380-wbtc]
+path = "contracts/multisig-yield-usda-4380-wbtc.clar"
 depends_on = ["trait-multisig-vote", "pool-token-yield-usda-4380-usda", "yield-token-pool"]
 
 [contracts.open-oracle]
