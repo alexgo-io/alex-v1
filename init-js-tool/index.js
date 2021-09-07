@@ -59,7 +59,6 @@ const setOpenOracle = async (symbol, src, price) => {
   } catch (error) {
       console.log(error);
   }
-  
 };
 async function run(){
     const {usdc, btc} = await initCoinPrice()
