@@ -1,4 +1,3 @@
-(impl-trait .trait-sip-010.sip-010-trait)
 (impl-trait .trait-pool-token.pool-token-trait)
 
 (define-fungible-token alex-usda)
