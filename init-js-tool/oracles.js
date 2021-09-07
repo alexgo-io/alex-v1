@@ -7,13 +7,12 @@ const {
   uintCV,
   broadcastTransaction
 } = require('@stacks/transactions');
+
+
 const {
-  StacksRegtest
-} = require('@stacks/network');
-const {
-  getWallet
-} = require('./wallet').default;
-const network = new StacksRegtest();
+  getPK, network
+} = require('./wallet');
+
 //Use CoinGeckoClient to fetch current prices of btc & usdc
 const initCoinPrice = async () => {
   console.log('Updating coin market price...');
@@ -37,8 +36,7 @@ const initCoinPrice = async () => {
 //Call open-oracle to set price
 const setOpenOracle = async (symbol, src, price) => {
   console.log('Setting oracle...', symbol, src, price);
-  const wallet = await getWallet();
-  const privateKey = wallet.accounts[0].stxPrivateKey
+  const privateKey = await getPK();
 
   const txOptions = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
