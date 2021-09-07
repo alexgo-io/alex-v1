@@ -387,12 +387,15 @@
             (balance-y (get balance-y pool))
             (yield-supply (get yield-supply pool))   
             (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap! (contract-call? the-yield-token get-balance tx-sender) get-balance-fail-err) percent) math-call-err))
-            (pool-value-unfloored (unwrap! (get-pool-value-in-token token collateral expiry) internal-function-call-err))
+            (pool-value-unfloored (try! (get-pool-value-in-token token collateral expiry)))
             (pool-value-in-token (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
             (shares-to-pool (unwrap! (contract-call? .math-fixed-point div-down shares pool-value-in-token) math-call-err))
             (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-down balance-x shares-to-pool) math-call-err))
             (dy-weighted (unwrap! (contract-call? .math-fixed-point mul-down balance-y shares-to-pool) math-call-err))
 
+            ;; TODO: this will result in a small shortfall due to tx cost and slippage
+            ;; TODO: need to swap this out of vault not tx-sender
+            ;; But then when expiry == now, (almost) 100% weight goes to dy already, so do we need this?
             (dx-to-dy (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-weighted) no-liquidity-err)))
             (dy (unwrap! (contract-call? .math-fixed-point add-fixed dy-weighted dx-to-dy) math-call-err))
             (pool-updated (merge pool {
@@ -419,8 +422,6 @@
    )
 )
 
-;; note single-sided liquidity
-;; TODO: currently the position returned is not floored
 (define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
     (let
         (
@@ -436,9 +437,6 @@
             (dx-weighted (get dx reduce-data))
             (dy-weighted (get dy reduce-data))
 
-            ;; TODO: a more efficient way to convert?
-            (dy-to-dx (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y token collateral u50000000 u50000000 dy-weighted) no-liquidity-err)))
-            (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) math-call-err))
             (pool-updated (merge pool {
                 key-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed key-supply shares) math-call-err),
                 balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed balance-x dx-weighted) math-call-err),
@@ -452,12 +450,13 @@
         ;; burn supported only at maturity
         (asserts! (> now expiry) expiry-err)
         
-        (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) transfer-x-failed-err)
+        (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) transfer-y-failed-err)
         
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-key-token burn tx-sender shares))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
-        (ok {dx: dx, dy: u0})
+        (ok {dx: dx-weighted, dy: dy-weighted})
    )
 )
 
