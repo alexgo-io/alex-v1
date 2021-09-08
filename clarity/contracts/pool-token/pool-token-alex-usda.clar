@@ -8,7 +8,6 @@
 ;; errors
 (define-constant not-authorized-err u1000)
 
-
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (match (ft-transfer? pool-token-alex-usda amount sender recipient)
     response (begin

@@ -9,7 +9,6 @@
 ;; errors
 (define-constant err-not-authorized u1000)
 
-
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (match (ft-transfer? yield-usda-4380-usda amount sender recipient)
     response (begin
@@ -65,19 +64,11 @@
 ;; can only be used by arkadiko swap main contract
 (define-public (mint (recipient principal) (amount uint))
   (begin
-<<<<<<< HEAD
     (print "alex-token-swap.mint")
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
     ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
-=======
-    (print "usda-token-swap.mint")
-    (print contract-caller)
-    (print amount)
-    ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err ERR-NOT-AUTHORIZED))
->>>>>>> origin/feature/main/sidney2
     (ft-mint? yield-usda-4380-usda amount recipient)
   )
 )
@@ -87,19 +78,11 @@
 ;; can only be used by arkadiko swap main contract
 (define-public (burn (recipient principal) (amount uint))
   (begin
-<<<<<<< HEAD
     (print "alex-token-swap.burn")
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
     ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
-=======
-    (print "usda-token-swap.burn")
-    (print contract-caller)
-    (print amount)
-    ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err ERR-NOT-AUTHORIZED))
->>>>>>> origin/feature/main/sidney2
     (ft-burn? yield-usda-4380-usda amount recipient)
   )
 )
