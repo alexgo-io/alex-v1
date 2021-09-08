@@ -304,10 +304,6 @@
             (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
             (strike (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
             
-            ;; TODO: setter / getter of bs-vol / ltv-0
-            ;; currently hard-coded at 50%
-            (bs-vol u50000000)
-            (ltv-0 u80000000)
             ;;(weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
 
             (now (* block-height ONE_8))            
@@ -325,7 +321,8 @@
             (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
             (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
             (complement (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 erf-term) math-call-err))
-            (weight-x (unwrap! (max (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err) u1) internal-function-call-err))
+            (weighted (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err))
+            (weight-x (if (> weighted u100000) weighted u100000))
 
             (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
 
