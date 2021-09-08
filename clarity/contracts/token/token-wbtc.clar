@@ -44,15 +44,12 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
-    (match (ft-transfer? wbtc amount sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )  
+  (match (ft-transfer? wbtc amount sender recipient)
+    response (begin
+      (print memo)
+      (ok response)
+    )
+    error (err error)
   )
 )
 

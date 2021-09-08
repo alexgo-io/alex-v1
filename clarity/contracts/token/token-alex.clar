@@ -3,7 +3,6 @@
 ;; Defines the Alex Governance Token according to the SRC20 Standard
 (define-fungible-token alex)
 
-
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 
@@ -54,6 +53,29 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (match (ft-transfer? galex amount sender recipient)
+    response (begin
+      (print memo)
+      (ok response)
+    )
+    error (err error)
+  )
+)
+
+;; ---------------------------------------------------------
+;; alex token trait
+;; ---------------------------------------------------------
+
+;; Mint method for glaex
+(define-public (mint-for-dao (amount uint) (recipient principal))
+  (begin
+    ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
+    (ft-mint? galex amount recipient)
+  )
+)
+
+;; Burn method for DAO
+(define-public (burn-for-dao (amount uint) (sender principal))
   (begin
     (asserts! (is-eq tx-sender sender) (err not-authorized-err))
     (match (ft-transfer? alex amount sender recipient)
