@@ -24,7 +24,7 @@
             (collateral-amount (unwrap! (contract-call? .math-fixed-point add-fixed swapped-margin (var-get borrow-in-collateral)) math-call-err))
             
             ;; mint yield-token and key-token using new-dy
-            (minted (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .token-wbtc .yield-usda-4380 .key-usda-wbtc-4380 collateral-amount)))
+            (minted (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .token-wbtc .yield-usda-4380 .key-usda-4380-wbtc collateral-amount)))
             (minted-yield-token (get yield-token minted))
             ;; swap minted yield-token for token
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x .yield-usda-4380 .token-usda minted-yield-token))))

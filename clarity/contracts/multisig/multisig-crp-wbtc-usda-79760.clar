@@ -3,7 +3,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; This CRP MultiSig is for 
-;; - CRP that mines yield-usda-4380 and key-usda-4380-wbtc
+;; - CRP that mines yield-wbtc-79760 and key-wbtc-79760-usda
 ;; - Q : On the future, I think helper function which can manage different expiry should be implemented. Any idea on it ? 
 
 ;; Errors
@@ -103,7 +103,7 @@
 ;; To check which tokens are accepted as votes,
 ;; Only relevant Yield Token and Key Token can be regarded as vote. 
 (define-read-only (is-token-accepted (vote-token <yield-token-trait>))
-    (or (is-eq (contract-of vote-token) .yield-usda-4380) (is-eq (contract-of vote-token) .key-usda-4380-wbtc))
+    (or (is-eq (contract-of vote-token) .yield-wbtc-79760) (is-eq (contract-of vote-token) .key-wbtc-79760-usda))
 )
 
 
@@ -119,11 +119,11 @@
   )
 
   (let (
-    (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda-4380 get-balance tx-sender)))
-    (proposer-key-balance (unwrap-panic (contract-call? .key-usda-4380-wbtc get-balance tx-sender)))
+    (proposer-yield-balance (unwrap-panic (contract-call? .yield-wbtc-79760 get-balance tx-sender)))
+    (proposer-key-balance (unwrap-panic (contract-call? .key-wbtc-79760-usda get-balance tx-sender)))
     ;;total supply is now floating point
-    (total-yield-supply (* (unwrap-panic (contract-call? .yield-usda-4380 get-total-supply)) ONE_8))
-    (total-key-supply (* (unwrap-panic (contract-call? .key-usda-4380-wbtc get-total-supply)) ONE_8))
+    (total-yield-supply (* (unwrap-panic (contract-call? .yield-wbtc-79760 get-total-supply)) ONE_8))
+    (total-key-supply (* (unwrap-panic (contract-call? .key-wbtc-79760-usda get-total-supply)) ONE_8))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -223,8 +223,8 @@
 (define-public (end-proposal (proposal-id uint) (token <ft-trait>) (collateral <ft-trait>) (yield-token <yield-token-trait>) (key-token <yield-token-trait>))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-yield-supply (unwrap-panic (contract-call? .yield-usda-4380 get-total-supply)))
-        (total-key-supply (unwrap-panic (contract-call? .key-usda-4380-wbtc get-total-supply)))
+        (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-79760 get-total-supply)))
+        (total-key-supply (unwrap-panic (contract-call? .key-wbtc-79760-usda get-total-supply)))
         (total-yield-key (+ total-yield-supply total-key-supply))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-yield-key threshold-percent)))
         (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))

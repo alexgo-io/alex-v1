@@ -21,11 +21,11 @@
 )
 
 (define-read-only (get-name)
-  (ok "YIELD-USDA-4380-WBTC")
+  (ok "yield-usda-4380-wbtc")
 )
 
 (define-read-only (get-symbol)
-  (ok "YIELD-USDA-4380-WBTC")
+  (ok "yield-usda-4380-wbtc")
 )
 
 (define-read-only (get-decimals)
