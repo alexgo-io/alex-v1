@@ -158,6 +158,7 @@
     )
 )
 
+
 (define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
@@ -272,8 +273,41 @@
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
 
             ;; determine strike using open oracle
-            ;; currently support at-the-money only
-            (strike (unwrap! (get-spot token collateral) get-oracle-price-fail-err))
+            ;; create-pool is always executed on initial level
+            ;;(strike (unwrap! (get-spot token collateral expiry) get-oracle-price-fail-err))
+            (token-symbol (unwrap! (contract-call? token get-symbol) get-symbol-fail-err))
+            (collateral-symbol (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
+            (strike (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))            
+            
+            ;;(weight-x (unwrap! (get-weight-x token collateral expiry strike bs-vol) get-weight-fail-err))
+
+            (spot strike)
+            (now (* block-height ONE_8))
+            ;; TODO: assume 10mins per block - something to be reviewed
+            (t (unwrap! (contract-call? .math-fixed-point div-down 
+                (unwrap! (contract-call? .math-fixed-point sub-fixed expiry now) math-call-err) (* u52560 ONE_8)) math-call-err))
+            ;; TODO: APYs need to be calculated from the prevailing yield token price.
+            ;; TODO: ln(S/K) approximated as (S/K - 1)
+
+            ;; we calculate d1 first
+            (spot-term (unwrap! (contract-call? .math-fixed-point div-up spot strike) math-call-err))
+            (pow-bs-vol (unwrap! (contract-call? .math-fixed-point div-up 
+                            (unwrap! (contract-call? .math-fixed-point pow-down bs-vol u200000000) math-call-err) u200000000) math-call-err))
+            (vol-term (unwrap! (contract-call? .math-fixed-point mul-up t pow-bs-vol) math-call-err))                       
+            (sqrt-t (unwrap! (contract-call? .math-fixed-point pow-down t u50000000) math-call-err))
+            (sqrt-2 (unwrap! (contract-call? .math-fixed-point pow-down u200000000 u50000000) math-call-err))
+            
+            (denominator (unwrap! (contract-call? .math-fixed-point mul-down bs-vol sqrt-t) math-call-err))
+            
+            (numerator (unwrap! (contract-call? .math-fixed-point add-fixed vol-term 
+            (unwrap! (contract-call? .math-fixed-point sub-fixed spot-term ONE_8) math-call-err)) math-call-err))
+            (d1 (unwrap! (contract-call? .math-fixed-point div-up numerator denominator) math-call-err))
+            (erf-term (unwrap! (erf (unwrap! (contract-call? .math-fixed-point div-up d1 sqrt-2) math-call-err)) math-call-err))
+            (complement (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 erf-term) math-call-err))
+            (weighted (unwrap! (contract-call? .math-fixed-point div-up complement u200000000) math-call-err))                
+            (weight-x (if (> weighted u100000) weighted u100000))
 
             (weight-y (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-x) math-call-err))
 
@@ -419,7 +453,28 @@
         ;; burn supported only at maturity
         (asserts! (> now expiry) expiry-err)
         
-        (unwrap! (contract-call? collateral transfer dy .alex-vault tx-sender none) transfer-x-failed-err)
+        ;; if shares > dy, then transfer the shortfall from reserve.
+        ;; TODO: this goes through swapping, so the amount received is actually slightly less than the shortfall
+        (and (< dy shares) 
+            (let
+                (
+                    (amount (unwrap! (contract-call? .math-fixed-point sub-fixed shares dy) math-call-err))                    
+                )                
+                (if (is-eq token-y .token-usda)
+                    (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                    (let
+                        (
+                            (amount-to-swap (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
+                        )
+                        (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                        (unwrap! (contract-call? token transfer (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap))) (as-contract tx-sender) .alex-vault none) transfer-y-failed-err)
+                    )
+                )                
+            )
+        )       
+        
+        ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
+        (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) transfer-y-failed-err)
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-yield-token burn tx-sender shares))
@@ -655,11 +710,44 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))            
         )
         (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
-        
-        (and (> fee-x u0) (unwrap! (contract-call? token transfer fee-x .alex-vault address none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? collateral transfer fee-y .alex-vault address none) transfer-y-failed-err))
+        (and (> fee-x u0) 
+            (and 
+                ;; first transfer fee-x to tx-sender
+                (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; send fee-x to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-x .token-usda) 
+                            fee-x 
+                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x)))
+                        )
+                    )
+                )
+            )
+        )
+
+        (and (> fee-y u0) 
+            (and 
+                ;; first transfer fee-y to tx-sender
+                (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; send fee-y to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-y .token-usda) 
+                            fee-y 
+                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y)))
+                        )
+                    )
+                )
+            )
+        )          
 
         (map-set pools-data-map
             { token-x: token-x, token-y: token-y, expiry: expiry}

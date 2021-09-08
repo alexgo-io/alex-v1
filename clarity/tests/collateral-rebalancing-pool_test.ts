@@ -24,7 +24,7 @@ import {
  const wBTCTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
  const usdaTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
  const ayusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-18530"
- const ayUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-usda-ayusda"
+ const ayUsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-yield-usda-4380-usda"
  const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-4380"
  const keyUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-wbtc-4380"
  const yieldUsda4380UsdaPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-yield-usda-4380-usda"
@@ -126,6 +126,22 @@ Clarinet.test({
             position =result.expectOk().expectTuple();
             position['balance-x'].expectUint(57266791292);
             position['balance-y'].expectUint(8651584241);
+
+        // Time machine to maturity
+        chain.mineEmptyBlockUntil(4381)
+
+        // Reduce Liquidity
+        // Reduce 1% of total yield token. 
+        result = CRPTest.reducePositionYield(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
+            position=result.expectOk().expectTuple();
+            position['dx'].expectUint(238195975);
+            position['dy'].expectUint(0);
+
+        // Manually Reduce 1& of total key token
+        result = CRPTest.reducePositionKey(deployer, usdaTokenAddress, wBTCTokenAddress, ayUsda4380TokenAddress, 1000000);
+            position=result.expectOk().expectTuple();
+            position['dx'].expectUint(235671181);
+            position['dy'].expectUint(0);
 
 
 

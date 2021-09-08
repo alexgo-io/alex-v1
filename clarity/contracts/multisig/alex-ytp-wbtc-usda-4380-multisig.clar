@@ -107,7 +107,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <yield-token-trait>))
-    (is-eq (contract-of token) .pool-token-usda-ayusda)
+    (is-eq (contract-of token) .pool-token-yield-usda-4380-usda)
 )
 
 
@@ -223,7 +223,7 @@
 (define-public (end-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .pool-token-usda-ayusda get-total-supply)))
+        (total-supply (unwrap-panic (contract-call? .pool-token-yield-usda-4380-usda get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
         (yes-votes (* (get yes-votes proposal) ONE_8))
   )

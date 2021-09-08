@@ -6,12 +6,13 @@
 
 (define-fungible-token yield-usda-4380)
 
-(define-data-var token-uri (string-utf8 256) u"")
-(define-data-var token-expiry uint u438000000000)  ;; 4380 * 10e8, where 52560(One year mainnet block height)/12 = 4380 
-(define-data-var underlying-token principal .token-usda)
+(define-constant token-expiry u438000000000)  ;; 4380 * 10e8, where 52560(One year mainnet block height)/12 = 4380 
+(define-constant underlying-token .token-usda)
 
 ;; errors
 (define-constant not-authorized-err u1000)
+
+(define-data-var token-uri (string-utf8 256) u"")
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -29,24 +30,12 @@
   (ok u8)
 )
 
-(define-read-only (get-underlying-token)
-  (ok (var-get underlying-token))
-)
-
 (define-read-only (get-balance (account principal))
   (ok (ft-get-balance yield-usda-4380 account))
 )
 
 (define-read-only (get-total-supply)
   (ok (ft-get-supply yield-usda-4380))
-)
-
-(define-public (set-token-uri (value (string-utf8 256)))
-  ;; TODO : Authorization Check
-  ;;(if (is-eq tx-sender (contract-call? .OWNER))
-    (ok (var-set token-uri value))
-  ;;  (err not-authorized-err)
-  ;;)
 )
 
 (define-read-only (get-token-uri)
@@ -84,11 +73,11 @@
 )
 
 (define-public (get-token)
-    (ok (var-get underlying-token))
+    (ok underlying-token)
 )
 
 (define-public (get-expiry)
-    (ok (var-get token-expiry))
+    (ok token-expiry)
 )
 
 

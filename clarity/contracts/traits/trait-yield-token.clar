@@ -10,9 +10,6 @@
     ;; the human readable name of the token
     (get-name () (response (string-ascii 32) uint))
 
-    ;; get underlying token of yield token
-    (get-underlying-token () (response principal uint))
-
     ;; the ticker symbol, or empty if none
     (get-symbol () (response (string-ascii 32) uint))
 

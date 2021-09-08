@@ -1,6 +1,5 @@
-(impl-trait .trait-sip-010.sip-010-trait)
+(impl-trait .trait-pool-token.pool-token-trait)
 
-;; Defines the Alex Governance Token according to the SRC20 Standard
 (define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
@@ -26,7 +25,7 @@
 )
 
 (define-read-only (get-name)
-  (ok "Alex Token")
+  (ok "ALEX")
 )
 
 (define-read-only (get-symbol)
@@ -53,7 +52,7 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? galex amount sender recipient)
+  (match (ft-transfer? alex amount sender recipient)
     response (begin
       (print memo)
       (ok response)
@@ -62,29 +61,17 @@
   )
 )
 
-;; ---------------------------------------------------------
-;; alex token trait
-;; ---------------------------------------------------------
-
-;; Mint method for glaex
-(define-public (mint-for-dao (amount uint) (recipient principal))
+(define-public (mint (recipient principal) (amount uint))
   (begin
     ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? galex amount recipient)
+    (ft-mint? alex amount recipient)
   )
 )
 
-;; Burn method for DAO
-(define-public (burn-for-dao (amount uint) (sender principal))
+(define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
-    (match (ft-transfer? alex amount sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )  
+    ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
+    (ft-burn? alex amount sender)
   )
 )
 
@@ -94,4 +81,5 @@
   ;; TODO: Erase on testnet or mainnet
   (try! (ft-mint? alex u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
   (try! (ft-mint? alex u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
+  (try! (ft-mint? alex u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
 )

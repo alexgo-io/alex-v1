@@ -6,14 +6,14 @@
 
 (define-fungible-token key-usda-wbtc-4380)
 
-;; Let's keep this for now, seems like I can't fetch constant values using contract-call
-(define-data-var token-uri (string-utf8 256) u"")
-(define-data-var token-expiry uint u438000000000)  ;; 4380 * 10e8, where 52560(One year mainnet block height)/12 = 4380 
-(define-data-var underlying-token principal .token-usda)
-(define-data-var underlying-collateral principal .token-wbtc)
+(define-constant token-expiry u438000000000)  ;; 4380 * 10e8, where 52560(One year mainnet block height)/12 = 4380 
+(define-constant underlying-token .token-usda)
+(define-constant underlying-collateral .token-wbtc)
 
 ;; errors
 (define-constant not-authorized-err u1000)
+
+(define-data-var token-uri (string-utf8 256) u"")
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -31,12 +31,8 @@
   (ok u8)
 )
 
-(define-read-only (get-underlying-token)
-  (ok (var-get underlying-token))
-)
-
 (define-read-only (get-underlying-collateral)
-  (ok (var-get underlying-collateral))
+  (ok underlying-collateral)
 )
 
 (define-read-only (get-balance (account principal))
@@ -45,14 +41,6 @@
 
 (define-read-only (get-total-supply)
   (ok (ft-get-supply key-usda-wbtc-4380))
-)
-
-(define-public (set-token-uri (value (string-utf8 256)))
-  ;; TODO : Authorization Check
-  ;;(if (is-eq tx-sender (contract-call? .OWNER))
-    (ok (var-set token-uri value))
-  ;;  (err not-authorized-err)
-  ;;)
 )
 
 (define-read-only (get-token-uri)
@@ -90,11 +78,11 @@
 )
 
 (define-public (get-token)
-    (ok (var-get underlying-token))
+    (ok underlying-token)
 )
 
 (define-public (get-expiry)
-    (ok (var-get token-expiry))
+    (ok token-expiry)
 )
 
 
