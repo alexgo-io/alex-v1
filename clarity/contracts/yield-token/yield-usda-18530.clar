@@ -18,11 +18,11 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-name)
-  (ok "ayUSDA-Aug2021")
+  (ok "yield-usda-18530")
 )
 
 (define-read-only (get-symbol)
-  (ok "ayUSDA-Aug2021")
+  (ok "yield-usda-18530")
 )
 
 (define-read-only (get-decimals)
