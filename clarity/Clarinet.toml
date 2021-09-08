@@ -19,7 +19,7 @@ depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/pool/collateral-rebalancing-pool.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool","token-usda","token-alex","alex-reserve-pool"]
+depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "open-oracle", "fixed-weight-pool","token-usda","token-alex","alex-reserve-pool","yield-token-pool"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/pool/fixed-weight-pool.clar"

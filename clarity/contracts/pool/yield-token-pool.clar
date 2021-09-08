@@ -527,10 +527,6 @@
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
-<<<<<<< HEAD:clarity/contracts/yield-token-pool.clar
-
-=======
->>>>>>> dc1ee7298b1c0f8b3bd6ea0f1b94cda9909f7b26:clarity/contracts/pool/yield-token-pool.clar
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
     )
 )

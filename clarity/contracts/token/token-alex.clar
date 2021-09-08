@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 (impl-trait .trait-pool-token.pool-token-trait)
 
-=======
-(impl-trait .trait-sip-010.sip-010-trait)
-
-;; Defines the Alex Governance Token according to the SRC20 Standard
->>>>>>> f1e577d32e44548547944a2dba6699ef9c1c87a3
 (define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
@@ -76,26 +70,15 @@
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-<<<<<<< HEAD
     ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
     (ft-burn? alex amount sender)
-=======
-    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
-    (match (ft-transfer? alex amount sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )  
->>>>>>> f1e577d32e44548547944a2dba6699ef9c1c87a3
   )
 )
 
 
-;; Initialize the contract for Testing.
-(begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? alex u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-  (try! (ft-mint? alex u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-)
+;; ;; Initialize the contract for Testing.
+;; (begin
+;;   ;; TODO: Erase on testnet or mainnet
+;;   (try! (ft-mint? alex u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
+;;   (try! (ft-mint? alex u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
+;; )
