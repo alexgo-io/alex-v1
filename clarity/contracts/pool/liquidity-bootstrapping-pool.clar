@@ -1,5 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; liquidity-bootstrapping-pool
 
@@ -7,6 +8,7 @@
 ;;
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
+(define-constant not-authorized-err (err u1000))
 (define-constant invalid-pool-err (err u2001))
 (define-constant no-liquidity-err (err u2002))
 (define-constant invalid-liquidity-err (err u2003))
@@ -22,6 +24,7 @@
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u1001))
 (define-constant internal-get-weight-err (err u2012))
+
 
 ;; data maps and vars
 ;;
@@ -169,7 +172,7 @@
     )
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -177,14 +180,13 @@
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
             (now (* block-height ONE_8))
-
             (pool-data {
                 total-supply: u0,
                 balance-x: u0,
                 balance-y: u0,
                 fee-balance-x: u0,
                 fee-balance-y: u0,
-                fee-to-address: (contract-of the-pool-token),
+                fee-to-address: (contract-of multisig-vote),
                 pool-token: (contract-of the-pool-token),
                 listed: now,
                 weight-x-0: weight-x-0,
@@ -371,6 +373,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
@@ -389,30 +392,13 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, expiry: expiry
             }
             (merge pool { fee-rate-y: fee-rate-y })
-        )
-        (ok true)     
-    )
-)
-
-(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (address principal))
-    (let 
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
-        )
-
-        (map-set pools-data-map 
-            { 
-                token-x: token-x, token-y: token-y, expiry: expiry 
-            }
-            (merge pool { fee-to-address: address })
         )
         (ok true)     
     )
@@ -456,7 +442,7 @@
             (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
             (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))                 
         )
-
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender

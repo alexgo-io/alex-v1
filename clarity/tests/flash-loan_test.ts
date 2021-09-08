@@ -14,7 +14,7 @@ const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-
 
 const alexVaultAddress = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault';
 const testFlashLoanUser =
-  'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.test-flash-loan-user';
+  'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-test';
 /**
  * Flash Loan Testing in Vault implementation.
  *

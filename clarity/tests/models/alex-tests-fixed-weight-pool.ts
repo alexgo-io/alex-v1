@@ -24,7 +24,7 @@ class FWPTestAgent1 {
     ], this.deployer.address);
   }
 
-  createPool(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, balanceX: number, balanceY: number) {
+  createPool(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, multiSig: string, balanceX: number, balanceY: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("fixed-weight-pool", "create-pool", [
         types.principal(tokenX),
@@ -32,6 +32,7 @@ class FWPTestAgent1 {
         types.uint(weightX),
         types.uint(weightY),
         types.principal(pooltoken),
+        types.principal(multiSig),
         types.uint(balanceX),
         types.uint(balanceY),
       ], user.address),
@@ -102,19 +103,6 @@ class FWPTestAgent1 {
         types.uint(weightX),
         types.uint(weightY),
         types.uint(dX) 
-      ], user.address),
-    ]);
-    return block.receipts[0].result;
-  }
-
-  setFeetoAddress(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, address: string) {
-    let block = this.chain.mineBlock([
-      Tx.contractCall("fixed-weight-pool", "set-fee-to-address", [
-        types.principal(tokenX),
-        types.principal(tokenY),
-        types.uint(weightX),
-        types.uint(weightY),
-        types.principal(address) 
       ], user.address),
     ]);
     return block.receipts[0].result;

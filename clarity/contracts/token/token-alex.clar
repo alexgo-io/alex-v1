@@ -1,16 +1,22 @@
+<<<<<<< HEAD
 (impl-trait .trait-pool-token.pool-token-trait)
 
+=======
+(impl-trait .trait-sip-010.sip-010-trait)
+
+;; Defines the Alex Governance Token according to the SRC20 Standard
+>>>>>>> f1e577d32e44548547944a2dba6699ef9c1c87a3
 (define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) (err err-not-authorized))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err not-authorized-err))
 
     (ok (var-set contract-owner owner))
   )
@@ -43,7 +49,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   (if (is-eq tx-sender (var-get contract-owner))
     (ok (var-set token-uri value))
-    (err err-not-authorized)
+    (err not-authorized-err)
   )
 )
 
@@ -70,8 +76,19 @@
 
 (define-public (burn (sender principal) (amount uint))
   (begin
+<<<<<<< HEAD
     ;; (asserts! (is-eq contract-caller .dao) (err ERR-NOT-AUTHORIZED))
     (ft-burn? alex amount sender)
+=======
+    (asserts! (is-eq tx-sender sender) (err not-authorized-err))
+    (match (ft-transfer? alex amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
+    )  
+>>>>>>> f1e577d32e44548547944a2dba6699ef9c1c87a3
   )
 )
 

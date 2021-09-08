@@ -1,2 +1,9 @@
 # Clarity History
 clarity/history.txt
+
+deploy-keychain.json
+**/contract-records/
+**/hex-files/
+**/staged-contracts/
+init-js-tool/node_modules
+init-js-tool/.env

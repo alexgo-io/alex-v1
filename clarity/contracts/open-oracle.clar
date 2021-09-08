@@ -8,11 +8,11 @@
 
 ;;(contract-call? 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.open-oracle get-price "alextestoracle" "USDA")
 
-(define-constant err-not-authorized (err u1000))
+(define-constant not-authorized-err (err u1000))
 (define-constant err-token-not-in-oracle (err u7001))
 
 ;; Let's keep oracle-owner to deployer for now.
-(define-data-var oracle-owner principal 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)
+(define-data-var oracle-owner principal tx-sender)
 
 (define-map prices
   { oracle-src: (string-ascii 32),
@@ -31,7 +31,7 @@
       (map-set prices { symbol: symbol, oracle-src: oracle-src } { last-price-in-cents: price, last-block: u0 })
       (ok price)
     )
-    (err err-not-authorized)
+    (err not-authorized-err)
   )
 )
 
@@ -51,7 +51,7 @@
 ;; TODO: On future when oracle owner in block chain can be controlled, implementing is required.
 ;; (define-public (set-oracle-owner (address principal))
 ;;   (begin
-;;     (asserts! (is-eq tx-sender (var-get oracle-owner)) (err ERR-NOT-AUTHORIZED))
+;;     (asserts! (is-eq tx-sender (var-get oracle-owner)) (err not-authorized-err))
 
 ;;     (ok (var-set oracle-owner address))
 ;;   )

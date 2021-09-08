@@ -6,7 +6,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -35,7 +35,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   ;;(if (is-eq tx-sender (contract-call? .arkadiko-dao get-dao-owner))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
