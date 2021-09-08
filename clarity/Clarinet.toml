@@ -61,13 +61,25 @@ depends_on = ["trait-yield-token", "trait-oracle", "trait-sip-010"]
 path = "contracts/pool-token/pool-token-alex-usda.clar"
 depends_on = ["trait-pool-token"]
 
-[contracts.pool-token-usda-ayusda]
-path = "contracts/pool-token/pool-token-usda-ayusda.clar"
-depends_on = ["trait-pool-token"]
+[contracts.pool-token-yield-usda-4380-usda]
+path = "contracts/pool-token-yield-usda-4380-usda.clar"
+depends_on = ["trait-sip-010", "trait-pool-token"]
 
-[contracts.pool-token-yield-usda-wbtc]
-path = "contracts/pool-token/pool-token-yield-usda-wbtc.clar"
-depends_on = ["trait-pool-token"]
+[contracts.pool-token-yield-usda-4380-wbtc]
+path = "contracts/pool-token-yield-usda-4380-wbtc.clar"
+depends_on = ["trait-sip-010", "trait-pool-token"]
+
+[contracts.pool-token-yield-usda-59760-usda]
+path = "contracts/pool-token-yield-usda-59760-usda.clar"
+depends_on = ["trait-sip-010", "trait-pool-token"]
+
+[contracts.pool-token-yield-usda-59760-wbtc]
+path = "contracts/pool-token-yield-usda-59760-wbtc.clar"
+depends_on = ["trait-sip-010", "trait-pool-token"]
+
+[contracts.test-flash-loan-user]
+path = "contracts/test-flash-loan-user.clar"
+depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vault", "fixed-weight-pool", "token-alex", "token-wbtc"]
 
 [contracts.token-alex]
 path = "contracts/token/token-alex.clar"

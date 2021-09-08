@@ -1,6 +1,6 @@
 (impl-trait .trait-pool-token.pool-token-trait)
 
-(define-fungible-token pool-token-alex-usda)
+(define-fungible-token ayusda-wbtc)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -10,7 +10,7 @@
 
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? pool-token-alex-usda amount sender recipient)
+  (match (ft-transfer? ayusda-wbtc amount sender recipient)
     response (begin
       (print memo)
       (ok response)
@@ -20,11 +20,11 @@
 )
 
 (define-read-only (get-name)
-  (ok "ALEX V1 galex USDA LP Token")
+  (ok "AYUSDAWBTC")
 )
 
 (define-read-only (get-symbol)
-  (ok "ALEXV1GALEXUSDA")
+  (ok "AYUSDAWBTC")
 )
 
 (define-read-only (get-decimals)
@@ -32,7 +32,7 @@
 )
 
 (define-read-only (get-balance (owner principal))
-  (ok (ft-get-balance pool-token-alex-usda owner))
+  (ok (ft-get-balance ayusda-wbtc owner))
 )
 
 (define-read-only (get-expiry)
@@ -40,7 +40,7 @@
 )
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply pool-token-alex-usda))
+  (ok (ft-get-supply ayusda-wbtc))
 )
 
 (define-read-only (get-token-uri)
@@ -68,8 +68,8 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? pool-token-alex-usda amount recipient)
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err not-authorized-err))
+    (ft-mint? ayusda-wbtc amount recipient)
   )
 )
 
@@ -82,13 +82,13 @@
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? pool-token-alex-usda amount recipient)
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err not-authorized-err))
+    (ft-burn? ayusda-wbtc amount recipient)
   )
 )
 
 ;; (begin
 ;;   ;; TODO: Erase on testnet or mainnet
-;;   (try! (ft-mint? pool-token-alex-usda u10000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-;;   (try! (ft-mint? pool-token-alex-usda u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
+;;   (try! (ft-mint? ayusda-wbtc u10000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
+;;   (try! (ft-mint? ayusda-wbtc u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
 ;; )

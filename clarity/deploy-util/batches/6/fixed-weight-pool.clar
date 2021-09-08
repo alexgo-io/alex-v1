@@ -70,10 +70,8 @@
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
        )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-       )
+        (asserts! (is-some pool) invalid-pool-err)
+        (ok pool)
    )
 )
 
@@ -89,20 +87,18 @@
             (token-y (contract-of token-y-trait))
             (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
        )
-        (if (is-some pool)
-            (ok pool)
-            invalid-pool-err
-       )
+        (asserts! (is-some pool) invalid-pool-err)
+        (ok pool)
    )
 )
 
 ;; get overall balances for the pair
-(define-public (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+(define-read-only (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
   (let
     (
       (token-x (contract-of token-x-trait))
       (token-y (contract-of token-y-trait))
-      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) (err invalid-pool-err)))
+      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) invalid-pool-err))
     )
     (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
   )
