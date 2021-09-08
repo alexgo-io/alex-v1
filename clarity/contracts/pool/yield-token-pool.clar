@@ -188,6 +188,8 @@
                 expiry: (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err)               
             })
         )
+        ;; create pool only if the correct pair
+        (asserts! (is-eq (try! (contract-call? the-aytoken get-token)) (contract-of the-token)) invalid-pool-err)
         (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) pool-already-exists-err)
         
         (map-set pools-map { pool-id: pool-id } { aytoken: aytoken })
