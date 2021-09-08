@@ -210,7 +210,7 @@ Clarinet.test({
 
         //Zero Transfer
         result = YTPTest.swapYForX(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, 0);
-        result.expectErr().expectUint(1001)
+        result.expectErr().expectUint(5004)
 
 
     },

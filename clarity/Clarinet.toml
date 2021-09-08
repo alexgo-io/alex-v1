@@ -33,6 +33,10 @@ depends_on = ["trait-flash-loan-user", "trait-vault", "trait-sip-010", "alex-vau
 path = "contracts/key-token/key-usda-wbtc-4380.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
 
+[contracts.key-usda-wbtc-59760]
+path = "contracts/key-usda-wbtc-59760.clar"
+depends_on = ["trait-sip-010", "trait-yield-token", "token-usda"]
+
 [contracts.liquidity-bootstrapping-pool]
 path = "contracts/pool/liquidity-bootstrapping-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation","trait-multisig-vote"]
@@ -44,6 +48,10 @@ depends_on = ["math-log-exp"]
 [contracts.math-log-exp]
 path = "contracts/lib/math-log-exp.clar"
 depends_on = []
+
+[contracts.multisig-yield-usda-wbtc]
+path = "contracts/multisig-yield-usda-wbtc.clar"
+depends_on = ["trait-multisig-vote", "pool-token-usda-ayusda", "yield-token-pool"]
 
 [contracts.open-oracle]
 path = "contracts/open-oracle.clar"

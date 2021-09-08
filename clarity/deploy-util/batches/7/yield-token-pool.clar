@@ -1,7 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
-(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; yield-token-pool
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -25,7 +24,7 @@
 (define-constant get-expiry-fail-err (err u2013))
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
-(define-constant not-authorized-err (err u1000))
+(define-constant authorisation-err (err u1000))
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant get-symbol-fail-err (err u6000))
 
@@ -54,9 +53,7 @@
     fee-to-address: principal,
     pool-token: principal,
     fee-rate-token: uint,    
-    fee-rate-aytoken: uint,
-    token-symbol: (string-ascii 32),
-    expiry: uint
+    fee-rate-aytoken: uint
   }
 )
 
@@ -106,14 +103,14 @@
     )
 )
 
-(define-read-only (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+(define-public (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
     (let
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
             (balance-token (get balance-token pool))
             (balance-aytoken (get balance-aytoken pool))
-            (token-symbol (get token-symbol pool))         
+            (token-symbol (unwrap! (contract-call? the-token get-symbol) get-symbol-fail-err))
             (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
             (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) math-call-err))
         )
@@ -126,12 +123,12 @@
 ;; b_y = balance-aytoken
 ;; b_x = balance-token
 ;; yield = ln(b_y/b_x)
-(define-read-only (get-yield (the-aytoken <yield-token-trait>))
+(define-public (get-yield (the-aytoken <yield-token-trait>))
     (let 
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-            (expiry (get expiry pool))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
             (balance-token (get balance-token pool))            
             (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
             (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
@@ -147,12 +144,13 @@
 ;; b_y = balance-aytoken
 ;; b_x = balance-token
 ;; price = (b_y / b_x) ^ t
-(define-read-only (get-price (the-aytoken <yield-token-trait>))
+(define-public (get-price (the-aytoken <yield-token-trait>))
     (let
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-            (expiry (get expiry pool))
+            ;;(exp (get expiry pool)) I think it is safer to use below function.
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
             (balance-token (get balance-token pool)) 
             (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
             (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
@@ -167,7 +165,7 @@
     )
 )
 
-(define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
     (let
         (
             (aytoken (contract-of the-aytoken))            
@@ -180,12 +178,10 @@
                 balance-virtual: u0,
                 fee-balance-aytoken: u0,
                 fee-balance-token: u0,
-                fee-to-address: (contract-of multisig-vote),
+                fee-to-address: (contract-of the-pool-token),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-aytoken: u0,
-                fee-rate-token: u0,
-                token-symbol: (unwrap! (contract-call? the-token get-symbol) get-symbol-fail-err),
-                expiry: (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err)               
+                fee-rate-token: u0                
             })
         )
         (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) pool-already-exists-err)
@@ -343,8 +339,7 @@
             (dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dy lambda) math-call-err))
             (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-net-fees) math-call-err))
 
-            ;;(dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
-            (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
+            (dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
 
             (pool-updated
                 (merge pool
@@ -397,8 +392,7 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
-
+        
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true)
     
@@ -411,10 +405,24 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
-
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
+    )
+)
+
+(define-public (set-fee-to-address (the-aytoken <yield-token-trait>) (address principal))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))    
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
+        )
+        (map-set pools-data-map 
+            { 
+                aytoken: aytoken 
+            }
+            (merge pool { fee-to-address: address })
+        )
+        (ok true)     
     )
 )
 
@@ -448,9 +456,9 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-aytoken pool))
-            (fee-y (get fee-balance-token pool))            
+            (fee-y (get fee-balance-token pool))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+
         (and (> fee-x u0) (unwrap! (contract-call? the-token transfer fee-x .alex-vault address none) transfer-x-failed-err))
         (and (> fee-y u0) (unwrap! (contract-call? the-aytoken transfer fee-y .alex-vault address none) transfer-y-failed-err))
 
@@ -462,13 +470,13 @@
     )
 )
 
-(define-read-only (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
+(define-public (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
     
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
@@ -479,32 +487,32 @@
     )
 )
 
-(define-read-only (get-x-given-y (the-aytoken <yield-token-trait>) (dy uint))
+(define-public (get-x-given-y (the-aytoken <yield-token-trait>) (dy uint))
     
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
         )
-<<<<<<< HEAD:clarity/contracts/yield-token-pool.clar
-
-=======
->>>>>>> dc1ee7298b1c0f8b3bd6ea0f1b94cda9909f7b26:clarity/contracts/pool/yield-token-pool.clar
+         ;;(print balance-token)
+         ;;(print balance-aytoken)
+         ;;(print normalized-expiry)
+         ;;(ok u1)
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
     )
 )
 
-(define-read-only (get-x-given-price (the-aytoken <yield-token-trait>) (price uint))
+(define-public (get-x-given-price (the-aytoken <yield-token-trait>) (price uint))
 
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
@@ -513,13 +521,13 @@
     )
 )
 
-(define-read-only (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
+(define-public (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
 
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-aytoken (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-aytoken pool) (get balance-virtual pool)) math-call-err))
         (balance-token (get balance-token pool))
@@ -528,13 +536,13 @@
     )
 )
 
-(define-read-only (get-token-given-position (the-aytoken <yield-token-trait>) (dx uint))
+(define-public (get-token-given-position (the-aytoken <yield-token-trait>) (dx uint))
 
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-actual (get balance-aytoken pool))
         (balance-virtual (get balance-virtual pool))
@@ -553,13 +561,13 @@
 
 )
 
-(define-read-only (get-position-given-mint (the-aytoken <yield-token-trait>) (token uint))
+(define-public (get-position-given-mint (the-aytoken <yield-token-trait>) (token uint))
 
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-actual (get balance-aytoken pool))
         (balance-virtual (get balance-virtual pool))
@@ -577,13 +585,13 @@
     )
 )
 
-(define-read-only (get-position-given-burn (the-aytoken <yield-token-trait>) (token uint))
+(define-public (get-position-given-burn (the-aytoken <yield-token-trait>) (token uint))
     
     (let 
         (
         (aytoken (contract-of the-aytoken))
         (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-        (expiry (get expiry pool))
+        (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
         (normalized-expiry (unwrap! (get-t expiry) internal-function-call-err))
         (balance-actual (get balance-aytoken pool))
         (balance-virtual (get balance-virtual pool))
