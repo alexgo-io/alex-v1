@@ -424,11 +424,18 @@
         (and (< dy shares) 
             (let
                 (
-                    (amount (unwrap! (contract-call? .math-fixed-point sub-fixed shares dy) math-call-err))
-                    (amount-to-swap (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
-                )
-                (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) transfer-y-failed-err)
-                (unwrap! (contract-call? token transfer (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap))) (as-contract tx-sender) .alex-vault none) transfer-y-failed-err)
+                    (amount (unwrap! (contract-call? .math-fixed-point sub-fixed shares dy) math-call-err))                    
+                )                
+                (if (is-eq token-y .token-usda)
+                    (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                    (let
+                        (
+                            (amount-to-swap (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
+                        )
+                        (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                        (unwrap! (contract-call? token transfer (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap))) (as-contract tx-sender) .alex-vault none) transfer-y-failed-err)
+                    )
+                )                
             )
         )       
         

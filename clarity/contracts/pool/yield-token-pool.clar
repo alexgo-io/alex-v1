@@ -456,6 +456,8 @@
             (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
             (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))            
         )
+        
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
         
