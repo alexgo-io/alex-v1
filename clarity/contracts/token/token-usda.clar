@@ -55,23 +55,18 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
     (ft-mint? usda amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .arkadiko-dao) (err ERR-NOT-AUTHORIZED))
     (ft-burn? usda amount sender)
   )
 )
 
-
 ;; Initialize the contract for Testing.
 (begin
   ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? usda u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-  (try! (ft-mint? usda u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-  (try! (ft-mint? usda u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
+  (try! (ft-mint? usda u100000000000000000 tx-sender))
 )
