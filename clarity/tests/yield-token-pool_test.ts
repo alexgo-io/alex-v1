@@ -9,27 +9,15 @@ import {
   
 
 // Deployer Address Constants 
-const wBTCTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
-const ayUsdawBTCPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.pool-token-yield-usda-4380-wbtc"
-const ayUsda4380TokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-4380"
+const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
+const yieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-59760"
+const ytpyieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-59760-wbtc"
+const multisigytpyieldwbtc59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-59760-wbtc"
 
 const ONE_8 = 100000000
-const expiry = 4380 * ONE_8  // 1 month  
-const testWeightX = 50000000 //0.5
-const testWeightY = 50000000 //0.5
-const testbsVol = 50000000
-
-const testWBTCPrice = 40000*ONE_8
-const testUSDAPrice = ONE_8
-const testExpiry = 4380*ONE_8
+const expiry = 59760 * ONE_8
 /**
  * Yield Token Pool Test Cases  
- * 
- * 1. Create Pool, Add values to the pool and reduce values.
- * 
- * 2. Arbitrageurs Swapping 
- * 
- * 3. Set Platform fees and collecting
  * 
  */
 
@@ -38,180 +26,206 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        
-        let wallet_1 =accounts.get('wallet_1')!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         
         //Deployer creating a pool, initial tokens injected to the pool
-        let result = YTPTest.createPool(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 10*ONE_8, 10*ONE_8);
+        let result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
-        let call = await YTPTest.getPoolDetails(ayUsda4380TokenAddress);
-        call.result.expectOk();
+        let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        let position:any = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(1000*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(1000*ONE_8);
+
+        let listed = 100000000;
 
         //Add extra liquidity
-        result = YTPTest.addToPosition(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 10*ONE_8);
-        result.expectOk().expectBool(true);
+        result = YTPTest.addToPosition(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 10*ONE_8);
+        position = result.expectOk().expectTuple();
+        position['supply'].expectUint(10*ONE_8);
+        position['balance-token'].expectUint(10*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(10*ONE_8);
 
         // Remove all liquidlity
-        result = YTPTest.reducePosition(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 1*ONE_8);
-        let position:any =result.expectOk().expectTuple();
-            position['dx'].expectUint(2000000000);
-            position['dy'].expectUint(0);
-    },
-});
+        result = YTPTest.reducePosition(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 1*ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(1010*ONE_8);
+        position['dy'].expectUint(0);
 
-Clarinet.test({
-    name: "YTP : Swapping",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
+        // Add back some liquidity
+        result = YTPTest.addToPosition(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 1000*ONE_8);
+        position = result.expectOk().expectTuple();
+        position['supply'].expectUint(1000*ONE_8);
+        position['balance-token'].expectUint(1000*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(1000*ONE_8);     
         
-        let wallet_1 =accounts.get('wallet_1')!;
-        let wallet_2 =accounts.get('wallet_2')!;
-        let YTPTest = new YTPTestAgent1(chain, deployer);
-        
-
-        //Deployer creating a pool, initial tokens injected to the pool
-        let result = YTPTest.createPool(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 10*ONE_8, 10*ONE_8);
-        result.expectOk().expectBool(true);
-
-        // Check pool details and print
-        let call = await YTPTest.getPoolDetails(ayUsda4380TokenAddress);
-        call.result.expectOk();
-
-        // Get weight for testing swap - internal test
+        // check t
         call = chain.callReadOnlyFn("yield-token-pool", "get-t", 
-            [types.uint(testExpiry)
-            ], wallet_1.address);
-        call.result.expectOk().expectUint(99977163)
+            [types.uint(expiry),
+             types.uint(listed)
+            ], deployer.address);
+        call.result.expectOk().expectUint(85000000)
         
-        //Error due to prohibitting mining of ayToken
-        result = YTPTest.getYgivenX(deployer, ayUsda4380TokenAddress,1000000);
+        // zero actual yield-token, so must throw an error
+        result = YTPTest.getYgivenX(deployer, yieldwbtc59760Address, 1*ONE_8);
         result.expectErr().expectUint(2016)
         
-        // get Yield - internal
+        // zero actual yield-token, so yield must be zero
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
-            [types.principal(ayUsda4380TokenAddress)
-            ], wallet_1.address);
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
         call.result.expectOk().expectUint(0)
 
-        // Add additional liquidity
-        result = YTPTest.addToPosition(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 100*ONE_8);
-        result.expectOk().expectBool(true);
+        // zero rate environment, so yield-token and token are at parity.
+        result = YTPTest.getXgivenY(deployer, yieldwbtc59760Address, 2*ONE_8);
+        result.expectOk().expectUint(200212341)
 
-        //Arbitrager swapping usda for ayusda 
-        result = YTPTest.swapYForX(wallet_2, ayUsda4380TokenAddress, wBTCTokenAddress, ONE_8);
-        let position:any =result.expectOk().expectTuple();
-            position['dx'].expectUint(96775442);
-            position['dy'].expectUint(100000000);
+        // sell some yield-token
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(200212341);
+        position['dy'].expectUint(2*ONE_8);
 
-        // Then now the yield is non-zero
+        // yield-token now has "actual" balance
+        call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(99799787659);
+        position['balance-aytoken'].expectUint(2*ONE_8);
+        position['balance-virtual'].expectUint(1000*ONE_8);         
+            
+        // now that yield token supply > token supply, yield is positive.
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
-        [types.principal(ayUsda4380TokenAddress)
-        ], wallet_1.address);
-        call.result.expectOk().expectUint(1788650)
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(400212); // 0.4%
 
-        //Swapping with positive ayToken in the Pool
-        result = YTPTest.swapXForY(wallet_2, ayUsda4380TokenAddress, wBTCTokenAddress, ONE_8);
-        position['dx'].expectUint(96775442);
-        position['dy'].expectUint(100000000);
+        // buy back some yield token
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
+        position = result.expectOk().expectTuple()
+        position['dx'].expectUint(ONE_8);
+        position['dy'].expectUint(100352095);        
 
-    },
-});
+        // attempt to sell more than max allowed yield token (2% of pool) must throw an error
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 21*ONE_8);
+        position =result.expectErr().expectUint(4002)
 
-// Clarinet.test({
-//     name: "YTP : Setting a Fee to principal",
-//     async fn(chain: Chain, accounts: Map<string, Account>) {
-//         let deployer = accounts.get("deployer")!;
-//         let wallet_1 =accounts.get('wallet_1')!;
-//         let wallet_2 =accounts.get('wallet_2')!;
+        call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(99899787659);
+        position['balance-aytoken'].expectUint(99647905);
+        position['balance-virtual'].expectUint(1000*ONE_8); 
 
-//         let YTPTest = new YTPTestAgent1(chain, deployer);
+        // after buying back some yield token, yield decreases.
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(199860); // 0.2%   
+
+        // we sell close to maximum allowed of yield token
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(1927749539);
+        position['dy'].expectUint(19*ONE_8);       
+                
+        call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(97972038120);
+        position['balance-aytoken'].expectUint(1999647905);
+        position['balance-virtual'].expectUint(1000*ONE_8);                 
+
+        // which moves yield substantially into the positive territory.
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(4028722); // 4%    
         
-//         //Deployer creating a pool, initial tokens injected to the pool
-//         let result = YTPTest.createPool(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 10*ONE_8, 10*ONE_8);
-//         result.expectOk().expectBool(true);
-
-//         // Check pool details and print
-//         let call = await YTPTest.getPoolDetails(ayUsda4380TokenAddress);
-//         call.result.expectOk();
+        // simulate to be on half way to expiry
+        chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)      
         
-//         // Add additional liquidity
-//         result = YTPTest.addToPosition(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 100*ONE_8);
-//         result.expectOk().expectBool(true);
+        // check t == 0.5
+        call = chain.callReadOnlyFn("yield-token-pool", "get-t", 
+            [types.uint(expiry),
+             types.uint(listed)
+            ], deployer.address);
+        call.result.expectOk().expectUint(50000000)        
 
-//         // Fees will be transferred to wallet_1
-//         result = YTPTest.setFeetoAddress(deployer, ayUsda4380TokenAddress, wallet_1.address);
-//         result.expectOk().expectBool(true);
+        call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(97972038120);
+        position['balance-aytoken'].expectUint(1999647905);
+        position['balance-virtual'].expectUint(1000*ONE_8); 
+
+        // no transaction since then till now, so yield remains the same. Note yield is absolute, not annualised number.
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(4028722); // 4%      
         
-//        // Check whether it is correctly settled
-//         result = YTPTest.getFeetoAddress(deployer, ayUsda4380TokenAddress);
-//         result.expectOk().expectPrincipal(wallet_1.address);
+        // sell some (a lot of) yield-token
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(1879746070);
+        position['dy'].expectUint(19*ONE_8);
 
-//         result = YTPTest.setFeeRateToken(deployer, ayUsda4380TokenAddress, 5000000);
-//         result.expectOk().expectBool(true);
+        call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(96092292050);
+        position['balance-aytoken'].expectUint(1999647905 + 19*ONE_8);
+        position['balance-virtual'].expectUint(1000*ONE_8);         
+            
+        // and see how it pushes the yield to crazy level.
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(7811636); // 78%    
 
-//         result = YTPTest.setFeeRateayToken(deployer, ayUsda4380TokenAddress, 5000000);
-//         result.expectOk().expectBool(true);
+        //buy back some yield token
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(19*ONE_8);
+        position['dy'].expectUint(1956741242);      
 
-//         //Arbitrager swapping usda for ayusda 
-//         result = YTPTest.swapYForX(wallet_2, ayUsda4380TokenAddress, wBTCTokenAddress, 1000000000);
-//         let position:any =result.expectOk().expectTuple();
-//             position['dx'].expectUint(1095681893);
-//             position['dy'].expectUint(1000000000);
-
-//         // Then now the yield is non-zero
-//         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
-//         [types.principal(ayUsda4380TokenAddress)
-//         ], wallet_1.address);
-//         call.result.expectOk().expectUint(19193578)
-
-//         // Swapping with positive ayToken in the Pool
-//         result = YTPTest.swapXForY(wallet_2, ayUsda4380TokenAddress, wBTCTokenAddress, 100000000);
-//         position =result.expectOk().expectTuple();
-//         position['dx'].expectUint(99040322);
-//         position['dy'].expectUint(122353982);
-
-//         // Collect Fees - Fee Collection Floating Point
-//         result = YTPTest.collectFees(wallet_1, ayUsda4380TokenAddress, wBTCTokenAddress);
-//         position =result.expectOk().expectTuple();
-//         position['fee-x'].expectUint(0);
-//         position['fee-y'].expectUint(959678);
-
-//     },
-// });
-
-
-Clarinet.test({
-    name: "YTP : General Error Testing",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let wallet_1 =accounts.get('wallet_1')!;
-        let wallet_2 =accounts.get('wallet_2')!;
-        let YTPTest = new YTPTestAgent1(chain, deployer);
+        // simulate to right before expiry
+        chain.mineEmptyBlockUntil((expiry / ONE_8) - 1)      
         
-        //Deployer creating a pool, initial tokens injected to the pool
-        let result = YTPTest.createPool(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 10*ONE_8, 10*ONE_8);
-        result.expectOk().expectBool(true);
+        // confirm t is almost zero.
+        call = chain.callReadOnlyFn("yield-token-pool", "get-t", 
+            [types.uint(expiry),
+             types.uint(listed)
+            ], deployer.address);
+        call.result.expectOk().expectUint(1673)
 
-        // Create Pool Error : pool-already-exists
-        result = YTPTest.createPool(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 1000000000, 100000000);
-        result.expectErr().expectUint(2000);
+        // no trade between half way and now, so yield should remain the same (again, yield is not annualised).
+        call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(3952408); // 4%      
+        
+        // buy some yield-token
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(19*ONE_8);
+        position['dy'].expectUint(1900016846);
 
-        // Reduce liquidlity math err - percent overflow
-        result = YTPTest.reducePosition(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, ayUsdawBTCPoolTokenAddress, 100000000000);
-        let position:any =result.expectErr().expectUint(5000);
+        // on expiry, the prices are back to parity.
+        call = chain.callReadOnlyFn("yield-token-pool", "get-price", 
+            [types.principal(yieldwbtc59760Address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(100000005); // par          
 
-        // Trying to mine when ayToken is zero balance
-        result = YTPTest.swapXForY(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, 100000000);
-        result.expectErr().expectUint(1001)
-
-        //Zero Transfer
-        result = YTPTest.swapYForX(deployer, ayUsda4380TokenAddress, wBTCTokenAddress, 0);
-        result.expectErr().expectUint(5004)
-
-
-    },
+    },    
 });

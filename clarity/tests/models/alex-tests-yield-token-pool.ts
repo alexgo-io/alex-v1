@@ -15,9 +15,10 @@ import {
       this.deployer = deployer;
     }
     
-    getT(expiry: number) {
+    getT(expiry: number, listed: number) {
       return this.chain.callReadOnlyFn("yield-token-pool", "get-t", [
-        types.uint(expiry)
+        types.uint(expiry),
+        types.uint(listed)
       ], this.deployer.address);
     }
 
