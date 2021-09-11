@@ -49,6 +49,14 @@ Clarinet.test({
         position['balance-aytoken'].expectUint(0);
         position['balance-virtual'].expectUint(10*ONE_8);
 
+        // Check pool details and print
+        call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(1010*ONE_8);
+        position['balance-token'].expectUint(1010*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(1010*ONE_8);        
+
         // Remove all liquidlity
         result = YTPTest.reducePosition(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 1*ONE_8);
         position =result.expectOk().expectTuple();

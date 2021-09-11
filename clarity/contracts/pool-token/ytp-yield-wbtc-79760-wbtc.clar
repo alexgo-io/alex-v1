@@ -87,8 +87,3 @@
     (ft-burn? yield-wbtc-79760-wbtc amount recipient)
   )
 )
-
-(begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? yield-wbtc-79760-wbtc u10000000000 tx-sender))
-)
