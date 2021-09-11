@@ -1,0 +1,4 @@
+
+Error: Parsing error: Illegal variable name: '<<<<<<<'
+Parsing error: Whitespace expected after colon (:), Found: 'scripts/batches/8/key-usda-wbtc-59760'
+Parsing error: Whitespace expected after colon (:), Found: 'clarity/contracts/yield-token/yield-wbtc-59760'
