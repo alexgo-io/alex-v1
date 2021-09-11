@@ -66,7 +66,6 @@
 ;; Mint method for yield-wbtc-59760
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-wbtc-pool) (err err-not-authorized))
     (ft-mint? yield-wbtc-59760 amount recipient)
   )
 )
@@ -74,7 +73,6 @@
 ;; Burn method for yield-wbtc-59760
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-wbtc-pool) (err err-not-authorized))
     (ft-burn? yield-wbtc-59760 amount sender)
   )
 )

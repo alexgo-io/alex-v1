@@ -1,3 +1,0 @@
-[contracts.alex-multisig-registry]
-path = "contracts/multisig/alex-multisig-registry.clar"
-depends_on = ["trait-yield-token", "trait-sip-010"]

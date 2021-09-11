@@ -386,7 +386,6 @@
     )
 )
 
-
 ;; Returns the fee of current x and y and make balance to 0.
 (define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     
