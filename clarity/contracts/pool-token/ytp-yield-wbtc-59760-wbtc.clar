@@ -87,7 +87,3 @@
     (ft-burn? yield-wbtc-59760-wbtc amount recipient)
   )
 )
-
-(begin
-  (try! (ft-mint? yield-wbtc-59760-wbtc u10000000000 tx-sender))
-)
