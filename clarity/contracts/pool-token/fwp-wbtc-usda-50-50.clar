@@ -1,16 +1,16 @@
+(impl-trait .trait-sip-010.sip-010-trait)
 (impl-trait .trait-pool-token.pool-token-trait)
 
-(define-fungible-token ayusda-usda)
+(define-fungible-token fwp-wbtc-usda-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant not-authorized-err u1000)
-
+(define-constant err-not-authorized u1000)
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? ayusda-usda amount sender recipient)
+  (match (ft-transfer? fwp-wbtc-usda-50-50 amount sender recipient)
     response (begin
       (print memo)
       (ok response)
@@ -20,15 +20,11 @@
 )
 
 (define-read-only (get-name)
-  (ok "ayUSDA USDA LP Token")
+  (ok "fwp-wbtc-usda-50-50")
 )
 
 (define-read-only (get-symbol)
-  (ok "AYUSDAUSDA")
-)
-
-(define-read-only (get-expiry)
-  (ok 438000000000)
+  (ok "fwp-wbtc-usda-50-50")
 )
 
 (define-read-only (get-decimals)
@@ -36,11 +32,11 @@
 )
 
 (define-read-only (get-balance (owner principal))
-  (ok (ft-get-balance ayusda-usda owner))
+  (ok (ft-get-balance fwp-wbtc-usda-50-50 owner))
 )
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply ayusda-usda))
+  (ok (ft-get-supply fwp-wbtc-usda-50-50))
 )
 
 (define-read-only (get-token-uri)
@@ -64,12 +60,12 @@
 ;; can only be used by arkadiko swap main contract
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    (print "usda-token-swap.mint")
+    (print "alex-token-swap.mint")
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err not-authorized-err))
-    (ft-mint? ayusda-usda amount recipient)
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
+    (ft-mint? fwp-wbtc-usda-50-50 amount recipient)
   )
 )
 
@@ -78,17 +74,11 @@
 ;; can only be used by arkadiko swap main contract
 (define-public (burn (recipient principal) (amount uint))
   (begin
-    (print "usda-token-swap.burn")
+    (print "alex-token-swap.burn")
     (print contract-caller)
     (print amount)
     ;; TODO - make dynamic
-    ;; (asserts! (is-eq contract-caller .arkadiko-swap-v1-1) (err not-authorized-err))
-    (ft-burn? ayusda-usda amount recipient)
+    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err err-not-authorized))
+    (ft-burn? fwp-wbtc-usda-50-50 amount recipient)
   )
 )
-
-;; (begin
-;;   ;; TODO: Erase on testnet or mainnet
-;;   (try! (ft-mint? ayusda-usda u10000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-;;   (try! (ft-mint? ayusda-usda u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-;; )

@@ -13,9 +13,6 @@
     ;; the ticker symbol, or empty if none
     (get-symbol () (response (string-ascii 32) uint))
 
-    ;; expiry of token
-    (get-expiry () (response uint uint))
-
     ;; the number of decimals used, e.g. 6 would mean 1_000_000 represents 1 token
     (get-decimals () (response uint uint))
 
@@ -41,11 +38,5 @@
 
     ;; the expiry
     (get-expiry () (response uint uint))
-
-    ;; ;; Mint
-    ;; (mint-from-registry (uint principal) (response bool uint))
-
-    ;; ;; Burn
-    ;; (burn-from-registry (uint principal) (response bool uint))
- )
+  )
 )
