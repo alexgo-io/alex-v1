@@ -14,6 +14,14 @@ import {
       this.chain = chain;
       this.deployer = deployer;
     }
+
+    getPoolDetails(token: string, collateral: string, expiry: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-details", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry)
+      ], this.deployer.address);
+    }    
     
     getWeightX(token: string, collateral: string, expiry: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-x", [
@@ -23,7 +31,7 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, dX: number) {
+    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
           types.principal(token),
@@ -31,6 +39,10 @@ import {
           types.principal(yieldToken),
           types.principal(keyToken),
           types.principal(multiSig),
+          types.uint(ltv_0),
+          types.uint(conversion_ltv),
+          types.uint(bs_vol),
+          types.uint(moving_average),
           types.uint(dX)
         ], user.address),
       ]);

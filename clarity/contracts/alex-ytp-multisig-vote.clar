@@ -1,6 +1,6 @@
 ;;(impl-trait .trait-multisig-vote.multisig-vote-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
-(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait ft-token .trait-sip-010.sip-010-trait)
 
 
 ;; Alex voting for MultiSig DAO
@@ -18,9 +18,8 @@
 (define-constant no-contract-changes-err (err u8001))
 (define-constant invalid-pool-token (err u8002))
 (define-constant block-height-not-reached (err u8003))
-(define-constant not-authorized-err (err u1000))
+(define-constant authorisation-err (err u1000))
 (define-constant status-ok u10000)
-(define-constant math-call-err (err u2010))
 
 (define-constant ONE_8 u100000000)
 
@@ -45,8 +44,9 @@
     no-votes: uint,
     fee-collector: principal,
     new-fee-rate-token: uint,
-    new-fee-rate-aytoken: uint
-   }
+    new-fee-rate-aytoken: uint,
+    contract-changes: (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool)))
+  }
 )
 
 (define-data-var proposal-count uint u0)
@@ -97,7 +97,8 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      fee-collector: .alex-ytp-multisig-vote,
+      contract-changes: (list { name: "", address: DEFAULT_OWNER, qualified-name: DEFAULT_OWNER, can-mint: false, can-burn: false} ),
+      fee-collector: DEFAULT_OWNER,
       new-fee-rate-token: u0,    ;; Default token feerate
       new-fee-rate-aytoken: u0  ;; default aytoken feerate
     }
@@ -107,7 +108,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <yield-token-trait>))
-    (is-eq (contract-of token) .ytp-yield-wbtc-79760-wbtc)
+    (is-eq (contract-of token) .ytp-yield-usda-4380-usda)
 )
 
 
@@ -118,12 +119,14 @@
     (start-block-height uint)
     (title (string-utf8 256))
     (url (string-utf8 256))
+    (contract-changes (list 10 (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+    (fee-collector principal)
     (new-fee-rate-token uint)
     (new-fee-rate-aytoken uint)
   )
   (let (
-    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-balance tx-sender)) ONE_8))
-    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
+    (proposer-balance (unwrap-panic (contract-call? .ytp-yield-usda-4380-usda get-balance tx-sender)))
+    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda-4380-usda get-total-supply)) ONE_8))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -142,7 +145,8 @@
         end-block-height: (+ start-block-height u1440),
         yes-votes: u0,
         no-votes: u0,
-        fee-collector: .alex-ytp-multisig-vote,
+        contract-changes: contract-changes,
+        fee-collector: fee-collector,
         new-fee-rate-token: new-fee-rate-token,
         new-fee-rate-aytoken: new-fee-rate-aytoken
       }
@@ -164,23 +168,22 @@
     ;; Can vote with corresponding pool token
     (asserts! (is-token-accepted token) invalid-pool-token)
     ;; Proposal should be open for voting
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (get is-open proposal) authorisation-err)
     ;; Vote should be casted after the start-block-height
-    (asserts! (>= block-height (get start-block-height proposal)) not-authorized-err)
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
     (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { yes-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get yes-votes proposal)) math-call-err) }))
+      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
+      { vote-count: (+ vote-count amount) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
-      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
-
+      { amount: (+ token-count amount) })
 
     (ok status-ok)
     
@@ -199,22 +202,22 @@
     ;; Can vote with corresponding pool token
     (asserts! (is-token-accepted token) invalid-pool-token)
     ;; Proposal should be open for voting
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (get is-open proposal) authorisation-err)
     ;; Vote should be casted after the start-block-height
-    (asserts! (>= block-height (get start-block-height proposal)) not-authorized-err)
+    (asserts! (>= block-height (get start-block-height proposal)) authorisation-err)
     ;; Voter should stake the corresponding pool token to the vote contract. 
     (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
 
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { no-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get no-votes proposal)) math-call-err) }))
+      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
+      { vote-count: (+ vote-count amount) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
-      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
+      { amount: (+ token-count amount) })
     (ok status-ok)
     )
     
@@ -223,13 +226,13 @@
 (define-public (end-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
+        (total-supply (unwrap-panic (contract-call? .ytp-yield-usda-4380-usda get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
-        (yes-votes (* (get yes-votes proposal) ONE_8))
+        (yes-votes (unwrap-panic (contract-call? .math-fixed-point mul-down (get yes-votes proposal) ONE_8)))
   )
 
-    (asserts! (not (is-eq (get id proposal) u0)) not-authorized-err)  ;; Default id
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (not (is-eq (get id proposal) u0)) authorisation-err)  ;; Default id
+    (asserts! (get is-open proposal) authorisation-err)
     (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
 
     (map-set proposals
@@ -245,13 +248,13 @@
 ;; This function needs to be called for all members
 (define-public (return-votes-to-member (token <yield-token-trait>) (proposal-id uint) (member principal))
   (let (
-    (token-count (/ (get amount (get-tokens-by-member-by-id proposal-id member token)) ONE_8)
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id member token)))
     (proposal (get-proposal-by-id proposal-id))
   )
 
     (asserts! (is-token-accepted token) invalid-pool-token)
-    (asserts! (not (get is-open proposal)) not-authorized-err)
-    (asserts! (>= block-height (get end-block-height proposal)) not-authorized-err)
+    (asserts! (not (get is-open proposal)) authorisation-err)
+    (asserts! (>= block-height (get end-block-height proposal)) authorisation-err)
 
     ;; Return the pool token
     (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none))
@@ -262,14 +265,62 @@
 (define-private (execute-proposal (proposal-id uint) (token <yield-token-trait>) (aytoken <yield-token-trait>))
   (let (
     (proposal (get-proposal-by-id proposal-id))
+    (contract-changes (get contract-changes proposal))
     (new-fee-rate-token (get new-fee-rate-token proposal))
     (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))
+    (collector-address (get fee-collector proposal))
   ) 
   
     ;; Setting for Yield Token Pool
-    (try! (contract-call? .yield-token-pool set-fee-rate-token token new-fee-rate-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-token aytoken new-fee-rate-token))
     (try! (contract-call? .yield-token-pool set-fee-rate-aytoken aytoken new-fee-rate-aytoken))
+    (try! (contract-call? .yield-token-pool set-fee-to-address aytoken collector-address))
     
-    (ok true)
+    (if (> (len contract-changes) u0)
+      (begin
+        (map execute-proposal-change-contract contract-changes)
+        (ok true)
+      )
+      no-contract-changes-err
+    )
+    ;; (and (> (len contract-changes) u0) (try! (map execute-proposal-change-contract contract-changes)))
+    ;; (ok true)
+    ;; no-contract-changes-err
+  )
+)
+
+;; Helper to execute proposal and change contracts
+(define-private (execute-proposal-change-contract (change (tuple (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))))
+  (let (
+    (name (get name change))
+    (address (get address change))
+    (qualified-name (get qualified-name change))
+    (can-mint (get can-mint change))
+    (can-burn (get can-burn change))
+  )
+    (if (not (is-eq name ""))
+      (begin
+        (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+        (ok true)
+      )
+      (ok false)
+    )
+  )
+)
+
+;; adds a new contract, only new ones allowed
+;; Things to be discussed
+(define-public (add-contract-address (name (string-ascii 256)) (address principal) (qualified-name principal) (can-mint bool) (can-burn bool))
+  (begin
+    ;; Who can add the contract to the registry
+    ;;(asserts! (is-eq tx-sender (contract-call? .alex-multisig-dao get-dao-owner)) (err authorisation-err))
+
+    (if (is-some (contract-call? .alex-multisig-registry get-contract-address-by-name name))
+      (ok false)
+      (begin
+        (try! (contract-call? .alex-multisig-registry set-contract-address name address qualified-name can-mint can-burn))
+        (ok true)
+      )
+    )
   )
 )
