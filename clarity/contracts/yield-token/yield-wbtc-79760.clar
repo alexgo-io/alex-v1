@@ -2,12 +2,11 @@
 (impl-trait .trait-yield-token.yield-token-trait) 
 
 ;; Defines ayUSDA which conforms sip010-trait and yield-token-trait. 
-;; yield-wbtc-wbtc with expiry of one month
 
 (define-fungible-token yield-wbtc-79760)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var token-expiry uint u7976000000000)  
+(define-data-var token-expiry uint u7976000000000)
 (define-data-var underlying-token principal .token-wbtc)
 
 ;; errors
@@ -59,14 +58,9 @@
   )
 )
 
-;; ---------------------------------------------------------
-;; ayUSDA token trait
-;; ---------------------------------------------------------
-
 ;; Mint method for yield-wbtc-79760
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-wbtc-pool) (err err-not-authorized))
     (ft-mint? yield-wbtc-79760 amount recipient)
   )
 )
@@ -74,7 +68,6 @@
 ;; Burn method for yield-wbtc-79760
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-wbtc-pool) (err err-not-authorized))
     (ft-burn? yield-wbtc-79760 amount sender)
   )
 )
@@ -88,9 +81,7 @@
 )
 
 
-;; Initialize the contract for Testing.
-(begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? yield-wbtc-79760 u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
-  ;;(try! (ft-mint? yield-wbtc-79760 u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; Wallet 2
-)
+;; ;; Initialize the contract for Testing.
+;; (begin
+;;   (try! (ft-mint? yield-wbtc-79760 u1000000000000 tx-sender))
+;; )

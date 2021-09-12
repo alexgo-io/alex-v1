@@ -87,9 +87,3 @@
     (ft-burn? yield-wbtc-79760-wbtc amount recipient)
   )
 )
-
-(begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? yield-wbtc-79760-wbtc u10000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
-  (try! (ft-mint? yield-wbtc-79760-wbtc u10000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-)

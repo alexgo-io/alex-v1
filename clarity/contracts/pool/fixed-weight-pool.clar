@@ -1,14 +1,14 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; fixed-weight-pool
-;; Fixed Weight Pool is an reference pool for which can be used as a template on future works. 
+;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;;
-;; TODO: token-x/token-y pool == token-y/token-x pool
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant authorisation-err (err u1000))
+(define-constant not-authorized-err (err u1000))
 (define-constant invalid-pool-err (err u2001))
 (define-constant no-liquidity-err (err u2002))
 (define-constant invalid-liquidity-err (err u2003))
@@ -24,6 +24,11 @@
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u1001))
+(define-constant get-oracle-price-fail-err (err u7000))
+
+(define-constant alex-symbol "alex")
+(define-constant reserve-usdc-symbol "usdc")
+(define-constant oracle-src "nothing")
 
 ;; data maps and vars
 (define-map pools-map
@@ -52,7 +57,9 @@
     fee-to-address: principal,
     pool-token: principal,
     fee-rate-x: uint,
-    fee-rate-y: uint
+    fee-rate-y: uint,
+    token-x-symbol: (string-ascii 32),
+    token-y-symbol: (string-ascii 32)
   }
 )
 
@@ -85,9 +92,8 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
-       )
-        (asserts! (is-some pool) invalid-pool-err)
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        )
         (ok pool)
    )
 )
@@ -104,7 +110,7 @@
   )
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -116,10 +122,12 @@
                 balance-y: u0,
                 fee-balance-x: u0,
                 fee-balance-y: u0,
-                fee-to-address: (contract-of the-pool-token),
+                fee-to-address: (contract-of multisig-vote),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-x: u0,
-                fee-rate-y: u0
+                fee-rate-y: u0,
+                token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
+                token-y-symbol: (try! (contract-call? token-y-trait get-symbol))
             })
        )
         (asserts!
@@ -143,41 +151,38 @@
 )
 
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
-    (let
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (total-supply (get total-supply pool))
-            (add-data (unwrap! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy) internal-function-call-err))
-            (new-supply (get token add-data))
-            (new-dy (get dy add-data))
-            (pool-updated (merge pool {
-                total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
-                balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
-                balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
-            }))
-       )
+    (begin
+        (asserts! (and (> dx u0) (> dy u0)) invalid-liquidity-err)
 
-        (asserts! (and (> dx u0) (> new-dy u0)) invalid-liquidity-err)
+        (let
+            (
+                (token-x (contract-of token-x-trait))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+                (total-supply (get total-supply pool))
+                (add-data (unwrap! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy) internal-function-call-err))
+                (new-supply (get token add-data))
+                (new-dy (get dy add-data))
+                (pool-updated (merge pool {
+                    total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
+                    balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
+                    balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
+                }))
+            )
 
-        ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none)) transfer-y-failed-err)
-        
-        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
-        (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
+            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+            (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) transfer-y-failed-err)
 
-        ;; mint pool token and send to tx-sender
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-        (try! (contract-call? the-pool-token mint tx-sender new-supply))
-        ;;(try! (contract-call? .alex-multisig-registry mint-token new-supply tx-sender))
-        (print { object: "pool", action: "liquidity-added", data: pool-updated })
-        (ok true)
-   )
+            ;; mint pool token and send to tx-sender
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+            (try! (contract-call? the-pool-token mint tx-sender new-supply))
+            
+            (print { object: "pool", action: "liquidity-added", data: pool-updated })
+            (ok {supply: new-supply, dx: dx, dy: new-dy})
+        )
+    )
 )    
 
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (percent uint))
@@ -189,7 +194,8 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
-                (shares (unwrap! (contract-call? .math-fixed-point mul-down (unwrap! (contract-call? the-pool-token get-balance tx-sender) math-call-err) percent) math-call-err))
+                (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
+                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) math-call-err)))
                 (total-supply (get total-supply pool))
                 (reduce-data (unwrap! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares) internal-function-call-err))
                 (dx (get dx reduce-data))
@@ -201,17 +207,9 @@
                     })
                 )
             )
-        
-            ;; TODO : Need Global constant of vault and check if the vault is valid using assert. 
-        
-            ;; send x from vault
-            ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-            ;; send y from vault
-            ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
 
             (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
             (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
-
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
@@ -226,93 +224,86 @@
 )
 
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))    
-    (let
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (fee-rate-x (get fee-rate-x pool))
-
-            ;; fee = dx * fee-rate-x
-            (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
-            (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
-    
-            (dy (unwrap! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees) internal-function-call-err))
-
-            (pool-updated
-                (merge pool
-                    {
-                    balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx-net-fees) math-call-err),
-                    balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
-                    fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
-                    }
-                )
-            )
-        )
-       
+    (begin
         (asserts! (> dx u0) invalid-liquidity-err) 
         ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)
-    
-        ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
-        ;; send y from vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy .alex-vault tx-sender none)) transfer-y-failed-err)
-        
-        (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
-        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)        
+        (let
+            (
+                (token-x (contract-of token-x-trait))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+                (fee-rate-x (get fee-rate-x pool))
 
-        ;; post setting
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-        (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-        (ok {dx: dx-net-fees, dy: dy})
+                ;; fee = dx * fee-rate-x
+                (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
+                (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
+    
+                (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
+
+                (pool-updated
+                    (merge pool
+                        {
+                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx-net-fees) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
+                        }
+                    )
+                )
+            )
+        
+            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
+            (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+
+            ;; post setting
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+            (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+            (ok {dx: dx-net-fees, dy: dy})
+        )
     )
 )
 
 (define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
-
-    (let
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (fee-rate-y (get fee-rate-y pool))
-
-            ;; fee = dy * fee-rate-y
-            (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
-            (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
-
-            (dx (unwrap! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees) internal-function-call-err))
-
-            (pool-updated
-                (merge pool
-                    {
-                    balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
-                    balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy-net-fees) math-call-err),
-                    fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
-                    }
-                )
-            )
-        )
-        (asserts! (> dy u0) invalid-liquidity-err)
+    (begin
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
+        (asserts! (> dy u0) invalid-liquidity-err)
+        (let
+            (
+                (token-x (contract-of token-x-trait))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+                (fee-rate-y (get fee-rate-y pool))
 
-        ;; send x from vault
-        ;;(asserts! (is-ok (contract-call? token-x-trait transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? token-y-trait transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
-        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
-        (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
+                ;; fee = dy * fee-rate-y
+                (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
+                (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
 
-        ;; post setting
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-        (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
-        (ok {dx: dx, dy: dy-net-fees})
+                (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
+
+                (pool-updated
+                    (merge pool
+                        {
+                        balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy-net-fees) math-call-err),
+                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
+                        }
+                    )
+                )
+            )
+        
+            (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+            (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
+
+            ;; post setting
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+            (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+            (ok {dx: dx, dy: dy-net-fees})
+        )
     )
 )
 
@@ -345,6 +336,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
@@ -363,30 +355,13 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
 
         (map-set pools-data-map 
             { 
                 token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
             }
             (merge pool { fee-rate-y: fee-rate-y })
-        )
-        (ok true)     
-    )
-)
-
-(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (address principal))
-    (let 
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-        )
-
-        (map-set pools-data-map 
-            { 
-                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
-            }
-            (merge pool { fee-to-address: address })
         )
         (ok true)     
     )
@@ -410,7 +385,7 @@
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))              
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
-        )
+        )        
         (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
     )
 )
@@ -426,10 +401,45 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))
         )
 
-        (and (> fee-x u0) (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault address none) transfer-x-failed-err))
-        (and (> fee-y u0) (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault address none) transfer-y-failed-err))
+        (and (> fee-x u0) 
+            (and 
+                ;; first transfer fee-x to tx-sender
+                (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; send fee-x to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-x .token-usda) 
+                            fee-x 
+                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
+                        )
+                    )
+                )
+            )
+        )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+
+        (and (> fee-y u0) 
+            (and 
+                ;; first transfer fee-y to tx-sender
+                (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; send fee-y to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token-y .token-usda) 
+                            fee-y 
+                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
+                        )
+                    )
+                )
+            )
+        )    
 
         (map-set pools-data-map
         { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}

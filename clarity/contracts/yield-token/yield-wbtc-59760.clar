@@ -66,7 +66,6 @@
 ;; Mint method for yield-wbtc-59760
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-wbtc-pool) (err err-not-authorized))
     (ft-mint? yield-wbtc-59760 amount recipient)
   )
 )
@@ -74,7 +73,6 @@
 ;; Burn method for yield-wbtc-59760
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .yield-wbtc-pool) (err err-not-authorized))
     (ft-burn? yield-wbtc-59760 amount sender)
   )
 )
@@ -87,10 +85,7 @@
     (ok (var-get token-expiry))
 )
 
-
 ;; Initialize the contract for Testing.
 (begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? yield-wbtc-59760 u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
-  ;;(try! (ft-mint? yield-wbtc-59760 u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; Wallet 2
+  (try! (ft-mint? yield-wbtc-59760 u2000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )

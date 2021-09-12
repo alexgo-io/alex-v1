@@ -117,3 +117,19 @@ depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-po
 [contracts.flash-loan-user-margin-wbtc-usda-59760]
 path = "contracts/flash-loan-user-margin-wbtc-usda-59760.clar"
 depends_on = ["token-usda", "token-wbtc", "yield-wbtc-59760", "key-wbtc-59760-usda"]
+
+[contracts.multisig-fwp-wbtc-usda-50-50]
+path = "contracts/multisig/multisig-fwp-wbtc-usda-50-50.clar"
+depends_on = []
+
+[contracts.multisig-ytp-yield-wbtc-59760-wbtc]
+path = "contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
+depends_on = ["ytp-yield-wbtc-59760-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-59760"]
+
+[contracts.multisig-ytp-yield-wbtc-79760-wbtc]
+path = "contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
+depends_on = ["ytp-yield-wbtc-79760-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-79760"]
+
+[contracts.multisig-crp-wbtc-59760-usda]
+path = "contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
+depends_on = ["yield-wbtc-59760", "key-wbtc-59760-usda", "token-wbtc", "token-usda", "trait-sip-010"]

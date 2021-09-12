@@ -38,11 +38,5 @@
 
     ;; the expiry
     (get-expiry () (response uint uint))
-
-    ;; ;; Mint
-    ;; (mint-from-registry (uint principal) (response bool uint))
-
-    ;; ;; Burn
-    ;; (burn-from-registry (uint principal) (response bool uint))
- )
+  )
 )

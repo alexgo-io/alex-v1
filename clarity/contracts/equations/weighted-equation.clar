@@ -14,22 +14,17 @@
 (define-constant math-call-err (err 4003))
 
 ;; max in/out as % of liquidity
-;; TODO: we may want to remove this. Too arbitrary
-(define-constant MAX_IN_RATIO (* u3 (pow u10 u7))) ;;0.3e8
-(define-constant MAX_OUT_RATIO (* u3 (pow u10 u7))) ;;0.3e8
+;; (define-constant MAX_IN_RATIO (* u2 (pow u10 u6))) ;; 2%
+;; (define-constant MAX_OUT_RATIO (* u2 (pow u10 u6))) ;; 2%
+;; for testing only
+(define-constant MAX_IN_RATIO (* u5 (pow u10 u7)))
+(define-constant MAX_OUT_RATIO (* u5 (pow u10 u7)))
 
 ;; data maps and vars
 ;;
 
 ;; private functions
 ;;
-
-(define-private (min (x uint) (y uint))
-    (if (< x y)
-        (ok x)
-        (ok y)
-    )
-)
 
 ;; public functions
 ;;
@@ -60,8 +55,10 @@
                 (max-in (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x MAX_IN_RATIO)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point add-fixed balance-x dx)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-x denominator)))
-                (exponent (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))
-                (power (unwrap-panic (contract-call? .math-fixed-point pow-down base exponent)))
+                (uncapped-exponent (unwrap-panic (contract-call? .math-fixed-point div-up weight-x weight-y)))
+                (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
+                (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
                 (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))
             )
             (asserts! (< dx max-in) max-in-ratio-err)
@@ -84,13 +81,15 @@
             (
                 (max-out (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y MAX_OUT_RATIO)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)))
-                (base (unwrap-panic (contract-call? .math-fixed-point div-up balance-y denominator)))
-                (exponent (unwrap-panic (min (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)) (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-down balance-y denominator)))
+                (uncapped-exponent (unwrap-panic (contract-call? .math-fixed-point div-down weight-x weight-y)))
+                (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
+                (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base exponent)))
                 (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))
             )
             (asserts! (< dy max-out) max-out-ratio-err)
-            (contract-call? .math-fixed-point mul-up balance-x ratio)
+            (contract-call? .math-fixed-point mul-down balance-x ratio)
         )
         weight-sum-err
     )
@@ -163,9 +162,7 @@
                     (token-supply (unwrap-panic (contract-call? .math-fixed-point div-down token total-supply)))
                     ;; calculate dx as % of balance-x corresponding to % you need to mint
                     (dx (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x token-supply)))
-                    ;; calculate dy using weight ratio
-                    (wy-wx (unwrap-panic (contract-call? .math-fixed-point div-down weight-y weight-x)))
-                    (dy (unwrap-panic (contract-call? .math-fixed-point mul-down dx wy-wx)))
+                    (dy (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y token-supply)))
                 )
                 (ok {dx: dx, dy: dy})
             )

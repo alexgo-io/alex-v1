@@ -15,9 +15,10 @@ import {
       this.deployer = deployer;
     }
     
-    getT(expiry: number) {
+    getT(expiry: number, listed: number) {
       return this.chain.callReadOnlyFn("yield-token-pool", "get-t", [
-        types.uint(expiry)
+        types.uint(expiry),
+        types.uint(listed)
       ], this.deployer.address);
     }
 
@@ -39,12 +40,13 @@ import {
         ], this.deployer.address);
       }
 
-    createPool(user: Account, aytoken: string, token: string, pooltoken: string, dX: number, dY: number) {
+    createPool(user: Account, aytoken: string, token: string, pooltoken: string, multiSig: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("yield-token-pool", "create-pool", [
           types.principal(aytoken),
           types.principal(token),
           types.principal(pooltoken),
+          types.principal(multiSig),
           types.uint(dX),
           types.uint(dY)
         ], user.address),
@@ -116,17 +118,6 @@ import {
           ], user.address),
         ]);
         return block.receipts[0].result;
-    }
-
-
-    setFeetoAddress(user: Account, aytoken: string, address: string) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("yield-token-pool", "set-fee-to-address", [
-          types.principal(aytoken),
-          types.principal(address) 
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
     }
   
     getFeetoAddress(user: Account, aytoken: string) {

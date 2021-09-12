@@ -7,11 +7,11 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) (err err-not-authorized))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err not-authorized-err))
 
     (ok (var-set contract-owner owner))
   )
@@ -26,7 +26,7 @@
 )
 
 (define-read-only (get-name)
-  (ok "Alex Token")
+  (ok "ALEX")
 )
 
 (define-read-only (get-symbol)
@@ -44,7 +44,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   (if (is-eq tx-sender (var-get contract-owner))
     (ok (var-set token-uri value))
-    (err err-not-authorized)
+    (err not-authorized-err)
   )
 )
 
@@ -76,8 +76,5 @@
 
 ;; Initialize the contract for Testing.
 (begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? alex u1000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-  (try! (ft-mint? alex u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-  (try! (ft-mint? alex u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
+  (try! (ft-mint? alex u1000000000000 tx-sender))
 )

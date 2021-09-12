@@ -30,5 +30,5 @@
     
     ;;burn(principal uint):bool
     (burn (principal uint) (response bool uint))
- )
+  )
 )

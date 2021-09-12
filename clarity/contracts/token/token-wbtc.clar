@@ -6,7 +6,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -35,7 +35,7 @@
 (define-public (set-token-uri (value (string-utf8 256)))
   ;;(if (is-eq tx-sender (contract-call? . get-dao-owner))
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
+  ;;  (err not-authorized-err)
   ;;)
 )
 
@@ -67,8 +67,6 @@
 
 ;; Initialize the contract for Testing.
 (begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? wbtc u2000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE)) ;; Deployer
-  (try! (ft-mint? wbtc u2000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-  (try! (ft-mint? wbtc u2000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; RegTest-V2 Deployer
+  (try! (ft-mint? wbtc u2000000000000 tx-sender))
+  (try! (ft-mint? wbtc u2000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )
