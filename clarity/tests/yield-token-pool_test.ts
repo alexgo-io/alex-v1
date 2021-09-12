@@ -25,7 +25,7 @@ Clarinet.test({
     name: "YTP : Pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
+        let deployer = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         
         //Deployer creating a pool, initial tokens injected to the pool
@@ -119,8 +119,8 @@ Clarinet.test({
         position['dx'].expectUint(ONE_8);
         position['dy'].expectUint(100352095);        
 
-        // attempt to sell more than max allowed yield token (2% of pool) must throw an error
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 21*ONE_8);
+        // attempt to sell more than max allowed yield token (50% of pool) must throw an error
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 501*ONE_8);
         position =result.expectErr().expectUint(4002)
 
         call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 

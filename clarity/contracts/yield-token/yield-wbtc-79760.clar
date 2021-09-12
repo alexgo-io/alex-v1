@@ -81,7 +81,7 @@
 )
 
 
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? yield-wbtc-79760 u1000000000000 tx-sender))
-)
+;; ;; Initialize the contract for Testing.
+;; (begin
+;;   (try! (ft-mint? yield-wbtc-79760 u1000000000000 tx-sender))
+;; )

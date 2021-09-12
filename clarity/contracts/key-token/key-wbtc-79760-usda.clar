@@ -86,7 +86,3 @@
 (define-public (get-expiry)
     (ok (var-get token-expiry))
 )
-
-(begin
-  (try! (ft-mint? key-wbtc-79760-usda u1000000000000 tx-sender))
-)

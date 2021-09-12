@@ -120,7 +120,7 @@
     (new-fee-rate-aytoken uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-balance tx-sender)))
+    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-balance tx-sender)) ONE_8))
     (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-total-supply)) ONE_8))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
@@ -220,7 +220,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-total-supply)))
+        (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-total-supply)) ONE_8))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
         (yes-votes (* (get yes-votes proposal) ONE_8))
   )
@@ -243,7 +243,7 @@
 (define-public (return-votes-to-member (token <ft-trait>) (proposal-id uint) (member principal))
   (let 
     (
-      (token-count (get amount (get-tokens-by-member-by-id proposal-id member token)))
+      (token-count (/ (get amount (get-tokens-by-member-by-id proposal-id member token)) ONE_8))
       (proposal (get-proposal-by-id proposal-id))
     )
 
