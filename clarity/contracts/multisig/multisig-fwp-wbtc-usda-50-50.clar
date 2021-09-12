@@ -169,13 +169,13 @@
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { yes-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get yes-votes proposal)) math-call-err) }))
+      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
+      { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
-      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
+      { amount: (+ amount token-count)})
 
     (ok amount)
     
@@ -200,13 +200,14 @@
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { no-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get no-votes proposal)) math-call-err) }))
+      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
+      { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
-      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
+      { amount: (+ amount token-count)})
+
     (ok amount)
     )
     
@@ -217,7 +218,7 @@
         (threshold-percent (var-get threshold))
         (total-supply (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
-        (yes-votes (* (get yes-votes proposal) ONE_8))
+        (yes-votes (get yes-votes proposal))
   )
 
     (asserts! (not (is-eq (get id proposal) u0)) not-authorized-err)  ;; Default id
