@@ -120,7 +120,7 @@
   )
   (let (
     (proposer-balance (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-balance tx-sender)))
-    (total-supply (* (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-total-supply)) ONE_8))
+    (total-supply (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-total-supply)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -145,7 +145,7 @@
     )
     (var-set proposal-count proposal-id)
     (var-set proposal-ids (unwrap-panic (as-max-len? (append (var-get proposal-ids) proposal-id) u100)))
-    (ok true)
+    (ok proposal-id)
   )
 )
 
@@ -177,14 +177,10 @@
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
       { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
 
-
-    (ok status-ok)
+    (ok amount)
     
     )
   )
-
-
-
 
 (define-public (vote-against (token <ft-trait>) (proposal-id uint) (amount uint))
   (let (
@@ -233,8 +229,9 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-    (ok status-ok))
+     (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
+     (ok status-ok)
+    )
 )
 
 ;; Return votes to voter(member)
@@ -270,4 +267,14 @@
     
     (ok true)
   )
+)
+
+
+(define-public (collect-fees-to-multisig)
+    ;; TODO : Conditions for moving collected balance to multisig
+    ;; Collect Fee from pool to multisig 
+    (begin
+      (try! (contract-call? .fixed-weight-pool collect-fees .token-wbtc .token-usda u50000000 u50000000))
+      (ok true)
+    )
 )
