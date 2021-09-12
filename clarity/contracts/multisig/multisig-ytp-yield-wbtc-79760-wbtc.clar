@@ -123,7 +123,7 @@
   )
   (let (
     (proposer-balance (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-balance tx-sender)))
-    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
+    (total-supply (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -182,7 +182,7 @@
       { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
 
 
-    (ok status-ok)
+    (ok amount)
     
     )
   )
@@ -215,7 +215,7 @@
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
       { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
-    (ok status-ok)
+    (ok amount)
     )
     
     )

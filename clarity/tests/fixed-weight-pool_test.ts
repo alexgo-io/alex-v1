@@ -7,13 +7,13 @@ import {
   } from './models/alex-tests-fixed-weight-pool.ts';
 
 import { 
-    MultiSigFWP,
+    MS_FWP_WBTC_USDA_5050,
 } from './models/alex-tests-multisigs.ts';
 
 import { 
     USDAToken,
     WBTCToken,
-    FWPWBTCUSDA5050Token
+    POOLTOKEN_FWP_WBTC_USDA_5050
   } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
@@ -106,17 +106,17 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : Trading with fees and collecting with multisig.",
+    name: "FWP : Fee Setting and Collection using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let wallet_1 = accounts.get("wallet_1")!;
+        //let wallet_1 = accounts.get("wallet_1")!;
 
         let FWPTest = new FWPTestAgent1(chain, deployer);
-        let MultiSigTest = new MultiSigFWP(chain, deployer, wallet_1);
+        let MultiSigTest = new MS_FWP_WBTC_USDA_5050(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let fwpPoolToken = new FWPWBTCUSDA5050Token(chain, deployer);
+        let fwpPoolToken = new POOLTOKEN_FWP_WBTC_USDA_5050(chain, deployer);
 
         const feeRateX = 5000000; // 5%
         const feeRateY = 5000000;
@@ -198,7 +198,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let FWPTest = new FWPTestAgent1(chain, deployer);
-        let MultiSigTest = new MultiSigFWP(chain, deployer, wallet_1);
+        let MultiSigTest = new MS_FWP_WBTC_USDA_5050(chain, deployer);
         const feeRateX = 5000000; // 5%
         const feeRateY = 5000000;
 
@@ -260,7 +260,7 @@ Clarinet.test({
         result.expectErr().expectUint(1); 
 
         result = MultiSigTest.voteAgainst(deployer, fwpwbtcusdaAddress, 1, 2960262500000 * 9 / 10 )
-        result.expectOk().expectUint(10000); 
+        result.expectOk().expectUint(2664236250000); 
 
         // Attempt to end proposal before block height
         result = MultiSigTest.endProposal(1)

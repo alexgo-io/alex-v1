@@ -6,7 +6,17 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { 
     YTPTestAgent1,
   } from './models/alex-tests-yield-token-pool.ts';
-  
+
+import { 
+    MS_YTP_WBT_59760,
+} from './models/alex-tests-multisigs.ts';
+
+import { 
+    USDAToken,
+    WBTCToken,
+    POOLTOKEN_YTP_WBTC_WBTC_59760
+  } from './models/alex-tests-tokens.ts';
+
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
@@ -235,5 +245,80 @@ Clarinet.test({
             ], deployer.address);
         call.result.expectOk().expectUint(100000005); // par          
 
+    },    
+});
+
+
+
+Clarinet.test({
+    name: "YTP : Fee Setting and Collection using Multisig ",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);
+        let ytpPoolToken = new POOLTOKEN_YTP_WBTC_WBTC_59760(chain, deployer);
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+        const buffer = new ArrayBuffer(34)
+        const feeRateX = 5000000; // 5%
+        const feeRateY = 5000000;
+
+        // let money = usdaToken.transferToken(10*ONE_8,deployer.address,wallet_1.address, buffer);
+        // money = wbtcToken.transferToken(10*ONE_8,deployer.address,wallet_1.address, buffer);
+        // money.expectOk()
+
+        //Deployer creating a pool, initial tokens injected to the pool
+        let result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
+        result.expectOk().expectBool(true);
+
+        // Check pool details and print
+        let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        let position:any = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(1000*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(1000*ONE_8);
+
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(99954689);
+        position['dy'].expectUint(ONE_8);
+
+        call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(99900045311);
+        position['balance-aytoken'].expectUint(ONE_8);
+        position['balance-virtual'].expectUint(1000*ONE_8);
+
+
+        call = await ytpPoolToken.balanceOf(deployer.address);
+        call.result.expectOk().expectUint(100000000000);
+
+        call = await ytpPoolToken.balanceOf(wallet_1.address);
+        call.result.expectOk().expectUint(0);
+
+        // Fee rate Setting Proposal of Multisig
+        result = MultiSigTest.propose(1000, " Fee Rate Setting to 5%", " https://docs.alexgo.io", feeRateX, feeRateY)
+        result.expectOk().expectUint(1) // First Proposal
+    
+        // Block 1000 mining
+        chain.mineEmptyBlock(1000);
+
+        // Deployer has 100 % of pool token
+        let ROresult:any = ytpPoolToken.balanceOf(deployer.address);
+        ROresult.result.expectOk().expectUint(100000000000);
+                
+        // 90 % of existing tokens are voted for the proposal
+        result = MultiSigTest.voteFor(deployer, ytpyieldwbtc59760Address, 1, 100000000000 * 9 / 10 )
+        result.expectOk().expectUint(90000000000)
+
+        chain.mineEmptyBlock(1440);
+
+        // end proposal 
+        result = MultiSigTest.endProposal(1)
+        result.expectOk().expectUint(10000) // Success 
+
+        
     },    
 });

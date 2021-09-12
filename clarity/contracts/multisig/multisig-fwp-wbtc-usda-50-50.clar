@@ -207,7 +207,7 @@
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
       { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
-    (ok status-ok)
+    (ok amount)
     )
     
     )
