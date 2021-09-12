@@ -22,9 +22,35 @@ import {
         types.uint(expiry)
       ], this.deployer.address);
     }    
+
+    getPoolValueInToken(token: string, collateral: string, expiry: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-token", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry)
+      ], this.deployer.address);
+    }
+
+    getPoolValueInCollateral(token: string, collateral: string, expiry: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-collateral", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry)
+      ], this.deployer.address);
+    }    
     
-    getWeightX(token: string, collateral: string, expiry: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-x", [
+    getWeightY(token: string, collateral: string, expiry: number, strike: number, bs_vol: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-y", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry),
+        types.uint(strike),
+        types.uint(bs_vol)
+      ], this.deployer.address);
+    }
+
+    getLtv(token: string, collateral: string, expiry: number){
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-ltv", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
@@ -226,7 +252,23 @@ import {
       return block.receipts[0].result;
     }
 
-  
+    getPositionGivenBurnKey(token: string, collateral: string, expiry: number, shares: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-position-given-burn-key", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry),
+        types.uint(shares)
+      ], this.deployer.address);
+    }
+
+    burnKeyToken(user: Account, amount: number) {
+      let block = this.chain.mineBlock([Tx.contractCall("key-wbtc-59760-usda", "burn", [
+        types.principal(user.address),
+        types.uint(amount)
+      ], user.address),
+      ]);
+      return block.receipts[0].result;    
+    }
   }
   
   export { CRPTestAgent1 };

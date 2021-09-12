@@ -85,7 +85,7 @@
     (ok (var-get token-expiry))
 )
 
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? yield-wbtc-59760 u1000000000000 tx-sender))
-)
+;; ;; Initialize the contract for Testing.
+;; (begin
+;;   (try! (ft-mint? yield-wbtc-59760 u1000000000000 tx-sender))
+;; )
