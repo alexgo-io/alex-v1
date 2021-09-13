@@ -86,11 +86,3 @@
 (define-public (get-expiry)
     (ok (var-get token-expiry))
 )
-
-
-;; Initialize the contract for Testing.
-(begin
-  ;; TODO: Erase on testnet or mainnet
-  (try! (ft-mint? key-wbtc-59760-usda u1000000000000 'ST1RKT6V51K1G3DXWZC22NX6PFM6GBZ8FQKSGSNFY)) ;; Deployer
-  (try! (ft-mint? key-wbtc-59760-usda u1000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;; Wallet 1
-)

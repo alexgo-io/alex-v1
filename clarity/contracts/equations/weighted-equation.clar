@@ -14,9 +14,11 @@
 (define-constant math-call-err (err 4003))
 
 ;; max in/out as % of liquidity
-;; TODO: we may want to remove this. Too arbitrary
-(define-constant MAX_IN_RATIO (* u2 (pow u10 u6))) ;; 2%
-(define-constant MAX_OUT_RATIO (* u2 (pow u10 u6))) ;; 2%
+;; (define-constant MAX_IN_RATIO (* u2 (pow u10 u6))) ;; 2%
+;; (define-constant MAX_OUT_RATIO (* u2 (pow u10 u6))) ;; 2%
+;; for testing only
+(define-constant MAX_IN_RATIO (* u5 (pow u10 u7)))
+(define-constant MAX_OUT_RATIO (* u5 (pow u10 u7)))
 
 ;; data maps and vars
 ;;
