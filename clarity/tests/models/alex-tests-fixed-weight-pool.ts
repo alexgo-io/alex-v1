@@ -94,19 +94,26 @@ import {
       ]);
       return block.receipts[0].result;
     }
-  
-    getYgivenX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dX: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "get-y-given-x", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(weightX),
-          types.uint(weightY),
-          types.uint(dX) 
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
+
+    getXgivenPrice(tokenX: string, tokenY: string, weightX: number, weightY: number, price: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-price", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(price)
+      ], this.deployer.address);
+    } 
+    
+    getYgivenPrice(tokenX: string, tokenY: string, weightX: number, weightY: number, price: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-y-given-price", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(price)
+      ], this.deployer.address);
+    } 
   
     setFeetoAddress(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, address: string) {
       let block = this.chain.mineBlock([

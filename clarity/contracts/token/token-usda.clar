@@ -67,6 +67,7 @@
 
 ;; Initialize the contract for Testing.
 (begin
-  ;; TODO: Erase on testnet or mainnet
   (try! (ft-mint? usda u100000000000000000 tx-sender))
+  ;; mint some to reserve pool
+  (try! (ft-mint? usda u10000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool))
 )
