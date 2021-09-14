@@ -139,6 +139,31 @@ import {
       ]);
       return block.receipts[0].result;
     }
+
+    getFeeX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "get-fee-rate-x", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "get-fee-rate-y", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
   
     collectFees(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
       let block = this.chain.mineBlock([
