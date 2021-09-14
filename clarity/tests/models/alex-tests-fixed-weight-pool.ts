@@ -4,7 +4,7 @@ import {
     Clarinet,
     Tx,
     types,
-  } from "https://deno.land/x/clarinet@v0.13.0/index.ts";
+  } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
   
   class FWPTestAgent1 {
     chain: Chain;
