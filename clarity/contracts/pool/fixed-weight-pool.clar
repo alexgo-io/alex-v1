@@ -490,6 +490,20 @@
     )
 )
 
+(define-read-only (get-y-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (price uint))
+
+    (let 
+        (
+        (token-x (contract-of token-x-trait))
+        (token-y (contract-of token-y-trait))
+        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
+        (balance-x (get balance-x pool))
+        (balance-y (get balance-y pool))
+        )
+        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
 (define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (dy uint))
     (let 
         (
