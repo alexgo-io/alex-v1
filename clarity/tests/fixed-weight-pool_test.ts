@@ -79,8 +79,8 @@ Clarinet.test({
         position['dx'].expectUint(wbtcQ);
         position['dy'].expectUint(wbtcQ*wbtcPrice);        
 
-        // attempt to trade too much (> 2%) will be rejected
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 2*ONE_8);
+        // attempt to trade too much (> 30%) will be rejected
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 50*ONE_8);
         position = result.expectErr().expectUint(4001);
 
         // swap some wbtc into usda

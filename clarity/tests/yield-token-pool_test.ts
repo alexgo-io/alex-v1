@@ -35,7 +35,7 @@ Clarinet.test({
     name: "YTP : Pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
+        let deployer = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         
         //Deployer creating a pool, initial tokens injected to the pool
@@ -129,8 +129,8 @@ Clarinet.test({
         position['dx'].expectUint(ONE_8);
         position['dy'].expectUint(100352095);        
 
-        // attempt to sell more than max allowed yield token (2% of pool) must throw an error
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 21*ONE_8);
+        // attempt to sell more than max allowed yield token (50% of pool) must throw an error
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 501*ONE_8);
         position =result.expectErr().expectUint(4002)
 
         call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
@@ -254,8 +254,8 @@ Clarinet.test({
     name: "YTP : Fee Setting and Collection using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let wallet_1 = accounts.get("wallet_1")!;
+        let deployer = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);
         let ytpPoolToken = new POOLTOKEN_YTP_WBTC_WBTC_59760(chain, deployer);
@@ -279,7 +279,7 @@ Clarinet.test({
         position['balance-token'].expectUint(1000*ONE_8);
         position['balance-aytoken'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
-
+        
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(99954689);
@@ -295,7 +295,7 @@ Clarinet.test({
         call = await ytpPoolToken.balanceOf(deployer.address);
         call.result.expectOk().expectUint(100000000000);
 
-        call = await ytpPoolToken.balanceOf(wallet_1.address);
+        call = await ytpPoolToken.balanceOf(wallet_2.address);
         call.result.expectOk().expectUint(0);
 
         // Fee rate Setting Proposal of Multisig
