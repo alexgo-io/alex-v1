@@ -4,18 +4,18 @@
 
 (define-data-var amount uint u0)
 
+(define-read-only (get-amount)
+    (ok (var-get amount))
+)
+
 ;; user MUST call this to provide borrow and margin amount (both in collateral terms) before calling flash-loan to execute
 (define-public (execute-margin-usda-wbtc-59760 (the-amount uint))
-    (begin
-        (var-set amount the-amount)
-        (ok true)
-    )    
+    (ok (var-set amount the-amount))
 )
 
 (define-public (execute)
-
     (let
-        (
+        (            
             (swapped-token (get dx (try! (contract-call? .collateral-rebalancing-pool add-to-position-and-switch .token-wbtc .token-usda .yield-wbtc-59760 .key-wbtc-59760-usda (var-get amount)))))
         )
         ;; swap token to collateral so we can return flash-loan
