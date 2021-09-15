@@ -163,7 +163,7 @@
             (base (unwrap! (contract-call? .math-fixed-point div-down balance-aytoken balance-token) math-call-err))
             (t-value (try! (get-t expiry listed)))
         )
-        (asserts! (> balance-aytoken balance-token) invalid-balance-err)
+        (asserts! (>= balance-aytoken balance-token) invalid-balance-err)
         (contract-call? .math-fixed-point pow-up base t-value)        
     )
 )
