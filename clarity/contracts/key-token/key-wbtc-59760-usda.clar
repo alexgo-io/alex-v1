@@ -11,7 +11,7 @@
 (define-data-var underlying-token principal .token-wbtc) ;; Token is wbtc
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant not-authorized-err u1000)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -66,7 +66,7 @@
 ;; Mint method for key-wbtc-59760-usda
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err not-authorized-err))
     (ft-mint? key-wbtc-59760-usda amount recipient)
   )
 )
@@ -74,7 +74,7 @@
 ;; Burn method for key-wbtc-59760-usda
 (define-public (burn (sender principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err err-not-authorized))
+    ;;(asserts! (is-eq contract-caller .collateral-rebalancing-pool) (err not-authorized-err))
     (ft-burn? key-wbtc-59760-usda amount sender)
   )
 )

@@ -16,7 +16,7 @@
 (define-constant transfer-y-failed-err (err u3002))
 (define-constant pool-already-exists-err (err u2000))
 (define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one (err u5000))
+(define-constant percent-greater-than-one-err (err u5000))
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
 (define-constant already-expiry-err (err u2010))
@@ -237,7 +237,7 @@
            )
         )
 
-        (asserts! (<= percent ONE_8) percent-greater-than-one)
+        (asserts! (<= percent ONE_8) percent-greater-than-one-err)
         (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
         (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
 

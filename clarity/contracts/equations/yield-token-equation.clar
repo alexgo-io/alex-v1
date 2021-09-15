@@ -10,7 +10,7 @@
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
 (define-constant math-call-err (err u4003))
-(define-constant insufficient-balance-err (err u7003))
+(define-constant insufficient-balance-err (err u4004))
 
 ;; max in/out as % of liquidity
 ;; (define-constant MAX_IN_RATIO (* u2 (pow u10 u6))) ;;2%

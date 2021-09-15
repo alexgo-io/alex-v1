@@ -9,12 +9,7 @@
 (define-constant user-execute-err (err u3005))
 (define-constant transfer-one-by-one-err (err u3006))
 (define-constant transfer-failed-err (err u3000))
-(define-constant none-token-err (err u3007))
-(define-constant get-token-fail (err u3008))
-(define-constant token-type-err (err u3009))
-(define-constant token-absent (err u3010))
-(define-constant invalid-balance (err u3011))
-(define-constant unwrap-err (err u3012))
+(define-constant invalid-flash-loan-balance-err (err u3008))
 (define-constant math-call-err (err u2010))
 (define-constant internal-function-call-err (err u1001))
 
@@ -39,7 +34,7 @@
 (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint))
   (let 
     (
-      (pre-bal (unwrap! (get-balance token) invalid-balance))
+      (pre-bal (unwrap! (get-balance token) invalid-flash-loan-balance-err))
       (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) math-call-err))
       (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) math-call-err))
     )

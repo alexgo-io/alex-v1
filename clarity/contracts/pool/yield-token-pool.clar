@@ -14,7 +14,7 @@
 (define-constant transfer-y-failed-err (err u3002))
 (define-constant pool-already-exists-err (err u2000))
 (define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one (err u5000))
+(define-constant percent-greater-than-one-err (err u5000))
 (define-constant invalid-balance-err (err u2008))
 (define-constant invalid-token-err (err u2007))
 (define-constant no-fee-x-err (err u2005))
@@ -288,7 +288,7 @@
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
         )    
-        percent-greater-than-one
+        percent-greater-than-one-err
     )    
 )
 

@@ -15,11 +15,10 @@
 
 ;; Errors
 (define-constant not-enough-balance-err (err u8000))
-(define-constant no-contract-changes-err (err u8001))
-(define-constant invalid-pool-token (err u8002))
-(define-constant block-height-not-reached (err u8003))
+(define-constant no-fee-change-err (err u8001))
+(define-constant invalid-pool-token-err (err u8002))
+(define-constant block-height-not-reached-err (err u8003))
 (define-constant not-authorized-err (err u1000))
-(define-constant status-ok u10000)
 (define-constant math-call-err (err u2010))
 
 (define-constant ONE_8 u100000000)
@@ -159,7 +158,7 @@
   )
 
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (is-token-accepted token) invalid-pool-token-err)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) not-authorized-err)
     ;; Vote should be casted after the start-block-height
@@ -193,7 +192,7 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (is-token-accepted token) invalid-pool-token-err)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) not-authorized-err)
     ;; Vote should be casted after the start-block-height
@@ -226,7 +225,7 @@
 
     (asserts! (not (is-eq (get id proposal) u0)) not-authorized-err)  ;; Default id
     (asserts! (get is-open proposal) not-authorized-err)
-    (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
+    (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached-err)
 
     (map-set proposals
       { id: proposal-id }
@@ -234,7 +233,7 @@
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
     (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-    (ok status-ok))
+    (ok true))
 )
 
 ;; Return votes to voter(member)
@@ -246,7 +245,7 @@
       (proposal (get-proposal-by-id proposal-id))
     )
 
-    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (is-token-accepted token) invalid-pool-token-err)
     (asserts! (not (get is-open proposal)) not-authorized-err)
     (asserts! (>= block-height (get end-block-height proposal)) not-authorized-err)
 

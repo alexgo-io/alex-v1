@@ -17,7 +17,7 @@
 (define-constant transfer-y-failed-err (err u3002))
 (define-constant pool-already-exists-err (err u2000))
 (define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one (err u5000))
+(define-constant percent-greater-than-one-err (err u5000))
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
 (define-constant weighted-equation-call-err (err u2009))
@@ -417,7 +417,7 @@
 ;; TODO: currently the position returned is not guaranteed 
 (define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) percent-greater-than-one)
+        (asserts! (<= percent ONE_8) percent-greater-than-one-err)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err)) expiry-err)
         (let
@@ -483,7 +483,7 @@
 
 (define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) percent-greater-than-one)
+        (asserts! (<= percent ONE_8) percent-greater-than-one-err)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-key-token get-expiry) get-expiry-fail-err)) expiry-err)
         (let
