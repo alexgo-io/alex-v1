@@ -7,3 +7,5 @@ deploy-keychain.json
 **/staged-contracts/
 init-js-tool/node_modules
 init-js-tool/.env
+**/.DS_Store
+
