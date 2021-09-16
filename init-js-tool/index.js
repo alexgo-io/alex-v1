@@ -1,15 +1,28 @@
 require('dotenv').config();
 const {initCoinPrice, setOpenOracle, getOpenOracle} = require('./oracles').default
-const { createFWP, createCRP,createYTP } = require('./pools')
+const { 
+    fwpCreate,
+    crpCreate,
+    crpAddToPostionAndSwitch,
+    crpGetLtv,
+    crpGetPoolDetails,
+    crpGetPoolValueInToken,
+    ytpCreate,
+    ytpSwapXforY,
+    ytpSwapYforX
+ } = require('./pools')
 async function run(){
-    const {usdc, btc} = await initCoinPrice()
+    // const {usdc, btc} = await initCoinPrice()
     //Need to call it one by one, or you'll receive 'ConflictingNonceInMempool' Error
-    // await setOpenOracle('WBTC','CoinGecko', btc);
-    // await setOpenOracle('USDA','CoinGecko', usdc);
-    //await createFWP()
-    //await createCRP('yield-usda-59760','key-usda-wbtc-59760');
-    //await createYTP('yield-usda-59760','token-wbtc', 'pool-token-usda-59760-usda');
-    //await getOpenOracle('nothing', 'WBTC');
-    //await getOpenOracle('nothing', 'USDA');
+    // await setOpenOracle('WBTC','nothing', btc);
+    // await setOpenOracle('USDA','nothing', usdc);
+    // await fwpCreate('token-wbtc', 'token-usda', 5e+7, 5e+7, 'fwp-wbtc-usda-50-50', 'multisig-fwp-wbtc-usda-50-50', 1e+8, 50000e+8);    
+    await getOpenOracle('nothing', 'WBTC');
+    await getOpenOracle('nothing', 'USDA');
+
+    await crpGetLtv('token-wbtc', 'token-usda', 59760e+8);
+    await crpGetPoolValueInToken('token-wbtc', 'token-usda', 59760e+8);
+    await crpGetPoolDetails('token-wbtc', 'token-usda', 59760e+8);
+
 }
 run();
