@@ -150,7 +150,7 @@
     )
     (var-set proposal-count proposal-id)
     (var-set proposal-ids (unwrap-panic (as-max-len? (append (var-get proposal-ids) proposal-id) u100)))
-    (ok true)
+    (ok proposal-id)
   )
 )
 
@@ -174,16 +174,15 @@
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { yes-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get yes-votes proposal)) math-call-err) }))
+      (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
+      { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
-      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
+      { amount: (+ amount token-count)})
 
-
-    (ok status-ok)
+    (ok amount)
     
     )
   )
@@ -209,14 +208,14 @@
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
-      (merge proposal { no-votes: (unwrap! (contract-call? .math-fixed-point add-fixed amount (get no-votes proposal)) math-call-err) }))
+      (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
     (map-set votes-by-member 
       { proposal-id: proposal-id, member: tx-sender }
-      { vote-count: (unwrap! (contract-call? .math-fixed-point add-fixed amount vote-count) math-call-err) })
+      { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
-      { amount: (unwrap! (contract-call? .math-fixed-point add-fixed amount token-count) math-call-err) })
-    (ok status-ok)
+      { amount: (+ amount token-count)})
+    (ok amount)
     )
     
     )
