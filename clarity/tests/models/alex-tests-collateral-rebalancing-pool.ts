@@ -4,7 +4,7 @@ import {
     Clarinet,
     Tx,
     types,
-  } from "https://deno.land/x/clarinet@v0.13.0/index.ts";
+  } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
   
   class CRPTestAgent1 {
     chain: Chain;
@@ -269,6 +269,24 @@ import {
       ]);
       return block.receipts[0].result;    
     }
+
+    transfer(user: Account, token: string, amount: number, sender: string, recipient: string, memo: ArrayBuffer) {
+      let block = this.chain.mineBlock([Tx.contractCall(token, "transfer", [
+        types.uint(amount),
+        types.principal(sender),
+        types.principal(recipient),
+        types.some(types.buff(memo))
+      ], user.address),
+      ]);
+      return block.receipts[0].result;    
+    }
+
+    getBalance(token: string, owner: string) {
+      return this.chain.callReadOnlyFn(token, "get-balance", [
+        types.principal(owner)
+      ], this.deployer.address);
+    }
+
   }
   
   export { CRPTestAgent1 };
