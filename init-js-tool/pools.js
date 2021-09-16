@@ -8,7 +8,8 @@ const {
     PostConditionMode,
     uintCV,
     contractPrincipalCV,
-    broadcastTransaction
+    broadcastTransaction,
+    ClarityType
   } = require('@stacks/transactions');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
@@ -251,12 +252,23 @@ const crpGetPoolDetails = async (token, collateral, expiry) => {
     };
     try {
       const result = await callReadOnlyFunction(options);
-      console.log(result);
+      printResult(result);
     } catch (error) {
       console.log(error);
     }
 };
-
+const printResult = (result)=>{
+    if(result.type === ClarityType.ResponseOk){
+        if(result.value.type == ClarityType.UInt){
+            console.log(result.value);
+        }else if(result.value.type == ClarityType.Tuple){
+            console.log('|');
+            for (const key in result.value.data) {
+                console.log('---',key,':',result.value.data[key]);
+            }
+        }
+    }
+}
 
 exports.fwpCreate = fwpCreate;
 exports.crpCreate = crpCreate;
