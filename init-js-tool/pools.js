@@ -257,6 +257,7 @@ const crpGetPoolDetails = async (token, collateral, expiry) => {
       console.log(error);
     }
 };
+
 const printResult = (result)=>{
     if(result.type === ClarityType.ResponseOk){
         if(result.value.type == ClarityType.UInt){
@@ -270,6 +271,55 @@ const printResult = (result)=>{
     }
 }
 
+const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+    console.log('[FWP] For given price, what is X...', tokenX, tokenY, weightX, weightY, price);
+  
+    const options = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'fixed-weight-pool',
+      functionName: 'get-x-given-price',
+      functionArgs: [
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+        uintCV(weightX),
+        uintCV(weightY),
+        uintCV(price)
+      ],
+      network: network,
+      senderAddress: process.env.ACCOUNT_ADDRESS,
+    };
+    try {
+      const result = await callReadOnlyFunction(options);
+      console.log(result);
+    } catch (error) {
+      console.log(error);
+    }
+};
+
+const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
+    console.log('Getting FWP Pool Details...', tokenX, tokenY, weightX, weightY);
+  
+    const options = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'fixed-weight-pool',
+      functionName: 'get-pool-details',
+      functionArgs: [
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+        uintCV(weightX),
+        uintCV(weightY)
+      ],
+      network: network,
+      senderAddress: process.env.ACCOUNT_ADDRESS,
+    };
+    try {
+      const result = await callReadOnlyFunction(options);
+      printResult(result);
+    } catch (error) {
+      console.log(error);
+    }
+};
+
 exports.fwpCreate = fwpCreate;
 exports.crpCreate = crpCreate;
 exports.ytpCreate = ytpCreate;
@@ -279,3 +329,5 @@ exports.ytpSwapYforX = ytpSwapYforX;
 exports.crpGetLtv = crpGetLtv;
 exports.crpGetPoolDetails = crpGetPoolDetails;
 exports.crpGetPoolValueInToken = crpGetPoolValueInToken;
+exports.fwpGetXGivenPrice = fwpGetXGivenPrice;
+exports.fwpGetPoolDetails = fwpGetPoolDetails;
