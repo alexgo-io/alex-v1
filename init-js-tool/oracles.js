@@ -61,7 +61,35 @@ const setOpenOracle = async (symbol, src, price) => {
   }
 };
 
+//Call open-oracle to get price
+const getOpenOracle = async (src, symbol) => {
+  console.log('Getting oracle...', src, symbol);
+  const privateKey = await getPK();
+
+  const txOptions = {
+    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractName: 'open-oracle',
+    functionName: 'get-price',
+    functionArgs: [
+      stringAsciiCV(src),      
+      stringAsciiCV(symbol)
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 exports.default = {
   initCoinPrice,
-  setOpenOracle
+  setOpenOracle,
+  getOpenOracle
 }
