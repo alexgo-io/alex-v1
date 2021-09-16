@@ -107,14 +107,35 @@
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
             (
-                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
                 (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
+                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
+                (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
+                (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))                
+            )
+            (asserts! (> price spot) no-liquidity-err)
+            (contract-call? .math-fixed-point mul-up balance-x (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
+        )
+        weight-sum-err    
+    )   
+)
+
+;; TODO: not very accurate
+(define-read-only (get-y-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    (if (is-eq (+ weight-x weight-y) ONE_8)
+        (let 
+            (
+
+                (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
+                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
                 (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))
-                (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
             )
-            (contract-call? .math-fixed-point mul-up balance-x ratio)
+            (asserts! (< price spot) no-liquidity-err)
+            (get-y-given-x balance-x balance-y weight-x weight-y 
+                (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x 
+                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))))
         )
         weight-sum-err    
     )   

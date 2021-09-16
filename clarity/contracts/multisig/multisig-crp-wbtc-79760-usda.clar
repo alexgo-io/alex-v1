@@ -95,8 +95,8 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      new-fee-rate-x: u0,    
-      new-fee-rate-y: u0  
+      new-fee-rate-x: u0,    ;; Default token feerate
+      new-fee-rate-y: u0  ;; default aytoken feerate
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -104,7 +104,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .fwp-wbtc-usda-50-50)
+    (or (is-eq (contract-of token) .yield-wbtc-79760) (is-eq (contract-of token) .key-wbtc-79760-usda))
 )
 
 
@@ -118,11 +118,16 @@
     (new-fee-rate-x uint)
     (new-fee-rate-y uint)
   )
-  (let (
-    (proposer-balance (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-balance tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-total-supply)))
-    (proposal-id (+ u1 (var-get proposal-count)))
-  )
+  (let 
+    (
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-wbtc-79760 get-balance tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-wbtc-79760-usda get-balance tx-sender)))
+      (proposer-balance (+ proposer-yield-balance proposer-key-balance))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-79760 get-total-supply)))
+      (total-key-supply (unwrap-panic (contract-call? .key-wbtc-79760-usda get-total-supply)))
+      (total-supply (+ total-yield-supply total-key-supply))
+      (proposal-id (+ u1 (var-get proposal-count)))
+    )
 
     ;; Requires 10% of the supply 
     (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
@@ -182,6 +187,9 @@
     )
   )
 
+
+
+
 (define-public (vote-against (token <ft-trait>) (proposal-id uint) (amount uint))
   (let (
     (proposal (get-proposal-by-id proposal-id))
@@ -207,7 +215,6 @@
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) }
       { amount: (+ amount token-count)})
-
     (ok amount)
     )
     
@@ -216,7 +223,9 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-total-supply)))
+        (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-79760 get-total-supply)))
+        (total-key-supply (unwrap-panic (contract-call? .key-wbtc-79760-usda get-total-supply)))
+        (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
         (yes-votes (get yes-votes proposal))
   )
@@ -230,9 +239,8 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-     (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-     (ok status-ok)
-    )
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
+    (ok status-ok))
 )
 
 ;; Return votes to voter(member)
@@ -256,26 +264,16 @@
 
 ;; Make needed contract changes on DAO
 (define-private (execute-proposal (proposal-id uint))
-  (let (
-    (proposal (get-proposal-by-id proposal-id))
-    (new-fee-rate-x (get new-fee-rate-x proposal))
-    (new-fee-rate-y (get new-fee-rate-y proposal))
-  ) 
+  (let 
+    (
+      (proposal (get-proposal-by-id proposal-id))
+      (new-fee-rate-x (get new-fee-rate-x proposal))
+      (new-fee-rate-y (get new-fee-rate-y proposal))
+    ) 
   
-    ;; Setting for Yield Token Pool
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wbtc .token-usda u50000000 u50000000 new-fee-rate-x))
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wbtc .token-usda u50000000 u50000000 new-fee-rate-y))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-wbtc .token-usda u5976000000000 new-fee-rate-x))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-wbtc .token-usda u5976000000000 new-fee-rate-y))
     
     (ok true)
   )
-)
-
-
-(define-public (collect-fees-to-multisig)
-    ;; TODO : Conditions for moving collected balance to multisig
-    ;; Collect Fee from pool to multisig 
-    (begin
-      (try! (contract-call? .fixed-weight-pool collect-fees .token-wbtc .token-usda u50000000 u50000000))
-      (ok true)
-    )
 )

@@ -2,10 +2,12 @@ const CoinGecko = require('coingecko-api');
 const CoinGeckoClient = new CoinGecko();
 const {
   makeContractCall,
+  callReadOnlyFunction,
   AnchorMode,
   stringAsciiCV,
   uintCV,
-  broadcastTransaction
+  broadcastTransaction,
+  bufferCVFromString
 } = require('@stacks/transactions');
 
 
@@ -61,7 +63,31 @@ const setOpenOracle = async (symbol, src, price) => {
   }
 };
 
+//Call open-oracle to get price
+const getOpenOracle = async (src, symbol) => {
+  console.log('Getting oracle...', src, symbol);
+
+  const options = {
+    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractName: 'open-oracle',
+    functionName: 'get-price',
+    functionArgs: [
+      stringAsciiCV(src),      
+      stringAsciiCV(symbol)
+    ],
+    network: network,
+    senderAddress: process.env.ACCOUNT_ADDRESS,
+  };
+  try {
+    const result = await callReadOnlyFunction(options);
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 exports.default = {
   initCoinPrice,
-  setOpenOracle
+  setOpenOracle,
+  getOpenOracle
 }
