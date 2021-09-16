@@ -107,7 +107,6 @@
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
             (
-
                 (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
                 (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
                 (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
