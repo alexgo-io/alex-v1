@@ -50,6 +50,6 @@
 
     ;; return the loan + fee
     (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) post-loan-transfer-failed-err) 
-    (ok true)
+    (ok {amount: amount, amount-with-fee: amount-with-fee})
   )
 )
