@@ -11,18 +11,24 @@ import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
+const multisigfwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
 const yieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-59760"
 const keywbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-usda"
-const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
 const ytpyieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-59760-wbtc"
 const multisigncrpwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-usda"
-const multisigfwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
 const multisigytpyieldwbtc59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-59760-wbtc"
+const yieldwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-79760"
+const keywbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-79760-usda"
+const ytpyieldwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-79760-wbtc"
+const multisigncrpwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-79760-usda"
+const multisigytpyieldwbtc79760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-79760-wbtc"
 const vaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
 const reserveAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
 const ONE_8 = 100000000
 const expiry = 59760 * ONE_8
+const expiry79760 = 79760 * ONE_8
 const ltv_0 = 0.8 * ONE_8
 const conversion_ltv = 0.95 * ONE_8
 const bs_vol = 0.8 * ONE_8
@@ -65,7 +71,6 @@ Clarinet.test({
         let position:any = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(wbtcQ);
         position['balance-y'].expectUint(Math.round(wbtcQ * wbtcPrice / ONE_8));
-
 
         result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
@@ -163,8 +168,8 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)    
 
         // wbtc rises then by 50%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8 * 1.5));
-        oracleresult.expectOk();
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 0.8 * 1.5);
+        oracleresult.expectOk();      
 
         // the rise shifts allocation to wbtc (token)
         call = await CRPTest.getWeightY(wbtcAddress, usdaAddress, expiry, 50000 * ONE_8, bs_vol);
@@ -292,6 +297,52 @@ Clarinet.test({
         position['key-supply'].expectUint(0);        
         position['balance-x'].expectUint(0);
         position['balance-y'].expectUint(8073636);                
+    },    
+});
+
+Clarinet.test({
+    name: "CRP : multiple CRP pools created",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        oracleresult.expectOk()
+
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult.expectOk()
+        
+        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result.expectOk().expectBool(true);
+
+        let call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        let position:any = call.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(wbtcQ);
+        position['balance-y'].expectUint(Math.round(wbtcQ * wbtcPrice / ONE_8));
+
+        result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
+        result.expectOk().expectBool(true);
+
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectOk().expectBool(true);
+
+        // simulate to half way to expiry
+        chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)    
+
+        // wbtc rises then by 50%
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8 * 1.5));
+        oracleresult.expectOk();
+
+        result = YTPTest.createPool(deployer, yieldwbtc79760Address, wbtcAddress, ytpyieldwbtc79760Address, multisigytpyieldwbtc79760, wbtcQ / 10, wbtcQ / 10);        
+        result.expectOk().expectBool(true);
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc79760Address, keywbtc79760Address, multisigncrpwbtc79760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectOk().expectBool(true);          
     },    
 });
 
