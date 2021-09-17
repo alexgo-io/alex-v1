@@ -20,7 +20,7 @@
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant expiry-err (err u2017))
 (define-constant get-balance-fail-err (err u6001))
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant oracle-src "nothing")
 

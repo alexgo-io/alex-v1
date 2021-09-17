@@ -26,7 +26,7 @@
 (define-constant get-expiry-fail-err (err u2013))
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant get-symbol-fail-err (err u6000))
 
@@ -401,7 +401,7 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-aytoken: fee-rate-aytoken }))
         (ok true)
@@ -415,7 +415,7 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
@@ -461,9 +461,9 @@
             (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) ERR-MATH-CALL))            
         )
         
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
         
         (and (> fee-x u0) 
             (and 

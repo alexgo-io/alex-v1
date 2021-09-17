@@ -8,7 +8,7 @@
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant invalid-pool-err (err u2001))
 (define-constant no-liquidity-err (err u2002))
 (define-constant invalid-liquidity-err (err u2003))
@@ -336,7 +336,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -355,7 +355,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -423,7 +423,7 @@
                 )
             )
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (and (> fee-y u0) 
             (and 

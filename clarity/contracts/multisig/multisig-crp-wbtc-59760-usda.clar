@@ -17,7 +17,7 @@
 (define-constant no-fee-change-err (err u8001))
 (define-constant invalid-pool-token-err (err u8002))
 (define-constant block-height-not-reached-err (err u8003))
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-MATH-CALL (err u2010))
 
 (define-constant ONE_8 u100000000)
@@ -163,9 +163,9 @@
     ;; Can vote with corresponding pool token
     (asserts! (is-token-accepted token) invalid-pool-token-err)
     ;; Proposal should be open for voting
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
-    (asserts! (>= block-height (get start-block-height proposal)) not-authorized-err)
+    (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
     (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
@@ -197,9 +197,9 @@
     ;; Can vote with corresponding pool token
     (asserts! (is-token-accepted token) invalid-pool-token-err)
     ;; Proposal should be open for voting
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
-    (asserts! (>= block-height (get start-block-height proposal)) not-authorized-err)
+    (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     ;; Voter should stake the corresponding pool token to the vote contract. 
     (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
 
@@ -228,8 +228,8 @@
         (yes-votes (get yes-votes proposal))
   )
 
-    (asserts! (not (is-eq (get id proposal) u0)) not-authorized-err)  ;; Default id
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (not (is-eq (get id proposal) u0)) ERR-NOT-AUTHORIZED)  ;; Default id
+    (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached-err)
 
     (map-set proposals
@@ -251,8 +251,8 @@
     )
 
     (asserts! (is-token-accepted token) invalid-pool-token-err)
-    (asserts! (not (get is-open proposal)) not-authorized-err)
-    (asserts! (>= block-height (get end-block-height proposal)) not-authorized-err)
+    (asserts! (not (get is-open proposal)) ERR-NOT-AUTHORIZED)
+    (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
     (try! (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none)))

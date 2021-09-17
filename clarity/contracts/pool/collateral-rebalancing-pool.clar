@@ -30,7 +30,7 @@
 (define-constant get-oracle-price-fail-err (err u7000))
 (define-constant expiry-err (err u2017))
 (define-constant get-balance-fail-err (err u6001))
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -652,7 +652,7 @@
             (token-y (contract-of token))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -671,7 +671,7 @@
             (token-y (contract-of token))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -720,7 +720,7 @@
             (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) ERR-MATH-CALL))
             (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) ERR-MATH-CALL))            
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) not-authorized-err)
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
