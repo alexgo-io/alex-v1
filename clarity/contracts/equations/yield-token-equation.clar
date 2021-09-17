@@ -6,7 +6,7 @@
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant ERR-NO-LIQUIDITY (err u2002))
-(define-constant weight-sum-err (err u4000))
+(define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
 (define-constant math-call-err (err u4003))

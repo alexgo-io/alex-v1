@@ -8,7 +8,7 @@
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant ERR-NO-LIQUIDITY (err u2002))
-(define-constant weight-sum-err (err u4000))
+(define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
 (define-constant math-call-err (err 4003))
@@ -37,7 +37,7 @@
         (ok (unwrap-panic (contract-call? .math-fixed-point mul-down 
                 (unwrap-panic (contract-call? .math-fixed-point pow-down balance-x weight-x)) 
                 (unwrap-panic (contract-call? .math-fixed-point pow-down balance-y weight-y)))))
-        weight-sum-err
+        ERR-WEIGHT-SUM
     )
 )
 
@@ -65,7 +65,7 @@
 
             (contract-call? .math-fixed-point mul-down balance-y complement)
         )
-        weight-sum-err
+        ERR-WEIGHT-SUM
     )    
 )
 
@@ -91,7 +91,7 @@
             (asserts! (< dy max-out) max-out-ratio-err)
             (contract-call? .math-fixed-point mul-down balance-x ratio)
         )
-        weight-sum-err
+        ERR-WEIGHT-SUM
     )
 )
 
@@ -117,7 +117,7 @@
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (contract-call? .math-fixed-point mul-up balance-x (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
         )
-        weight-sum-err    
+        ERR-WEIGHT-SUM    
     )   
 )
 
@@ -138,7 +138,7 @@
                 (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x 
                     (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))))
         )
-        weight-sum-err    
+        ERR-WEIGHT-SUM    
     )   
 )
 
@@ -171,7 +171,7 @@
                 )   
             )
         )
-        weight-sum-err    
+        ERR-WEIGHT-SUM    
     )    
 )
 
@@ -190,7 +190,7 @@
             )
             ERR-NO-LIQUIDITY
         )
-        weight-sum-err
+        ERR-WEIGHT-SUM
     )
 )
 
