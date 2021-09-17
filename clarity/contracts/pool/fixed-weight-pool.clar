@@ -10,7 +10,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL-ERR (err u2001))
-(define-constant no-liquidity-err (err u2002))
+(define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))

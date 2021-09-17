@@ -11,7 +11,7 @@
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
 (define-constant ERR-INVALID-POOL-ERR (err u2001))
-(define-constant no-liquidity-err (err u2002))
+(define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
@@ -390,7 +390,7 @@
                 (dx-weighted (unwrap! (contract-call? .math-fixed-point mul-down weight-x dx) ERR-MATH-CALL))
                 (dx-to-dy (unwrap! (contract-call? .math-fixed-point sub-fixed dx dx-weighted) ERR-MATH-CALL))
 
-                (dy-weighted (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy) no-liquidity-err)))
+                (dy-weighted (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy) ERR-NO-LIQUIDITY)))
 
                 (pool-updated (merge pool {
                     yield-supply: (unwrap! (contract-call? .math-fixed-point add-fixed yield-new-supply yield-supply) ERR-MATH-CALL),
@@ -436,7 +436,7 @@
                 ;; if there are any residual collateral, convert to token
                 (bal-x-to-y (if (is-eq balance-x u0) 
                                 u0 
-                                (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x) no-liquidity-err))))
+                                (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x) ERR-NO-LIQUIDITY))))
                 (new-bal-y (unwrap! (contract-call? .math-fixed-point add-fixed balance-y bal-x-to-y) ERR-MATH-CALL))
                 (dy (unwrap! (contract-call? .math-fixed-point mul-down new-bal-y shares-to-yield) ERR-MATH-CALL))
 
@@ -816,7 +816,7 @@
             (let 
                 (
                     (ltv (try! (get-ltv token collateral expiry)))
-                    (dy (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) no-liquidity-err))
+                    (dy (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) ERR-NO-LIQUIDITY))
                     (ltv-dy (unwrap! (contract-call? .math-fixed-point mul-down ltv dy) ERR-MATH-CALL))
                 )
 
@@ -853,7 +853,7 @@
                     (dy-weighted (get dy pos-data))
 
                     ;; always convert to collateral ccy
-                    (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) no-liquidity-err))
+                    (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY))
                     
                     (dx (unwrap! (contract-call? .math-fixed-point add-fixed dx-weighted dy-to-dx) ERR-MATH-CALL))
                 )
