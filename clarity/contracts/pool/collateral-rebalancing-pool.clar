@@ -20,16 +20,16 @@
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant weighted-equation-call-err (err u2009))
+(define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u4003))
-(define-constant internal-function-call-err (err u1001))
-(define-constant get-weight-fail-err (err u2012))
-(define-constant get-expiry-fail-err (err u2013))
-(define-constant get-price-fail-err (err u2015))
-(define-constant get-symbol-fail-err (err u6000))
-(define-constant get-oracle-price-fail-err (err u7000))
-(define-constant expiry-err (err u2017))
-(define-constant get-balance-fail-err (err u6001))
+(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
+(define-constant ERR-GET-WEIGHT-FAIL (err u2012))
+(define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
+(define-constant ERR-GET-PRICE-FAIL (err u2015))
+(define-constant ERR-GET-SYMBOL-FAIL (err u6000))
+(define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
+(define-constant ERR-EXPIRY (err u2017))
+(define-constant ERR-GET-BALANCE-FAIL (err u6001))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant a1 u27839300)
@@ -147,8 +147,8 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))                        
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))            
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))            
         )
         (ok (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))
     )
@@ -165,8 +165,8 @@
             (balance-y (get balance-y pool))   
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))  
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
             (token-value (unwrap! (contract-call? .math-fixed-point mul-down balance-x collateral-price) ERR-MATH-CALL))
             (balance-x-in-y (unwrap! (contract-call? .math-fixed-point div-down token-value token-price) ERR-MATH-CALL))
         )
@@ -184,8 +184,8 @@
             (balance-y (get balance-y pool))   
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))  
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
             (collateral-value (unwrap! (contract-call? .math-fixed-point mul-down balance-y token-price) ERR-MATH-CALL))
             (balance-y-in-x (unwrap! (contract-call? .math-fixed-point div-down collateral-value collateral-price) ERR-MATH-CALL))
         )
@@ -223,7 +223,7 @@
 
             ;; determine spot using open oracle
             ;; token / collateral
-            (spot (unwrap! (get-spot token collateral expiry) get-oracle-price-fail-err))
+            (spot (unwrap! (get-spot token collateral expiry) ERR-GET-ORACLE-PRICE-FAIL))
             (now (* block-height ONE_8))
             
             ;; TODO: assume 10mins per block - something to be reviewed            
@@ -277,7 +277,7 @@
 
             (token-x (contract-of collateral))
             (token-y (contract-of token))            
-            (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
+            (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
 
             (now (* block-height ONE_8))
             ;; TODO: assume 10mins per block - something to be reviewed
@@ -286,8 +286,8 @@
 
             (token-symbol (try! (contract-call? token get-symbol)))
             (collateral-symbol (try! (contract-call? collateral get-symbol)))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) get-oracle-price-fail-err))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             
             (strike (unwrap-panic (contract-call? .math-fixed-point div-down token-price collateral-price)))
 
@@ -325,8 +325,8 @@
                 ltv-0: ltv-0,
                 weight-x: weight-x,
                 weight-y: weight-y,
-                token-symbol: (unwrap! (contract-call? token get-symbol) get-symbol-fail-err),
-                collateral-symbol: (unwrap! (contract-call? collateral get-symbol) get-symbol-fail-err),
+                token-symbol: (unwrap! (contract-call? token get-symbol) ERR-GET-SYMBOL-FAIL),
+                collateral-symbol: (unwrap! (contract-call? collateral get-symbol) ERR-GET-SYMBOL-FAIL),
                 moving-average: moving-average,
                 conversion-ltv: conversion-ltv
             })
@@ -365,7 +365,7 @@
     (let
         ;; Just for Validation of initial parameters
         (   
-            (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
+            (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
             (ltv (try! (get-ltv token collateral expiry)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -419,17 +419,17 @@
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         ;; burn supported only at maturity
-        (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err)) expiry-err)
+        (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR)) ERR-EXPIRY)
         (let
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (expiry (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err))
+                (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (yield-supply (get yield-supply pool))
-                (total-shares (unwrap! (contract-call? the-yield-token get-balance tx-sender) get-balance-fail-err))
+                (total-shares (unwrap! (contract-call? the-yield-token get-balance tx-sender) ERR-GET-BALANCE-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) ERR-MATH-CALL)))
                 (shares-to-yield (unwrap! (contract-call? .math-fixed-point div-down shares yield-supply) ERR-MATH-CALL))        
 
@@ -485,17 +485,17 @@
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         ;; burn supported only at maturity
-        (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-key-token get-expiry) get-expiry-fail-err)) expiry-err)
+        (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-key-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR)) ERR-EXPIRY)
         (let
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (expiry (unwrap! (contract-call? the-key-token get-expiry) get-expiry-fail-err))
+                (expiry (unwrap! (contract-call? the-key-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))            
                 (key-supply (get key-supply pool))            
-                (total-shares (unwrap! (contract-call? the-key-token get-balance tx-sender) get-balance-fail-err))
+                (total-shares (unwrap! (contract-call? the-key-token get-balance tx-sender) ERR-GET-BALANCE-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) ERR-MATH-CALL)))
                 (reduce-data (try! (get-position-given-burn-key token collateral expiry shares)))
                 (dx-weighted (get dx reduce-data))
@@ -526,7 +526,7 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
-        (asserts! (<= (* block-height ONE_8) expiry) expiry-err)    
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)    
     
         (let
             (
@@ -540,7 +540,7 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol) get-weight-fail-err))
+                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol) ERR-GET-WEIGHT-FAIL))
                 (weight-x (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-y) ERR-MATH-CALL))            
             
                 ;; fee = dx * fee-rate-x
@@ -578,7 +578,7 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
-        (asserts! (<= (* block-height ONE_8) expiry) expiry-err)      
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)      
         (let
             (
                 (token-x (contract-of collateral))
@@ -591,7 +591,7 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol) get-weight-fail-err))
+                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol) ERR-GET-WEIGHT-FAIL))
                 (weight-x (unwrap! (contract-call? .math-fixed-point sub-fixed ONE_8 weight-y) ERR-MATH-CALL))   
 
                 ;; fee = dy * fee-rate-y
@@ -822,7 +822,7 @@
 
                 (ok {yield-token: ltv-dy, key-token: ltv-dy})
             )
-            expiry-err
+            ERR-EXPIRY
         )
     )
 )
@@ -847,7 +847,7 @@
             
                     (ltv (try! (get-ltv token collateral expiry)))
 
-                    (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) weighted-equation-call-err))
+                    (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
 
                     (dx-weighted (get dx pos-data))
                     (dy-weighted (get dy pos-data))
@@ -859,7 +859,7 @@
                 )
                 (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
             )
-            expiry-err
+            ERR-EXPIRY
         )
     )
 )
@@ -871,7 +871,7 @@
         )
         (if (> now expiry)
             (ok shares)
-            expiry-err
+            ERR-EXPIRY
         )
     )
 )
@@ -905,7 +905,7 @@
                 )
                 (ok {dx: dx, dy: dy})
             )
-            expiry-err
+            ERR-EXPIRY
         )
     )
 )

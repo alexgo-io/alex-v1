@@ -19,10 +19,10 @@
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant already-expiry-err (err u2010))
-(define-constant weighted-equation-call-err (err u2009))
+(define-constant already-ERR-EXPIRY (err u2010))
+(define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
-(define-constant internal-function-call-err (err u1001))
+(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 (define-constant internal-get-weight-err (err u2012))
 
 
@@ -154,7 +154,7 @@
             (weight-t (unwrap! (contract-call? .math-fixed-point sub-fixed weight-x-0 weight-change) ERR-MATH-CALL))     
         )
 
-        (asserts! (< now expiry) already-expiry-err)
+        (asserts! (< now expiry) already-ERR-EXPIRY)
 
         (ok weight-t)
     )
@@ -281,7 +281,7 @@
         )
 
         ;; swap is allowed only until expiry
-        (asserts! (< now expiry) already-expiry-err)
+        (asserts! (< now expiry) already-ERR-EXPIRY)
         
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
@@ -329,7 +329,7 @@
         )
 
         ;; swap is allowed only until expiry
-        (asserts! (< now expiry) already-expiry-err)
+        (asserts! (< now expiry) already-ERR-EXPIRY)
 
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)

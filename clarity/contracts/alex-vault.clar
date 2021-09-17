@@ -11,7 +11,7 @@
 (define-constant transfer-failed-err (err u3000))
 (define-constant invalid-flash-loan-balance-err (err u3008))
 (define-constant ERR-MATH-CALL (err u2010))
-(define-constant internal-function-call-err (err u1001))
+(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 
 ;; flash loan fee rate
 (define-data-var flash-loan-fee-rate uint u100000) ;;0.001%

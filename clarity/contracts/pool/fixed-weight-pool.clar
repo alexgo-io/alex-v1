@@ -21,10 +21,10 @@
 (define-constant invalid-token-err (err u2007))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant weighted-equation-call-err (err u2009))
+(define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
-(define-constant internal-function-call-err (err u1001))
-(define-constant get-oracle-price-fail-err (err u7000))
+(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
+(define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
 
 (define-constant alex-symbol "alex")
 (define-constant reserve-usdc-symbol "usdc")
@@ -162,7 +162,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-supply (get total-supply pool))
-                (add-data (unwrap! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy) internal-function-call-err))
+                (add-data (unwrap! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy) ERR-INTERNAL-FUNCTION-CALL))
                 (new-supply (get token add-data))
                 (new-dy (get dy add-data))
                 (pool-updated (merge pool {
@@ -197,7 +197,7 @@
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) ERR-MATH-CALL)))
                 (total-supply (get total-supply pool))
-                (reduce-data (unwrap! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares) internal-function-call-err))
+                (reduce-data (unwrap! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares) ERR-INTERNAL-FUNCTION-CALL))
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {

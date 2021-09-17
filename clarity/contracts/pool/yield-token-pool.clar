@@ -19,16 +19,16 @@
 (define-constant invalid-token-err (err u2007))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant invalid-expiry-err (err u2009))
+(define-constant invalid-ERR-EXPIRY (err u2009))
 (define-constant fixed-point-err (err 5014))
-(define-constant internal-function-call-err (err u1001))
+(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 (define-constant ERR-MATH-CALL (err u4003))
-(define-constant get-expiry-fail-err (err u2013))
+(define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
 (define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant get-oracle-price-fail-err (err u7000))
-(define-constant get-symbol-fail-err (err u6000))
+(define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
+(define-constant ERR-GET-SYMBOL-FAIL (err u6000))
 
 ;; TODO: need to be defined properly
 (define-constant oracle-src "nothing")
@@ -80,8 +80,8 @@
                 (unwrap! (contract-call? .math-fixed-point sub-fixed (var-get max-expiry) listed) ERR-MATH-CALL)) ERR-MATH-CALL))
             (t-maxed (if (< t MAX_T) t MAX_T))
         )
-        (asserts! (> (var-get max-expiry) expiry) invalid-expiry-err)
-        (asserts! (> (var-get max-expiry) now) invalid-expiry-err)
+        (asserts! (> (var-get max-expiry) expiry) invalid-ERR-EXPIRY)
+        (asserts! (> (var-get max-expiry) now) invalid-ERR-EXPIRY)
 
         (ok t-maxed)
     )
@@ -118,7 +118,7 @@
             (balance-token (get balance-token pool))
             (balance-aytoken (get balance-aytoken pool))
             (token-symbol (get token-symbol pool))         
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) get-oracle-price-fail-err))
+            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (balance (unwrap! (contract-call? .math-fixed-point add-fixed balance-token balance-aytoken) ERR-MATH-CALL))
         )
 
@@ -173,7 +173,7 @@
         (
             (aytoken (contract-of the-aytoken))            
             (pool-id (+ (var-get pool-count) u1))
-            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
             (now (* block-height ONE_8))
             (pool-data {
                 total-supply: u0,
@@ -186,8 +186,8 @@
                 pool-token: (contract-of the-pool-token),
                 fee-rate-aytoken: u0,
                 fee-rate-token: u0,
-                token-symbol: (unwrap! (contract-call? the-token get-symbol) get-symbol-fail-err),
-                expiry: (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err),
+                token-symbol: (unwrap! (contract-call? the-token get-symbol) ERR-GET-SYMBOL-FAIL),
+                expiry: (unwrap! (contract-call? the-aytoken get-expiry) ERR-GET-EXPIRY-FAIL-ERR),
                 listed: now          
             })
         )
@@ -219,7 +219,7 @@
             (balance-aytoken (get balance-aytoken pool))
             (balance-virtual (get balance-virtual pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap! (get-token-given-position the-aytoken dx) internal-function-call-err))
+            (add-data (unwrap! (get-token-given-position the-aytoken dx) ERR-INTERNAL-FUNCTION-CALL))
             (new-supply (get token add-data))
             (new-dy-act (get dy-act add-data))
             (new-dy-vir (get dy-vir add-data))
@@ -265,7 +265,7 @@
                 (total-supply (get total-supply pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) ERR-MATH-CALL)))
-                (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) internal-function-call-err))
+                (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) ERR-INTERNAL-FUNCTION-CALL))
                 (dx (get dx reduce-data))
                 (dy-act (get dy-act reduce-data))
                 (dy-vir (get dy-vir reduce-data))
@@ -298,7 +298,7 @@
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (expiry (unwrap! (contract-call? the-aytoken get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
             (fee-rate-aytoken (get fee-rate-aytoken pool))
 
             ;; lambda ~= 1 - fee-rate-aytoken * yield
@@ -347,7 +347,7 @@
             (dy-net-fees (unwrap! (contract-call? .math-fixed-point mul-down dy lambda) ERR-MATH-CALL))
             (fee (unwrap! (contract-call? .math-fixed-point sub-fixed dy dy-net-fees) ERR-MATH-CALL))
 
-            ;;(dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) internal-function-call-err))
+            ;;(dx (unwrap! (get-x-given-y the-aytoken dy-net-fees) ERR-INTERNAL-FUNCTION-CALL))
             (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
             (pool-updated
