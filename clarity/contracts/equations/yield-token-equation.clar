@@ -8,7 +8,7 @@
 (define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
-(define-constant max-out-ratio-err (err u4002))
+(define-constant ERR-MAX-OUT-RATIO (err u4002))
 (define-constant math-call-err (err u4003))
 (define-constant insufficient-balance-err (err u4004))
 
@@ -77,7 +77,7 @@
             (y-dy-pow (unwrap-panic (contract-call? .math-fixed-point pow-up (unwrap-panic (contract-call? .math-fixed-point sub-fixed balance-y dy)) t-comp)))
             (term (unwrap-panic (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point add-fixed x-pow y-pow)) y-dy-pow)))            
         )
-        (asserts! (< dy max-out) max-out-ratio-err)
+        (asserts! (< dy max-out) ERR-MAX-OUT-RATIO)
         (contract-call? .math-fixed-point sub-fixed (unwrap-panic (contract-call? .math-fixed-point pow-down term t-comp-num)) balance-x)         
     )
     insufficient-balance-err

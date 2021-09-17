@@ -10,7 +10,7 @@
 (define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
-(define-constant max-out-ratio-err (err u4002))
+(define-constant ERR-MAX-OUT-RATIO (err u4002))
 (define-constant math-call-err (err 4003))
 
 ;; max in/out as % of liquidity
@@ -88,7 +88,7 @@
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base exponent)))
                 (ratio (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))
             )
-            (asserts! (< dy max-out) max-out-ratio-err)
+            (asserts! (< dy max-out) ERR-MAX-OUT-RATIO)
             (contract-call? .math-fixed-point mul-down balance-x ratio)
         )
         ERR-WEIGHT-SUM
