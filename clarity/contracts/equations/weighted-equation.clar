@@ -9,7 +9,7 @@
 
 (define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-WEIGHT-SUM (err u4000))
-(define-constant ERR-IN-RATIO (err u4001))
+(define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant max-out-ratio-err (err u4002))
 (define-constant math-call-err (err 4003))
 
@@ -61,7 +61,7 @@
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-up base exponent)))
                 (complement (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))
             )
-            (asserts! (< dx max-in) ERR-IN-RATIO)
+            (asserts! (< dx max-in) ERR-MAX-IN-RATIO)
 
             (contract-call? .math-fixed-point mul-down balance-y complement)
         )
