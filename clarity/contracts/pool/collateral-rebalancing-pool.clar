@@ -31,6 +31,8 @@
 (define-constant ERR-EXPIRY (err u2017))
 (define-constant ERR-GET-BALANCE-FAIL (err u6001))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
+
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -370,7 +372,7 @@
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
-        (asserts! (> ONE_8 ltv) ERR-INVALID-POOL-ERR)
+        (asserts! (> ONE_8 ltv) ERR-LTV-GREATER-THAN-ONE)
         (print ltv)
         (let
             (
