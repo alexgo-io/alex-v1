@@ -22,7 +22,7 @@
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
 (define-constant weighted-equation-call-err (err u2009))
-(define-constant math-call-err (err u2010))
+(define-constant ERR-MATH-CALL (err u2010))
 (define-constant internal-function-call-err (err u1001))
 (define-constant get-oracle-price-fail-err (err u7000))
 
@@ -166,9 +166,9 @@
                 (new-supply (get token add-data))
                 (new-dy (get dy add-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) math-call-err),
-                    balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) math-call-err),
-                    balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) math-call-err)
+                    total-supply: (unwrap! (contract-call? .math-fixed-point add-fixed new-supply total-supply) ERR-MATH-CALL),
+                    balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed balance-x dx) ERR-MATH-CALL),
+                    balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed balance-y new-dy) ERR-MATH-CALL)
                 }))
             )
 
@@ -195,15 +195,15 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) math-call-err)))
+                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (contract-call? .math-fixed-point mul-down total-shares percent) ERR-MATH-CALL)))
                 (total-supply (get total-supply pool))
                 (reduce-data (unwrap! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares) internal-function-call-err))
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) math-call-err),
-                    balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
-                    balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err)
+                    total-supply: (unwrap! (contract-call? .math-fixed-point sub-fixed total-supply shares) ERR-MATH-CALL),
+                    balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) ERR-MATH-CALL),
+                    balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) ERR-MATH-CALL)
                     })
                 )
             )
@@ -238,17 +238,17 @@
                 (fee-rate-x (get fee-rate-x pool))
 
                 ;; fee = dx * fee-rate-x
-                (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) math-call-err))
-                (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) math-call-err))
+                (fee (unwrap! (contract-call? .math-fixed-point mul-up dx fee-rate-x) ERR-MATH-CALL))
+                (dx-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dx fee) ERR-MATH-CALL))
     
                 (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx-net-fees) math-call-err),
-                        balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) math-call-err),
-                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) math-call-err)
+                        balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-x pool) dx-net-fees) ERR-MATH-CALL),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-y pool) dy) ERR-MATH-CALL),
+                        fee-balance-x: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-x pool)) ERR-MATH-CALL)
                         }
                     )
                 )
@@ -280,17 +280,17 @@
                 (fee-rate-y (get fee-rate-y pool))
 
                 ;; fee = dy * fee-rate-y
-                (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) math-call-err))
-                (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) math-call-err))
+                (fee (unwrap! (contract-call? .math-fixed-point mul-up dy fee-rate-y) ERR-MATH-CALL))
+                (dy-net-fees (unwrap! (contract-call? .math-fixed-point sub-fixed dy fee) ERR-MATH-CALL))
 
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) math-call-err),
-                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy-net-fees) math-call-err),
-                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) math-call-err)
+                        balance-x: (unwrap! (contract-call? .math-fixed-point sub-fixed (get balance-x pool) dx) ERR-MATH-CALL),
+                        balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed (get balance-y pool) dy-net-fees) ERR-MATH-CALL),
+                        fee-balance-y: (unwrap! (contract-call? .math-fixed-point add-fixed fee (get fee-balance-y pool)) ERR-MATH-CALL)
                         }
                     )
                 )
@@ -402,10 +402,10 @@
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
             (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
-            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) math-call-err))
-            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) math-call-err))
-            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) math-call-err))
-            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) math-call-err))
+            (fee-x-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-x rebate-rate) ERR-MATH-CALL))
+            (fee-y-rebate (unwrap! (contract-call? .math-fixed-point mul-down fee-y rebate-rate) ERR-MATH-CALL))
+            (fee-x-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-x fee-x-rebate) ERR-MATH-CALL))
+            (fee-y-net (unwrap! (contract-call? .math-fixed-point sub-fixed fee-y fee-y-rebate) ERR-MATH-CALL))
         )
 
         (and (> fee-x u0) 

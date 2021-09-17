@@ -11,7 +11,7 @@
 (define-constant no-fee-x-err (err u2005))
 (define-constant no-fee-y-err (err u2006))
 (define-constant weighted-equation-call-err (err u2009))
-(define-constant math-call-err (err u2010))
+(define-constant ERR-MATH-CALL (err u2010))
 (define-constant internal-function-call-err (err u1001))
 (define-constant get-weight-fail-err (err u2012))
 (define-constant get-expiry-fail-err (err u2013))
@@ -38,13 +38,13 @@
 (define-public (transfer-to-mint (usda-amount uint))
     (let
         (
-            (amount-to-rebate (unwrap! (contract-call? .math-fixed-point mul-down usda-amount (var-get rebate-rate)) math-call-err))
+            (amount-to-rebate (unwrap! (contract-call? .math-fixed-point mul-down usda-amount (var-get rebate-rate)) ERR-MATH-CALL))
             (usda-symbol (unwrap! (contract-call? .token-usda get-symbol) get-symbol-fail-err))
             (alex-symbol (unwrap! (contract-call? .token-alex get-symbol) get-symbol-fail-err))
             (usda-price (unwrap! (contract-call? .open-oracle get-price oracle-src usda-symbol) get-oracle-price-fail-err))
             (alex-price (unwrap! (contract-call? .open-oracle get-price oracle-src alex-symbol) get-oracle-price-fail-err))
-            (usda-to-alex (unwrap! (contract-call? .math-fixed-point div-down usda-price alex-price) math-call-err))
-            (alex-to-rebate (unwrap! (contract-call? .math-fixed-point mul-down amount-to-rebate usda-to-alex) math-call-err))
+            (usda-to-alex (unwrap! (contract-call? .math-fixed-point div-down usda-price alex-price) ERR-MATH-CALL))
+            (alex-to-rebate (unwrap! (contract-call? .math-fixed-point mul-down amount-to-rebate usda-to-alex) ERR-MATH-CALL))
         )
         (asserts! (> usda-amount u0) invalid-liquidity-err)
 

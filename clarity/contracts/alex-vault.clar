@@ -10,7 +10,7 @@
 (define-constant transfer-one-by-one-err (err u3006))
 (define-constant transfer-failed-err (err u3000))
 (define-constant invalid-flash-loan-balance-err (err u3008))
-(define-constant math-call-err (err u2010))
+(define-constant ERR-MATH-CALL (err u2010))
 (define-constant internal-function-call-err (err u1001))
 
 ;; flash loan fee rate
@@ -35,8 +35,8 @@
   (let 
     (
       (pre-bal (unwrap! (get-balance token) invalid-flash-loan-balance-err))
-      (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) math-call-err))
-      (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) math-call-err))
+      (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) ERR-MATH-CALL))
+      (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) ERR-MATH-CALL))
     )
 
     ;; make sure current balance > loan amount

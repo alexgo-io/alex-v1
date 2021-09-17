@@ -9,7 +9,7 @@
 (define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
-(define-constant math-call-err (err u4003))
+(define-constant ERR-MATH-CALL (err u4003))
 (define-constant insufficient-balance-err (err u4004))
 
 ;; max in/out as % of liquidity

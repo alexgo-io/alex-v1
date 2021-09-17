@@ -1,6 +1,6 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 
-(define-constant math-call-err (err u2010))
+(define-constant ERR-MATH-CALL (err u2010))
 
 (define-data-var borrow-in-collateral uint u0)
 (define-data-var margin-in-token uint u0)
@@ -21,7 +21,7 @@
             ;; swap margin-in-token to collateral ccy
             (swapped-margin (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-wbtc .token-usda u50000000 u50000000 (var-get margin-in-token)))))
             ;; calculate new dy based on swapped margin and flash loan
-            (collateral-amount (unwrap! (contract-call? .math-fixed-point add-fixed swapped-margin (var-get borrow-in-collateral)) math-call-err))
+            (collateral-amount (unwrap! (contract-call? .math-fixed-point add-fixed swapped-margin (var-get borrow-in-collateral)) ERR-MATH-CALL))
             
             ;; mint yield-token and key-token using new-dy
             (minted (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wbtc .token-usda .yield-wbtc-59760 .key-wbtc-59760-usda collateral-amount)))

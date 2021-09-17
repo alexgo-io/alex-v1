@@ -18,7 +18,7 @@
 (define-constant invalid-pool-token-err (err u8002))
 (define-constant block-height-not-reached-err (err u8003))
 (define-constant not-authorized-err (err u1000))
-(define-constant math-call-err (err u2010))
+(define-constant ERR-MATH-CALL (err u2010))
 
 (define-constant ONE_8 u100000000)
 ;; Constants
