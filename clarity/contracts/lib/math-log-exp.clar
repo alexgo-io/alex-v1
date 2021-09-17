@@ -44,11 +44,11 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-(define-constant X_OUT_OF_BOUNDS (err u5009))
-(define-constant Y_OUT_OF_BOUNDS (err u5010))
-(define-constant PRODUCT_OUT_OF_BOUNDS (err u5011))
-(define-constant INVALID_EXPONENT (err u5012))
-(define-constant OUT_OF_BOUNDS (err u5013))
+(define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
+(define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
+(define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
+(define-constant ERR-INVALID-EXPONENT (err u5012))
+(define-constant ERR-OUT-OF-BOUNDS (err u5013))
 
 ;; private functions
 ;;
@@ -113,14 +113,14 @@
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) ONE_8))
     )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) PRODUCT_OUT_OF_BOUNDS)
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
   )
 )
 
 (define-private (exp-pos (x int))
   (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
     (let
       (
         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
@@ -181,10 +181,10 @@
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) X_OUT_OF_BOUNDS)
+    (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) Y_OUT_OF_BOUNDS)
+    (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
 
     (if (is-eq y u0) 
       (ok (to-uint ONE_8))
@@ -200,7 +200,7 @@
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
 (define-read-only (exp-fixed (x int))
   (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
     (if (< x 0)
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
@@ -226,7 +226,7 @@
 ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-read-only (ln-fixed (a int))
   (begin
-    (asserts! (> a 0) (err OUT_OF_BOUNDS))
+    (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
     (if (< a ONE_8)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.
