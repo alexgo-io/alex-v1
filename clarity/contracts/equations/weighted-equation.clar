@@ -101,19 +101,20 @@
 ;; b_y = balance-y
 ;; w_x = weight-x 
 ;; w_y = weight-y
-;; spot = b_x * w_y / b_y / w_x
-;; d_x = b_x * ((price / spot) ^ w_y - 1)
+;; spot = b_y * w_x / b_x / w_y
+;; d_x = b_x * ((spot / price) ^ w_y - 1)
+;; TODO: we know it works when w_x = w_y = 0.5; does it work otherwise?
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
             (
-                (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
-                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
+                (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y weight-x)))
+                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x weight-y)))
                 (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
-                (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-up spot price)))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))                
             )
-            (asserts! (> price spot) no-liquidity-err)
+            (asserts! (< price spot) no-liquidity-err)
             (contract-call? .math-fixed-point mul-up balance-x (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
         )
         weight-sum-err    
@@ -126,16 +127,14 @@
         (let 
             (
 
-                (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-x weight-y)))
-                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-y weight-x)))
+                (numerator (unwrap-panic (contract-call? .math-fixed-point mul-down balance-y weight-x)))
+                (denominator (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x weight-y)))
                 (spot (unwrap-panic (contract-call? .math-fixed-point div-down numerator denominator)))
-                (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
+                (base (unwrap-panic (contract-call? .math-fixed-point div-up spot price)))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))
             )
-            (asserts! (< price spot) no-liquidity-err)
-            (get-y-given-x balance-x balance-y weight-x weight-y 
-                (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x 
-                    (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))))
+            (asserts! (> price spot) no-liquidity-err)
+            (contract-call? .math-fixed-point mul-up balance-y (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))            
         )
         weight-sum-err    
     )   
