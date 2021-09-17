@@ -9,7 +9,7 @@
 ;;(contract-call? 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.open-oracle get-price "alextestoracle" "USDA")
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant err-token-not-in-oracle (err u7001))
+(define-constant ERR-TOKEN-NOT-IN-ORACLE (err u7001))
 
 ;; Let's keep oracle-owner to deployer for now.
 (define-data-var oracle-owner principal tx-sender)
@@ -40,7 +40,7 @@
 (define-read-only (get-price (oracle-src (string-ascii 32)) (symbol (string-ascii 32)))
   (let
     (
-      (price-map (unwrap! (map-get? prices {symbol: symbol, oracle-src: oracle-src }) err-token-not-in-oracle))
+      (price-map (unwrap! (map-get? prices {symbol: symbol, oracle-src: oracle-src }) ERR-TOKEN-NOT-IN-ORACLE))
       (last-price (get last-price-in-cents price-map))
       (last-block (get last-block price-map))
     )
