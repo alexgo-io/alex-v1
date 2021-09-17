@@ -1,3 +1,5 @@
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+
 ;; alex-reserve-pool
 
 (define-constant invalid-pool-err (err u2001))
@@ -21,8 +23,18 @@
 (define-constant expiry-err (err u2017))
 (define-constant get-balance-fail-err (err u6001))
 (define-constant not-authorized-err (err u1000))
+(define-constant transfer-failed-err (err u3000))
 
 (define-constant oracle-src "nothing")
+
+(define-data-var contract-owner principal tx-sender)
+
+(define-map approved-contracts
+  { name: principal }
+  {
+    can-transfer: bool
+  }
+)
 
 (define-data-var rebate-rate uint u50000000) ;;50%
 
@@ -30,8 +42,24 @@
     (ok (var-get rebate-rate))
 )
 
-;; TODO: access control
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (ok (var-set contract-owner owner))
+  )
+)
+
+;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
+(define-public (transfer-on-behalf-of (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+  (begin     
+    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) not-authorized-err)
+    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) transfer-failed-err)
+    (ok true)
+  )
+)
+
 (define-public (set-rebate-rate (rate uint))
+    ;; (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ok (var-set rebate-rate rate))
 )
 
@@ -56,4 +84,14 @@
         (print { object: "reserve-pool", action: "transfer-to-mint", data: alex-to-rebate })
         (ok true)        
     )
+)
+
+;; contract initialisation
+(begin
+  (map-set approved-contracts
+    { name: .collateral-rebalancing-pool }
+    {
+      can-transfer: true
+    }
+  )  
 )

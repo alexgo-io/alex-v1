@@ -238,8 +238,10 @@
         )
 
         (asserts! (<= percent ONE_8) percent-greater-than-one)
-        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
-        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        ;; (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (try! (contract-call? .alex-vault transfer-on-behalf-of token-x-trait dx (as-contract tx-sender) tx-sender))
+        ;; (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        (try! (contract-call? .alex-vault transfer-on-behalf-of token-y-trait dy (as-contract tx-sender) tx-sender))
 
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
         (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -287,7 +289,8 @@
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
         (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
-        (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        ;; (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+        (try! (contract-call? .alex-vault transfer-on-behalf-of token-y-trait dy (as-contract tx-sender) tx-sender))
 
         ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -334,7 +337,8 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
 
-        (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        ;; (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+        (try! (contract-call? .alex-vault transfer-on-behalf-of token-x-trait dx (as-contract tx-sender) tx-sender))
         (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
 
         ;; post setting
@@ -447,7 +451,8 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                (try! (contract-call? .alex-vault transfer-on-behalf-of token-x-trait fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -463,7 +468,8 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                (try! (contract-call? .alex-vault transfer-on-behalf-of token-y-trait fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 

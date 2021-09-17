@@ -9,6 +9,7 @@ const {
     crpGetLtv,
     crpGetPoolDetails,
     crpGetPoolValueInToken,
+    crpGetWeightY,
     ytpCreate,
     ytpSwapXforY,
     ytpSwapYforX
@@ -43,11 +44,12 @@ async function run(){
     // await ytpCreate('yield-wbtc-79760', 'token-wbtc', 'ytp-yield-wbtc-79760-wbtc', 'multisig-ytp-yield-wbtc-79760-wbtc', wbtcQ / 10, wbtcQ / 10);
     // await crpCreate('token-wbtc', 'token-usda', 'yield-wbtc-79760', 'key-wbtc-79760-usda', 'multisig-crp-wbtc-79760-usda', ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
 
-    await fwpGetXGivenPrice('token-wbtc', 'token-usda', weightX, weightY, 4846200000000)
+    //await fwpGetXGivenPrice('token-wbtc', 'token-usda', weightX, weightY, 4846200000000)
     //await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
 
     // await crpGetLtv('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolValueInToken('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
+    await crpGetWeightY('token-wbtc', 'token-usda',  expiry, 4846200000000, 80e+7);
 }
 run();

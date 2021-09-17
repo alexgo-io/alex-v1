@@ -271,7 +271,7 @@
 )
 
 ;; single sided liquidity
-(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
+(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <ft-trait>) (the-key-token <ft-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -352,7 +352,7 @@
     )
 )
 
-(define-public (add-to-position-and-switch (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))
+(define-public (add-to-position-and-switch (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <ft-trait>) (the-key-token <ft-trait>) (dx uint))
     (let
         (
             (minted-yield-token (get yield-token (try! (add-to-position token collateral the-yield-token the-key-token dx))))
@@ -362,7 +362,7 @@
 )
 
 ;; note single-sided liquidity
-(define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
+(define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <ft-trait>) (the-key-token <ft-trait>) (dx uint))    
     (let
         ;; Just for Validation of initial parameters
         (   
@@ -402,7 +402,7 @@
             )     
 
             (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) transfer-x-failed-err)
-            (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) transfer-y-failed-err)
+            (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) transfer-y-failed-err)            
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
@@ -416,7 +416,7 @@
 
 ;; note single sided liquidity
 ;; TODO: currently the position returned is not guaranteed 
-(define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
+(define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <ft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         ;; burn supported only at maturity
@@ -458,12 +458,14 @@
                         (amount (unwrap! (contract-call? .math-fixed-point sub-fixed shares dy) math-call-err))                    
                     )                
                     (if (is-eq token-y .token-usda)
-                        (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                        ;; (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                        (try! (contract-call? .alex-reserve-pool transfer-on-behalf-of .token-usda amount (as-contract tx-sender) tx-sender))
                         (let
                             (
                                 (amount-to-swap (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount)))
                             )
-                            (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                            ;; (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) transfer-y-failed-err)
+                            (try! (contract-call? .alex-reserve-pool transfer-on-behalf-of .token-usda amount-to-swap (as-contract tx-sender) tx-sender))
                             (unwrap! (contract-call? token transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap))) tx-sender .alex-vault none) transfer-y-failed-err)
                         )
                     )                
@@ -471,7 +473,8 @@
             )       
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) transfer-y-failed-err)
+            ;; (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) transfer-y-failed-err)
+            (try! (contract-call? .alex-vault transfer-on-behalf-of token shares (as-contract tx-sender) tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-yield-token burn tx-sender shares))
@@ -482,7 +485,7 @@
     )
 )
 
-(define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
+(define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <ft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) percent-greater-than-one)
         ;; burn supported only at maturity
@@ -510,8 +513,10 @@
                 )            
             )
 
-            (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) transfer-x-failed-err))
-            (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) transfer-y-failed-err))
+            ;; (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) transfer-x-failed-err))
+            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-on-behalf-of collateral dx-weighted (as-contract tx-sender) tx-sender)))
+            ;; (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) transfer-y-failed-err))
+            (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-on-behalf-of token dy-weighted (as-contract tx-sender) tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-key-token burn tx-sender shares))
@@ -563,7 +568,8 @@
             )
 
             (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) transfer-x-failed-err)
-            (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+            ;; (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) transfer-y-failed-err)
+            (try! (contract-call? .alex-vault transfer-on-behalf-of token dy (as-contract tx-sender) tx-sender))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -613,7 +619,8 @@
                 )
             )
 
-            (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+            ;; (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) transfer-x-failed-err)
+            (try! (contract-call? .alex-vault transfer-on-behalf-of collateral dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) transfer-y-failed-err)
 
             ;; post setting
@@ -725,7 +732,8 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                (try! (contract-call? .alex-vault transfer-on-behalf-of collateral fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -741,7 +749,8 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                (try! (contract-call? .alex-vault transfer-on-behalf-of token fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -806,6 +815,22 @@
         (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
     )
 )
+
+(define-read-only (get-y-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x (get weight-x pool))
+            (weight-y (get weight-y pool))         
+        )
+        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
 
 ;; single sided liquidity
 (define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))

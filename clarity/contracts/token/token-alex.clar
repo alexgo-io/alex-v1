@@ -1,18 +1,23 @@
 (impl-trait .trait-pool-token.pool-token-trait)
 
-;; Defines the ALEX according to the SIP-010 Standard
 (define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 
+(define-map approved-contracts
+  { name: principal }
+  {
+    can-transfer: bool
+  }
+)
+
 ;; errors
-(define-constant not-authorized-err u1000)
+(define-constant not-authorized-err (err u1000))
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) (err not-authorized-err))
-
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ok (var-set contract-owner owner))
   )
 )
@@ -42,9 +47,9 @@
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
-  (if (is-eq tx-sender (var-get contract-owner))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ok (var-set token-uri value))
-    (err not-authorized-err)
   )
 )
 
@@ -53,23 +58,28 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? alex amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
+  (begin
+    (asserts! (is-eq sender tx-sender) not-authorized-err)
+    (match (ft-transfer? alex amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
     )
-    error (err error)
   )
 )
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ft-mint? alex amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ft-burn? alex amount sender)
   )
 )

@@ -1,12 +1,19 @@
 (impl-trait .trait-pool-token.pool-token-trait)
 
-;; Defines the wBTC according to the SIP-010 Standard
 (define-fungible-token wbtc)
 
 (define-data-var token-uri (string-utf8 256) u"")
+(define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant not-authorized-err u1000)
+(define-constant not-authorized-err (err u1000))
+
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (ok (var-set contract-owner owner))
+  )
+)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -33,10 +40,10 @@
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
-  ;;(if (is-eq tx-sender (contract-call? . get-dao-owner))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ok (var-set token-uri value))
-  ;;  (err not-authorized-err)
-  ;;)
+  )
 )
 
 (define-read-only (get-token-uri)
@@ -44,23 +51,28 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? wbtc amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
+  (begin
+    (asserts! (is-eq sender tx-sender) not-authorized-err)
+    (match (ft-transfer? wbtc amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
     )
-    error (err error)
   )
 )
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ft-mint? wbtc amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ft-burn? wbtc amount sender)
   )
 )

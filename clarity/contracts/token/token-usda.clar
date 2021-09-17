@@ -1,12 +1,19 @@
 (impl-trait .trait-pool-token.pool-token-trait)
 
-;; Defines the USDA Stablecoin according to the SIP-010 Standard
 (define-fungible-token usda)
 
 (define-data-var token-uri (string-utf8 256) u"")
+(define-data-var contract-owner principal tx-sender)
 
 ;; errors
-(define-constant not-authorized-err u1000)
+(define-constant not-authorized-err (err u1000))
+
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (ok (var-set contract-owner owner))
+  )
+)
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
@@ -33,10 +40,10 @@
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
-  ;;(if (is-eq tx-sender (contract-call? .arkadiko-dao get-dao-owner))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ok (var-set token-uri value))
-  ;;  (err not-authorized-err)
-  ;;)
+  )
 )
 
 (define-read-only (get-token-uri)
@@ -44,23 +51,28 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? usda amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
+  (begin
+    (asserts! (is-eq sender tx-sender) not-authorized-err)
+    (match (ft-transfer? usda amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
     )
-    error (err error)
   )
 )
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ft-mint? usda amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
     (ft-burn? usda amount sender)
   )
 )
@@ -68,6 +80,6 @@
 ;; Initialize the contract for Testing.
 (begin
   (try! (ft-mint? usda u1000000000000000 tx-sender))
-  (try! (ft-mint? usda u10000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool))
+  (try! (ft-mint? usda u10000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.usda-reserve-pool))
   (try! (ft-mint? usda u200000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )

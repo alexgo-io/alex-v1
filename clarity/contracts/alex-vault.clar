@@ -12,6 +12,14 @@
 (define-constant post-loan-transfer-failed-err (err u3007))
 (define-constant invalid-balance (err u3011))
 (define-constant math-call-err (err u2010))
+(define-constant not-authorized-err (err u1000))
+
+(define-map approved-contracts
+  { name: principal }
+  {
+    can-transfer: bool
+  }
+)
 
 ;; flash loan fee rate
 (define-data-var flash-loan-fee-rate uint u0)
@@ -28,6 +36,15 @@
 ;; return token balance held by vault
 (define-public (get-balance (token <ft-trait>))
   (contract-call? token get-balance (as-contract tx-sender))
+)
+
+;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
+(define-public (transfer-on-behalf-of (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+  (begin     
+    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) not-authorized-err)
+    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) transfer-failed-err)
+    (ok true)
+  )
 )
 
 ;; perform flash loan
@@ -52,4 +69,38 @@
     (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) post-loan-transfer-failed-err) 
     (ok amount-with-fee)
   )
+)
+
+;; contract initialisation
+(begin
+  (map-set approved-contracts
+    { name: .alex-reserve-pool }
+    {
+      can-transfer: true
+    }
+  )
+  (map-set approved-contracts
+    { name: .collateral-rebalancing-pool }
+    {
+      can-transfer: true
+    }
+  )  
+  (map-set approved-contracts
+    { name: .fixed-weight-pool }
+    {
+      can-transfer: true
+    }
+  )  
+  (map-set approved-contracts
+    { name: .liquidity-bootstrapping-pool }
+    {
+      can-transfer: true
+    }
+  )  
+  (map-set approved-contracts
+    { name: .yield-token-pool }
+    {
+      can-transfer: true
+    }
+  )  
 )

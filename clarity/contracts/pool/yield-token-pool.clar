@@ -130,7 +130,7 @@
 ;; b_y = balance-aytoken
 ;; b_x = balance-token
 ;; yield = ln(b_y/b_x)
-(define-read-only (get-yield (the-aytoken <yield-token-trait>))
+(define-read-only (get-yield (the-aytoken <ft-trait>))
     (let 
         (
             (aytoken (contract-of the-aytoken))
@@ -236,11 +236,9 @@
         (asserts! (and (> dx u0) (or (> new-dy-act u0) (> new-dy-vir u0))) invalid-liquidity-err)
 
         ;; send x to vault
-        ;;(asserts! (is-ok (contract-call? the-token transfer dx tx-sender .alex-vault none)) transfer-x-failed-err)
         (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err))
 
         ;; send y to vault
-        ;;(asserts! (is-ok (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none)) transfer-y-failed-err)
         (and (> new-dy-act u0) (unwrap! (contract-call? the-aytoken transfer new-dy-act tx-sender .alex-vault none) transfer-y-failed-err))
         
         ;; mint pool token and send to tx-sender
@@ -253,7 +251,7 @@
    )
 )    
 
-(define-public (reduce-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
+(define-public (reduce-position (the-aytoken <ft-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
     (if (<= percent ONE_8)
         (let
             (
@@ -277,10 +275,11 @@
                     })
                 )
             )
-            ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-            ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none)) transfer-y-failed-err)
-            (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
-            (and (> dy-act u0) (unwrap! (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none) transfer-y-failed-err))
+
+            ;; (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+            (and (> dx u0) (try! (contract-call? .alex-vault transfer-on-behalf-of the-token dx (as-contract tx-sender) tx-sender)))
+            ;; (and (> dy-act u0) (unwrap! (contract-call? the-aytoken transfer dy-act .alex-vault tx-sender none) transfer-y-failed-err))
+            (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-on-behalf-of the-aytoken dy-act (as-contract tx-sender) tx-sender)))
 
             (map-set pools-data-map { aytoken: aytoken } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -292,13 +291,13 @@
     )    
 )
 
-(define-public (swap-x-for-y (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dx uint))
+(define-public (swap-x-for-y (the-aytoken <ft-trait>) (the-token <ft-trait>) (dx uint))
     
     (let
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) invalid-pool-err))
-            (expiry (unwrap! (contract-call? the-aytoken get-expiry) get-expiry-fail-err))
+            (expiry (get expiry pool))
             (fee-rate-aytoken (get fee-rate-aytoken pool))
 
             ;; lambda ~= 1 - fee-rate-aytoken * yield
@@ -323,7 +322,8 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) transfer-x-failed-err))
-        (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy .alex-vault tx-sender none) transfer-y-failed-err))
+        ;; (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy .alex-vault tx-sender none) transfer-y-failed-err))
+        (and (> dy u0) (try! (contract-call? .alex-vault transfer-on-behalf-of the-aytoken dy (as-contract tx-sender) tx-sender)))
 
         ;; post setting
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -332,7 +332,7 @@
     )
 )
 
-(define-public (swap-y-for-x (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dy uint))
+(define-public (swap-y-for-x (the-aytoken <ft-trait>) (the-token <ft-trait>) (dy uint))
 
     (let
         (
@@ -362,9 +362,9 @@
         )
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
-        ;;(asserts! (is-ok (contract-call? the-token transfer dx .alex-vault tx-sender none)) transfer-x-failed-err)
-        ;;(asserts! (is-ok (contract-call? the-aytoken transfer dy tx-sender .alex-vault none)) transfer-y-failed-err)
-        (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+
+        ;; (and (> dx u0) (unwrap! (contract-call? the-token transfer dx .alex-vault tx-sender none) transfer-x-failed-err))
+        (and (> dx u0) (try! (contract-call? .alex-vault transfer-on-behalf-of the-token dx (as-contract tx-sender) tx-sender)))
         (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) transfer-y-failed-err))
 
         (print dy)
@@ -375,7 +375,7 @@
     )
 )
 
-(define-read-only (get-fee-rate-aytoken (the-aytoken <yield-token-trait>))
+(define-read-only (get-fee-rate-aytoken (the-aytoken <ft-trait>))
     (let 
         (
             (aytoken (contract-of the-aytoken))
@@ -385,7 +385,7 @@
     )
 )
 
-(define-read-only (get-fee-rate-token (the-aytoken <yield-token-trait>))
+(define-read-only (get-fee-rate-token (the-aytoken <ft-trait>))
     (let 
         (
             (aytoken (contract-of the-aytoken))
@@ -395,7 +395,7 @@
     )
 )
 
-(define-public (set-fee-rate-aytoken (the-aytoken <yield-token-trait>) (fee-rate-aytoken uint))
+(define-public (set-fee-rate-aytoken (the-aytoken <ft-trait>) (fee-rate-aytoken uint))
     (let 
         (
             (aytoken (contract-of the-aytoken))
@@ -409,7 +409,7 @@
     )
 )
 
-(define-public (set-fee-rate-token (the-aytoken <yield-token-trait>) (fee-rate-token uint))
+(define-public (set-fee-rate-token (the-aytoken <ft-trait>) (fee-rate-token uint))
     (let 
         (
             (aytoken (contract-of the-aytoken))
@@ -423,7 +423,7 @@
 )
 
 ;; return principal
-(define-read-only (get-fee-to-address (the-aytoken <yield-token-trait>))
+(define-read-only (get-fee-to-address (the-aytoken <ft-trait>))
     (let 
         (
             (aytoken (contract-of the-aytoken))       
@@ -433,7 +433,7 @@
     )
 )
 
-(define-read-only (get-fees (the-aytoken <yield-token-trait>))
+(define-read-only (get-fees (the-aytoken <ft-trait>))
     (let
         (
             (aytoken (contract-of the-aytoken))   
@@ -468,7 +468,8 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                (unwrap! (contract-call? the-aytoken transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                ;; (unwrap! (contract-call? the-aytoken transfer fee-x .alex-vault tx-sender none) transfer-x-failed-err)
+                (try! (contract-call? .alex-vault transfer-on-behalf-of the-aytoken fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -484,7 +485,8 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                (unwrap! (contract-call? the-token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                ;; (unwrap! (contract-call? the-token transfer fee-y .alex-vault tx-sender none) transfer-y-failed-err)
+                (try! (contract-call? .alex-vault transfer-on-behalf-of the-token fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -505,7 +507,7 @@
     )
 )
 
-(define-read-only (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
+(define-read-only (get-y-given-x (the-aytoken <ft-trait>) (dx uint))
     
     (let 
         (
@@ -523,7 +525,7 @@
     )
 )
 
-(define-read-only (get-x-given-y (the-aytoken <yield-token-trait>) (dy uint))
+(define-read-only (get-x-given-y (the-aytoken <ft-trait>) (dy uint))
     
     (let 
         (
@@ -539,7 +541,7 @@
     )
 )
 
-(define-read-only (get-x-given-price (the-aytoken <yield-token-trait>) (price uint))
+(define-read-only (get-x-given-price (the-aytoken <ft-trait>) (price uint))
 
     (let 
         (
@@ -555,7 +557,7 @@
     )
 )
 
-(define-read-only (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
+(define-read-only (get-x-given-yield (the-aytoken <ft-trait>) (yield uint))
 
     (let 
         (
@@ -597,7 +599,7 @@
 
 )
 
-(define-read-only (get-position-given-mint (the-aytoken <yield-token-trait>) (token uint))
+(define-read-only (get-position-given-mint (the-aytoken <ft-trait>) (token uint))
 
     (let 
         (
@@ -622,7 +624,7 @@
     )
 )
 
-(define-read-only (get-position-given-burn (the-aytoken <yield-token-trait>) (token uint))
+(define-read-only (get-position-given-burn (the-aytoken <ft-trait>) (token uint))
     
     (let 
         (
