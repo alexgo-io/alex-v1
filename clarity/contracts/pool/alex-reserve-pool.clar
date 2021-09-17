@@ -1,10 +1,10 @@
 ;; alex-reserve-pool
 
-(define-constant invalid-pool-err (err u2001))
+(define-constant ERR-INVALID-POOL-ERR (err u2001))
 (define-constant ERR-NO-LIQUIDITY (err u2002))
-(define-constant invalid-liquidity-err (err u2003))
-(define-constant transfer-x-failed-err (err u3001))
-(define-constant transfer-y-failed-err (err u3002))
+(define-constant ERR-INVALID-LIQUIDITY (err u2003))
+(define-constant ERR-TRANSFER-X-FAILED (err u3001))
+(define-constant ERR-TRANSFER-Y-FAILED (err u3002))
 (define-constant pool-already-exists-err (err u2000))
 (define-constant too-many-pools-err (err u2004))
 (define-constant percent-greater-than-one-err (err u5000))
@@ -46,7 +46,7 @@
             (usda-to-alex (unwrap! (contract-call? .math-fixed-point div-down usda-price alex-price) ERR-MATH-CALL))
             (alex-to-rebate (unwrap! (contract-call? .math-fixed-point mul-down amount-to-rebate usda-to-alex) ERR-MATH-CALL))
         )
-        (asserts! (> usda-amount u0) invalid-liquidity-err)
+        (asserts! (> usda-amount u0) ERR-INVALID-LIQUIDITY)
 
         ;; all usdc amount is transferred
         (try! (contract-call? .token-usda transfer usda-amount tx-sender (as-contract tx-sender) none))
