@@ -14,13 +14,13 @@
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
-(define-constant pool-already-exists-err (err u2000))
-(define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one-err (err u5000))
+(define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
+(define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
 (define-constant invalid-balance-err (err u2008))
 (define-constant invalid-token-err (err u2007))
-(define-constant no-fee-x-err (err u2005))
-(define-constant no-fee-y-err (err u2006))
+(define-constant ERR-NO-FEE (err u2005))
+(define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant internal-function-call-err (err u1001))
@@ -135,13 +135,13 @@
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
                 (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }))
            )
-            pool-already-exists-err
+            ERR-POOL-ALREADY-EXISTS
        )
 
         (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-data)
         
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
         ;; Deployer should inject the initial coins to the pool
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx dy))
@@ -219,7 +219,7 @@
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
         )
-        percent-greater-than-one-err
+        ERR-PERCENT_GREATER_THAN_ONE
     )
 )
 

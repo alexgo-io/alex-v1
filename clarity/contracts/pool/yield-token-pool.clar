@@ -12,13 +12,13 @@
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
-(define-constant pool-already-exists-err (err u2000))
-(define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one-err (err u5000))
+(define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
+(define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
 (define-constant invalid-balance-err (err u2008))
 (define-constant invalid-token-err (err u2007))
-(define-constant no-fee-x-err (err u2005))
-(define-constant no-fee-y-err (err u2006))
+(define-constant ERR-NO-FEE (err u2005))
+(define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant invalid-expiry-err (err u2009))
 (define-constant fixed-point-err (err 5014))
 (define-constant internal-function-call-err (err u1001))
@@ -193,12 +193,12 @@
         )
         ;; create pool only if the correct pair
         (asserts! (is-eq (try! (contract-call? the-aytoken get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
-        (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) pool-already-exists-err)
+        (asserts! (is-none (map-get? pools-data-map { aytoken: aytoken })) ERR-POOL-ALREADY-EXISTS)
         
         (map-set pools-map { pool-id: pool-id } { aytoken: aytoken })
         (map-set pools-data-map { aytoken: aytoken } pool-data)
         
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
 
         ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
@@ -288,7 +288,7 @@
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
         )    
-        percent-greater-than-one-err
+        ERR-PERCENT_GREATER_THAN_ONE
     )    
 )
 

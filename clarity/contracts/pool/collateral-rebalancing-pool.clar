@@ -15,11 +15,11 @@
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
-(define-constant pool-already-exists-err (err u2000))
-(define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one-err (err u5000))
-(define-constant no-fee-x-err (err u2005))
-(define-constant no-fee-y-err (err u2006))
+(define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
+(define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
+(define-constant ERR-NO-FEE (err u2005))
+(define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant weighted-equation-call-err (err u2009))
 (define-constant ERR-MATH-CALL (err u4003))
 (define-constant internal-function-call-err (err u1001))
@@ -337,13 +337,13 @@
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
                 (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, expiry: expiry }))
             )
-            pool-already-exists-err
+            ERR-POOL-ALREADY-EXISTS
         )
 
         (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
         (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
         
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
         (try! (add-to-position token collateral the-yield-token the-key-token dx))
         (print { object: "pool", action: "created", data: pool-data })
@@ -417,7 +417,7 @@
 ;; TODO: currently the position returned is not guaranteed 
 (define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) percent-greater-than-one-err)
+        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-yield-token get-expiry) get-expiry-fail-err)) expiry-err)
         (let
@@ -483,7 +483,7 @@
 
 (define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) percent-greater-than-one-err)
+        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-key-token get-expiry) get-expiry-fail-err)) expiry-err)
         (let
