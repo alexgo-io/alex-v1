@@ -1,7 +1,7 @@
 ;; alex-reserve-pool
 
 (define-constant invalid-pool-err (err u2001))
-(define-constant no-liquidity-err (err u2002))
+(define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant invalid-liquidity-err (err u2003))
 (define-constant transfer-x-failed-err (err u3001))
 (define-constant transfer-y-failed-err (err u3002))

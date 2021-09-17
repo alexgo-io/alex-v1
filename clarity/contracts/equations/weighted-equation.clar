@@ -7,7 +7,7 @@
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant no-liquidity-err (err u2002))
+(define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant weight-sum-err (err u4000))
 (define-constant max-in-ratio-err (err u4001))
 (define-constant max-out-ratio-err (err u4002))
@@ -114,7 +114,7 @@
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))                
             )
-            (asserts! (> price spot) no-liquidity-err)
+            (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (contract-call? .math-fixed-point mul-up balance-x (unwrap-panic (contract-call? .math-fixed-point sub-fixed power ONE_8)))            
         )
         weight-sum-err    
@@ -133,7 +133,7 @@
                 (base (unwrap-panic (contract-call? .math-fixed-point div-up price spot)))
                 (power (unwrap-panic (contract-call? .math-fixed-point pow-down base weight-y)))
             )
-            (asserts! (< price spot) no-liquidity-err)
+            (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (get-y-given-x balance-x balance-y weight-x weight-y 
                 (unwrap-panic (contract-call? .math-fixed-point mul-up balance-x 
                     (unwrap-panic (contract-call? .math-fixed-point sub-fixed ONE_8 power)))))
@@ -188,7 +188,7 @@
                 )
                 (ok {dx: dx, dy: dy})
             )
-            no-liquidity-err
+            ERR-NO-LIQUIDITY
         )
         weight-sum-err
     )
