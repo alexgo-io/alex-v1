@@ -317,7 +317,7 @@ Clarinet.test({
 
         // end proposal 
         result = MultiSigTest.endProposal(1)
-        result.expectOk().expectUint(10000) // Success 
+        result.expectOk().expectBool(true) // Success 
 
         
     },    

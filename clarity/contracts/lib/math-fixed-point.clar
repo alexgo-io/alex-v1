@@ -8,13 +8,13 @@
 ;; constants
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
-(define-constant SCALE_UP_OVERFLOW (err u5001))
-(define-constant SCALE_DOWN_OVERFLOW (err u5002))
-(define-constant ADD_OVERFLOW (err u5003))
-(define-constant SUB_OVERFLOW (err u5004))
-(define-constant MUL_OVERFLOW (err u5005))
-(define-constant DIV_OVERFLOW (err u5006))
-(define-constant POW_OVERFLOW (err u5007))
+(define-constant ERR-SCALE-UP-OVERFLOW (err u5001))
+(define-constant ERR-SCALE-DOWN-OVERFLOW (err u5002))
+(define-constant ERR-ADD-OVERFLOW (err u5003))
+(define-constant ERR-SUB-OVERFLOW (err u5004))
+(define-constant ERR-MUL-OVERFLOW (err u5005))
+(define-constant ERR-DIV-OVERFLOW (err u5006))
+(define-constant ERR-POW-OVERFLOW (err u5007))
 
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
@@ -33,7 +33,7 @@
         (
             (r (* a ONE_8))
         )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
+        (asserts! (is-eq (/ r ONE_8) a) ERR-SCALE-UP-OVERFLOW)
         (ok r)
     )
 )
@@ -41,7 +41,7 @@
 (define-read-only (scale-down (a uint))
   (let
     ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
+    (asserts! (is-eq (* r ONE_8) a) ERR-SCALE-DOWN-OVERFLOW)
     (ok r)
  )
 )
@@ -51,7 +51,7 @@
         (
             (c (+ a b))
         )
-        (asserts! (>= c a) ADD_OVERFLOW)
+        (asserts! (>= c a) ERR-ADD-OVERFLOW)
         (ok c)
     )
 )
@@ -59,7 +59,7 @@
 (define-read-only (sub-fixed (a uint) (b uint))
     (let
         ()
-        (asserts! (<= b a) SUB_OVERFLOW)
+        (asserts! (<= b a) ERR-SUB-OVERFLOW)
         (ok (- a b))
     )
 )
