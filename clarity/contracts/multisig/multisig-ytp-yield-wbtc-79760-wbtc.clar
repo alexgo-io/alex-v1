@@ -14,13 +14,13 @@
 ;; 
 
 ;; Errors
-(define-constant not-enough-balance-err (err u8000))
-(define-constant no-contract-changes-err (err u8001))
-(define-constant invalid-pool-token (err u8002))
-(define-constant block-height-not-reached (err u8003))
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-ENOUGH-BALANCE (err u8000))
+(define-constant ERR-NO-FEE-CHANGE (err u8001))
+(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
+(define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-MATH-CALL (err u2010))
 (define-constant status-ok u10000)
-(define-constant math-call-err (err u2010))
 
 (define-constant ONE_8 u100000000)
 
@@ -126,7 +126,7 @@
   )
 
     ;; Requires 10% of the supply 
-    (asserts! (>= (* proposer-balance u10) total-supply) not-enough-balance-err)
+    (asserts! (>= (* proposer-balance u10) total-supply) ERR-NOT-ENOUGH-BALANCE)
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -159,11 +159,11 @@
   )
 
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (is-token-accepted token) ERR-INVALID-POOL-TOKEN)
     ;; Proposal should be open for voting
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
-    (asserts! (>= block-height (get start-block-height proposal)) not-authorized-err)
+    (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
     (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
@@ -193,11 +193,11 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) invalid-pool-token)
+    (asserts! (is-token-accepted token) ERR-INVALID-POOL-TOKEN)
     ;; Proposal should be open for voting
-    (asserts! (get is-open proposal) not-authorized-err)
+    (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
-    (asserts! (>= block-height (get start-block-height proposal)) not-authorized-err)
+    (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     ;; Voter should stake the corresponding pool token to the vote contract. 
     (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
 
@@ -224,17 +224,17 @@
         (yes-votes (get yes-votes proposal))
   )
 
-    (asserts! (not (is-eq (get id proposal) u0)) not-authorized-err)  ;; Default id
-    (asserts! (get is-open proposal) not-authorized-err)
-    (asserts! (>= block-height (get end-block-height proposal)) block-height-not-reached)
+    (asserts! (not (is-eq (get id proposal) u0)) ERR-NOT-AUTHORIZED)  ;; Default id
+    (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
+    (asserts! (>= block-height (get end-block-height proposal)) ERR-BLOCK-HEIGHT-NOT-REACHED)
 
     (map-set proposals
       { id: proposal-id }
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-    (ok status-ok))
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
+    (ok true))
 )
 
 ;; Return votes to voter(member)
@@ -246,9 +246,9 @@
       (proposal (get-proposal-by-id proposal-id))
     )
 
-    (asserts! (is-token-accepted token) invalid-pool-token)
-    (asserts! (not (get is-open proposal)) not-authorized-err)
-    (asserts! (>= block-height (get end-block-height proposal)) not-authorized-err)
+    (asserts! (is-token-accepted token) ERR-INVALID-POOL-TOKEN)
+    (asserts! (not (get is-open proposal)) ERR-NOT-AUTHORIZED)
+    (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
     (try! (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none)))
