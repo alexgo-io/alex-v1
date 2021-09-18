@@ -1,5 +1,7 @@
 (impl-trait .trait-vault.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -39,7 +41,23 @@
 )
 
 ;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
-(define-public (transfer-on-behalf-of (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+(define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+  (begin     
+    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) not-authorized-err)
+    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) transfer-failed-err)
+    (ok true)
+  )
+)
+
+(define-public (transfer-yield (token <yield-token-trait>) (amount uint) (sender principal) (recipient principal))
+  (begin     
+    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) not-authorized-err)
+    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) transfer-failed-err)
+    (ok true)
+  )
+)
+
+(define-public (transfer-pool (token <pool-token-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
     (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) not-authorized-err)
     (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) transfer-failed-err)
