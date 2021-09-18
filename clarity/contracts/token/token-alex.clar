@@ -13,11 +13,11 @@
 )
 
 ;; errors
-(define-constant not-authorized-err (err u1000))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
   )
 )
@@ -48,7 +48,7 @@
 
 (define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
   )
 )
@@ -59,7 +59,7 @@
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
-    (asserts! (is-eq sender tx-sender) not-authorized-err)
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
     (match (ft-transfer? alex amount sender recipient)
       response (begin
         (print memo)
@@ -72,14 +72,14 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-mint? alex amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) not-authorized-err)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-burn? alex amount sender)
   )
 )
