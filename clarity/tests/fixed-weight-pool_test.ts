@@ -80,8 +80,8 @@ Clarinet.test({
         position['dx'].expectUint(wbtcQ);
         position['dy'].expectUint(wbtcQ*wbtcPrice);        
 
-        // attempt to trade too much (> 30%) will be rejected
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 50*ONE_8);
+        // attempt to trade too much (> 90%) will be rejected
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90*ONE_8);
         position = result.expectErr().expectUint(4001);
 
         // swap some wbtc into usda
@@ -159,7 +159,7 @@ Clarinet.test({
 
         // end proposal 
         result = MultiSigTest.endProposal(1)
-        result.expectOk().expectUint(10000) // Success 
+        result.expectOk().expectBool(true) // Success 
        
         // Fee set to 5% 
         result = FWPTest.getFeeX(deployer, wbtcAddress, usdaAddress, weightX, weightY);
@@ -272,7 +272,7 @@ Clarinet.test({
 
         // end proposal 
         result = MultiSigTest.endProposal(1)
-        result.expectOk().expectUint(10000) 
+        result.expectOk().expectBool(true) 
 
         // Fee didn't change
         result = FWPTest.getFeeX(deployer, wbtcAddress, usdaAddress, weightX, weightY);

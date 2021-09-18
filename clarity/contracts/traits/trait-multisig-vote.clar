@@ -8,7 +8,7 @@
 
     (vote-against (<ft-trait> uint uint) (response uint uint))  
 
-    (end-proposal (uint) (response uint uint))
+    (end-proposal (uint) (response bool uint))
 
     (return-votes-to-member (<ft-trait> uint principal) (response bool uint))
 

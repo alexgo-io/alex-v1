@@ -10,7 +10,7 @@
 (define-data-var underlying-token principal .token-wbtc)
 
 ;; errors
-(define-constant err-not-authorized u1000)
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
