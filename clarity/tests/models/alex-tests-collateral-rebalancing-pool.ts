@@ -287,6 +287,24 @@ import {
       ], this.deployer.address);
     }
 
+    getXgivenPrice(token: string, collateral: string, expiry: number, price: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-x-given-price", [
+          types.principal(token),
+          types.principal(collateral),
+          types.uint(expiry),
+          types.uint(price)
+        ], this.deployer.address);
+    }    
+
+    getYgivenPrice(token: string, collateral: string, expiry: number, price: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-y-given-price", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry),
+        types.uint(price)
+      ], this.deployer.address);
+    }       
+
   }
   
   export { CRPTestAgent1 };

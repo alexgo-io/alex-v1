@@ -9,6 +9,7 @@ import {
 import { 
     MS_FWP_WBTC_USDA_5050,
 } from './models/alex-tests-multisigs.ts';
+import { OracleManager } from './models/alex-tests-oracle-mock.ts';
 
 import { 
     USDAToken,
@@ -79,8 +80,8 @@ Clarinet.test({
         position['dx'].expectUint(wbtcQ);
         position['dy'].expectUint(wbtcQ*wbtcPrice);        
 
-        // attempt to trade too much (> 30%) will be rejected
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 50*ONE_8);
+        // attempt to trade too much (> 90%) will be rejected
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90*ONE_8);
         position = result.expectErr().expectUint(4001);
 
         // swap some wbtc into usda
@@ -281,3 +282,80 @@ Clarinet.test({
         result.expectOk().expectUint(0)
     },
 });
+
+Clarinet.test({
+    name: "FWP : testing get-x-given-price and get-y-given-price",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        // initialise prices
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8);
+        oracleresult.expectOk()            
+        oracleresult = Oracle.updatePrice(deployer,"USDA", "nothing" ,usdaPrice * ONE_8);
+        oracleresult.expectOk()                    
+
+        // Deployer creating a pool, initial tokens injected to the pool
+        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigAddress, wbtcQ, wbtcQ*wbtcPrice);
+        result.expectOk().expectBool(true);
+
+        // Check pool details and print
+        let call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress,weightX, weightY);
+        let position:any = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(2236067605752);
+        position['balance-x'].expectUint(wbtcQ);
+        position['balance-y'].expectUint(wbtcQ*wbtcPrice);
+
+        // wbtc (token) rises by 10% vs usda (collateral)
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8 * 1.1);
+        oracleresult.expectOk()
+
+        // now pool price still implies wbtcPrice
+        call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        position = call.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(10000000000);
+        position['balance-y'].expectUint(500000000000000);         
+        
+        // let's do some arb
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8*1.1);
+        call.result.expectOk().expectUint(23268715000000);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 23268715000000)
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(23268715000000);
+        position['dx'].expectUint(488087600);
+
+        // now pool price implies wbtcPrice*1.1 ~= 55,000
+        // 523268715000000 divided by 9511912400 = 55011.935875271517429
+        call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        position = call.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(10000000000 - 488087600);
+        position['balance-y'].expectUint(500000000000000 + 23268715000000);     
+
+        // wbtc (token) then falls by 30% vs usda (collateral)
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8 * 1.1 * 0.8);
+        oracleresult.expectOk()        
+        
+        // let's do some arb
+        // but calling get-y-given-price throws an error
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8*1.1 *0.8);
+        call.result.expectErr().expectUint(2002);
+        // we need to call get-x-given-price
+        call = await FWPTest.getXgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8*1.1 *0.8);
+        call.result.expectOk().expectUint(1123881913);                 
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 1123881913)
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(1123881913);         
+        position['dy'].expectUint(55293632435374);      
+
+        // now pool price implies wbtcPrice*1.1*0.8 ~= 44,000
+        // 467975082564626 divided by 10635794313 = 44000.012485445100954
+        call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        position = call.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(9511912400 + 1123881913);
+        position['balance-y'].expectUint(523268715000000 - 55293632435374);         
+    },
+});          
+        
+        
