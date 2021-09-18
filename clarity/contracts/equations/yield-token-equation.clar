@@ -5,11 +5,11 @@
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant no-liquidity-err (err u2002))
-(define-constant weight-sum-err (err u4000))
-(define-constant max-in-ratio-err (err u4001))
-(define-constant max-out-ratio-err (err u4002))
-(define-constant math-call-err (err u4003))
+(define-constant ERR-NO-LIQUIDITY (err u2002))
+(define-constant ERR-WEIGHT-SUM (err u4000))
+(define-constant ERR-MAX-IN-RATIO (err u4001))
+(define-constant ERR-MAX-OUT-RATIO (err u4002))
+(define-constant ERR-MATH-CALL (err u4003))
 (define-constant insufficient-balance-err (err u4004))
 
 ;; max in/out as % of liquidity
@@ -49,7 +49,7 @@
             (x-dx-pow (unwrap-panic (pow-down (unwrap-panic (add-fixed balance-x dx)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) x-dx-pow)))
         )
-        (asserts! (< dx max-in) max-in-ratio-err)     
+        (asserts! (< dx max-in) ERR-MAX-IN-RATIO)     
 
         (sub-fixed balance-y (unwrap-panic (pow-down term t-comp-num)))
     )
@@ -77,7 +77,7 @@
             (y-dy-pow (unwrap-panic (pow-up (unwrap-panic (sub-fixed balance-y dy)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) y-dy-pow)))            
         )
-        (asserts! (< dy max-out) max-out-ratio-err)
+        (asserts! (< dy max-out) ERR-MAX-OUT-RATIO)
         (sub-fixed (unwrap-panic (pow-down term t-comp-num)) balance-x)         
     )
     insufficient-balance-err
@@ -158,7 +158,7 @@
             )                
             (ok {dx: dx, dy: dy})
         )
-        no-liquidity-err
+        ERR-NO-LIQUIDITY
     )
 )
 
