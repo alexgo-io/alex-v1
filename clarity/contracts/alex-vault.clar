@@ -7,14 +7,15 @@
 (define-constant insufficient-flash-loan-balance-err (err u3003))
 (define-constant invalid-post-loan-balance-err (err u3004))
 (define-constant user-execute-err (err u3005))
-(define-constant transfer-one-by-one-err (err u3006))
 (define-constant transfer-failed-err (err u3000))
 (define-constant invalid-flash-loan-balance-err (err u3008))
+(define-constant loan-transfer-failed-err (err u3006))
+(define-constant post-loan-transfer-failed-err (err u3007))
+(define-constant invalid-balance (err u3011))
 (define-constant math-call-err (err u2010))
-(define-constant internal-function-call-err (err u1001))
 
 ;; flash loan fee rate
-(define-data-var flash-loan-fee-rate uint u100000) ;;0.001%
+(define-data-var flash-loan-fee-rate uint u0)
 
 (define-read-only (get-flash-loan-fee-rate)
   (ok (var-get flash-loan-fee-rate))
@@ -43,13 +44,13 @@
     (asserts! (> pre-bal amount) insufficient-flash-loan-balance-err)
 
     ;; transfer loan to flash-loan-user
-    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) (contract-of flash-loan-user) none) transfer-failed-err)
+    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) tx-sender none) loan-transfer-failed-err)
 
     ;; flash-loan-user executes with loan received
     (unwrap! (contract-call? flash-loan-user execute) user-execute-err)
 
     ;; return the loan + fee
-    (unwrap! (contract-call? token transfer amount-with-fee (contract-of flash-loan-user) (as-contract tx-sender) none) transfer-failed-err) 
-    (ok true)
+    (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) post-loan-transfer-failed-err) 
+    (ok amount-with-fee)
   )
 )
