@@ -397,24 +397,29 @@ Clarinet.test({
 
         // wbtc (token) rises by 50% vs usda (collateral)
         oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.5);
-        oracleresult.expectOk()      
+        oracleresult.expectOk()    
+        
+        call = await Oracle.getPrice("nothing", "WBTC");
+        call.result.expectOk().expectUint(wbtcPrice * 1.5);
 
+        // now pool price still implies $50,000 per wbtc
         call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
         position = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(9966423100);
         position['balance-y'].expectUint(501673273700000);         
         
-        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(ONE_8 / ((wbtcPrice / ONE_8) * 1.5)));
-        call.result.expectOk().expectUint(76790325328021);
-
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 76790325328021 + 15773799942279)
+        // let's do some arb
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice * 1.5);
+        call.result.expectOk().expectUint(90683373999371);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90683373999371)
         position = result.expectOk().expectTuple();
-        position['dy'].expectUint(76790325328021 + 15773799942279);
-        position['dx'].expectUint(2254979469);
+        position['dy'].expectUint(90683373999371);
+        position['dx'].expectUint(2199052387);
 
-        // not accurate enough
-        call = await FWPTest.getXgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(ONE_8 / ((wbtcPrice / ONE_8) * 1.5)));
-        call.result.expectOk().expectUint(106287676);
+        call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        position = call.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(7767370713);
+        position['balance-y'].expectUint(592356647699371);         
         
         // simulate to expiry + 1
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1) 
@@ -444,8 +449,8 @@ Clarinet.test({
         // ltv > 100%, so we dip into reserve pool
         // the shortfall is about 0.0287411 BTC ~= 2155.5825 USD
         call = await CRPTest.getBalance("token-usda", reserveAddress);
-        call.result.expectOk().expectUint(9702705872037)
-        // the actual decrease was 2972.94127963 USD, makes sense given AMM slippage
+        call.result.expectOk().expectUint(9740794336638)
+        // the actual decrease was 2592.05663362 USD, makes sense given AMM slippage
 
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);

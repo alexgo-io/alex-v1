@@ -807,6 +807,21 @@
     )
 )
 
+(define-read-only (get-y-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
+    (let 
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) invalid-pool-err))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x (get weight-x pool))
+            (weight-y (get weight-y pool))         
+        )
+        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
 ;; single sided liquidity
 (define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
     (let 

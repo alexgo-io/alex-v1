@@ -101,41 +101,38 @@
 ;; b_y = balance-y
 ;; w_x = weight-x 
 ;; w_y = weight-y
-;; spot = b_x * w_y / b_y / w_x
-;; d_x = b_x * ((price / spot) ^ w_y - 1)
+;; spot = b_y * w_x / b_x / w_y
+;; d_x = b_x * ((spot / price) ^ w_y - 1)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
             (
-                (numerator (unwrap-panic (mul-down balance-x weight-y)))
-                (denominator (unwrap-panic (mul-up balance-y weight-x)))
+                (numerator (unwrap-panic (mul-down balance-y weight-x)))
+                (denominator (unwrap-panic (mul-up balance-x weight-y)))
                 (spot (unwrap-panic (div-down numerator denominator)))
-                (base (unwrap-panic (div-up price spot)))
+                (base (unwrap-panic (div-up spot price)))
                 (power (unwrap-panic (pow-down base weight-y)))                
             )
-            (asserts! (> price spot) no-liquidity-err)
+            (asserts! (< price spot) no-liquidity-err)
             (mul-up balance-x (unwrap-panic (sub-fixed power ONE_8)))            
         )
         weight-sum-err    
     )   
 )
 
-;; TODO: not very accurate
+;; follows from the above
 (define-read-only (get-y-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (if (is-eq (+ weight-x weight-y) ONE_8)
         (let 
             (
-
-                (numerator (unwrap-panic (mul-down balance-x weight-y)))
-                (denominator (unwrap-panic (mul-up balance-y weight-x)))
+                (numerator (unwrap-panic (mul-down balance-y weight-x)))
+                (denominator (unwrap-panic (mul-up balance-x weight-y)))
                 (spot (unwrap-panic (div-down numerator denominator)))
-                (base (unwrap-panic (div-up price spot)))
-                (power (unwrap-panic (pow-down base weight-y)))
+                (base (unwrap-panic (div-up spot price)))
+                (power (unwrap-panic (pow-down base weight-x)))
             )
-            (asserts! (< price spot) no-liquidity-err)
-            (get-y-given-x balance-x balance-y weight-x weight-y 
-                (unwrap-panic (mul-up balance-x 
-                    (unwrap-panic (sub-fixed ONE_8 power)))))
+            (asserts! (> price spot) no-liquidity-err)
+            (mul-up balance-y (unwrap-panic (sub-fixed ONE_8 power)))
         )
         weight-sum-err    
     )   
