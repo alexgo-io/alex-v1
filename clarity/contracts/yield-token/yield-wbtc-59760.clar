@@ -5,7 +5,7 @@
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 (define-data-var token-expiry uint u5976000000000)  
-(define-data-var underlying-token principal .token-yield-wbtc-59760)
+(define-data-var underlying-token principal .token-wbtc)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
