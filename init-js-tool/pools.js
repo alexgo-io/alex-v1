@@ -14,7 +14,7 @@ const {
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy) => {
-  console.log('[FWP] creating...', tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy);
+  console.log('[FWP] create-pool...', tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy);
   const privateKey = await getPK();
   const txOptions = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -45,7 +45,7 @@ const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, 
   }
 }
 const crpCreate = async (token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
-  console.log('[CRP] creating...', token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
+  console.log('[CRP] create-pool...', token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
   const privateKey = await getPK();
   const txOptions = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -78,7 +78,7 @@ const crpCreate = async (token, collateral, yiedToken, keyToken, multiSig, ltv_0
   }
 }
 const ytpCreate = async (yiedToken, token, poolToken, multiSig, dx, dy) => {
-  console.log('[YTP] creating...', yiedToken, token, poolToken, multiSig, dx, dy);
+  console.log('[YTP] create-pool...', yiedToken, token, poolToken, multiSig, dx, dy);
   const privateKey = await getPK();
   const txOptions = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -108,6 +108,7 @@ const ytpCreate = async (yiedToken, token, poolToken, multiSig, dx, dy) => {
 }
 
 const crpAddToPostionAndSwitch = async (token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
+  console.log('[CRP] add-to-position-and-switch...', token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
   const privateKey = await getPK();
   const txOptions = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -141,6 +142,7 @@ const crpAddToPostionAndSwitch = async (token, collateral, yiedToken, keyToken, 
 }
 
 const ytpSwapXforY = async (yiedToken, token, dx) => {
+  console.log('[YTP] swap-x-for-y...', yiedToken, token, dx);
   const privateKey = await getPK();
   const txOptions = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -167,6 +169,7 @@ const ytpSwapXforY = async (yiedToken, token, dx) => {
 }
 
 const ytpSwapYforX = async (yiedToken, token, dy) => {
+  console.log('[YTP] swap-y-for-x...', yiedToken, token, dy);
   const privateKey = await getPK();
   const txOptions = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -258,7 +261,7 @@ const ytpGetPoolDetails = async (yieldToken) => {
 };
 
 const crpGetLtv = async (token, collateral, expiry) => {
-  console.log('Getting LTV...', token, collateral, expiry);
+  console.log('[CRP] get-ltv...]', token, collateral, expiry);
 
   const options = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -329,7 +332,7 @@ const crpGetYgivenX = async (token, collateral, expiry, dx) => {
 };
 
 const crpGetPoolValueInToken = async (token, collateral, expiry) => {
-  console.log('Getting CRP Pool Value in Token...', token, collateral, expiry);
+  console.log('[CRP] get-pool-value-in-token...]', token, collateral, expiry);
 
   const options = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -352,7 +355,7 @@ const crpGetPoolValueInToken = async (token, collateral, expiry) => {
 };
 
 const crpGetPoolDetails = async (token, collateral, expiry) => {
-  console.log('Getting CRP Pool Details...', token, collateral, expiry);
+  console.log('[CRP] get-pool-details...]', token, collateral, expiry);
 
   const options = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -388,7 +391,7 @@ const printResult = (result)=>{
 }
 
 const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
-  console.log('[FWP] For given price, what is X...', tokenX, tokenY, weightX, weightY, price);
+  console.log('[FWP] get-x-given-price...', tokenX, tokenY, weightX, weightY, price);
 
   const options = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -463,7 +466,7 @@ const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
 };
 
 const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
-  console.log('[FWP] For given price, what is X...', tokenX, tokenY, weightX, weightY, price);
+  console.log('[FWP] get-y-given-price...', tokenX, tokenY, weightX, weightY, price);
 
   const options = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -488,7 +491,7 @@ const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
 };
 
 const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
-  console.log('Getting FWP Pool Details...', tokenX, tokenY, weightX, weightY);
+  console.log('[FWP] get-pool-details...]', tokenX, tokenY, weightX, weightY);
 
   const options = {
     contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -511,20 +514,20 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
   }
 };
 
-exports.fwpCreate = fwpCreate;
-exports.crpCreate = crpCreate;
 exports.ytpCreate = ytpCreate;
-exports.crpAddToPostionAndSwitch = crpAddToPostionAndSwitch;
 exports.ytpSwapXforY = ytpSwapXforY;
 exports.ytpSwapYforX = ytpSwapYforX;
 exports.ytpGetYgivenX = ytpGetYgivenX;
 exports.ytpGetXgivenY = ytpGetXgivenY;
 exports.ytpGetPoolDetails = ytpGetPoolDetails;
+exports.crpCreate = crpCreate;
+exports.crpAddToPostionAndSwitch = crpAddToPostionAndSwitch;
 exports.crpGetLtv = crpGetLtv;
 exports.crpGetYgivenX = crpGetYgivenX;
 exports.crpGetXgivenY = crpGetXgivenY;
 exports.crpGetPoolDetails = crpGetPoolDetails;
 exports.crpGetPoolValueInToken = crpGetPoolValueInToken;
+exports.fwpCreate = fwpCreate;
 exports.fwpGetXGivenPrice = fwpGetXGivenPrice;
 exports.fwpGetYGivenPrice = fwpGetYGivenPrice;
 exports.fwpGetPoolDetails = fwpGetPoolDetails;

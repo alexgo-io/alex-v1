@@ -58,13 +58,13 @@ async function run(){
     // await fwpGetYgivenX('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
     // await fwpGetXgivenY('token-wbtc', 'token-usda', weightX, weightY, 10000e+8);
 
-    // await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
-    // await crpGetXgivenY('token-wbtc', 'token-usda', expiry, 1e+8);
-    // await crpGetYgivenX('token-wbtc', 'token-usda', expiry, 10000e+8);
+    await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
+    await crpGetXgivenY('token-wbtc', 'token-usda', expiry, 1e+8);
+    await crpGetYgivenX('token-wbtc', 'token-usda', expiry, 10000e+8);
 
-    await ytpGetPoolDetails('yield-wbtc-59760');
-    await ytpGetXgivenY('yield-wbtc-59760', 1e+8);
-    await ytpGetYgivenX('yield-wbtc-59760', 1e+8);
+    // await ytpGetPoolDetails('yield-wbtc-59760');
+    // await ytpGetXgivenY('yield-wbtc-59760', 1e+8);
+    // await ytpGetYgivenX('yield-wbtc-59760', 1e+8);
 
     // await crpGetLtv('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolValueInToken('token-wbtc', 'token-usda', expiry);
