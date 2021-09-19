@@ -46,7 +46,7 @@
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
     (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
-    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) ERR-TRANSFER-FAILED)
+    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -54,7 +54,7 @@
 (define-public (transfer-yield (token <yield-token-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
     (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
-    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) ERR-TRANSFER-FAILED)
+    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -62,7 +62,7 @@
 (define-public (transfer-pool (token <pool-token-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
     (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
-    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) ERR-TRANSFER-FAILED)
+    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -74,19 +74,20 @@
       (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
       (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) ERR-MATH-CALL))
       (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) ERR-MATH-CALL))
+      (recipient tx-sender)
     )
 
     ;; make sure current balance > loan amount
     (asserts! (> pre-bal amount) ERR-INSUFFICIENT-FLASH-LOAN-BALANCE)
 
     ;; transfer loan to flash-loan-user
-    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) tx-sender none) ERR-LOAN-TRANSFER-FAILED)
+    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
 
     ;; flash-loan-user executes with loan received
     (unwrap! (contract-call? flash-loan-user execute) ERR-USER-EXECUTE)
 
     ;; return the loan + fee
-    (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED) 
+    (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED)
     (ok amount-with-fee)
   )
 )

@@ -80,6 +80,6 @@
 ;; Initialize the contract for Testing.
 (begin
   (try! (ft-mint? usda u1000000000000000 tx-sender))
-  (try! (ft-mint? usda u10000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.usda-reserve-pool))
+  (try! (ft-mint? usda u10000000000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool))
   (try! (ft-mint? usda u200000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )

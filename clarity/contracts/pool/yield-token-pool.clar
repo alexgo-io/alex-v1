@@ -219,7 +219,7 @@
             (balance-aytoken (get balance-aytoken pool))
             (balance-virtual (get balance-virtual pool))
             (total-supply (get total-supply pool))
-            (add-data (unwrap! (get-token-given-position the-aytoken dx) ERR-INTERNAL-FUNCTION-CALL))
+            (add-data (try! (get-token-given-position the-aytoken dx)))
             (new-supply (get token add-data))
             (new-dy-act (get dy-act add-data))
             (new-dy-vir (get dy-vir add-data))
@@ -243,7 +243,6 @@
         
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { aytoken: aytoken } pool-updated)
-        ;; Failure. 
         (try! (contract-call? the-pool-token mint tx-sender new-supply))
         ;;(try! (contract-call? .alex-multisig-registry mint-token the-pool-token new-supply tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })

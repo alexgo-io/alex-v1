@@ -3,7 +3,7 @@
 (define-fungible-token fwp-wbtc-usda-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var contract-owner principal .fixed-weight-pool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -65,14 +65,14 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-mint? fwp-wbtc-usda-50-50 amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-burn? fwp-wbtc-usda-50-50 amount sender)
   )
 )

@@ -3,7 +3,7 @@
 (define-fungible-token key-wbtc-79760-usda)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var contract-owner principal .collateral-rebalancing-pool)
 (define-data-var token-expiry uint u7976000000000)  
 (define-data-var underlying-token principal .token-key-wbtc-79760-usda)
 
@@ -67,14 +67,14 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-mint? key-wbtc-79760-usda amount recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-burn? key-wbtc-79760-usda amount sender)
   )
 )

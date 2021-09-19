@@ -55,7 +55,7 @@
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
     (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
-    (unwrap! (contract-call? token transfer amount (as-contract tx-sender) recipient none) ERR-TRANSFER-FAILED)
+    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
