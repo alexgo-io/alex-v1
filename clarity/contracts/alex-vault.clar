@@ -1,3 +1,4 @@
+(impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-vault.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
@@ -18,23 +19,38 @@
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 
-(define-map approved-contracts
-  { name: principal }
-  {
-    can-transfer: bool
-  }
-)
+(define-data-var contract-owner principal tx-sender)
+
+(define-map approved-contracts principal bool)
 
 ;; flash loan fee rate
 (define-data-var flash-loan-fee-rate uint u0)
+
+(define-read-only (get-owner)
+  (ok (var-get contract-owner))
+)
+
+(define-public (set-owner (owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
+  )
+)
 
 (define-read-only (get-flash-loan-fee-rate)
   (ok (var-get flash-loan-fee-rate))
 )
 
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED))
+)
+
 ;; TODO: multisig
 (define-public (set-flash-loan-fee-rate (fee uint))
-  (ok (var-set flash-loan-fee-rate fee))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set flash-loan-fee-rate fee))
+  )
 )
 
 ;; return token balance held by vault
@@ -45,7 +61,7 @@
 ;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
-    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved sender))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
@@ -53,7 +69,7 @@
 
 (define-public (transfer-yield (token <yield-token-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
-    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved sender))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
@@ -61,7 +77,7 @@
 
 (define-public (transfer-pool (token <pool-token-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
-    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved sender))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
@@ -94,34 +110,9 @@
 
 ;; contract initialisation
 (begin
-  (map-set approved-contracts
-    { name: .alex-reserve-pool }
-    {
-      can-transfer: true
-    }
-  )
-  (map-set approved-contracts
-    { name: .collateral-rebalancing-pool }
-    {
-      can-transfer: true
-    }
-  )  
-  (map-set approved-contracts
-    { name: .fixed-weight-pool }
-    {
-      can-transfer: true
-    }
-  )  
-  (map-set approved-contracts
-    { name: .liquidity-bootstrapping-pool }
-    {
-      can-transfer: true
-    }
-  )  
-  (map-set approved-contracts
-    { name: .yield-token-pool }
-    {
-      can-transfer: true
-    }
-  )  
+  (map-set approved-contracts .alex-reserve-pool true)
+  (map-set approved-contracts .collateral-rebalancing-pool true)  
+  (map-set approved-contracts .fixed-weight-pool true)  
+  (map-set approved-contracts .liquidity-bootstrapping-pool true)  
+  (map-set approved-contracts .yield-token-pool true)  
 )

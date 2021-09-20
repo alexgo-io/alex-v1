@@ -26,12 +26,10 @@
 ;; For Testing Purpose, need for mocking oracle. 
 ;; price must be in fixed point integer
 (define-public (update-price (symbol (string-ascii 32)) (oracle-src (string-ascii 32)) (price uint))
-  (if (is-eq tx-sender (var-get oracle-owner))
-    (begin
-      (map-set prices { symbol: symbol, oracle-src: oracle-src } { last-price-in-cents: price, last-block: u0 })
-      (ok price)
-    )
-    (err ERR-NOT-AUTHORIZED)
+  (begin
+    (asserts! (is-eq tx-sender (var-get oracle-owner)) ERR-NOT-AUTHORIZED)
+    (map-set prices { symbol: symbol, oracle-src: oracle-src } { last-price-in-cents: price, last-block: u0 })
+    (ok price)
   )
 )
 

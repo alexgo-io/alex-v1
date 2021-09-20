@@ -1,3 +1,4 @@
+(impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; alex-reserve-pool
@@ -31,12 +32,7 @@
 
 (define-data-var contract-owner principal tx-sender)
 
-(define-map approved-contracts
-  { name: principal }
-  {
-    can-transfer: bool
-  }
-)
+(define-map approved-contracts principal bool)
 
 (define-data-var rebate-rate uint u50000000) ;;50%
 
@@ -44,9 +40,13 @@
     (ok (var-get rebate-rate))
 )
 
-(define-public (set-contract-owner (owner principal))
+(define-read-only (get-owner)
+  (ok (var-get contract-owner))
+)
+
+(define-public (set-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
   )
 )
@@ -54,15 +54,17 @@
 ;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
-    (asserts! (default-to false (get can-transfer (map-get? approved-contracts { name: sender }))) ERR-NOT-AUTHORIZED)
+    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
 
 (define-public (set-rebate-rate (rate uint))
-    ;; (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set rebate-rate rate))
+  )
 )
 
 (define-public (transfer-to-mint (usda-amount uint))
@@ -459,33 +461,7 @@
  )
 )
 
-(define-read-only (test)
-  (let
-    (
-      (x (* u7 (pow u10 u6)))
-      (y (* u233 (pow u10 u6)))
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
-      ;;(r (exp-pos (* -1 logx-times-y)))
-
-      ;;(arg (* 69 iONE_8))
-      ;;(r (exp-pos arg))
-      ;;(x_product (fold accumulate_product x_a_list {x: arg, product: iONE_8}))
-  )
-  ;;(ok logx-times-y)
-  ;;x_product
-  (ok (pow-fixed x y))
- )
-)
-
 ;; contract initialisation
 (begin
-  (map-set approved-contracts
-    { name: .collateral-rebalancing-pool }
-    {
-      can-transfer: true
-    }
-  )  
+  (map-set approved-contracts .collateral-rebalancing-pool true)  
 )
