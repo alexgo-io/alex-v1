@@ -1,9 +1,7 @@
 require('dotenv').config();
 const { makeContractDeploy, broadcastTransaction, AnchorMode } = require('@stacks/transactions');
 const walkSync = require('walk-sync');
-const BigNum = require('bn.js');
 const fs = require('fs')
-const path = require('path')
 
 const {
     getPK, network
@@ -37,7 +35,7 @@ async function deploy(filePath, contractName){
     const transaction = await makeContractDeploy(txOptions);
     const broadcast_id = await broadcastTransaction(transaction, network);
     // console.log(broadcast_id)
-    console.log(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
+    //console.log(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
     while (true){
         let truth = await fetch(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
         let res = await truth.json();
