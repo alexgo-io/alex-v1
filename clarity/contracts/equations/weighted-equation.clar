@@ -33,11 +33,11 @@
 ;; get-invariant
 ;; invariant = b_x ^ w_x * b_y ^ w_y 
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (ok (unwrap-panic (mul-down 
                 (unwrap-panic (pow-down balance-x weight-x)) 
-                (unwrap-panic (pow-down balance-y weight-y)))))
-        ERR-WEIGHT-SUM
+                (unwrap-panic (pow-down balance-y weight-y)))))        
     )
 )
 
@@ -49,10 +49,11 @@
 ;; w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
 ;; w_y = weight-y                                                                       
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
         (let 
             (
-                (max-in (unwrap-panic (mul-down balance-x MAX_IN_RATIO)))
                 (denominator (unwrap-panic (add-fixed balance-x dx)))
                 (base (unwrap-panic (div-up balance-x denominator)))
                 (uncapped-exponent (unwrap-panic (div-up weight-x weight-y)))
@@ -61,11 +62,8 @@
                 (power (unwrap-panic (pow-up base exponent)))
                 (complement (unwrap-panic (sub-fixed ONE_8 power)))
             )
-            (asserts! (< dx max-in) ERR-MAX-IN-RATIO)
-
             (mul-down balance-y complement)
-        )
-        ERR-WEIGHT-SUM
+        ) 
     )    
 )
 
@@ -76,10 +74,11 @@
 ;; w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
 ;; w_y = weight-y                                                           
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (max-out (unwrap-panic (mul-down balance-y MAX_OUT_RATIO)))
                 (denominator (unwrap-panic (sub-fixed balance-y dy)))
                 (base (unwrap-panic (div-down balance-y denominator)))
                 (uncapped-exponent (unwrap-panic (div-down weight-x weight-y)))
@@ -88,10 +87,8 @@
                 (power (unwrap-panic (pow-down base exponent)))
                 (ratio (unwrap-panic (sub-fixed power ONE_8)))
             )
-            (asserts! (< dy max-out) ERR-MAX-OUT-RATIO)
             (mul-down balance-x ratio)
         )
-        ERR-WEIGHT-SUM
     )
 )
 
@@ -104,57 +101,54 @@
 ;; spot = b_y * w_x / b_x / w_y
 ;; d_x = b_x * ((spot / price) ^ w_y - 1)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
-        (let 
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (let
             (
                 (numerator (unwrap-panic (mul-down balance-y weight-x)))
                 (denominator (unwrap-panic (mul-up balance-x weight-y)))
                 (spot (unwrap-panic (div-down numerator denominator)))
-                (base (unwrap-panic (div-up spot price)))
-                (power (unwrap-panic (pow-down base weight-y)))                
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
-            (mul-up balance-x (unwrap-panic (sub-fixed power ONE_8)))            
+            (let 
+                (
+                    (base (unwrap-panic (div-up spot price)))
+                    (power (unwrap-panic (pow-down base weight-y)))                
+                )
+                (mul-up balance-x (unwrap-panic (sub-fixed power ONE_8)))            
+            )
         )
-        ERR-WEIGHT-SUM    
     )   
 )
 
 ;; follows from the above
 (define-read-only (get-y-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
-        (let 
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (let
             (
                 (numerator (unwrap-panic (mul-down balance-y weight-x)))
                 (denominator (unwrap-panic (mul-up balance-x weight-y)))
                 (spot (unwrap-panic (div-down numerator denominator)))
-                (base (unwrap-panic (div-up spot price)))
-                (power (unwrap-panic (pow-down base weight-y)))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
-            (mul-up balance-y (unwrap-panic (sub-fixed ONE_8 power)))
+            (let 
+                (
+                    (base (unwrap-panic (div-up spot price)))
+                    (power (unwrap-panic (pow-down base weight-y)))
+                )
+                (mul-up balance-y (unwrap-panic (sub-fixed ONE_8 power)))
+            )
         )
-        ERR-WEIGHT-SUM    
     )   
 )
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (ok
             (if (is-eq total-supply u0)
-                (let
-                    (
-                        ;; if total-supply is zero
-                        ;;
-                        ;; invariant = (b_x ^ w_x) * (b_y ^ w_y)
-                        ;;
-                        ;;(dy-wy (unwrap-panic (pow-down dy weight-y)))
-                        ;;(dx-wx (unwrap-panic (pow-down dx weight-x)))
-                        ;;(invariant (unwrap-panic (mul-down dx-wx dy-wy)))
-                        (invariant (unwrap-panic (get-invariant dx dy weight-x weight-y)))
-                    )                    
-                    {token: invariant, dy: dy}
-                )
+                {token: (unwrap-panic (get-invariant dx dy weight-x weight-y)), dy: dy}
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
@@ -166,27 +160,24 @@
                     {token: token, dy: new-dy}
                 )   
             )
-        )
-        ERR-WEIGHT-SUM    
+        ) 
     )    
 )
 
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
-    (if (is-eq (+ weight-x weight-y) ONE_8)
-        (if (> total-supply u0)
-            (let
-                (   
-                    ;; first calculate what % you need to mint
-                    (token-supply (unwrap-panic (div-down token total-supply)))
-                    ;; calculate dx as % of balance-x corresponding to % you need to mint
-                    (dx (unwrap-panic (mul-down balance-x token-supply)))
-                    (dy (unwrap-panic (mul-down balance-y token-supply)))
-                )
-                (ok {dx: dx, dy: dy})
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
+        (let
+            (   
+                ;; first calculate what % you need to mint
+                (token-supply (unwrap-panic (div-down token total-supply)))
+                ;; calculate dx as % of balance-x corresponding to % you need to mint
+                (dx (unwrap-panic (mul-down balance-x token-supply)))
+                (dy (unwrap-panic (mul-down balance-y token-supply)))
             )
-            ERR-NO-LIQUIDITY
+            (ok {dx: dx, dy: dy})
         )
-        ERR-WEIGHT-SUM
     )
 )
 
