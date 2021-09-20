@@ -13,7 +13,8 @@
     "@stacks/wallet-sdk": "^2.0.1",
     "bn.js": "^5.2.0",
     "coingecko-api": "^1.0.10",
-    "dotenv": "^10.0.0"
+    "dotenv": "^10.0.0",
+    "walk-sync": "^3.0.0"
   },
   "resolutions": {
     "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
