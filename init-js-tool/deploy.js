@@ -2,10 +2,25 @@ require('dotenv').config();
 const { makeContractDeploy, broadcastTransaction, AnchorMode } = require('@stacks/transactions');
 const walkSync = require('walk-sync');
 const fs = require('fs')
-
 const {
     getPK, network
   } = require('./wallet');
+const readline = require('readline-promise').default;
+const { exit } = require('process');
+
+
+let contract_records = {"Contracts":[]}
+let VERSION;
+
+async function get_version(){
+    const rlp = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true
+      });
+    let answer = await rlp.questionAsync('What is the version number?')
+    return answer
+}
 
 function sleep(ms) {
 return new Promise(
@@ -46,9 +61,24 @@ async function deploy(filePath, contractName){
         await sleep(3000)
     }
     console.log("Contract Deployed Successfully")
+    let contract_record = {}
+    contract_record['name'] = contractName
+    contract_record['version'] = VERSION
+    contract_record['deployer'] = process.env.ACCOUNT_ADDRESS
+    contract_records['Contracts'].push(contract_record)
 }
 
-function run(){
-    walkDir();
+async function run(){
+    VERSION = await get_version()
+    //walk the batches directory and deploy
+    await walkDir();
+    //write to file
+    console.log(contract_records)
+    fs.writeFile('./contract-records.json', JSON.stringify(contract_records), 'utf8', function (err){
+        if (err) throw err
+        console.log("File created")
+        exit()
+    });
+
 }
 run()
