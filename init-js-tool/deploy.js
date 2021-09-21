@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { makeContractDeploy, broadcastTransaction, AnchorMode } = require('@stacks/transactions');
-const walkSync = require('walk-sync');
 const fs = require('fs')
 const {
     getPK, network
@@ -11,6 +10,43 @@ const { exit } = require('process');
 
 let contract_records = {"Contracts":[]}
 let VERSION;
+let contract_paths = [
+    "lib/math-log-exp.clar",
+    "lib/math-fixed-point.clar",
+    "traits/trait-flash-loan-user.clar",
+    "traits/trait-oracle.clar",
+    "traits/trait-pool-token.clar",
+    "traits/trait-sip-010.clar",
+    "traits/trait-yield-token.clar",
+    "equations/weighted-equation.clar",
+    "equations/yield-token-equation.clar",
+    "pool-token/fwp-wbtc-usda-50-50.clar",
+    "key-token/key-wbtc-59760-usda.clar",
+    "key-token/key-wbtc-79760-usda.clar",
+    "pool-token/ytp-yield-wbtc-59760-wbtc.clar",
+    "pool-token/ytp-yield-wbtc-79760-wbtc.clar",
+    "open-oracle.clar",
+    "traits/trait-vault.clar",
+    "traits/trait-multisig-vote.clar",
+    "yield-token/yield-wbtc-59760.clar",
+    "yield-token/yield-wbtc-79760.clar",
+    "alex-vault.clar",
+    "token/token-alex.clar",
+    "token/token-usda.clar",
+    "token/token-wbtc.clar",
+    "pool/alex-reserve-pool.clar",
+    "pool/fixed-weight-pool.clar",
+    "pool/liquidity-bootstrapping-pool.clar",
+    "pool/yield-token-pool.clar",
+    "pool/collateral-rebalancing-pool.clar",
+    "flash-loan-user-margin-usda-wbtc-59760.clar",
+    "multisig/multisig-crp-wbtc-59760-usda.clar",
+    "multisig/multisig-crp-wbtc-79760-usda.clar",
+    "multisig/multisig-fwp-wbtc-usda-50-50.clar",
+    "multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar",
+    "multisig/multisig-ytp-yield-wbtc-79760-wbtc.clar",
+]
+
 
 async function get_version(){
     const rlp = readline.createInterface({
@@ -28,13 +64,12 @@ return new Promise(
 );
 }
 async function walkDir() {
-    const paths = walkSync('./batches', {includeBasePath: true, directories: false})
     // console.log(paths)
-    await paths.reduce(async (memo, path) => {
+    await contract_paths.reduce(async (memo, path) => {
         await memo
-        let contract_file = path.split('/')[3]
+        let contract_file = path.split('/').at(-1)
         let contract_name = contract_file.split('.')[0]
-        await deploy(path, contract_name)
+        await deploy("../clarity/contracts/"+path, contract_name)
     }, undefined);
   };
 
