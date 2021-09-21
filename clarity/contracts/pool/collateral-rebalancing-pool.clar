@@ -273,83 +273,84 @@
 
 ;; single sided liquidity
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
-    (let
-        (
-            (pool-id (+ (var-get pool-count) u1))
-
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))            
-            (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
-
-            (now (* block-height ONE_8))
-            ;; TODO: assume 10mins per block - something to be reviewed
-            (t (unwrap! (div-down 
-                (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u52560 ONE_8)) ERR-MATH-CALL))
-
-            (token-symbol (try! (contract-call? token get-symbol)))
-            (collateral-symbol (try! (contract-call? collateral get-symbol)))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            
-            (strike (unwrap-panic (div-down token-price collateral-price)))
-
-            ;; TODO: APYs need to be calculated from the prevailing yield token price.
-            ;; we calculate d1 first
-            ;; because we support 'at-the-money' only, we can simplify formula
-            (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
-            (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))            
-            (pow-bs-vol (unwrap! (div-up 
-                            (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
-            (numerator (unwrap! (mul-up t pow-bs-vol) ERR-MATH-CALL))                       
-            (denominator (unwrap! (mul-down bs-vol sqrt-t) ERR-MATH-CALL))        
-            (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
-            (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
-            (complement (unwrap! (sub-fixed ONE_8 erf-term) ERR-MATH-CALL))
-            (weighted (unwrap! (div-up complement u200000000) ERR-MATH-CALL))                
-            (weight-y (if (> weighted u100000) weighted u100000))
-
-            (weight-x (unwrap! (sub-fixed ONE_8 weight-y) ERR-MATH-CALL))
-
-            (pool-data {
-                yield-supply: u0,
-                key-supply: u0,
-                balance-x: u0,
-                balance-y: u0,
-                fee-balance-x: u0,
-                fee-balance-y: u0,
-                fee-to-address: (contract-of multisig-vote),
-                yield-token: (contract-of the-yield-token),
-                key-token: (contract-of the-key-token),
-                strike: strike,
-                bs-vol: bs-vol,
-                fee-rate-x: u0,
-                fee-rate-y: u0,
-                ltv-0: ltv-0,
-                weight-x: weight-x,
-                weight-y: weight-y,
-                token-symbol: (unwrap! (contract-call? token get-symbol) ERR-GET-SYMBOL-FAIL),
-                collateral-symbol: (unwrap! (contract-call? collateral get-symbol) ERR-GET-SYMBOL-FAIL),
-                moving-average: moving-average,
-                conversion-ltv: conversion-ltv
-            })
-        )
-
+    (begin
         (asserts!
             (and
-                (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
-                (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, expiry: expiry }))
+                (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
+                (is-none (map-get? pools-data-map { token-x: (contract-of token), token-y: (contract-of collateral), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
             )
             ERR-POOL-ALREADY-EXISTS
-        )
+        )    
+        (let
+            (
+                (pool-id (+ (var-get pool-count) u1))
 
-        (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))            
+                (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
+
+                (now (* block-height ONE_8))
+                ;; TODO: assume 10mins per block - something to be reviewed
+                (t (unwrap! (div-down 
+                    (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u52560 ONE_8)) ERR-MATH-CALL))
+
+                (token-symbol (try! (contract-call? token get-symbol)))
+                (collateral-symbol (try! (contract-call? collateral get-symbol)))
+                (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+                (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            
+                (strike (unwrap-panic (div-down token-price collateral-price)))
+
+                ;; TODO: APYs need to be calculated from the prevailing yield token price.
+                ;; we calculate d1 first
+                ;; because we support 'at-the-money' only, we can simplify formula
+                (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
+                (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))            
+                (pow-bs-vol (unwrap! (div-up 
+                                (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
+                (numerator (unwrap! (mul-up t pow-bs-vol) ERR-MATH-CALL))                       
+                (denominator (unwrap! (mul-down bs-vol sqrt-t) ERR-MATH-CALL))        
+                (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
+                (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
+                (complement (unwrap! (sub-fixed ONE_8 erf-term) ERR-MATH-CALL))
+                (weighted (unwrap! (div-up complement u200000000) ERR-MATH-CALL))                
+                (weight-y (if (> weighted u100000) weighted u100000))
+
+                (weight-x (unwrap! (sub-fixed ONE_8 weight-y) ERR-MATH-CALL))
+
+                (pool-data {
+                    yield-supply: u0,
+                    key-supply: u0,
+                    balance-x: u0,
+                    balance-y: u0,
+                    fee-balance-x: u0,
+                    fee-balance-y: u0,
+                    fee-to-address: (contract-of multisig-vote),
+                    yield-token: (contract-of the-yield-token),
+                    key-token: (contract-of the-key-token),
+                    strike: strike,
+                    bs-vol: bs-vol,
+                    fee-rate-x: u0,
+                    fee-rate-y: u0,
+                    ltv-0: ltv-0,
+                    weight-x: weight-x,
+                    weight-y: weight-y,
+                    token-symbol: (unwrap! (contract-call? token get-symbol) ERR-GET-SYMBOL-FAIL),
+                    collateral-symbol: (unwrap! (contract-call? collateral get-symbol) ERR-GET-SYMBOL-FAIL),
+                    moving-average: moving-average,
+                    conversion-ltv: conversion-ltv
+                })
+            )
+
+            (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
         
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
-        (var-set pool-count pool-id)
-        (try! (add-to-position token collateral the-yield-token the-key-token dx))
-        (print { object: "pool", action: "created", data: pool-data })
-        (ok true)
+            (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
+            (var-set pool-count pool-id)
+            (try! (add-to-position token collateral the-yield-token the-key-token dx))
+            (print { object: "pool", action: "created", data: pool-data })
+            (ok true)
+        )
     )
 )
 
@@ -416,7 +417,6 @@
 )    
 
 ;; note single sided liquidity
-;; TODO: currently the position returned is not guaranteed 
 (define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
@@ -459,12 +459,14 @@
                         (amount (unwrap! (sub-fixed shares dy) ERR-MATH-CALL))                    
                     )                
                     (if (is-eq token-y .token-usda)
-                        (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                        ;; (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                        (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount (as-contract tx-sender) tx-sender))
                         (let
                             (
                                 (amount-to-swap (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount)))
                             )
-                            (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                            ;; (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                            (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap (as-contract tx-sender) tx-sender))
                             (unwrap! (contract-call? token transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap))) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
                         )
                     )                
@@ -472,7 +474,8 @@
             )       
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            ;; (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft token shares (as-contract tx-sender) tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-yield-token burn tx-sender shares))
@@ -511,8 +514,10 @@
                 )            
             )
 
-            (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED))
-            (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED))
+            ;; (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED))
+            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted (as-contract tx-sender) tx-sender)))
+            ;; (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED))
+            (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted (as-contract tx-sender) tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-key-token burn tx-sender shares))
@@ -564,7 +569,8 @@
             )
 
             (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            ;; (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft token dy (as-contract tx-sender) tx-sender))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -614,7 +620,8 @@
                 )
             )
 
-            (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+            ;; (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft collateral dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
             ;; post setting
@@ -726,7 +733,8 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+                ;; (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+                (try! (contract-call? .alex-vault transfer-ft collateral fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -742,7 +750,8 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+                ;; (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+                (try! (contract-call? .alex-vault transfer-ft token fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -825,104 +834,84 @@
 
 ;; single sided liquidity
 (define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
-    (let 
-        (
-            (now (* block-height ONE_8))
-        )
-        (if (< now expiry) ;; mint supported until, but excl., expiry
-            (let 
-                (
-                    (ltv (try! (get-ltv token collateral expiry)))
-                    (dy (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) ERR-NO-LIQUIDITY))
-                    (ltv-dy (unwrap! (mul-down ltv dy) ERR-MATH-CALL))
-                )
-
-                (ok {yield-token: ltv-dy, key-token: ltv-dy})
+    (begin
+        (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY)
+        (let 
+            (
+                (ltv (try! (get-ltv token collateral expiry)))
+                (dy (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) ERR-NO-LIQUIDITY))
+                (ltv-dy (unwrap! (mul-down ltv dy) ERR-MATH-CALL))
             )
-            ERR-EXPIRY
+
+            (ok {yield-token: ltv-dy, key-token: ltv-dy})
         )
     )
 )
 
 ;; single sided liquidity
 (define-read-only (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
-    (let 
-        (
-            (now (* block-height ONE_8))
-        )
-        (if (< now expiry) ;; mint supported until, but excl., expiry
-            (let 
-                (
-                    (token-x (contract-of collateral))
-                    (token-y (contract-of token))
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-                    (balance-x (get balance-x pool))
-                    (balance-y (get balance-y pool))
-                    (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
-                    (weight-x (get weight-x pool))
-                    (weight-y (get weight-y pool))
+    (begin
+        (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY) ;; mint supported until, but excl., expiry
+        (let 
+            (
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+                (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
+                (weight-x (get weight-x pool))
+                (weight-y (get weight-y pool))
             
-                    (ltv (try! (get-ltv token collateral expiry)))
+                (ltv (try! (get-ltv token collateral expiry)))
 
-                    (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
+                (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
 
-                    (dx-weighted (get dx pos-data))
-                    (dy-weighted (get dy pos-data))
+                (dx-weighted (get dx pos-data))
+                (dy-weighted (get dy pos-data))
 
-                    ;; always convert to collateral ccy
-                    (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY))
+                ;; always convert to collateral ccy
+                (dy-to-dx (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY))
                     
-                    (dx (unwrap! (add-fixed dx-weighted dy-to-dx) ERR-MATH-CALL))
-                )
-                (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
+                (dx (unwrap! (add-fixed dx-weighted dy-to-dx) ERR-MATH-CALL))
             )
-            ERR-EXPIRY
+            (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
         )
     )
 )
 
 (define-read-only (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
-    (let 
-        (
-            (now (* block-height ONE_8))
-        )
-        (if (> now expiry)
-            (ok shares)
-            ERR-EXPIRY
-        )
+    (begin
+        (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)
+        (ok shares)
     )
 )
 
 (define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
-    (let 
-        (
-            (now (* block-height ONE_8))
-        )
-        (if (> now expiry)
-            (let 
-                (
-                    (token-x (contract-of collateral))
-                    (token-y (contract-of token))
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-                    (balance-x (get balance-x pool))
-                    (balance-y (get balance-y pool))  
-                    (yield-supply (get yield-supply pool))                  
-                    (key-supply (get key-supply pool))
-                    (weight-x (get weight-x pool))
-                    (weight-y (get weight-y pool))
-                    (pool-value-unfloored (try! (get-pool-value-in-token token collateral expiry)))
-                    (pool-value-in-y (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
-                    (key-value-in-y (unwrap! (sub-fixed pool-value-in-y yield-supply) ERR-MATH-CALL))
-                    (key-to-pool (unwrap! (div-down key-value-in-y pool-value-in-y) ERR-MATH-CALL))
-                    (shares-to-key (unwrap! (div-down shares key-supply) ERR-MATH-CALL))
-                    (shares-to-pool (unwrap! (mul-down key-to-pool shares-to-key) ERR-MATH-CALL))
+    (begin         
+        (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)
+        (let 
+            (
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))  
+                (yield-supply (get yield-supply pool))                  
+                (key-supply (get key-supply pool))
+                (weight-x (get weight-x pool))
+                (weight-y (get weight-y pool))
+                (pool-value-unfloored (try! (get-pool-value-in-token token collateral expiry)))
+                (pool-value-in-y (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
+                (key-value-in-y (unwrap! (sub-fixed pool-value-in-y yield-supply) ERR-MATH-CALL))
+                (key-to-pool (unwrap! (div-down key-value-in-y pool-value-in-y) ERR-MATH-CALL))
+                (shares-to-key (unwrap! (div-down shares key-supply) ERR-MATH-CALL))
+                (shares-to-pool (unwrap! (mul-down key-to-pool shares-to-key) ERR-MATH-CALL))
                     
-                    (dx (unwrap! (mul-down shares-to-pool balance-x) ERR-MATH-CALL))
-                    (dy (unwrap! (mul-down shares-to-pool balance-y) ERR-MATH-CALL))
-                )
-                (ok {dx: dx, dy: dy})
+                (dx (unwrap! (mul-down shares-to-pool balance-x) ERR-MATH-CALL))
+                (dy (unwrap! (mul-down shares-to-pool balance-y) ERR-MATH-CALL))
             )
-            ERR-EXPIRY
+            (ok {dx: dx, dy: dy})
         )
     )
 )

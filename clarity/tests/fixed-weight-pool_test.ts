@@ -229,7 +229,7 @@ Clarinet.test({
 
         // Reducing Liquidity of zero, Error caught on the code which tries to transfer zero balance from vault
         result = FWPTest.reducePosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, 0);
-        result.expectErr().expectUint(3001);
+        result.expectErr().expectUint(3000);
 
         // Swapping 
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8);

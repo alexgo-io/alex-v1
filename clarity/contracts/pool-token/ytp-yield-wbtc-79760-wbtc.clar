@@ -1,89 +1,83 @@
-(impl-trait .trait-sip-010.sip-010-trait)
+(impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-pool-token.pool-token-trait)
 
-(define-fungible-token yield-wbtc-79760-wbtc)
+(define-fungible-token ytp-yield-wbtc-79760-wbtc)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var contract-owner principal .yield-token-pool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
+(define-read-only (get-owner)
+  (ok (var-get contract-owner))
+)
 
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? yield-wbtc-79760-wbtc amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
-    )
-    error (err error)
+(define-public (set-owner (owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
+;; ---------------------------------------------------------
+;; SIP-10 Functions
+;; ---------------------------------------------------------
+
+(define-read-only (get-total-supply)
+  (ok (ft-get-supply ytp-yield-wbtc-79760-wbtc))
+)
+
 (define-read-only (get-name)
-  (ok "yield-wbtc-79760-wbtc")
+  (ok "ytp-yield-wbtc-79760-wbtc")
 )
 
 (define-read-only (get-symbol)
-  (ok "yield-wbtc-79760-wbtc")
+  (ok "ytp-yield-wbtc-79760-wbtc")
 )
 
 (define-read-only (get-decimals)
   (ok u6)
 )
 
-(define-read-only (get-balance (owner principal))
-  (ok (ft-get-balance yield-wbtc-79760-wbtc owner))
+(define-read-only (get-balance (account principal))
+  (ok (ft-get-balance ytp-yield-wbtc-79760-wbtc account))
 )
 
-(define-read-only (get-expiry)
-  (ok 5976000000000)
-)
-
-(define-read-only (get-total-supply)
-  (ok (ft-get-supply yield-wbtc-79760-wbtc))
-)
-
-(define-read-only (get-token-uri)
-  (ok (some u"https://docs.alexgo.io/"))
-)
-
-
-;; one stop function to gather all the data relevant to the LP token in one call
-(define-read-only (get-data (owner principal))
-  (ok {
-    name: (unwrap-panic (get-name)),
-    symbol: (unwrap-panic (get-symbol)),
-    decimals: (unwrap-panic (get-decimals)),
-    uri: (unwrap-panic (get-token-uri)),
-    supply: (unwrap-panic (get-total-supply)),
-    balance: (unwrap-panic (get-balance owner))
-  })
-)
-
-;; the extra mint method used when adding liquidity
-;; can only be used by arkadiko swap main contract
-(define-public (mint (recipient principal) (amount uint))
+(define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (print "alex-token-swap.mint")
-    (print contract-caller)
-    (print amount)
-    ;; TODO - make dynamic
-    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err ERR-NOT-AUTHORIZED))
-    (ft-mint? yield-wbtc-79760-wbtc amount recipient)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set token-uri value))
   )
 )
 
+(define-read-only (get-token-uri)
+  (ok (some (var-get token-uri)))
+)
 
-;; the extra burn method used when removing liquidity
-;; can only be used by arkadiko swap main contract
-(define-public (burn (recipient principal) (amount uint))
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
-    (print "alex-token-swap.burn")
-    (print contract-caller)
-    (print amount)
-    ;; TODO - make dynamic
-    ;;(asserts! (is-eq contract-caller .yield-usda-pool) (err ERR-NOT-AUTHORIZED))
-    (ft-burn? yield-wbtc-79760-wbtc amount recipient)
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (match (ft-transfer? ytp-yield-wbtc-79760-wbtc amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
+    )
+  )
+)
+
+(define-public (mint (recipient principal) (amount uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ft-mint? ytp-yield-wbtc-79760-wbtc amount recipient)
+  )
+)
+
+(define-public (burn (sender principal) (amount uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ft-burn? ytp-yield-wbtc-79760-wbtc amount sender)
   )
 )
