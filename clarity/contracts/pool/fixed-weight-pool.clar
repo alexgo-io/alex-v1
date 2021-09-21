@@ -72,14 +72,13 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-
     (let
         (
             (pool (map-get? pools-map {pool-id: pool-id}))
-       )
+        )
         (asserts! (is-some pool) ERR-INVALID-POOL-ERR)
         (ok pool)
-   )
+    )
 )
 
 (define-read-only (get-pools)
@@ -129,14 +128,14 @@
                 token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
                 token-y-symbol: (try! (contract-call? token-y-trait get-symbol))
             })
-       )
+        )
         (asserts!
             (and
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }))
                 (is-none (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }))
-           )
+            )
             ERR-POOL-ALREADY-EXISTS
-       )
+        )             
 
         (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y })
         (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-data)
@@ -147,7 +146,7 @@
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx dy))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
-   )
+    )
 )
 
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
@@ -186,7 +185,8 @@
 )    
 
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (percent uint))
-    (if (<= percent ONE_8)
+    (begin
+        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -221,7 +221,6 @@
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
         )
-        ERR-PERCENT_GREATER_THAN_ONE
     )
 )
 
@@ -396,7 +395,6 @@
 
 ;; Returns the fee of current x and y and make balance to 0.
 (define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
-    
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -411,6 +409,7 @@
             (fee-x-net (unwrap! (sub-fixed fee-x fee-x-rebate) ERR-MATH-CALL))
             (fee-y-net (unwrap! (sub-fixed fee-y fee-y-rebate) ERR-MATH-CALL))
         )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)        
 
         (and (> fee-x u0) 
             (and 
@@ -428,7 +427,6 @@
                 )
             )
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (and (> fee-y u0) 
             (and 

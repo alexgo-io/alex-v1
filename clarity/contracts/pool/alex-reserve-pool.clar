@@ -68,6 +68,8 @@
 )
 
 (define-public (transfer-to-mint (usda-amount uint))
+  (begin
+    (asserts! (> usda-amount u0) ERR-INVALID-LIQUIDITY)
     (let
         (
             (amount-to-rebate (unwrap! (mul-down usda-amount (var-get rebate-rate)) ERR-MATH-CALL))
@@ -78,8 +80,6 @@
             (usda-to-alex (unwrap! (div-down usda-price alex-price) ERR-MATH-CALL))
             (alex-to-rebate (unwrap! (mul-down amount-to-rebate usda-to-alex) ERR-MATH-CALL))
         )
-        (asserts! (> usda-amount u0) ERR-INVALID-LIQUIDITY)
-
         ;; all usdc amount is transferred
         (try! (contract-call? .token-usda transfer usda-amount tx-sender (as-contract tx-sender) none))
         ;; portion of that (by rebate-rate) is minted as alex and transferred        
@@ -88,6 +88,7 @@
         (print { object: "reserve-pool", action: "transfer-to-mint", data: alex-to-rebate })
         (ok true)        
     )
+  )
 )
 
 ;; math-fixed-point
