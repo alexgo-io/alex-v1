@@ -20,6 +20,7 @@ let contract_paths = [
     "traits/trait-yield-token.clar",
     "equations/weighted-equation.clar",
     "equations/yield-token-equation.clar",
+    "traits/trait-ownable.clar",
     "pool-token/fwp-wbtc-usda-50-50.clar",
     "key-token/key-wbtc-59760-usda.clar",
     "key-token/key-wbtc-79760-usda.clar",
