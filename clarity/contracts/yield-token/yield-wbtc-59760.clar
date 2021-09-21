@@ -1,21 +1,34 @@
-(impl-trait .trait-sip-010.sip-010-trait)
+(impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-yield-token.yield-token-trait) 
-
-;; Defines ayUSDA which conforms sip010-trait and yield-token-trait. 
-;; yield-wbtc with expiry of one month
 
 (define-fungible-token yield-wbtc-59760)
 
 (define-data-var token-uri (string-utf8 256) u"")
+(define-data-var contract-owner principal .collateral-rebalancing-pool)
 (define-data-var token-expiry uint u5976000000000)  
 (define-data-var underlying-token principal .token-wbtc)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
+(define-read-only (get-owner)
+  (ok (var-get contract-owner))
+)
+
+(define-public (set-owner (owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
+  )
+)
+
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
 ;; ---------------------------------------------------------
+
+(define-read-only (get-total-supply)
+  (ok (ft-get-supply yield-wbtc-59760))
+)
 
 (define-read-only (get-name)
   (ok "yield-wbtc-59760")
@@ -26,23 +39,18 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u8)
+  (ok u6)
 )
 
 (define-read-only (get-balance (account principal))
   (ok (ft-get-balance yield-wbtc-59760 account))
 )
 
-(define-read-only (get-total-supply)
-  (ok (ft-get-supply yield-wbtc-59760))
-)
-
 (define-public (set-token-uri (value (string-utf8 256)))
-  ;; TODO : Authorization Check
-  ;;(if (is-eq tx-sender (contract-call? .OWNER))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
-  ;;  (err ERR-NOT-AUTHORIZED)
-  ;;)
+  )
 )
 
 (define-read-only (get-token-uri)
@@ -50,29 +58,28 @@
 )
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (match (ft-transfer? yield-wbtc-59760 amount sender recipient)
-    response (begin
-      (print memo)
-      (ok response)
+  (begin
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (match (ft-transfer? yield-wbtc-59760 amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
     )
-    error (err error)
   )
 )
 
-;; ---------------------------------------------------------
-;; ayUSDA token trait
-;; ---------------------------------------------------------
-
-;; Mint method for yield-wbtc-59760
 (define-public (mint (recipient principal) (amount uint))
   (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-mint? yield-wbtc-59760 amount recipient)
   )
 )
 
-;; Burn method for yield-wbtc-59760
 (define-public (burn (sender principal) (amount uint))
   (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ft-burn? yield-wbtc-59760 amount sender)
   )
 )

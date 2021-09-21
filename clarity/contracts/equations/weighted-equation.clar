@@ -1,8 +1,6 @@
 ;; weighted-equation
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
-;;(impl-trait .trait-equation.equation-trait)
-
 ;; constants
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places

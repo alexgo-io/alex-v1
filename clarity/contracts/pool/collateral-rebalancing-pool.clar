@@ -459,12 +459,14 @@
                         (amount (unwrap! (sub-fixed shares dy) ERR-MATH-CALL))                    
                     )                
                     (if (is-eq token-y .token-usda)
-                        (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                        ;; (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                        (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount (as-contract tx-sender) tx-sender))
                         (let
                             (
                                 (amount-to-swap (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount)))
                             )
-                            (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                            ;; (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
+                            (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap (as-contract tx-sender) tx-sender))
                             (unwrap! (contract-call? token transfer (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap))) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
                         )
                     )                
@@ -472,7 +474,8 @@
             )       
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            ;; (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft token shares (as-contract tx-sender) tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-yield-token burn tx-sender shares))
@@ -511,8 +514,10 @@
                 )            
             )
 
-            (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED))
-            (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED))
+            ;; (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED))
+            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted (as-contract tx-sender) tx-sender)))
+            ;; (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED))
+            (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted (as-contract tx-sender) tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-key-token burn tx-sender shares))
@@ -564,7 +569,8 @@
             )
 
             (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            ;; (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft token dy (as-contract tx-sender) tx-sender))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -614,7 +620,8 @@
                 )
             )
 
-            (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+            ;; (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft collateral dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
             ;; post setting
@@ -726,7 +733,8 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+                ;; (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
+                (try! (contract-call? .alex-vault transfer-ft collateral fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 
@@ -742,7 +750,8 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+                ;; (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
+                (try! (contract-call? .alex-vault transfer-ft token fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
                     (contract-call? .alex-reserve-pool transfer-to-mint 

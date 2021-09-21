@@ -14,6 +14,7 @@ const {
     crpGetYgivenX,    
     crpGetPoolDetails,
     crpGetPoolValueInToken,
+    crpGetWeightY,
     ytpCreate,
     ytpSwapXforY,
     ytpSwapYforX,
@@ -69,5 +70,6 @@ async function run(){
     // await crpGetLtv('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolValueInToken('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
+    await crpGetWeightY('token-wbtc', 'token-usda',  expiry, 4846200000000, 80e+7);
 }
 run();
