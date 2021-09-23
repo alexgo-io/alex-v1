@@ -9,8 +9,7 @@ const {
   broadcastTransaction,
   bufferCVFromString
 } = require('@stacks/transactions');
-
-
+const {wait_until_confirmation} = require('./utils')
 const {
   getPK, network
 } = require('./wallet');
@@ -58,6 +57,7 @@ const setOpenOracle = async (symbol, src, price) => {
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
+    await wait_until_confirmation(broadcastResponse.txid)
   } catch (error) {
     console.log(error);
   }
@@ -79,8 +79,7 @@ const getOpenOracle = async (src, symbol) => {
     senderAddress: process.env.ACCOUNT_ADDRESS,
   };
   try {
-    const result = await callReadOnlyFunction(options);
-    console.log(result);
+    return callReadOnlyFunction(options);
   } catch (error) {
     console.log(error);
   }
