@@ -60,9 +60,9 @@ async function get_version(){
 }
 
 function sleep(ms) {
-return new Promise(
-    resolve => setTimeout(resolve, ms)
-);
+    return new Promise(
+        resolve => setTimeout(resolve, ms)
+    );
 }
 async function walkDir() {
     // console.log(paths)

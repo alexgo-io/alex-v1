@@ -11,6 +11,7 @@ const {
     broadcastTransaction,
     ClarityType
 } = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 
 
 const flExecuteMarginUsdaWbtc16973 = async(amount) => {
@@ -33,6 +34,7 @@ const flExecuteMarginUsdaWbtc16973 = async(amount) => {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }

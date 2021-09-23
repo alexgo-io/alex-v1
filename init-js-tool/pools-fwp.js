@@ -11,6 +11,7 @@ const {
   broadcastTransaction,
   ClarityType
 } = require('@stacks/transactions');
+const {wait_until_confirmation} = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy) => {
@@ -132,6 +133,8 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
+      await wait_until_confirmation(broadcastResponse.txid)
+
   } catch (error) {
       console.log(error);
   }

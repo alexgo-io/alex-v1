@@ -1,16 +1,17 @@
 const {
     getPK, network
   } = require('./wallet');
-  const {
-    makeContractCall,
-    callReadOnlyFunction,
-    AnchorMode,
-    PostConditionMode,
-    uintCV,
-    contractPrincipalCV,
-    broadcastTransaction,
-    ClarityType
-  } = require('@stacks/transactions');
+const {
+  makeContractCall,
+  callReadOnlyFunction,
+  AnchorMode,
+  PostConditionMode,
+  uintCV,
+  contractPrincipalCV,
+  broadcastTransaction,
+  ClarityType
+} = require('@stacks/transactions');
+const {wait_until_confirmation } = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
   const crpCreate = async (token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
@@ -104,6 +105,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }
@@ -132,6 +134,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }
