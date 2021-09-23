@@ -50,6 +50,36 @@ function generateKeyTokenContract(token, collateral, expiry){
     })
 }
 
+function generateMultisigCRP(token, collateral, expiry){
+    let src = "../clarity/contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
+    let dest = `./generated-contracts/multisig-crp-${collateral}-${expiry}-${token}.clar`
+    fs.copyFile(src, dest, err =>{
+        if (err) {
+            console.log("Error found:: ", err)
+        }
+    })
+    replace.sync({
+        files: dest,
+        from: [/usda/g, /wbtc/g, /59760/g],
+        to: [token, collateral, expiry]
+    })
+}
+
+function generateMultisigYTPYield(collateral, expiry){
+    let src = "../clarity/contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
+    let dest = `./generated-contracts/multisig-ytp-yield-${collateral}-${expiry}-${collateral}.clar`
+    fs.copyFile(src, dest, err =>{
+        if (err) {
+            console.log("Error found:: ", err)
+        }
+    })
+    replace.sync({
+        files: dest,
+        from: [/wbtc/g, /59760/g],
+        to: [collateral, expiry]
+    })
+}
+
 
 async function run() {
     let token = process.argv[2]
@@ -58,5 +88,8 @@ async function run() {
     generateKeyTokenContract(token, collateral, expiry)
     generateYieldTokenContract(collateral, expiry)
     generatePoolTokenContract(collateral, expiry)
+    generateMultisigCRP(token, collateral, expiry)
+    generateMultisigYTPYield(collateral, expiry)
+
 }
 run()
