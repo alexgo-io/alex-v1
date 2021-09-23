@@ -41,6 +41,7 @@ const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, 
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
+      await wait_until_confirmation(broadcastResponse)
   } catch (error) {
       console.log(error);
   }
@@ -164,6 +165,7 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
+      await wait_until_confirmation(broadcastResponse)
   } catch (error) {
       console.log(error);
   }

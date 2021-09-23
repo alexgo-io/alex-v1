@@ -43,6 +43,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }
@@ -77,6 +78,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }
