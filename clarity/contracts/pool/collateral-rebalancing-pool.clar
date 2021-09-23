@@ -40,8 +40,8 @@
 (define-constant a4 u7810800)
 
 ;; TODO: need to be defined properly
-(define-constant oracle-src "nothing")
-
+(define-data-var contract-owner principal tx-sender)
+(define-data-var oracle-src (string-ascii 32) "coingecko")
 ;; data maps and vars
 ;;
 (define-map pools-map
@@ -116,6 +116,17 @@
 ;; public functions
 ;;
 
+(define-read-only (get-oracle-src)
+  (ok (var-get oracle-src))
+)
+
+(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set oracle-src new-oracle-src))
+  )
+)
+
 ;; implement trait-pool
 (define-read-only (get-pool-count)
     (ok (var-get pool-count))
@@ -149,8 +160,8 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))                        
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))            
+            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))            
         )
         (ok (unwrap-panic (div-down token-price collateral-price)))
     )
@@ -167,8 +178,8 @@
             (balance-y (get balance-y pool))   
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
+            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
             (token-value (unwrap! (mul-down balance-x collateral-price) ERR-MATH-CALL))
             (balance-x-in-y (unwrap! (div-down token-value token-price) ERR-MATH-CALL))
         )
@@ -186,8 +197,8 @@
             (balance-y (get balance-y pool))   
             (token-symbol (get token-symbol pool))
             (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
+            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
             (collateral-value (unwrap! (mul-down balance-y token-price) ERR-MATH-CALL))
             (balance-y-in-x (unwrap! (div-down collateral-value collateral-price) ERR-MATH-CALL))
         )
@@ -296,8 +307,8 @@
 
                 (token-symbol (try! (contract-call? token get-symbol)))
                 (collateral-symbol (try! (contract-call? collateral get-symbol)))
-                (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-                (collateral-price (unwrap! (contract-call? .open-oracle get-price oracle-src collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+                (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+                (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             
                 (strike (unwrap-panic (div-down token-price collateral-price)))
 
