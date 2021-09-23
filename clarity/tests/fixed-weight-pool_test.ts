@@ -292,9 +292,9 @@ Clarinet.test({
         let Oracle = new OracleManager(chain, deployer);
         
         // initialise prices
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko" ,wbtcPrice * ONE_8);
         oracleresult.expectOk()            
-        oracleresult = Oracle.updatePrice(deployer,"USDA", "nothing" ,usdaPrice * ONE_8);
+        oracleresult = Oracle.updatePrice(deployer,"USDA", "coingecko" ,usdaPrice * ONE_8);
         oracleresult.expectOk()                    
 
         // Deployer creating a pool, initial tokens injected to the pool
@@ -309,7 +309,7 @@ Clarinet.test({
         position['balance-y'].expectUint(wbtcQ*wbtcPrice);
 
         // wbtc (token) rises by 10% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8 * 1.1);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko" ,wbtcPrice * ONE_8 * 1.1);
         oracleresult.expectOk()
 
         // now pool price still implies wbtcPrice
@@ -334,7 +334,7 @@ Clarinet.test({
         position['balance-y'].expectUint(500000000000000 + 23268715000000);     
 
         // wbtc (token) then falls by 30% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8 * 1.1 * 0.8);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko" ,wbtcPrice * ONE_8 * 1.1 * 0.8);
         oracleresult.expectOk()        
         
         // let's do some arb

@@ -56,10 +56,10 @@ Clarinet.test({
         let Oracle = new OracleManager(chain, deployer);
         let FLTest = new FLTestAgent1(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
 
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
