@@ -79,8 +79,7 @@ const getOpenOracle = async (src, symbol) => {
     senderAddress: process.env.ACCOUNT_ADDRESS,
   };
   try {
-    const result = await callReadOnlyFunction(options);
-    console.log(result);
+    return callReadOnlyFunction(options);
   } catch (error) {
     console.log(error);
   }

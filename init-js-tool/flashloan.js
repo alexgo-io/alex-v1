@@ -13,13 +13,13 @@ const {
 } = require('@stacks/transactions');
 
 
-const flExecuteMarginUsdaWbtc59760 = async(amount) => {
-    console.log('[FL] execute-margin-usda-wbtc-59760...', amount);
+const flExecuteMarginUsdaWbtc16973 = async(amount) => {
+    console.log('[FL] execute-margin-usda-wbtc-16973...', amount);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
-        contractName: 'flash-loan-user-margin-usda-wbtc-59760',
-        functionName: 'execute-margin-usda-wbtc-59760',
+        contractName: 'flash-loan-user-margin-usda-wbtc-16973',
+        functionName: 'execute-margin-usda-wbtc-16973',
         functionArgs: [
             uintCV(amount),
         ],
@@ -38,4 +38,4 @@ const flExecuteMarginUsdaWbtc59760 = async(amount) => {
     }
 }
 
-exports.flExecuteMarginUsdaWbtc59760 = flExecuteMarginUsdaWbtc59760;
+exports.flExecuteMarginUsdaWbtc16973 = flExecuteMarginUsdaWbtc16973;
