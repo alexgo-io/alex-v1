@@ -440,6 +440,35 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
   }
 };
 
+const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
+  console.log('[FWP] swap-x-for-y...', tokenX, tokenY, weightX, weightY, dx);
+  const privateKey = await getPK();
+  const txOptions = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'fixed-weight-pool',
+      functionName: 'swap-x-for-y',
+      functionArgs: [
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          uintCV(weightX),
+          uintCV(weightY),          
+          uintCV(dx)
+      ],
+      senderKey: privateKey,
+      validateWithAbi: true,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+      const transaction = await makeContractCall(txOptions);
+      const broadcastResponse = await broadcastTransaction(transaction, network);
+      console.log(broadcastResponse);
+  } catch (error) {
+      console.log(error);
+  }
+}
+
 const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
   console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dy);
 
@@ -559,3 +588,4 @@ exports.fwpGetYGivenPrice = fwpGetYGivenPrice;
 exports.fwpGetPoolDetails = fwpGetPoolDetails;
 exports.fwpGetYgivenX = fwpGetYgivenX;
 exports.fwpGetXgivenY = fwpGetXgivenY;
+exports.fwpSwapXforY = fwpSwapXforY;
