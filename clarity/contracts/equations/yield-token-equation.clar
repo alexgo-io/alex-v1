@@ -75,7 +75,7 @@
             (y-pow (unwrap-panic (pow-down balance-y t-comp)))
             (y-dy-pow (unwrap-panic (pow-up (unwrap-panic (sub-fixed balance-y dy)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) y-dy-pow)))            
-        )        
+        )       
         (sub-fixed (unwrap-panic (pow-down term t-comp-num)) balance-x)         
     )  
   )

@@ -594,3 +594,118 @@ Clarinet.test({
     },    
 });        
 
+Clarinet.test({
+    name: "CRP : Error Testing",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        oracleresult.expectOk()
+        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult.expectOk()
+        
+        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result.expectOk().expectBool(true);
+
+        let call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        let position:any = call.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(wbtcQ);
+        position['balance-y'].expectUint(Math.round(wbtcQ * wbtcPrice / ONE_8));
+
+        result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
+        result.expectOk().expectBool(true);
+
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectOk().expectBool(true);
+
+        call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
+        call.result.expectOk().expectUint(100111426);
+
+        // ltv-0 is 80%, but injecting liquidity pushes up LTV
+        call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
+        call.result.expectOk().expectUint(80717419);
+
+        // Check pool details and print
+        call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['yield-supply'].expectUint(80807360);
+        position['key-supply'].expectUint(80807360);
+        position['weight-x'].expectUint(66534526);
+        position['weight-y'].expectUint(33465474);        
+        position['balance-x'].expectUint(3326726300000);
+        position['balance-y'].expectUint(33576900);
+        position['strike'].expectUint(50000 * ONE_8);
+        position['ltv-0'].expectUint(ltv_0);
+        position['bs-vol'].expectUint(bs_vol);
+        position['conversion-ltv'].expectUint(conversion_ltv);
+        position['moving-average'].expectUint(moving_average);
+
+
+        result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, 0);
+        position = result.expectErr().expectUint(2003)
+
+        // Bug ? - If the balance is below 1 usd, error occurs. 
+        // result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, 0.1 * ONE_8);
+        // position = result.expectOk().expectTuple();
+
+        result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, ONE_8 * ONE_8);
+        position = result.expectErr().expectUint(2002)
+
+        // arbtrageur attepmts to swap zero value
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0);
+        position = result.expectErr().expectUint(2003)
+
+        // arbtrageur attepmts to swap small value
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.1* ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(0.1* ONE_8);
+        position['dy'].expectUint(198);
+
+        // arbtrageur attepmts to swap in full value
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, ONE_8 * ONE_8);
+        position = result.expectErr().expectUint(4001)
+        
+        // arbtrageur attepmts to swap zero value
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0);
+        position = result.expectErr().expectUint(2003)  
+
+        // arbtrageur attepmts to swap small value
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.000001 * ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(19361605);
+        position['dy'].expectUint(0.000001 * ONE_8);
+
+        // arbtrageur attepmts to swap in full value
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8 * ONE_8);
+        position = result.expectErr().expectUint(4002)  
+
+        // arbtrageur selling 0.01 wbtc for usda
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.01 * ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(206098530927);
+        position['dy'].expectUint(0.01 * ONE_8);     
+
+        // simulate to expiry + 1
+        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)    
+        
+        // arbtrageur attepmts to retreive back with zero value
+        result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, 0);        
+        position = result.expectErr().expectUint(3000) 
+
+        // arbitrageur attempts to retreuve back with small value
+        result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, 0.001 * ONE_8);        
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(0);
+        position['dy'].expectUint(80807); 
+
+        // arbtrageur attepmts to retreive back with full value
+        result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, 101*ONE_8);        
+        position = result.expectErr().expectUint(5000) 
+    },    
+});        

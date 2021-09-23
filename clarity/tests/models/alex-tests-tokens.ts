@@ -28,7 +28,7 @@ class USDAToken {
             types.uint(amount),
             types.principal(sender),
             types.principal(receiver),
-            types.buff(memo)
+            types.some(types.buff(memo))
           ], this.deployer.address),
         ]);
         return block.receipts[0].result;
@@ -63,7 +63,7 @@ class USDAToken {
             types.uint(amount),
             types.principal(sender),
             types.principal(receiver),
-            types.buff(memo)
+            types.some(types.buff(memo))
           ], this.deployer.address),
         ]);
         return block.receipts[0].result;
