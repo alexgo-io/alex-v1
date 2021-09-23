@@ -36,11 +36,10 @@
 ;;
 ;; d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
-  (begin
-    (asserts! (>= balance-x dx) insufficient-balance-err)
-    (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+    (if (>= balance-x dx)
     (let 
         (
+            (max-in (unwrap-panic (mul-down balance-x MAX_IN_RATIO)))
             (t-comp (unwrap-panic (sub-fixed ONE_8 t)))
             (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
             (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
@@ -49,10 +48,13 @@
             (y-pow (unwrap-panic (pow-down balance-y t-comp)))
             (x-dx-pow (unwrap-panic (pow-down (unwrap-panic (add-fixed balance-x dx)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) x-dx-pow)))
-        )     
+        )
+        (asserts! (< dx max-in) ERR-MAX-IN-RATIO)     
+
         (sub-fixed balance-y (unwrap-panic (pow-down term t-comp-num)))
-    )    
-  )
+    )
+    insufficient-balance-err
+    )
 )
 
 ;; d_x = dx
@@ -62,11 +64,10 @@
 ;;
 ;; d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
-  (begin
-    (asserts! (>= balance-y dy) insufficient-balance-err)
-    (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+    (if (>= balance-y dy)
     (let 
         (
+            (max-out (unwrap-panic (mul-down balance-y MAX_OUT_RATIO)))            
             (t-comp (unwrap-panic (sub-fixed ONE_8 t)))
             (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
             (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
@@ -75,10 +76,12 @@
             (y-pow (unwrap-panic (pow-down balance-y t-comp)))
             (y-dy-pow (unwrap-panic (pow-up (unwrap-panic (sub-fixed balance-y dy)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) y-dy-pow)))            
-        )        
+        )
+        (asserts! (< dy max-out) ERR-MAX-OUT-RATIO)
         (sub-fixed (unwrap-panic (pow-down term t-comp-num)) balance-x)         
-    )  
-  )
+    )
+    insufficient-balance-err
+    )
 )
 
 ;; d_x = dx
@@ -103,6 +106,7 @@
                                     (unwrap-panic (pow-down 
                                     price (unwrap-panic (div-down t-comp t)))))))
         )
+
         (mul-up balance-x 
             (unwrap-panic (sub-fixed 
                 (unwrap-panic (pow-down 
@@ -145,17 +149,17 @@
 
 ;; 
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
-  (begin
-    (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
-    (let
-      (
-        (token-div-supply (unwrap-panic (div-down token total-supply)))
-        (dx (unwrap-panic (mul-down balance-x token-div-supply)))
-        (dy (unwrap-panic (mul-down balance-y token-div-supply)))
-      )                
-      (ok {dx: dx, dy: dy})
-    )        
-  )
+    (if (> total-supply u0) 
+        (let
+            (
+                (token-div-supply (unwrap-panic (div-down token total-supply)))
+                (dx (unwrap-panic (mul-down balance-x token-div-supply)))
+                (dy (unwrap-panic (mul-down balance-y token-div-supply)))
+            )                
+            (ok {dx: dx, dy: dy})
+        )
+        ERR-NO-LIQUIDITY
+    )
 )
 
 (define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
