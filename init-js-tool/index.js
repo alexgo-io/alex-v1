@@ -87,9 +87,12 @@ async function run(){
     // await getBalance('token-usda');
     const current_LTV = 98379787/100000005;
     await flashloan('flash-loan-user-margin-usda-wbtc-59760', 'token-usda', (ONE_8 * (ONE_8 - current_LTV)))
-
+    // console.log("AMOUNT:: ", ONE_8 * ((ONE_8/1000) - current_LTV))
 
 }
 run();
 
+// 55487943475558
+// 9999999901620218
+// 99999901620217
 
