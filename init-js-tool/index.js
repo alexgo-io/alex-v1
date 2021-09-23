@@ -67,6 +67,7 @@ async function run(){
     let usdaPrice = (await getOpenOracle('nothing', 'USDA')).value.value;
     let printed = parseFloat(wbtcPrice / usdaPrice);
 
+
     // await crpGetLtv('token-wbtc', 'token-usda', 16973e+8);
     // await crpGetPoolValueInToken('token-wbtc', 'token-usda', 16973e+8);
     let result = await crpGetPoolDetails('token-wbtc', 'token-usda', 16973e+8);
@@ -109,6 +110,22 @@ async function run(){
     // await crpGetYgivenX('token-wbtc', 'token-usda', expiry, 10000e+8);    
     // await crpGetYgivenPrice('token-wbtc', 'token-usda', expiry, Math.round((1/50000)*ONE_8));
 
+    // [ using fwp-wbtc-usda-50-50 as example ]
+
+    // FromAmount = dx WBTC
+    // ToAmount = (contract-call? .fixed-weight-pool get-y-given-x wbtc usda 50% 50% dx)
+    // Exchange Rate = (contract-call? .fixed-weight-pool get-y-given-x wbtc usda 50% 50% ONE_8)
+    // Estimated TX Cost = [0]
+
+    // Swap => (contract-call? .fixed-weight-pool swap-x-for-y wbtc usda 50% 50% dx)
+
+    console.log("------ Testing Spot Trading ------");
+    let from_amount = ONE_8;
+    let to_amount = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount)));
+    let exchange_rate = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, ONE_8)));
+    await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount);
+
+    console.log("------ Testing Margin Trading ------");
     let amount = ONE_8;
     let ltv = parseInt((await crpGetLtv('token-wbtc', 'token-usda', expiry)).value.value);
     ltv /= parseInt((await ytpGetPrice("yield-wbtc-16973")).value.value);
