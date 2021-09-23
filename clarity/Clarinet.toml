@@ -131,7 +131,7 @@ path = "contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
 depends_on = ["ytp-yield-wbtc-59760-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-59760"]
 
 [contracts.multisig-ytp-yield-wbtc-79760-wbtc]
-path = "contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
+path = "contracts/multisig/multisig-ytp-yield-wbtc-79760-wbtc.clar"
 depends_on = ["ytp-yield-wbtc-79760-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-79760"]
 
 [contracts.multisig-crp-wbtc-59760-usda]
@@ -141,3 +141,27 @@ depends_on = ["yield-wbtc-59760", "key-wbtc-59760-usda", "token-wbtc", "token-us
 [contracts.multisig-crp-wbtc-79760-usda]
 path = "contracts/multisig/multisig-crp-wbtc-79760-usda.clar"
 depends_on = ["yield-wbtc-79760", "key-wbtc-79760-usda", "token-wbtc", "token-usda", "trait-sip-010"]
+
+[contracts.multisig-crp-wbtc-16973-usda]
+path = "contracts/multisig/multisig-crp-wbtc-16973-usda.clar"
+depends_on = ["yield-wbtc-16973", "key-wbtc-16973-usda", "token-wbtc", "token-usda", "trait-sip-010"]
+
+[contracts.multisig-ytp-yield-wbtc-16973-wbtc]
+path = "contracts/multisig/multisig-ytp-yield-wbtc-16973-wbtc.clar"
+depends_on = ["ytp-yield-wbtc-16973-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-16973"]
+
+[contracts.flash-loan-user-margin-usda-wbtc-16973]
+path = "contracts/flash-loan-user-margin-usda-wbtc-16973.clar"
+depends_on = ["token-usda", "token-wbtc", "yield-wbtc-16973", "key-wbtc-16973-usda"]
+
+[contracts.key-wbtc-16973-usda]
+path = "contracts/key-token/key-wbtc-16973-usda.clar"
+depends_on = ["trait-sip-010", "trait-yield-token", "token-wbtc", "trait-ownable"]
+
+[contracts.ytp-yield-wbtc-16973-wbtc]
+path = "contracts/pool-token/ytp-yield-wbtc-16973-wbtc.clar"
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-ownable"]
+
+[contracts.yield-wbtc-16973]
+path = "contracts/yield-token/yield-wbtc-16973.clar"
+depends_on = ["trait-sip-010", "trait-yield-token", "token-wbtc", "trait-ownable"]
