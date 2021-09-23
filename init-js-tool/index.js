@@ -1,5 +1,7 @@
 require('dotenv').config();
 const {initCoinPrice, setOpenOracle, getOpenOracle} = require('./oracles').default
+const {flExecuteMarginUsdaWbtc59760} = require('./flashloan')
+const {flashloan, getBalance} = require('./vault')
 const { 
     fwpCreate,
     fwpGetXGivenPrice,
@@ -17,12 +19,15 @@ const {
     crpGetPoolValueInToken,
     crpGetWeightY,
     ytpCreate,
+    ytpGetPrice,
+    ytpGetYield,
     ytpSwapXforY,
     ytpSwapYforX,
     ytpGetXgivenY,
     ytpGetYgivenX,
     ytpGetPoolDetails,    
  } = require('./pools')
+
 async function run(){
 
     const ONE_8 = 100000000
@@ -57,8 +62,8 @@ async function run(){
     // await fwpGetXGivenPrice('token-wbtc', 'token-usda', weightX, weightY, 4846200000000)
     // await fwpGetYGivenPrice('token-wbtc', 'token-usda', weightX, weightY, 4846200000000)
     // await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
-    // await fwpGetYgivenX('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
-    await fwpSwapXforY('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
+    //await fwpGetYgivenX('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
+    // await fwpSwapXforY('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
 
 
     // await fwpGetXgivenY('token-wbtc', 'token-usda', weightX, weightY, 10000e+8);
@@ -67,6 +72,8 @@ async function run(){
     // await crpGetXgivenY('token-wbtc', 'token-usda', expiry, 1e+8);
     // await crpGetYgivenX('token-wbtc', 'token-usda', expiry, 10000e+8);
 
+    // await ytpGetPrice('yield-wbtc-59760')
+    // await ytpGetYield('yield-wbtc-59760')
     // await ytpGetPoolDetails('yield-wbtc-59760');
     // await ytpGetXgivenY('yield-wbtc-59760', 1e+8);
     // await ytpGetYgivenX('yield-wbtc-59760', 1e+8);
@@ -74,7 +81,15 @@ async function run(){
     // await crpGetLtv('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolValueInToken('token-wbtc', 'token-usda', expiry);
     // await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
-
     // await crpGetWeightY('token-wbtc', 'token-usda',  expiry, 4846200000000, 80e+7);
+
+    // await flExecuteMarginUsdaWbtc59760(ONE_8);
+    // await getBalance('token-usda');
+    const current_LTV = 98379787/100000005;
+    await flashloan('flash-loan-user-margin-usda-wbtc-59760', 'token-usda', (ONE_8 * (ONE_8 - current_LTV)))
+
+
 }
 run();
+
+

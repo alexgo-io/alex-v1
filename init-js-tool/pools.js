@@ -141,6 +141,48 @@ const crpAddToPostionAndSwitch = async (token, collateral, yiedToken, keyToken, 
   }
 }
 
+const ytpGetPrice = async(yieldToken) => {
+  console.log('[YTP] get-price...', yieldToken);
+
+  const options = {
+    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractName: 'yield-token-pool',
+    functionName: 'get-price',
+    functionArgs: [
+      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+    ],
+    network: network,
+    senderAddress: process.env.ACCOUNT_ADDRESS,
+  };
+  try {
+    const result = await callReadOnlyFunction(options);
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const ytpGetYield = async(yieldToken) => {
+  console.log('[YTP] get-price...', yieldToken);
+
+  const options = {
+    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractName: 'yield-token-pool',
+    functionName: 'get-yield',
+    functionArgs: [
+      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+    ],
+    network: network,
+    senderAddress: process.env.ACCOUNT_ADDRESS,
+  };
+  try {
+    const result = await callReadOnlyFunction(options);
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 const ytpSwapXforY = async (yiedToken, token, dx) => {
   console.log('[YTP] swap-x-for-y...', yiedToken, token, dx);
   const privateKey = await getPK();
@@ -569,6 +611,8 @@ const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
 };
 
 exports.ytpCreate = ytpCreate;
+exports.ytpGetPrice = ytpGetPrice;
+exports.ytpGetYield = ytpGetYield;
 exports.ytpSwapXforY = ytpSwapXforY;
 exports.ytpSwapYforX = ytpSwapYforX;
 exports.ytpGetYgivenX = ytpGetYgivenX;
