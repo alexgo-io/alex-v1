@@ -80,6 +80,21 @@ function generateMultisigYTPYield(token, expiry){
     })
 }
 
+function generateFlashLoanUser(collateral, token, expiry) {
+    let src = "../clarity/contracts/flash-loan-user-margin-usda-wbtc-59760.clar"
+    let dest = `./generated-contracts/flash-loan-user-margin-${collateral}-${token}-${expiry}.clar`
+    fs.copyFile(src, dest, err =>{
+        if (err) {
+            console.log("Error found:: ", err)
+        }
+    })
+    replace.sync({
+        files: dest,
+        from: [/usda/g, /wbtc/g, /59760/g],
+        to: [collateral, token, expiry]
+    })
+}
+
 
 async function run() {
     let collateral = process.argv[2]
@@ -90,6 +105,6 @@ async function run() {
     generatePoolTokenContract(token, expiry)
     generateMultisigCRP(collateral, token, expiry)
     generateMultisigYTPYield(token, expiry)
-
+    generateFlashLoanUser(collateral, token, expiry)
 }
 run()
