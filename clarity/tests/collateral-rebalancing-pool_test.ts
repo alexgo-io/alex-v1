@@ -448,7 +448,7 @@ Clarinet.test({
         // ltv > 100%, so we dip into reserve pool
         // the shortfall is about 0.0287411 BTC ~= 2155.5825 USD
         call = await CRPTest.getBalance("token-usda", reserveAddress);
-        call.result.expectOk().expectUint(9740794336638)
+        call.result.expectOk().expectUint(9740795000000)
         // the actual decrease was 2592.05663362 USD, makes sense given AMM slippage
 
         // most of yield-token burnt, but key-token remains

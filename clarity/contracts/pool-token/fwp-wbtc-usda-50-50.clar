@@ -9,6 +9,20 @@
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
+(define-constant ONE_8 (pow u10 u8))
+
+(define-private (pow-decimals)
+  (pow u10 (unwrap-panic (get-decimals)))
+)
+
+(define-read-only (fixed-to-decimals (amount uint))
+  (/ (* amount (pow-decimals)) ONE_8)
+)
+
+(define-private (decimals-to-fixed (amount uint))
+  (/ (* amount ONE_8) (pow-decimals))
+)
+
 (define-read-only (get-owner)
   (ok (var-get contract-owner))
 )
@@ -25,7 +39,7 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply fwp-wbtc-usda-50-50))
+  (ok (decimals-to-fixed (ft-get-supply fwp-wbtc-usda-50-50)))
 )
 
 (define-read-only (get-name)
@@ -37,11 +51,11 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u6)
+  (ok u0)
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance fwp-wbtc-usda-50-50 account))
+  (ok (decimals-to-fixed (ft-get-balance fwp-wbtc-usda-50-50 account)))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -58,7 +72,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? fwp-wbtc-usda-50-50 amount sender recipient)
+    (match (ft-transfer? fwp-wbtc-usda-50-50 (fixed-to-decimals amount) sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -71,13 +85,13 @@
 (define-public (mint (recipient principal) (amount uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-mint? fwp-wbtc-usda-50-50 amount recipient)
+    (ft-mint? fwp-wbtc-usda-50-50 (fixed-to-decimals amount) recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-burn? fwp-wbtc-usda-50-50 amount sender)
+    (ft-burn? fwp-wbtc-usda-50-50 (fixed-to-decimals amount) sender)
   )
 )
