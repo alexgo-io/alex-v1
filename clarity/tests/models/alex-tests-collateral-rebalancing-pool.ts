@@ -56,6 +56,15 @@ import {
         types.uint(expiry)
       ], this.deployer.address);
     }
+
+    getTokenGivenPosition(token: string, collateral: string, expiry: number, dx: number){
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-token-given-position", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry),
+        types.uint(dx)
+      ], this.deployer.address);
+    }    
   
     createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number) {
       let block = this.chain.mineBlock([
