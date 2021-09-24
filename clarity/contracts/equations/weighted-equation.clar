@@ -12,11 +12,11 @@
 (define-constant ERR-MATH-CALL (err 4003))
 
 ;; max in/out as % of liquidity
-;; (define-constant MAX_IN_RATIO (* u2 (pow u10 u6))) ;; 2%
-;; (define-constant MAX_OUT_RATIO (* u2 (pow u10 u6))) ;; 2%
+(define-constant MAX_IN_RATIO (* u5 (pow u10 u6))) ;; 2%
+(define-constant MAX_OUT_RATIO (* u5 (pow u10 u6))) ;; 2%
 ;; for testing only
-(define-constant MAX_IN_RATIO (* u9 (pow u10 u7)))
-(define-constant MAX_OUT_RATIO (* u9 (pow u10 u7)))
+;; (define-constant MAX_IN_RATIO (* u9 (pow u10 u7)))
+;; (define-constant MAX_OUT_RATIO (* u9 (pow u10 u7)))
 
 ;; data maps and vars
 ;;

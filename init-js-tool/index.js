@@ -1,9 +1,10 @@
 require('dotenv').config();
 const {initCoinPrice, setOpenOracle, getOpenOracle} = require('./oracles').default
-const {flExecuteMarginUsdaWbtc16973} = require('./flashloan')
+const {flExecuteMarginUsdaWbtc23670} = require('./flashloan')
 const {flashloan, getBalance} = require('./vault')
 const { 
     fwpCreate,
+    fwpAddToPosition,
     fwpGetXGivenPrice,
     fwpGetYGivenPrice,
     fwpGetXgivenY,
@@ -40,84 +41,95 @@ const {
 async function run(){
 
     const ONE_8 = 100000000
-    const expiry = 16973 * ONE_8
-    const ltv_0 = 0.8 * ONE_8
+    const expiry = 23670 * ONE_8
+    const ltv_0 = 0.7 * ONE_8
     const conversion_ltv = 0.95 * ONE_8
     const bs_vol = 0.8 * ONE_8
     const moving_average = 0.95 * ONE_8
 
     const weightX = 0.5 * ONE_8
-    const weightY = 0.5 * ONE_8
+    const weightY = 0.5 * ONE_8    
 
-    const wbtcQ = 10*ONE_8
-    // const wbtcPrice = 48126    
-
-    //Need to call it one by one, or you'll receive 'ConflictingNonceInMempool' Error
-
+    console.log("------ Update Price Oracle ------")
     const {usdc, btc} = await initCoinPrice()
-    await setOpenOracle('WBTC','nothing', btc);
-    await setOpenOracle('USDA','nothing', usdc);
+    await setOpenOracle('WBTC','coingecko', btc);
+    await setOpenOracle('USDA','coingecko', usdc);
+    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
 
-    // await fwpCreate('token-wbtc', 'token-usda', 5e+7, 5e+7, 'fwp-wbtc-usda-50-50', 'multisig-fwp-wbtc-usda-50-50', wbtcQ, wbtcPrice * wbtcQ);        
-    // await ytpCreate('yield-wbtc-16973', 'token-wbtc', 'ytp-yield-wbtc-16973-wbtc', 'multisig-ytp-yield-wbtc-16973-wbtc', wbtcQ / 5, wbtcQ / 5);
-    // await crpCreate('token-wbtc', 'token-usda', 'yield-wbtc-16973', 'key-wbtc-16973-usda', 'multisig-crp-wbtc-16973-usda', ltv_0, conversion_ltv, bs_vol, moving_average, 100000 * ONE_8);
+    // console.log("------ Pool Creation ------");
+    // let usda_balance = BigInt(10000000e+8);
+    // let wbtc_balance = BigInt(20000e+8)
+    // let left_side = wbtc_balance / BigInt(100); //1% balance to fwp
+    // let right_side = Math.round(Number(wbtcPrice) * Number(left_side) / ONE_8);
+    // await fwpCreate('token-wbtc', 'token-usda', weightX, weightY, 'fwp-wbtc-usda-50-50', 'multisig-fwp-wbtc-usda-50-50', left_side, right_side);        
+    
+    // let left_side = wbtc_balance / BigInt(10); // 10% balance to ytp
+    // let right_side = left_side;
+    // await ytpCreate('yield-wbtc-23670', 'token-wbtc', 'ytp-yield-wbtc-23670-wbtc', 'multisig-ytp-yield-wbtc-23670-wbtc', left_side, right_side);
+    
+    // let usda_collateral = Number(usda_balance / BigInt(100)); //10% usda balance to mint yield-wbtc
+    // await crpCreate('token-wbtc', 'token-usda', 'yield-wbtc-23670', 'key-wbtc-23670-usda', 'multisig-crp-wbtc-23670-usda', ltv_0, conversion_ltv, bs_vol, moving_average, usda_collateral);    
+    // await ytpSwapYforX('yield-wbtc-23670', 'token-wbtc', 1e+8);
 
-
-    let wbtcPrice = (await getOpenOracle('nothing', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('nothing', 'USDA')).value.value;
+    console.log("------ FWP Arbitrage ------")
     let printed = parseFloat(wbtcPrice / usdaPrice);
 
-
-    // await crpGetLtv('token-wbtc', 'token-usda', 16973e+8);
-    // await crpGetPoolValueInToken('token-wbtc', 'token-usda', 16973e+8);
-    let result = await crpGetPoolDetails('token-wbtc', 'token-usda', 16973e+8);
+    let result = await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
     let balance_x = result.value.data['balance-x'].value;
     let balance_y = result.value.data['balance-y'].value;
-    let weight_x = result.value.data['weight-x'].value;
-    let weight_y = result.value.data['weight-y'].value;
 
-    let implied = balance_y * weight_x / balance_x / weight_y;
+    let implied = balance_y * BigInt(weightX) / balance_x / BigInt(weightY);
+    console.log("printed: ", printed, "implied:", implied);
     if (printed < implied) {
-        let dx = await crpGetXgivenPrice('token-wbtc', 'token-usda', expiry, Math.round(ONE_8 / printed));
+        let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', weightX, weightY, printed * ONE_8);
         console.log("dx = ", dx);
-        await crpSwapXforY('token-wbtc', 'token-usda', expiry, dx.value.value);
+        if(dx.type === 7){
+            await fwpSwapXforY('token-wbtc', 'token-usda', weightX, weightY, dx.value.value);
+        }
     } else {
-        let dy = await crpGetYgivenPrice('token-wbtc', 'token-usda', expiry, Math.round(ONE_8 / printed));
+        let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', weightX, weightY, printed * ONE_8);
         console.log("dy = ", dy);
-        await crpSwapYforX('token-wbtc', 'token-usda', expiry, dy.value.value);
-    }
+        if(dy.type === 7){
+            await fwpSwapYforX('token-wbtc', 'token-usda', weightX, weightY, dy.value.value);
+        }
+    }  
+    result = await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
+    balance_x = result.value.data['balance-x'].value;
+    balance_y = result.value.data['balance-y'].value;      
+    console.log('post arb implied: ', balance_y / balance_x);
 
-    // await fwpGetXGivenPrice('token-wbtc', 'token-usda', weightX, weightY, 4846200000000)
-    // await fwpGetYGivenPrice('token-wbtc', 'token-usda', weightX, weightY, 4846200000000)
-    // await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
-    // await fwpGetYgivenX('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
-    // await fwpSwapXforY('token-wbtc', 'token-usda', weightX, weightY, 1e+8);
+    console.log("------ CRP Arbitrage ------")
+    printed = parseFloat(wbtcPrice / usdaPrice);
 
+    result = await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
+    balance_x = result.value.data['balance-x'].value;
+    balance_y = result.value.data['balance-y'].value;
+    weight_x = result.value.data['weight-x'].value;
+    weight_y = result.value.data['weight-y'].value;
 
-    // await fwpGetXgivenY('token-wbtc', 'token-usda', weightX, weightY, 10000e+8);
+    implied = balance_x * weight_y / balance_y / weight_x;
+    console.log("printed: ", printed, "implied:", implied);
+    if (printed < implied) {
+        let dx = await crpGetXgivenPrice('token-wbtc', 'token-usda', expiry, printed * ONE_8);
+        console.log("dx = ", dx);
+        if(dx.type === 7){
+            await crpSwapXforY('token-wbtc', 'token-usda', expiry, dx.value.value);
+        }
+    } else {
+        let dy = await crpGetYgivenPrice('token-wbtc', 'token-usda', expiry, printed * ONE_8);
+        console.log("dy = ", dy);
+        if(dy.type === 7){
+            await crpSwapYforX('token-wbtc', 'token-usda', expiry, dy.value.value);
+        }
+    } 
+    result = await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
+    balance_x = result.value.data['balance-x'].value;
+    balance_y = result.value.data['balance-y'].value;
+    weight_x = result.value.data['weight-x'].value;
+    weight_y = result.value.data['weight-y'].value;    
+    console.log('post arb implied: ', balance_x * weight_y / balance_y / weight_x);    
 
-    // await ytpGetPrice('yield-wbtc-16973')
-    // await ytpGetYield('yield-wbtc-16973')
-    // await ytpGetPoolDetails('yield-wbtc-16973');
-    // await ytpGetXgivenY('yield-wbtc-16973', 1e+8);
-    // await ytpGetYgivenX('yield-wbtc-16973', 1e+8);
-
-    // await crpGetLtv('token-wbtc', 'token-usda', expiry);
-    // await crpGetPoolValueInToken('token-wbtc', 'token-usda', expiry);
-    // await crpGetPoolDetails('token-wbtc', 'token-usda', expiry);
-    // await crpGetWeightY('token-wbtc', 'token-usda',  expiry, 4846200000000, 80e+7);
-    // await crpGetXgivenY('token-wbtc', 'token-usda', expiry, 1e+8);
-    // await crpGetYgivenX('token-wbtc', 'token-usda', expiry, 10000e+8);    
-    // await crpGetYgivenPrice('token-wbtc', 'token-usda', expiry, Math.round((1/50000)*ONE_8));
-
-    // [ using fwp-wbtc-usda-50-50 as example ]
-
-    // FromAmount = dx WBTC
-    // ToAmount = (contract-call? .fixed-weight-pool get-y-given-x wbtc usda 50% 50% dx)
-    // Exchange Rate = (contract-call? .fixed-weight-pool get-y-given-x wbtc usda 50% 50% ONE_8)
-    // Estimated TX Cost = [0]
-
-    // Swap => (contract-call? .fixed-weight-pool swap-x-for-y wbtc usda 50% 50% dx)
 
     console.log("------ Testing Spot Trading ------");
     let from_amount = ONE_8;
@@ -125,20 +137,20 @@ async function run(){
     let exchange_rate = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, ONE_8)));
     await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount);
 
-    console.log("------ Testing Margin Trading ------");
-    let amount = ONE_8;
+    console.log("------ Testing Margin Trading (Long USD vs BTC) ------");
+    let amount = 10000*ONE_8; //gross exposure of $10,000
     let ltv = parseInt((await crpGetLtv('token-wbtc', 'token-usda', expiry)).value.value);
-    ltv /= parseInt((await ytpGetPrice("yield-wbtc-16973")).value.value);
+    ltv /= parseInt((await ytpGetPrice("yield-wbtc-23670")).value.value);
     let margin = Math.round(amount * (1 - ltv));
     let leverage = 1 / (1 - ltv);
-    let trade_price = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', weightX, weightY, amount)).value.value);
+    let trade_price = parseInt((await fwpGetXgivenY('token-wbtc', 'token-usda', weightX, weightY, amount)).value.value) / ONE_8;
 
     console.log("ltv: ", ltv, "; amount: ", amount, "; margin: ", margin);
     console.log("leverage: ", leverage, "; trade_price: ", trade_price)
-    await flExecuteMarginUsdaWbtc16973(amount);
+    await flExecuteMarginUsdaWbtc23670(amount);
     await getBalance('token-usda');
     
-    await flashloan('flash-loan-user-margin-usda-wbtc-16973', 'token-usda', (amount - margin));
+    await flashloan('flash-loan-user-margin-usda-wbtc-23670', 'token-usda', (amount - margin));
 
 }
 run();

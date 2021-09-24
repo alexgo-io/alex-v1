@@ -41,7 +41,39 @@ const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, 
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse)
+      await wait_until_confirmation(broadcastResponse.txid)
+  } catch (error) {
+      console.log(error);
+  }
+}
+
+const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx, dy) => {
+  console.log('[FWP] add-to-position...', tokenX, tokenY, weightX, weightY, poolToken, dx, dy);
+  const privateKey = await getPK();
+  const txOptions = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'fixed-weight-pool',
+      functionName: 'add-to-position',
+      functionArgs: [
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          uintCV(weightX),
+          uintCV(weightY),
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
+          uintCV(dx),
+          uintCV(dy),
+      ],
+      senderKey: privateKey,
+      validateWithAbi: true,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+      const transaction = await makeContractCall(txOptions);
+      const broadcastResponse = await broadcastTransaction(transaction, network);
+      console.log(broadcastResponse);
+      await wait_until_confirmation(broadcastResponse.txid)
   } catch (error) {
       console.log(error);
   }
@@ -165,7 +197,7 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse)
+      await wait_until_confirmation(broadcastResponse.txid)
   } catch (error) {
       console.log(error);
   }
@@ -245,6 +277,7 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
 };
 
 exports.fwpCreate = fwpCreate;
+exports.fwpAddToPosition = fwpAddToPosition;
 exports.fwpGetXGivenPrice = fwpGetXGivenPrice;
 exports.fwpGetYGivenPrice = fwpGetYGivenPrice;
 exports.fwpGetPoolDetails = fwpGetPoolDetails;

@@ -11,11 +11,17 @@ const wait_until_confirmation = async(txid) => {
         let res = await truth.json();
         console.log(`Waiting for confirmation... ${txid}`)
         if (res['tx_status'] === 'success'){
+            console.log('Transaction completed successfully')
+            break;
+        } else if (res['tx_status'] === 'abort_by_response'){
+            console.log('Transaction aborted: ', res['tx_result']['repr'])
+            break;
+        } else if (res.hasOwnProperty('error')){
+            console.log('Transaction aborted: ', res['error']);
             break;
         }
         await sleep(3000)
-    }
-    console.log('Transaction Confirmed')
+    }    
 }
 
 exports.sleep = sleep;

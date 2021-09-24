@@ -37,7 +37,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u8)
+  (ok u0)
 )
 
 (define-read-only (get-balance (account principal))
@@ -98,5 +98,5 @@
 
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? alex u1000000000000 tx-sender))
+  (try! (ft-mint? alex u10000 tx-sender))
 )

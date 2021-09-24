@@ -11,6 +11,7 @@ const {
     broadcastTransaction,
     ClarityType
   } = require('@stacks/transactions');
+  const {wait_until_confirmation} = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
   
@@ -39,7 +40,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse)
+        await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -109,7 +110,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse)
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }
@@ -137,7 +138,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse)
+        await wait_until_confirmation(broadcastResponse.txid)
     } catch (error) {
         console.log(error);
     }
