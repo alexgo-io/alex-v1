@@ -28,7 +28,8 @@
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-constant oracle-src "nothing")
+
+(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -42,6 +43,17 @@
 
 (define-read-only (get-owner)
   (ok (var-get contract-owner))
+)
+
+(define-read-only (get-oracle-src)
+  (ok (var-get oracle-src))
+)
+
+(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set oracle-src new-oracle-src))
+  )
 )
 
 (define-public (set-owner (owner principal))
@@ -71,16 +83,17 @@
   (begin
     (asserts! (> usda-amount u0) ERR-INVALID-LIQUIDITY)
     (let
-        (
+        (   
             (amount-to-rebate (unwrap! (mul-down usda-amount (var-get rebate-rate)) ERR-MATH-CALL))
             (usda-symbol (unwrap! (contract-call? .token-usda get-symbol) ERR-GET-SYMBOL-FAIL))
             (alex-symbol (unwrap! (contract-call? .token-alex get-symbol) ERR-GET-SYMBOL-FAIL))
-            (usda-price (unwrap! (contract-call? .open-oracle get-price oracle-src usda-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (alex-price (unwrap! (contract-call? .open-oracle get-price oracle-src alex-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (usda-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) usda-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (alex-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) alex-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (usda-to-alex (unwrap! (div-down usda-price alex-price) ERR-MATH-CALL))
             (alex-to-rebate (unwrap! (mul-down amount-to-rebate usda-to-alex) ERR-MATH-CALL))
         )
         ;; all usdc amount is transferred
+        ;; (print oracle)
         (try! (contract-call? .token-usda transfer usda-amount tx-sender (as-contract tx-sender) none))
         ;; portion of that (by rebate-rate) is minted as alex and transferred        
         (try! (contract-call? .token-alex mint tx-sender alex-to-rebate))

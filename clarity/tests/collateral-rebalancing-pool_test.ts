@@ -25,6 +25,8 @@ const multisigncrpwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.
 const multisigytpyieldwbtc79760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-79760-wbtc"
 const vaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
 const reserveAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
+const keywbtc59760wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-wbtc"
+const multisigncrpwbtc59760wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-wbtc"
 
 const ONE_8 = 100000000
 const expiry = 59760 * ONE_8
@@ -43,9 +45,8 @@ const weightY = 0.5 * ONE_8
 const wbtcQ = 100*ONE_8
 
 /**
- * Yield Token Pool Test Cases  
+ * Collateral Rebalancing Pool Test Cases  
  * 
- *  TODO: test shortfall case with reserve-pool
  */
 
 Clarinet.test({
@@ -58,9 +59,9 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -139,7 +140,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(33465993);          
 
         // wbtc (token) falls by 20% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8));
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko", Math.round(wbtcPrice * 0.8));
         oracleresult.expectOk()
 
         // move forward by one day
@@ -167,7 +168,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)    
 
         // wbtc rises then by 50%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 0.8 * 1.5);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 0.8 * 1.5);
         oracleresult.expectOk();      
 
         // the rise shifts allocation to wbtc (token)
@@ -192,7 +193,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) * 3 / 4)    
 
         // what if wbtc rises then by another 10%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8 * 1.5 * 1.1));
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko", Math.round(wbtcPrice * 0.8 * 1.5 * 1.1));
         oracleresult.expectOk();
 
         // we hold over 60% in usda, so pool value in wbtc goes down
@@ -309,10 +310,10 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
 
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -334,7 +335,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)    
 
         // wbtc rises then by 50%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8 * 1.5));
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko", Math.round(wbtcPrice * 0.8 * 1.5));
         oracleresult.expectOk();
 
         result = YTPTest.createPool(deployer, yieldwbtc79760Address, wbtcAddress, ytpyieldwbtc79760Address, multisigytpyieldwbtc79760, wbtcQ / 10, wbtcQ / 10);        
@@ -355,10 +356,10 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
 
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcQ*wbtcPrice/ONE_8));
@@ -395,10 +396,10 @@ Clarinet.test({
         position['moving-average'].expectUint(moving_average);   
 
         // wbtc (token) rises by 50% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.5);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.5);
         oracleresult.expectOk()    
         
-        call = await Oracle.getPrice("nothing", "WBTC");
+        call = await Oracle.getPrice("coingecko", "WBTC");
         call.result.expectOk().expectUint(wbtcPrice * 1.5);
 
         // now pool price still implies $50,000 per wbtc
@@ -448,7 +449,7 @@ Clarinet.test({
         // ltv > 100%, so we dip into reserve pool
         // the shortfall is about 0.0287411 BTC ~= 2155.5825 USD
         call = await CRPTest.getBalance("token-usda", reserveAddress);
-        call.result.expectOk().expectUint(9740794336638)
+        call.result.expectOk().expectUint(9740795000000)
         // the actual decrease was 2592.05663362 USD, makes sense given AMM slippage
 
         // most of yield-token burnt, but key-token remains
@@ -501,9 +502,9 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -544,9 +545,9 @@ Clarinet.test({
         position['moving-average'].expectUint(moving_average);
 
         // WBTC rises by 10%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.1);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
 
         // arbtrageur sells $ for wbtc at ~$52,000 per wbtc, making tidy profits
@@ -570,9 +571,9 @@ Clarinet.test({
         // this leads to impermanent loss, hence moving-average in this context is important.
 
         // WBTC falls by 20%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.1 * 0.8);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1 * 0.8);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()  
         
         // arbtrageur sells wbtc for $ at ~$65,000 per wbtc (vs. $44,000 printed), making tidy profits
@@ -591,6 +592,71 @@ Clarinet.test({
         position['weight-y'].expectUint(28509485);        
         position['balance-x'].expectUint(3438105429197 - 2368068346005);
         position['balance-y'].expectUint(31448927 + 22562287);       
+    },    
+});  
+
+Clarinet.test({
+    name: "CRP : testing pegged CRP (= yield-token collateralised by token)",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice);
+        oracleresult.expectOk()
+
+        let result = YTPTest.createPool(wallet_1, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ, wbtcQ);        
+        result.expectOk().expectBool(true);
+
+        // sell some yield-token to create a positive yield
+        result = YTPTest.swapYForX(wallet_1, yieldwbtc59760Address, wbtcAddress, 5*ONE_8);
+        let position:any = result.expectOk().expectTuple();
+        
+        let call = await YTPTest.getPrice(yieldwbtc59760Address);
+        call.result.expectOk().expectUint(109095981);        
+
+        let ltv_00 = Math.round(ONE_8 * ONE_8 / 109095981);
+        let conversion_ltv_0 = 0.98e+8;
+        let bs_vol_0 = 0.1e+8;
+        let collateral = ONE_8;
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = CRPTest.createPool(wallet_1, wbtcAddress, wbtcAddress, yieldwbtc59760Address, keywbtc59760wbtcAddress, multisigncrpwbtc59760wbtcAddress, ltv_00, conversion_ltv_0, bs_vol_0, moving_average, collateral);
+        result.expectOk().expectBool(true);
+
+        call = await CRPTest.getPoolValueInToken(wbtcAddress, wbtcAddress, expiry);
+        call.result.expectOk().expectUint(ONE_8);
+
+        // ltv-0 is 80%, but injecting liquidity pushes up LTV
+        call = await CRPTest.getLtv(wbtcAddress, wbtcAddress, expiry);
+        call.result.expectOk().expectUint(ltv_00);
+
+        // Check pool details and print
+        call = await CRPTest.getPoolDetails(wbtcAddress, wbtcAddress, expiry);
+        position = call.result.expectOk().expectTuple(); 
+        position['yield-supply'].expectUint(91662405); //about 1 / 1.09
+        position['key-supply'].expectUint(91662405);
+        position['weight-x'].expectUint(52269481);
+        position['weight-y'].expectUint(ONE_8 - 52269481);        
+        position['balance-x'].expectUint(52269481);
+        position['balance-y'].expectUint(ONE_8 - 52269481);
+        position['strike'].expectUint(ONE_8);
+        position['ltv-0'].expectUint(ltv_00);
+        position['bs-vol'].expectUint(bs_vol_0);
+        position['conversion-ltv'].expectUint(conversion_ltv_0);
+        position['moving-average'].expectUint(moving_average);
+
+        // WBTC rises by 10%
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice * 1.1);
+        oracleresult.expectOk()
+
+        // pegged CRP throws error if someone tries to swap
+        call = await CRPTest.getXgivenPrice(wbtcAddress, wbtcAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
+        call.result.expectOk().expectUint(9516775442);
+        result = CRPTest.swapXForY(wallet_1, wbtcAddress, wbtcAddress, expiry, 9516775442);
+        position = result.expectErr().expectUint(2001);
     },    
 });        
 

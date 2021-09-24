@@ -70,30 +70,30 @@ Clarinet.test({
         // Reduce all liquidlity
         result = FWPTest.reducePosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(5/4 * wbtcQ);
-        position['dy'].expectUint(5/4 * wbtcQ * wbtcPrice);
+        position['dx'].expectUint(12499622000);
+        position['dy'].expectUint(624981100000000);
 
         // Add back some liquidity
         result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ, wbtcQ*wbtcPrice);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(2236067605752);
+        position['supply'].expectUint(2235639947089);
         position['dx'].expectUint(wbtcQ);
-        position['dy'].expectUint(wbtcQ*wbtcPrice);        
+        position['dy'].expectUint(499999999999878);        
 
         // attempt to trade too much (> 90%) will be rejected
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90*ONE_8);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 91*ONE_8);
         position = result.expectErr().expectUint(4001);
 
         // swap some wbtc into usda
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(ONE_8);
-        position['dy'].expectUint(4950465000000);    
+        position['dy'].expectUint(4950462120393);    
         
         // swap some usda into wbtc
         result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(103049997);
+        position['dx'].expectUint(103049813);
         position['dy'].expectUint(wbtcPrice*ONE_8);        
 
         // attempt to swap zero throws an error
@@ -148,7 +148,7 @@ Clarinet.test({
         chain.mineEmptyBlock(1000);
 
         let ROresult:any = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(2795084507190);
+        ROresult.result.expectOk().expectUint(2795000000000);
         
         // 90 % of existing tokens are voted for the proposal
         result = MultiSigTest.voteFor(deployer, fwpwbtcusdaAddress, 1, 2795084507190 * 9 / 10 )
@@ -292,9 +292,9 @@ Clarinet.test({
         let Oracle = new OracleManager(chain, deployer);
         
         // initialise prices
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko" ,wbtcPrice * ONE_8);
         oracleresult.expectOk()            
-        oracleresult = Oracle.updatePrice(deployer,"USDA", "nothing" ,usdaPrice * ONE_8);
+        oracleresult = Oracle.updatePrice(deployer,"USDA", "coingecko" ,usdaPrice * ONE_8);
         oracleresult.expectOk()                    
 
         // Deployer creating a pool, initial tokens injected to the pool
@@ -309,7 +309,7 @@ Clarinet.test({
         position['balance-y'].expectUint(wbtcQ*wbtcPrice);
 
         // wbtc (token) rises by 10% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8 * 1.1);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko" ,wbtcPrice * ONE_8 * 1.1);
         oracleresult.expectOk()
 
         // now pool price still implies wbtcPrice
@@ -334,7 +334,7 @@ Clarinet.test({
         position['balance-y'].expectUint(500000000000000 + 23268715000000);     
 
         // wbtc (token) then falls by 30% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC", "nothing" ,wbtcPrice * ONE_8 * 1.1 * 0.8);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko" ,wbtcPrice * ONE_8 * 1.1 * 0.8);
         oracleresult.expectOk()        
         
         // let's do some arb
