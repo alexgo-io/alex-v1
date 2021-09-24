@@ -50,7 +50,7 @@ const wbtcQ = 100*ONE_8
  */
 
 Clarinet.test({
-    name: "CRP : Pool creation, adding values and reducing values",
+    name: "CRP : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -409,18 +409,19 @@ Clarinet.test({
         position['balance-y'].expectUint(501673273700000);         
         
         // let's do some arb
-        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice * 1.5);
-        call.result.expectOk().expectUint(90683373999371);         
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90683373999371)
-        position = result.expectOk().expectTuple();
-        position['dy'].expectUint(90683373999371);
-        position['dx'].expectUint(2199052387);
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(wbtcPrice * 1.1));
+        call.result.expectOk().expectUint(21740477871935);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 21740477871935)      
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(wbtcPrice * 1.1 * 1.1));
+        call.result.expectOk().expectUint(24314829907924);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 24314829907924)  
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(wbtcPrice * 1.1 * 1.1 * 1.1));
+        call.result.expectOk().expectUint(25433530203156);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 25433530203156) 
+        call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(wbtcPrice * 1.1 * 1.1 * 1.1 * 1.1));
+        call.result.expectOk().expectUint(26614599244126);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 26614599244126)                              
 
-        call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(7767370713);
-        position['balance-y'].expectUint(592356647699371);         
-        
         // simulate to expiry + 1
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1) 
 
@@ -447,10 +448,9 @@ Clarinet.test({
         position['dy'].expectUint(80807360);
 
         // ltv > 100%, so we dip into reserve pool
-        // the shortfall is about 0.0287411 BTC ~= 2155.5825 USD
+        // the shortfall is about 0.0287411 BTC
         call = await CRPTest.getBalance("token-usda", reserveAddress);
-        call.result.expectOk().expectUint(9740794336638)
-        // the actual decrease was 2592.05663362 USD, makes sense given AMM slippage
+        call.result.expectOk().expectUint(9885767000000)
 
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
@@ -518,8 +518,9 @@ Clarinet.test({
         result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
 
+        let moving_average_0 = 0.95e+8
         //Deployer creating a pool, initial tokens injected to the pool
-        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average_0, 50000 * ONE_8);
         result.expectOk().expectBool(true);
 
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
@@ -542,7 +543,7 @@ Clarinet.test({
         position['ltv-0'].expectUint(ltv_0);
         position['bs-vol'].expectUint(bs_vol);
         position['conversion-ltv'].expectUint(conversion_ltv);
-        position['moving-average'].expectUint(moving_average);
+        position['moving-average'].expectUint(moving_average_0);
 
         // WBTC rises by 10%
         oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1);
@@ -550,15 +551,12 @@ Clarinet.test({
         oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
 
-        // arbtrageur sells $ for wbtc at ~$52,000 per wbtc, making tidy profits
         call = await CRPTest.getXgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
-        call.result.expectOk().expectUint(111379129197);
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 111379129197);
+        call.result.expectOk().expectUint(64673278);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 64673278);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(111379129197);
         position['dy'].expectUint(2127973);     
-        // the rebalance, based on the original weigting brings back implied price to ~$55,000
-        // 3438105429197 * 33465474 / 31448927 / 66534526 = 54987.410883797596226
 
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
@@ -570,16 +568,15 @@ Clarinet.test({
         // 3438105429197 * 70690442 / 31448927 / 29309558 = 263672.468897732823119
         // this leads to impermanent loss, hence moving-average in this context is important.
 
-        // WBTC falls by 20%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1 * 0.8);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1 * 0.98);
         oracleresult.expectOk()
         oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()  
         
         // arbtrageur sells wbtc for $ at ~$65,000 per wbtc (vs. $44,000 printed), making tidy profits
-        call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.8 / ONE_8)));
-        call.result.expectOk().expectUint(22562287);
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 22562287);
+        call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.98/ ONE_8)));
+        call.result.expectOk().expectUint(21206570);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 21206570);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(2368068346005);
         position['dy'].expectUint(22562287);     
@@ -622,8 +619,9 @@ Clarinet.test({
         let conversion_ltv_0 = 0.98e+8;
         let bs_vol_0 = 0.1e+8;
         let collateral = ONE_8;
+        let moving_average_0 = 0.95e+8
         //Deployer creating a pool, initial tokens injected to the pool
-        result = CRPTest.createPool(wallet_1, wbtcAddress, wbtcAddress, yieldwbtc59760Address, keywbtc59760wbtcAddress, multisigncrpwbtc59760wbtcAddress, ltv_00, conversion_ltv_0, bs_vol_0, moving_average, collateral);
+        result = CRPTest.createPool(wallet_1, wbtcAddress, wbtcAddress, yieldwbtc59760Address, keywbtc59760wbtcAddress, multisigncrpwbtc59760wbtcAddress, ltv_00, conversion_ltv_0, bs_vol_0, moving_average_0, collateral);
         result.expectOk().expectBool(true);
 
         call = await CRPTest.getPoolValueInToken(wbtcAddress, wbtcAddress, expiry);
@@ -646,7 +644,7 @@ Clarinet.test({
         position['ltv-0'].expectUint(ltv_00);
         position['bs-vol'].expectUint(bs_vol_0);
         position['conversion-ltv'].expectUint(conversion_ltv_0);
-        position['moving-average'].expectUint(moving_average);
+        position['moving-average'].expectUint(moving_average_0);
 
         // WBTC rises by 10%
         oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice * 1.1);
