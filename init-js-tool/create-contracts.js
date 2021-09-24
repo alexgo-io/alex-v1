@@ -5,90 +5,66 @@ if(process.argv.length !== 5){
         process.exit(0)
     }
     
-function generateYieldTokenContract(token, expiry){
+async function generateYieldTokenContract(token, expiry){
     let src = "../clarity/contracts/yield-token/yield-wbtc-59760.clar"
     let dest = `./generated-contracts/yield-${token}-${expiry}.clar`
-    fs.copyFile(src, dest, err =>{
-        if (err) {
-            console.log("Error found:: ", err)
-        }
-    })
-    replace.sync({
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    await replace({
         files: dest,
         from: [/wbtc/g, /59760/g],
         to: [token, expiry]
     })
 }
 
-function generatePoolTokenContract(token, expiry){
+async function generatePoolTokenContract(token, expiry){
     let src = "../clarity/contracts/pool-token/ytp-yield-wbtc-59760-wbtc.clar"
     let dest = `./generated-contracts/ytp-yield-${token}-${expiry}-${token}.clar`
-    fs.copyFile(src, dest, err =>{
-        if (err) {
-            console.log("Error found:: ", err)
-        }
-    })
-    replace.sync({
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    await replace({
         files: dest,
         from: [/wbtc/g, /59760/g],
         to: [token, expiry]
     })
 }
 
-function generateKeyTokenContract(collateral, token, expiry){
+async function generateKeyTokenContract(collateral, token, expiry){
     let src = "../clarity/contracts/key-token/key-wbtc-59760-usda.clar"
     let dest = `./generated-contracts/key-${token}-${expiry}-${collateral}.clar`
-    fs.copyFile(src, dest, err =>{
-        if (err) {
-            console.log("Error found:: ", err)
-        }
-    })
-    replace.sync({
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    await replace({
         files: dest,
         from: [/usda/g, /wbtc/g, /59760/g],
         to: [collateral, token, expiry]
     })
 }
 
-function generateMultisigCRP(collateral, token, expiry){
+async function generateMultisigCRP(collateral, token, expiry){
     let src = "../clarity/contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
     let dest = `./generated-contracts/multisig-crp-${token}-${expiry}-${collateral}.clar`
-    fs.copyFile(src, dest, err =>{
-        if (err) {
-            console.log("Error found:: ", err)
-        }
-    })
-    replace.sync({
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    await replace({
         files: dest,
         from: [/usda/g, /wbtc/g, /59760/g],
         to: [collateral, token, expiry]
     })
 }
 
-function generateMultisigYTPYield(token, expiry){
+async function generateMultisigYTPYield(token, expiry){
     let src = "../clarity/contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
     let dest = `./generated-contracts/multisig-ytp-yield-${token}-${expiry}-${token}.clar`
-    fs.copyFile(src, dest, err =>{
-        if (err) {
-            console.log("Error found:: ", err)
-        }
-    })
-    replace.sync({
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    await replace({
         files: dest,
         from: [/wbtc/g, /59760/g],
         to: [token, expiry]
     })
 }
 
-function generateFlashLoanUser(collateral, token, expiry) {
+async function generateFlashLoanUser(collateral, token, expiry) {
     let src = "../clarity/contracts/flash-loan-user-margin-usda-wbtc-59760.clar"
     let dest = `./generated-contracts/flash-loan-user-margin-${collateral}-${token}-${expiry}.clar`
-    fs.copyFile(src, dest, err =>{
-        if (err) {
-            console.log("Error found:: ", err)
-        }
-    })
-    replace.sync({
+    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    await replace({
         files: dest,
         from: [/usda/g, /wbtc/g, /59760/g],
         to: [collateral, token, expiry]
@@ -100,11 +76,11 @@ async function run() {
     let collateral = process.argv[2]
     let token = process.argv[3]
     let expiry = process.argv[4]
-    generateKeyTokenContract(collateral, token, expiry)
-    generateYieldTokenContract(token, expiry)
-    generatePoolTokenContract(token, expiry)
-    generateMultisigCRP(collateral, token, expiry)
-    generateMultisigYTPYield(token, expiry)
-    generateFlashLoanUser(collateral, token, expiry)
+     generateKeyTokenContract(collateral, token, expiry)
+     generateYieldTokenContract(token, expiry)
+     generatePoolTokenContract(token, expiry)
+     generateMultisigCRP(collateral, token, expiry)
+     generateMultisigYTPYield(token, expiry)
+     generateFlashLoanUser(collateral, token, expiry)
 }
 run()
