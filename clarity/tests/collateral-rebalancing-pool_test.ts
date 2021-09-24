@@ -605,7 +605,7 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice);
         oracleresult.expectOk()
 
         let result = YTPTest.createPool(wallet_1, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ, wbtcQ);        
@@ -649,7 +649,7 @@ Clarinet.test({
         position['moving-average'].expectUint(moving_average);
 
         // WBTC rises by 10%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.1);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice * 1.1);
         oracleresult.expectOk()
 
         // pegged CRP throws error if someone tries to swap
