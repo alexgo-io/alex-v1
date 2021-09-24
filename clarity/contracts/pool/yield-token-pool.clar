@@ -31,7 +31,8 @@
 (define-constant ERR-GET-SYMBOL-FAIL (err u6000))
 
 ;; TODO: need to be defined properly
-(define-constant oracle-src "nothing")
+(define-data-var contract-owner principal tx-sender)
+(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
 (define-map pools-map
@@ -69,6 +70,17 @@
 
 (define-read-only (get-max-expiry)
     (ok (var-get max-expiry))
+)
+
+(define-read-only (get-oracle-src)
+  (ok (var-get oracle-src))
+)
+
+(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set oracle-src new-oracle-src))
+  )
 )
 
 (define-read-only (get-t (expiry uint) (listed uint))
@@ -117,7 +129,7 @@
             (balance-token (get balance-token pool))
             (balance-aytoken (get balance-aytoken pool))
             (token-symbol (get token-symbol pool))         
-            (token-price (unwrap! (contract-call? .open-oracle get-price oracle-src token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (balance (unwrap! (add-fixed balance-token balance-aytoken) ERR-MATH-CALL))
         )
         (mul-up balance token-price)

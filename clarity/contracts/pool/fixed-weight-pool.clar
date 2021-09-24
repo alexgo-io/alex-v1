@@ -28,7 +28,8 @@
 
 (define-constant alex-symbol "alex")
 (define-constant reserve-usdc-symbol "usdc")
-(define-constant oracle-src "nothing")
+(define-data-var contract-owner principal tx-sender)
+(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
 (define-map pools-map
@@ -106,6 +107,17 @@
       (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL-ERR))
     )
     (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
+  )
+)
+
+(define-read-only (get-oracle-src)
+  (ok (var-get oracle-src))
+)
+
+(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set oracle-src new-oracle-src))
   )
 )
 

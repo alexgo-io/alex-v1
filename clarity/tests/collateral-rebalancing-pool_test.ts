@@ -58,9 +58,9 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -139,7 +139,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(33465993);          
 
         // wbtc (token) falls by 20% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8));
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko", Math.round(wbtcPrice * 0.8));
         oracleresult.expectOk()
 
         // move forward by one day
@@ -167,7 +167,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)    
 
         // wbtc rises then by 50%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 0.8 * 1.5);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 0.8 * 1.5);
         oracleresult.expectOk();      
 
         // the rise shifts allocation to wbtc (token)
@@ -192,7 +192,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) * 3 / 4)    
 
         // what if wbtc rises then by another 10%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8 * 1.5 * 1.1));
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko", Math.round(wbtcPrice * 0.8 * 1.5 * 1.1));
         oracleresult.expectOk();
 
         // we hold over 60% in usda, so pool value in wbtc goes down
@@ -309,10 +309,10 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
 
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -334,7 +334,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)    
 
         // wbtc rises then by 50%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing", Math.round(wbtcPrice * 0.8 * 1.5));
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko", Math.round(wbtcPrice * 0.8 * 1.5));
         oracleresult.expectOk();
 
         result = YTPTest.createPool(deployer, yieldwbtc79760Address, wbtcAddress, ytpyieldwbtc79760Address, multisigytpyieldwbtc79760, wbtcQ / 10, wbtcQ / 10);        
@@ -355,10 +355,10 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
 
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcQ*wbtcPrice/ONE_8));
@@ -395,10 +395,10 @@ Clarinet.test({
         position['moving-average'].expectUint(moving_average);   
 
         // wbtc (token) rises by 50% vs usda (collateral)
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.5);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.5);
         oracleresult.expectOk()    
         
-        call = await Oracle.getPrice("nothing", "WBTC");
+        call = await Oracle.getPrice("coingecko", "WBTC");
         call.result.expectOk().expectUint(wbtcPrice * 1.5);
 
         // now pool price still implies $50,000 per wbtc
@@ -501,9 +501,9 @@ Clarinet.test({
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
         
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice);
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -544,9 +544,9 @@ Clarinet.test({
         position['moving-average'].expectUint(moving_average);
 
         // WBTC rises by 10%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.1);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
 
         // arbtrageur sells $ for wbtc at ~$52,000 per wbtc, making tidy profits
@@ -570,9 +570,9 @@ Clarinet.test({
         // this leads to impermanent loss, hence moving-average in this context is important.
 
         // WBTC falls by 20%
-        oracleresult = Oracle.updatePrice(deployer,"WBTC","nothing",wbtcPrice * 1.1 * 0.8);
+        oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1 * 0.8);
         oracleresult.expectOk()
-        oracleresult = Oracle.updatePrice(deployer,"USDA","nothing",usdaPrice);
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()  
         
         // arbtrageur sells wbtc for $ at ~$65,000 per wbtc (vs. $44,000 printed), making tidy profits
