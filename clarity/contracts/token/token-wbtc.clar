@@ -25,7 +25,7 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply wbtc))
+  (ok (decimals-to-fixed (ft-get-supply wbtc)))
 )
 
 (define-read-only (get-name)
@@ -37,11 +37,11 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u6)
+  (ok u8)
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance wbtc account))
+  (ok (decimals-to-fixed (ft-get-balance wbtc account)))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -55,10 +55,24 @@
   (ok (some (var-get token-uri)))
 )
 
+(define-constant ONE_8 (pow u10 u8))
+
+(define-private (pow-decimals)
+  (pow u10 (unwrap-panic (get-decimals)))
+)
+
+(define-read-only (fixed-to-decimals (amount uint))
+  (/ (* amount (pow-decimals)) ONE_8)
+)
+
+(define-private (decimals-to-fixed (amount uint))
+  (/ (* amount ONE_8) (pow-decimals))
+)
+
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? wbtc amount sender recipient)
+    (match (ft-transfer? wbtc (fixed-to-decimals amount) sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -71,14 +85,14 @@
 (define-public (mint (recipient principal) (amount uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-mint? wbtc amount recipient)
+    (ft-mint? wbtc (fixed-to-decimals amount) recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-burn? wbtc amount sender)
+    (ft-burn? wbtc (fixed-to-decimals amount) sender)
   )
 )
 
