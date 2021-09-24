@@ -552,43 +552,37 @@ Clarinet.test({
         oracleresult.expectOk()
 
         call = await CRPTest.getXgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
-        call.result.expectOk().expectUint(64673278);
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 64673278);
+        call.result.expectOk().expectUint(111379129197);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 111379129197);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(111379129197);
         position['dy'].expectUint(2127973);     
 
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['weight-x'].expectUint(29309558);
-        position['weight-y'].expectUint(70690442);        
+        position['weight-x'].expectUint(64673278);
+        position['weight-y'].expectUint(ONE_8 - 64673278);        
         position['balance-x'].expectUint(3326726300000 + 111379129197);
         position['balance-y'].expectUint(33576900 - 2127973);
-        // but swap triggers weight-change, which takes implied away from printed
-        // 3438105429197 * 70690442 / 31448927 / 29309558 = 263672.468897732823119
-        // this leads to impermanent loss, hence moving-average in this context is important.
 
         oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice * 1.1 * 0.98);
         oracleresult.expectOk()
         oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()  
         
-        // arbtrageur sells wbtc for $ at ~$65,000 per wbtc (vs. $44,000 printed), making tidy profits
         call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.98/ ONE_8)));
-        call.result.expectOk().expectUint(21206570);
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 21206570);
+        call.result.expectOk().expectUint(1120201);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 1120201);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(2368068346005);
-        position['dy'].expectUint(22562287);     
-        // the rebalance, based on the original weigting brings back implied price to ~$44,000
-        // 1070037083192 * 70690442 / 54011214 / 29309558 = 47782.219378044761895
+        position['dx'].expectUint(236037077175);
+        position['dy'].expectUint(1120201);     
 
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['weight-x'].expectUint(71490515);
-        position['weight-y'].expectUint(28509485);        
-        position['balance-x'].expectUint(3438105429197 - 2368068346005);
-        position['balance-y'].expectUint(31448927 + 22562287);       
+        position['weight-x'].expectUint(62949744);
+        position['weight-y'].expectUint(ONE_8 - 62949744);        
+        position['balance-x'].expectUint(3202068352022);
+        position['balance-y'].expectUint(32569128);       
     },    
 });  
 
