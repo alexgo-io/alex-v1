@@ -450,7 +450,10 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-x .token-usda) 
                             fee-x 
-                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token-x-trait u50000000 u50000000))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-x-trait .token-usda u50000000 u50000000 fee-x)))
+                            )                            
                         )
                     )
                 )
@@ -467,7 +470,10 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-y .token-usda) 
                             fee-y 
-                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token-y-trait u50000000 u50000000))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-y-trait .token-usda u50000000 u50000000 fee-y)))
+                            )                            
                         )
                     )
                 )
