@@ -45,6 +45,35 @@ const {
         console.log(error);
     }
   }
+
+  const ytpAddToPosition = async (yiedToken, token, poolToken, dx) => {
+    console.log('[YTP] add-to-position...', yiedToken, token, poolToken, dx);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: 'yield-token-pool',
+        functionName: 'add-to-position',
+        functionArgs: [
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),           
+            uintCV(dx)
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid);
+    } catch (error) {
+        console.log(error);
+    }
+  }  
   
   
   const ytpGetPrice = async(yieldToken) => {
@@ -230,4 +259,5 @@ const {
   exports.ytpGetYgivenX = ytpGetYgivenX;
   exports.ytpGetXgivenY = ytpGetXgivenY;
   exports.ytpGetPoolDetails = ytpGetPoolDetails;
+  exports.ytpAddToPosition = ytpAddToPosition;
   

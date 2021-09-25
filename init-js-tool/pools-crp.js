@@ -49,8 +49,8 @@ const {wait_until_confirmation } = require('./utils');
     }
   }
   
-  const crpAddToPostionAndSwitch = async (token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
-    console.log('[CRP] add-to-position-and-switch...', token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
+  const crpAddToPostionAndSwitch = async (token, collateral, yiedToken, keyToken, dx) => {
+    console.log('[CRP] add-to-position-and-switch...', token, collateral, yiedToken, keyToken, dx);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -61,11 +61,6 @@ const {wait_until_confirmation } = require('./utils');
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, multiSig),
-            uintCV(ltv_0),
-            uintCV(conversion_ltv),
-            uintCV(bs_vol),
-            uintCV(moving_average),
             uintCV(dx),
         ],
         senderKey: privateKey,
@@ -83,6 +78,36 @@ const {wait_until_confirmation } = require('./utils');
         console.log(error);
     }
   }
+
+  const crpAddToPostion = async (token, collateral, yiedToken, keyToken, dx) => {
+    console.log('[CRP] add-to-position..', token, collateral, yiedToken, keyToken, dx);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: 'collateral-rebalancing-pool',
+        functionName: 'add-to-position',
+        functionArgs: [
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
+            uintCV(dx),
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+  }  
 
   const crpSwapXforY = async (token, collateral, expiry, dx) => {
     console.log('[CRP] swap-x-for-y...', token, collateral, expiry, dx);
@@ -342,6 +367,7 @@ const {wait_until_confirmation } = require('./utils');
   };
 
   exports.crpCreate = crpCreate;
+  exports.crpAddToPostion = crpAddToPostion;
   exports.crpAddToPostionAndSwitch = crpAddToPostionAndSwitch;
   exports.crpGetLtv = crpGetLtv;
   exports.crpGetYgivenX = crpGetYgivenX;
