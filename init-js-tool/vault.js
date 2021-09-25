@@ -12,6 +12,7 @@ const {
     ClarityType
 } = require('@stacks/transactions');
 const { wait_until_confirmation } = require('./utils');
+const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 
 const flashloan = async(loan_contract, token, amount) => {
@@ -42,6 +43,80 @@ const flashloan = async(loan_contract, token, amount) => {
     }
 }
 
+const mint = async(token, recipient, amount) => {
+    console.log('[Token] mint...', token, recipient, amount);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: token,
+        functionName: 'mint',
+        functionArgs: [
+            principalCV(recipient),
+            uintCV(amount),
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+const burn = async(token, recipient, amount) => {
+    console.log('[Token] burn...', token, recipient, amount);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: token,
+        functionName: 'burn',
+        functionArgs: [
+            principalCV(recipient),
+            uintCV(amount),
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+const balance = async(token, owner) => {
+    console.log('[Token] get-balance...', token, owner);
+
+    const options = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: token,
+        functionName: 'get-balance',
+        functionArgs: [
+        principalCV(owner),
+        ],
+        network: network,
+        senderAddress: process.env.ACCOUNT_ADDRESS,
+    };
+    try {
+        return callReadOnlyFunction(options);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 const getBalance = async(token) => {
     console.log('[VAULT] get-balance...', token);
 
@@ -64,4 +139,7 @@ const getBalance = async(token) => {
 }
 
 exports.flashloan = flashloan;
+exports.mint = mint;
+exports.burn = burn;
+exports.balance = balance;
 exports.getBalance = getBalance;

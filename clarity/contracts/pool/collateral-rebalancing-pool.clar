@@ -285,11 +285,8 @@
 ;; single sided liquidity
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
     (begin
-        (asserts!
-            (and
-                (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
-                (is-none (map-get? pools-data-map { token-x: (contract-of token), token-y: (contract-of collateral), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
-            )
+        (asserts! 
+            (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
             ERR-POOL-ALREADY-EXISTS
         )    
         (let
@@ -406,8 +403,11 @@
                 (dx-to-dy (unwrap! (sub-fixed dx dx-weighted) ERR-MATH-CALL))
 
                 (dy-weighted (if (is-eq token-x token-y)
-                                dx-to-dy 
-                                (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy) ERR-NO-LIQUIDITY))
+                                dx-to-dy
+                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
+                                    (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy) ERR-NO-LIQUIDITY))
+                                    (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy) ERR-NO-LIQUIDITY))
+                                )                                 
                              )
                 )
 
@@ -456,7 +456,10 @@
                                 u0 
                                 (if (is-eq token-x token-y)
                                     balance-x
-                                    (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x) ERR-NO-LIQUIDITY))
+                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
+                                        (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x) ERR-NO-LIQUIDITY))
+                                        (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x) ERR-NO-LIQUIDITY))
+                                    ) 
                                 )
                             )
                 )
@@ -487,7 +490,11 @@
                                 (amount-to-swap 
                                     (if (is-eq token-y .token-usda)
                                         amount
-                                        (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount))
+                                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
+                                            (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount))
+                                            (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount))
+                                        )                                         
+                                        
                                     )
                                 )
                             )
@@ -495,7 +502,10 @@
                             (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap (as-contract tx-sender) tx-sender))
                             (unwrap! (contract-call? token transfer (if (is-eq token-y .token-usda)
                                                                         amount-to-swap
-                                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap)))
+                                                                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
+                                                                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap)))
+                                                                            (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap)))
+                                                                        )                                                                        
                                                                     ) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
                         )
                     )                
@@ -773,7 +783,10 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-x .token-usda) 
                             fee-x 
-                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x)))
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda collateral u50000000 u50000000))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral .token-usda u50000000 u50000000 fee-x)))
+                            )                            
                         )
                     )
                 )
@@ -790,7 +803,10 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-y .token-usda) 
                             fee-y 
-                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y)))
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token u50000000 u50000000))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token .token-usda u50000000 u50000000 fee-y)))
+                            )                            
                         )
                     )
                 )
@@ -874,7 +890,10 @@
                 (ltv (try! (get-ltv token collateral expiry)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
-                        (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) ERR-NO-LIQUIDITY)
+                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
+                            (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) ERR-NO-LIQUIDITY)
+                            (unwrap! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dx) ERR-NO-LIQUIDITY)
+                        )                    
                     )
                 )
                 (ltv-dy (unwrap! (mul-down ltv dy) ERR-MATH-CALL))
@@ -910,7 +929,10 @@
                 ;; always convert to collateral ccy
                 (dy-to-dx (if (is-eq token-x token-y)
                             dy-weighted
-                            (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY)
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
+                                (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY)
+                                (unwrap! (contract-call? .fixed-weight-pool get-x-given-y collateral token u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY)
+                            )                            
                         )
                 )   
                 (dx (unwrap! (add-fixed dx-weighted dy-to-dx) ERR-MATH-CALL))
