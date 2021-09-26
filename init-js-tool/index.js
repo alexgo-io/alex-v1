@@ -56,56 +56,56 @@ const {
  } = require('./pools-ytp')
 
 const _deploy = {
-    // 59760: {token: 'token-wbtc', 
-    //     collateral: 'token-usda', 
-    //     yield_token: 'yield-wbtc-59760', 
-    //     key_token: 'key-wbtc-59760-usda',
-    //     pool_token: 'ytp-yield-wbtc-59760-wbtc',
-    //     multisig_ytp: 'multisig-ytp-yield-wbtc-59760-wbtc',
-    //     multisig_crp: 'multisig-crp-wbtc-59760-usda',
-    //     liquidity_ytp: 250e+8,
-    //     collateral_crp: 1000000e+8
-    // },
-    // 23670: {token: 'token-wbtc', 
-    //     collateral: 'token-usda', 
-    //     yield_token: 'yield-wbtc-23670', 
-    //     key_token: 'key-wbtc-23670-usda',
-    //     pool_token: 'ytp-yield-wbtc-23670-wbtc',
-    //     multisig_ytp: 'multisig-ytp-yield-wbtc-23670-wbtc',
-    //     multisig_crp: 'multisig-crp-wbtc-23670-usda',
-    //     liquidity_ytp: 250e+8,
-    //     collateral_crp: 1000000e+8
-    // },           
-    // 1: {token: 'token-wbtc', 
-    //     collateral: 'token-usda', 
-    //     yield_token: 'yield-wbtc-23040', 
-    //     key_token: 'key-wbtc-23040-usda',
-    //     pool_token: 'ytp-yield-wbtc-23040-wbtc',
-    //     multisig_ytp: 'multisig-ytp-yield-wbtc-23040-wbtc',
-    //     multisig_crp: 'multisig-crp-wbtc-23040-usda',
-    //     liquidity_ytp: 250e+8,
-    //     collateral_crp: 1000000e+8
-    // },
-    // 2: {token: 'token-wbtc', 
-    //     collateral: 'token-usda', 
-    //     yield_token: 'yield-wbtc-34560', 
-    //     key_token: 'key-wbtc-34560-usda',
-    //     pool_token: 'ytp-yield-wbtc-34560-wbtc',
-    //     multisig_ytp: 'multisig-ytp-yield-wbtc-34560-wbtc',
-    //     multisig_crp: 'multisig-crp-wbtc-34560-usda',
-    //     liquidity_ytp: 250e+8,
-    //     collateral_crp: 1000000e+8
-    // },   
-    // 3: {token: 'token-wbtc', 
-    //     collateral: 'token-usda', 
-    //     yield_token: 'yield-wbtc-74880', 
-    //     key_token: 'key-wbtc-74880-usda',
-    //     pool_token: 'ytp-yield-wbtc-74880-wbtc',
-    //     multisig_ytp: 'multisig-ytp-yield-wbtc-74880-wbtc',
-    //     multisig_crp: 'multisig-crp-wbtc-74880-usda',
-    //     liquidity_ytp: 250e+8,
-    //     collateral_crp: 1000000e+8
-    // },
+    59760: {token: 'token-wbtc', 
+        collateral: 'token-usda', 
+        yield_token: 'yield-wbtc-59760', 
+        key_token: 'key-wbtc-59760-usda',
+        pool_token: 'ytp-yield-wbtc-59760-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-59760-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-59760-usda',
+        liquidity_ytp: 250e+8,
+        collateral_crp: 1000000e+8
+    },
+    23670: {token: 'token-wbtc', 
+        collateral: 'token-usda', 
+        yield_token: 'yield-wbtc-23670', 
+        key_token: 'key-wbtc-23670-usda',
+        pool_token: 'ytp-yield-wbtc-23670-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-23670-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-23670-usda',
+        liquidity_ytp: 250e+8,
+        collateral_crp: 1000000e+8
+    },           
+    1: {token: 'token-wbtc', 
+        collateral: 'token-usda', 
+        yield_token: 'yield-wbtc-23040', 
+        key_token: 'key-wbtc-23040-usda',
+        pool_token: 'ytp-yield-wbtc-23040-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-23040-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-23040-usda',
+        liquidity_ytp: 250e+8,
+        collateral_crp: 1000000e+8
+    },
+    2: {token: 'token-wbtc', 
+        collateral: 'token-usda', 
+        yield_token: 'yield-wbtc-34560', 
+        key_token: 'key-wbtc-34560-usda',
+        pool_token: 'ytp-yield-wbtc-34560-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-34560-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-34560-usda',
+        liquidity_ytp: 250e+8,
+        collateral_crp: 1000000e+8
+    },   
+    3: {token: 'token-wbtc', 
+        collateral: 'token-usda', 
+        yield_token: 'yield-wbtc-74880', 
+        key_token: 'key-wbtc-74880-usda',
+        pool_token: 'ytp-yield-wbtc-74880-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-74880-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-74880-usda',
+        liquidity_ytp: 250e+8,
+        collateral_crp: 1000000e+8
+    },
     4: {token: 'token-usda', 
         collateral: 'token-wbtc', 
         yield_token: 'yield-usda-74880', 
@@ -114,7 +114,7 @@ const _deploy = {
         multisig_ytp: 'multisig-ytp-yield-usda-74880-usda',
         multisig_crp: 'multisig-crp-usda-74880-wbtc',
         liquidity_ytp: 1000000e+8,
-        collateral_crp: 250e+8
+        collateral_crp: 1e+8
     },      
     5: {token: 'token-usda', 
         collateral: 'token-wbtc', 
@@ -124,7 +124,7 @@ const _deploy = {
         multisig_ytp: 'multisig-ytp-yield-usda-34560-usda',
         multisig_crp: 'multisig-crp-usda-34560-wbtc',
         liquidity_ytp: 1000000e+8,
-        collateral_crp: 250e+8
+        collateral_crp: 1e+8
     },     
     6: {token: 'token-usda', 
         collateral: 'token-wbtc', 
@@ -134,7 +134,7 @@ const _deploy = {
         multisig_ytp: 'multisig-ytp-yield-usda-23040-usda',
         multisig_crp: 'multisig-crp-usda-23040-wbtc',
         liquidity_ytp: 1000000e+8,
-        collateral_crp: 250e+8
+        collateral_crp: 1e+8
     }                              
 }
 
@@ -188,9 +188,9 @@ async function create_fwp(add_only){
     left_side = wbtc_balance.value.value / BigInt(10); //10% balance to fwp
     right_side = Math.round(Number(wbtcPrice) * Number(left_side) / ONE_8);
     if (add_only){
-        await fwpAddToPosition('token-wbtc', 'token-usda', weightX, weightY, 'fwp-wbtc-usda-50-50', left_side, right_side);
+        await fwpAddToPosition('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, 'fwp-wbtc-usda-50-50', left_side, right_side);
     } else {
-        await fwpCreate('token-wbtc', 'token-usda', weightX, weightY, 'fwp-wbtc-usda-50-50', 'multisig-fwp-wbtc-usda-50-50', left_side, right_side);         
+        await fwpCreate('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, 'fwp-wbtc-usda-50-50', 'multisig-fwp-wbtc-usda-50-50', left_side, right_side);         
     }
 }
 
@@ -232,34 +232,31 @@ async function set_faucet_amounts(){
 async function arbitrage_fwp(){
     console.log("------ FWP Arbitrage ------")
 
-    const weightX = 0.5 * ONE_8
-    const weightY = 0.5 * ONE_8   
-
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
     let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;  
 
     let printed = parseFloat(wbtcPrice / usdaPrice);
 
-    let result = await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
+    let result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
     let balance_x = result.value.data['balance-x'].value;
     let balance_y = result.value.data['balance-y'].value;
 
-    let implied = balance_y * BigInt(weightX) / balance_x / BigInt(weightY);
+    let implied = Number(balance_y) / Number(balance_x);
     console.log("printed: ", printed, "implied:", implied);
     if (printed < implied) {
-        let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', weightX, weightY, printed * ONE_8);
+        let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
         console.log("dx = ", dx);
         if(dx.type === 7){
-            await fwpSwapXforY('token-wbtc', 'token-usda', weightX, weightY, dx.value.value);
+            await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
         }
     } else {
-        let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', weightX, weightY, printed * ONE_8);
+        let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
         console.log("dy = ", dy);
         if(dy.type === 7){
-            await fwpSwapYforX('token-wbtc', 'token-usda', weightX, weightY, dy.value.value);
+            await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
         }
     }  
-    result = await fwpGetPoolDetails('token-wbtc', 'token-usda', weightX, weightY);
+    result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
     balance_x = result.value.data['balance-x'].value;
     balance_y = result.value.data['balance-y'].value;      
     console.log('post arb implied: ', balance_y / balance_x);    
@@ -283,9 +280,9 @@ async function arbitrage_crp(){
 
     for (const key in _list) {
         console.log(_list[key]);
-        printed = parseFloat(wbtcPrice / usdaPrice);
+        printed = Number(wbtcPrice) / Number(usdaPrice);
         if (_list[key]['token'] === 'token-usda') {
-            printed = parseFloat(usdaPrice / wbtcPrice);
+            printed = Number(usdaPrice) / Number(wbtcPrice);
         }
 
         result = await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']);
@@ -294,16 +291,16 @@ async function arbitrage_crp(){
         weight_x = result.value.data['weight-x'].value;
         weight_y = result.value.data['weight-y'].value;
 
-        implied = balance_x * weight_y / balance_y / weight_x;
+        implied = Number(balance_x) * Number(weight_y) / Number(balance_y) / Number(weight_x);
         console.log("printed: ", printed, "implied:", implied);
         if (printed < implied) {
-            let dx = await crpGetXgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], printed * ONE_8);
+            let dx = await crpGetXgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
             console.log("dx = ", dx);
             if(dx.type === 7){
                 await crpSwapXforY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx.value.value);
             }
         } else {
-            let dy = await crpGetYgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], printed * ONE_8);
+            let dy = await crpGetYgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
             console.log("dy = ", dy);
             if(dy.type === 7){
                 await crpSwapYforX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy.value.value);
@@ -314,7 +311,8 @@ async function arbitrage_crp(){
         balance_y = result.value.data['balance-y'].value;
         weight_x = result.value.data['weight-x'].value;
         weight_y = result.value.data['weight-y'].value;    
-        console.log('post arb implied: ', balance_x * weight_y / balance_y / weight_x);    
+        implied = Number(balance_x) * Number(weight_y) / Number(balance_y) / Number(weight_x);
+        console.log('post arb implied: ', implied);    
     }    
 }
 
@@ -431,7 +429,7 @@ async function run(){
     // await test_margin_trading();
     // await get_pool_details_crp();
     // await get_pool_details_ytp();
-    await reduce_position_ytp(0.9999e+8);
+    // await reduce_position_ytp(0.99e+8); //TODO: 1e+8 throws error
 }
 run();
 
