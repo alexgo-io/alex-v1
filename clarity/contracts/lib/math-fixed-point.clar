@@ -133,7 +133,7 @@
         )
         
         ;;(add-fixed raw max-error)
-        (if (and (>= a ONE_8) (round raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
+        (if (>= a ONE_8)  (round raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
     )
 )
 
