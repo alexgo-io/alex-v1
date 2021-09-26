@@ -75,6 +75,34 @@ const {
     }
   }  
   
+  const ytpReducePosition = async (yiedToken, token, poolToken, percent) => {
+    console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: 'yield-token-pool',
+        functionName: 'reduce-position',
+        functionArgs: [
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),           
+            uintCV(percent)
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid);
+    } catch (error) {
+        console.log(error);
+    }
+  }  
   
   const ytpGetPrice = async(yieldToken) => {
     console.log('[YTP] get-price...', yieldToken);
@@ -260,4 +288,4 @@ const {
   exports.ytpGetXgivenY = ytpGetXgivenY;
   exports.ytpGetPoolDetails = ytpGetPoolDetails;
   exports.ytpAddToPosition = ytpAddToPosition;
-  
+  exports.ytpReducePosition = ytpReducePosition;
