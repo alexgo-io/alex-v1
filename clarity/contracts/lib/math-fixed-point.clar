@@ -20,6 +20,7 @@
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
+(define-constant TOLERANCE_CONSTANT u10000)
 
 ;; public functions
 ;;
@@ -128,7 +129,25 @@
         (
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (prv-result (unwrap-panic (add-fixed raw max-error)))
         )
-        (add-fixed raw max-error)
+        
+        ;;(add-fixed raw max-error)
+        (if (and (>= a ONE_8) (round raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
+    )
+)
+
+(define-read-only (round (a uint) (tolerance uint))
+    (begin
+    (if (is-eq (mod a tolerance) u0) (ok a)
+        (let
+            (
+                (temp (/ a tolerance))
+                (temp2 (+ temp u1))
+                (rounded (* temp2 tolerance))
+            )
+        (ok rounded)
+        )
+    )
     )
 )
