@@ -14,8 +14,8 @@ const {
 const {wait_until_confirmation } = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
-  const crpCreate = async (token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
-    console.log('[CRP] create-pool...', token, collateral, yiedToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
+  const crpCreate = async (token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
+    console.log('[CRP] create-pool...', token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -24,7 +24,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, multiSig),
             uintCV(ltv_0),
@@ -49,8 +49,8 @@ const {wait_until_confirmation } = require('./utils');
     }
   }
   
-  const crpAddToPostionAndSwitch = async (token, collateral, yiedToken, keyToken, dx) => {
-    console.log('[CRP] add-to-position-and-switch...', token, collateral, yiedToken, keyToken, dx);
+  const crpAddToPostionAndSwitch = async (token, collateral, yieldToken, keyToken, dx) => {
+    console.log('[CRP] add-to-position-and-switch...', token, collateral, yieldToken, keyToken, dx);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -59,7 +59,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
             uintCV(dx),
         ],
@@ -79,8 +79,8 @@ const {wait_until_confirmation } = require('./utils');
     }
   }
 
-  const crpAddToPostion = async (token, collateral, yiedToken, keyToken, dx) => {
-    console.log('[CRP] add-to-position..', token, collateral, yiedToken, keyToken, dx);
+  const crpAddToPostion = async (token, collateral, yieldToken, keyToken, dx) => {
+    console.log('[CRP] add-to-position..', token, collateral, yieldToken, keyToken, dx);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -89,9 +89,67 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
             uintCV(dx),
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+  }  
+
+  const crpReducePostionYield = async (token, collateral, yieldToken, percent) => {
+    console.log('[CRP] reduce-position-yield..', token, collateral, yieldToken, percent);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: 'collateral-rebalancing-pool',
+        functionName: 'reduce-position-yield',
+        functionArgs: [
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+            uintCV(percent),
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+  }  
+
+  const crpReducePostionKey = async (token, collateral, keyToken, percent) => {
+    console.log('[CRP] reduce-position-key..', token, collateral, keyToken, percent);
+    const privateKey = await getPK();
+    const txOptions = {
+        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractName: 'collateral-rebalancing-pool',
+        functionName: 'reduce-position-key',
+        functionArgs: [
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
+            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, keyToken),
+            uintCV(percent),
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -369,6 +427,8 @@ const {wait_until_confirmation } = require('./utils');
   exports.crpCreate = crpCreate;
   exports.crpAddToPostion = crpAddToPostion;
   exports.crpAddToPostionAndSwitch = crpAddToPostionAndSwitch;
+  exports.crpReducePostionKey = crpReducePostionKey;
+  exports.crpReducePostionYield = crpReducePostionYield;
   exports.crpGetLtv = crpGetLtv;
   exports.crpGetYgivenX = crpGetYgivenX;
   exports.crpGetXgivenY = crpGetXgivenY;

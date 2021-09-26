@@ -15,6 +15,7 @@ const {setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens} = require('./f
 const { 
     fwpCreate,
     fwpAddToPosition,
+    fwpReducePosition,
     fwpGetXGivenPrice,
     fwpGetYGivenPrice,
     fwpGetXgivenY,
@@ -27,6 +28,8 @@ const {
     crpCreate,
     crpAddToPostionAndSwitch,
     crpAddToPostion,
+    crpReducePostionYield,
+    crpReducePostionKey,
     crpGetLtv,
     crpGetXgivenY,
     crpGetYgivenX,    

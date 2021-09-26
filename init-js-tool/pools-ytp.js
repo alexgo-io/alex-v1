@@ -76,7 +76,7 @@ const {
   }  
   
   const ytpReducePosition = async (yiedToken, token, poolToken, percent) => {
-    console.log('[YTP] reduce-to-position...', yiedToken, token, poolToken, percent);
+    console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,

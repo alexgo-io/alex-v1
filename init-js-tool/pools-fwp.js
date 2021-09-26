@@ -79,6 +79,37 @@ const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx,
   }
 }
 
+const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent) => {
+  console.log('[FWP] reduce-position...', tokenX, tokenY, weightX, weightY, poolToken, percent);
+  const privateKey = await getPK();
+  const txOptions = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'fixed-weight-pool',
+      functionName: 'reduce-position',
+      functionArgs: [
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          uintCV(weightX),
+          uintCV(weightY),
+          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
+          uintCV(percent),
+      ],
+      senderKey: privateKey,
+      validateWithAbi: true,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+      const transaction = await makeContractCall(txOptions);
+      const broadcastResponse = await broadcastTransaction(transaction, network);
+      console.log(broadcastResponse);
+      await wait_until_confirmation(broadcastResponse.txid)
+  } catch (error) {
+      console.log(error);
+  }
+}
+
 const printResult = (result)=>{
   if(result.type === ClarityType.ResponseOk){
       if(result.value.type == ClarityType.UInt){
@@ -278,6 +309,7 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
 
 exports.fwpCreate = fwpCreate;
 exports.fwpAddToPosition = fwpAddToPosition;
+exports.fwpReducePosition = fwpReducePosition;
 exports.fwpGetXGivenPrice = fwpGetXGivenPrice;
 exports.fwpGetYGivenPrice = fwpGetYGivenPrice;
 exports.fwpGetPoolDetails = fwpGetPoolDetails;
