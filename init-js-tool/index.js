@@ -48,7 +48,7 @@ const {
     ytpGetYgivenX,
     ytpGetPoolDetails,  
     ytpAddToPosition,
-    ytpReduceToPosition  
+    ytpReducePosition  
  } = require('./pools-ytp')
 
 async function run(){

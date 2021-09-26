@@ -75,13 +75,13 @@ const {
     }
   }  
   
-  const ytpReduceToPosition = async (yiedToken, token, poolToken, percent) => {
+  const ytpReducePosition = async (yiedToken, token, poolToken, percent) => {
     console.log('[YTP] reduce-to-position...', yiedToken, token, poolToken, percent);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
-        functionName: 'reduce-to-position',
+        functionName: 'reduce-position',
         functionArgs: [
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
@@ -288,4 +288,4 @@ const {
   exports.ytpGetXgivenY = ytpGetXgivenY;
   exports.ytpGetPoolDetails = ytpGetPoolDetails;
   exports.ytpAddToPosition = ytpAddToPosition;
-  exports.ytpReduceToPosition = ytpReduceToPosition;
+  exports.ytpReducePosition = ytpReducePosition;
