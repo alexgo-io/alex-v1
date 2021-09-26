@@ -100,7 +100,7 @@ async function get_version(){
         output: process.stdout,
         terminal: true
       });
-    let answer = await rlp.questionAsync('What is the version number?')
+    let answer = await rlp.questionAsync('What is the version number? ')
     return answer
 }
 

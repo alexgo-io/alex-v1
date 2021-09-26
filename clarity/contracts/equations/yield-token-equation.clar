@@ -126,7 +126,7 @@
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))
   (ok
-    (if (is-eq total-supply u0)
+    (if (or (is-eq total-supply u0) (is-eq balance-x balance-y)) ;; either at inception or if yield == 0
       {token: dx, dy: dx}
       (let
         (
