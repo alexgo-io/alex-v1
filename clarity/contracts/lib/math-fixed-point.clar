@@ -133,18 +133,18 @@
         )
         
         ;;(add-fixed raw max-error)
-        (if (>= a ONE_8)  (round raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
+        (if (>= a ONE_8)  (round-for-up raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
     )
 )
 
-(define-read-only (round (a uint) (tolerance uint))
+(define-read-only (round-for-up (a uint) (tolerance uint))
     (begin
     (if (is-eq (mod a tolerance) u0) (ok a)
         (let
             (
-                (temp (/ a tolerance))
-                (temp2 (+ temp u1))
-                (rounded (* temp2 tolerance))
+                (divided (/ a tolerance))
+                (new-value (+ divided u1))
+                (rounded (* new-value tolerance))
             )
         (ok rounded)
         )
