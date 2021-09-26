@@ -386,19 +386,6 @@ const {wait_until_confirmation } = require('./utils');
     }
   };
   
-  const printResult = (result)=>{
-    if(result.type === ClarityType.ResponseOk){
-        if(result.value.type == ClarityType.UInt){
-            console.log(result.value);
-        }else if(result.value.type == ClarityType.Tuple){
-            console.log('|');
-            for (const key in result.value.data) {
-                console.log('---',key,':',result.value.data[key]);
-            }
-        }
-    }
-  }
-  
   const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
       console.log('Getting CRP Weight-Y...', token, collateral, expiry, strike, bs_vol);
     
