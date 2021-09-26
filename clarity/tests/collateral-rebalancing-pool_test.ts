@@ -409,16 +409,16 @@ Clarinet.test({
         
         // let's do some arb
         call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice * 1.5);
-        call.result.expectOk().expectUint(90683373999371);         
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90683373999371)
+        call.result.expectOk().expectUint(90683373999370);         
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 90683373999370)
         position = result.expectOk().expectTuple();
-        position['dy'].expectUint(90683373999371);
+        position['dy'].expectUint(90683373999370);
         position['dx'].expectUint(2199052387);
 
         call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
         position = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(7767370713);
-        position['balance-y'].expectUint(592356647699371);         
+        position['balance-y'].expectUint(592356647699370);         
         
         // simulate to expiry + 1
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1) 
@@ -577,11 +577,11 @@ Clarinet.test({
         
         // arbtrageur sells wbtc for $ at ~$65,000 per wbtc (vs. $44,000 printed), making tidy profits
         call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.8 / ONE_8)));
-        call.result.expectOk().expectUint(22562287);
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 22562287);
+        call.result.expectOk().expectUint(22562286);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 22562286);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(2368068346005);
-        position['dy'].expectUint(22562287);     
+        position['dx'].expectUint(2368068036575);
+        position['dy'].expectUint(22562286);     
         // the rebalance, based on the original weigting brings back implied price to ~$44,000
         // 1070037083192 * 70690442 / 54011214 / 29309558 = 47782.219378044761895
 
@@ -589,8 +589,8 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['weight-x'].expectUint(71490515);
         position['weight-y'].expectUint(28509485);        
-        position['balance-x'].expectUint(3438105429197 - 2368068346005);
-        position['balance-y'].expectUint(31448927 + 22562287);       
+        position['balance-x'].expectUint(3438105429197 - 2368068036575);
+        position['balance-y'].expectUint(31448927 + 22562286);       
     },    
 });        
 

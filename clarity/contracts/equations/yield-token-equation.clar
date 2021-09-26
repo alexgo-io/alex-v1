@@ -19,7 +19,7 @@
 ;; for testing only
 (define-constant MAX_IN_RATIO (* u5 (pow u10 u7)))
 (define-constant MAX_OUT_RATIO (* u5 (pow u10 u7)))
-
+(define-constant TOLERANCE u10)
 ;; data maps and vars
 ;;
 
@@ -49,8 +49,9 @@
             (y-pow (unwrap-panic (pow-down balance-y t-comp)))
             (x-dx-pow (unwrap-panic (pow-down (unwrap-panic (add-fixed balance-x dx)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) x-dx-pow)))
+            (pow-term (unwrap-panic (pow-down term t-comp-num)))
         )     
-        (sub-fixed balance-y (unwrap-panic (pow-down term t-comp-num)))
+        (if (> balance-y (+ TOLERANCE pow-term)) (sub-fixed balance-y pow-term) (ok u0))  
     )    
   )
 )
@@ -75,8 +76,9 @@
             (y-pow (unwrap-panic (pow-down balance-y t-comp)))
             (y-dy-pow (unwrap-panic (pow-up (unwrap-panic (sub-fixed balance-y dy)) t-comp)))
             (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) y-dy-pow)))            
-        )       
-        (sub-fixed (unwrap-panic (pow-down term t-comp-num)) balance-x)         
+            (pow-term (unwrap-panic (pow-down term t-comp-num)))
+        )
+        (if (> pow-term (+ TOLERANCE balance-x)) (sub-fixed pow-term balance-x) (ok u0))       
     )  
   )
 )

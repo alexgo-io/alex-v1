@@ -409,17 +409,25 @@ Clarinet.test({
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0);
         position =result.expectErr().expectUint(2003)
         
+        // False swap value -- Filter added
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0.0000001 * ONE_8);
+        //position =result.expectErr().expectUint(2003)
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(0);
+        position['dy'].expectUint(0.0000001 * ONE_8);
         // call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         // position = call.result.expectErr();
 
-        // Bug, this should pass -- to be checked
+        // Fixed
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0.001 * ONE_8);
-        position =result.expectErr().expectUint(5004)
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(0);
+        position['dy'].expectUint(0.001 * ONE_8);
 
         // Attempt for Swapping
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(99787067);
+        position['dx'].expectUint(99760122);
         position['dy'].expectUint(ONE_8);
 
         // Attempts for zero value swapping
@@ -434,7 +442,7 @@ Clarinet.test({
         result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 0.1 * ONE_8);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(0.1 * ONE_8);
-        position['dy'].expectUint(10161454);
+        position['dy'].expectUint(10178704);
 
     },    
 });
