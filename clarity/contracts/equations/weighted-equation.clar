@@ -14,6 +14,7 @@
 ;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u10 (pow u10 u6))) ;; 10%
 (define-constant MAX_OUT_RATIO (* u10 (pow u10 u6))) ;; 10%
+;;(define-constant EQUATION_TOLERANCE u10)
 ;; for testing only
 ;; (define-constant MAX_IN_RATIO (* u9 (pow u10 u7)))
 ;; (define-constant MAX_OUT_RATIO (* u9 (pow u10 u7)))
@@ -58,8 +59,10 @@
                 (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-up base exponent)))
-                (complement (unwrap-panic (sub-fixed ONE_8 power)))
+                (complement (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
             )
+            ;; To differentiate create-pool case and other cases so create-pool case won't fall back in sub-fixed error
+            ;;(if (> ONE_8 (+ EQUATION_TOLERANCE power)) (mul-down balance-y (unwrap-panic (sub-fixed ONE_8 power))) (ok u0))  
             (mul-down balance-y complement)
         ) 
     )    
@@ -77,14 +80,16 @@
         (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (denominator (unwrap-panic (sub-fixed balance-y dy)))
+                (denominator (if (<= balance-y dy) u0 (unwrap-panic (sub-fixed balance-y dy))))
                 (base (unwrap-panic (div-down balance-y denominator)))
                 (uncapped-exponent (unwrap-panic (div-down weight-x weight-y)))
                 (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-down base exponent)))
-                (ratio (unwrap-panic (sub-fixed power ONE_8)))
+                (ratio (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
             )
+            ;; To differentiate create-pool case and other cases so create-pool case won't fall back in sub-fixed error
+            ;;(if (> power (+ EQUATION_TOLERANCE ONE_8)) (mul-down balance-x (unwrap-panic (sub-fixed power ONE_8))) (ok u0)) 
             (mul-down balance-x ratio)
         )
     )
@@ -113,7 +118,7 @@
                     (base (unwrap-panic (div-up spot price)))
                     (power (unwrap-panic (pow-down base weight-y)))                
                 )
-                (mul-up balance-x (unwrap-panic (sub-fixed power ONE_8)))            
+                (mul-up balance-x (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
             )
         )
     )   
@@ -135,7 +140,7 @@
                     (base (unwrap-panic (div-up spot price)))
                     (power (unwrap-panic (pow-down base weight-y)))
                 )
-                (mul-up balance-y (unwrap-panic (sub-fixed ONE_8 power)))
+                (mul-up balance-y (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
             )
         )
     )   

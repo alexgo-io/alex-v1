@@ -15,6 +15,7 @@
 ;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u10 (pow u10 u6))) ;; 10%
 (define-constant MAX_OUT_RATIO (* u10 (pow u10 u6))) ;; 10%
+;;(define-constant EQUATION_TOLERANCE u10)
 ;; for testing only
 ;; (define-constant MAX_IN_RATIO (* u9 (pow u10 u7)))
 ;; (define-constant MAX_OUT_RATIO (* u9 (pow u10 u7)))
@@ -40,20 +41,19 @@
     (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)     
     (let 
       (
-        (t-comp (unwrap-panic (sub-fixed ONE_8 t)))
+        (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
         (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
         (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (x-pow (unwrap-panic (pow-down balance-x t-comp)))
         (y-pow (unwrap-panic (pow-down balance-y t-comp)))
         (x-dx-pow (unwrap-panic (pow-down (unwrap-panic (add-fixed balance-x dx)) t-comp)))
-        (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) x-dx-pow)))
+        (add-term (unwrap-panic (add-fixed x-pow y-pow)))
+        (term (if (<= add-term x-dx-pow) u0 (unwrap-panic (sub-fixed add-term x-dx-pow))))
         (final-term (unwrap-panic (pow-down term t-comp-num)))
-      )        
-      (if (> balance-y final-term) ;; if we are overwhelmed by numerical error, return 0
-        (sub-fixed balance-y final-term)
-        (ok u0)
       )
+      ;; if we are overwhelmed by numerical error, return 0
+      (if (<= balance-y final-term) (ok u0) (sub-fixed balance-y final-term))
     )  
   )
 )
@@ -70,20 +70,18 @@
     (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
     (let 
       (          
-        (t-comp (unwrap-panic (sub-fixed ONE_8 t)))
+        (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
         (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
         (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (x-pow (unwrap-panic (pow-down balance-x t-comp)))
         (y-pow (unwrap-panic (pow-down balance-y t-comp)))
-        (y-dy-pow (unwrap-panic (pow-up (unwrap-panic (sub-fixed balance-y dy)) t-comp)))
-        (term (unwrap-panic (sub-fixed (unwrap-panic (add-fixed x-pow y-pow)) y-dy-pow)))   
+        (y-dy-pow (unwrap-panic (pow-up (if (<= balance-y dy) u0 (unwrap-panic (sub-fixed balance-y dy))) t-comp)))
+        (add-term (unwrap-panic (add-fixed x-pow y-pow)))
+        (term (if (<= add-term y-dy-pow) u0 (unwrap-panic (sub-fixed add-term y-dy-pow))))
         (final-term (unwrap-panic (pow-down term t-comp-num)))         
       )
-      (if (> final-term balance-x)
-        (sub-fixed final-term balance-x)
-        (ok u0)
-      )        
+      (if (<= final-term balance-x) (ok u0) (sub-fixed final-term balance-x))
     )  
   )
 )
@@ -98,7 +96,7 @@
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (t uint) (price uint))
   (let 
     (
-      (t-comp (unwrap-panic (sub-fixed ONE_8 t)))
+      (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
       (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
       (bound (unwrap-panic (contract-call? .math-log-exp get-exp-bound)))
       (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
@@ -107,10 +105,7 @@
       (denom (unwrap-panic (add-fixed ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t)))))))
       (lead-term (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num)))
     )
-    (if (> lead-term ONE_8)
-      (mul-up balance-x (unwrap-panic (sub-fixed lead-term ONE_8)))
-      (ok u0)
-    )                          
+    (if (<= lead-term ONE_8) (ok u0) (mul-up balance-x (unwrap-panic (sub-fixed lead-term ONE_8))))
   )
 )
 
@@ -140,7 +135,6 @@
   )    
 )
 
-;; 
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
   (begin
     (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)

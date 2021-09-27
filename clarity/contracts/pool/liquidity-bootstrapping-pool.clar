@@ -231,9 +231,9 @@
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL),
-                    balance-x: (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL),
-                    balance-y: (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)
+                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
+                    balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
+                    balance-y: (if (<= balance-y dx) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL))
                     })
                 )
             )
@@ -265,7 +265,7 @@
 
                 ;; fee = dx * fee-rate-x
                 (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
-                (dx-net-fees (unwrap! (sub-fixed dx fee) ERR-MATH-CALL))
+                (dx-net-fees (if (<= dx fee) u0 (unwrap! (sub-fixed dx fee) ERR-MATH-CALL)))
 
                 ;; swap triggers update of weight
                 (weight-x (try! (get-weight-x token-x-trait token-y-trait expiry)))
@@ -276,7 +276,7 @@
                     (merge pool
                         {
                             balance-x: (unwrap! (add-fixed balance-x dx-net-fees) ERR-MATH-CALL),
-                            balance-y: (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL),
+                            balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)),
                             fee-balance-x: (unwrap! (add-fixed fee (get fee-balance-x pool)) ERR-MATH-CALL),
                             weight-x-t: weight-x
                         }
@@ -311,7 +311,7 @@
 
                 ;; fee = dy * fee-rate-y
                 (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
-                (dy-net-fees (unwrap! (sub-fixed dy fee) ERR-MATH-CALL))
+                (dy-net-fees (if (<= dy fee) u0 (unwrap! (sub-fixed dy fee) ERR-MATH-CALL)))
 
                 ;; swap triggers update of weight
                 (weight-x (try! (get-weight-x token-x-trait token-y-trait expiry)))
@@ -321,7 +321,7 @@
                 (pool-updated
                     (merge pool
                         {
-                            balance-x: (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL),
+                            balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
                             balance-y: (unwrap! (add-fixed balance-y dy-net-fees) ERR-MATH-CALL),
                             fee-balance-y: (unwrap! (add-fixed fee (get fee-balance-y pool)) ERR-MATH-CALL),
                             weight-x-t: weight-x
@@ -433,11 +433,7 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-x pool))
             (fee-y (get fee-balance-y pool))
-            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
-            (fee-x-rebate (unwrap! (mul-down fee-x rebate-rate) ERR-MATH-CALL))
-            (fee-y-rebate (unwrap! (mul-down fee-y rebate-rate) ERR-MATH-CALL))
-            (fee-x-net (unwrap! (sub-fixed fee-x fee-x-rebate) ERR-MATH-CALL))
-            (fee-y-net (unwrap! (sub-fixed fee-y fee-y-rebate) ERR-MATH-CALL))                 
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))              
         )
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
         (and (> fee-x u0) 
