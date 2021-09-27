@@ -277,10 +277,10 @@
                 (dy-act (get dy-act reduce-data))
                 (dy-vir (get dy-vir reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL),
-                    balance-token: (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL),
-                    balance-aytoken: (unwrap! (sub-fixed balance-aytoken dy-act) ERR-MATH-CALL),                    
-                    balance-virtual: (unwrap! (sub-fixed balance-virtual dy-vir) ERR-MATH-CALL),                    
+                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
+                    balance-token: (if (<= balance-token dx) u0 (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL)),
+                    balance-aytoken: (if (<= balance-aytoken dy-act) u0 (unwrap! (sub-fixed balance-aytoken dy-act) ERR-MATH-CALL)),
+                    balance-virtual: (if (<= balance-virtual dy-vir) u0 (unwrap! (sub-fixed balance-virtual dy-vir) ERR-MATH-CALL))
                     })
                 )
             )
@@ -305,22 +305,25 @@
                 (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
                 (expiry (unwrap! (contract-call? the-aytoken get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 (fee-rate-aytoken (get fee-rate-aytoken pool))
+                (balance-token (get balance-token pool))
+                (balance-aytoken (get balance-aytoken pool))
+                (fee-balance-token (get fee-balance-token pool))
 
                 ;; lambda ~= 1 - fee-rate-aytoken * yield
                 (yield (try! (get-yield the-aytoken)))
                 (fee-yield (unwrap! (mul-down yield fee-rate-aytoken) ERR-MATH-CALL))
-                (lambda (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL))
+                (lambda (if (<= ONE_8 fee-yield) u0 (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL)))
                 (dx-net-fees (unwrap! (mul-down dx lambda) ERR-MATH-CALL))
-                (fee (unwrap! (sub-fixed dx dx-net-fees) ERR-MATH-CALL))
+                (fee (if (<= dx dx-net-fees) u0 (unwrap! (sub-fixed dx dx-net-fees) ERR-MATH-CALL)))
 
                 (dy (try! (get-y-given-x the-aytoken dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (unwrap! (add-fixed (get balance-token pool) dx-net-fees) ERR-MATH-CALL),
-                            balance-aytoken: (unwrap! (sub-fixed (get balance-aytoken pool) dy) ERR-MATH-CALL),
-                            fee-balance-token: (unwrap! (add-fixed (get fee-balance-token pool) fee) ERR-MATH-CALL)
+                            balance-token: (unwrap! (add-fixed balance-token dx-net-fees) ERR-MATH-CALL),
+                            balance-aytoken: (if (<= balance-aytoken dy) u0 (unwrap! (sub-fixed balance-aytoken dy) ERR-MATH-CALL)),
+                            fee-balance-token: (unwrap! (add-fixed fee-balance-token fee) ERR-MATH-CALL)
                         }
                     )
                 )
@@ -346,21 +349,24 @@
                 (aytoken (contract-of the-aytoken))
                 (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
                 (fee-rate-token (get fee-rate-token pool))
+                (balance-token (get balance-token pool))
+                (balance-aytoken (get balance-aytoken pool))
+                (fee-balance-aytoken (get fee-balance-aytoken pool))
 
                 ;; lambda ~= 1 - fee-rate-token * yield
                 (yield (try! (get-yield the-aytoken)))
                 (fee-yield (unwrap! (mul-down yield fee-rate-token) ERR-MATH-CALL))
-                (lambda (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL))
+                (lambda (if (<= ONE_8 fee-yield) u0 (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL)))
                 (dy-net-fees (unwrap! (mul-down dy lambda) ERR-MATH-CALL))
-                (fee (unwrap! (sub-fixed dy dy-net-fees) ERR-MATH-CALL))                
+                (fee (if (<= dy dy-net-fees) u0 (unwrap! (sub-fixed dy dy-net-fees) ERR-MATH-CALL)))
                 (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (unwrap! (sub-fixed (get balance-token pool) dx) ERR-MATH-CALL),                        
-                            balance-aytoken: (unwrap! (add-fixed (get balance-aytoken pool) dy-net-fees) ERR-MATH-CALL),
-                            fee-balance-aytoken: (unwrap! (add-fixed (get fee-balance-aytoken pool) fee) ERR-MATH-CALL)
+                            balance-token: (if (<= balance-token dx) u0 (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL)),
+                            balance-aytoken: (unwrap! (add-fixed balance-aytoken dy-net-fees) ERR-MATH-CALL),
+                            fee-balance-aytoken: (unwrap! (add-fixed fee-balance-aytoken fee) ERR-MATH-CALL)
                         }
                     )
                 )
@@ -458,11 +464,7 @@
             (address (get fee-to-address pool))
             (fee-x (get fee-balance-aytoken pool))
             (fee-y (get fee-balance-token pool))
-            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
-            (fee-x-rebate (unwrap! (mul-down fee-x rebate-rate) ERR-MATH-CALL))
-            (fee-y-rebate (unwrap! (mul-down fee-y rebate-rate) ERR-MATH-CALL))
-            (fee-x-net (unwrap! (sub-fixed fee-x fee-x-rebate) ERR-MATH-CALL))
-            (fee-y-net (unwrap! (sub-fixed fee-y fee-y-rebate) ERR-MATH-CALL))            
+            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))        
         )
         
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
@@ -599,7 +601,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (if (is-eq token dy) u0 (unwrap! (mul-down dy percent-act) ERR-MATH-CALL)))
-        (dy-vir (if (is-eq token dy) token (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
+        (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL))))
         )        
         (ok {token: token, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -625,7 +627,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
-        (dy-vir (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL))
+        (dy-vir (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -650,7 +652,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
-        (dy-vir (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL))
+        (dy-vir (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
     )

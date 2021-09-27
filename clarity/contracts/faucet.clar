@@ -50,7 +50,7 @@
         (asserts! (is-eq contract-caller contract-owner) ERR-NOT-AUTHORIZED)
         (try! (contract-call? .token-wbtc mint recipient (var-get wbtc-amount)))
         (try! (contract-call? .token-usda mint recipient (var-get usda-amount)))
-        (unwrap! (stx-transfer? (/ (var-get stx-amount) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED)
+        (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED)
         (ok true)        
     )
 )

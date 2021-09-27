@@ -93,14 +93,15 @@ const {
     }
   }
 
-  const getSomeTokens = async () => {
+  const getSomeTokens = async (recipient) => {
     console.log('[Faucet] get some tokens...');
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,
         contractName: 'faucet',
         functionName: 'get-some-tokens',
-        functionArgs: [         
+        functionArgs: [     
+          principalCV(recipient)    
         ],
         senderKey: privateKey,
         validateWithAbi: true,
