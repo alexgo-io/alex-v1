@@ -53,6 +53,14 @@ depends_on = ["math-log-exp"]
 path = "contracts/lib/math-log-exp.clar"
 depends_on = []
 
+[contracts.math-new-fixed-point]
+path = "contracts/new-lib/math-new-fixed-point.clar"
+depends_on = ["math-new-log-exp"]
+
+[contracts.math-new-log-exp]
+path = "contracts/new-lib/math-new-log-exp.clar"
+depends_on = []
+
 [contracts.multisig-crp-wbtc-59760-usda]
 path = "contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
 depends_on = ["yield-wbtc-59760", "key-wbtc-59760-usda", "token-wbtc", "token-usda", "trait-sip-010"]

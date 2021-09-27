@@ -7,7 +7,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_10 (pow u10 u10)) ;; 10 decimal places
 (define-constant ERR-SCALE-UP-OVERFLOW (err u5001))
 (define-constant ERR-SCALE-DOWN-OVERFLOW (err u5002))
 (define-constant ERR-ADD-OVERFLOW (err u5003))
@@ -16,8 +16,8 @@
 (define-constant ERR-DIV-OVERFLOW (err u5006))
 (define-constant ERR-POW-OVERFLOW (err u5007))
 
-;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
+;; With 10 fixed digits you would have a maximum error of 0.5 * 10^-10 in each entry, 
+;; which could aggregate to about 10 x 0.5 * 10^-10 = 4 * 10^-10 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
 (define-constant TOLERANCE_CONSTANT u10000)
@@ -25,23 +25,23 @@
 ;;
 
 (define-read-only (get_one)
-    (ok ONE_8)
+    (ok ONE_10)
 )
 
 (define-read-only (scale-up (a uint))
     (let
         (
-            (r (* a ONE_8))
+            (r (* a ONE_10))
         )
-        (asserts! (is-eq (/ r ONE_8) a) ERR-SCALE-UP-OVERFLOW)
+        (asserts! (is-eq (/ r ONE_10) a) ERR-SCALE-UP-OVERFLOW)
         (ok r)
     )
 )
 
 (define-read-only (scale-down (a uint))
   (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) ERR-SCALE-DOWN-OVERFLOW)
+    ((r (/ a ONE_10)))
+    (asserts! (is-eq (* r ONE_10) a) ERR-SCALE-DOWN-OVERFLOW)
     (ok r)
  )
 )
@@ -69,7 +69,7 @@
         (
             (product (* a b))
         )
-        (ok (/ product ONE_8))
+        (ok (/ product ONE_10))
     )
 )
 
@@ -81,7 +81,7 @@
        )
         (if (is-eq product u0)
             (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            (ok (+ u1 (/ (- product u1) ONE_10)))
        )
    )
 )
@@ -89,7 +89,7 @@
 (define-read-only (div-down (a uint) (b uint))
     (let
         (
-            (a-inflated (* a ONE_8))
+            (a-inflated (* a ONE_10))
        )
         (if (is-eq a u0)
             (ok u0)
@@ -101,7 +101,7 @@
 (define-read-only (div-up (a uint) (b uint))
     (let
         (
-            (a-inflated (* a ONE_8))
+            (a-inflated (* a ONE_10))
        )
         (if (is-eq a u0)
             (ok u0)
@@ -116,7 +116,7 @@
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        ;;(if (>= a ONE_8) (round-for-up raw TOLERANCE_CONSTANT)
+        ;;(if (>= a ONE_10) (round-for-up raw TOLERANCE_CONSTANT)
             (if (< raw max-error)
                 (ok u0)
                 (sub-fixed raw max-error)
@@ -132,7 +132,7 @@
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (add-fixed raw max-error)
-        ;;(if (>= a ONE_8)  (round-for-up raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
+        ;;(if (>= a ONE_10)  (round-for-up raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
     )
 )
 
