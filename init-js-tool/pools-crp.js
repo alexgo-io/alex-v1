@@ -197,7 +197,7 @@ const {wait_until_confirmation } = require('./utils');
   }  
 
   const crpSwapYforX = async (token, collateral, expiry, dy) => {
-    console.log('[CRP] swap-x-for-y...', token, collateral, expiry, dy);
+    console.log('[CRP] swap-y-for-x...', token, collateral, expiry, dy);
     const privateKey = await getPK();
     const txOptions = {
         contractAddress: process.env.ACCOUNT_ADDRESS,

@@ -280,9 +280,9 @@ async function arbitrage_crp(){
 
     for (const key in _list) {
         console.log(_list[key]);
-        printed = Number(wbtcPrice) / Number(usdaPrice);
+        printed = Number(usdaPrice) / Number(wbtcPrice);
         if (_list[key]['token'] === 'token-usda') {
-            printed = Number(usdaPrice) / Number(wbtcPrice);
+            printed = Number(wbtcPrice) / Number(usdaPrice);
         }
 
         result = await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']);
@@ -291,7 +291,7 @@ async function arbitrage_crp(){
         weight_x = result.value.data['weight-x'].value;
         weight_y = result.value.data['weight-y'].value;
 
-        implied = Number(balance_x) * Number(weight_y) / Number(balance_y) / Number(weight_x);
+        implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
         console.log("printed: ", printed, "implied:", implied);
         if (printed < implied) {
             let dx = await crpGetXgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
@@ -311,7 +311,7 @@ async function arbitrage_crp(){
         balance_y = result.value.data['balance-y'].value;
         weight_x = result.value.data['weight-x'].value;
         weight_y = result.value.data['weight-y'].value;    
-        implied = Number(balance_x) * Number(weight_y) / Number(balance_y) / Number(weight_x);
+        implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
         console.log('post arb implied: ', implied);    
     }    
 }
@@ -424,7 +424,7 @@ async function run(){
     // await create_ytp(add_only=true);
     // await create_crp(add_only=true);
     // await arbitrage_fwp();
-    // await arbitrage_crp();
+    await arbitrage_crp();
     // await test_spot_trading();
     // await test_margin_trading();
     // await get_pool_details_crp();
@@ -432,4 +432,3 @@ async function run(){
     // await reduce_position_ytp(0.99e+8); //TODO: 1e+8 throws error
 }
 run();
-
