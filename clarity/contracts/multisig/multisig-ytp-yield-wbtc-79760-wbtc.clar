@@ -21,6 +21,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-COLLECT-FEE (err u8004))
+(define-constant ERR-TRANSFER-X-FAILED (err u3001))
 
 (define-constant ONE_8 u100000000)
 
