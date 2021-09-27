@@ -15,6 +15,7 @@
 ;; max in/out as % of liquidity
 (define-constant MAX_IN_RATIO (* u10 (pow u10 u6))) ;; 10%
 (define-constant MAX_OUT_RATIO (* u10 (pow u10 u6))) ;; 10%
+;;(define-constant EQUATION_TOLERANCE u10)
 ;; for testing only
 ;; (define-constant MAX_IN_RATIO (* u9 (pow u10 u7)))
 ;; (define-constant MAX_OUT_RATIO (* u9 (pow u10 u7)))
