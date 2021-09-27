@@ -20,7 +20,7 @@ Clarinet.test({
                 types.uint(5*ONE_8),
                 types.uint(5*ONE_8)
             ], deployer.address);
-        call.result.expectOk().expectUint(312499930206);
+        call.result.expectOk().expectUint(312499930206); //
 
         call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
             [
