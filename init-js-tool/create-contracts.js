@@ -1,21 +1,34 @@
 const fs = require('fs')
 const replace = require('replace-in-file');
+const toml = require('toml');
+
+const clarinet_config = toml.parse(fs.readFileSync('../clarity/Clarinet.toml', 'utf-8'))
+console.log(clarinet_config)
+
+const test = `\n[contracts.ytp-yield-wbtc-1000-wbtc]\npath = "contracts/pool-token/ytp-yield-wbtc-1000-wbtc.clar"\ndepends_on = ["trait-sip-010", "trait-pool-token", "trait-ownable"]`
+// fs.appendFileSync('../clarity/Clarinet.toml', test);
+
 if(process.argv.length !== 5){
         console.log("Enter the desired (1)collateral, (2)token, and then (3)expiry")
         process.exit(0)
     }
 let contracts = []    
 function generateYieldTokenContract(token, expiry){
-    let base_path = "../clarity/contracts/yield-token/"
-    let src = base_path + "yield-wbtc-59760.clar"
-    let dest = base_path + `yield-${token}-${expiry}.clar`
-    fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
-    replace.sync({
-        files: dest,
-        from: [/wbtc/g, /59760/g],
-        to: [token, expiry]
-    })
-    contracts.push(`yield-${token}-${expiry}.clar`)
+    // let base_path = "../clarity/contracts/yield-token/"
+    // let src = base_path + "yield-wbtc-59760.clar"
+    let new_name = `yield-${token}-${expiry}.clar`
+    // let dest = base_path + new_name
+    // fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
+    // replace.sync({
+    //     files: dest,
+    //     from: [/wbtc/g, /59760/g],
+    //     to: [token, expiry]
+    // })
+    // contracts.push(new_name)
+
+    const new_config = `\n[contracts.${new_name}]\npath = "${clarinet_config.contracts['yield-wbtc-59760'].path}"\ndepends_on = ${clarinet_config.contracts['yield-wbtc-59760'].depends_on}`
+    console.log(new_config)
+    fs.appendFileSync('../clarity/Clarinet.toml', new_config);
 }
 
 function generatePoolTokenContract(token, expiry){
@@ -131,12 +144,12 @@ function run() {
     let collateral = process.argv[2]
     let token = process.argv[3]
     let expiry = process.argv[4]
-     generateKeyTokenContract(collateral, token, expiry)
-     generateYieldTokenContract(token, expiry)
-     generatePoolTokenContract(token, expiry)
-     generateMultisigCRP(collateral, token, expiry)
-     generateMultisigYTPYield(token, expiry)
-     generateFlashLoanUser(collateral, token, expiry)
-     console.log(contracts);
+    // generateKeyTokenContract(collateral, token, expiry)
+    generateYieldTokenContract(token, expiry)
+    // generatePoolTokenContract(token, expiry)
+    // generateMultisigCRP(collateral, token, expiry)
+    // generateMultisigYTPYield(token, expiry)
+    // generateFlashLoanUser(collateral, token, expiry)
+    console.log(contracts);
 }
 run()

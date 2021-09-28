@@ -15,7 +15,8 @@
     "coingecko-api": "^1.0.10",
     "dotenv": "^10.0.0",
     "readline-promise": "^1.0.5",
-    "replace-in-file": "^6.2.0"
+    "replace-in-file": "^6.2.0",
+    "toml": "^3.0.0"
   },
   "resolutions": {
     "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
