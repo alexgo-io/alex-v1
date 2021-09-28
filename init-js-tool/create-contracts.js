@@ -6,8 +6,9 @@ if(process.argv.length !== 5){
     }
 let contracts = []    
 function generateYieldTokenContract(token, expiry){
-    let src = "../clarity/contracts/yield-token/yield-wbtc-59760.clar"
-    let dest = `./generated-contracts/yield-${token}-${expiry}.clar`
+    let base_path = "../clarity/contracts/yield-token/"
+    let src = base_path + "yield-wbtc-59760.clar"
+    let dest = base_path + `yield-${token}-${expiry}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     replace.sync({
         files: dest,
@@ -18,8 +19,9 @@ function generateYieldTokenContract(token, expiry){
 }
 
 function generatePoolTokenContract(token, expiry){
-    let src = "../clarity/contracts/pool-token/ytp-yield-wbtc-59760-wbtc.clar"
-    let dest = `./generated-contracts/ytp-yield-${token}-${expiry}-${token}.clar`
+    let base_path = "../clarity/contracts/pool-token/"
+    let src = base_path + "ytp-yield-wbtc-59760-wbtc.clar"
+    let dest = base_path + `ytp-yield-${token}-${expiry}-${token}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     replace.sync({
         files: dest,
@@ -30,8 +32,9 @@ function generatePoolTokenContract(token, expiry){
 }
 
 function generateKeyTokenContract(collateral, token, expiry){
-    let src = "../clarity/contracts/key-token/key-wbtc-59760-usda.clar"
-    let dest = `./generated-contracts/key-${token}-${expiry}-${collateral}.clar`
+    let base_path = "../clarity/contracts/key-token/"
+    let src = base_path + "key-wbtc-59760-usda.clar"
+    let dest = base_path +`key-${token}-${expiry}-${collateral}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     if (collateral === 'wbtc'){
         replace.sync({
@@ -56,8 +59,9 @@ function generateKeyTokenContract(collateral, token, expiry){
 }
 
 function generateMultisigCRP(collateral, token, expiry){
-    let src = "../clarity/contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
-    let dest = `./generated-contracts/multisig-crp-${token}-${expiry}-${collateral}.clar`
+    let base_path = "../clarity/contracts/multisig/"
+    let src = base_path + "multisig-crp-wbtc-59760-usda.clar"
+    let dest = base_path + `multisig-crp-${token}-${expiry}-${collateral}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     if (collateral === 'wbtc'){
         replace.sync({
@@ -82,8 +86,9 @@ function generateMultisigCRP(collateral, token, expiry){
 }
 
 function generateMultisigYTPYield(token, expiry){
-    let src = "../clarity/contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
-    let dest = `./generated-contracts/multisig-ytp-yield-${token}-${expiry}-${token}.clar`
+    let base_path = "../clarity/contracts/multisig/"
+    let src = base_path + "multisig-ytp-yield-wbtc-59760-wbtc.clar"
+    let dest = base_path + `multisig-ytp-yield-${token}-${expiry}-${token}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     replace.sync({
         files: dest,
@@ -94,8 +99,9 @@ function generateMultisigYTPYield(token, expiry){
 }
 
 function generateFlashLoanUser(collateral, token, expiry) {
-    let src = "../clarity/contracts/flash-loan-user-margin-usda-wbtc-59760.clar"
-    let dest = `./generated-contracts/flash-loan-user-margin-${collateral}-${token}-${expiry}.clar`
+    let base_path = "../clarity/contracts/"
+    let src = base_path + "flash-loan-user-margin-usda-wbtc-59760.clar"
+    let dest = base_path + `flash-loan-user-margin-${collateral}-${token}-${expiry}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     
     if (collateral === 'wbtc'){
