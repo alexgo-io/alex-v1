@@ -272,7 +272,7 @@
                 (total-supply (get total-supply pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
-                (reduce-data (unwrap! (get-position-given-burn the-aytoken shares) ERR-INTERNAL-FUNCTION-CALL))
+                (reduce-data (try! (get-position-given-burn the-aytoken shares)))
                 (dx (get dx reduce-data))
                 (dy-act (get dy-act reduce-data))
                 (dy-vir (get dy-vir reduce-data))
