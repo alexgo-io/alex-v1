@@ -33,11 +33,25 @@ function generateKeyTokenContract(collateral, token, expiry){
     let src = "../clarity/contracts/key-token/key-wbtc-59760-usda.clar"
     let dest = `./generated-contracts/key-${token}-${expiry}-${collateral}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
-    replace.sync({
-        files: dest,
-        from: [/usda/g, /wbtc/g, /59760/g],
-        to: [collateral, token, expiry]
-    })
+    if (collateral === 'wbtc'){
+        replace.sync({
+            files: dest,
+            from: [/usda/g, /wbtc/g, /59760/g],
+            to: ['collateralfoo', 'tokenfoo', expiry]
+        })
+        replace.sync({
+            files: dest,
+            from: [/collateralfoo/g, /tokenfoo/g],
+            to: [collateral, token]
+        })
+    }
+    else{
+        replace.sync({
+            files: dest,
+            from: [/usda/g, /wbtc/g, /59760/g],
+            to: [collateral, token, expiry]
+        })
+    }
     contracts.push(`key-${token}-${expiry}-${collateral}.clar`)
 }
 
@@ -45,11 +59,25 @@ function generateMultisigCRP(collateral, token, expiry){
     let src = "../clarity/contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
     let dest = `./generated-contracts/multisig-crp-${token}-${expiry}-${collateral}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
-    replace.sync({
-        files: dest,
-        from: [/usda/g, /wbtc/g, /59760/g],
-        to: [collateral, token, expiry]
-    })
+    if (collateral === 'wbtc'){
+        replace.sync({
+            files: dest,
+            from: [/usda/g, /wbtc/g, /59760/g],
+            to: ['collateralfoo', 'tokenfoo', expiry]
+        })
+        replace.sync({
+            files: dest,
+            from: [/collateralfoo/g, /tokenfoo/g],
+            to: [collateral, token]
+        })
+    }
+    else{
+        replace.sync({
+            files: dest,
+            from: [/usda/g, /wbtc/g, /59760/g],
+            to: [collateral, token, expiry]
+        })
+    }
     contracts.push(`multisig-crp-${token}-${expiry}-${collateral}.clar`)
 }
 
@@ -69,11 +97,26 @@ function generateFlashLoanUser(collateral, token, expiry) {
     let src = "../clarity/contracts/flash-loan-user-margin-usda-wbtc-59760.clar"
     let dest = `./generated-contracts/flash-loan-user-margin-${collateral}-${token}-${expiry}.clar`
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
-    replace.sync({
-        files: dest,
-        from: [/usda/g, /wbtc/g, /59760/g],
-        to: [collateral, token, expiry]
-    })
+    
+    if (collateral === 'wbtc'){
+        replace.sync({
+            files: dest,
+            from: [/usda/g, /wbtc/g, /59760/g],
+            to: ['collateralfoo', 'tokenfoo', expiry]
+        })
+        replace.sync({
+            files: dest,
+            from: [/collateralfoo/g, /tokenfoo/g],
+            to: [collateral, token]
+        })
+    }
+    else{
+        replace.sync({
+            files: dest,
+            from: [/usda/g, /wbtc/g, /59760/g],
+            to: [collateral, token, expiry]
+        })
+    }
     contracts.push(`flash-loan-user-margin-${collateral}-${token}-${expiry}.clar`)
 }
 
