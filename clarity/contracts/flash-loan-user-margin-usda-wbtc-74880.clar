@@ -19,7 +19,10 @@
             (swapped-token (get dx (try! (contract-call? .collateral-rebalancing-pool add-to-position-and-switch .token-wbtc .token-usda .yield-wbtc-74880 .key-wbtc-74880-usda (var-get amount)))))            
         )
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-wbtc .token-usda u50000000 u50000000 swapped-token))
+        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wbtc .token-usda u50000000 u50000000))
+            (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-wbtc .token-usda u50000000 u50000000 swapped-token))
+            (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda .token-wbtc u50000000 u50000000 swapped-token))
+        )
         
         (print { object: "flash-loan-user-margin-usda-wbtc-74880", action: "execute", data: (var-get amount) })
         (ok true)

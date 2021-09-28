@@ -56,26 +56,26 @@ const {
  } = require('./pools-ytp')
 
 const _deploy = {
-    59760: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-59760', 
-        key_token: 'key-wbtc-59760-usda',
-        pool_token: 'ytp-yield-wbtc-59760-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-59760-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-59760-usda',
-        liquidity_ytp: 250e+8,
-        collateral_crp: 1000000e+8
-    },
-    23670: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-23670', 
-        key_token: 'key-wbtc-23670-usda',
-        pool_token: 'ytp-yield-wbtc-23670-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-23670-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-23670-usda',
-        liquidity_ytp: 250e+8,
-        collateral_crp: 1000000e+8
-    },           
+    // 59760: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-59760', 
+    //     key_token: 'key-wbtc-59760-usda',
+    //     pool_token: 'ytp-yield-wbtc-59760-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-59760-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-59760-usda',
+    //     liquidity_ytp: 250e+8,
+    //     collateral_crp: 1000000e+8
+    // },
+    // 23670: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-23670', 
+    //     key_token: 'key-wbtc-23670-usda',
+    //     pool_token: 'ytp-yield-wbtc-23670-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-23670-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-23670-usda',
+    //     liquidity_ytp: 250e+8,
+    //     collateral_crp: 1000000e+8
+    // },           
     1: {token: 'token-wbtc', 
         collateral: 'token-usda', 
         yield_token: 'yield-wbtc-23040', 
@@ -160,12 +160,12 @@ async function update_price_oracle(){
     await setOpenOracle('USDA','coingecko', usdc);    
 }
 
-async function mint_to_deployer(){
-    await mint('token-usda', process.env.ACCOUNT_ADDRESS, 100000000000000000n);
-    usda_balance = await balance('token-usda', process.env.ACCOUNT_ADDRESS);
+async function mint_some_tokens(recipient){
+    await mint('token-usda', recipient, 100000000000000000n);
+    usda_balance = await balance('token-usda', recipient);
     console.log('usda balance: ', usda_balance);    
-    await mint('token-wbtc', process.env.ACCOUNT_ADDRESS, 2439024390244);
-    wbtc_balance = await balance('token-wbtc', process.env.ACCOUNT_ADDRESS);
+    await mint('token-wbtc', recipient, 2439024390244);
+    wbtc_balance = await balance('token-wbtc', recipient);
     console.log('wbtc balance: ', wbtc_balance);    
 }
 
@@ -224,7 +224,6 @@ async function create_crp(add_only){
 }
 
 async function set_faucet_amounts(){
-    // hack until figure out exactly how to handle decimals
     await setUsdaAmount(500000e+8);
     await setWbtcAmount(5e+8);
     await setStxAmount(250e+8);
@@ -276,11 +275,11 @@ async function arbitrage_crp(){
     let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;      
 
     _list = {
-        // 1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
+        1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
         // 2: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23670e+8 },    
-        // 3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
+        3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
         // 4: { token: 'token-wbtc', collateral: 'token-usda', expiry: 59760e+8 },               
-        // 5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
+        5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
         6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 74880e+8 },   
         7: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },                             
         8: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },           
@@ -382,9 +381,9 @@ async function test_margin_trading(){
 async function get_pool_details_crp(){
     _list = {
         1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
-        2: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23670e+8 },    
+        // 2: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23670e+8 },    
         3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
-        4: { token: 'token-wbtc', collateral: 'token-usda', expiry: 59760e+8 },               
+        // 4: { token: 'token-wbtc', collateral: 'token-usda', expiry: 59760e+8 },               
         5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
         6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 74880e+8 },   
         7: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },                             
@@ -440,23 +439,24 @@ _white_list = {
 
 async function run(){
     // await see_balance(process.env.ACCOUNT_ADDRESS);
-    await update_price_oracle();
+    // await update_price_oracle();
     // await set_faucet_amounts();
-    // await mint_to_deployer();
+    // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await create_fwp(add_only=true);
     // await create_ytp(add_only=true);
     // await create_crp(add_only=true);
-    await arbitrage_fwp();
-    await arbitrage_crp();
+    // await arbitrage_fwp();
+    // await arbitrage_crp();
     // await test_spot_trading();
     // await test_margin_trading();
     // await get_pool_details_crp();
     // await get_pool_details_ytp();
-    // await reduce_position_ytp(0.99e+8); //TODO: 1e+8 throws error
-    // for(const key in _white_list){
-    //     await get_some_token(_white_list[key]);
-    //     // await burn('token-wbtc', _white_list[key], 5);
-    //     // await burn('token-usda', _white_list[key], 500000e+6);
-    // }
+    // await reduce_position_ytp(1e+8);
+    for(const key in _white_list){
+        await get_some_token(_white_list[key]);
+        // await burn('token-wbtc', _white_list[key], 5);
+        // await burn('token-usda', _white_list[key], 500000e+6);
+    }
+    // await mint_some_tokens('STB2BWB0K5XZGS3FXVTG3TKS46CQVV66NAK3YVN8');
 }
 run();
