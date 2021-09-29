@@ -1,7 +1,8 @@
 const { generateWallet } = require('@stacks/wallet-sdk');
 const {
     StacksRegtest,
-    StacksMocknet
+    StacksMocknet,
+    StacksMainnet
   } = require('@stacks/network');
 const getPK = async ()=>{
     const wallet = await generateWallet({
@@ -13,7 +14,7 @@ const getPK = async ()=>{
 }
 //const network = new StacksRegtest();
 const network = new StacksMocknet({
-    url:'https://regtest-2.alexgo.io'
+    url:'http://localhost:3999'
 })
 exports.getPK = getPK
 exports.network = network;
