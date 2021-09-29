@@ -231,6 +231,6 @@ function run() {
     generateMultisigCRP(collateral, token, expiry)
     generateMultisigYTPYield(token, expiry)
     generateFlashLoanUser(collateral, token, expiry)
-    console.log(contracts);
+    console.log("Contracts:", contracts);
 }
 run()
