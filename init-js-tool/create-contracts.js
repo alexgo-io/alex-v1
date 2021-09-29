@@ -89,6 +89,10 @@ function generateMultisigCRP(collateral, token, expiry){
     let src = base_path + "multisig-crp-wbtc-59760-usda.clar"
     let new_name = `multisig-crp-${token}-${expiry}-${collateral}`
     let dest = base_path + new_name + ".clar"
+    let deps = clarinet_config.contracts['multisig-crp-wbtc-59760-usda'].depends_on
+    //get dependencies
+    let old_path_split = clarinet_config.contracts['multisig-crp-wbtc-59760-usda'].path.split('/')
+    let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     if (collateral === 'wbtc'){
         replace.sync({
@@ -101,6 +105,31 @@ function generateMultisigCRP(collateral, token, expiry){
             from: [/collateralfoo/g, /tokenfoo/g],
             to: [collateral, token]
         })
+
+        let swapped_assets = deps.map(dep => {
+            if(dep.includes('wbtc') && dep.includes('usda')){
+                let result = dep.split('-').map(part =>{
+                    if(part === 'wbtc'){
+                        return token
+                    }
+                    if(part === 'usda'){
+                        return collateral
+                    }
+                    return part
+                })
+                return result.join('-')
+            }
+            else if(dep.includes('usda')){
+                return dep.replace('usda', collateral)
+            }
+            else if(dep.includes('wbtc')){
+                return dep.replace('wbtc', token)
+            }
+            return dep
+        })
+        let stringified_deps = swapped_assets.map(dep => "\"" + dep.replace('59760', expiry) + "\"")
+        const new_config = `\n[contracts.${new_name}]\npath = "${new_path}"\ndepends_on = [${stringified_deps}]\n`
+        fs.appendFileSync('../clarity/Clarinet.toml', new_config);
     }
     else{
         replace.sync({
@@ -108,14 +137,11 @@ function generateMultisigCRP(collateral, token, expiry){
             from: [/usda/g, /wbtc/g, /59760/g],
             to: [collateral, token, expiry]
         })
+        let stringified_deps = deps.map(dep => "\"" + dep.replace('59760', expiry) + "\"" )
+        const new_config = `\n[contracts.${new_name}]\npath = "${new_path}"\ndepends_on = [${stringified_deps}]\n`
+        fs.appendFileSync('../clarity/Clarinet.toml', new_config);
     }
     contracts.push(`multisig-crp-${token}-${expiry}-${collateral}.clar`)
-    let old_path_split = clarinet_config.contracts['multisig-crp-wbtc-59760-usda'].path.split('/')
-    let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
-    let deps = clarinet_config.contracts['multisig-crp-wbtc-59760-usda'].depends_on
-    let stringified_deps = deps.map(dep => "\"" + dep + "\"" )
-    const new_config = `\n[contracts.${new_name}]\npath = "${new_path}"\ndepends_on = [${stringified_deps}]\n`
-    fs.appendFileSync('../clarity/Clarinet.toml', new_config);
 }
 
 function generateMultisigYTPYield(token, expiry){
@@ -183,8 +209,8 @@ function run() {
     generatePoolTokenContract(token, expiry)
     generateKeyTokenContract(collateral, token, expiry)
     generateMultisigCRP(collateral, token, expiry)
-    generateMultisigYTPYield(token, expiry)
-    generateFlashLoanUser(collateral, token, expiry)
+    // generateMultisigYTPYield(token, expiry)
+    // generateFlashLoanUser(collateral, token, expiry)
     console.log(contracts);
 }
 run()
