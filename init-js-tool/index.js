@@ -116,18 +116,18 @@ const _deploy = {
     //     ltv_0: 0.7e+8,
     //     bs_vol: 0.8e+8
     // },     
-    6: {token: 'token-usda', 
-        collateral: 'token-wbtc', 
-        yield_token: 'yield-usda-23040', 
-        key_token: 'key-usda-23040-wbtc',
-        pool_token: 'ytp-yield-usda-23040-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-23040-usda',
-        multisig_crp: 'multisig-crp-usda-23040-wbtc',
-        liquidity_ytp: 1000000e+8,
-        collateral_crp: 1e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8
-    },
+    // 6: {token: 'token-usda', 
+    //     collateral: 'token-wbtc', 
+    //     yield_token: 'yield-usda-23040', 
+    //     key_token: 'key-usda-23040-wbtc',
+    //     pool_token: 'ytp-yield-usda-23040-usda',
+    //     multisig_ytp: 'multisig-ytp-yield-usda-23040-usda',
+    //     multisig_crp: 'multisig-crp-usda-23040-wbtc',
+    //     liquidity_ytp: 1000000e+8,
+    //     collateral_crp: 1e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8
+    // },
     // 7: {token: 'token-usda', 
     //     collateral: 'yield-usda-74880', 
     //     yield_token: 'yield-usda-23040', 
@@ -302,9 +302,9 @@ async function arbitrage_crp(){
     let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;      
 
     _list = {
-        1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
-        3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
-        5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
+        // 1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
+        // 3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
+        // 5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
         6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 74880e+8 },   
         7: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },                             
         8: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },           
@@ -387,20 +387,20 @@ async function test_margin_trading(){
     await flExecuteMarginWbtcUsda23040(amount);
     await flashloan('flash-loan-user-margin-wbtc-usda-23040', 'token-wbtc', (amount - margin));
 
-    console.log("------ Testing Margin Trading (Short BTC vs USD) ------");
-    expiry_0 = 23040e+8    
-    amount = 1*ONE_8; //gross exposure of 1 BTC
-    trade_price = Number((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, amount)).value.value); // in USD
-    trade_amount = amount; // in BTC
-    ltv = Number((await crpGetLtv('token-wbtc', 'token-usda', expiry_0)).value.value);
-    ltv /= Number((await ytpGetPrice("yield-wbtc-23040")).value.value);
-    margin = Math.round(amount * (1 - ltv) * Number(wbtcPrice) / ONE_8); // in USD
-    leverage = 1 / (1 - ltv);
+    // console.log("------ Testing Margin Trading (Short BTC vs USD) ------");
+    // expiry_0 = 23040e+8    
+    // amount = 1*ONE_8; //gross exposure of 1 BTC
+    // trade_price = Number((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, amount)).value.value); // in USD
+    // trade_amount = amount; // in BTC
+    // ltv = Number((await crpGetLtv('token-wbtc', 'token-usda', expiry_0)).value.value);
+    // ltv /= Number((await ytpGetPrice("yield-wbtc-23040")).value.value);
+    // margin = Math.round(amount * (1 - ltv) * Number(wbtcPrice) / ONE_8); // in USD
+    // leverage = 1 / (1 - ltv);
 
-    console.log("ltv: ", ltv, "; amount (BTC): ", amount, "; margin (USD): ", margin);
-    console.log("leverage: ", leverage, "; trade_price (USD): ", trade_price)
-    await flExecuteMarginUsdaWbtc23040(trade_price);    
-    await flashloan('flash-loan-user-margin-usda-wbtc-23040', 'token-usda', (trade_price - margin));    
+    // console.log("ltv: ", ltv, "; amount (BTC): ", amount, "; margin (USD): ", margin);
+    // console.log("leverage: ", leverage, "; trade_price (USD): ", trade_price)
+    // await flExecuteMarginUsdaWbtc23040(trade_price);    
+    // await flashloan('flash-loan-user-margin-usda-wbtc-23040', 'token-usda', (trade_price - margin));    
 }
 
 async function get_pool_details_crp(){
@@ -470,8 +470,8 @@ async function run(){
     // await set_faucet_amounts();
     // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await create_fwp(add_only=true);
-    // await create_ytp(add_only=true);
-    // await create_crp(add_only=true);
+    // await create_ytp(add_only=false);
+    // await create_crp(add_only=false);
     // await arbitrage_fwp();
     // await arbitrage_crp();
     // await test_spot_trading();

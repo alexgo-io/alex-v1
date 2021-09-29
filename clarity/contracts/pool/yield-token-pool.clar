@@ -21,10 +21,8 @@
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant invalid-ERR-EXPIRY (err u2009))
 (define-constant fixed-point-err (err 5014))
-(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 (define-constant ERR-MATH-CALL (err u4003))
 (define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
-(define-constant aytoken-equation-call-err (err u2014))
 (define-constant dy-bigger-than-available-err (err u2016))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
@@ -472,7 +470,6 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                ;; (unwrap! (contract-call? the-aytoken transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft the-aytoken fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
@@ -492,7 +489,6 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                ;; (unwrap! (contract-call? the-token transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft the-token fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
@@ -596,7 +592,7 @@
         (balance-aytoken (unwrap! (add-fixed balance-actual balance-virtual) ERR-MATH-CALL))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
-        (data (unwrap! (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken normalized-expiry total-supply dx) aytoken-equation-call-err))
+        (data (try! (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken normalized-expiry total-supply dx)))
         (token (get token data))
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
@@ -622,7 +618,7 @@
         (balance-aytoken (unwrap! (add-fixed balance-actual balance-virtual) ERR-MATH-CALL))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
-        (data (unwrap! (contract-call? .yield-token-equation get-position-given-mint balance-token balance-aytoken normalized-expiry total-supply token) aytoken-equation-call-err))   
+        (data (try! (contract-call? .yield-token-equation get-position-given-mint balance-token balance-aytoken normalized-expiry total-supply token)))   
         (dx (get dx data))
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
@@ -647,7 +643,7 @@
         (balance-aytoken (unwrap! (add-fixed balance-actual balance-virtual) ERR-MATH-CALL))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
-        (data (unwrap! (contract-call? .yield-token-equation get-position-given-burn balance-token balance-aytoken normalized-expiry total-supply token) aytoken-equation-call-err))   
+        (data (try! (contract-call? .yield-token-equation get-position-given-burn balance-token balance-aytoken normalized-expiry total-supply token)))   
         (dx (get dx data))
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))

@@ -405,8 +405,8 @@
                 (dy-weighted (if (is-eq token-x token-y)
                                 dx-to-dy
                                 (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                    (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy) ERR-NO-LIQUIDITY))
-                                    (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy) ERR-NO-LIQUIDITY))
+                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy)))
+                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy)))
                                 )                                 
                              )
                 )
@@ -457,8 +457,8 @@
                                 (if (is-eq token-x token-y)
                                     balance-x
                                     (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                        (get dx (unwrap! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x) ERR-NO-LIQUIDITY))
-                                        (get dy (unwrap! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x) ERR-NO-LIQUIDITY))
+                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x)))
+                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x)))
                                     ) 
                                 )
                             )
@@ -553,9 +553,7 @@
                 )            
             )
 
-            ;; (and (> dx-weighted u0) (unwrap! (contract-call? collateral transfer dx-weighted .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED))
             (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted (as-contract tx-sender) tx-sender)))
-            ;; (and (> dy-weighted u0) (unwrap! (contract-call? token transfer dy-weighted .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED))
             (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted (as-contract tx-sender) tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -610,7 +608,6 @@
             )
 
             (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            ;; (unwrap! (contract-call? token transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token dy (as-contract tx-sender) tx-sender))
 
             ;; post setting
@@ -663,7 +660,6 @@
                 )
             )
 
-            ;; (unwrap! (contract-call? collateral transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft collateral dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
@@ -772,7 +768,6 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                ;; (unwrap! (contract-call? collateral transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft collateral fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
@@ -792,7 +787,6 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                ;; (unwrap! (contract-call? token transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft token fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
@@ -887,8 +881,8 @@
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                            (unwrap! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx) ERR-NO-LIQUIDITY)
-                            (unwrap! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dx) ERR-NO-LIQUIDITY)
+                            (try! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx))
+                            (try! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dx))
                         )                    
                     )
                 )
@@ -926,8 +920,8 @@
                 (dy-to-dx (if (is-eq token-x token-y)
                             dy-weighted
                             (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                (unwrap! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY)
-                                (unwrap! (contract-call? .fixed-weight-pool get-x-given-y collateral token u50000000 u50000000 dy-weighted) ERR-NO-LIQUIDITY)
+                                (try! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted))
+                                (try! (contract-call? .fixed-weight-pool get-x-given-y collateral token u50000000 u50000000 dy-weighted))
                             )                            
                         )
                 )   

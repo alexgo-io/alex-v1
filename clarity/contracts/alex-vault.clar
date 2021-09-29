@@ -100,7 +100,7 @@
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
 
     ;; flash-loan-user executes with loan received
-    (unwrap! (contract-call? flash-loan-user execute) ERR-USER-EXECUTE)
+    (try! (contract-call? flash-loan-user execute token amount))
 
     ;; return the loan + fee
     (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED)

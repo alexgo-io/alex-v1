@@ -714,7 +714,7 @@ Clarinet.test({
         // position = result.expectOk().expectTuple();
 
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, ONE_8 * ONE_8);
-        position = result.expectErr().expectUint(2002)
+        position = result.expectErr().expectUint(4002)
 
         // arbtrageur attepmts to swap zero value
         result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0);

@@ -22,7 +22,6 @@
 (define-constant already-ERR-EXPIRY (err u2010))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
-(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 (define-constant internal-get-weight-err (err u2012))
 
 
@@ -329,7 +328,6 @@
                     )
                 )
             )
-            ;; (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
             ;; post setting
@@ -439,7 +437,6 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                ;; (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft token-x-trait fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
