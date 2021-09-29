@@ -201,12 +201,12 @@ async function create_fwp(add_only){
             right_side: 100000000e+8
         },
         2: {
-            token_x: 'yield-usda-24030',
+            token_x: 'yield-usda-23040',
             token_y: 'yield-usda-74880',
             weight_x: 0.5e+8,
             weight_y: 0.5e+8,
-            pool_token: 'fwp-yield-usda-24030-yield-usda-74880-50-50',
-            multisig: 'multisig-fwp-yield-usda-24030-yield-usda-74880-50-50',
+            pool_token: 'fwp-yield-usda-23040-yield-usda-74880-50-50',
+            multisig: 'multisig-fwp-yield-usda-23040-yield-usda-74880-50-50',
             left_side: 1000000e+8,
             right_side: 1000000e+8
         }        
@@ -384,7 +384,7 @@ async function test_margin_trading(){
 
     console.log("ltv: ", ltv, "; amount (BTC): ", amount, "; margin (BTC): ", margin);
     console.log("leverage: ", leverage, "; trade_price (USD): ", trade_price)
-    // await flExecuteMarginWbtcUsda23040(amount);
+
     await flashloan('flash-loan-user-margin-wbtc-usda-23040', 'token-wbtc', (amount - margin));
 
     console.log("------ Testing Margin Trading (Short BTC vs USD) ------");
@@ -399,7 +399,7 @@ async function test_margin_trading(){
 
     console.log("ltv: ", ltv, "; amount (BTC): ", amount, "; margin (USD): ", margin);
     console.log("leverage: ", leverage, "; trade_price (USD): ", trade_price)
-    // await flExecuteMarginUsdaWbtc23040(trade_price);    
+
     await flashloan('flash-loan-user-margin-usda-wbtc-23040', 'token-usda', (trade_price - margin));    
 }
 
@@ -464,21 +464,21 @@ _white_list = {
     Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0'
 }
 
-// https://regtest-2.alexgo.io
-// http://localhost:3999
-
 async function run(){
     // await see_balance(process.env.ACCOUNT_ADDRESS);
-    // await update_price_oracle();
+    await update_price_oracle();
     // await set_faucet_amounts();
     // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
+    // await create_fwp(add_only=false);
+    // await create_ytp(add_only=false);
+    // await create_crp(add_only=false);
     // await create_fwp(add_only=true);
     // await create_ytp(add_only=true);
-    // await create_crp(add_only=true);
-    // await arbitrage_fwp();
-    // await arbitrage_crp();
+    // await create_crp(add_only=true);    
+    await arbitrage_fwp();
+    await arbitrage_crp();
     // await test_spot_trading();
-    await test_margin_trading();
+    // await test_margin_trading();
     // await get_pool_details_fwp();
     // await get_pool_details_crp();
     // await get_pool_details_ytp();
