@@ -32,7 +32,7 @@ function generateYieldTokenContract(token, expiry){
 function generatePoolTokenContract(token, expiry){
     let base_path = "../clarity/contracts/pool-token/"
     let src = base_path + "ytp-yield-wbtc-59760-wbtc.clar"
-    let new_name = `ytp-yield-${token}-${expiry}-${token}.clar`
+    let new_name = `ytp-yield-${token}-${expiry}-${token}`
     let dest = base_path + new_name + '.clar'
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
     replace.sync({
@@ -159,7 +159,7 @@ function generateMultisigYTPYield(token, expiry){
     let old_path_split = clarinet_config.contracts['multisig-ytp-yield-wbtc-59760-wbtc'].path.split('/')
     let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
     let deps = clarinet_config.contracts['multisig-ytp-yield-wbtc-59760-wbtc'].depends_on
-    let stringified_deps = deps.map(dep => "\"" + dep + "\"" )
+    let stringified_deps = deps.map(dep => "\"" + dep.replace('59760', expiry).replaceAll('wbtc', token) + "\"" )
     const new_config = `\n[contracts.${new_name}]\npath = "${new_path}"\ndepends_on = [${stringified_deps}]\n`
     fs.appendFileSync('../clarity/Clarinet.toml', new_config);
 }
@@ -209,7 +209,7 @@ function run() {
     generatePoolTokenContract(token, expiry)
     generateKeyTokenContract(collateral, token, expiry)
     generateMultisigCRP(collateral, token, expiry)
-    // generateMultisigYTPYield(token, expiry)
+    generateMultisigYTPYield(token, expiry)
     // generateFlashLoanUser(collateral, token, expiry)
     console.log(contracts);
 }
