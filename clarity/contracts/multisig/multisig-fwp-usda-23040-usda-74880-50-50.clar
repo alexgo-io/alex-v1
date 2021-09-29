@@ -102,7 +102,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .fwp-usda-23040-usda-74880)
+    (is-eq (contract-of token) .fwp-usda-23040-usda-74880-50-50)
 )
 
 
@@ -117,8 +117,8 @@
     (new-fee-rate-y uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880 get-balance tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880 get-total-supply)))
+    (proposer-balance (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880-50-50 get-balance tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880-50-50 get-total-supply)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -214,7 +214,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880 get-total-supply)))
+        (total-supply (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880-50-50 get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
         (yes-votes (get yes-votes proposal))
   )
