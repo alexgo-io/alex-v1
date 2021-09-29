@@ -20,7 +20,7 @@ function generateYieldTokenContract(token, expiry){
         from: [/wbtc/g, /59760/g],
         to: [token, expiry]
     })
-    contracts.push(new_name + '.clar')
+    contracts.push('yield-token/' + new_name + '.clar')
     let old_path_split = clarinet_config.contracts['yield-wbtc-59760'].path.split('/')
     let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
     let deps = clarinet_config.contracts['yield-wbtc-59760'].depends_on
@@ -40,7 +40,7 @@ function generatePoolTokenContract(token, expiry){
         from: [/wbtc/g, /59760/g],
         to: [token, expiry]
     })
-    contracts.push(`ytp-yield-${token}-${expiry}-${token}.clar`)
+    contracts.push(`pool-token/ytp-yield-${token}-${expiry}-${token}.clar`)
     let old_path_split = clarinet_config.contracts['ytp-yield-wbtc-59760-wbtc'].path.split('/')
     let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
     let deps = clarinet_config.contracts['ytp-yield-wbtc-59760-wbtc'].depends_on
@@ -75,7 +75,7 @@ function generateKeyTokenContract(collateral, token, expiry){
             to: [collateral, token, expiry]
         })
     }
-    contracts.push(`key-${token}-${expiry}-${collateral}.clar`)
+    contracts.push(`key-token/key-${token}-${expiry}-${collateral}.clar`)
     let old_path_split = clarinet_config.contracts['key-wbtc-59760-usda'].path.split('/')
     let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
     let deps = clarinet_config.contracts['key-wbtc-59760-usda'].depends_on
@@ -141,7 +141,7 @@ function generateMultisigCRP(collateral, token, expiry){
         const new_config = `\n[contracts.${new_name}]\npath = "${new_path}"\ndepends_on = [${stringified_deps}]\n`
         fs.appendFileSync('../clarity/Clarinet.toml', new_config);
     }
-    contracts.push(`multisig-crp-${token}-${expiry}-${collateral}.clar`)
+    contracts.push(`multisig/multisig-crp-${token}-${expiry}-${collateral}.clar`)
 }
 
 function generateMultisigYTPYield(token, expiry){
@@ -155,7 +155,7 @@ function generateMultisigYTPYield(token, expiry){
         from: [/wbtc/g, /59760/g],
         to: [token, expiry]
     })
-    contracts.push(`multisig-ytp-yield-${token}-${expiry}-${token}.clar`)
+    contracts.push(`multisig/multisig-ytp-yield-${token}-${expiry}-${token}.clar`)
     let old_path_split = clarinet_config.contracts['multisig-ytp-yield-wbtc-59760-wbtc'].path.split('/')
     let new_path = old_path_split.slice(0,2).join('/') + '/' + new_name + '.clar'
     let deps = clarinet_config.contracts['multisig-ytp-yield-wbtc-59760-wbtc'].depends_on
@@ -170,7 +170,6 @@ function generateFlashLoanUser(collateral, token, expiry) {
     let new_name = `flash-loan-user-margin-${collateral}-${token}-${expiry}`
     let dest = base_path + new_name + '.clar'
     fs.copyFileSync(src, dest, fs.constants.COPYFILE_EXCL)
-    
     if (collateral === 'wbtc'){
         replace.sync({
             files: dest,
