@@ -194,7 +194,28 @@ function generateFlashLoanUser(collateral, token, expiry) {
     let old_path_split = clarinet_config.contracts['flash-loan-user-margin-usda-wbtc-59760'].path.split('/')
     let new_path = old_path_split.slice(0,1).join('/') + '/' + new_name + '.clar'
     let deps = clarinet_config.contracts['flash-loan-user-margin-usda-wbtc-59760'].depends_on
-    let stringified_deps = deps.map(dep => "\"" + dep + "\"" )
+    let swapped_assets = deps.map(dep => {
+        if(dep.includes('wbtc') && dep.includes('usda')){
+            let result = dep.split('-').map(part =>{
+                if(part === 'wbtc'){
+                    return token
+                }
+                if(part === 'usda'){
+                    return collateral
+                }
+                return part
+            })
+            return result.join('-')
+        }
+        else if(dep.includes('usda')){
+            return dep.replace('usda', collateral)
+        }
+        else if(dep.includes('wbtc')){
+            return dep.replace('wbtc', token)
+        }
+        return dep
+    })
+    let stringified_deps = swapped_assets.map(dep => "\"" + dep.replace('59760', expiry) + "\"" )
     const new_config = `\n[contracts.${new_name}]\npath = "${new_path}"\ndepends_on = [${stringified_deps}]\n`
     fs.appendFileSync('../clarity/Clarinet.toml', new_config);
     
@@ -210,7 +231,7 @@ function run() {
     generateKeyTokenContract(collateral, token, expiry)
     generateMultisigCRP(collateral, token, expiry)
     generateMultisigYTPYield(token, expiry)
-    // generateFlashLoanUser(collateral, token, expiry)
+    generateFlashLoanUser(collateral, token, expiry)
     console.log(contracts);
 }
 run()
