@@ -244,6 +244,50 @@ const {
       console.log(error);
     }
   };
+
+  const ytpGetXgivenYield = async (yieldToken, yied) => {
+    console.log('[YTP] get-x-given-yield...', yieldToken, yied);
+  
+    const options = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'yield-token-pool',
+      functionName: 'get-x-given-yield',
+      functionArgs: [
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        uintCV(yied)
+      ],
+      network: network,
+      senderAddress: process.env.ACCOUNT_ADDRESS,
+    };
+    try {
+      return callReadOnlyFunction(options);
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };  
+  
+  const ytpGetYgivenYield = async (yieldToken, yied) => {
+    console.log('[YTP] get-y-given-yield...', yieldToken, yied);
+  
+    const options = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'yield-token-pool',
+      functionName: 'get-y-given-yield',
+      functionArgs: [
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        uintCV(yied)
+      ],
+      network: network,
+      senderAddress: process.env.ACCOUNT_ADDRESS,
+    };
+    try {
+      return callReadOnlyFunction(options);
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };  
   
   const ytpGetPoolDetails = async (yieldToken) => {
     console.log('[YTP] get-pool-details...', yieldToken);
@@ -289,3 +333,5 @@ const {
   exports.ytpGetPoolDetails = ytpGetPoolDetails;
   exports.ytpAddToPosition = ytpAddToPosition;
   exports.ytpReducePosition = ytpReducePosition;
+  exports.ytpGetXgivenYield = ytpGetXgivenYield;
+  exports.ytpGetYgivenYield = ytpGetYgivenYield;
