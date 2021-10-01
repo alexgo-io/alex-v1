@@ -13,10 +13,10 @@ let VERSION;
 let contract_paths = [
     "lib/math-log-exp.clar",
     "lib/math-fixed-point.clar",
+    "traits/trait-sip-010.clar",    
     "traits/trait-flash-loan-user.clar",
     "traits/trait-oracle.clar",
     "traits/trait-pool-token.clar",
-    "traits/trait-sip-010.clar",
     "traits/trait-yield-token.clar",
     "traits/trait-ownable.clar",
     "traits/trait-vault.clar",
@@ -72,19 +72,35 @@ let contract_paths = [
     "flash-loan-user-margin-wbtc-usda-23040.clar",        
     "flash-loan-user-margin-wbtc-usda-74880.clar",   
     "faucet.clar",
+    
+    "yield-token/yield-wbtc-5760.clar",
+    "yield-token/yield-usda-5760.clar",    
+    "key-token/key-usda-5760-wbtc.clar",        
+    "key-token/key-wbtc-5760-usda.clar",   
+    "pool-token/ytp-yield-wbtc-5760-wbtc.clar",   
+    "pool-token/ytp-yield-usda-5760-usda.clar",       
+    "multisig/multisig-crp-wbtc-5760-usda.clar",  
+    "multisig/multisig-crp-usda-5760-wbtc.clar",      
+    "multisig/multisig-ytp-yield-wbtc-5760-wbtc.clar",  
+    "multisig/multisig-ytp-yield-usda-5760-usda.clar",    
+    "flash-loan-user-margin-usda-wbtc-5760.clar", 
+    "flash-loan-user-margin-wbtc-usda-5760.clar",         
+    
+    "key-token/key-usda-23040-yield-usda-74880.clar",
+    "multisig/multisig-crp-usda-23040-yield-usda-74880.clar",
+    "pool-token/fwp-usda-23040-usda-74880-50-50.clar",
+    "multisig/multisig-fwp-usda-23040-usda-74880-50-50.clar",    
+    
     // "yield-token/yield-wbtc-59760.clar",
-    // "yield-token/yield-wbtc-79760.clar",    
     // "key-token/key-wbtc-59760-usda.clar",
-    // "key-token/key-wbtc-79760-usda.clar",,    
     // "pool-token/ytp-yield-wbtc-59760-wbtc.clar",
-    // "pool-token/ytp-yield-wbtc-79760-wbtc.clar",
-    // "multisig/multisig-crp-wbtc-59760-usda.clar",
-    // "multisig/multisig-crp-wbtc-79760-usda.clar",
+    // "multisig/multisig-crp-wbtc-59760-usda.clar",,
     // "multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar",
-    // "multisig/multisig-ytp-yield-wbtc-79760-wbtc.clar",
     // "flash-loan-user-margin-usda-wbtc-59760.clar",    
+
     // "key-token/key-wbtc-59760-wbtc.clar",
-    // "multisig/multisig-crp-wbtc-59760-wbtc.clar",      
+    // "multisig/multisig-crp-wbtc-59760-wbtc.clar",   
+       
     // "pool-token/ytp-yield-wbtc-23670-wbtc.clar",    
     // "yield-token/yield-wbtc-23670.clar",
     // "key-token/key-wbtc-23670-usda.clar",    
@@ -133,20 +149,26 @@ async function deploy(filePath, contractName){
     // console.log(broadcast_id)
     //console.log(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
     while (true){
-        let truth = await fetch(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
+        let truth = await fetch(`https://regtest-2.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
         let res = await truth.json();
-        console.log("Waiting...")
+        console.log(`Waiting... ${broadcast_id.txid}`)
         if (res['tx_status'] === 'success'){
+            console.log("Contract Deployed Successfully")
+            let contract_record = {}
+            contract_record['name'] = contractName
+            contract_record['version'] = VERSION
+            contract_record['deployer'] = process.env.ACCOUNT_ADDRESS
+            contract_records['Contracts'].push(contract_record)            
+            break;
+        } else if (res['tx_status'] === 'abort_by_response'){
+            console.log('Transaction aborted: ', res['tx_result']['repr'])
+            break;
+        } else if (res.hasOwnProperty('error')){
+            console.log('Transaction aborted: ', res['error']);
             break;
         }
         await sleep(3000)
     }
-    console.log("Contract Deployed Successfully")
-    let contract_record = {}
-    contract_record['name'] = contractName
-    contract_record['version'] = VERSION
-    contract_record['deployer'] = process.env.ACCOUNT_ADDRESS
-    contract_records['Contracts'].push(contract_record)
 }
 
 async function run(){

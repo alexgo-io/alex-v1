@@ -7,9 +7,9 @@ const {
   stringAsciiCV,
   uintCV,
   broadcastTransaction,
-  bufferCVFromString
+  bufferCVFromString,
 } = require('@stacks/transactions');
-const {wait_until_confirmation} = require('./utils')
+const {wait_until_confirmation, get_nonce } = require('./utils')
 const {
   getPK, network
 } = require('./wallet');
@@ -57,7 +57,7 @@ const setOpenOracle = async (symbol, src, price) => {
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    await wait_until_confirmation(broadcastResponse.txid)
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }

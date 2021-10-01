@@ -27,14 +27,14 @@ import {
       return block.receipts[0].result;
     }
 
-    executeMarginUsdaWbtc59760(user: Account, amount:number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("flash-loan-user-margin-usda-wbtc-59760", "execute-margin-usda-wbtc-59760", [
-          types.uint(amount)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
+    // executeMarginUsdaWbtc59760(user: Account, amount:number) {
+    //   let block = this.chain.mineBlock([
+    //     Tx.contractCall("flash-loan-user-margin-usda-wbtc-59760", "execute-margin-usda-wbtc-59760", [
+    //       types.uint(amount)
+    //     ], user.address),
+    //   ]);
+    //   return block.receipts[0].result;
+    // }
 
     getBalance(token: string, owner: string) {
       return this.chain.callReadOnlyFn(token, "get-balance", [
