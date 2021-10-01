@@ -239,9 +239,9 @@
             (spot (unwrap! (get-spot token collateral expiry) ERR-GET-ORACLE-PRICE-FAIL))
             (now (* block-height ONE_8))
             
-            ;; TODO: assume 10mins per block - something to be reviewed            
+            ;; TODO: assume 15secs per block 
             (t (unwrap! (div-down 
-                (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u52560 ONE_8)) ERR-MATH-CALL))
+                (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u2102400 ONE_8)) ERR-MATH-CALL))
             ;; TODO: APYs need to be calculated from the prevailing yield token price.
             ;; TODO: ln(S/K) approximated as (S/K - 1)
 
@@ -1082,7 +1082,7 @@
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
-            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (if (< raw max-error)
@@ -1095,7 +1095,7 @@
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
-            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (add-fixed raw max-error)

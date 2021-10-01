@@ -56,42 +56,42 @@ const {
  } = require('./pools-ytp')
 
 const _deploy = {        
-    1: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-23040', 
-        key_token: 'key-wbtc-23040-usda',
-        pool_token: 'ytp-yield-wbtc-23040-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-23040-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-23040-usda',
-        liquidity_ytp: 250e+8,
-        collateral_crp: 1000000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8
-    },
-    2: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-34560', 
-        key_token: 'key-wbtc-34560-usda',
-        pool_token: 'ytp-yield-wbtc-34560-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-34560-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-34560-usda',
-        liquidity_ytp: 250e+8,
-        collateral_crp: 1000000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8
-    },   
-    3: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-74880', 
-        key_token: 'key-wbtc-74880-usda',
-        pool_token: 'ytp-yield-wbtc-74880-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-74880-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-74880-usda',
-        liquidity_ytp: 250e+8,
-        collateral_crp: 1000000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8
-    },
+    // 1: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-23040', 
+    //     key_token: 'key-wbtc-23040-usda',
+    //     pool_token: 'ytp-yield-wbtc-23040-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-23040-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-23040-usda',
+    //     liquidity_ytp: 250e+8,
+    //     collateral_crp: 1000000e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8
+    // },
+    // 2: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-34560', 
+    //     key_token: 'key-wbtc-34560-usda',
+    //     pool_token: 'ytp-yield-wbtc-34560-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-34560-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-34560-usda',
+    //     liquidity_ytp: 250e+8,
+    //     collateral_crp: 1000000e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8
+    // },   
+    // 3: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-74880', 
+    //     key_token: 'key-wbtc-74880-usda',
+    //     pool_token: 'ytp-yield-wbtc-74880-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-74880-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-74880-usda',
+    //     liquidity_ytp: 250e+8,
+    //     collateral_crp: 1000000e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8
+    // },
     4: {token: 'token-usda', 
         collateral: 'token-wbtc', 
         yield_token: 'yield-usda-74880', 
@@ -467,15 +467,15 @@ _white_list = {
 }
 
 async function run(){
-    await see_balance(process.env.ACCOUNT_ADDRESS);
-    await update_price_oracle();
+    // await see_balance(process.env.ACCOUNT_ADDRESS);
+    // await update_price_oracle();
     // await set_faucet_amounts();
-    await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
+    // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);
     // await create_fwp(add_only=true);
-    // await create_ytp(add_only=true);
+    await create_ytp(add_only=true);
     // await create_crp(add_only=true);    
     // await arbitrage_fwp();
     // await arbitrage_crp();
@@ -485,12 +485,11 @@ async function run(){
     // await get_pool_details_crp();
     // await get_pool_details_ytp();
     // await reduce_position_ytp(0.5e+8); // TODO: still doesn't work
-    for(const key in _white_list){
-        await get_some_token(_white_list[key]);
-        // await burn('token-wbtc', _white_list[key], 5);
-        // await burn('token-usda', _white_list[key], 500000e+6);
-    }
+    // for(const key in _white_list){
+    //     await get_some_token(_white_list[key]);
+    //     // await burn('token-wbtc', _white_list[key], 5);
+    //     // await burn('token-usda', _white_list[key], 500000e+6);
+    // }
     // await mint_some_tokens('STB2BWB0K5XZGS3FXVTG3TKS46CQVV66NAK3YVN8');
-    await ytpGet
 }
 run();
