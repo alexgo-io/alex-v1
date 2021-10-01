@@ -221,7 +221,7 @@ const {
     } catch (error) {
       console.log(error);
     }
-  };
+  };  
   
   const ytpGetYgivenX = async (yieldToken, dx) => {
     console.log('[YTP] get-y-given-x...', yieldToken, dx);

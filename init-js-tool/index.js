@@ -461,33 +461,36 @@ _white_list = {
     Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
     Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
     Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
-    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0'
+    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
+    Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
+    Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
 }
 
 async function run(){
-    // await see_balance(process.env.ACCOUNT_ADDRESS);
+    await see_balance(process.env.ACCOUNT_ADDRESS);
     await update_price_oracle();
     // await set_faucet_amounts();
-    // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
+    await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);
     // await create_fwp(add_only=true);
     // await create_ytp(add_only=true);
     // await create_crp(add_only=true);    
-    await arbitrage_fwp();
-    await arbitrage_crp();
-    // await test_spot_trading();
+    // await arbitrage_fwp();
+    // await arbitrage_crp();
+    // // await test_spot_trading();
     // await test_margin_trading();
     // await get_pool_details_fwp();
     // await get_pool_details_crp();
     // await get_pool_details_ytp();
     // await reduce_position_ytp(0.5e+8); // TODO: still doesn't work
-    // for(const key in _white_list){
-    //     await get_some_token(_white_list[key]);
-    //     // await burn('token-wbtc', _white_list[key], 5);
-    //     // await burn('token-usda', _white_list[key], 500000e+6);
-    // }
+    for(const key in _white_list){
+        await get_some_token(_white_list[key]);
+        // await burn('token-wbtc', _white_list[key], 5);
+        // await burn('token-usda', _white_list[key], 500000e+6);
+    }
     // await mint_some_tokens('STB2BWB0K5XZGS3FXVTG3TKS46CQVV66NAK3YVN8');
+    await ytpGet
 }
 run();

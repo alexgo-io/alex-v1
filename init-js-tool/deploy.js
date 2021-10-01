@@ -11,13 +11,13 @@ const { exit } = require('process');
 let contract_records = {"Contracts":[]}
 let VERSION;
 let contract_paths = [
-    "lib/math-log-exp.clar",
-    "lib/math-fixed-point.clar",
-    "traits/trait-sip-010.clar",    
-    "traits/trait-flash-loan-user.clar",
-    "traits/trait-oracle.clar",
-    "traits/trait-pool-token.clar",
-    "traits/trait-yield-token.clar",
+    // "lib/math-log-exp.clar",
+    // "lib/math-fixed-point.clar",
+    // "traits/trait-sip-010.clar",    
+    // "traits/trait-flash-loan-user.clar",
+    // "traits/trait-oracle.clar",
+    // "traits/trait-pool-token.clar",
+    // "traits/trait-yield-token.clar",
     "traits/trait-ownable.clar",
     "traits/trait-vault.clar",
     "traits/trait-multisig-vote.clar",
