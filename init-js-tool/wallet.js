@@ -12,8 +12,9 @@ const getPK = async ()=>{
     const privateKey = wallet.accounts[0].stxPrivateKey
     return privateKey
 }
-//const network = new StacksRegtest();
-const network = new StacksMocknet({
+const network = new StacksRegtest({
+//const network = new StacksMocknet({
+// const network = new StacksMainnet({    
     url:'https://regtest-2.alexgo.io'
 })
 exports.getPK = getPK

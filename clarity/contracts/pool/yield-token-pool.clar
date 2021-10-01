@@ -15,7 +15,6 @@
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
-(define-constant invalid-balance-err (err u2008))
 (define-constant invalid-token-err (err u2007))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
@@ -144,13 +143,12 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
             (expiry (get expiry pool))
-            (balance-token (get balance-token pool))            
+            (listed (get listed pool))
+            (balance-token (get balance-token pool)) 
             (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
-            (base (unwrap! (div-down balance-aytoken balance-token) ERR-MATH-CALL))
+            (t-value (try! (get-t expiry listed)))
         )
-        (asserts! (>= balance-aytoken balance-token) invalid-balance-err)
-
-        (ok (to-uint (unwrap! (contract-call? .math-log-exp ln-fixed (to-int base)) ERR-MATH-CALL)))
+        (contract-call? .yield-token-equation get-yield balance-token balance-aytoken t-value)
     )
 )
 
@@ -167,11 +165,9 @@
             (listed (get listed pool))
             (balance-token (get balance-token pool)) 
             (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
-            (base (unwrap! (div-down balance-aytoken balance-token) ERR-MATH-CALL))
             (t-value (try! (get-t expiry listed)))
         )
-        (asserts! (>= balance-aytoken balance-token) invalid-balance-err)               
-        (pow-up base t-value)
+        (contract-call? .yield-token-equation get-price balance-token balance-aytoken t-value)
     )
 )
 
@@ -562,6 +558,22 @@
     )
 )
 
+(define-read-only (get-y-given-price (the-aytoken <yield-token-trait>) (price uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
+        (expiry (get expiry pool))
+        (listed (get listed pool))
+        (normalized-expiry (try! (get-t expiry listed)))
+        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-y-given-price balance-token balance-aytoken normalized-expiry price)
+    )
+)
+
 (define-read-only (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
 
     (let 
@@ -575,6 +587,22 @@
         (balance-token (get balance-token pool))
         )
         (contract-call? .yield-token-equation get-x-given-yield balance-token balance-aytoken normalized-expiry yield)
+    )
+)
+
+(define-read-only (get-y-given-yield (the-aytoken <yield-token-trait>) (yield uint))
+
+    (let 
+        (
+        (aytoken (contract-of the-aytoken))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
+        (expiry (get expiry pool))
+        (listed (get listed pool))
+        (normalized-expiry (try! (get-t expiry listed)))
+        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-token (get balance-token pool))
+        )
+        (contract-call? .yield-token-equation get-y-given-yield balance-token balance-aytoken normalized-expiry yield)
     )
 )
 
@@ -768,7 +796,7 @@
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
-            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (if (< raw max-error)
@@ -781,7 +809,7 @@
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
-            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (add-fixed raw max-error)
