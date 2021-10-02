@@ -408,13 +408,27 @@ async function arbitrage_ytp(){
             let dx = await ytpGetXgivenYield(_list[key]['yield_token'], Math.round(target_yield * ONE_8));
             console.log("dx = ", dx);
             if(dx.type === 7){
-                await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx.value.value);
+                let result = await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx.value.value);
+                if (!result) {
+                    dx_i = dx.value.value;
+                    for (let i = 0; i < 10; i++) {
+                        dx_i /= 2n;
+                        await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx_i);
+                    }
+                }
             }
         } else {
             let dy = await ytpGetYgivenYield(_list[key]['yield_token'], Math.round(target_yield * ONE_8));
             console.log("dy = ", dy);
             if(dy.type === 7){
-                await ytpSwapYforX(_list[key]['yield_token'], _list[key]['token'], dy.value.value);
+                let result = await ytpSwapYforX(_list[key]['yield_token'], _list[key]['token'], dy.value.value);
+                if (!result) {
+                    dy_i = dy.value.value;
+                    for (let i = 0; i < 10; i++) {
+                        dy_i /= 2n;
+                        await ytpSwapYforX(_list[key]['yield_token'], _list[key]['token'], dy_i);
+                    }
+                }                
             }
         } 
 
@@ -528,25 +542,25 @@ async function reduce_position_ytp(percent){
 }
 
 _white_list = {
-    // Hadan: 'SP24XV1GFP70T7CK9SZJMX1BAEV0VQ8PH6D2ZP266',
-    Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
+    Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
+    // Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
     // Marvin: 'SP1YMQJR0T1P52RT1VVPZZYZEQXQ5HBE6VWR36HFE',
-    James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
-    Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
-    Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
-    Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
-    Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
-    Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
-    Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
-    Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
-    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
-    Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
-    Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
+    // James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
+    // Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
+    // Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
+    // Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
+    // Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
+    // Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
+    // Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
+    // Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
+    // Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
+    // Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
+    // Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
 }
 
 async function run(){
     // await see_balance(process.env.ACCOUNT_ADDRESS);
-    await update_price_oracle();
+    // await update_price_oracle();
     // await set_faucet_amounts();
     // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await create_fwp(add_only=false);
@@ -555,9 +569,9 @@ async function run(){
     // await create_fwp(add_only=true);
     // await create_ytp(add_only=true);
     // await create_crp(add_only=true);    
-    await arbitrage_fwp();
+    // await arbitrage_fwp();
     await arbitrage_ytp();    
-    await arbitrage_crp();
+    // await arbitrage_crp();
     // await test_spot_trading();
     // await test_margin_trading();
     // await get_pool_details_fwp();

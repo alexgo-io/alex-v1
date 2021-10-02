@@ -12,13 +12,13 @@ const wait_until_confirmation = async(txid) => {
         console.log(`Waiting for confirmation... ${txid}`)
         if (res['tx_status'] === 'success'){
             console.log('Transaction completed successfully')
-            break;
+            return true;
         } else if (res['tx_status'] === 'abort_by_response'){
             console.log('Transaction aborted: ', res['tx_result']['repr'])
-            break;
+            return false;
         } else if (res.hasOwnProperty('error')){
             console.log('Transaction aborted: ', res['error']);
-            break;
+            return false;
         }        
     }    
 }
