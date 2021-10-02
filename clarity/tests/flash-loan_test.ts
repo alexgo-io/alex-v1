@@ -115,9 +115,9 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999946672295);  
+        position = call.result.expectOk().expectUint(1999999997136);  
         call = await FLTest.getBalance(usdaAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(3313275000000);            
+        position = call.result.expectOk().expectUint(1217223000000);            
         // should see change in key token
         call = await FLTest.getBalance(keyusda23040Address, wallet_1.address);
         position = call.result.expectOk().expectUint(122000000);
