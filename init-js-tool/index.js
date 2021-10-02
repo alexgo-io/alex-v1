@@ -560,7 +560,7 @@ _white_list = {
 
 async function run(){
     // await see_balance(process.env.ACCOUNT_ADDRESS);
-    // await update_price_oracle();
+    await update_price_oracle();
     // await set_faucet_amounts();
     // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await create_fwp(add_only=false);
@@ -569,9 +569,9 @@ async function run(){
     // await create_fwp(add_only=true);
     // await create_ytp(add_only=true);
     // await create_crp(add_only=true);    
-    // await arbitrage_fwp();
+    await arbitrage_fwp();
     await arbitrage_ytp();    
-    // await arbitrage_crp();
+    await arbitrage_crp();
     // await test_spot_trading();
     // await test_margin_trading();
     // await get_pool_details_fwp();
