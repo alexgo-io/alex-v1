@@ -384,12 +384,12 @@ async function arbitrage_ytp(){
     _list = {
         1: { yield_token: 'yield-wbtc-5760' , token: 'token-wbtc', target_yield: 0.00003 },
         2: { yield_token: 'yield-usda-5760' , token: 'token-usda', target_yield: 0.00003 },        
-        // 3: { yield_token: 'yield-wbtc-23040' , token: 'token-wbtc', target_yield: 0.00164 },
-        // 4: { yield_token: 'yield-usda-23040' , token: 'token-usda', target_yield: 0.00164 },        
-        // 5: { yield_token: 'yield-wbtc-34560' , token: 'token-wbtc', target_yield: 0.00328 },
-        // 6: { yield_token: 'yield-usda-34560' , token: 'token-usda', target_yield: 0.00328 },        
-        // 7: { yield_token: 'yield-wbtc-74880' , token: 'token-wbtc', target_yield: 0.01068 },
-        // 8: { yield_token: 'yield-usda-74880' , token: 'token-usda', target_yield: 0.01068 }                                  
+        3: { yield_token: 'yield-wbtc-23040' , token: 'token-wbtc', target_yield: 0.00164 },
+        4: { yield_token: 'yield-usda-23040' , token: 'token-usda', target_yield: 0.00164 },        
+        5: { yield_token: 'yield-wbtc-34560' , token: 'token-wbtc', target_yield: 0.00328 },
+        6: { yield_token: 'yield-usda-34560' , token: 'token-usda', target_yield: 0.00328 },        
+        7: { yield_token: 'yield-wbtc-74880' , token: 'token-wbtc', target_yield: 0.01068 },
+        8: { yield_token: 'yield-usda-74880' , token: 'token-usda', target_yield: 0.01068 }                                  
     }
 
     for (const key in _list) {
