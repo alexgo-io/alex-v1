@@ -304,7 +304,6 @@ const {
     };
     try {
       return callReadOnlyFunction(options);
-      printResult(result);
     } catch (error) {
       console.log(error);
     }

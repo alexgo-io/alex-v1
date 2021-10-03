@@ -497,16 +497,23 @@ async function get_pool_details_crp(){
     _list = {
         1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 5760e+8 },
         2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 5760e+8 },        
-        3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
-        4: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },          
-        5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
-        6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },          
-        7: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
-        8: { token: 'token-usda', collateral: 'token-wbtc', expiry: 74880e+8 },                                    
+        // 3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
+        // 4: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },          
+        // 5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
+        // 6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },          
+        // 7: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
+        // 8: { token: 'token-usda', collateral: 'token-wbtc', expiry: 74880e+8 },                                    
     }
     
     for (const key in _list){
-        printResult(await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']));
+        let ltv = await crpGetLtv(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']);
+        let details = await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])
+        let balance_x = details.value.data['balance-x'];
+        let balance_y = details.value.data['balance-y'];
+        console.log('ltv: ', Number(ltv.value.value) / ONE_8,
+                    'balance-collateral: ', Number(balance_x.value) / ONE_8,
+                    'balance-token: ', Number(balance_y.value) / ONE_8);
+        // printResult(await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']));
     }
 }
 
@@ -518,15 +525,26 @@ async function get_pool_details_ytp(){
     _list = {
         1: { yield_token: 'yield-wbtc-5760' },
         2: { yield_token: 'yield-usda-5760' },        
-        // 3: { yield_token: 'yield-wbtc-23040' },
-        // 4: { yield_token: 'yield-usda-23040' },        
-        // 5: { yield_token: 'yield-wbtc-34560' },
-        // 6: { yield_token: 'yield-usda-34560' },        
-        // 7: { yield_token: 'yield-wbtc-74880' },
-        // 8: { yield_token: 'yield-usda-74880' }
+        3: { yield_token: 'yield-wbtc-23040' },
+        4: { yield_token: 'yield-usda-23040' },        
+        5: { yield_token: 'yield-wbtc-34560' },
+        6: { yield_token: 'yield-usda-34560' },        
+        7: { yield_token: 'yield-wbtc-74880' },
+        8: { yield_token: 'yield-usda-74880' }
     }
     for (const key in _list){
-        printResult(await ytpGetPoolDetails(_list[key]['yield_token']))
+        let yied = await ytpGetYield(_list[key]['yield_token']);
+        let price = await ytpGetPrice(_list[key]['yield_token']);
+        let details = await ytpGetPoolDetails(_list[key]['yield_token']);
+        let balance_aytoken = details.value.data['balance-aytoken'];
+        let balance_virtual = details.value.data['balance-virtual'];
+        let balance_token = details.value.data['balance-token'];
+
+        console.log('yield: ', Number(yied.value.value) / ONE_8, 'price: ', Number(price.value.value) / ONE_8);
+        console.log('balance (yield-token/virtual/token): ', 
+                    Number(balance_aytoken.value) / ONE_8, 
+                    Number(balance_virtual.value) / ONE_8, 
+                    Number(balance_token.value) / ONE_8);
     }
 }
 async function reduce_position_ytp(percent){
@@ -577,8 +595,8 @@ async function run(){
     // await test_spot_trading();
     // await test_margin_trading();
     // await get_pool_details_fwp();
-    // await get_pool_details_crp();
-    await get_pool_details_ytp();
+    await get_pool_details_crp();
+    // await get_pool_details_ytp();
     // await reduce_position_ytp(0.5e+8); // TODO: still doesn't work
     // for(const key in _white_list){
     //     await get_some_token(_white_list[key]);

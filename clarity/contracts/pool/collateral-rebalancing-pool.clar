@@ -456,16 +456,18 @@
                                 u0 
                                 (if (is-eq token-x token-y)
                                     balance-x
-                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x)))
-                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x)))
-                                    ) 
+                                    (begin
+                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender tx-sender)))
+                                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
+                                            (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x))))
+                                            (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x))))
+                                        )                                                                                
+                                    )                                    
                                 )
                             )
                 )
                 (new-bal-y (unwrap! (add-fixed balance-y bal-x-to-y) ERR-MATH-CALL))
                 (dy (unwrap! (mul-down new-bal-y shares-to-yield) ERR-MATH-CALL))
-
 
                 (pool-updated (merge pool {
                     yield-supply: (if (<= yield-supply shares) u0 (unwrap! (sub-fixed yield-supply shares) ERR-MATH-CALL)),
@@ -473,6 +475,13 @@
                     balance-y: (if (<= new-bal-y dy) u0 (unwrap! (sub-fixed new-bal-y dy) ERR-MATH-CALL))
                     })
                 )
+            )
+
+            ;; if any conversion happened at contract level, transfer back to vault
+            (and 
+                (> bal-x-to-y u0) 
+                (not (is-eq token-x token-y)) 
+                (as-contract (unwrap! (contract-call? token transfer bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
             )
 
             ;; if shares > dy, then transfer the shortfall from reserve.
@@ -483,37 +492,34 @@
                         (amount (unwrap! (sub-fixed shares dy) ERR-MATH-CALL))                    
                     )                
                     (if (is-eq token-y .token-usda)
-                        ;; (unwrap! (contract-call? .token-usda transfer amount .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
-                        (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount (as-contract tx-sender) tx-sender))
+                        (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount tx-sender tx-sender)))
                         (let
                             (
                                 (amount-to-swap 
                                     (if (is-eq token-y .token-usda)
                                         amount
                                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
-                                            (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount))
-                                            (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount))
+                                            (as-contract (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount)))
+                                            (as-contract (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
                                         )                                         
                                         
                                     )
                                 )
                             )
-                            ;; (unwrap! (contract-call? .token-usda transfer amount-to-swap .alex-reserve-pool tx-sender none) ERR-TRANSFER-Y-FAILED)
-                            (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap (as-contract tx-sender) tx-sender))
-                            (unwrap! (contract-call? token transfer (if (is-eq token-y .token-usda)
+                            (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap tx-sender tx-sender)))
+                            (as-contract (unwrap! (contract-call? token transfer (if (is-eq token-y .token-usda)
                                                                         amount-to-swap
                                                                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
                                                                             (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap)))
                                                                             (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap)))
                                                                         )                                                                        
-                                                                    ) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+                                                                    ) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
                         )
                     )                
                 )
             )       
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            ;; (unwrap! (contract-call? token transfer shares .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token shares (as-contract tx-sender) tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
