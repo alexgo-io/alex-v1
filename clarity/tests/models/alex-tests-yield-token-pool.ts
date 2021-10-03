@@ -99,6 +99,20 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+    getYgivenX(aytoken: string, dx: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-y-given-x", [
+        types.principal(aytoken),
+        types.uint(dx)
+      ], this.deployer.address);      
+    }
+    
+    getXgivenY(aytoken: string, dy: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-x-given-y", [
+        types.principal(aytoken),
+        types.uint(dy)
+      ], this.deployer.address);      
+    }      
   
     getYgivenPrice(aytoken: string, price: number) {
       return this.chain.callReadOnlyFn("yield-token-pool", "get-y-given-price", [
