@@ -99,26 +99,48 @@ import {
         ]);
         return block.receipts[0].result;
       }
-  
-    getYgivenX(user: Account, aytoken: string, dX: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("yield-token-pool", "get-y-given-x", [
-          types.principal(aytoken),
-          types.uint(dX)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
+
+    getYgivenX(aytoken: string, dx: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-y-given-x", [
+        types.principal(aytoken),
+        types.uint(dx)
+      ], this.deployer.address);      
     }
     
-    getXgivenY(user: Account, aytoken: string, dY: number) {
-        let block = this.chain.mineBlock([
-          Tx.contractCall("yield-token-pool", "get-x-given-y", [
-            types.principal(aytoken),
-            types.uint(dY)
-          ], user.address),
-        ]);
-        return block.receipts[0].result;
+    getXgivenY(aytoken: string, dy: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-x-given-y", [
+        types.principal(aytoken),
+        types.uint(dy)
+      ], this.deployer.address);      
+    }      
+  
+    getYgivenPrice(aytoken: string, price: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-y-given-price", [
+        types.principal(aytoken),
+        types.uint(price)
+      ], this.deployer.address);      
     }
+    
+    getXgivenPrice(aytoken: string, price: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-x-given-price", [
+        types.principal(aytoken),
+        types.uint(price)
+      ], this.deployer.address);      
+    }
+
+    getYgivenYield(aytoken: string, yied: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-y-given-yield", [
+        types.principal(aytoken),
+        types.uint(yied)
+      ], this.deployer.address);      
+    }
+    
+    getXgivenYield(aytoken: string, yied: number) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-x-given-yield", [
+        types.principal(aytoken),
+        types.uint(yied)
+      ], this.deployer.address);      
+    }    
   
     getFeetoAddress(user: Account, aytoken: string) {
       let block = this.chain.mineBlock([

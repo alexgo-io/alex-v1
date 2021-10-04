@@ -89,8 +89,8 @@ Clarinet.test({
         call.result.expectOk().expectUint(85000000)
         
         // zero actual yield-token, so must throw an error
-        result = YTPTest.getYgivenX(deployer, yieldwbtc59760Address, 1*ONE_8);
-        result.expectErr().expectUint(2016)
+        call = await YTPTest.getYgivenX(yieldwbtc59760Address, 1*ONE_8);
+        call.result.expectErr().expectUint(2016)
         
         // zero actual yield-token, so yield must be zero
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
@@ -99,8 +99,8 @@ Clarinet.test({
         call.result.expectOk().expectUint(0)
 
         // zero rate environment, so yield-token and token are at parity.
-        result = YTPTest.getXgivenY(deployer, yieldwbtc59760Address, 2*ONE_8);
-        result.expectOk().expectUint(200212341)
+        call = await YTPTest.getXgivenY(yieldwbtc59760Address, 2*ONE_8);
+        call.result.expectOk().expectUint(200212341)
 
         // sell some yield-token
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8);
@@ -248,6 +248,57 @@ Clarinet.test({
     },    
 });
 
+Clarinet.test({
+    name: "YTP : get-x-given-price/yield, get-y-given-price/yield",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("wallet_1")!;
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        
+        //Deployer creating a pool, initial tokens injected to the pool
+        let result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
+        result.expectOk().expectBool(true);
+
+        // Check pool details and print
+        let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        let position:any = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(1000*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(1000*ONE_8);
+
+        call = await YTPTest.getYield(yieldwbtc59760Address);
+        call.result.expectOk().expectUint(0);
+        
+        // if current yield < target yield, then supply of yield-token needs to increase
+        call = await YTPTest.getXgivenYield(yieldwbtc59760Address, 0.001*ONE_8);
+        call.result.expectErr().expectUint(2002);
+        call = await YTPTest.getYgivenYield(yieldwbtc59760Address, 0.001*ONE_8);          
+        call.result.expectOk().expectUint(49979000);
+
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 49979000);
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(49979000);
+        position['dx'].expectUint(49878123);
+
+        call = await YTPTest.getYield(yieldwbtc59760Address);
+        call.result.expectOk().expectUint(99856);
+
+        // now let's try to reduce the yield
+        call = await YTPTest.getYgivenYield(yieldwbtc59760Address, 0.0005*ONE_8);                  
+        call.result.expectErr().expectUint(2002);
+        call = await YTPTest.getXgivenYield(yieldwbtc59760Address, 0.0005*ONE_8);        
+        call.result.expectOk().expectUint(24903573);      
+        
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 24903573);
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(24990123);
+        position['dx'].expectUint(24903573);
+
+        call = await YTPTest.getYield(yieldwbtc59760Address);
+        call.result.expectOk().expectUint(49962);
+
+    },    
+});
 
 
 Clarinet.test({

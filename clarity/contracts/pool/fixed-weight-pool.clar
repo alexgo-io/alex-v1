@@ -23,7 +23,6 @@
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
-(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 (define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
 
 (define-constant alex-symbol "alex")
@@ -177,7 +176,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-supply (get total-supply pool))
-                (add-data (unwrap! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy) ERR-INTERNAL-FUNCTION-CALL))
+                (add-data (try! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy)))
                 (new-supply (get token add-data))
                 (new-dy (get dy add-data))
                 (pool-updated (merge pool {
@@ -213,7 +212,7 @@
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
                 (total-supply (get total-supply pool))
-                (reduce-data (unwrap! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares) ERR-INTERNAL-FUNCTION-CALL))
+                (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares)))
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {
@@ -224,15 +223,12 @@
                 )
             )
 
-            ;; (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
-            ;; (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
             (try! (contract-call? the-pool-token burn tx-sender shares))
-            ;;(try! (contract-call? .alex-multisig-registry burn-token new-supply tx-sender))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
@@ -272,7 +268,6 @@
             )
         
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            ;; (unwrap! (contract-call? token-y-trait transfer dy .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
 
             ;; post setting
@@ -315,7 +310,6 @@
                 )
             )
         
-            ;; (unwrap! (contract-call? token-x-trait transfer dx .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
@@ -427,7 +421,6 @@
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender
-                ;; (unwrap! (contract-call? token-x-trait transfer fee-x .alex-vault tx-sender none) ERR-TRANSFER-X-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft token-x-trait fee-x (as-contract tx-sender) tx-sender))
                 ;; send fee-x to reserve-pool to mint alex    
                 (try! 
@@ -444,7 +437,6 @@
         (and (> fee-y u0) 
             (and 
                 ;; first transfer fee-y to tx-sender
-                ;; (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
                 (try! (contract-call? .alex-vault transfer-ft token-y-trait fee-y (as-contract tx-sender) tx-sender))
                 ;; send fee-y to reserve-pool to mint alex    
                 (try! 
@@ -680,7 +672,7 @@
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
-            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (if (< raw max-error)
@@ -693,7 +685,7 @@
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
-            (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
+            (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
         (add-fixed raw max-error)
