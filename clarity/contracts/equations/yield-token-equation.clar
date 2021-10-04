@@ -39,14 +39,9 @@
 )
 
 ;; note yield is not annualised
-;; b_y = balance-aytoken
-;; b_x = balance-token
-;; yield = ln(b_y/b_x)
+;; yield = ln(price)
 (define-read-only (get-yield (balance-x uint) (balance-y uint) (t uint))
-  (begin 
-    (asserts! (>= balance-y balance-x) invalid-balance-err)
-    (ok (to-uint (unwrap-panic (ln-fixed (to-int (unwrap-panic (div-down balance-y balance-x)))))))      
-  )
+  (ok (to-uint (unwrap-panic (ln-fixed (to-int (try! (get-price balance-x balance-y t)))))))
 )
 
 ;; d_x = dx
@@ -159,23 +154,11 @@
 )
 
 (define-read-only (get-x-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (let 
-    (
-      (t-yield (unwrap-panic (mul-up t yield)))
-      (price (to-uint (unwrap-panic (exp-fixed (to-int t-yield)))))
-    )
-    (get-x-given-price balance-x balance-y t price)
-  )
+  (get-x-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
 )
 
 (define-read-only (get-y-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (let 
-    (
-      (t-yield (unwrap-panic (mul-up t yield)))
-      (price (to-uint (unwrap-panic (exp-fixed (to-int t-yield)))))
-    )
-    (get-y-given-price balance-x balance-y t price)
-  )
+  (get-y-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
 )
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))

@@ -63,10 +63,18 @@
 (define-data-var pool-count uint u0)
 (define-data-var pools-list (list 2000 uint) (list))
 
-(define-data-var max-expiry uint u0)
+;; 4 years based on 2102400 blocks per year (i.e. 15 secs per block)
+(define-data-var max-expiry uint (unwrap-panic (scale-up u8409600))) 
 
 (define-read-only (get-max-expiry)
     (ok (var-get max-expiry))
+)
+
+(define-public (set-max-expiry (new-max-expiry uint))
+    (begin
+       (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (ok (var-set max-expiry new-max-expiry)) 
+    )
 )
 
 (define-read-only (get-oracle-src)
@@ -134,9 +142,6 @@
 )
 
 ;; note yield is not annualised
-;; b_y = balance-aytoken
-;; b_x = balance-token
-;; yield = ln(b_y/b_x)
 (define-read-only (get-yield (the-aytoken <yield-token-trait>))
     (let 
         (
@@ -152,10 +157,6 @@
     )
 )
 
-;; get-price
-;; b_y = balance-aytoken
-;; b_x = balance-token
-;; price = (b_y / b_x) ^ t
 (define-read-only (get-price (the-aytoken <yield-token-trait>))
     (let
         (
@@ -204,8 +205,8 @@
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
-            ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
-            (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (add-fixed expiry ONE_8) ERR-MATH-CALL) (var-get max-expiry)))
+            ;; ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
+            ;; (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (add-fixed expiry ONE_8) ERR-MATH-CALL) (var-get max-expiry)))
             (try! (add-to-position the-aytoken the-token the-pool-token dx))
 
             (print { object: "pool", action: "created", data: pool-data })
