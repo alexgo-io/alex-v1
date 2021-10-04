@@ -3,8 +3,6 @@
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
-;; TODO: overflow causes runtime error, should handle before operation rather than after
-
 ;; constants
 ;;
 (define-constant ONE_10 (pow u10 u10)) ;; 10 decimal places

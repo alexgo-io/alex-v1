@@ -39,7 +39,6 @@
 (define-constant a3 u97200)
 (define-constant a4 u7810800)
 
-;; TODO: need to be defined properly
 (define-data-var contract-owner principal tx-sender)
 (define-data-var oracle-src (string-ascii 32) "coingecko")
 ;; data maps and vars
@@ -239,11 +238,9 @@
             (spot (unwrap! (get-spot token collateral expiry) ERR-GET-ORACLE-PRICE-FAIL))
             (now (* block-height ONE_8))
             
-            ;; TODO: assume 15secs per block 
+            ;; assume 15secs per block 
             (t (unwrap! (div-down 
                 (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u2102400 ONE_8)) ERR-MATH-CALL))
-            ;; TODO: APYs need to be calculated from the prevailing yield token price.
-            ;; TODO: ln(S/K) approximated as (S/K - 1)
 
             ;; we calculate d1 first
             (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
@@ -367,7 +364,7 @@
         (
             (minted-yield-token (get yield-token (try! (add-to-position token collateral the-yield-token the-key-token dx))))
         )
-        (contract-call? .yield-token-pool swap-y-for-x the-yield-token token minted-yield-token)
+        (contract-call? .yield-token-pool swap-y-for-x the-yield-token token minted-yield-token none)
     )
 )
 
@@ -405,8 +402,8 @@
                 (dy-weighted (if (is-eq token-x token-y)
                                 dx-to-dy
                                 (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy)))
-                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy)))
+                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
+                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy none)))
                                 )                                 
                              )
                 )
@@ -459,8 +456,8 @@
                                     (begin
                                         (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender tx-sender)))
                                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                            (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x))))
-                                            (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x))))
+                                            (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x none))))
+                                            (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x none))))
                                         )                                                                                
                                     )                                    
                                 )
@@ -510,8 +507,8 @@
                             (as-contract (unwrap! (contract-call? token transfer (if (is-eq token-y .token-usda)
                                                                         amount-to-swap
                                                                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
-                                                                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap)))
-                                                                            (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap)))
+                                                                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap none)))
+                                                                            (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap none)))
                                                                         )                                                                        
                                                                     ) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
                         )
@@ -781,8 +778,8 @@
                         (if (is-eq token-x .token-usda) 
                             fee-x 
                             (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda collateral u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral .token-usda u50000000 u50000000 fee-x)))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda collateral u50000000 u50000000 fee-x none)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral .token-usda u50000000 u50000000 fee-x none)))
                             )                            
                         )
                     )
@@ -800,8 +797,8 @@
                         (if (is-eq token-y .token-usda) 
                             fee-y 
                             (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token .token-usda u50000000 u50000000 fee-y)))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token u50000000 u50000000 fee-y none)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token .token-usda u50000000 u50000000 fee-y none)))
                             )                            
                         )
                     )

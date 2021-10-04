@@ -23,7 +23,7 @@
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant internal-get-weight-err (err u2012))
-
+(define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 
 ;; data maps and vars
 ;;
@@ -247,12 +247,10 @@
     )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
         ;; swap is allowed only until expiry
         (asserts! (< (* block-height ONE_8) expiry) already-ERR-EXPIRY)
-        ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)    
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -282,6 +280,9 @@
                     )
                 )
             )
+
+            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
             ;; post setting
@@ -292,13 +293,10 @@
     )
 )
 
-(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
         ;; swap is allowed only until expiry
-        (asserts! (< (* block-height ONE_8) expiry) already-ERR-EXPIRY)
-
-        ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)        
+        (asserts! (< (* block-height ONE_8) expiry) already-ERR-EXPIRY)     
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -328,6 +326,9 @@
                     )
                 )
             )
+
+            (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
+
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
             ;; post setting
@@ -444,8 +445,8 @@
                         (if (is-eq token-x .token-usda) 
                             fee-x 
                             (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token-x-trait u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-x-trait .token-usda u50000000 u50000000 fee-x)))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x none)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-x-trait .token-usda u50000000 u50000000 fee-x none)))
                             )                            
                         )
                     )
@@ -464,8 +465,8 @@
                         (if (is-eq token-y .token-usda) 
                             fee-y 
                             (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token-y-trait u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-y-trait .token-usda u50000000 u50000000 fee-y)))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y none)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-y-trait .token-usda u50000000 u50000000 fee-y none)))
                             )                            
                         )
                     )

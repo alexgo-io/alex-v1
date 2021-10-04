@@ -86,10 +86,10 @@ let contract_paths = [
     "flash-loan-user-margin-usda-wbtc-5760.clar", 
     "flash-loan-user-margin-wbtc-usda-5760.clar",         
     
-    "key-token/key-usda-23040-yield-usda-74880.clar",
-    "multisig/multisig-crp-usda-23040-yield-usda-74880.clar",
-    "pool-token/fwp-usda-23040-usda-74880-50-50.clar",
-    "multisig/multisig-fwp-usda-23040-usda-74880-50-50.clar",    
+    // "key-token/key-usda-23040-yield-usda-74880.clar",
+    // "multisig/multisig-crp-usda-23040-yield-usda-74880.clar",
+    // "pool-token/fwp-usda-23040-usda-74880-50-50.clar",
+    // "multisig/multisig-fwp-usda-23040-usda-74880-50-50.clar",    
     
     // "yield-token/yield-wbtc-59760.clar",
     // "key-token/key-wbtc-59760-usda.clar",

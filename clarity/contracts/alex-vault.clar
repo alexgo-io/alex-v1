@@ -45,7 +45,6 @@
   (ok (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED))
 )
 
-;; TODO: multisig
 (define-public (set-flash-loan-fee-rate (fee uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)

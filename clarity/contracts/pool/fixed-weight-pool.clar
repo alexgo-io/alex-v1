@@ -24,6 +24,7 @@
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
+(define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 
 (define-constant alex-symbol "alex")
 (define-constant reserve-usdc-symbol "usdc")
@@ -236,11 +237,9 @@
     )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))    
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
-        ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)        
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -266,6 +265,8 @@
                     )
                 )
             )
+
+            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
@@ -278,10 +279,8 @@
     )
 )
 
-(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
-        ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
             (
@@ -309,6 +308,8 @@
                     )
                 )
             )
+
+            (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
@@ -427,7 +428,7 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-x .token-usda) 
                             fee-x 
-                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
+                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x none)))
                         )
                     )
                 )
@@ -443,7 +444,7 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-y .token-usda) 
                             fee-y 
-                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
+                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y none)))
                         )
                     )
                 )

@@ -108,8 +108,6 @@
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
-;; TODO: overflow causes runtime error, should handle before operation rather than after
-
 ;; constants
 ;;
 (define-constant SCALE_UP_OVERFLOW (err u5001))
