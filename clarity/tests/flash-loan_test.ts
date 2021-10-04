@@ -87,7 +87,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(74520874);
         
         // sell some yield-token
-        result = YTPTest.swapYForX(wallet_1, yieldusda23040Address, usdaAddress, 10000*ONE_8);
+        result = YTPTest.swapYForX(wallet_1, yieldusda23040Address, usdaAddress, 10000*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(1017223843528);
         position['dy'].expectUint(10000*ONE_8);

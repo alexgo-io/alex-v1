@@ -81,25 +81,25 @@ Clarinet.test({
         position['dy'].expectUint(499999999999878);        
 
         // attempt to trade too much (> 90%) will be rejected
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 91*ONE_8);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 91*ONE_8, 0);
         position = result.expectErr().expectUint(4001);
 
         // swap some wbtc into usda
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(ONE_8);
         position['dy'].expectUint(4950462120393);    
         
         // swap some usda into wbtc
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8);
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(103049813);
         position['dy'].expectUint(wbtcPrice*ONE_8);        
 
         // attempt to swap zero throws an error
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0);
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0, 0);
         result.expectErr().expectUint(2003);    
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0, 0);
         result.expectErr().expectUint(2003);               
     },
 });
@@ -168,13 +168,13 @@ Clarinet.test({
         result.expectOk().expectUint(5000000)
         
         // Swapping 
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(95000000);    // 5% Fee Charged on ONE_8
         position['dy'].expectUint(4714125000000);    // Corresponding dy value
         
         // Swapping 
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*wbtcPrice);
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*wbtcPrice, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(97192466);    // Corresponding dx value
         position['dy'].expectUint(4750000000000);    // 5% Fee Charged on ONE_8*wbtcPrice
@@ -232,17 +232,17 @@ Clarinet.test({
         result.expectErr().expectUint(3000);
 
         // Swapping 
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(ONE_8);
         position['dy'].expectUint(4960262500000);   
 
         // Attempts to trade more than limit
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*ONE_8);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*ONE_8, 0);
         result.expectErr().expectUint(4001); 
 
         // Zero swapping
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0);
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0, 0);
         result.expectErr().expectUint(2003); 
        
         // Fee Setting
@@ -321,7 +321,7 @@ Clarinet.test({
         // let's do some arb
         call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8*1.1);
         call.result.expectOk().expectUint(23268715000000);         
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 23268715000000)
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 23268715000000, 0)
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(23268715000000);
         position['dx'].expectUint(488087600);
@@ -344,7 +344,7 @@ Clarinet.test({
         // we need to call get-x-given-price
         call = await FWPTest.getXgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8*1.1 *0.95);
         call.result.expectOk().expectUint(248161895);                 
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 248161895)
+        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 248161895, 0)
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(248161895);         
         position['dy'].expectUint(13304708837897);      

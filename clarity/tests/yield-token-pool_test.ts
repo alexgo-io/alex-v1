@@ -103,7 +103,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(200212341)
 
         // sell some yield-token
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(200212341);
         position['dy'].expectUint(2*ONE_8);
@@ -124,13 +124,13 @@ Clarinet.test({
         call.result.expectOk().expectUint(400212); // 0.4%
 
         // buy back some yield token
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8, 0);
         position = result.expectOk().expectTuple()
         position['dx'].expectUint(ONE_8);
         position['dy'].expectUint(100352095);        
 
         // attempt to sell more than max allowed yield token (50% of pool) must throw an error
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 501*ONE_8);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 501*ONE_8, 0);
         position =result.expectErr().expectUint(4002)
 
         call = chain.callReadOnlyFn("yield-token-pool", "get-pool-details", 
@@ -148,7 +148,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(199860); // 0.2%   
 
         // we sell close to maximum allowed of yield token
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(1927749539);
         position['dy'].expectUint(19*ONE_8);       
@@ -192,7 +192,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(4028722); // 4%      
         
         // sell some (a lot of) yield-token
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(1879746070);
         position['dy'].expectUint(19*ONE_8);
@@ -212,7 +212,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(7811636); // 78%    
 
         //buy back some yield token
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(19*ONE_8);
         position['dy'].expectUint(1956741242);      
@@ -234,7 +234,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(3952408); // 4%      
         
         // buy some yield-token
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 19*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(19*ONE_8);
         position['dy'].expectUint(1900016846);
@@ -275,7 +275,7 @@ Clarinet.test({
         call = await YTPTest.getYgivenYield(yieldwbtc59760Address, 0.001*ONE_8);          
         call.result.expectOk().expectUint(49979000);
 
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 49979000);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 49979000, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(49979000);
         position['dx'].expectUint(49878123);
@@ -289,7 +289,7 @@ Clarinet.test({
         call = await YTPTest.getXgivenYield(yieldwbtc59760Address, 0.0005*ONE_8);        
         call.result.expectOk().expectUint(24903573);      
         
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 24903573);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 24903573, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(24990123);
         position['dx'].expectUint(24903573);
@@ -338,7 +338,7 @@ Clarinet.test({
         position['balance-aytoken'].expectUint(0);
         position['balance-virtual'].expectUint(10*ONE_8);   
 
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(99951128); //99954689
         position['dy'].expectUint(ONE_8);
@@ -457,43 +457,36 @@ Clarinet.test({
         position =result.expectErr().expectUint(1)
 
         // False swap value -- Filter added
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0, 0);
         position =result.expectErr().expectUint(2003)
         
-        // False swap value -- Filter added
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0.0000001 * ONE_8);
-        //position =result.expectErr().expectUint(2003)
-        position =result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(0.0000001 * ONE_8);
-        // call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
-        // position = call.result.expectErr();
+        // Too small => < max-slippage
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0.0000001 * ONE_8, 0);
+        position =result.expectErr().expectUint(2020);
 
-        // Fixed
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0.001 * ONE_8);
-        position =result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(0.001 * ONE_8);
+        // Too small => < max-slippage
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 0.001 * ONE_8, 0);
+        position =result.expectErr().expectUint(2020);
 
         // Attempt for Swapping
-        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(99760122);
+        position['dx'].expectUint(99787067);
         position['dy'].expectUint(ONE_8);
 
         // Attempts for zero value swapping
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 0);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 0, 0);
         position =result.expectErr().expectUint(2003)
 
         // Attempts to swap more than available balance in the pool
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 100*ONE_8);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 100*ONE_8, 0);
         position =result.expectErr().expectUint(2016) 
 
         // Swap
-        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 0.1 * ONE_8);
+        result = YTPTest.swapXForY(deployer, yieldwbtc59760Address, wbtcAddress, 0.1 * ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(0.1 * ONE_8);
-        position['dy'].expectUint(10178704);
+        position['dy'].expectUint(10161454);
 
     },    
 });
