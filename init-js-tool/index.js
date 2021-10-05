@@ -652,15 +652,15 @@ _white_list = {
 async function run(){
     // await set_faucet_amounts();
     // await see_balance(process.env.ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
+    await update_price_oracle();    
     // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
-    // await arbitrage_fwp();
-    // await arbitrage_crp();    
-    // await arbitrage_ytp();    
+    await arbitrage_fwp();
+    await arbitrage_crp();    
+    await arbitrage_ytp();    
     // await test_spot_trading();
     // await test_margin_trading();
 
@@ -677,10 +677,10 @@ async function run(){
     // await reduce_position_crp(ONE_8, 'key');
     
     // await see_balance(process.env.ACCOUNT_ADDRESS + '.alex-vault');    
-    for(const key in _white_list){
-        await get_some_token(_white_list[key]);
-        // await burn('token-wbtc', _white_list[key], 5);
-        // await burn('token-usda', _white_list[key], 500000e+6);
-    }
+    // for(const key in _white_list){
+    //     await get_some_token(_white_list[key]);
+    //     // await burn('token-wbtc', _white_list[key], 5);
+    //     // await burn('token-usda', _white_list[key], 500000e+6);
+    // }
 }
 run();
