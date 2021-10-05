@@ -41,7 +41,7 @@ const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, 
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
@@ -73,7 +73,7 @@ const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx,
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
@@ -104,7 +104,7 @@ const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, pe
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
@@ -197,7 +197,7 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
 
   } catch (error) {
       console.log(error);
@@ -228,7 +228,7 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }

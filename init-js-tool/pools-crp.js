@@ -43,7 +43,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -73,7 +73,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -103,7 +103,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -132,7 +132,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -161,7 +161,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -190,7 +190,7 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -219,14 +219,14 @@ const {wait_until_confirmation } = require('./utils');
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid)
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
   }   
   
   const crpGetLtv = async (token, collateral, expiry) => {
-    console.log('[CRP] get-ltv...]', token, collateral, expiry);
+    console.log('[CRP] get-ltv...', token, collateral, expiry);
   
     const options = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -342,7 +342,7 @@ const {wait_until_confirmation } = require('./utils');
   };  
   
   const crpGetPoolValueInToken = async (token, collateral, expiry) => {
-    console.log('[CRP] get-pool-value-in-token...]', token, collateral, expiry);
+    console.log('[CRP] get-pool-value-in-token...', token, collateral, expiry);
   
     const options = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -365,7 +365,7 @@ const {wait_until_confirmation } = require('./utils');
   };
   
   const crpGetPoolDetails = async (token, collateral, expiry) => {
-    console.log('[CRP] get-pool-details...]', token, collateral, expiry);
+    console.log('[CRP] get-pool-details...', token, collateral, expiry);
   
     const options = {
       contractAddress: process.env.ACCOUNT_ADDRESS,
@@ -385,6 +385,28 @@ const {wait_until_confirmation } = require('./utils');
       console.log(error);
     }
   };
+
+  const crpGetSpot = async (token, collateral, expiry) => {
+    console.log('[CRP] get-spot...', token, collateral, expiry);
+  
+    const options = {
+      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractName: 'collateral-rebalancing-pool',
+      functionName: 'get-spot',
+      functionArgs: [
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),     
+        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, collateral),
+        uintCV(expiry)
+      ],
+      network: network,
+      senderAddress: process.env.ACCOUNT_ADDRESS,
+    };
+    try {
+      return callReadOnlyFunction(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };  
   
   const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
       console.log('Getting CRP Weight-Y...', token, collateral, expiry, strike, bs_vol);
@@ -426,4 +448,5 @@ const {wait_until_confirmation } = require('./utils');
   exports.crpGetXgivenPrice = crpGetXgivenPrice;
   exports.crpSwapXforY = crpSwapXforY;
   exports.crpSwapYforX = crpSwapYforX;
+  exports.crpGetSpot = crpGetSpot;
   
