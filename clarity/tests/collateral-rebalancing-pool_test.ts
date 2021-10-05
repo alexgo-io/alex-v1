@@ -232,13 +232,13 @@ Clarinet.test({
 
         // simulate to expiry + 1
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)         
-        // swap is no longer allowed
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
-        position = result.expectErr().expectUint(2017);  
+        // // swap is no longer allowed
+        // result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
+        // position = result.expectErr().expectUint(2017);  
 
-        // swap is no longer allowed
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
-        position = result.expectErr().expectUint(2017);   
+        // // swap is no longer allowed
+        // result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
+        // position = result.expectErr().expectUint(2017);   
 
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();

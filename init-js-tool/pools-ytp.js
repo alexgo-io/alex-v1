@@ -40,7 +40,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid);
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -69,7 +69,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid);
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
@@ -98,7 +98,7 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid);
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
