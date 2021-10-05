@@ -434,7 +434,7 @@ async function arbitrage_ytp(){
         result = await ytpGetYield(_list[key]['yield_token']);
         implied_yield = Number(result.value.value) / ONE_8;
 
-        let node_info = await (await fetch('http://localhost:3999/v2/info')).json();
+        let node_info = await (await fetch('https://regtest-2.alexgo.io/v2/info')).json();
         let time_to_maturity = (Math.round(_list[key]['expiry'] / ONE_8) - node_info['burn_block_height']) / 2102400;
         target_yield = _list[key]['target_apy'] * time_to_maturity;
 

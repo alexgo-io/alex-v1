@@ -15,7 +15,7 @@ const getPK = async ()=>{
 const network = new StacksRegtest({
 //const network = new StacksMocknet({
 // const network = new StacksMainnet({    
-    url:'http://localhost:3999'
+    url:'https://regtest-2.alexgo.io'
 })
 exports.getPK = getPK
 exports.network = network;

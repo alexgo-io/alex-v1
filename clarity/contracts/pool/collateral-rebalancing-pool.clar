@@ -244,11 +244,9 @@
             (ok u99900000)   
             (let 
                 (
-                    ;; TODO: assume 15secs per block 
+                    ;; assume 15secs per block 
                     (t (unwrap! (div-down 
                     (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u2102400 ONE_8)) ERR-MATH-CALL))
-                    ;; TODO: APYs need to be calculated from the prevailing yield token price.
-                    ;; TODO: ln(S/K) approximated as (S/K - 1)
 
                     ;; we calculate d1 first
                     (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
@@ -300,7 +298,6 @@
             
                 (strike (unwrap-panic (div-down token-price collateral-price)))
 
-                ;; TODO: APYs need to be calculated from the prevailing yield token price.
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
                 (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
@@ -365,7 +362,6 @@
 ;; note single-sided liquidity
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
-        ;; Just for Validation of initial parameters
         (   
             (token-x (contract-of collateral))
             (token-y (contract-of token))             
@@ -615,7 +611,6 @@
     )
 )
 
-;; split of balance to yield and key is transparent to traders
 (define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
     (begin
         ;; TODO : Check whether dy or dx value is valid  
