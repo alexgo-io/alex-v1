@@ -372,10 +372,10 @@ async function arbitrage_crp(dry_run=true){
     _list = {
         // test1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 240e+8 },
         // test2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 240e+8 },            
-        // 1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 5760e+8 },
-        // 2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 5760e+8 },        
-        // 3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
-        // 4: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },          
+        1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 5760e+8 },
+        2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 5760e+8 },        
+        3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
+        4: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },          
         5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
         6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },          
         // 7: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
@@ -518,11 +518,17 @@ async function arbitrage_ytp(dry_run=true){
                     let ltv = Number((await crpGetLtv(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])).value.value);
                     ltv /= Number((await ytpGetPrice(_list[key]['yield_token'])).value.value);
                     let dy_ltv = Math.round(dy_collateral / ltv);
-                    let dx = await ytpGetXgivenY(_list[key]['yield_token'], dy.value.value);
-                    if (dx.type == 7){
+                    let dx = await ytpGetXgivenY(_list[key]['yield_token'], dy.value.value);                    
+                    let dx_fwp;
+                    if(_list[key]['token'] == 'token-usda') {
+                        dx_fwp = await fwpGetYgivenX(_list[key]['collateral'], _list[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
+                    } else {
+                        dx_fwp = await fwpGetXgivenY(_list[key]['token'], _list[key]['collateral'], 0.5e+8, 0.5e+8, dy_ltv);
+                    }
+                    if (dx.type == 7 && dx_fwp.type == 7){
                         await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv);
                     } else {         
-                        console.log('error: ', dx.value.value);          
+                        console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);          
                         dy_ltv = Math.round(dy_ltv / 4);
                         dy_i = Math.round(Number(dy.value.value) / 4 );
                         for (let i = 0; i < 4; i++){
@@ -770,7 +776,7 @@ async function run(){
     // await create_crp(add_only=false);    
     // await arbitrage_fwp(dry_run=false);
     // await arbitrage_crp(dry_run=false);    
-    // await arbitrage_ytp(dry_run=false);    
+    await arbitrage_ytp(dry_run=false);    
     // await test_spot_trading();
     // await test_margin_trading();
 
@@ -781,9 +787,9 @@ async function run(){
     // await arbitrage_fwp(dry_run=true);
     // await arbitrage_crp(dry_run=true);    
     // await arbitrage_ytp(dry_run=true); 
-    await get_pool_details_fwp();
-    await get_pool_details_crp();
-    await get_pool_details_ytp();   
+    // await get_pool_details_fwp();
+    // await get_pool_details_crp();
+    // await get_pool_details_ytp();   
 
     // await reduce_position_ytp(0.5e+8);
     // await reduce_position_crp(ONE_8, 'yield');
