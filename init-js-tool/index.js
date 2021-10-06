@@ -372,10 +372,10 @@ async function arbitrage_crp(dry_run=true){
     _list = {
         // test1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 240e+8 },
         // test2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 240e+8 },            
-        1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 5760e+8 },
-        2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 5760e+8 },        
-        3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
-        4: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },          
+        // 1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 5760e+8 },
+        // 2: { token: 'token-usda', collateral: 'token-wbtc', expiry: 5760e+8 },        
+        // 3: { token: 'token-wbtc', collateral: 'token-usda', expiry: 23040e+8 },
+        // 4: { token: 'token-usda', collateral: 'token-wbtc', expiry: 23040e+8 },          
         5: { token: 'token-wbtc', collateral: 'token-usda', expiry: 34560e+8 }, 
         6: { token: 'token-usda', collateral: 'token-wbtc', expiry: 34560e+8 },          
         // 7: { token: 'token-wbtc', collateral: 'token-usda', expiry: 74880e+8 },            
@@ -403,7 +403,21 @@ async function arbitrage_crp(dry_run=true){
                 let dx = await crpGetXgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
 
                 if(dx.type === 7 && dx.value.value > 0n){
-                    await crpSwapXforY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx.value.value);
+                    let dy = await crpGetYgivenX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx.value.value);
+                    if(dy.type == 7){
+                        await crpSwapXforY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx.value.value);
+                    } else {
+                        console.log('error: ', dy.value.value);
+                        let dx_i = Math.round(Number(dx.value.value) / 4);
+                        for(let i = 0; i < 4; i++) {
+                            let dy_i = await crpGetYgivenX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx_i);
+                            if(dy_i.type == 7) {
+                                await crpSwapXforY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx_i);
+                            } else {
+                                console.log('error: ', dy_i.value.value);
+                            }
+                        }
+                    }
                 } else {
                     console.log('error (or zero): ', dx.value.value);
                 }
@@ -411,7 +425,21 @@ async function arbitrage_crp(dry_run=true){
                 let dy = await crpGetYgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
 
                 if(dy.type === 7 && dy.value.value > 0n){
-                    await crpSwapYforX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy.value.value);
+                    let dx = await crpGetXgivenY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy.value.value);
+                    if(dx.type == 7){
+                        await crpSwapYforX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy.value.value);
+                    } else {
+                        console.log('error: ', dx.value.value);
+                        let dy_i = Math.round(Number(dy.value.value) / 4);
+                        for(let i = 0; i < 4; i++) {
+                            let dx_i = await crpGetXgivenY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy_i);
+                            if(dx_i.type == 7) {
+                                await crpSwapYforX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy_i);
+                            } else {
+                                console.log('error: ', dx_i.value.value);
+                            }
+                        }                    
+                    }
                 } else {
                     console.log('error (or zero): ', dy.value.value);
                 }
@@ -595,9 +623,13 @@ async function get_pool_details_crp(){
         let details = await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])
         let balance_x = details.value.data['balance-x'];
         let balance_y = details.value.data['balance-y'];
+        let weight_x = details.value.data['weight-x'];
+        let weight_y = details.value.data['weight-y'];
         console.log('ltv: ', Number(ltv.value.value) / ONE_8,
-                    'balance-collateral: ', Number(balance_x.value) / ONE_8,
-                    'balance-token: ', Number(balance_y.value) / ONE_8);
+                    'balance-collateral: ', Math.round(Number(balance_x.value) / ONE_8),
+                    'weight: ', Number(weight_x.value) / ONE_8,
+                    'balance-token: ', Math.round(Number(balance_y.value) / ONE_8),
+                    'weight: ', Number(weight_y.value) / ONE_8);
         // printResult(await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']));
     }
 }
@@ -740,7 +772,7 @@ async function run(){
     // await arbitrage_crp(dry_run=false);    
     // await arbitrage_ytp(dry_run=false);    
     // await test_spot_trading();
-    await test_margin_trading();
+    // await test_margin_trading();
 
     // await create_fwp(add_only=true);
     // await create_crp(add_only=true);     
@@ -749,15 +781,17 @@ async function run(){
     // await arbitrage_fwp(dry_run=true);
     // await arbitrage_crp(dry_run=true);    
     // await arbitrage_ytp(dry_run=true); 
-    // await get_pool_details_fwp();
-    // await get_pool_details_crp();
-    // await get_pool_details_ytp();   
+    await get_pool_details_fwp();
+    await get_pool_details_crp();
+    await get_pool_details_ytp();   
 
     // await reduce_position_ytp(0.5e+8);
     // await reduce_position_crp(ONE_8, 'yield');
     // await reduce_position_crp(ONE_8, 'key');
     
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');        
+    // await see_balance(process.env.USER_ACCOUNT_ADDRESS);        
+
     // for(const key in _white_list){
     //     await get_some_token(_white_list[key]);
     //     // await burn('token-wbtc', _white_list[key], 5);
