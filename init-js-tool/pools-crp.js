@@ -16,7 +16,7 @@ const {wait_until_confirmation } = require('./utils');
   
   const crpCreate = async (token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
     console.log('[CRP] create-pool...', token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
-    const privateKey = await getUserPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'collateral-rebalancing-pool',

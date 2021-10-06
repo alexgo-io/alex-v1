@@ -518,15 +518,15 @@ async function arbitrage_ytp(dry_run=true){
                     let ltv = Number((await crpGetLtv(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])).value.value);
                     ltv /= Number((await ytpGetPrice(_list[key]['yield_token'])).value.value);
                     let dy_ltv = Math.round(dy_collateral / ltv);
-                    let dx = await ytpGetXgivenY(_list[key]['yield_token'], dy.value.value);                    
+                    let dx = await ytpGetXgivenY(_list[key]['yield_token'], Math.round(Number(dy.value.value) / ltv));                    
                     let dx_fwp;
-                    if(_list[key]['token'] == 'token-usda') {
-                        dx_fwp = await fwpGetYgivenX(_list[key]['collateral'], _list[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
-                    } else {
+                    if(_list[key]['collateral'] == 'token-usda') {
                         dx_fwp = await fwpGetXgivenY(_list[key]['token'], _list[key]['collateral'], 0.5e+8, 0.5e+8, dy_ltv);
+                    } else {
+                        dx_fwp = await fwpGetYgivenX(_list[key]['collateral'], _list[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
                     }
                     if (dx.type == 7 && dx_fwp.type == 7){
-                        await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv);
+                        // await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv);
                     } else {         
                         console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);          
                         dy_ltv = Math.round(dy_ltv / 4);
@@ -750,7 +750,7 @@ _white_list = {
     // Marvin: 'SP1YMQJR0T1P52RT1VVPZZYZEQXQ5HBE6VWR36HFE',
     James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
     Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
-    Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
+    // Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
     // Chan2: 'STPXVKFHHPJ9FTMQEXCM41PH1042BVG2YMM310TK',
     // Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
     // Chan4: 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT',
@@ -767,15 +767,16 @@ _white_list = {
 async function run(){
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
+    await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
-    // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);    
+    // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
+    // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
-    // await arbitrage_fwp(dry_run=false);
-    // await arbitrage_crp(dry_run=false);    
+    await arbitrage_fwp(dry_run=false);
+    await arbitrage_crp(dry_run=false);    
     await arbitrage_ytp(dry_run=false);    
     // await test_spot_trading();
     // await test_margin_trading();
