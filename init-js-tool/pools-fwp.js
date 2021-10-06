@@ -235,8 +235,7 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
 }
 
 const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
-  console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dy);
-
+  console.log('[FWP] get-x-given-y...', tokenX, tokenY, weightX, weightY, dy);
   const options = {
     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
     contractName: 'fixed-weight-pool',
