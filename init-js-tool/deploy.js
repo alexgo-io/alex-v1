@@ -2,7 +2,7 @@ require('dotenv').config();
 const { makeContractDeploy, broadcastTransaction, AnchorMode } = require('@stacks/transactions');
 const fs = require('fs')
 const {
-    getPK, network
+    getDeployerPK, getUserPK, network
   } = require('./wallet');
 const readline = require('readline-promise').default;
 const { exit } = require('process');
@@ -32,10 +32,11 @@ let contract_paths = [
     "pool/fixed-weight-pool.clar",
     "pool/liquidity-bootstrapping-pool.clar",
     "pool/yield-token-pool.clar",
-    "pool/collateral-rebalancing-pool.clar",      
-    "pool-token/fwp-wbtc-usda-50-50.clar",    
-    "multisig/multisig-fwp-wbtc-usda-50-50.clar",  
+    "pool/collateral-rebalancing-pool.clar",
     "faucet.clar",
+
+    "pool-token/fwp-wbtc-usda-50-50.clar",    
+    "multisig/multisig-fwp-wbtc-usda-50-50.clar",      
 
     // "yield-token/yield-wbtc-240.clar",
     // "yield-token/yield-usda-240.clar",    
@@ -153,7 +154,7 @@ async function walkDir() {
 
 async function deploy(filePath, contractName){
     console.log("Deploying:: ", contractName )
-    let privatekey = await getPK();
+    let privatekey = await getDeployerPK();
     const txOptions = {
       contractName: contractName,
       codeBody: fs.readFileSync(filePath).toString(),
@@ -174,7 +175,7 @@ async function deploy(filePath, contractName){
             let contract_record = {}
             contract_record['name'] = contractName
             contract_record['version'] = VERSION
-            contract_record['deployer'] = process.env.ACCOUNT_ADDRESS
+            contract_record['deployer'] = process.env.DEPLOYER_ACCOUNT_ADDRESS
             contract_records['Contracts'].push(contract_record)            
             break;
         } else if (res['tx_status'] === 'abort_by_response'){

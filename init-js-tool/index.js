@@ -243,9 +243,9 @@ async function create_fwp(add_only){
     console.log("------ FWP Creation / Add Liquidity ------");
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
 
-    usda_balance = await balance('token-usda', process.env.ACCOUNT_ADDRESS);
+    usda_balance = await balance('token-usda', process.env.DEPLOYER_ACCOUNT_ADDRESS);
     console.log('usda balance: ', usda_balance);   
-    wbtc_balance = await balance('token-wbtc', process.env.ACCOUNT_ADDRESS);
+    wbtc_balance = await balance('token-wbtc', process.env.DEPLOYER_ACCOUNT_ADDRESS);
     console.log('wbtc balance: ', wbtc_balance);   
     
     _pools = {
@@ -707,42 +707,44 @@ function timestamp() {
 
 
 _white_list = {
-    // Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
-    // Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
+    Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
+    Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
     // Marvin: 'SP1YMQJR0T1P52RT1VVPZZYZEQXQ5HBE6VWR36HFE',
-    // James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
-    // Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
-    // Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
+    James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
+    Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
+    Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
     // Chan2: 'STPXVKFHHPJ9FTMQEXCM41PH1042BVG2YMM310TK',
-    Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
-    // Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
-    // Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
-    // Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
-    // Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
-    // Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
-    // Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
-    // Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
-    // Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
+    // Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
+    // Chan4: 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT',
+    Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
+    Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
+    Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
+    Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
+    Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
+    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
+    Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
+    Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
 }
 
 async function run(){
     // await set_faucet_amounts();
-    // await see_balance(process.env.ACCOUNT_ADDRESS);
-    await update_price_oracle();    
-    // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
-    // await mint_some_usda(process.env.ACCOUNT_ADDRESS + '.alex-reserve-pool');    
+    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await update_price_oracle();    
+    // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
+    // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);    
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
-    await arbitrage_fwp(dry_run=false);
-    await arbitrage_crp(dry_run=false);    
-    await arbitrage_ytp(dry_run=false);    
+    // await arbitrage_fwp(dry_run=false);
+    // await arbitrage_crp(dry_run=false);    
+    // await arbitrage_ytp(dry_run=false);    
     // await test_spot_trading();
-    // await test_margin_trading();
+    await test_margin_trading();
 
     // await create_fwp(add_only=true);
+    // await create_crp(add_only=true);     
     // await create_ytp(add_only=true);
-    // await create_crp(add_only=true); 
 
     // await arbitrage_fwp(dry_run=true);
     // await arbitrage_crp(dry_run=true);    
@@ -755,8 +757,7 @@ async function run(){
     // await reduce_position_crp(ONE_8, 'yield');
     // await reduce_position_crp(ONE_8, 'key');
     
-    // await see_balance(process.env.ACCOUNT_ADDRESS + '.alex-vault');    
-    
+    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');        
     // for(const key in _white_list){
     //     await get_some_token(_white_list[key]);
     //     // await burn('token-wbtc', _white_list[key], 5);

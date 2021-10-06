@@ -1,5 +1,5 @@
 const {
-    getPK, network
+    getDeployerPK, getUserPK, network
   } = require('./wallet');
   const {
     makeContractCall,
@@ -17,9 +17,9 @@ const {
   
   const setUsdaAmount = async (amount) => {
     console.log('[Faucet] set-usda-amount...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'faucet',
         functionName: 'set-usda-amount',
         functionArgs: [         
@@ -43,9 +43,9 @@ const {
 
   const setWbtcAmount = async (amount) => {
     console.log('[Faucet] set-wbtc-amount...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'faucet',
         functionName: 'set-wbtc-amount',
         functionArgs: [         
@@ -69,9 +69,9 @@ const {
 
   const setStxAmount = async (amount) => {
     console.log('[Faucet] set-stx-amount...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'faucet',
         functionName: 'set-stx-amount',
         functionArgs: [         
@@ -95,9 +95,9 @@ const {
 
   const getSomeTokens = async (recipient) => {
     console.log('[Faucet] get some tokens...');
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'faucet',
         functionName: 'get-some-tokens',
         functionArgs: [     

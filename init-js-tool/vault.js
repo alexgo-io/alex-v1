@@ -1,5 +1,5 @@
 const {
-    getPK, network
+    getDeployerPK, getUserPK, network
 } = require('./wallet');
 const {
     makeContractCall,
@@ -17,14 +17,14 @@ const { principalCV } = require('@stacks/transactions/dist/clarity/types/princip
 
 const flashloan = async(loan_contract, token, amount) => {
     console.log('[Vault] flash-loan...', loan_contract, token, amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'alex-vault',
         functionName: 'flash-loan',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, loan_contract),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, loan_contract),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             uintCV(amount),
         ],
         senderKey: privateKey,
@@ -45,9 +45,9 @@ const flashloan = async(loan_contract, token, amount) => {
 
 const mint = async(token, recipient, amount) => {
     console.log('[Token] mint...', token, recipient, amount);
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
         functionName: 'mint',
         functionArgs: [
@@ -72,9 +72,9 @@ const mint = async(token, recipient, amount) => {
 
 const burn = async(token, recipient, amount) => {
     console.log('[Token] burn...', token, recipient, amount);
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
         functionName: 'burn',
         functionArgs: [
@@ -101,14 +101,14 @@ const balance = async(token, owner) => {
     console.log('[Token] get-balance...', token, owner);
 
     const options = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
         functionName: 'get-balance',
         functionArgs: [
         principalCV(owner),
         ],
         network: network,
-        senderAddress: process.env.ACCOUNT_ADDRESS,
+        senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
         return callReadOnlyFunction(options);
@@ -121,14 +121,14 @@ const getBalance = async(token) => {
     console.log('[VAULT] get-balance...', token);
 
     const options = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'alex-vault',
         functionName: 'get-balance',
         functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
         ],
         network: network,
-        senderAddress: process.env.ACCOUNT_ADDRESS,
+        senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
         const result = await callReadOnlyFunction(options);
