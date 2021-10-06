@@ -526,7 +526,7 @@ async function arbitrage_ytp(dry_run=true){
                         dx_fwp = await fwpGetYgivenX(_list[key]['collateral'], _list[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
                     }
                     if (dx.type == 7 && dx_fwp.type == 7){
-                        // await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv);
+                        await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv);
                     } else {         
                         console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);          
                         dy_ltv = Math.round(dy_ltv / 4);
