@@ -322,7 +322,7 @@ async function get_some_token(recipient){
     await see_balance(recipient);
 }
 
-async function arbitrage_fwp(){
+async function arbitrage_fwp(dry_run=true){
     console.log("------ FWP Arbitrage ------")
 
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
@@ -336,26 +336,33 @@ async function arbitrage_fwp(){
 
     let implied = Number(balance_y) / Number(balance_x);
     console.log("printed: ", printed, "implied:", implied);
-    if (printed < implied) {
-        let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
-        console.log("dx = ", dx);
-        if(dx.type === 7){
-            await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
-        }
-    } else {
-        let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
-        console.log("dy = ", dy);
-        if(dy.type === 7){
-            await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
-        }
-    }  
-    result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
-    balance_x = result.value.data['balance-x'].value;
-    balance_y = result.value.data['balance-y'].value;      
-    console.log('post arb implied: ', balance_y / balance_x);    
+
+    if (!dry_run) {
+        if (printed < implied) {
+            let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
+
+            if(dx.type === 7 && dx.value.value > 0n){
+                await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
+            } else {
+                console.log('error (or zero): ', dx.value.value);
+            }
+        } else {
+            let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
+
+            if(dy.type === 7 && dy.value.value > 0n){
+                await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
+            } else {
+                console.log('error (or zero): ', dy.value.value);
+            }
+        }  
+        result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
+        balance_x = result.value.data['balance-x'].value;
+        balance_y = result.value.data['balance-y'].value;      
+        console.log('post arb implied: ', balance_y / balance_x);    
+    }
 }
 
-async function arbitrage_crp(){
+async function arbitrage_crp(dry_run=true){
     console.log("------ CRP Arbitrage ------")
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
     let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;      
@@ -388,30 +395,37 @@ async function arbitrage_crp(){
 
         implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
         console.log("printed: ", printed, "implied:", implied);
-        if (printed < implied) {
-            let dx = await crpGetXgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
-            console.log("dx = ", dx);
-            if(dx.type === 7){
-                await crpSwapXforY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx.value.value);
-            }
-        } else {
-            let dy = await crpGetYgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
-            console.log("dy = ", dy);
-            if(dy.type === 7){
-                await crpSwapYforX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy.value.value);
-            }
-        } 
-        result = await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']);
-        balance_x = result.value.data['balance-x'].value;
-        balance_y = result.value.data['balance-y'].value;
-        weight_x = result.value.data['weight-x'].value;
-        weight_y = result.value.data['weight-y'].value;    
-        implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
-        console.log('post arb implied: ', implied);    
-    }    
+
+        if (!dry_run){
+            if (printed < implied) {
+                let dx = await crpGetXgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
+
+                if(dx.type === 7 && dx.value.value > 0n){
+                    await crpSwapXforY(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dx.value.value);
+                } else {
+                    console.log('error (or zero): ', dx.value.value);
+                }
+            } else {
+                let dy = await crpGetYgivenPrice(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], Math.round(printed * ONE_8));
+
+                if(dy.type === 7 && dy.value.value > 0n){
+                    await crpSwapYforX(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'], dy.value.value);
+                } else {
+                    console.log('error (or zero): ', dy.value.value);
+                }
+            } 
+            result = await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']);
+            balance_x = result.value.data['balance-x'].value;
+            balance_y = result.value.data['balance-y'].value;
+            weight_x = result.value.data['weight-x'].value;
+            weight_y = result.value.data['weight-y'].value;    
+            implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
+            console.log('post arb implied: ', implied);    
+        }    
+    }
 }
 
-async function arbitrage_ytp(){
+async function arbitrage_ytp(dry_run=true){
     console.log("------ YTP Arbitrage ------")
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
     let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;      
@@ -430,7 +444,7 @@ async function arbitrage_ytp(){
     }
 
     for (const key in _list) {
-
+        console.log(_list[key]);
         result = await ytpGetYield(_list[key]['yield_token']);
         implied_yield = Number(result.value.value) / ONE_8;
 
@@ -439,40 +453,64 @@ async function arbitrage_ytp(){
         target_yield = _list[key]['target_apy'] * time_to_maturity;
 
         console.log("target: ", target_yield, "implied:", implied_yield);
-        if (target_yield < implied_yield) {
-            let dx = await ytpGetXgivenYield(_list[key]['yield_token'], Math.round(target_yield * ONE_8));
-            console.log("dx = ", dx);
-            if(dx.type === 7){
-                let result = await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx.value.value);
-                if (!result) {
-                    dx_i = dx.value.value / 4n;
-                    for (let i = 0; i < 4; i++) {
-                        await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx_i);
-                    }
-                }
-            }
-        } else {
-            let dy = await ytpGetYgivenYield(_list[key]['yield_token'], Math.round(target_yield * ONE_8));
-            console.log("dy = ", dy);
-            if(dy.type === 7){
-                let spot = Number((await crpGetSpot(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])).value.value) / ONE_8;
-                let dy_collateral = Number(dy.value.value) * spot;
-                let ltv = Number((await crpGetLtv(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])).value.value);
-                ltv /= Number((await ytpGetPrice(_list[key]['yield_token'])).value.value);
-                let dy_ltv = Math.round(dy_collateral / ltv);
-                let result = await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv)
-                if (!result) {
-                    dy_ltv = Math.round(dy_ltv / 4);
-                    for (let i = 0; i < 4; i++){
-                        await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv); 
-                    }
-                }
-            }
-        } 
 
-        result = await ytpGetYield(_list[key]['yield_token']);
-        implied_yield = Number(result.value.value) / ONE_8;
-        console.log('post arb implied: ', implied_yield);    
+        if (!dry_run){
+            if (target_yield < implied_yield) {
+                let dx = await ytpGetXgivenYield(_list[key]['yield_token'], Math.round(target_yield * ONE_8));
+
+                if(dx.type === 7 && dx.value.value > 0n){
+                    let dy = await ytpGetYgivenX(_list[key]['yield_token'], dx.value.value);                    
+                    if(dy.type == 7){                
+                        await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx.value.value);
+                    } else {
+                        console.log('error: ', dy.value.value);
+                        dx_i = Math.round(Number(dx.value.value) / 4);
+                        for (let i = 0; i < 4; i++) {
+                            let dy_i = await ytpGetYgivenX(_list[key]['yield_token'], dx_i);
+                            if(dy_i.type == 7){
+                                await ytpSwapXforY(_list[key]['yield_token'], _list[key]['token'], dx_i);
+                            } else {
+                                console.log('error: ', dy_i.value.value);
+                            }
+                        }
+                    }
+                } else {
+                    console.log('error (or zero):', dx.value.value);
+                }
+            } else {
+                let dy = await ytpGetYgivenYield(_list[key]['yield_token'], Math.round(target_yield * ONE_8));
+                
+                if(dy.type === 7 && dy.value.value > 0n){
+                    let spot = Number((await crpGetSpot(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])).value.value) / ONE_8;
+                    let dy_collateral = Number(dy.value.value) * spot;
+                    let ltv = Number((await crpGetLtv(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry'])).value.value);
+                    ltv /= Number((await ytpGetPrice(_list[key]['yield_token'])).value.value);
+                    let dy_ltv = Math.round(dy_collateral / ltv);
+                    let dx = await ytpGetXgivenY(_list[key]['yield_token'], dy.value.value);
+                    if (dx.type == 7){
+                        await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv);
+                    } else {         
+                        console.log('error: ', dx.value.value);          
+                        dy_ltv = Math.round(dy_ltv / 4);
+                        dy_i = Math.round(Number(dy.value.value) / 4 );
+                        for (let i = 0; i < 4; i++){
+                            let dx_i = await ytpGetXgivenY(_list[key]['yield_token'], dy_i);
+                            if (dx_i.type == 7){
+                                await crpAddToPostionAndSwitch(_list[key]['token'], _list[key]['collateral'], _list[key]['yield_token'], _list[key]['key_token'], dy_ltv); 
+                            } else {
+                                console.log('error: ', dx_i.value.value);
+                            }
+                        }
+                    }
+                } else {
+                    console.log('error (or zero): ', dy.value.value);
+                }
+            }    
+
+            result = await ytpGetYield(_list[key]['yield_token']);
+            implied_yield = Number(result.value.value) / ONE_8;
+            console.log('post arb implied: ', implied_yield);    
+        }
     }    
 }
 
@@ -639,48 +677,53 @@ _white_list = {
     // Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
     // Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
     // Chan2: 'STPXVKFHHPJ9FTMQEXCM41PH1042BVG2YMM310TK',
-    Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
-    Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
-    Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
-    Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
-    Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
-    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
-    Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
-    Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
+    Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
+    // Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
+    // Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
+    // Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
+    // Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
+    // Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
+    // Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
+    // Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
+    // Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
 }
 
 async function run(){
     // await set_faucet_amounts();
     // await see_balance(process.env.ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
+    await update_price_oracle();    
     // await mint_some_tokens(process.env.ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
-    // await arbitrage_fwp();
-    // await arbitrage_crp();    
-    // await arbitrage_ytp();    
+    await arbitrage_fwp(dry_run=false);
+    await arbitrage_crp(dry_run=false);    
+    await arbitrage_ytp(dry_run=false);    
     // await test_spot_trading();
     // await test_margin_trading();
 
-    // await get_pool_details_fwp();
-    // await get_pool_details_crp();
-    // await get_pool_details_ytp();
-
     // await create_fwp(add_only=true);
     // await create_ytp(add_only=true);
-    // await create_crp(add_only=true);    
+    // await create_crp(add_only=true); 
+
+    // await arbitrage_fwp(dry_run=true);
+    // await arbitrage_crp(dry_run=true);    
+    // await arbitrage_ytp(dry_run=true); 
+    // await get_pool_details_fwp();
+    // await get_pool_details_crp();
+    // await get_pool_details_ytp();   
 
     // await reduce_position_ytp(0.5e+8);
     // await reduce_position_crp(ONE_8, 'yield');
     // await reduce_position_crp(ONE_8, 'key');
     
     // await see_balance(process.env.ACCOUNT_ADDRESS + '.alex-vault');    
-    for(const key in _white_list){
-        await get_some_token(_white_list[key]);
-        // await burn('token-wbtc', _white_list[key], 5);
-        // await burn('token-usda', _white_list[key], 500000e+6);
-    }
+    
+    // for(const key in _white_list){
+    //     await get_some_token(_white_list[key]);
+    //     // await burn('token-wbtc', _white_list[key], 5);
+    //     // await burn('token-usda', _white_list[key], 500000e+6);
+    // }
 }
 run();
