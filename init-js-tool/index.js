@@ -216,37 +216,36 @@ async function update_price_oracle(){
 }
 
 async function mint_some_tokens(recipient){
+    console.log('------ Mint Some Tokens ------');
     await mint_some_usda(recipient);
     await mint_some_wbtc(recipient);
 }
 
 async function mint_some_usda(recipient){
+    console.log('------ Mint Some USDA ------');
     await mint('token-usda', recipient, 200000000000000000n);
     usda_balance = await balance('token-usda', recipient);
-    console.log('usda balance: ', usda_balance);
+    console.log('usda balance: ', format_number(usda_balance));
 }
 
 async function mint_some_wbtc(recipient){
+    console.log('------ Mint Some WBTC ------');
     await mint('token-wbtc', recipient, 5000000000000);
     wbtc_balance = await balance('token-wbtc', recipient);
-    console.log('wbtc balance: ', wbtc_balance);
+    console.log('wbtc balance: ', format_number(wbtc_balance));
 }
 
 async function see_balance(owner){
+    console.log('------ See Balance ------');
     usda_balance = await balance('token-usda', owner);
-    console.log('usda balance: ', Number(usda_balance.value.value) / ONE_8);
+    console.log('usda balance: ', format_number(Number(usda_balance.value.value) / ONE_8));
     wbtc_balance = await balance('token-wbtc', owner);
-    console.log('wbtc balance: ', Number(wbtc_balance.value.value) / ONE_8); 
+    console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8)); 
 }
 
 async function create_fwp(add_only){
     console.log("------ FWP Creation / Add Liquidity ------");
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
-
-    usda_balance = await balance('token-usda', process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    console.log('usda balance: ', usda_balance);   
-    wbtc_balance = await balance('token-wbtc', process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    console.log('wbtc balance: ', wbtc_balance);   
+    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
     
     _pools = {
         1: {
@@ -310,6 +309,7 @@ async function create_crp(add_only){
 }
 
 async function set_faucet_amounts(){
+    console.log('------ Set Faucet Amounts ------');
     await setUsdaAmount(500000e+8);
     await setWbtcAmount(5e+8);
     await setStxAmount(250e+8);
@@ -336,7 +336,7 @@ async function arbitrage_fwp(dry_run=true){
     let balance_y = result.value.data['balance-y'].value;
 
     let implied = Number(balance_y) / Number(balance_x);
-    console.log("printed: ", printed, "implied:", implied);
+    console.log("printed: ", format_number(printed, 8), "implied:", format_number(implied, 8));
 
     if (!dry_run) {
         if (printed < implied) {
@@ -383,7 +383,7 @@ async function arbitrage_fwp(dry_run=true){
         result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
         balance_x = result.value.data['balance-x'].value;
         balance_y = result.value.data['balance-y'].value;      
-        console.log('post arb implied: ', balance_y / balance_x);    
+        console.log('post arb implied: ', format_number(balance_y / balance_x, 8));    
     }
 }
 
@@ -407,7 +407,7 @@ async function arbitrage_crp(dry_run=true){
     }
 
     for (const key in _list) {
-        console.log(_list[key]);
+        // console.log(_list[key]);
         printed = Number(usdaPrice) / Number(wbtcPrice);
         if (_list[key]['token'] === 'token-usda') {
             printed = Number(wbtcPrice) / Number(usdaPrice);
@@ -420,7 +420,7 @@ async function arbitrage_crp(dry_run=true){
         weight_y = result.value.data['weight-y'].value;
 
         implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
-        console.log("printed: ", printed, "implied:", implied);
+        console.log("printed: ", format_number(printed, 8), "implied:", format_number(implied, 8));
 
         if (!dry_run){
             if (printed < implied) {
@@ -474,7 +474,7 @@ async function arbitrage_crp(dry_run=true){
             weight_x = result.value.data['weight-x'].value;
             weight_y = result.value.data['weight-y'].value;    
             implied = Number(balance_y) * Number(weight_x) / Number(balance_x) / Number(weight_y);
-            console.log('post arb implied: ', implied);    
+            console.log('post arb implied: ', format_number(implied, 8));    
         }    
     }
 }
@@ -482,9 +482,6 @@ async function arbitrage_crp(dry_run=true){
 async function arbitrage_ytp(dry_run=true){
     console.log("------ YTP Arbitrage ------")
     console.log(timestamp());
-
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;  
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;      
 
     _list = {
         // test1: { yield_token: 'yield-wbtc-240' , token: 'token-wbtc', target_apy: 0.10, collateral: 'token-usda', key_token: 'key-wbtc-240-usda', expiry: 240e+8 },
@@ -500,7 +497,7 @@ async function arbitrage_ytp(dry_run=true){
     }
 
     for (const key in _list) {
-        console.log(_list[key]);
+        // console.log(_list[key]);
         result = await ytpGetYield(_list[key]['yield_token']);
         implied_yield = Number(result.value.value) / ONE_8;
 
@@ -508,7 +505,7 @@ async function arbitrage_ytp(dry_run=true){
         let time_to_maturity = (Math.round(_list[key]['expiry'] / ONE_8) - node_info['burn_block_height']) / 2102400;
         target_yield = _list[key]['target_apy'] * time_to_maturity;
 
-        console.log("target: ", target_yield, "implied:", implied_yield);
+        console.log("target: ", format_number(target_yield, 8), "implied:", format_number(implied_yield, 8));
 
         if (!dry_run){
             if (target_yield < implied_yield) {
@@ -571,7 +568,7 @@ async function arbitrage_ytp(dry_run=true){
 
             result = await ytpGetYield(_list[key]['yield_token']);
             implied_yield = Number(result.value.value) / ONE_8;
-            console.log('post arb implied: ', implied_yield);    
+            console.log('post arb implied: ', format_number(implied_yield, 8));    
         }
     }    
 }
@@ -593,7 +590,7 @@ async function test_spot_trading(){
     if (to_amount.type === 7){
         await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount);
     } else {
-        console.log(to_amount);
+        console.log('error: ', to_amount.value.value);
     }
 }
 
@@ -612,8 +609,8 @@ async function test_margin_trading(){
     let margin = Math.round(amount * (1 - ltv)); // in BTC
     let leverage = 1 / (1 - ltv);
 
-    console.log("ltv: ", ltv, "; amount (BTC): ", amount, "; margin (BTC): ", margin);
-    console.log("leverage: ", leverage, "; trade_price (USD): ", trade_price)
+    console.log("ltv: ", format_number(ltv, 2), "; amount (BTC): ", format_number(amount, 8), "; margin (BTC): ", format_number(margin, 8));
+    console.log("leverage: ", format_number(leverage, 2), "; trade_price (USD): ", format_number(trade_price, 2));
 
     await flashloan('flash-loan-user-margin-wbtc-usda-5760', 'token-wbtc', (amount - margin));
 
@@ -628,14 +625,14 @@ async function test_margin_trading(){
     margin = Math.round(amount * (1 - ltv) * Number(wbtcPrice) / ONE_8); // in USD
     leverage = 1 / (1 - ltv);
 
-    console.log("ltv: ", ltv, "; amount (BTC): ", amount, "; margin (USD): ", margin);
-    console.log("leverage: ", leverage, "; trade_price (USD): ", trade_price)
+    console.log("ltv: ", format_number(ltv, 2), "; amount (BTC): ", format_number(amount, 8), "; margin (USD): ", format_number(margin, 2));
+    console.log("leverage: ", format_number(leverage, 2), "; trade_price (USD): ", format_number(trade_price, 2))
 
     await flashloan('flash-loan-user-margin-usda-wbtc-5760', 'token-usda', (trade_price - margin));    
 }
 
 function format_number(number, fixed=2){
-    return number.toFixed(fixed).replace(/\d(?=(\d{3})+\.)/g, '$&,');    
+    return number.toFixed(fixed).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 }
 
 async function get_pool_details_crp(){
@@ -660,9 +657,9 @@ async function get_pool_details_crp(){
         let weight_x = details.value.data['weight-x'];
         let weight_y = details.value.data['weight-y'];
         console.log('ltv: ', format_number(Number(ltv.value.value) / ONE_8),
-                    'balance-collateral: ', format_number(Number(balance_x.value) / ONE_8),
-                    'balance-token: ', format_number(Number(balance_y.value) / ONE_8),
-                    'weights: ', format_number(Number(weight_x.value) / ONE_8),                    
+                    '; balance-collateral: ', format_number(Number(balance_x.value) / ONE_8),
+                    '; balance-token: ', format_number(Number(balance_y.value) / ONE_8),
+                    '; weights (collateral / token): ', format_number(Number(weight_x.value) / ONE_8),                    
                     '/', format_number(Number(weight_y.value) / ONE_8));
         // printResult(await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']));
     }
@@ -698,9 +695,11 @@ async function get_pool_details_ytp(){
         let balance_token = details.value.data['balance-token'];
 
         console.log('yield: ', format_number(Number(yied.value.value) / ONE_8, 8), 'price: ', format_number(Number(price.value.value) / ONE_8, 8));
-        console.log('balance (yield-token/virtual/token): ', 
+        console.log('balance (yield-token / virtual / token): ', 
                     format_number(Number(balance_aytoken.value) / ONE_8), 
+                    ' / ',
                     format_number(Number(balance_virtual.value) / ONE_8), 
+                    ' / ',
                     format_number(Number(balance_token.value) / ONE_8));
     }
 }
@@ -818,9 +817,9 @@ async function run(){
     // await create_crp(add_only=true);     
     // await create_ytp(add_only=true);
 
-    // await arbitrage_fwp(dry_run=true);
-    // await arbitrage_crp(dry_run=true);    
-    // await arbitrage_ytp(dry_run=true); 
+    await arbitrage_fwp(dry_run=true);
+    await arbitrage_crp(dry_run=true);    
+    await arbitrage_ytp(dry_run=true); 
     await get_pool_details_fwp();
     await get_pool_details_crp();
     await get_pool_details_ytp();   

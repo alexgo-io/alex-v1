@@ -15,6 +15,7 @@ const {wait_until_confirmation } = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
   const crpCreate = async (token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] create-pool...', token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
     const privateKey = await getDeployerPK();
     const txOptions = {
@@ -50,6 +51,7 @@ const {wait_until_confirmation } = require('./utils');
   }
   
   const crpAddToPostionAndSwitch = async (token, collateral, yieldToken, keyToken, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] add-to-position-and-switch...', token, collateral, yieldToken, keyToken, dx);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -80,6 +82,7 @@ const {wait_until_confirmation } = require('./utils');
   }
 
   const crpAddToPostion = async (token, collateral, yieldToken, keyToken, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] add-to-position..', token, collateral, yieldToken, keyToken, dx);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -110,6 +113,7 @@ const {wait_until_confirmation } = require('./utils');
   }  
 
   const crpReducePostionYield = async (token, collateral, yieldToken, percent) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] reduce-position-yield..', token, collateral, yieldToken, percent);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -139,6 +143,7 @@ const {wait_until_confirmation } = require('./utils');
   }  
 
   const crpReducePostionKey = async (token, collateral, keyToken, percent) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] reduce-position-key..', token, collateral, keyToken, percent);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -168,6 +173,7 @@ const {wait_until_confirmation } = require('./utils');
   }  
 
   const crpSwapXforY = async (token, collateral, expiry, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] swap-x-for-y...', token, collateral, expiry, dx);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -197,6 +203,7 @@ const {wait_until_confirmation } = require('./utils');
   }  
 
   const crpSwapYforX = async (token, collateral, expiry, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] swap-y-for-x...', token, collateral, expiry, dy);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -226,6 +233,7 @@ const {wait_until_confirmation } = require('./utils');
   }   
   
   const crpGetLtv = async (token, collateral, expiry) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-ltv...', token, collateral, expiry);
   
     const options = {
@@ -248,6 +256,7 @@ const {wait_until_confirmation } = require('./utils');
   };
   
   const crpGetXgivenY = async (token, collateral, expiry, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-x-given-y...', token, collateral, expiry, dy);
   
     const options = {
@@ -272,6 +281,7 @@ const {wait_until_confirmation } = require('./utils');
   };
   
   const crpGetYgivenX = async (token, collateral, expiry, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-y-given-x...', token, collateral, expiry, dx);
   
     const options = {
@@ -296,6 +306,7 @@ const {wait_until_confirmation } = require('./utils');
   };
 
   const crpGetYgivenPrice = async (token, collateral, expiry, price) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-y-given-price...', token, collateral, expiry, price);
   
     const options = {
@@ -319,6 +330,7 @@ const {wait_until_confirmation } = require('./utils');
   };  
 
   const crpGetXgivenPrice = async (token, collateral, expiry, price) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-y-given-price...', token, collateral, expiry, price);
   
     const options = {
@@ -342,6 +354,7 @@ const {wait_until_confirmation } = require('./utils');
   };  
   
   const crpGetPoolValueInToken = async (token, collateral, expiry) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-pool-value-in-token...', token, collateral, expiry);
   
     const options = {
@@ -365,6 +378,7 @@ const {wait_until_confirmation } = require('./utils');
   };
   
   const crpGetPoolDetails = async (token, collateral, expiry) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-pool-details...', token, collateral, expiry);
   
     const options = {
@@ -387,6 +401,7 @@ const {wait_until_confirmation } = require('./utils');
   };
 
   const crpGetSpot = async (token, collateral, expiry) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[CRP] get-spot...', token, collateral, expiry);
   
     const options = {
@@ -409,6 +424,7 @@ const {wait_until_confirmation } = require('./utils');
   };  
   
   const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
+    console.log('--------------------------------------------------------------------------');
       console.log('Getting CRP Weight-Y...', token, collateral, expiry, strike, bs_vol);
     
       const options = {
