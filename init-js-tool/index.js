@@ -343,7 +343,19 @@ async function arbitrage_fwp(dry_run=true){
             let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
 
             if(dx.type === 7 && dx.value.value > 0n){
-                await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
+                let dy = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
+                if(dy.type == 7) {
+                    await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
+                } else {
+                    console.log('error: ', dy.value.value);
+                    let dx_i = Number(dx.value.value) / 4;
+                    for(let i = 0; i < 4; i++){
+                        let dy_i = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx_i);
+                        if( dy_i.type == 7 ){
+                            await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx_i);
+                        }
+                    }
+                }
             } else {
                 console.log('error (or zero): ', dx.value.value);
             }
@@ -351,7 +363,19 @@ async function arbitrage_fwp(dry_run=true){
             let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
 
             if(dy.type === 7 && dy.value.value > 0n){
-                await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
+                let dx = await fwpGetXgivenY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
+                if(dx.type == 7) {
+                    await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
+                } else {
+                    console.log('error: ', dx.value.value);
+                    let dy_i = Number(dy.value.value) / 4;
+                    for(let i = 0; i < 4; i++){
+                        let dx_i = await fwpGetXgivenY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy_i);
+                        if( dx_i.type == 7 ){
+                            await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy_i);
+                        }
+                    }
+                }
             } else {
                 console.log('error (or zero): ', dy.value.value);
             }
@@ -759,10 +783,11 @@ _white_list = {
     // Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
     // Chan4: 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT',
     // Chan5: 'ST3SP15W4B0D1DS8R37E85XP9E48FTD2JF30X11D9',
-    Chan6: 'ST37GBP1245R8TCX45YPXG088EDXWWY949J8A7618',
+    // Chan6: 'ST37GBP1245R8TCX45YPXG088EDXWWY949J8A7618',
     // Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
     // Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
     // Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
+    Rachel2: 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y',
     // Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
     // Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
     // Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
