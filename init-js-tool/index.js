@@ -610,6 +610,10 @@ async function test_margin_trading(){
     await flashloan('flash-loan-user-margin-usda-wbtc-5760', 'token-usda', (trade_price - margin));    
 }
 
+function format_number(number, fixed=2){
+    return number.toFixed(fixed).replace(/\d(?=(\d{3})+\.)/g, '$&,');    
+}
+
 async function get_pool_details_crp(){
     _list = {
         // test1: { token: 'token-wbtc', collateral: 'token-usda', expiry: 240e+8 },
@@ -631,11 +635,11 @@ async function get_pool_details_crp(){
         let balance_y = details.value.data['balance-y'];
         let weight_x = details.value.data['weight-x'];
         let weight_y = details.value.data['weight-y'];
-        console.log('ltv: ', Number(ltv.value.value) / ONE_8,
-                    'balance-collateral: ', Math.round(Number(balance_x.value) / ONE_8),
-                    'weight: ', Number(weight_x.value) / ONE_8,
-                    'balance-token: ', Math.round(Number(balance_y.value) / ONE_8),
-                    'weight: ', Number(weight_y.value) / ONE_8);
+        console.log('ltv: ', format_number(Number(ltv.value.value) / ONE_8),
+                    'balance-collateral: ', format_number(Number(balance_x.value) / ONE_8),
+                    'balance-token: ', format_number(Number(balance_y.value) / ONE_8),
+                    'weights: ', format_number(Number(weight_x.value) / ONE_8),                    
+                    '/', format_number(Number(weight_y.value) / ONE_8));
         // printResult(await crpGetPoolDetails(_list[key]['token'], _list[key]['collateral'], _list[key]['expiry']));
     }
 }
@@ -645,7 +649,7 @@ async function get_pool_details_fwp(){
     let balance_x = details.value.data['balance-x'];
     let balance_y = details.value.data['balance-y'];
 
-    console.log('balance-x: ', Number(balance_x.value) / ONE_8, 'balance-y: ', Number(balance_y.value) / ONE_8);
+    console.log('balance-x: ', format_number(Number(balance_x.value) / ONE_8), 'balance-y: ', format_number(Number(balance_y.value) / ONE_8));
 }
 
 async function get_pool_details_ytp(){
@@ -669,11 +673,11 @@ async function get_pool_details_ytp(){
         let balance_virtual = details.value.data['balance-virtual'];
         let balance_token = details.value.data['balance-token'];
 
-        console.log('yield: ', Number(yied.value.value) / ONE_8, 'price: ', Number(price.value.value) / ONE_8);
+        console.log('yield: ', format_number(Number(yied.value.value) / ONE_8, 8), 'price: ', format_number(Number(price.value.value) / ONE_8, 8));
         console.log('balance (yield-token/virtual/token): ', 
-                    Number(balance_aytoken.value) / ONE_8, 
-                    Number(balance_virtual.value) / ONE_8, 
-                    Number(balance_token.value) / ONE_8);
+                    format_number(Number(balance_aytoken.value) / ONE_8), 
+                    format_number(Number(balance_virtual.value) / ONE_8), 
+                    format_number(Number(balance_token.value) / ONE_8));
     }
 }
 async function reduce_position_ytp(percent){
@@ -745,29 +749,31 @@ function timestamp() {
 
 
 _white_list = {
-    Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
-    Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
+    // Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
+    // Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
     // Marvin: 'SP1YMQJR0T1P52RT1VVPZZYZEQXQ5HBE6VWR36HFE',
-    James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
-    Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
+    // James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
+    // Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
     // Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
     // Chan2: 'STPXVKFHHPJ9FTMQEXCM41PH1042BVG2YMM310TK',
     // Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
     // Chan4: 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT',
-    Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
-    Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
-    Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
-    Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
-    Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
-    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
-    Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
-    Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
+    // Chan5: 'ST3SP15W4B0D1DS8R37E85XP9E48FTD2JF30X11D9',
+    Chan6: 'ST37GBP1245R8TCX45YPXG088EDXWWY949J8A7618',
+    // Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
+    // Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
+    // Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
+    // Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
+    // Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
+    // Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
+    // Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
+    // Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
 }
 
 async function run(){
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    await update_price_oracle();    
+    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
@@ -776,9 +782,9 @@ async function run(){
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
     
-    await arbitrage_fwp(dry_run=false);
-    await arbitrage_crp(dry_run=false);    
-    await arbitrage_ytp(dry_run=false);    
+    // await arbitrage_fwp(dry_run=false);
+    // await arbitrage_crp(dry_run=false);    
+    // await arbitrage_ytp(dry_run=false);    
     
     // await test_spot_trading();
     // await test_margin_trading();
@@ -790,9 +796,9 @@ async function run(){
     // await arbitrage_fwp(dry_run=true);
     // await arbitrage_crp(dry_run=true);    
     // await arbitrage_ytp(dry_run=true); 
-    // await get_pool_details_fwp();
-    // await get_pool_details_crp();
-    // await get_pool_details_ytp();   
+    await get_pool_details_fwp();
+    await get_pool_details_crp();
+    await get_pool_details_ytp();   
 
     // await reduce_position_ytp(0.5e+8);
     // await reduce_position_crp(ONE_8, 'yield');
