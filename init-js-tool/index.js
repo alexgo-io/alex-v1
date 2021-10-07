@@ -383,7 +383,7 @@ async function arbitrage_fwp(dry_run=true){
         result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
         balance_x = result.value.data['balance-x'].value;
         balance_y = result.value.data['balance-y'].value;      
-        console.log('post arb implied: ', format_number(balance_y / balance_x, 8));    
+        console.log('post arb implied: ', format_number(Number(balance_y / balance_x), 8));    
     }
 }
 
@@ -797,7 +797,7 @@ _white_list = {
 async function run(){
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
+    await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
@@ -806,9 +806,9 @@ async function run(){
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
     
-    // await arbitrage_fwp(dry_run=false);
-    // await arbitrage_crp(dry_run=false);    
-    // await arbitrage_ytp(dry_run=false);    
+    await arbitrage_fwp(dry_run=false);
+    await arbitrage_crp(dry_run=false);    
+    await arbitrage_ytp(dry_run=false);    
     
     // await test_spot_trading();
     // await test_margin_trading();
@@ -817,12 +817,12 @@ async function run(){
     // await create_crp(add_only=true);     
     // await create_ytp(add_only=true);
 
-    await arbitrage_fwp(dry_run=true);
-    await arbitrage_crp(dry_run=true);    
-    await arbitrage_ytp(dry_run=true); 
-    await get_pool_details_fwp();
-    await get_pool_details_crp();
-    await get_pool_details_ytp();   
+    // await arbitrage_fwp(dry_run=true);
+    // await arbitrage_crp(dry_run=true);    
+    // await arbitrage_ytp(dry_run=true); 
+    // await get_pool_details_fwp();
+    // await get_pool_details_crp();
+    // await get_pool_details_ytp();   
 
     // await reduce_position_ytp(0.5e+8);
     // await reduce_position_crp(ONE_8, 'yield');
