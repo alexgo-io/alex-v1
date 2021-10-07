@@ -39,9 +39,15 @@
 )
 
 ;; note yield is not annualised
-;; yield = ln(price)
+;; yield = price - 1
 (define-read-only (get-yield (balance-x uint) (balance-y uint) (t uint))
-  (ok (to-uint (unwrap-panic (ln-fixed (to-int (try! (get-price balance-x balance-y t)))))))
+  (let
+    (
+      (price (try! (get-price balance-x balance-y t)))
+    )    
+    ;; (ok (to-uint (unwrap-panic (ln-fixed (to-int price)))))
+    (if (<= price ONE_8) (ok u0) (sub-fixed price ONE_8))
+  )
 )
 
 ;; d_x = dx
@@ -66,9 +72,11 @@
         (add-term (unwrap-panic (add-fixed x-pow y-pow)))
         (term (if (<= add-term x-dx-pow) u0 (unwrap-panic (sub-fixed add-term x-dx-pow))))
         (final-term (unwrap-panic (pow-down term t-comp-num)))
+        (dy (if (<= balance-y final-term) u0 (unwrap-panic (sub-fixed balance-y final-term))))
       )
-      ;; if we are overwhelmed by numerical error, return 0
-      (if (<= balance-y final-term) (ok u0) (sub-fixed balance-y final-term))
+      
+      (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+      (ok dy)
     )  
   )
 )
@@ -95,8 +103,11 @@
         (add-term (unwrap-panic (add-fixed x-pow y-pow)))
         (term (if (<= add-term y-dy-pow) u0 (unwrap-panic (sub-fixed add-term y-dy-pow))))
         (final-term (unwrap-panic (pow-down term t-comp-num)))         
+        (dx (if (<= final-term balance-x) u0 (unwrap-panic (sub-fixed final-term balance-x))))
       )
-      (if (<= final-term balance-x) (ok u0) (sub-fixed final-term balance-x))
+
+      (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+      (ok dx)
     )  
   )
 )
@@ -154,11 +165,13 @@
 )
 
 (define-read-only (get-x-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (get-x-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
+  ;; (get-x-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
+  (get-x-given-price balance-x balance-y t (unwrap-panic (add-fixed ONE_8 yield)))
 )
 
 (define-read-only (get-y-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (get-y-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
+  ;; (get-y-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
+  (get-y-given-price balance-x balance-y t (unwrap-panic (add-fixed ONE_8 yield)))
 )
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))

@@ -224,10 +224,10 @@
 )
 
 (define-read-only (get-weight-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
-    (let 
+    (let
         (
             (token-x (contract-of collateral))
-            (token-y (contract-of token))            
+            (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
             (weight-y (get weight-y pool))
             (moving-average (get moving-average pool))
@@ -238,46 +238,35 @@
             ;; token / collateral
             (spot (unwrap! (get-spot token collateral expiry) ERR-GET-ORACLE-PRICE-FAIL))
             (now (* block-height ONE_8))
-            
-            ;; TODO: assume 15secs per block 
-            (t (unwrap! (div-down 
-                (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u2102400 ONE_8)) ERR-MATH-CALL))
-            ;; TODO: APYs need to be calculated from the prevailing yield token price.
-            ;; TODO: ln(S/K) approximated as (S/K - 1)
-
-            ;; we calculate d1 first
-            (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
-            (pow-bs-vol (unwrap! (div-up 
-                            (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
-            (vol-term (unwrap! (mul-up t pow-bs-vol) ERR-MATH-CALL))                       
-            (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
-            (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
-            
-            (denominator (unwrap! (mul-down bs-vol sqrt-t) ERR-MATH-CALL))
-
             (ltv (try! (get-ltv token collateral expiry)))
         )
-
-        ;; if current ltv > conversion-ltv, then pool converts to (almost) 100% token (i.e. weight-x = 0)
-        (if (or (> ltv conversion-ltv) (is-eq now expiry))
-            (ok u99900000)                    
-            (let
+        (if (or (> ltv conversion-ltv) (>= now expiry))
+            (ok u99900000)   
+            (let 
                 (
-                    (numerator (unwrap! (add-fixed vol-term 
-                                    (unwrap! (sub-fixed 
-                                        (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term)) ERR-MATH-CALL)) ERR-MATH-CALL))
+                    ;; assume 15secs per block 
+                    (t (unwrap! (div-down 
+                    (unwrap! (sub-fixed expiry now) ERR-MATH-CALL) (* u2102400 ONE_8)) ERR-MATH-CALL))
+
+                    ;; we calculate d1 first
+                    (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
+                    (pow-bs-vol (unwrap! (div-up 
+                                    (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
+                    (vol-term (unwrap! (mul-up t pow-bs-vol) ERR-MATH-CALL))                       
+                    (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
+                    (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
+            
+                    (denominator (unwrap! (mul-down bs-vol sqrt-t) ERR-MATH-CALL))
+                    (numerator (unwrap! (add-fixed vol-term (unwrap! (sub-fixed (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term)) ERR-MATH-CALL)) ERR-MATH-CALL))
                     (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
                     (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
                     (complement (if (> spot-term ONE_8) (unwrap! (add-fixed ONE_8 erf-term) ERR-MATH-CALL) (if (<= ONE_8 erf-term) u0 (unwrap! (sub-fixed ONE_8 erf-term) ERR-MATH-CALL))))
                     (weight-t (unwrap! (div-up complement u200000000) ERR-MATH-CALL))
-                    (weighted (unwrap! (add-fixed 
-                                (unwrap! (mul-down moving-average weight-y) ERR-MATH-CALL) 
-                                (unwrap! (mul-down ma-comp weight-t) ERR-MATH-CALL)) ERR-MATH-CALL))
-                    
+                    (weighted (unwrap! (add-fixed (unwrap! (mul-down moving-average weight-y) ERR-MATH-CALL) (unwrap! (mul-down ma-comp weight-t) ERR-MATH-CALL)) ERR-MATH-CALL))                    
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
                 (ok (if (> weighted u100000) weighted u100000))
-            )     
+            )    
         )
     )
 )
@@ -309,7 +298,6 @@
             
                 (strike (unwrap-panic (div-down token-price collateral-price)))
 
-                ;; TODO: APYs need to be calculated from the prevailing yield token price.
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
                 (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
@@ -374,7 +362,6 @@
 ;; note single-sided liquidity
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
-        ;; Just for Validation of initial parameters
         (   
             (token-x (contract-of collateral))
             (token-y (contract-of token))             
@@ -576,7 +563,7 @@
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
-        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)    
+        ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)    
         
         ;; swap is supported only if token /= collateral
         (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)
@@ -624,13 +611,12 @@
     )
 )
 
-;; split of balance to yield and key is transparent to traders
 (define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
     (begin
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
-        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)   
+        ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)   
         ;; swap is supported only if token /= collateral
         (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)   
         (let
@@ -1343,26 +1329,5 @@
       (ok (- 0 (unwrap-panic (ln-priv (/ (* iONE_8 iONE_8) a)))))
       (ln-priv a)
    )
- )
-)
-
-(define-read-only (test)
-  (let
-    (
-      (x (* u7 (pow u10 u6)))
-      (y (* u233 (pow u10 u6)))
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
-      ;;(r (exp-pos (* -1 logx-times-y)))
-
-      ;;(arg (* 69 iONE_8))
-      ;;(r (exp-pos arg))
-      ;;(x_product (fold accumulate_product x_a_list {x: arg, product: iONE_8}))
-  )
-  ;;(ok logx-times-y)
-  ;;x_product
-  (ok (pow-fixed x y))
  )
 )
