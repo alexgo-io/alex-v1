@@ -112,10 +112,10 @@ const {wait_until_confirmation } = require('./utils');
     }
   }  
 
-  const crpReducePostionYield = async (token, collateral, yieldToken, percent) => {
+  const crpReducePostionYield = async (token, collateral, yieldToken, percent, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[CRP] reduce-position-yield..', token, collateral, yieldToken, percent);
-    const privateKey = await getUserPK();
+    const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'collateral-rebalancing-pool',
@@ -142,10 +142,11 @@ const {wait_until_confirmation } = require('./utils');
     }
   }  
 
-  const crpReducePostionKey = async (token, collateral, keyToken, percent) => {
+  const crpReducePostionKey = async (token, collateral, keyToken, percent, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[CRP] reduce-position-key..', token, collateral, keyToken, percent);
-    const privateKey = await getUserPK();
+
+    const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'collateral-rebalancing-pool',
