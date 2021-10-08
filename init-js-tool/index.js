@@ -59,34 +59,34 @@ const {
  } = require('./pools-ytp')
 
 const _deploy = {  
-    0: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-240', 
-        key_token: 'key-wbtc-240-usda',
-        pool_token: 'ytp-yield-wbtc-240-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-240-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-240-usda',
-        liquidity_ytp: 2500000000000n / BigInt(2),
-        collateral_crp: 50000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.10,
-        expiry: 240e+8,
-    },
-    1: {token: 'token-usda', 
-        collateral: 'token-wbtc', 
-        yield_token: 'yield-usda-240', 
-        key_token: 'key-usda-240-wbtc',
-        pool_token: 'ytp-yield-usda-240-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-240-usda',
-        multisig_crp: 'multisig-crp-usda-240-wbtc',
-        liquidity_ytp: 100000000000000000n / BigInt(2),
-        collateral_crp: 1e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.10,
-        expiry: 240e+8,
-    },     
+    // 0: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-240', 
+    //     key_token: 'key-wbtc-240-usda',
+    //     pool_token: 'ytp-yield-wbtc-240-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-240-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-240-usda',
+    //     liquidity_ytp: 2500000000000n / BigInt(2),
+    //     collateral_crp: 50000e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8,
+    //     target_apy: 0.10,
+    //     expiry: 240e+8,
+    // },
+    // 1: {token: 'token-usda', 
+    //     collateral: 'token-wbtc', 
+    //     yield_token: 'yield-usda-240', 
+    //     key_token: 'key-usda-240-wbtc',
+    //     pool_token: 'ytp-yield-usda-240-usda',
+    //     multisig_ytp: 'multisig-ytp-yield-usda-240-usda',
+    //     multisig_crp: 'multisig-crp-usda-240-wbtc',
+    //     liquidity_ytp: 100000000000000000n / BigInt(2),
+    //     collateral_crp: 1e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8,
+    //     target_apy: 0.10,
+    //     expiry: 240e+8,
+    // },     
     2: {token: 'token-wbtc', 
         collateral: 'token-usda', 
         yield_token: 'yield-wbtc-5760', 
@@ -261,14 +261,14 @@ async function mint_some_usda(recipient){
     console.log('------ Mint Some USDA ------');
     await mint('token-usda', recipient, 200000000000000000n);
     usda_balance = await balance('token-usda', recipient);
-    console.log('usda balance: ', format_number(Number(usda_balance)));
+    console.log('usda balance: ', format_number(Number(usda_balance.value.value)));
 }
 
 async function mint_some_wbtc(recipient){
     console.log('------ Mint Some WBTC ------');
     await mint('token-wbtc', recipient, 5000000000000);
     wbtc_balance = await balance('token-wbtc', recipient);
-    console.log('wbtc balance: ', format_number(Number(wbtc_balance)));
+    console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value)));
 }
 
 async function see_balance(owner){
