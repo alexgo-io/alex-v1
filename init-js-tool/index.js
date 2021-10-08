@@ -366,7 +366,7 @@ async function arbitrage_fwp(dry_run=true){
 
     if (!dry_run) {
         if (printed < implied) {
-            let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
+            let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, Math.round(printed * ONE_8));
 
             if(dx.type === 7 && dx.value.value > 0n){
                 let dy = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
@@ -374,7 +374,7 @@ async function arbitrage_fwp(dry_run=true){
                     await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
                 } else {
                     console.log('error: ', dy.value.value);
-                    let dx_i = Number(dx.value.value) / 4;
+                    let dx_i = Math.round(Number(dx.value.value) / 4);
                     for(let i = 0; i < 4; i++){
                         let dy_i = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx_i);
                         if( dy_i.type == 7 ){
@@ -386,7 +386,7 @@ async function arbitrage_fwp(dry_run=true){
                 console.log('error (or zero): ', dx.value.value);
             }
         } else {
-            let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, printed * ONE_8);
+            let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, Math.round(printed * ONE_8));
 
             if(dy.type === 7 && dy.value.value > 0n){
                 let dx = await fwpGetXgivenY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
@@ -394,7 +394,7 @@ async function arbitrage_fwp(dry_run=true){
                     await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
                 } else {
                     console.log('error: ', dx.value.value);
-                    let dy_i = Number(dy.value.value) / 4;
+                    let dy_i = Math.round(Number(dy.value.value) / 4);
                     for(let i = 0; i < 4; i++){
                         let dx_i = await fwpGetXgivenY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy_i);
                         if( dx_i.type == 7 ){
