@@ -519,8 +519,8 @@ async function arbitrage_ytp(dry_run=true){
                         await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx.value.value);
                     } else {
                         console.log('error: ', dy.value.value);
-                        dx_i = Math.round(Number(dx.value.value) / 4);
-                        for (let i = 0; i < 4; i++) {
+                        dx_i = Math.round(Number(dx.value.value) / 10);
+                        for (let i = 0; i < 10; i++) {
                             let dy_i = await ytpGetYgivenX(_deploy[key]['yield_token'], dx_i);
                             if(dy_i.type == 7){
                                 await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx_i);
@@ -552,9 +552,9 @@ async function arbitrage_ytp(dry_run=true){
                         await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv);
                     } else {         
                         console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);          
-                        dy_ltv = Math.round(dy_ltv / 4);
-                        dy_i = Math.round(Number(dy.value.value) / 4 );
-                        for (let i = 0; i < 4; i++){
+                        dy_ltv = Math.round(dy_ltv / 10);
+                        dy_i = Math.round(Number(dy.value.value) / 10);
+                        for (let i = 0; i < 10; i++){
                             let dx_i = await ytpGetXgivenY(_deploy[key]['yield_token'], dy_i);
                             if (dx_i.type == 7){
                                 await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv); 
@@ -729,32 +729,31 @@ function timestamp() {
 
 
 _white_list = {
-    Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
-    Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
-    Marvin: 'SP1YMQJR0T1P52RT1VVPZZYZEQXQ5HBE6VWR36HFE',
-    James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
-    Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
-    Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
-    // Chan2: 'STPXVKFHHPJ9FTMQEXCM41PH1042BVG2YMM310TK',
+    // Hadan: 'STBAY5N5TRTEHHXRP4MH5H3W5FK2EXJDJWDYFA02',
+    // Chiente: 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK',
+    // Marvin: 'SP1YMQJR0T1P52RT1VVPZZYZEQXQ5HBE6VWR36HFE',
+    // James: 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
+    // Jing: 'ST2Q086N22CPRA5RK306CT5T0QFG6GNMJQBY4HXZC',
+    // Chan: 'ST3BQ65DRM8DMTYDD5HWMN60EYC0JFS5NC262MM33', 
+    Chan2: 'ST34FFGQDDJ04Z79GKJAJG9KGCSCS49MXA83RKHWH',
     // Chan3: 'ST2FJ75N8SNQY91W997VEPPCZX41GXBXR8ASX7DK3',
     // Chan4: 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT',
     // Chan5: 'ST3SP15W4B0D1DS8R37E85XP9E48FTD2JF30X11D9',
     // Chan6: 'ST37GBP1245R8TCX45YPXG088EDXWWY949J8A7618',
-    Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
-    Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
-    Rachel: 'STY8YN3BJBF96FA3T916D5MFQQJ2GMKBNQW10NT5',
-    Rachel2: 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y',
-    Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
+    // Sidney: 'ST14YKBTNC0V2QXS3DSGFVCBJHQ7RM396511TJBTJ',
+    // Liming: 'ST27WEWFJ3R3A8P20SRZHYJT1RP7GQRSB999RBN31',
+    // Rachel: 'STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9',
+    // Tiger: 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
     Noise: 'ST290HKX9PWEQ7C3T3MFH3GZ4MXDP10F68K5GPSM2',
-    Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
-    Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
-    Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
+    // Oscar: 'ST19VTXARP3J5NFH1T69DCVJZ01CYYTWP0ME2VTX0',
+    // Oscar2: 'ST2HRPEK5BC4C9CGNRT95Z85M9B9C3M99C6V7A6EZ',
+    // Shawn: 'ST27TPYFGSGT3YGTEBTVMHZXD511AE6JGP15XVZDS'    
 }
 
 async function run(){
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    await update_price_oracle();    
+    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
@@ -763,9 +762,9 @@ async function run(){
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
     
-    await arbitrage_fwp(dry_run=false);
-    await arbitrage_crp(dry_run=false);    
-    await arbitrage_ytp(dry_run=false);    
+    // await arbitrage_fwp(dry_run=false);
+    // await arbitrage_crp(dry_run=false);    
+    // await arbitrage_ytp(dry_run=false);    
     
     // await test_spot_trading();
     // await test_margin_trading();
@@ -774,12 +773,12 @@ async function run(){
     // await create_crp(add_only=true);     
     // await create_ytp(add_only=true);
 
-    // await arbitrage_fwp(dry_run=true);
-    // await arbitrage_crp(dry_run=true);    
-    // await arbitrage_ytp(dry_run=true); 
-    // await get_pool_details_fwp();
-    // await get_pool_details_crp();
-    // await get_pool_details_ytp();   
+    await arbitrage_fwp(dry_run=true);
+    await arbitrage_crp(dry_run=true);    
+    await arbitrage_ytp(dry_run=true); 
+    await get_pool_details_fwp();
+    await get_pool_details_crp();
+    await get_pool_details_ytp();   
 
     // await reduce_position_ytp(0.9*ONE_8);
     // await reduce_position_crp(ONE_8, 'yield');
