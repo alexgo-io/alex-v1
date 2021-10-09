@@ -773,19 +773,20 @@ async function run(){
     // await create_crp(add_only=true);     
     // await create_ytp(add_only=true);
 
-    await arbitrage_fwp(dry_run=true);
-    await arbitrage_crp(dry_run=true);    
-    await arbitrage_ytp(dry_run=true); 
+    // await arbitrage_fwp(dry_run=true);
+    // await arbitrage_crp(dry_run=true);    
+    // await arbitrage_ytp(dry_run=true); 
     await get_pool_details_fwp();
     await get_pool_details_crp();
     await get_pool_details_ytp();   
 
-    // await reduce_position_ytp(0.9*ONE_8);
-    // await reduce_position_crp(ONE_8, 'yield');
-    // await reduce_position_crp(ONE_8, 'key');
-    // await reduce_position_ytp(0.9*ONE_8, deployer=true);
-    // await reduce_position_crp(ONE_8, 'yield', deployer=true);
-    // await reduce_position_crp(ONE_8, 'key', deployer=true);    
+    // const _reduce = { 0:_deploy[2], 1:_deploy[3] };
+    // await reduce_position_ytp(_reduce, 0.9 * ONE_8);
+    // await reduce_position_crp(_reduce, ONE_8, 'yield');
+    // await reduce_position_crp(_reduce, ONE_8, 'key');    
+    // await reduce_position_ytp(_reduce, 0.9*ONE_8, deployer=true);
+    // await reduce_position_crp(_reduce, ONE_8, 'yield', deployer=true);
+    // await reduce_position_crp(_reduce, ONE_8, 'key', deployer=true);    
     
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');        
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);        
