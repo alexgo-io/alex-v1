@@ -583,7 +583,7 @@ async function arbitrage_crp(dry_run = true) {
 async function arbitrage_ytp(dry_run = true) {
     console.log("------ YTP Arbitrage ------")
     console.log(timestamp());
-    const threshold = 0.1;
+    const threshold = 0.05;
 
     for (const key in _deploy) {
         // console.log(_deploy[key]);
