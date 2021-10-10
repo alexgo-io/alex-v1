@@ -53,7 +53,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok (unwrap-panic (contract-call? .token-usda get-decimals)))
+  (ok (unwrap-panic (contract-call? .token-wbtc get-decimals)))
 )
 
 (define-read-only (get-balance (account principal))

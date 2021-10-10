@@ -467,6 +467,7 @@ async function arbitrage_crp(dry_run = true) {
                                     await crpSwapXforY(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dx_i);
                                 } else {
                                     console.log('error: ', dy_i.value.value);
+                                    break;
                                 }
                             }
                         }
@@ -489,6 +490,7 @@ async function arbitrage_crp(dry_run = true) {
                                     await crpSwapYforX(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dy_i);
                                 } else {
                                     console.log('error: ', dx_i.value.value);
+                                    break;
                                 }
                             }
                         }
@@ -543,6 +545,7 @@ async function arbitrage_ytp(dry_run = true) {
                                     await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx_i);
                                 } else {
                                     console.log('error: ', dy_i.value.value);
+                                    break;
                                 }
                             }
                         }
@@ -577,6 +580,7 @@ async function arbitrage_ytp(dry_run = true) {
                                     await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv);
                                 } else {
                                     console.log('error: ', dx_i.value.value);
+                                    break;
                                 }
                             }
                         }
