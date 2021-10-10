@@ -59,9 +59,9 @@ const {
 } = require('./pools-ytp')
 
 const _deploy = {
-    0: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-40555', 
+    0: {token: 'token-wbtc',
+        collateral: 'token-usda',
+        yield_token: 'yield-wbtc-40555',
         key_token: 'key-wbtc-40555-usda',
         pool_token: 'ytp-yield-wbtc-40555-wbtc',
         multisig_ytp: 'multisig-ytp-yield-wbtc-40555-wbtc',
@@ -70,12 +70,12 @@ const _deploy = {
         collateral_crp: 50000e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.10,
+        target_apy: 0.08354,
         expiry: 40555e+8,
     },
-    1: {token: 'token-usda', 
-        collateral: 'token-wbtc', 
-        yield_token: 'yield-usda-40555', 
+    1: {token: 'token-usda',
+        collateral: 'token-wbtc',
+        yield_token: 'yield-usda-40555',
         key_token: 'key-usda-40555-wbtc',
         pool_token: 'ytp-yield-usda-40555-usda',
         multisig_ytp: 'multisig-ytp-yield-usda-40555-usda',
@@ -84,9 +84,9 @@ const _deploy = {
         collateral_crp: 1e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.10,
+        target_apy: 0.136475,
         expiry: 40555e+8,
-    },     
+    }, 
     // 2: {
     //     token: 'token-wbtc',
     //     collateral: 'token-usda',
@@ -249,7 +249,7 @@ const _deploy = {
         collateral_crp: 50000e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.15,
+        target_apy: 0.133486,
         expiry: 80875e+8,
     },
     13: {
@@ -264,12 +264,12 @@ const _deploy = {
         collateral_crp: 1e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.15,
+        target_apy: 0.155768,
         expiry: 80875e+8,
     },
-    14: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-121195', 
+    14: {token: 'token-wbtc',
+        collateral: 'token-usda',
+        yield_token: 'yield-wbtc-121195',
         key_token: 'key-wbtc-121195-usda',
         pool_token: 'ytp-yield-wbtc-121195-wbtc',
         multisig_ytp: 'multisig-ytp-yield-wbtc-121195-wbtc',
@@ -278,12 +278,12 @@ const _deploy = {
         collateral_crp: 50000e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.20,
+        target_apy: 0.23469,
         expiry: 121195e+8,
     },
-    15: {token: 'token-usda', 
-        collateral: 'token-wbtc', 
-        yield_token: 'yield-usda-121195', 
+    15: {token: 'token-usda',
+        collateral: 'token-wbtc',
+        yield_token: 'yield-usda-121195',
         key_token: 'key-usda-121195-wbtc',
         pool_token: 'ytp-yield-usda-121195-usda',
         multisig_ytp: 'multisig-ytp-yield-usda-121195-usda',
@@ -292,9 +292,9 @@ const _deploy = {
         collateral_crp: 1e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.20,
+        target_apy: 0.21950,
         expiry: 121195e+8,
-    },         
+    },    
 }
 
 const ONE_8 = 100000000
@@ -645,7 +645,7 @@ async function arbitrage_ytp(dry_run = true) {
                                 console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);
                                 dy_ltv = Math.round(dy_ltv / 10);
                                 dy_i = Math.round(Number(dy.value.value) / 10);
-                                for (let i = 0; i < 10; i++) {
+                                for (let i = 0; i < 4; i++) {
                                     let dx_i = await ytpGetXgivenY(_deploy[key]['yield_token'], dy_i);
                                     let dx_fwp_i;
                                     if (_deploy[key]['collateral'] == 'token-usda') {
@@ -834,7 +834,7 @@ _white_list = {
 async function run() {
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    await update_price_oracle();    
+    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
