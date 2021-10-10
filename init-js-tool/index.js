@@ -491,7 +491,7 @@ async function arbitrage_crp(dry_run = true) {
     console.log("------ CRP Arbitrage ------")
     console.log(timestamp());
 
-    const threshold = 0.01;
+    const threshold = 0.002;
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
     let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
 
@@ -834,7 +834,7 @@ _white_list = {
 async function run() {
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
+    await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
