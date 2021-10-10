@@ -59,34 +59,34 @@ const {
 } = require('./pools-ytp')
 
 const _deploy = {
-    0: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-40555', 
-        key_token: 'key-wbtc-40555-usda',
-        pool_token: 'ytp-yield-wbtc-40555-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-40555-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-40555-usda',
-        liquidity_ytp: 2500000000000n / BigInt(2),
-        collateral_crp: 50000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.10,
-        expiry: 40555e+8,
-    },
-    1: {token: 'token-usda', 
-        collateral: 'token-wbtc', 
-        yield_token: 'yield-usda-40555', 
-        key_token: 'key-usda-40555-wbtc',
-        pool_token: 'ytp-yield-usda-40555-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-40555-usda',
-        multisig_crp: 'multisig-crp-usda-40555-wbtc',
-        liquidity_ytp: 100000000000000000n / BigInt(2),
-        collateral_crp: 1e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.10,
-        expiry: 40555e+8,
-    },     
+    // 0: {token: 'token-wbtc', 
+    //     collateral: 'token-usda', 
+    //     yield_token: 'yield-wbtc-40555', 
+    //     key_token: 'key-wbtc-40555-usda',
+    //     pool_token: 'ytp-yield-wbtc-40555-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-40555-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-40555-usda',
+    //     liquidity_ytp: 2500000000000n / BigInt(2),
+    //     collateral_crp: 50000e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8,
+    //     target_apy: 0.10,
+    //     expiry: 40555e+8,
+    // },
+    // 1: {token: 'token-usda', 
+    //     collateral: 'token-wbtc', 
+    //     yield_token: 'yield-usda-40555', 
+    //     key_token: 'key-usda-40555-wbtc',
+    //     pool_token: 'ytp-yield-usda-40555-usda',
+    //     multisig_ytp: 'multisig-ytp-yield-usda-40555-usda',
+    //     multisig_crp: 'multisig-crp-usda-40555-wbtc',
+    //     liquidity_ytp: 100000000000000000n / BigInt(2),
+    //     collateral_crp: 1e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8,
+    //     target_apy: 0.10,
+    //     expiry: 40555e+8,
+    // },     
     // 2: {
     //     token: 'token-wbtc',
     //     collateral: 'token-usda',
@@ -237,34 +237,36 @@ const _deploy = {
     //     target_apy: 0.30,
     //     expiry: 74880e+8,
     // },
-    12: {token: 'token-wbtc', 
-        collateral: 'token-usda', 
-        yield_token: 'yield-wbtc-80875', 
-        key_token: 'key-wbtc-80875-usda',
-        pool_token: 'ytp-yield-wbtc-80875-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-80875-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-80875-usda',
-        liquidity_ytp: 2500000000000n / BigInt(2),
-        collateral_crp: 50000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.15,
-        expiry: 80875e+8,
-    },
-    13: {token: 'token-usda', 
-        collateral: 'token-wbtc', 
-        yield_token: 'yield-usda-80875', 
-        key_token: 'key-usda-80875-wbtc',
-        pool_token: 'ytp-yield-usda-80875-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-80875-usda',
-        multisig_crp: 'multisig-crp-usda-80875-wbtc',
-        liquidity_ytp: 100000000000000000n / BigInt(2),
-        collateral_crp: 1e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.15,
-        expiry: 80875e+8,
-    }, 
+    // 12: {
+    //     token: 'token-wbtc',
+    //     collateral: 'token-usda',
+    //     yield_token: 'yield-wbtc-80875',
+    //     key_token: 'key-wbtc-80875-usda',
+    //     pool_token: 'ytp-yield-wbtc-80875-wbtc',
+    //     multisig_ytp: 'multisig-ytp-yield-wbtc-80875-wbtc',
+    //     multisig_crp: 'multisig-crp-wbtc-80875-usda',
+    //     liquidity_ytp: 2500000000000n / BigInt(2),
+    //     collateral_crp: 50000e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8,
+    //     target_apy: 0.15,
+    //     expiry: 80875e+8,
+    // },
+    // 13: {
+    //     token: 'token-usda',
+    //     collateral: 'token-wbtc',
+    //     yield_token: 'yield-usda-80875',
+    //     key_token: 'key-usda-80875-wbtc',
+    //     pool_token: 'ytp-yield-usda-80875-usda',
+    //     multisig_ytp: 'multisig-ytp-yield-usda-80875-usda',
+    //     multisig_crp: 'multisig-crp-usda-80875-wbtc',
+    //     liquidity_ytp: 100000000000000000n / BigInt(2),
+    //     collateral_crp: 1e+8,
+    //     ltv_0: 0.7e+8,
+    //     bs_vol: 0.8e+8,
+    //     target_apy: 0.15,
+    //     expiry: 80875e+8,
+    // },
     14: {token: 'token-wbtc', 
         collateral: 'token-usda', 
         yield_token: 'yield-wbtc-121195', 
@@ -516,8 +518,8 @@ async function arbitrage_crp(dry_run = true) {
                             await crpSwapXforY(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dx.value.value);
                         } else {
                             console.log('error: ', dy.value.value);
-                            let dx_i = Math.round(Number(dx.value.value) / 4);
-                            for (let i = 0; i < 4; i++) {
+                            let dx_i = Math.round(Number(dx.value.value) / 10);
+                            for (let i = 0; i < 10; i++) {
                                 let dy_i = await crpGetYgivenX(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dx_i);
                                 if (dy_i.type == 7) {
                                     await crpSwapXforY(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dx_i);
@@ -539,8 +541,8 @@ async function arbitrage_crp(dry_run = true) {
                             await crpSwapYforX(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dy.value.value);
                         } else {
                             console.log('error: ', dx.value.value);
-                            let dy_i = Math.round(Number(dy.value.value) / 4);
-                            for (let i = 0; i < 4; i++) {
+                            let dy_i = Math.round(Number(dy.value.value) / 10);
+                            for (let i = 0; i < 10; i++) {
                                 let dx_i = await crpGetXgivenY(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dy_i);
                                 if (dx_i.type == 7) {
                                     await crpSwapYforX(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'], dy_i);
@@ -570,6 +572,7 @@ async function arbitrage_crp(dry_run = true) {
 async function arbitrage_ytp(dry_run = true) {
     console.log("------ YTP Arbitrage ------")
     console.log(timestamp());
+    const threshold = 0.1;
 
     for (const key in _deploy) {
         // console.log(_deploy[key]);
@@ -581,74 +584,76 @@ async function arbitrage_ytp(dry_run = true) {
 
         if (time_to_maturity > 0) {
             target_yield = Math.max(0, _deploy[key]['target_apy'] * time_to_maturity);
+            let diff = (target_yield - implied_yield) / implied_yield;
+            if (diff > threshold) {
+                console.log("target: ", format_number(target_yield, 8), "implied:", format_number(implied_yield, 8));
 
-            console.log("target: ", format_number(target_yield, 8), "implied:", format_number(implied_yield, 8));
+                if (!dry_run) {
+                    if (target_yield < implied_yield) {
+                        let dx = await ytpGetXgivenYield(_deploy[key]['yield_token'], Math.round(target_yield * ONE_8));
 
-            if (!dry_run) {
-                if (target_yield < implied_yield) {
-                    let dx = await ytpGetXgivenYield(_deploy[key]['yield_token'], Math.round(target_yield * ONE_8));
-
-                    if (dx.type === 7 && dx.value.value > 0n) {
-                        let dy = await ytpGetYgivenX(_deploy[key]['yield_token'], dx.value.value);
-                        if (dy.type == 7) {
-                            await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx.value.value);
-                        } else {
-                            console.log('error: ', dy.value.value);
-                            dx_i = Math.round(Number(dx.value.value) / 10);
-                            for (let i = 0; i < 10; i++) {
-                                let dy_i = await ytpGetYgivenX(_deploy[key]['yield_token'], dx_i);
-                                if (dy_i.type == 7) {
-                                    await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx_i);
-                                } else {
-                                    console.log('error: ', dy_i.value.value);
-                                    break;
+                        if (dx.type === 7 && dx.value.value > 0n) {
+                            let dy = await ytpGetYgivenX(_deploy[key]['yield_token'], dx.value.value);
+                            if (dy.type == 7) {
+                                await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx.value.value);
+                            } else {
+                                console.log('error: ', dy.value.value);
+                                dx_i = Math.round(Number(dx.value.value) / 10);
+                                for (let i = 0; i < 10; i++) {
+                                    let dy_i = await ytpGetYgivenX(_deploy[key]['yield_token'], dx_i);
+                                    if (dy_i.type == 7) {
+                                        await ytpSwapXforY(_deploy[key]['yield_token'], _deploy[key]['token'], dx_i);
+                                    } else {
+                                        console.log('error: ', dy_i.value.value);
+                                        break;
+                                    }
                                 }
                             }
+                        } else {
+                            console.log('error (or zero):', dx.value.value);
                         }
                     } else {
-                        console.log('error (or zero):', dx.value.value);
-                    }
-                } else {
-                    let dy = await ytpGetYgivenYield(_deploy[key]['yield_token'], Math.round(target_yield * ONE_8));
+                        let dy = await ytpGetYgivenYield(_deploy[key]['yield_token'], Math.round(target_yield * ONE_8));
 
-                    if (dy.type === 7 && dy.value.value > 0n) {
-                        let spot = Number((await crpGetSpot(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'])).value.value) / ONE_8;
-                        let dy_collateral = Number(dy.value.value) * spot;
-                        let ltv = Number((await crpGetLtv(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'])).value.value);
-                        ltv /= Number((await ytpGetPrice(_deploy[key]['yield_token'])).value.value);
-                        let dy_ltv = Math.round(dy_collateral / ltv);
-                        let dx = await ytpGetXgivenY(_deploy[key]['yield_token'], Math.round(Number(dy.value.value) / ltv));
-                        let dx_fwp;
-                        if (_deploy[key]['collateral'] == 'token-usda') {
-                            dx_fwp = await fwpGetXgivenY(_deploy[key]['token'], _deploy[key]['collateral'], 0.5e+8, 0.5e+8, dy_ltv);
-                        } else {
-                            dx_fwp = await fwpGetYgivenX(_deploy[key]['collateral'], _deploy[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
-                        }
-                        if (dx.type == 7 && dx_fwp.type == 7) {
-                            await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv);
-                        } else {
-                            console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);
-                            dy_ltv = Math.round(dy_ltv / 10);
-                            dy_i = Math.round(Number(dy.value.value) / 10);
-                            for (let i = 0; i < 10; i++) {
-                                let dx_i = await ytpGetXgivenY(_deploy[key]['yield_token'], dy_i);
-                                if (dx_i.type == 7) {
-                                    await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv);
-                                } else {
-                                    console.log('error: ', dx_i.value.value);
-                                    break;
+                        if (dy.type === 7 && dy.value.value > 0n) {
+                            let spot = Number((await crpGetSpot(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'])).value.value) / ONE_8;
+                            let dy_collateral = Number(dy.value.value) * spot;
+                            let ltv = Number((await crpGetLtv(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['expiry'])).value.value);
+                            ltv /= Number((await ytpGetPrice(_deploy[key]['yield_token'])).value.value);
+                            let dy_ltv = Math.round(dy_collateral / ltv);
+                            let dx = await ytpGetXgivenY(_deploy[key]['yield_token'], Math.round(Number(dy.value.value) / ltv));
+                            let dx_fwp;
+                            if (_deploy[key]['collateral'] == 'token-usda') {
+                                dx_fwp = await fwpGetXgivenY(_deploy[key]['token'], _deploy[key]['collateral'], 0.5e+8, 0.5e+8, dy_ltv);
+                            } else {
+                                dx_fwp = await fwpGetYgivenX(_deploy[key]['collateral'], _deploy[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
+                            }
+                            if (dx.type == 7 && dx_fwp.type == 7) {
+                                await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv);
+                            } else {
+                                console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);
+                                dy_ltv = Math.round(dy_ltv / 10);
+                                dy_i = Math.round(Number(dy.value.value) / 10);
+                                for (let i = 0; i < 10; i++) {
+                                    let dx_i = await ytpGetXgivenY(_deploy[key]['yield_token'], dy_i);
+                                    if (dx_i.type == 7) {
+                                        await crpAddToPostionAndSwitch(_deploy[key]['token'], _deploy[key]['collateral'], _deploy[key]['yield_token'], _deploy[key]['key_token'], dy_ltv);
+                                    } else {
+                                        console.log('error: ', dx_i.value.value);
+                                        break;
+                                    }
                                 }
                             }
+                        } else {
+                            console.log('error (or zero): ', dy.value.value);
                         }
-                    } else {
-                        console.log('error (or zero): ', dy.value.value);
                     }
+
+                    result = await ytpGetYield(_deploy[key]['yield_token']);
+                    implied_yield = Number(result.value.value) / ONE_8;
+                    console.log('post arb implied: ', format_number(implied_yield, 8));
+                    console.log(timestamp());
                 }
-
-                result = await ytpGetYield(_deploy[key]['yield_token']);
-                implied_yield = Number(result.value.value) / ONE_8;
-                console.log('post arb implied: ', format_number(implied_yield, 8));
-                console.log(timestamp());
             }
         }
     }
@@ -831,21 +836,20 @@ _white_list = {
 async function run() {
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    await update_price_oracle();    
+    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
-    
-    // await arbitrage_fwp(dry_run=false);
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false);
     // await create_crp(add_only=false);    
 
-    await arbitrage_fwp(dry_run=false);
-    await arbitrage_crp(dry_run=false);    
-    await arbitrage_ytp(dry_run=false);    
+    await arbitrage_fwp(dry_run = false);    
+    await arbitrage_crp(dry_run = false);    
+    // await arbitrage_ytp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);    
 
     // await arbitrage_fwp(dry_run=false);
     // await arbitrage_crp(dry_run=false);    
