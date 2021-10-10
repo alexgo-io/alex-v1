@@ -53,7 +53,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok (unwrap-panic (contract-call? .yield-usda-74880 get-decimals)))
+  (ok (unwrap-panic (contract-call? .yield-usda-23040 get-decimals)))
 )
 
 (define-read-only (get-balance (account principal))
