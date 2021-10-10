@@ -16,6 +16,7 @@ const {
   
   
   const ytpCreate = async (yiedToken, token, poolToken, multiSig, dx, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] create-pool...', yiedToken, token, poolToken, multiSig, dx, dy);
     const privateKey = await getDeployerPK();
     const txOptions = {
@@ -47,6 +48,7 @@ const {
   }
 
   const ytpAddToPosition = async (yiedToken, token, poolToken, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] add-to-position...', yiedToken, token, poolToken, dx);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -76,6 +78,7 @@ const {
   }  
   
   const ytpReducePosition = async (yiedToken, token, poolToken, percent) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -105,6 +108,7 @@ const {
   }  
   
   const ytpGetPrice = async(yieldToken) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-price...', yieldToken);
   
     const options = {
@@ -125,7 +129,8 @@ const {
   }
   
   const ytpGetYield = async(yieldToken) => {
-    console.log('[YTP] get-price...', yieldToken);
+    console.log('--------------------------------------------------------------------------');
+    console.log('[YTP] get-yield...', yieldToken);
   
     const options = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -146,6 +151,7 @@ const {
   }
   
   const ytpSwapXforY = async (yiedToken, token, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-x-for-y...', yiedToken, token, dx);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -174,6 +180,7 @@ const {
   }
   
   const ytpSwapYforX = async (yiedToken, token, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-y-for-x...', yiedToken, token, dy);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -202,6 +209,7 @@ const {
   }
   
   const ytpGetXgivenY = async (yieldToken, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-x-given-y...', yieldToken, dy);
   
     const options = {
@@ -224,6 +232,7 @@ const {
   };  
   
   const ytpGetYgivenX = async (yieldToken, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-y-given-x...', yieldToken, dx);
   
     const options = {
@@ -246,6 +255,7 @@ const {
   };
 
   const ytpGetXgivenYield = async (yieldToken, yied) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-x-given-yield...', yieldToken, yied);
   
     const options = {
@@ -268,6 +278,7 @@ const {
   };  
   
   const ytpGetYgivenYield = async (yieldToken, yied) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-y-given-yield...', yieldToken, yied);
   
     const options = {
@@ -290,6 +301,7 @@ const {
   };  
   
   const ytpGetPoolDetails = async (yieldToken) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-pool-details...', yieldToken);
   
     const options = {
