@@ -19,5 +19,8 @@
   },
   "resolutions": {
     "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
+  },
+  "devDependencies": {
+    "@stacks/blockchain-api-client": "^0.69.0"
   }
 }

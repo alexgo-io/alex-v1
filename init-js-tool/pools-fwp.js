@@ -15,6 +15,7 @@ const {wait_until_confirmation} = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] create-pool...', tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -48,6 +49,7 @@ const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, 
 }
 
 const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] add-to-position...', tokenX, tokenY, weightX, weightY, poolToken, dx, dy);
   const privateKey = await getUserPK();
   const txOptions = {
@@ -80,6 +82,7 @@ const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx,
 }
 
 const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] reduce-position...', tokenX, tokenY, weightX, weightY, poolToken, percent);
   const privateKey = await getUserPK();
   const txOptions = {
@@ -124,6 +127,7 @@ const printResult = (result)=>{
 }
 
 const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-x-given-price...', tokenX, tokenY, weightX, weightY, price);
 
   const options = {
@@ -149,6 +153,7 @@ const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
 };
 
 const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dx);
 
   const options = {
@@ -174,6 +179,7 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
 };
 
 const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] swap-x-for-y...', tokenX, tokenY, weightX, weightY, dx);
   const privateKey = await getUserPK();
   const txOptions = {
@@ -205,6 +211,7 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
 }
 
 const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] swap-y-for-x...', tokenX, tokenY, weightX, weightY, dy);
   const privateKey = await getUserPK();
   const txOptions = {
@@ -235,6 +242,7 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
 }
 
 const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-x-given-y...', tokenX, tokenY, weightX, weightY, dy);
   const options = {
     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -259,6 +267,7 @@ const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
 };
 
 const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-y-given-price...', tokenX, tokenY, weightX, weightY, price);
 
   const options = {
@@ -284,6 +293,7 @@ const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
 };
 
 const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-pool-details...]', tokenX, tokenY, weightX, weightY);
 
   const options = {
