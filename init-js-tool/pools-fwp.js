@@ -81,10 +81,10 @@ const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx,
   }
 }
 
-const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent) => {
+const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent, deployer=true) => {
   console.log('--------------------------------------------------------------------------');
   console.log('[FWP] reduce-position...', tokenX, tokenY, weightX, weightY, poolToken, percent);
-  const privateKey = await getUserPK();
+  const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'fixed-weight-pool',
