@@ -77,10 +77,10 @@ const {
     }
   }  
   
-  const ytpReducePosition = async (yiedToken, token, poolToken, percent) => {
+  const ytpReducePosition = async (yiedToken, token, poolToken, percent, deployer=true) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
-    const privateKey = await getUserPK();
+    const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
@@ -299,6 +299,28 @@ const {
       console.log(error);
     }
   };  
+
+  const ytpGetPositionGivenBurn = async (yieldToken, shares) => {
+    console.log('--------------------------------------------------------------------------');
+    console.log('[YTP] get-position-given-burn...', yieldToken);
+  
+    const options = {
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+      contractName: 'yield-token-pool',
+      functionName: 'get-position-given-burn',
+      functionArgs: [
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
+        uintCV(shares)
+      ],
+      network: network,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    };
+    try {
+      return callReadOnlyFunction(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };  
   
   const ytpGetPoolDetails = async (yieldToken) => {
     console.log('--------------------------------------------------------------------------');
@@ -346,3 +368,4 @@ const {
   exports.ytpReducePosition = ytpReducePosition;
   exports.ytpGetXgivenYield = ytpGetXgivenYield;
   exports.ytpGetYgivenYield = ytpGetYgivenYield;
+  exports.ytpGetPositionGivenBurn = ytpGetPositionGivenBurn;
