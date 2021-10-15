@@ -743,38 +743,35 @@ _white_list = {
 async function run() {
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
+    await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
 
-    const _pools = {
-                        0: _deploy[0],
-                        1: _deploy[1],
-                    };
+    const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    // await arbitrage_fwp(dry_run = false);
-    // await arbitrage_crp(dry_run = false, _pools);
-    // await arbitrage_ytp(dry_run = false, _pools);
-    // await arbitrage_fwp(dry_run = false, _pools);
+    await arbitrage_fwp(dry_run = false);
+    await arbitrage_crp(dry_run = false, _pools);
+    await arbitrage_ytp(dry_run = false, _pools);
+    await arbitrage_fwp(dry_run = false, _pools);
 
     // await test_spot_trading();
     // await test_margin_trading();
 
-    await create_fwp(add_only=true);
+    // await create_fwp(add_only=true);
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
     // await arbitrage_fwp(dry_run=true, _pools);
     // await arbitrage_crp(dry_run=true, _pools);    
     // await arbitrage_ytp(dry_run=true, _pools); 
-    await get_pool_details_fwp();
-    await get_pool_details_crp(_pools);
+    // await get_pool_details_fwp();
+    // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
     // await reduce_position_fwp(0.1 * ONE_8, deployer=true);
