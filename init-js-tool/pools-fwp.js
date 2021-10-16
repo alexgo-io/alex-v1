@@ -1,5 +1,5 @@
 const {
-  getPK, network
+  getDeployerPK, getUserPK, network
 } = require('./wallet');
 const {
   makeContractCall,
@@ -15,19 +15,20 @@ const {wait_until_confirmation} = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] create-pool...', tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy);
-  const privateKey = await getPK();
+  const privateKey = await getDeployerPK();
   const txOptions = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'fixed-weight-pool',
       functionName: 'create-pool',
       functionArgs: [
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, multiSig),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, multiSig),
           uintCV(dx),
           uintCV(dy),
       ],
@@ -41,25 +42,26 @@ const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, 
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
 }
 
 const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] add-to-position...', tokenX, tokenY, weightX, weightY, poolToken, dx, dy);
-  const privateKey = await getPK();
+  const privateKey = await getUserPK();
   const txOptions = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'fixed-weight-pool',
       functionName: 'add-to-position',
       functionArgs: [
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
           uintCV(dx),
           uintCV(dy),
       ],
@@ -73,25 +75,26 @@ const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx,
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
 }
 
-const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent) => {
+const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent, deployer=true) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] reduce-position...', tokenX, tokenY, weightX, weightY, poolToken, percent);
-  const privateKey = await getPK();
+  const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
   const txOptions = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'fixed-weight-pool',
       functionName: 'reduce-position',
       functionArgs: [
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
           uintCV(percent),
       ],
       senderKey: privateKey,
@@ -104,7 +107,7 @@ const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, pe
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
@@ -124,21 +127,22 @@ const printResult = (result)=>{
 }
 
 const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-x-given-price...', tokenX, tokenY, weightX, weightY, price);
 
   const options = {
-    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
     contractName: 'fixed-weight-pool',
     functionName: 'get-x-given-price',
     functionArgs: [
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
       uintCV(weightX),
       uintCV(weightY),
       uintCV(price)
     ],
     network: network,
-    senderAddress: process.env.ACCOUNT_ADDRESS,
+    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
   };
   try {
     return callReadOnlyFunction(options);
@@ -149,21 +153,22 @@ const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
 };
 
 const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dx);
 
   const options = {
-    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
     contractName: 'fixed-weight-pool',
     functionName: 'get-y-given-x',
     functionArgs: [
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
       uintCV(weightX),
       uintCV(weightY),
       uintCV(dx)
     ],
     network: network,
-    senderAddress: process.env.ACCOUNT_ADDRESS,
+    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
   };
   try {
     return callReadOnlyFunction(options);
@@ -174,15 +179,16 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
 };
 
 const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] swap-x-for-y...', tokenX, tokenY, weightX, weightY, dx);
-  const privateKey = await getPK();
+  const privateKey = await getUserPK();
   const txOptions = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'fixed-weight-pool',
       functionName: 'swap-x-for-y',
       functionArgs: [
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),          
           uintCV(dx)
@@ -197,7 +203,7 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
 
   } catch (error) {
       console.log(error);
@@ -205,15 +211,16 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
 }
 
 const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] swap-y-for-x...', tokenX, tokenY, weightX, weightY, dy);
-  const privateKey = await getPK();
+  const privateKey = await getUserPK();
   const txOptions = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'fixed-weight-pool',
       functionName: 'swap-y-for-x',
       functionArgs: [
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
+          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),          
           uintCV(dy)
@@ -228,28 +235,28 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
       const transaction = await makeContractCall(txOptions);
       const broadcastResponse = await broadcastTransaction(transaction, network);
       console.log(broadcastResponse);
-      await wait_until_confirmation(broadcastResponse.txid)
+      return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
       console.log(error);
   }
 }
 
 const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
-  console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dy);
-
+  console.log('--------------------------------------------------------------------------');
+  console.log('[FWP] get-x-given-y...', tokenX, tokenY, weightX, weightY, dy);
   const options = {
-    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
     contractName: 'fixed-weight-pool',
     functionName: 'get-x-given-y',
     functionArgs: [
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
       uintCV(weightX),
       uintCV(weightY),
       uintCV(dy)
     ],
     network: network,
-    senderAddress: process.env.ACCOUNT_ADDRESS,
+    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
   };
   try {
     return callReadOnlyFunction(options);
@@ -260,21 +267,22 @@ const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
 };
 
 const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-y-given-price...', tokenX, tokenY, weightX, weightY, price);
 
   const options = {
-    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
     contractName: 'fixed-weight-pool',
     functionName: 'get-y-given-price',
     functionArgs: [
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
       uintCV(weightX),
       uintCV(weightY),
       uintCV(price)
     ],
     network: network,
-    senderAddress: process.env.ACCOUNT_ADDRESS,
+    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
   };
   try {
     return callReadOnlyFunction(options);
@@ -285,20 +293,21 @@ const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
 };
 
 const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
+  console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-pool-details...]', tokenX, tokenY, weightX, weightY);
 
   const options = {
-    contractAddress: process.env.ACCOUNT_ADDRESS,
+    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
     contractName: 'fixed-weight-pool',
     functionName: 'get-pool-details',
     functionArgs: [
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
       uintCV(weightX),
       uintCV(weightY)
     ],
     network: network,
-    senderAddress: process.env.ACCOUNT_ADDRESS,
+    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
   };
   try {
     return callReadOnlyFunction(options);

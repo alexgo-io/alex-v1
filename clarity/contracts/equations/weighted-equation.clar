@@ -1,5 +1,5 @@
 ;; weighted-equation
-;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
+;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
 ;; constants
 ;;
@@ -57,10 +57,10 @@
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-up base exponent)))
                 (complement (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
+                (dy (unwrap-panic (mul-down balance-y complement)))
             )
-            ;; To differentiate create-pool case and other cases so create-pool case won't fall back in sub-fixed error
-            ;;(if (> ONE_8 (+ EQUATION_TOLERANCE power)) (mul-down balance-y (unwrap-panic (sub-fixed ONE_8 power))) (ok u0))  
-            (mul-down balance-y complement)
+            (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+            (ok dy)
         ) 
     )    
 )
@@ -84,10 +84,10 @@
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-down base exponent)))
                 (ratio (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
+                (dx (unwrap-panic (mul-down balance-x ratio)))
             )
-            ;; To differentiate create-pool case and other cases so create-pool case won't fall back in sub-fixed error
-            ;;(if (> power (+ EQUATION_TOLERANCE ONE_8)) (mul-down balance-x (unwrap-panic (sub-fixed power ONE_8))) (ok u0)) 
-            (mul-down balance-x ratio)
+            (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+            (ok dx)
         )
     )
 )
@@ -189,7 +189,7 @@
 
 ;; math-fixed-point
 ;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
+;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
 ;; constants
 ;;
@@ -322,7 +322,7 @@
 ;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
+;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
 ;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
 
 ;; constants

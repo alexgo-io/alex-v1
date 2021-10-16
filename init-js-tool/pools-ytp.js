@@ -1,5 +1,5 @@
 const {
-    getPK, network
+    getDeployerPK, getUserPK, network
   } = require('./wallet');
   const {
     makeContractCall,
@@ -16,17 +16,18 @@ const {
   
   
   const ytpCreate = async (yiedToken, token, poolToken, multiSig, dx, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] create-pool...', yiedToken, token, poolToken, multiSig, dx, dy);
-    const privateKey = await getPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'create-pool',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, multiSig),            
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, multiSig),            
             uintCV(dx),
             uintCV(dy),
         ],
@@ -40,23 +41,24 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid);
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
   }
 
   const ytpAddToPosition = async (yiedToken, token, poolToken, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] add-to-position...', yiedToken, token, poolToken, dx);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'add-to-position',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),           
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),           
             uintCV(dx)
         ],
         senderKey: privateKey,
@@ -69,23 +71,24 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid);
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
   }  
   
-  const ytpReducePosition = async (yiedToken, token, poolToken, percent) => {
+  const ytpReducePosition = async (yiedToken, token, poolToken, percent, deployer=true) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
-    const privateKey = await getPK();
+    const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'reduce-position',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, poolToken),           
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),           
             uintCV(percent)
         ],
         senderKey: privateKey,
@@ -98,24 +101,25 @@ const {
         const transaction = await makeContractCall(txOptions);
         const broadcastResponse = await broadcastTransaction(transaction, network);
         console.log(broadcastResponse);
-        await wait_until_confirmation(broadcastResponse.txid);
+        return await wait_until_confirmation(broadcastResponse.txid);
     } catch (error) {
         console.log(error);
     }
   }  
   
   const ytpGetPrice = async(yieldToken) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-price...', yieldToken);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-price',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -125,17 +129,18 @@ const {
   }
   
   const ytpGetYield = async(yieldToken) => {
-    console.log('[YTP] get-price...', yieldToken);
+    console.log('--------------------------------------------------------------------------');
+    console.log('[YTP] get-yield...', yieldToken);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-yield',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -146,15 +151,16 @@ const {
   }
   
   const ytpSwapXforY = async (yiedToken, token, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-x-for-y...', yiedToken, token, dx);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'swap-x-for-y',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),          
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),          
             uintCV(dx)
         ],
         senderKey: privateKey,
@@ -174,15 +180,16 @@ const {
   }
   
   const ytpSwapYforX = async (yiedToken, token, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-y-for-x...', yiedToken, token, dy);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'swap-y-for-x',
         functionArgs: [
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yiedToken),
-            contractPrincipalCV(process.env.ACCOUNT_ADDRESS, token),          
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),          
             uintCV(dy)
         ],
         senderKey: privateKey,
@@ -202,18 +209,19 @@ const {
   }
   
   const ytpGetXgivenY = async (yieldToken, dy) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-x-given-y...', yieldToken, dy);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-x-given-y',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(dy)
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -224,18 +232,19 @@ const {
   };  
   
   const ytpGetYgivenX = async (yieldToken, dx) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-y-given-x...', yieldToken, dx);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-y-given-x',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(dx)
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -246,18 +255,19 @@ const {
   };
 
   const ytpGetXgivenYield = async (yieldToken, yied) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-x-given-yield...', yieldToken, yied);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-x-given-yield',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(yied)
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -268,18 +278,19 @@ const {
   };  
   
   const ytpGetYgivenYield = async (yieldToken, yied) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-y-given-yield...', yieldToken, yied);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-y-given-yield',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken),
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(yied)
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -288,19 +299,42 @@ const {
       console.log(error);
     }
   };  
+
+  const ytpGetPositionGivenBurn = async (yieldToken, shares) => {
+    console.log('--------------------------------------------------------------------------');
+    console.log('[YTP] get-position-given-burn...', yieldToken);
+  
+    const options = {
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+      contractName: 'yield-token-pool',
+      functionName: 'get-position-given-burn',
+      functionArgs: [
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
+        uintCV(shares)
+      ],
+      network: network,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    };
+    try {
+      return callReadOnlyFunction(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };  
   
   const ytpGetPoolDetails = async (yieldToken) => {
+    console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-pool-details...', yieldToken);
   
     const options = {
-      contractAddress: process.env.ACCOUNT_ADDRESS,
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       contractName: 'yield-token-pool',
       functionName: 'get-pool-details',
       functionArgs: [
-        contractPrincipalCV(process.env.ACCOUNT_ADDRESS, yieldToken)
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken)
       ],
       network: network,
-      senderAddress: process.env.ACCOUNT_ADDRESS,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
     };
     try {
       return callReadOnlyFunction(options);
@@ -334,3 +368,4 @@ const {
   exports.ytpReducePosition = ytpReducePosition;
   exports.ytpGetXgivenYield = ytpGetXgivenYield;
   exports.ytpGetYgivenYield = ytpGetYgivenYield;
+  exports.ytpGetPositionGivenBurn = ytpGetPositionGivenBurn;

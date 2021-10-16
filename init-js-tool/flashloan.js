@@ -1,5 +1,5 @@
 const {
-    getPK, network
+    getDeployerPK, getUserPK, network
 } = require('./wallet');
 const {
     makeContractCall,
@@ -15,9 +15,9 @@ const { wait_until_confirmation } = require('./utils');
 
 const flExecuteMarginUsdaWbtc23040 = async(amount) => {
     console.log('[FL] execute-margin-usda-wbtc-23040...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-usda-wbtc-23040',
         functionName: 'execute-margin-usda-wbtc-23040',
         functionArgs: [
@@ -41,9 +41,9 @@ const flExecuteMarginUsdaWbtc23040 = async(amount) => {
 
 const flExecuteMarginWbtcUsda23040 = async(amount) => {
     console.log('[FL] execute-margin-wbtc-usda-23040...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-wbtc-usda-23040',
         functionName: 'execute-margin-wbtc-usda-23040',
         functionArgs: [
@@ -67,9 +67,9 @@ const flExecuteMarginWbtcUsda23040 = async(amount) => {
 
 const flExecuteMarginUsdaWbtc23670 = async(amount) => {
     console.log('[FL] execute-margin-usda-wbtc-23670...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-usda-wbtc-23670',
         functionName: 'execute-margin-usda-wbtc-23670',
         functionArgs: [
@@ -93,9 +93,9 @@ const flExecuteMarginUsdaWbtc23670 = async(amount) => {
 
 const flExecuteMarginUsdaWbtc34560 = async(amount) => {
     console.log('[FL] execute-margin-usda-wbtc-34560...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-usda-wbtc-34560',
         functionName: 'execute-margin-usda-wbtc-34560',
         functionArgs: [
@@ -119,9 +119,9 @@ const flExecuteMarginUsdaWbtc34560 = async(amount) => {
 
 const flExecuteMarginWbtcUsda34560 = async(amount) => {
     console.log('[FL] execute-margin-wbtc-usda-34560...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-wbtc-usda-34560',
         functionName: 'execute-margin-wbtc-usda-34560',
         functionArgs: [
@@ -145,9 +145,9 @@ const flExecuteMarginWbtcUsda34560 = async(amount) => {
 
 const flExecuteMarginUsdaWbtc74880 = async(amount) => {
     console.log('[FL] execute-margin-usda-wbtc-74880...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-usda-wbtc-74880',
         functionName: 'execute-margin-usda-wbtc-74880',
         functionArgs: [
@@ -171,9 +171,9 @@ const flExecuteMarginUsdaWbtc74880 = async(amount) => {
 
 const flExecuteMarginWbtcUsda74880 = async(amount) => {
     console.log('[FL] execute-margin-wbtc-usda-74880...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-wbtc-usda-74880',
         functionName: 'execute-margin-wbtc-usda-74880',
         functionArgs: [
@@ -197,9 +197,9 @@ const flExecuteMarginWbtcUsda74880 = async(amount) => {
 
 const flExecuteMarginUsdaWbtc59760 = async(amount) => {
     console.log('[FL] execute-margin-usda-wbtc-59760...', amount);
-    const privateKey = await getPK();
+    const privateKey = await getUserPK();
     const txOptions = {
-        contractAddress: process.env.ACCOUNT_ADDRESS,
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'flash-loan-user-margin-usda-wbtc-59760',
         functionName: 'execute-margin-usda-wbtc-59760',
         functionArgs: [

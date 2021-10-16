@@ -562,7 +562,7 @@
 
 ;; math-fixed-point
 ;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
+;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
 ;; TODO: overflow causes runtime error, should handle before operation rather than after
 
@@ -697,7 +697,7 @@
 ;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
+;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
 ;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
 
 ;; constants
@@ -928,26 +928,5 @@
       (ok (- 0 (unwrap-panic (ln-priv (/ (* iONE_8 iONE_8) a)))))
       (ln-priv a)
    )
- )
-)
-
-(define-read-only (test)
-  (let
-    (
-      (x (* u7 (pow u10 u6)))
-      (y (* u233 (pow u10 u6)))
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
-      ;;(r (exp-pos (* -1 logx-times-y)))
-
-      ;;(arg (* 69 iONE_8))
-      ;;(r (exp-pos arg))
-      ;;(x_product (fold accumulate_product x_a_list {x: arg, product: iONE_8}))
-  )
-  ;;(ok logx-times-y)
-  ;;x_product
-  (ok (pow-fixed x y))
  )
 )

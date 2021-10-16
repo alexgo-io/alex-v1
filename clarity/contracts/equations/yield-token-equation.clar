@@ -39,13 +39,14 @@
 )
 
 ;; note yield is not annualised
-;; b_y = balance-aytoken
-;; b_x = balance-token
-;; yield = ln(b_y/b_x)
+;; yield = price - 1
 (define-read-only (get-yield (balance-x uint) (balance-y uint) (t uint))
-  (begin 
-    (asserts! (>= balance-y balance-x) invalid-balance-err)
-    (ok (to-uint (unwrap-panic (ln-fixed (to-int (unwrap-panic (div-down balance-y balance-x)))))))      
+  (let
+    (
+      (price (try! (get-price balance-x balance-y t)))
+    )    
+    ;; (ok (to-uint (unwrap-panic (ln-fixed (to-int price)))))
+    (if (<= price ONE_8) (ok u0) (sub-fixed price ONE_8))
   )
 )
 
@@ -71,9 +72,11 @@
         (add-term (unwrap-panic (add-fixed x-pow y-pow)))
         (term (if (<= add-term x-dx-pow) u0 (unwrap-panic (sub-fixed add-term x-dx-pow))))
         (final-term (unwrap-panic (pow-down term t-comp-num)))
+        (dy (if (<= balance-y final-term) u0 (unwrap-panic (sub-fixed balance-y final-term))))
       )
-      ;; if we are overwhelmed by numerical error, return 0
-      (if (<= balance-y final-term) (ok u0) (sub-fixed balance-y final-term))
+      
+      (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+      (ok dy)
     )  
   )
 )
@@ -100,8 +103,11 @@
         (add-term (unwrap-panic (add-fixed x-pow y-pow)))
         (term (if (<= add-term y-dy-pow) u0 (unwrap-panic (sub-fixed add-term y-dy-pow))))
         (final-term (unwrap-panic (pow-down term t-comp-num)))         
+        (dx (if (<= final-term balance-x) u0 (unwrap-panic (sub-fixed final-term balance-x))))
       )
-      (if (<= final-term balance-x) (ok u0) (sub-fixed final-term balance-x))
+
+      (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+      (ok dx)
     )  
   )
 )
@@ -159,23 +165,13 @@
 )
 
 (define-read-only (get-x-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (let 
-    (
-      (t-yield (unwrap-panic (mul-up t yield)))
-      (price (to-uint (unwrap-panic (exp-fixed (to-int t-yield)))))
-    )
-    (get-x-given-price balance-x balance-y t price)
-  )
+  ;; (get-x-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
+  (get-x-given-price balance-x balance-y t (unwrap-panic (add-fixed ONE_8 yield)))
 )
 
 (define-read-only (get-y-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (let 
-    (
-      (t-yield (unwrap-panic (mul-up t yield)))
-      (price (to-uint (unwrap-panic (exp-fixed (to-int t-yield)))))
-    )
-    (get-y-given-price balance-x balance-y t price)
-  )
+  ;; (get-y-given-price balance-x balance-y t (to-uint (unwrap-panic (exp-fixed (to-int yield)))))
+  (get-y-given-price balance-x balance-y t (unwrap-panic (add-fixed ONE_8 yield)))
 )
 
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))
@@ -217,7 +213,7 @@
 
 ;; math-fixed-point
 ;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
+;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
 ;; TODO: overflow causes runtime error, should handle before operation rather than after
 
@@ -352,7 +348,7 @@
 ;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
+;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
 ;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
 
 ;; constants

@@ -89,11 +89,11 @@ Clarinet.test({
         // sell some yield-token
         result = YTPTest.swapYForX(wallet_1, yieldusda23040Address, usdaAddress, 10000*ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(1017223843528);
+        position['dx'].expectUint(1000041600834);
         position['dy'].expectUint(10000*ONE_8);
 
         call = await YTPTest.getPrice(yieldusda23040Address);
-        call.result.expectOk().expectUint(103489851);
+        call.result.expectOk().expectUint(100010963);
 
         // remember ltv to be used for margin is:
         // ltv = (.collateral-rebalancing-pool get-ltv) / (.yield-token-pool get-price)
@@ -115,12 +115,12 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999999997136);  
+        position = call.result.expectOk().expectUint(1999999998496);  
         call = await FLTest.getBalance(usdaAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(1217223000000);            
+        position = call.result.expectOk().expectUint(1200041000000);            
         // should see change in key token
         call = await FLTest.getBalance(keyusda23040Address, wallet_1.address);
-        position = call.result.expectOk().expectUint(122000000);
+        position = call.result.expectOk().expectUint(117000000);
         // but nothing with yield token
         call = await FLTest.getBalance(yieldusda23040Address, wallet_1.address);
         position = call.result.expectOk().expectUint(1999999000000000000);                
