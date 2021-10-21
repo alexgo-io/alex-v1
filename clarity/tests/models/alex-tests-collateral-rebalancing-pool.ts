@@ -312,7 +312,14 @@ import {
         types.uint(expiry),
         types.uint(price)
       ], this.deployer.address);
-    }       
+    }    
+    
+    getPositionGivenBurnYield(expiry: number, shares: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-position-given-burn-yield", [
+        types.uint(expiry),
+        types.uint(shares)
+      ], this.deployer.address);
+    }
 
   }
   

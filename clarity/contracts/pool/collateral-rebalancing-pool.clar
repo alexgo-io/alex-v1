@@ -924,7 +924,7 @@
     )
 )
 
-(define-read-only (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-burn-yield (expiry uint) (shares uint))
     (begin
         (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)
         (ok shares)
