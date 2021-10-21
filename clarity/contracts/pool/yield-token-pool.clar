@@ -266,7 +266,7 @@
                 (balance-virtual (get balance-virtual pool))                
                 (total-supply (get total-supply pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (reduce-data (try! (get-position-given-burn the-aytoken shares)))
                 (dx (get dx reduce-data))
                 (dy-act (get dy-act reduce-data))
@@ -306,9 +306,9 @@
 
                 ;; lambda ~= 1 - fee-rate-aytoken * yield
                 (yield (try! (get-yield the-aytoken)))
-                (fee-yield (unwrap! (mul-down yield fee-rate-aytoken) ERR-MATH-CALL))
+                (fee-yield (mul-down yield fee-rate-aytoken))
                 (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
-                (dx-net-fees (unwrap! (mul-down dx lambda) ERR-MATH-CALL))
+                (dx-net-fees (mul-down dx lambda))
                 (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
 
                 (dy (try! (get-y-given-x the-aytoken dx-net-fees)))
@@ -350,9 +350,9 @@
 
                 ;; lambda ~= 1 - fee-rate-token * yield
                 (yield (try! (get-yield the-aytoken)))
-                (fee-yield (unwrap! (mul-down yield fee-rate-token) ERR-MATH-CALL))
+                (fee-yield (mul-down yield fee-rate-token))
                 (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
-                (dy-net-fees (unwrap! (mul-down dy lambda) ERR-MATH-CALL))
+                (dy-net-fees (mul-down dy lambda))
                 (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
                 (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
@@ -625,7 +625,7 @@
         (token (get token data))
         (dy (get dy data))
         (percent-act (if (is-eq balance-aytoken u0) u0 (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL)))
-        (dy-act (if (is-eq token dy) u0 (unwrap! (mul-down dy percent-act) ERR-MATH-CALL)))
+        (dy-act (if (is-eq token dy) u0 (mul-down dy percent-act)))
         (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (- dy dy-act))))
         )        
         (ok {token: token, dy-act: dy-act, dy-vir: dy-vir})
@@ -731,12 +731,7 @@
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+    (/ (* a b) ONE_8)
 )
 
 

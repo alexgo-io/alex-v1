@@ -151,7 +151,7 @@
                 (expiry-to-listed (- expiry listed))
                 (weight-diff (- weight-x-0 weight-x-1))
                 (time-ratio (unwrap! (div-down now-to-listed expiry-to-listed) ERR-MATH-CALL))
-                (weight-change (unwrap! (mul-down weight-diff time-ratio) ERR-MATH-CALL))
+                (weight-change (mul-down weight-diff time-ratio))
                 (weight-t (- weight-x-0 weight-change))     
             )
 
@@ -224,7 +224,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))     
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait expiry shares)))
                 (dx (get dx reduce-data))
@@ -622,12 +622,7 @@
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+    (/ (* a b) ONE_8)
 )
 
 

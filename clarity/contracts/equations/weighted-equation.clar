@@ -31,9 +31,9 @@
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (ok (unwrap-panic (mul-down 
+        (ok (mul-down 
                 (unwrap-panic (pow-down balance-x weight-x)) 
-                (unwrap-panic (pow-down balance-y weight-y)))))        
+                (unwrap-panic (pow-down balance-y weight-y))))       
     )
 )
 
@@ -47,7 +47,7 @@
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down balance-x MAX_IN_RATIO)) ERR-MAX-IN-RATIO)
         (let 
             (
                 (denominator (+ balance-x dx))
@@ -57,9 +57,9 @@
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-up base exponent)))
                 (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
-                (dy (unwrap-panic (mul-down balance-y complement)))
+                (dy (mul-down balance-y complement))
             )
-            (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+            (asserts! (< dy (mul-down balance-y MAX_OUT_RATIO)) ERR-MAX-OUT-RATIO)
             (ok dy)
         ) 
     )    
@@ -74,7 +74,7 @@
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+        (asserts! (< dy (mul-down balance-y MAX_OUT_RATIO)) ERR-MAX-OUT-RATIO)
         (let 
             (
                 (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
@@ -84,9 +84,9 @@
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-down base exponent)))
                 (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
-                (dx (unwrap-panic (mul-down balance-x ratio)))
+                (dx (mul-down balance-x ratio))
             )
-            (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+            (asserts! (< dx (mul-down balance-x MAX_IN_RATIO)) ERR-MAX-IN-RATIO)
             (ok dx)
         )
     )
@@ -105,7 +105,7 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (unwrap-panic (mul-down balance-y weight-x)))
+                (numerator (mul-down balance-y weight-x))
                 (denominator (mul-up balance-x weight-y))
                 (spot (unwrap-panic (div-down numerator denominator)))
             )
@@ -127,7 +127,7 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (unwrap-panic (mul-down balance-y weight-x)))
+                (numerator (mul-down balance-y weight-x))
                 (denominator (mul-up balance-x weight-y))
                 (spot (unwrap-panic (div-down numerator denominator)))
             )
@@ -152,10 +152,10 @@
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-                        (new-dy (unwrap-panic (mul-down balance-y 
-                                (unwrap-panic (div-down dx balance-x)))))
-                        (token (unwrap-panic (mul-down total-supply  
-                                (unwrap-panic (div-down dx balance-x)))))
+                        (new-dy (mul-down balance-y 
+                                (unwrap-panic (div-down dx balance-x))))
+                        (token (mul-down total-supply  
+                                (unwrap-panic (div-down dx balance-x))))
                     )
                     {token: token, dy: new-dy}
                 )   
@@ -173,8 +173,8 @@
                 ;; first calculate what % you need to mint
                 (token-supply (unwrap-panic (div-down token total-supply)))
                 ;; calculate dx as % of balance-x corresponding to % you need to mint
-                (dx (unwrap-panic (mul-down balance-x token-supply)))
-                (dy (unwrap-panic (mul-down balance-y token-supply)))
+                (dx (mul-down balance-x token-supply))
+                (dy (mul-down balance-y token-supply))
             )
             (ok {dx: dx, dy: dy})
         )
@@ -234,12 +234,7 @@
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+  (/ (* a b) ONE_8)
 )
 
 
