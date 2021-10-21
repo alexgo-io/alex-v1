@@ -102,10 +102,10 @@
             (a3x (unwrap! (mul-down a3 x3) ERR-MATH-CALL))
             (x4 (unwrap! (pow-down x u400000000) ERR-MATH-CALL))
             (a4x (unwrap! (mul-down a4 x4) ERR-MATH-CALL))
-            (denom (unwrap! (add-fixed ONE_8 a1x) ERR-MATH-CALL))
-            (denom1 (unwrap! (add-fixed denom a2x) ERR-MATH-CALL))
-            (denom2 (unwrap! (add-fixed denom1 a3x) ERR-MATH-CALL))
-            (denom3 (unwrap! (add-fixed denom2 a4x) ERR-MATH-CALL))
+            (denom (+ ONE_8 a1x))
+            (denom1 (+ denom a2x))
+            (denom2 (+ denom1 a3x))
+            (denom3 (+ denom2 a4x))
             (denom4 (unwrap! (pow-down denom3 u400000000) ERR-MATH-CALL))
             (base (unwrap! (div-down ONE_8 denom4) ERR-MATH-CALL))
         )
@@ -183,7 +183,7 @@
             (token-value (unwrap! (mul-down balance-x collateral-price) ERR-MATH-CALL))
             (balance-x-in-y (unwrap! (div-down token-value token-price) ERR-MATH-CALL))
         )
-        (add-fixed balance-x-in-y balance-y)
+        (ok (+ balance-x-in-y balance-y))
     )
 )
 
@@ -202,7 +202,7 @@
             (collateral-value (unwrap! (mul-down balance-y token-price) ERR-MATH-CALL))
             (balance-y-in-x (unwrap! (div-down collateral-value collateral-price) ERR-MATH-CALL))
         )
-        (add-fixed balance-y-in-x balance-x)
+        (ok (+ balance-y-in-x balance-x))
     )
 )
 
@@ -257,12 +257,12 @@
                     (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
             
                     (denominator (unwrap! (mul-down bs-vol sqrt-t) ERR-MATH-CALL))
-                    (numerator (unwrap! (add-fixed vol-term (unwrap! (sub-fixed (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term)) ERR-MATH-CALL)) ERR-MATH-CALL))
+                    (numerator (+ vol-term (unwrap! (sub-fixed (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term)) ERR-MATH-CALL)))
                     (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
                     (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
-                    (complement (if (> spot-term ONE_8) (unwrap! (add-fixed ONE_8 erf-term) ERR-MATH-CALL) (if (<= ONE_8 erf-term) u0 (unwrap! (sub-fixed ONE_8 erf-term) ERR-MATH-CALL))))
+                    (complement (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (unwrap! (sub-fixed ONE_8 erf-term) ERR-MATH-CALL))))
                     (weight-t (unwrap! (div-up complement u200000000) ERR-MATH-CALL))
-                    (weighted (unwrap! (add-fixed (unwrap! (mul-down moving-average weight-y) ERR-MATH-CALL) (unwrap! (mul-down ma-comp weight-t) ERR-MATH-CALL)) ERR-MATH-CALL))                    
+                    (weighted (+ (unwrap! (mul-down moving-average weight-y) ERR-MATH-CALL) (unwrap! (mul-down ma-comp weight-t) ERR-MATH-CALL)))                    
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
                 (ok (if (> weighted u100000) weighted u100000))
@@ -399,10 +399,10 @@
                 )
 
                 (pool-updated (merge pool {
-                    yield-supply: (unwrap! (add-fixed yield-new-supply yield-supply) ERR-MATH-CALL),
-                    key-supply: (unwrap! (add-fixed key-new-supply key-supply) ERR-MATH-CALL),
-                    balance-x: (unwrap! (add-fixed balance-x dx-weighted) ERR-MATH-CALL),
-                    balance-y: (unwrap! (add-fixed balance-y dy-weighted) ERR-MATH-CALL)
+                    yield-supply: (+ yield-new-supply yield-supply),
+                    key-supply: (+ key-new-supply key-supply),
+                    balance-x: (+ balance-x dx-weighted),
+                    balance-y: (+ balance-y dy-weighted)
                 }))
             )     
 
@@ -453,7 +453,7 @@
                                 )
                             )
                 )
-                (new-bal-y (unwrap! (add-fixed balance-y bal-x-to-y) ERR-MATH-CALL))
+                (new-bal-y (+ balance-y bal-x-to-y))
                 (dy (unwrap! (mul-down new-bal-y shares-to-yield) ERR-MATH-CALL))
 
                 (pool-updated (merge pool {
@@ -590,9 +590,9 @@
                 (pool-updated
                     (merge pool
                         {
-                            balance-x: (unwrap! (add-fixed balance-x dx-net-fees) ERR-MATH-CALL),
+                            balance-x: (+ balance-x dx-net-fees),
                             balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)),
-                            fee-balance-x: (unwrap! (add-fixed (get fee-balance-x pool) fee) ERR-MATH-CALL),
+                            fee-balance-x: (+ (get fee-balance-x pool) fee),
                             weight-x: weight-x,
                             weight-y: weight-y                    
                         }
@@ -643,8 +643,8 @@
                     (merge pool
                         {
                             balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                            balance-y: (unwrap! (add-fixed balance-y dy-net-fees) ERR-MATH-CALL),                      
-                            fee-balance-y: (unwrap! (add-fixed (get fee-balance-y pool) fee) ERR-MATH-CALL),
+                            balance-y: (+ balance-y dy-net-fees),                      
+                            fee-balance-y: (+ (get fee-balance-y pool) fee),
                             weight-x: weight-x,
                             weight-y: weight-y                        
                         }
@@ -917,7 +917,7 @@
                             )                            
                         )
                 )   
-                (dx (unwrap! (add-fixed dx-weighted dy-to-dx) ERR-MATH-CALL))
+                (dx (+ dx-weighted dy-to-dx))
             )
             (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
         )
@@ -1007,16 +1007,6 @@
  )
 )
 
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
 (define-read-only (sub-fixed (a uint) (b uint))
     (let
         ()
@@ -1090,7 +1080,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 
