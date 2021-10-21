@@ -252,7 +252,7 @@
                     (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
                     (pow-bs-vol (unwrap! (div-up 
                                     (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
-                    (vol-term (unwrap! (mul-up t pow-bs-vol) ERR-MATH-CALL))                       
+                    (vol-term (mul-up t pow-bs-vol))
                     (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
                     (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
             
@@ -304,7 +304,7 @@
                 (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))            
                 (pow-bs-vol (unwrap! (div-up 
                                 (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
-                (numerator (unwrap! (mul-up t pow-bs-vol) ERR-MATH-CALL))                       
+                (numerator (mul-up t pow-bs-vol))
                 (denominator (unwrap! (mul-down bs-vol sqrt-t) ERR-MATH-CALL))        
                 (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
                 (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
@@ -583,7 +583,7 @@
                 (weight-x (- ONE_8 weight-y))            
             
                 ;; fee = dx * fee-rate-x
-                (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
+                (fee (mul-up dx fee-rate-x))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (dy (try! (get-y-given-x token collateral expiry dx-net-fees)))
 
@@ -635,7 +635,7 @@
                 (weight-x (- ONE_8 weight-y))   
 
                 ;; fee = dy * fee-rate-y
-                (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
+                (fee (mul-up dy fee-rate-y))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
                 (dx (try! (get-x-given-y token collateral expiry dy-net-fees)))        
 
@@ -1023,8 +1023,8 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
@@ -1057,7 +1057,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
             (ok u0)
@@ -1070,7 +1070,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
     )

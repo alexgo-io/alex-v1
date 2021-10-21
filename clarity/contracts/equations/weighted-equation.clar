@@ -106,7 +106,7 @@
         (let
             (
                 (numerator (unwrap-panic (mul-down balance-y weight-x)))
-                (denominator (unwrap-panic (mul-up balance-x weight-y)))
+                (denominator (mul-up balance-x weight-y))
                 (spot (unwrap-panic (div-down numerator denominator)))
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
@@ -115,7 +115,7 @@
                     (base (unwrap-panic (div-up spot price)))
                     (power (unwrap-panic (pow-down base weight-y)))                
                 )
-                (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8)))
+                (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
             )
         )
     )   
@@ -128,7 +128,7 @@
         (let
             (
                 (numerator (unwrap-panic (mul-down balance-y weight-x)))
-                (denominator (unwrap-panic (mul-up balance-x weight-y)))
+                (denominator (mul-up balance-x weight-y))
                 (spot (unwrap-panic (div-down numerator denominator)))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
@@ -137,7 +137,7 @@
                     (base (unwrap-panic (div-up spot price)))
                     (power (unwrap-panic (pow-down base weight-y)))
                 )
-                (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
             )
         )
     )   
@@ -249,8 +249,8 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
@@ -283,7 +283,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
             (ok u0)
@@ -296,7 +296,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (ok (+ raw max-error))
     )

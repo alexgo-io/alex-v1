@@ -133,7 +133,7 @@
         (denom (+ ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t))))))
         (lead-term (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num)))
       )
-      (if (<= lead-term ONE_8) (ok u0) (mul-up balance-x (- lead-term ONE_8)))
+      (if (<= lead-term ONE_8) (ok u0) (ok (mul-up balance-x (- lead-term ONE_8))))
     )
   )
 )
@@ -157,7 +157,7 @@
         (max-exp (unwrap-panic (get-exp-bound)))
         (numer (+ ONE_8 (unwrap-panic (pow-down (unwrap-panic (div-down balance-y balance-x)) t-comp))))
         (denom (+ ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t))))))
-        (lead-term (unwrap-panic (mul-up balance-x (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num)))))
+        (lead-term (mul-up balance-x (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num))))
       )
       (if (<= balance-y lead-term) (ok u0) (ok (- balance-y lead-term)))
     )
@@ -273,8 +273,8 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
@@ -307,7 +307,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
             (ok u0)
@@ -320,7 +320,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (ok (+ raw max-error))
     )

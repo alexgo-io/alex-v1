@@ -137,7 +137,7 @@
             (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (balance (+ balance-token balance-aytoken))
         )
-        (mul-up balance token-price)
+        (ok (mul-up balance token-price))
     )
 )
 
@@ -651,7 +651,7 @@
         (dx (get dx data))
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
-        (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
+        (dy-act (mul-up dy percent-act))
         (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
@@ -676,7 +676,7 @@
         (dx (get dx data))
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
-        (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
+        (dy-act (mul-up dy percent-act))
         (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
@@ -746,8 +746,8 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
@@ -780,7 +780,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
             (ok u0)
@@ -793,7 +793,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
     )

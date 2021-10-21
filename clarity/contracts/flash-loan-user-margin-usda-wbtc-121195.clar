@@ -14,7 +14,7 @@
             (expiry (unwrap! (contract-call? .yield-wbtc-121195 get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wbtc .token-usda expiry)))
             (price (try! (contract-call? .yield-token-pool get-price .yield-wbtc-121195)))
-            (gross-amount (unwrap! (contract-call? .math-fixed-point mul-up amount (unwrap! (contract-call? .math-fixed-point div-down price ltv) math-call-err)) math-call-err))
+            (gross-amount (contract-call? .math-fixed-point mul-up amount (unwrap! (contract-call? .math-fixed-point div-down price ltv) math-call-err)))
             (swapped-token (get dx (try! (contract-call? .collateral-rebalancing-pool add-to-position-and-switch .token-wbtc .token-usda .yield-wbtc-121195 .key-wbtc-121195-usda gross-amount))))            
         )
         ;; swap token to collateral so we can return flash-loan
