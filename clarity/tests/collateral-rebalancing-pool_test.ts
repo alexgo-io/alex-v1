@@ -752,3 +752,42 @@ Clarinet.test({
         position = result.expectErr().expectUint(5000) 
     },    
 });        
+
+Clarinet.test({
+    name: 'CRP : testing get-x-given-y and get-y-given-x',
+    async fn (chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
+        oracleresult.expectOk()
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
+        oracleresult.expectOk()
+        
+        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result.expectOk().expectBool(true);
+
+        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectOk().expectBool(true);
+
+        result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8);
+        result.expectOk().expectUint(2003);
+
+        result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, 0);
+        result.expectOk().expectUint(0);
+
+        result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, 0, ONE_8);
+        result.expectErr().expectUint(2001);
+
+        result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, expiry, 500);
+        result.expectOk().expectUint(98205150);
+
+        result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, expiry, 0);
+        result.expectOk().expectUint(0);
+
+        result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, 0, 500);
+        result.expectErr().expectUint(2001)
+    }
+})

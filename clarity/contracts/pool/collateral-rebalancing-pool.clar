@@ -285,7 +285,7 @@
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))            
                 (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
-
+                
                 (now (* block-height ONE_8))
                 ;; TODO: assume 10mins per block - something to be reviewed
                 (t (unwrap! (div-down 
@@ -804,33 +804,39 @@
 )
 
 (define-read-only (get-y-given-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
-    (let 
+    (let
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (weight-x (get weight-x pool))
-            (weight-y (get weight-y pool))
+            (pool (unwrap! (map-get? pools-data-map
+			    { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry })
+			    ERR-INVALID-POOL-ERR)
+            )
         )
-        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+        (contract-call? .weighted-equation get-y-given-x
+            (get balance-x pool)
+            (get balance-y pool)
+            (get weight-x pool)
+            (get weight-y pool)
+            dx
+        )
     )
 )
 
 (define-read-only (get-x-given-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
-    (let 
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (weight-x (get weight-x pool))
-            (weight-y (get weight-y pool))
-        )
-        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
-    )
+	(let
+		(
+			(pool (unwrap! (map-get? pools-data-map
+				{ token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry })
+				ERR-INVALID-POOL-ERR)
+			)
+		)
+		(contract-call? .weighted-equation get-x-given-y 
+			(get balance-x pool) 
+			(get balance-y pool) 
+			(get weight-x pool) 
+			(get weight-y pool) 
+			dy
+		)
+	)
 )
 
 (define-read-only (get-x-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
