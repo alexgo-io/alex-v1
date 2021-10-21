@@ -81,9 +81,9 @@
                 (new-supply (get token add-data))
                 (new-dy (get dy add-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (add-fixed new-supply total-supply) ERR-MATH-CALL),
-                    balance-x: (unwrap! (add-fixed balance-x dx) ERR-MATH-CALL),
-                    balance-y: (unwrap! (add-fixed balance-y new-dy) ERR-MATH-CALL)
+                    total-supply: (+ new-supply total-supply),
+                    balance-x: (+ balance-x dx),
+                    balance-y: (+ balance-y new-dy)
                 }))
             )
             (asserts! (> new-dy u0) ERR-INVALID-LIQUIDITY)
@@ -274,9 +274,9 @@
                 (pool-updated
                     (merge pool
                         {
-                            balance-x: (unwrap! (add-fixed balance-x dx-net-fees) ERR-MATH-CALL),
+                            balance-x: (+ balance-x dx-net-fees),
                             balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)),
-                            fee-balance-x: (unwrap! (add-fixed fee (get fee-balance-x pool)) ERR-MATH-CALL),
+                            fee-balance-x: (+ fee (get fee-balance-x pool)),
                             weight-x-t: weight-x
                         }
                     )
@@ -321,8 +321,8 @@
                     (merge pool
                         {
                             balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                            balance-y: (unwrap! (add-fixed balance-y dy-net-fees) ERR-MATH-CALL),
-                            fee-balance-y: (unwrap! (add-fixed fee (get fee-balance-y pool)) ERR-MATH-CALL),
+                            balance-y: (+ balance-y dy-net-fees),
+                            fee-balance-y: (+ fee (get fee-balance-y pool)),
                             weight-x-t: weight-x
                         }
                     )
@@ -621,16 +621,6 @@
  )
 )
 
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
 (define-read-only (sub-fixed (a uint) (b uint))
     (let
         ()
@@ -704,7 +694,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 
