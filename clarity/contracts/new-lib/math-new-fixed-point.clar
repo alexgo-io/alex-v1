@@ -47,7 +47,12 @@
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_10)
+    (let
+        (
+            (product (* a b))
+        )
+        (ok (/ product ONE_10))
+    )
 )
 
 

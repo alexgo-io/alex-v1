@@ -210,7 +210,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
+                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
                 (total-supply (get total-supply pool))
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares)))
                 (dx (get dx reduce-data))
@@ -606,7 +606,12 @@
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
+    (let
+        (
+            (product (* a b))
+        )
+        (ok (/ product ONE_8))
+    )
 )
 
 

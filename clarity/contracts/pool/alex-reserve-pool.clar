@@ -84,13 +84,13 @@
     (asserts! (> usda-amount u0) ERR-INVALID-LIQUIDITY)
     (let
         (   
-            (amount-to-rebate (mul-down usda-amount (var-get rebate-rate)))
+            (amount-to-rebate (unwrap! (mul-down usda-amount (var-get rebate-rate)) ERR-MATH-CALL))
             (usda-symbol (unwrap! (contract-call? .token-usda get-symbol) ERR-GET-SYMBOL-FAIL))
             (alex-symbol (unwrap! (contract-call? .token-alex get-symbol) ERR-GET-SYMBOL-FAIL))
             (usda-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) usda-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (alex-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) alex-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (usda-to-alex (unwrap! (div-down usda-price alex-price) ERR-MATH-CALL))
-            (alex-to-rebate (mul-down amount-to-rebate usda-to-alex))
+            (alex-to-rebate (unwrap! (mul-down amount-to-rebate usda-to-alex) ERR-MATH-CALL))
         )
         ;; all usdc amount is transferred
         ;; (print oracle)
@@ -151,7 +151,12 @@
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-  (/ (* a b) ONE_8)
+    (let
+        (
+            (product (* a b))
+        )
+        (ok (/ product ONE_8))
+    )
 )
 
 

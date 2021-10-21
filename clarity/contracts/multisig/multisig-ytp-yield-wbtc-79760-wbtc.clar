@@ -335,7 +335,7 @@
     ;; Get the balance of gAlex token which is owned by Multisig
     (rebated-galex (* (unwrap-panic (contract-call? .token-alex get-balance (as-contract tx-sender))) ONE_8))
     ;; Calculate how much user shall receive
-    (users-rebate (contract-call? .math-fixed-point mul-down rebated-galex user-percentage))
+    (users-rebate (unwrap-panic (contract-call? .math-fixed-point mul-down rebated-galex user-percentage)))
   ) 
     ;; Check whether the collect round is open
     (asserts! (get is-open collect-round) ERR-NOT-AUTHORIZED)
