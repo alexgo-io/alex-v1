@@ -95,7 +95,7 @@
         (let
             (
                 (t (unwrap! (div-down
-                    (- expiry (* block-height ONE_8)) 
+                    (if (< expiry (* block-height ONE_8)) u0 (- expiry (* block-height ONE_8)))
                     (- (var-get max-expiry) listed)) ERR-MATH-CALL))
             )
             (ok (if (< t MAX_T) t MAX_T)) ;; to avoid numerical error
