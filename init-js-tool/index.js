@@ -173,7 +173,23 @@ const _deploy = {
         bs_vol: 0.8e+8,
         target_apy: 0.22950,
         expiry: 161515e+8,
-    },      
+    },    
+    8: {token: 'token-wbtc',
+        collateral: 'token-usda',
+        yield_token: 'yield-wbtc-11520',
+        key_token: 'key-wbtc-11520-usda',
+        pool_token: 'ytp-yield-wbtc-11520-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-11520-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-11520-usda',
+        liquidity_ytp: 100e+8,
+        collateral_crp: 1500000e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.24469,
+        expiry: 11520e+8,
+    },    
+    
+    
 }
 
 const ONE_8 = 100000000
@@ -208,14 +224,14 @@ async function mint_some_usda(recipient) {
     console.log('------ Mint Some USDA ------');
     await mint('token-usda', recipient, 200000000000000000n);
     usda_balance = await balance('token-usda', recipient);
-    console.log('usda balance: ', format_number(Number(usda_balance.value.value)));
+    console.log('usda balance: ', format_number(Number(usda_balance.value.value) / ONE_8));
 }
 
 async function mint_some_wbtc(recipient) {
     console.log('------ Mint Some WBTC ------');
     await mint('token-wbtc', recipient, 5000000000000);
     wbtc_balance = await balance('token-wbtc', recipient);
-    console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value)));
+    console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8));
 }
 
 async function see_balance(owner) {
@@ -749,10 +765,8 @@ async function run() {
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
 
-    const _pools = {
-                        0: _deploy[0],
-                        1: _deploy[1],
-                    };
+    // const _pools = { 0:_deploy[2], 1:_deploy[3], 2:_deploy[4], 3:_deploy[5], 4:_deploy[6], 5:_deploy[7] };
+    // const _pools = { 0:_deploy[2] };
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
@@ -761,20 +775,20 @@ async function run() {
     // await arbitrage_fwp(dry_run = false);
     // await arbitrage_crp(dry_run = false, _pools);
     // await arbitrage_ytp(dry_run = false, _pools);
-    // await arbitrage_fwp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
 
-    await create_fwp(add_only=true);
+    // await create_fwp(add_only=true);
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
     // await arbitrage_fwp(dry_run=true, _pools);
     // await arbitrage_crp(dry_run=true, _pools);    
     // await arbitrage_ytp(dry_run=true, _pools); 
-    await get_pool_details_fwp();
-    await get_pool_details_crp(_pools);
+    // await get_pool_details_fwp();
+    // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
     // await reduce_position_fwp(0.1 * ONE_8, deployer=true);
@@ -791,12 +805,16 @@ async function run() {
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');        
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);        
     
-    // await mint_some_tokens('STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ');
+    // await mint_some_tokens('STTXVX9GCR7JMSA8M7XZT4TTJ7EZVPJV6QGGKK6T');
+    // await get_some_token('ST3YWEVAEB33P3QXQ16D5HRKX4DGKN501ED4M3JVY');
 
     // for(const key in _white_list){
     //     await get_some_token(_white_list[key]);
     //     // await burn('token-wbtc', _white_list[key], 5);
     //     // await burn('token-usda', _white_list[key], 500000e+6);
     // }
+
+    // result = await ytpGetYgivenX('yield-wbtc-80875', 1e8);
+    // console.log(result);
 }
 run();
