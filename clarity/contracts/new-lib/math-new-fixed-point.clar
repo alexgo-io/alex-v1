@@ -46,16 +46,6 @@
  )
 )
 
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ERR-ADD-OVERFLOW)
-        (ok c)
-    )
-)
-
 (define-read-only (sub-fixed (a uint) (b uint))
     (let
         ()
@@ -131,8 +121,8 @@
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
-        ;;(if (>= a ONE_10)  (round-for-up raw TOLERANCE_CONSTANT) (add-fixed raw max-error))
+        (ok (+ raw max-error))
+        ;;(if (>= a ONE_10)  (round-for-up raw TOLERANCE_CONSTANT) (+ raw max-error))
     )
 )
 
