@@ -147,12 +147,12 @@
                 (listed (get listed pool))
 
                 ;; weight-t = weight-x-0 - (block-height - listed) * (weight-x-0 - weight-x-1) / (expiry - listed)
-                (now-to-listed (unwrap! (sub-fixed (* block-height ONE_8) listed) ERR-MATH-CALL))
-                (expiry-to-listed (unwrap! (sub-fixed expiry listed) ERR-MATH-CALL))
-                (weight-diff (unwrap! (sub-fixed weight-x-0 weight-x-1) ERR-MATH-CALL))
+                (now-to-listed (- (* block-height ONE_8) listed))
+                (expiry-to-listed (- expiry listed))
+                (weight-diff (- weight-x-0 weight-x-1))
                 (time-ratio (unwrap! (div-down now-to-listed expiry-to-listed) ERR-MATH-CALL))
                 (weight-change (unwrap! (mul-down weight-diff time-ratio) ERR-MATH-CALL))
-                (weight-t (unwrap! (sub-fixed weight-x-0 weight-change) ERR-MATH-CALL))     
+                (weight-t (- weight-x-0 weight-change))     
             )
 
             (ok weight-t)
@@ -230,9 +230,9 @@
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
-                    balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                    balance-y: (if (<= balance-y dx) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL))
+                    total-supply: (if (<= total-supply shares) u0 (- total-supply shares)),
+                    balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                    balance-y: (if (<= balance-y dx) u0 (- balance-y dy))
                     })
                 )
             )
@@ -264,18 +264,18 @@
 
                 ;; fee = dx * fee-rate-x
                 (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
-                (dx-net-fees (if (<= dx fee) u0 (unwrap! (sub-fixed dx fee) ERR-MATH-CALL)))
+                (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
 
                 ;; swap triggers update of weight
                 (weight-x (try! (get-weight-x token-x-trait token-y-trait expiry)))
-                (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))
+                (weight-y (- ONE_8 weight-x))
                 (dy (try! (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx-net-fees)))                    
 
                 (pool-updated
                     (merge pool
                         {
                             balance-x: (+ balance-x dx-net-fees),
-                            balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)),
+                            balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
                             fee-balance-x: (+ fee (get fee-balance-x pool)),
                             weight-x-t: weight-x
                         }
@@ -310,17 +310,17 @@
 
                 ;; fee = dy * fee-rate-y
                 (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
-                (dy-net-fees (if (<= dy fee) u0 (unwrap! (sub-fixed dy fee) ERR-MATH-CALL)))
+                (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
 
                 ;; swap triggers update of weight
                 (weight-x (try! (get-weight-x token-x-trait token-y-trait expiry)))
-                (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))            
+                (weight-y (- ONE_8 weight-x))            
                 (dx (try! (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
+                            balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
                             balance-y: (+ balance-y dy-net-fees),
                             fee-balance-y: (+ fee (get fee-balance-y pool)),
                             weight-x-t: weight-x
@@ -490,7 +490,7 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))
+            (weight-y (- ONE_8 weight-x))
         )
         (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
     )
@@ -505,7 +505,7 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))
+            (weight-y (- ONE_8 weight-x))
         )
         (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
     )
@@ -520,7 +520,7 @@
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))            
+            (weight-y (- ONE_8 weight-x))            
         )
         (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
     )
@@ -536,7 +536,7 @@
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))          
+            (weight-y (- ONE_8 weight-x))          
         )
         (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)
     )
@@ -552,7 +552,7 @@
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))     
             (weight-x (get weight-x-t pool))
-            (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))                         
+            (weight-y (- ONE_8 weight-x))                         
         )
         (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares)
     )
@@ -568,7 +568,7 @@
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (unwrap! (sub-fixed ONE_8 weight-x) ERR-MATH-CALL))                  
+            (weight-y (- ONE_8 weight-x))                  
         )
         (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)
     )
@@ -619,14 +619,6 @@
     (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
     (ok r)
  )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
 )
 
 (define-read-only (mul-down (a uint) (b uint))
@@ -683,7 +675,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
