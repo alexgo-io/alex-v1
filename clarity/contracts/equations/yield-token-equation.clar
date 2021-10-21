@@ -46,7 +46,7 @@
       (price (try! (get-price balance-x balance-y t)))
     )    
     ;; (ok (to-uint (unwrap-panic (ln-fixed (to-int price)))))
-    (if (<= price ONE_8) (ok u0) (sub-fixed price ONE_8))
+    (if (<= price ONE_8) (ok u0) (ok (- price ONE_8)))
   )
 )
 
@@ -62,7 +62,7 @@
     (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)     
     (let 
       (
-        (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
@@ -70,9 +70,9 @@
         (y-pow (unwrap-panic (pow-down balance-y t-comp)))
         (x-dx-pow (unwrap-panic (pow-down (+ balance-x dx) t-comp)))
         (add-term (+ x-pow y-pow))
-        (term (if (<= add-term x-dx-pow) u0 (unwrap-panic (sub-fixed add-term x-dx-pow))))
+        (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
         (final-term (unwrap-panic (pow-down term t-comp-num)))
-        (dy (if (<= balance-y final-term) u0 (unwrap-panic (sub-fixed balance-y final-term))))
+        (dy (if (<= balance-y final-term) u0 (- balance-y final-term)))
       )
       
       (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
@@ -93,17 +93,17 @@
     (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
     (let 
       (          
-        (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (x-pow (unwrap-panic (pow-down balance-x t-comp)))
         (y-pow (unwrap-panic (pow-down balance-y t-comp)))
-        (y-dy-pow (unwrap-panic (pow-up (if (<= balance-y dy) u0 (unwrap-panic (sub-fixed balance-y dy))) t-comp)))
+        (y-dy-pow (unwrap-panic (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp)))
         (add-term (+ x-pow y-pow))
-        (term (if (<= add-term y-dy-pow) u0 (unwrap-panic (sub-fixed add-term y-dy-pow))))
+        (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
         (final-term (unwrap-panic (pow-down term t-comp-num)))         
-        (dx (if (<= final-term balance-x) u0 (unwrap-panic (sub-fixed final-term balance-x))))
+        (dx (if (<= final-term balance-x) u0 (- final-term balance-x)))
       )
 
       (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
@@ -124,7 +124,7 @@
     (asserts! (< price (try! (get-price balance-x balance-y t))) ERR-NO-LIQUIDITY) 
     (let 
       (
-        (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
@@ -133,7 +133,7 @@
         (denom (+ ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t))))))
         (lead-term (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num)))
       )
-      (if (<= lead-term ONE_8) (ok u0) (mul-up balance-x (unwrap-panic (sub-fixed lead-term ONE_8))))
+      (if (<= lead-term ONE_8) (ok u0) (mul-up balance-x (- lead-term ONE_8)))
     )
   )
 )
@@ -150,7 +150,7 @@
     (asserts! (> price (try! (get-price balance-x balance-y t))) ERR-NO-LIQUIDITY) 
     (let 
       (
-        (t-comp (if (<= ONE_8 t) u0 (unwrap-panic (sub-fixed ONE_8 t))))
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
@@ -159,7 +159,7 @@
         (denom (+ ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t))))))
         (lead-term (unwrap-panic (mul-up balance-x (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num)))))
       )
-      (if (<= balance-y lead-term) (ok u0) (sub-fixed balance-y lead-term))
+      (if (<= balance-y lead-term) (ok u0) (ok (- balance-y lead-term)))
     )
   )
 )
@@ -257,14 +257,6 @@
  )
 )
 
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
-)
-
 (define-read-only (mul-down (a uint) (b uint))
     (let
         (
@@ -319,7 +311,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
