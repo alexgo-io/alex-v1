@@ -50,7 +50,7 @@
         (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
         (let 
             (
-                (denominator (unwrap-panic (add-fixed balance-x dx)))
+                (denominator (+ balance-x dx))
                 (base (unwrap-panic (div-up balance-x denominator)))
                 (uncapped-exponent (unwrap-panic (div-up weight-x weight-y)))
                 (bound (unwrap-panic (get-exp-bound)))
@@ -233,16 +233,6 @@
  )
 )
 
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
 (define-read-only (sub-fixed (a uint) (b uint))
     (let
         ()
@@ -316,7 +306,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
+        (ok (+ raw max-error))
     )
 )
 
