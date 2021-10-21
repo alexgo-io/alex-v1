@@ -95,8 +95,8 @@
         (let
             (
                 (t (unwrap! (div-down
-                    (unwrap! (sub-fixed expiry (* block-height ONE_8)) ERR-MATH-CALL) 
-                    (unwrap! (sub-fixed (var-get max-expiry) listed) ERR-MATH-CALL)) ERR-MATH-CALL))
+                    (- expiry (* block-height ONE_8)) 
+                    (- (var-get max-expiry) listed)) ERR-MATH-CALL))
             )
             (ok (if (< t MAX_T) t MAX_T)) ;; to avoid numerical error
         )
@@ -272,10 +272,10 @@
                 (dy-act (get dy-act reduce-data))
                 (dy-vir (get dy-vir reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
-                    balance-token: (if (<= balance-token dx) u0 (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL)),
-                    balance-aytoken: (if (<= balance-aytoken dy-act) u0 (unwrap! (sub-fixed balance-aytoken dy-act) ERR-MATH-CALL)),
-                    balance-virtual: (if (<= balance-virtual dy-vir) u0 (unwrap! (sub-fixed balance-virtual dy-vir) ERR-MATH-CALL))
+                    total-supply: (if (<= total-supply shares) u0 (- total-supply shares)),
+                    balance-token: (if (<= balance-token dx) u0 (- balance-token dx)),
+                    balance-aytoken: (if (<= balance-aytoken dy-act) u0 (- balance-aytoken dy-act)),
+                    balance-virtual: (if (<= balance-virtual dy-vir) u0 (- balance-virtual dy-vir))
                     })
                 )
             )
@@ -307,9 +307,9 @@
                 ;; lambda ~= 1 - fee-rate-aytoken * yield
                 (yield (try! (get-yield the-aytoken)))
                 (fee-yield (unwrap! (mul-down yield fee-rate-aytoken) ERR-MATH-CALL))
-                (lambda (if (<= ONE_8 fee-yield) u0 (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL)))
+                (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
                 (dx-net-fees (unwrap! (mul-down dx lambda) ERR-MATH-CALL))
-                (fee (if (<= dx dx-net-fees) u0 (unwrap! (sub-fixed dx dx-net-fees) ERR-MATH-CALL)))
+                (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
 
                 (dy (try! (get-y-given-x the-aytoken dx-net-fees)))
 
@@ -317,7 +317,7 @@
                     (merge pool
                         {
                             balance-token: (+ balance-token dx-net-fees),
-                            balance-aytoken: (if (<= balance-aytoken dy) u0 (unwrap! (sub-fixed balance-aytoken dy) ERR-MATH-CALL)),
+                            balance-aytoken: (if (<= balance-aytoken dy) u0 (- balance-aytoken dy)),
                             fee-balance-token: (+ fee-balance-token fee)
                         }
                     )
@@ -351,15 +351,15 @@
                 ;; lambda ~= 1 - fee-rate-token * yield
                 (yield (try! (get-yield the-aytoken)))
                 (fee-yield (unwrap! (mul-down yield fee-rate-token) ERR-MATH-CALL))
-                (lambda (if (<= ONE_8 fee-yield) u0 (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL)))
+                (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
                 (dy-net-fees (unwrap! (mul-down dy lambda) ERR-MATH-CALL))
-                (fee (if (<= dy dy-net-fees) u0 (unwrap! (sub-fixed dy dy-net-fees) ERR-MATH-CALL)))
+                (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
                 (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (if (<= balance-token dx) u0 (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL)),
+                            balance-token: (if (<= balance-token dx) u0 (- balance-token dx)),
                             balance-aytoken: (+ balance-aytoken dy-net-fees),
                             fee-balance-aytoken: (+ fee-balance-aytoken fee)
                         }
@@ -626,7 +626,7 @@
         (dy (get dy data))
         (percent-act (if (is-eq balance-aytoken u0) u0 (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL)))
         (dy-act (if (is-eq token dy) u0 (unwrap! (mul-down dy percent-act) ERR-MATH-CALL)))
-        (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL))))
+        (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (- dy dy-act))))
         )        
         (ok {token: token, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -652,7 +652,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
-        (dy-vir (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
+        (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -677,7 +677,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
-        (dy-vir (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
+        (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -728,14 +728,6 @@
     (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
     (ok r)
  )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
 )
 
 (define-read-only (mul-down (a uint) (b uint))
@@ -792,7 +784,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
