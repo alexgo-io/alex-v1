@@ -46,14 +46,6 @@
  )
 )
 
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) ERR-SUB-OVERFLOW)
-        (ok (- a b))
-    )
-)
-
 (define-read-only (mul-down (a uint) (b uint))
     (let
         (
@@ -109,7 +101,7 @@
         ;;(if (>= a ONE_8) (round-for-up raw TOLERANCE_CONSTANT)
             (if (< raw max-error)
                 (ok u0)
-                (sub-fixed raw max-error)
+                (ok (- raw max-error))
             )
         ;;)
     )
