@@ -56,7 +56,7 @@
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-up base exponent)))
-                (complement (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
                 (dy (unwrap-panic (mul-down balance-y complement)))
             )
             (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
@@ -77,13 +77,13 @@
         (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (denominator (if (<= balance-y dy) u0 (unwrap-panic (sub-fixed balance-y dy))))
+                (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
                 (base (unwrap-panic (div-down balance-y denominator)))
                 (uncapped-exponent (unwrap-panic (div-down weight-x weight-y)))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-down base exponent)))
-                (ratio (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
                 (dx (unwrap-panic (mul-down balance-x ratio)))
             )
             (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
@@ -115,7 +115,7 @@
                     (base (unwrap-panic (div-up spot price)))
                     (power (unwrap-panic (pow-down base weight-y)))                
                 )
-                (mul-up balance-x (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
+                (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8)))
             )
         )
     )   
@@ -137,7 +137,7 @@
                     (base (unwrap-panic (div-up spot price)))
                     (power (unwrap-panic (pow-down base weight-y)))
                 )
-                (mul-up balance-y (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
+                (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power)))
             )
         )
     )   
@@ -233,14 +233,6 @@
  )
 )
 
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
-)
-
 (define-read-only (mul-down (a uint) (b uint))
     (let
         (
@@ -295,7 +287,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
