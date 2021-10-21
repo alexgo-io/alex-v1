@@ -150,14 +150,6 @@
  )
 )
 
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
-)
-
 (define-read-only (mul-down (a uint) (b uint))
     (let
         (
@@ -212,7 +204,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
