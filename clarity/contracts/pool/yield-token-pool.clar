@@ -95,8 +95,8 @@
         (let
             (
                 (t (unwrap! (div-down
-                    (if (< expiry (* block-height ONE_8)) u0 (unwrap! (sub-fixed expiry (* block-height ONE_8)) ERR-MATH-CALL))
-                    (unwrap! (sub-fixed (var-get max-expiry) listed) ERR-MATH-CALL)) ERR-MATH-CALL))
+                    (if (< expiry (* block-height ONE_8)) u0 (- expiry (* block-height ONE_8)))
+                    (- (var-get max-expiry) listed)) ERR-MATH-CALL))
             )
             (ok (if (< t MAX_T) t MAX_T)) ;; to avoid numerical error
         )
@@ -135,7 +135,7 @@
             (balance-aytoken (get balance-aytoken pool))
             (token-symbol (get token-symbol pool))         
             (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (balance (unwrap! (add-fixed balance-token balance-aytoken) ERR-MATH-CALL))
+            (balance (+ balance-token balance-aytoken))
         )
         (mul-up balance token-price)
     )
@@ -150,7 +150,7 @@
             (expiry (get expiry pool))
             (listed (get listed pool))
             (balance-token (get balance-token pool)) 
-            (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+            (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
             (t-value (try! (get-t expiry listed)))
         )
         (contract-call? .yield-token-equation get-yield balance-token balance-aytoken t-value)
@@ -165,7 +165,7 @@
             (expiry (get expiry pool))
             (listed (get listed pool))
             (balance-token (get balance-token pool)) 
-            (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+            (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
             (t-value (try! (get-t expiry listed)))
         )
         (contract-call? .yield-token-equation get-price balance-token balance-aytoken t-value)
@@ -206,7 +206,7 @@
             (var-set pool-count pool-id)
 
             ;; ;; if ayToken added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
-            ;; (var-set max-expiry (if (< (var-get max-expiry) expiry) (unwrap! (add-fixed expiry ONE_8) ERR-MATH-CALL) (var-get max-expiry)))
+            ;; (var-set max-expiry (if (< (var-get max-expiry) expiry) (+ expiry ONE_8) (var-get max-expiry)))
             (try! (add-to-position the-aytoken the-token the-pool-token dx))
 
             (print { object: "pool", action: "created", data: pool-data })
@@ -232,10 +232,10 @@
                 (new-dy-act (get dy-act add-data))
                 (new-dy-vir (get dy-vir add-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (add-fixed new-supply total-supply) ERR-MATH-CALL),
-                    balance-token: (unwrap! (add-fixed balance-token dx) ERR-MATH-CALL),
-                    balance-aytoken: (unwrap! (add-fixed balance-aytoken new-dy-act) ERR-MATH-CALL),
-                    balance-virtual: (unwrap! (add-fixed balance-virtual new-dy-vir) ERR-MATH-CALL)   
+                    total-supply: (+ new-supply total-supply),
+                    balance-token: (+ balance-token dx),
+                    balance-aytoken: (+ balance-aytoken new-dy-act),
+                    balance-virtual: (+ balance-virtual new-dy-vir)   
                 }))
             )
             ;; at least one of dy must be greater than zero            
@@ -272,10 +272,10 @@
                 (dy-act (get dy-act reduce-data))
                 (dy-vir (get dy-vir reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
-                    balance-token: (if (<= balance-token dx) u0 (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL)),
-                    balance-aytoken: (if (<= balance-aytoken dy-act) u0 (unwrap! (sub-fixed balance-aytoken dy-act) ERR-MATH-CALL)),
-                    balance-virtual: (if (<= balance-virtual dy-vir) u0 (unwrap! (sub-fixed balance-virtual dy-vir) ERR-MATH-CALL))
+                    total-supply: (if (<= total-supply shares) u0 (- total-supply shares)),
+                    balance-token: (if (<= balance-token dx) u0 (- balance-token dx)),
+                    balance-aytoken: (if (<= balance-aytoken dy-act) u0 (- balance-aytoken dy-act)),
+                    balance-virtual: (if (<= balance-virtual dy-vir) u0 (- balance-virtual dy-vir))
                     })
                 )
             )
@@ -307,18 +307,18 @@
                 ;; lambda ~= 1 - fee-rate-aytoken * yield
                 (yield (try! (get-yield the-aytoken)))
                 (fee-yield (unwrap! (mul-down yield fee-rate-aytoken) ERR-MATH-CALL))
-                (lambda (if (<= ONE_8 fee-yield) u0 (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL)))
+                (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
                 (dx-net-fees (unwrap! (mul-down dx lambda) ERR-MATH-CALL))
-                (fee (if (<= dx dx-net-fees) u0 (unwrap! (sub-fixed dx dx-net-fees) ERR-MATH-CALL)))
+                (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
 
                 (dy (try! (get-y-given-x the-aytoken dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (unwrap! (add-fixed balance-token dx-net-fees) ERR-MATH-CALL),
-                            balance-aytoken: (if (<= balance-aytoken dy) u0 (unwrap! (sub-fixed balance-aytoken dy) ERR-MATH-CALL)),
-                            fee-balance-token: (unwrap! (add-fixed fee-balance-token fee) ERR-MATH-CALL)
+                            balance-token: (+ balance-token dx-net-fees),
+                            balance-aytoken: (if (<= balance-aytoken dy) u0 (- balance-aytoken dy)),
+                            fee-balance-token: (+ fee-balance-token fee)
                         }
                     )
                 )
@@ -351,17 +351,17 @@
                 ;; lambda ~= 1 - fee-rate-token * yield
                 (yield (try! (get-yield the-aytoken)))
                 (fee-yield (unwrap! (mul-down yield fee-rate-token) ERR-MATH-CALL))
-                (lambda (if (<= ONE_8 fee-yield) u0 (unwrap! (sub-fixed ONE_8 fee-yield) ERR-MATH-CALL)))
+                (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
                 (dy-net-fees (unwrap! (mul-down dy lambda) ERR-MATH-CALL))
-                (fee (if (<= dy dy-net-fees) u0 (unwrap! (sub-fixed dy dy-net-fees) ERR-MATH-CALL)))
+                (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
                 (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (if (<= balance-token dx) u0 (unwrap! (sub-fixed balance-token dx) ERR-MATH-CALL)),
-                            balance-aytoken: (unwrap! (add-fixed balance-aytoken dy-net-fees) ERR-MATH-CALL),
-                            fee-balance-aytoken: (unwrap! (add-fixed fee-balance-aytoken fee) ERR-MATH-CALL)
+                            balance-token: (if (<= balance-token dx) u0 (- balance-token dx)),
+                            balance-aytoken: (+ balance-aytoken dy-net-fees),
+                            fee-balance-aytoken: (+ fee-balance-aytoken fee)
                         }
                     )
                 )
@@ -518,7 +518,7 @@
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))    
+        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))    
         (balance-token (get balance-token pool))
         (dy (try! (contract-call? .yield-token-equation get-y-given-x balance-token balance-aytoken normalized-expiry dx)))
         )
@@ -536,7 +536,7 @@
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
         (balance-token (get balance-token pool))
         )
         (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
@@ -552,7 +552,7 @@
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
         (balance-token (get balance-token pool))
         )
         (contract-call? .yield-token-equation get-x-given-price balance-token balance-aytoken normalized-expiry price)
@@ -568,7 +568,7 @@
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
         (balance-token (get balance-token pool))
         )
         (contract-call? .yield-token-equation get-y-given-price balance-token balance-aytoken normalized-expiry price)
@@ -584,7 +584,7 @@
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
         (balance-token (get balance-token pool))
         )
         (contract-call? .yield-token-equation get-x-given-yield balance-token balance-aytoken normalized-expiry yield)
@@ -600,7 +600,7 @@
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (unwrap! (add-fixed (get balance-aytoken pool) (get balance-virtual pool)) ERR-MATH-CALL))
+        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
         (balance-token (get balance-token pool))
         )
         (contract-call? .yield-token-equation get-y-given-yield balance-token balance-aytoken normalized-expiry yield)
@@ -618,7 +618,7 @@
         (normalized-expiry (try! (get-t expiry listed)))
         (balance-actual (get balance-aytoken pool))
         (balance-virtual (get balance-virtual pool))
-        (balance-aytoken (unwrap! (add-fixed balance-actual balance-virtual) ERR-MATH-CALL))
+        (balance-aytoken (+ balance-actual balance-virtual))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
         (data (try! (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken normalized-expiry total-supply dx)))
@@ -626,7 +626,7 @@
         (dy (get dy data))
         (percent-act (if (is-eq balance-aytoken u0) u0 (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL)))
         (dy-act (if (is-eq token dy) u0 (unwrap! (mul-down dy percent-act) ERR-MATH-CALL)))
-        (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL))))
+        (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (- dy dy-act))))
         )        
         (ok {token: token, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -644,7 +644,7 @@
         (normalized-expiry (try! (get-t expiry listed)))
         (balance-actual (get balance-aytoken pool))
         (balance-virtual (get balance-virtual pool))
-        (balance-aytoken (unwrap! (add-fixed balance-actual balance-virtual) ERR-MATH-CALL))
+        (balance-aytoken (+ balance-actual balance-virtual))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
         (data (try! (contract-call? .yield-token-equation get-position-given-mint balance-token balance-aytoken normalized-expiry total-supply token)))   
@@ -652,7 +652,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
-        (dy-vir (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
+        (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -669,7 +669,7 @@
         (normalized-expiry (try! (get-t expiry listed)))
         (balance-actual (get balance-aytoken pool))
         (balance-virtual (get balance-virtual pool))
-        (balance-aytoken (unwrap! (add-fixed balance-actual balance-virtual) ERR-MATH-CALL))
+        (balance-aytoken (+ balance-actual balance-virtual))
         (balance-token (get balance-token pool))
         (total-supply (get total-supply pool))
         (data (try! (contract-call? .yield-token-equation get-position-given-burn balance-token balance-aytoken normalized-expiry total-supply token)))   
@@ -677,7 +677,7 @@
         (dy (get dy data))
         (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
         (dy-act (unwrap! (mul-up dy percent-act) ERR-MATH-CALL))
-        (dy-vir (if (<= dy dy-act) u0 (unwrap! (sub-fixed dy dy-act) ERR-MATH-CALL)))
+        (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
         (ok {dx: dx, dy-act: dy-act, dy-vir: dy-vir})
     )
@@ -728,24 +728,6 @@
     (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
     (ok r)
  )
-)
-
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
 )
 
 (define-read-only (mul-down (a uint) (b uint))
@@ -802,7 +784,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
@@ -813,7 +795,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 
