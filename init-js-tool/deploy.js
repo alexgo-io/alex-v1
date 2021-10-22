@@ -121,15 +121,27 @@ let contract_paths = [
     // "key-token/key-wbtc-161515-usda.clar",    
     // "multisig/multisig-crp-wbtc-161515-usda.clar",  
     // "multisig/multisig-ytp-yield-wbtc-161515-wbtc.clar",  
-    "flash-loan-user-margin-usda-wbtc-161515.clar",     
-    "pool-token/ytp-yield-usda-161515-usda.clar",
-    "key-token/key-usda-161515-wbtc.clar",    
-    "yield-token/yield-usda-161515.clar",    
-    "multisig/multisig-crp-usda-161515-wbtc.clar",  
-    "multisig/multisig-ytp-yield-usda-161515-usda.clar",    
-    "flash-loan-user-margin-wbtc-usda-161515.clar",              
+    // "flash-loan-user-margin-usda-wbtc-161515.clar",     
+    // "pool-token/ytp-yield-usda-161515-usda.clar",
+    // "key-token/key-usda-161515-wbtc.clar",    
+    // "yield-token/yield-usda-161515.clar",    
+    // "multisig/multisig-crp-usda-161515-wbtc.clar",  
+    // "multisig/multisig-ytp-yield-usda-161515-usda.clar",    
+    // "flash-loan-user-margin-wbtc-usda-161515.clar",     
+    
+    // "pool-token/ytp-yield-wbtc-200335-wbtc.clar",    
+    // "yield-token/yield-wbtc-200335.clar",
+    // "key-token/key-wbtc-200335-usda.clar",    
+    // "multisig/multisig-crp-wbtc-200335-usda.clar",  
+    // "multisig/multisig-ytp-yield-wbtc-200335-wbtc.clar",  
+    // "flash-loan-user-margin-usda-wbtc-200335.clar",     
+    "pool-token/ytp-yield-usda-200335-usda.clar",
+    // "key-token/key-usda-200335-wbtc.clar",    
+    "yield-token/yield-usda-200335.clar",    
+    // "multisig/multisig-crp-usda-200335-wbtc.clar",  
+    // "multisig/multisig-ytp-yield-usda-200335-usda.clar",    
+    "flash-loan-user-margin-wbtc-usda-200335.clar",         
 ]
-
 
 async function get_version(){
     const rlp = readline.createInterface({
