@@ -796,7 +796,7 @@ async function run() {
 
     await arbitrage_fwp(dry_run = false);
     await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
     // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
