@@ -150,24 +150,6 @@
  )
 )
 
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
-)
-
 (define-read-only (mul-down (a uint) (b uint))
     (let
         (
@@ -222,7 +204,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
@@ -233,7 +215,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 

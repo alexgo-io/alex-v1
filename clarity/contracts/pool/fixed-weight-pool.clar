@@ -180,9 +180,9 @@
                 (new-supply (get token add-data))
                 (new-dy (get dy add-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (add-fixed new-supply total-supply) ERR-MATH-CALL),
-                    balance-x: (unwrap! (add-fixed balance-x dx) ERR-MATH-CALL),
-                    balance-y: (unwrap! (add-fixed balance-y new-dy) ERR-MATH-CALL)
+                    total-supply: (+ new-supply total-supply),
+                    balance-x: (+ balance-x dx),
+                    balance-y: (+ balance-y new-dy)
                 }))
             )
 
@@ -216,9 +216,9 @@
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
-                    balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                    balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL))
+                    total-supply: (if (<= total-supply shares) u0 (- total-supply shares)),
+                    balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                    balance-y: (if (<= balance-y dy) u0 (- balance-y dy))
                     })
                 )
             )
@@ -252,16 +252,16 @@
 
                 ;; fee = dx * fee-rate-x
                 (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
-                (dx-net-fees (if (<= dx fee) u0 (unwrap! (sub-fixed dx fee) ERR-MATH-CALL)))
+                (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
     
                 (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (unwrap! (add-fixed balance-x dx-net-fees) ERR-MATH-CALL),
-                        balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)),
-                        fee-balance-x: (unwrap! (add-fixed fee (get fee-balance-x pool)) ERR-MATH-CALL)
+                        balance-x: (+ balance-x dx-net-fees),
+                        balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
+                        fee-balance-x: (+ fee (get fee-balance-x pool))
                         }
                     )
                 )
@@ -295,16 +295,16 @@
 
                 ;; fee = dy * fee-rate-y
                 (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
-                (dy-net-fees (if (<= dy fee) u0 (unwrap! (sub-fixed dy fee) ERR-MATH-CALL)))
+                (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
 
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                        balance-y: (unwrap! (add-fixed balance-y dy-net-fees) ERR-MATH-CALL),
-                        fee-balance-y: (unwrap! (add-fixed fee fee-balance-y) ERR-MATH-CALL)
+                        balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                        balance-y: (+ balance-y dy-net-fees),
+                        fee-balance-y: (+ fee fee-balance-y) 
                         }
                     )
                 )
@@ -605,24 +605,6 @@
  )
 )
 
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
-)
-
 (define-read-only (mul-down (a uint) (b uint))
     (let
         (
@@ -677,7 +659,7 @@
         )
         (if (< raw max-error)
             (ok u0)
-            (sub-fixed raw max-error)
+            (ok (- raw max-error))
         )
     )
 )
@@ -688,7 +670,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 
