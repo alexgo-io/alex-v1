@@ -490,11 +490,6 @@ Clarinet.test({
         position['balance-x'].expectUint(0);
         position['balance-y'].expectUint(0);                
     
-        call = await CRPTest.getPositionGivenBurnYield(expiry, ONE_8);
-        call.result.expectOk().expectUint(100000000);
-    
-        call = await CRPTest.getPositionGivenBurnYield((chain.blockHeight) * ONE_8, ONE_8);
-        call.result.expectErr().expectUint(2017);
     },    
 });
 
