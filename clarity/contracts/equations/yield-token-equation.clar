@@ -34,7 +34,7 @@
 (define-read-only (get-price (balance-x uint) (balance-y uint) (t uint))
   (begin
     (asserts! (>= balance-y balance-x) invalid-balance-err)      
-    (ok (unwrap-panic (pow-up (unwrap-panic (div-down balance-y balance-x)) t)))
+    (ok (unwrap-panic (pow-up (div-down balance-y balance-x) t)))
   )
 )
 
@@ -63,7 +63,7 @@
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (x-pow (unwrap-panic (pow-down balance-x t-comp)))
@@ -94,7 +94,7 @@
     (let 
       (          
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (x-pow (unwrap-panic (pow-down balance-x t-comp)))
@@ -125,13 +125,13 @@
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (max-exp (unwrap-panic (get-exp-bound)))
-        (numer (+ ONE_8 (unwrap-panic (pow-down (unwrap-panic (div-down balance-y balance-x)) t-comp))))
-        (denom (+ ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t))))))
-        (lead-term (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num)))
+        (numer (+ ONE_8 (unwrap-panic (pow-down (div-down balance-y balance-x) t-comp))))
+        (denom (+ ONE_8 (unwrap-panic (pow-down price (div-down t-comp t)))))
+        (lead-term (unwrap-panic (pow-down (div-down numer denom) t-comp-num)))
       )
       (if (<= lead-term ONE_8) (ok u0) (ok (mul-up balance-x (- lead-term ONE_8))))
     )
@@ -151,13 +151,13 @@
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (unwrap-panic (div-down ONE_8 t-comp)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
         (bound (unwrap-panic (get-exp-bound)))
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (max-exp (unwrap-panic (get-exp-bound)))
-        (numer (+ ONE_8 (unwrap-panic (pow-down (unwrap-panic (div-down balance-y balance-x)) t-comp))))
-        (denom (+ ONE_8 (unwrap-panic (pow-down price (unwrap-panic (div-down t-comp t))))))
-        (lead-term (mul-up balance-x (unwrap-panic (pow-down (unwrap-panic (div-down numer denom)) t-comp-num))))
+        (numer (+ ONE_8 (unwrap-panic (pow-down (div-down balance-y balance-x) t-comp))))
+        (denom (+ ONE_8 (unwrap-panic (pow-down price (div-down t-comp t)))))
+        (lead-term (mul-up balance-x (unwrap-panic (pow-down (div-down numer denom) t-comp-num))))
       )
       (if (<= balance-y lead-term) (ok u0) (ok (- balance-y lead-term)))
     )
@@ -183,8 +183,8 @@
         (let
           (
             ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-            (dy (mul-down balance-y (unwrap-panic (div-down dx balance-x))))
-            (token (mul-down total-supply (unwrap-panic (div-down dx balance-x))))
+            (dy (mul-down balance-y (div-down dx balance-x)))
+            (token (mul-down total-supply (div-down dx balance-x)))
           )
           {token: token, dy: dy}
         )
@@ -198,7 +198,7 @@
     (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
     (let
       (
-        (token-div-supply (unwrap-panic (div-down token total-supply)))
+        (token-div-supply (div-down token total-supply))
         (dx (mul-down balance-x token-div-supply))
         (dy (mul-down balance-y token-div-supply))
       )                
@@ -275,15 +275,10 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
 
 (define-read-only (div-up (a uint) (b uint))

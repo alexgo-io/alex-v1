@@ -78,8 +78,8 @@
         (let 
             (
                 (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
-                (base (unwrap-panic (div-down balance-y denominator)))
-                (uncapped-exponent (unwrap-panic (div-down weight-x weight-y)))
+                (base (div-down balance-y denominator))
+                (uncapped-exponent (div-down weight-x weight-y))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-down base exponent)))
@@ -107,7 +107,7 @@
             (
                 (numerator (mul-down balance-y weight-x))
                 (denominator (mul-up balance-x weight-y))
-                (spot (unwrap-panic (div-down numerator denominator)))
+                (spot (div-down numerator denominator))
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (let 
@@ -129,7 +129,7 @@
             (
                 (numerator (mul-down balance-y weight-x))
                 (denominator (mul-up balance-x weight-y))
-                (spot (unwrap-panic (div-down numerator denominator)))
+                (spot (div-down numerator denominator))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
@@ -153,9 +153,9 @@
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
                         (new-dy (mul-down balance-y 
-                                (unwrap-panic (div-down dx balance-x))))
+                                (div-down dx balance-x)))
                         (token (mul-down total-supply  
-                                (unwrap-panic (div-down dx balance-x))))
+                                (div-down dx balance-x)))
                     )
                     {token: token, dy: new-dy}
                 )   
@@ -171,7 +171,7 @@
         (let
             (   
                 ;; first calculate what % you need to mint
-                (token-supply (unwrap-panic (div-down token total-supply)))
+                (token-supply (div-down token total-supply))
                 ;; calculate dx as % of balance-x corresponding to % you need to mint
                 (dx (mul-down balance-x token-supply))
                 (dy (mul-down balance-y token-supply))
@@ -251,15 +251,10 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
 
 (define-read-only (div-up (a uint) (b uint))

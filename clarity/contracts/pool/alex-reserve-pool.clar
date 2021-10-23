@@ -89,7 +89,7 @@
             (alex-symbol (unwrap! (contract-call? .token-alex get-symbol) ERR-GET-SYMBOL-FAIL))
             (usda-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) usda-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (alex-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) alex-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (usda-to-alex (unwrap! (div-down usda-price alex-price) ERR-MATH-CALL))
+            (usda-to-alex (div-down usda-price alex-price))
             (alex-to-rebate (mul-down amount-to-rebate usda-to-alex))
         )
         ;; all usdc amount is transferred
@@ -168,15 +168,10 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
 
 (define-read-only (div-up (a uint) (b uint))

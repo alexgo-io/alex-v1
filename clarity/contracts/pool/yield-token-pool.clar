@@ -94,9 +94,9 @@
         (asserts! (> (var-get max-expiry) (* block-height ONE_8)) invalid-ERR-EXPIRY)        
         (let
             (
-                (t (unwrap! (div-down
+                (t (div-down
                     (if (< expiry (* block-height ONE_8)) u0 (- expiry (* block-height ONE_8)))
-                    (- (var-get max-expiry) listed)) ERR-MATH-CALL))
+                    (- (var-get max-expiry) listed)))
             )
             (ok (if (< t MAX_T) t MAX_T)) ;; to avoid numerical error
         )
@@ -748,15 +748,10 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))

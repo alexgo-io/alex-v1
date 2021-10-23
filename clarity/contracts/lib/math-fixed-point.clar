@@ -64,14 +64,9 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
    )
 )
 
