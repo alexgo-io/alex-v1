@@ -249,19 +249,19 @@
                     (- expiry now) (* u2102400 ONE_8)) ERR-MATH-CALL))
 
                     ;; we calculate d1 first
-                    (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
-                    (pow-bs-vol (unwrap! (div-up 
-                                    (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
+                    (spot-term (div-up spot strike))
+                    (pow-bs-vol (div-up 
+                                    (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000))
                     (vol-term (mul-up t pow-bs-vol))
                     (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
                     (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
             
                     (denominator (mul-down bs-vol sqrt-t))
                     (numerator (+ vol-term (- (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term))))
-                    (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
-                    (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
+                    (d1 (div-up numerator denominator))
+                    (erf-term (unwrap! (erf (div-up d1 sqrt-2)) ERR-MATH-CALL))
                     (complement (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))))
-                    (weight-t (unwrap! (div-up complement u200000000) ERR-MATH-CALL))
+                    (weight-t (div-up complement u200000000))
                     (weighted (+ (mul-down moving-average weight-y) (mul-down ma-comp weight-t)))                    
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
@@ -302,14 +302,14 @@
                 ;; because we support 'at-the-money' only, we can simplify formula
                 (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
                 (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))            
-                (pow-bs-vol (unwrap! (div-up 
-                                (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
+                (pow-bs-vol (div-up 
+                                (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000))
                 (numerator (mul-up t pow-bs-vol))
                 (denominator (mul-down bs-vol sqrt-t))        
-                (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
-                (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
+                (d1 (div-up numerator denominator))
+                (erf-term (unwrap! (erf (div-up d1 sqrt-2)) ERR-MATH-CALL))
                 (complement (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term)))
-                (weighted (unwrap! (div-up complement u200000000) ERR-MATH-CALL))                
+                (weighted (div-up complement u200000000))                
                 (weight-y (if (> weighted u100000) weighted u100000))
 
                 (weight-x (- ONE_8 weight-y))
@@ -1037,15 +1037,10 @@
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    

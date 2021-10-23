@@ -51,8 +51,8 @@
         (let 
             (
                 (denominator (+ balance-x dx))
-                (base (unwrap-panic (div-up balance-x denominator)))
-                (uncapped-exponent (unwrap-panic (div-up weight-x weight-y)))
+                (base (div-up balance-x denominator))
+                (uncapped-exponent (div-up weight-x weight-y))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (unwrap-panic (pow-up base exponent)))
@@ -112,7 +112,7 @@
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (unwrap-panic (div-up spot price)))
+                    (base (div-up spot price))
                     (power (unwrap-panic (pow-down base weight-y)))                
                 )
                 (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
@@ -134,7 +134,7 @@
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (unwrap-panic (div-up spot price)))
+                    (base (div-up spot price))
                     (power (unwrap-panic (pow-down base weight-y)))
                 )
                 (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
@@ -263,15 +263,10 @@
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+  (if (is-eq a u0)
+    u0
+    (+ u1 (/ (- (* a ONE_8) u1) b))
+  )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    

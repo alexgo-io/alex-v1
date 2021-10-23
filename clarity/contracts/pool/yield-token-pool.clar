@@ -624,7 +624,7 @@
         (data (try! (contract-call? .yield-token-equation get-token-given-position balance-token balance-aytoken normalized-expiry total-supply dx)))
         (token (get token data))
         (dy (get dy data))
-        (percent-act (if (is-eq balance-aytoken u0) u0 (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL)))
+        (percent-act (if (is-eq balance-aytoken u0) u0 (div-up balance-actual balance-aytoken)))
         (dy-act (if (is-eq token dy) u0 (mul-down dy percent-act)))
         (dy-vir (if (is-eq token dy) token (if (<= dy dy-act) u0 (- dy dy-act))))
         )        
@@ -650,7 +650,7 @@
         (data (try! (contract-call? .yield-token-equation get-position-given-mint balance-token balance-aytoken normalized-expiry total-supply token)))   
         (dx (get dx data))
         (dy (get dy data))
-        (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
+        (percent-act (div-up balance-actual balance-aytoken))
         (dy-act (mul-up dy percent-act))
         (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
@@ -675,7 +675,7 @@
         (data (try! (contract-call? .yield-token-equation get-position-given-burn balance-token balance-aytoken normalized-expiry total-supply token)))   
         (dx (get dx data))
         (dy (get dy data))
-        (percent-act (unwrap! (div-up balance-actual balance-aytoken) ERR-MATH-CALL))
+        (percent-act (div-up balance-actual balance-aytoken))
         (dy-act (mul-up dy percent-act))
         (dy-vir (if (<= dy dy-act) u0 (- dy dy-act)))
         )
@@ -760,15 +760,10 @@
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
