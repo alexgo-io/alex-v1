@@ -240,13 +240,7 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+  (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))

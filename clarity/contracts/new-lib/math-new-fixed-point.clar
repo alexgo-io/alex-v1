@@ -29,13 +29,7 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_10))
-        )
-        (asserts! (is-eq (/ r ONE_10) a) ERR-SCALE-UP-OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_10)
 )
 
 (define-read-only (scale-down (a uint))
