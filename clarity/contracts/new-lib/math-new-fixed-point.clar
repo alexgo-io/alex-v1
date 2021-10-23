@@ -33,11 +33,7 @@
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_10)))
-    (asserts! (is-eq (* r ONE_10) a) ERR-SCALE-DOWN-OVERFLOW)
-    (ok r)
- )
+    (/ a ONE_10)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
