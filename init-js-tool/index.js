@@ -201,7 +201,35 @@ const _deploy = {
         bs_vol: 0.8e+8,
         target_apy: 0.10950,
         expiry: 200335e+8,
-    },       
+    },
+    10: {token: 'token-wbtc',
+        collateral: 'token-usda',
+        yield_token: 'yield-wbtc-240655',
+        key_token: 'key-wbtc-240655-usda',
+        pool_token: 'ytp-yield-wbtc-240655-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-240655-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-240655-usda',
+        liquidity_ytp: 100e+8,
+        collateral_crp: 1500000e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.08469,
+        expiry: 240655e+8,
+    },
+    11: {token: 'token-usda',
+        collateral: 'token-wbtc',
+        yield_token: 'yield-usda-240655',
+        key_token: 'key-usda-240655-wbtc',
+        pool_token: 'ytp-yield-usda-240655-usda',
+        multisig_ytp: 'multisig-ytp-yield-usda-240655-usda',
+        multisig_crp: 'multisig-crp-usda-240655-wbtc',
+        liquidity_ytp: 6000000e+8,
+        collateral_crp: 25e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.10950,
+        expiry: 240655e+8,
+    },        
     
 }
 
@@ -778,16 +806,18 @@ async function run() {
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
 
-    // const _pools = {    0:_deploy[2], 
-    //                     1:_deploy[3], 
-    //                     2:_deploy[4], 
-    //                     3:_deploy[5], 
-    //                     4:_deploy[6], 
-    //                     5:_deploy[7],
-    //                     6:_deploy[8],
-    //                     7:_deploy[9]
-    //                 };
-    const _pools = { 0:_deploy[8], 1:_deploy[9] };
+    const _pools = {    0:_deploy[2], 
+                        1:_deploy[3], 
+                        2:_deploy[4], 
+                        3:_deploy[5], 
+                        4:_deploy[6], 
+                        5:_deploy[7],
+                        6:_deploy[8],
+                        7:_deploy[9],
+                        8:_deploy[10],
+                        9:_deploy[11]
+                    };
+    // const _pools = { 0:_deploy[10], 1:_deploy[11] };
     // const _pools = _deploy;
 
     // await create_fwp(add_only=false);
