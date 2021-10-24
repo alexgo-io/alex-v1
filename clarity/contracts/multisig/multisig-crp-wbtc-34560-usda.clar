@@ -224,7 +224,7 @@
         (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-34560 get-total-supply)))
         (total-key-supply (unwrap-panic (contract-call? .key-wbtc-34560-usda get-total-supply)))
         (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
-        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 
