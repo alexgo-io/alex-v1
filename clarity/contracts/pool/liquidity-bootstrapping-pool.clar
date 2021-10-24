@@ -150,8 +150,8 @@
                 (now-to-listed (- (* block-height ONE_8) listed))
                 (expiry-to-listed (- expiry listed))
                 (weight-diff (- weight-x-0 weight-x-1))
-                (time-ratio (unwrap! (div-down now-to-listed expiry-to-listed) ERR-MATH-CALL))
-                (weight-change (unwrap! (mul-down weight-diff time-ratio) ERR-MATH-CALL))
+                (time-ratio (div-down now-to-listed expiry-to-listed))
+                (weight-change (mul-down weight-diff time-ratio))
                 (weight-t (- weight-x-0 weight-change))     
             )
 
@@ -224,7 +224,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))     
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait expiry shares)))
                 (dx (get dx reduce-data))
@@ -263,7 +263,7 @@
                 (fee-rate-x (get fee-rate-x pool))
 
                 ;; fee = dx * fee-rate-x
-                (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
+                (fee (mul-up dx fee-rate-x))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
 
                 ;; swap triggers update of weight
@@ -309,7 +309,7 @@
                 (fee-rate-y (get fee-rate-y pool))  
 
                 ;; fee = dy * fee-rate-y
-                (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
+                (fee (mul-up dy fee-rate-y))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
 
                 ;; swap triggers update of weight
@@ -604,30 +604,15 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
-    (ok r)
- )
+    (/ a ONE_8)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+    (/ (* a b) ONE_8)
 )
 
 
@@ -637,41 +622,31 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
             (ok u0)
@@ -684,7 +659,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
     )
