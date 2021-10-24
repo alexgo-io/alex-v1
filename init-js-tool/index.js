@@ -235,14 +235,16 @@ async function mint_some_tokens(recipient) {
 
 async function mint_some_usda(recipient) {
     console.log('------ Mint Some USDA ------');
-    await mint('token-usda', recipient, 200000000000000000n);
+    // await mint('token-usda', recipient, 200000000000000000n);
+    await mint('token-usda', recipient, 10000000000 * ONE_8);
     usda_balance = await balance('token-usda', recipient);
     console.log('usda balance: ', format_number(Number(usda_balance.value.value) / ONE_8));
 }
 
 async function mint_some_wbtc(recipient) {
     console.log('------ Mint Some WBTC ------');
-    await mint('token-wbtc', recipient, 5000000000000);
+    // await mint('token-wbtc', recipient, 5000000000000);
+    await mint('token-wbtc', recipient, Math.round(10000000000 * ONE_8 / 61800));
     wbtc_balance = await balance('token-wbtc', recipient);
     console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8));
 }
@@ -267,8 +269,10 @@ async function create_fwp(add_only) {
             weight_y: 0.5e+8,
             pool_token: 'fwp-wbtc-usda-50-50',
             multisig: 'multisig-fwp-wbtc-usda-50-50',
-            left_side: Math.round(Number(100000000000000000) / 2 * ONE_8 / Number(wbtcPrice)),
-            right_side: Number(100000000000000000) / 2
+            // left_side: Math.round(Number(100000000000000000) / 2 * ONE_8 / Number(wbtcPrice)),
+            // right_side: Number(100000000000000000) / 2
+            left_side: Math.round(10000000000 * ONE_8 * ONE_8 / Number(wbtcPrice)),
+            right_side: 10000000000 * ONE_8            
         },
     }
 
@@ -691,10 +695,10 @@ async function get_pool_details_ytp(_subset=_deploy) {
     }
 }
 
-async function reduce_position_fwp(percent) {
+async function reduce_position_fwp(percent, deployer=false) {
     console.log("------ Reducing FWP Positions ------");
     console.log(timestamp());
-    await fwpReducePosition('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, 'fwp-wbtc-usda-50-50', percent);
+    await fwpReducePosition('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, 'fwp-wbtc-usda-50-50', percent, deployer);
 }
 
 async function reduce_position_ytp(_reduce, percent, deployer=false) {
@@ -705,20 +709,19 @@ async function reduce_position_ytp(_reduce, percent, deployer=false) {
 
         let total_shares = await balance(_reduce[key]['pool_token'], (deployer) ? process.env.DEPLOYER_ACCOUNT_ADDRESS : process.env.USER_ACCOUNT_ADDRESS);
         let shares = Math.round(percent * Number(total_shares.value.value) / ONE_8);
+        console.log(shares);
         console.log('total shares: ', format_number(Number(total_shares.value.value) / ONE_8), 'shares: ', format_number(shares / ONE_8));
         let pos = await ytpGetPositionGivenBurn(_reduce[key]['yield_token'], shares);
-        console.log('reducing yield-token / virtual / token:', 
-                        format_number(Number(pos.value.data['dy-act'].value) / ONE_8),        
-                        '/',                        
-                        format_number(Number(pos.value.data['dy-vir'].value) / ONE_8),                        
-                        '/',                        
-                        format_number(Number(pos.value.data['dx'].value) / ONE_8));
-
-        // console.log(pos);
         if (shares > 0 && pos.type == 7){
+            console.log('reducing yield-token / virtual / token:', 
+            format_number(Number(pos.value.data['dy-act'].value) / ONE_8),        
+            '/',                        
+            format_number(Number(pos.value.data['dy-vir'].value) / ONE_8),                        
+            '/',                        
+            format_number(Number(pos.value.data['dx'].value) / ONE_8));            
             await ytpReducePosition(_reduce[key]['yield_token'], _reduce[key]['token'], _reduce[key]['pool_token'], percent, deployer);
         } else {
-            console.error('shares: ', format_number(shares));
+            console.error('error: ', pos);
         }
     }
 }
@@ -772,7 +775,7 @@ _white_list = {
 async function run() {
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    await update_price_oracle();    
+    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
@@ -787,15 +790,15 @@ async function run() {
     //                     6:_deploy[8],
     //                     7:_deploy[9]
     //                 };
-    const _pools = { 0:_deploy[8], 1:_deploy[9] };
+    const _pools = { 0:_deploy[2], 1:_deploy[3] };
     // const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
     // await arbitrage_ytp(dry_run = false, _pools);
     // await arbitrage_fwp(dry_run = false);
 
@@ -813,21 +816,22 @@ async function run() {
     // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
-    // await reduce_position_fwp(0.1 * ONE_8, deployer=true);
+    // await reduce_position_fwp(0.9 * ONE_8);
 
     // const _reduce = { 0: _deploy[14] , 1: _deploy[15] };
     // await reduce_position_ytp(_reduce, 0.9*ONE_8, deployer=true);
     // await get_pool_details_ytp(_subset=_reduce);   
 
-    // await reduce_position_crp(_reduce, ONE_8, 'yield');
-    // await reduce_position_crp(_reduce, ONE_8, 'key');    
-    // await reduce_position_crp(_reduce, ONE_8, 'yield', deployer=true);
-    // await reduce_position_crp(_reduce, ONE_8, 'key', deployer=true);    
+    // await reduce_position_ytp(_pools, 0.5*ONE_8, deployer=true);
+    // await reduce_position_crp(_pools, ONE_8, 'yield');
+    // await reduce_position_crp(_pools, ONE_8, 'key');    
+    // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
+    // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);    
 
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
     
-    // await mint_some_tokens('STTXVX9GCR7JMSA8M7XZT4TTJ7EZVPJV6QGGKK6T');
-    // await get_some_token('STTXVX9GCR7JMSA8M7XZT4TTJ7EZVPJV6QGGKK6T');
+    // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
+    // await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
     // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
     // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
 
@@ -839,6 +843,8 @@ async function run() {
     // await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 500000000e8);
     // await arbitrage_fwp(dry_run = false);
     // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);    
-    // await see_balance(process.env.USER_ACCOUNT_ADDRESS);         
+    // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
+    result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
+    console.log(result);
 }
 run();
