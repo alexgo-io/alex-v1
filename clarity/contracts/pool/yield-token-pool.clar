@@ -463,7 +463,6 @@
         )
         
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
-        
         (and (> fee-x u0) 
             (and 
                 ;; first transfer fee-x to tx-sender

@@ -62,7 +62,7 @@
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
   (begin     
     (try! (check-is-approved sender))
-    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) (err tx-sender)));;ERR-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
