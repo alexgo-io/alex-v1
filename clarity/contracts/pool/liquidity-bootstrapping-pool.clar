@@ -150,7 +150,7 @@
                 (now-to-listed (- (* block-height ONE_8) listed))
                 (expiry-to-listed (- expiry listed))
                 (weight-diff (- weight-x-0 weight-x-1))
-                (time-ratio (unwrap! (div-down now-to-listed expiry-to-listed) ERR-MATH-CALL))
+                (time-ratio (div-down now-to-listed expiry-to-listed))
                 (weight-change (mul-down weight-diff time-ratio))
                 (weight-t (- weight-x-0 weight-change))     
             )
@@ -639,27 +639,17 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    

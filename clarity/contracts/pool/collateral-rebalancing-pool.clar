@@ -107,7 +107,7 @@
             (denom2 (+ denom1 a3x))
             (denom3 (+ denom2 a4x))
             (denom4 (unwrap! (pow-down denom3 u400000000) ERR-MATH-CALL))
-            (base (unwrap! (div-down ONE_8 denom4) ERR-MATH-CALL))
+            (base (div-down ONE_8 denom4))
         )
         (if (<= ONE_8 base) (ok u0) (ok (- ONE_8 base)))
     )
@@ -163,7 +163,7 @@
             (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))            
         )
-        (ok (unwrap-panic (div-down token-price collateral-price)))
+        (ok (div-down token-price collateral-price))
     )
 )
 
@@ -181,7 +181,7 @@
             (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
             (token-value (mul-down balance-x collateral-price))
-            (balance-x-in-y (unwrap! (div-down token-value token-price) ERR-MATH-CALL))
+            (balance-x-in-y (div-down token-value token-price))
         )
         (ok (+ balance-x-in-y balance-y))
     )
@@ -200,7 +200,7 @@
             (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
             (collateral-value (mul-down balance-y token-price))
-            (balance-y-in-x (unwrap! (div-down collateral-value collateral-price) ERR-MATH-CALL))
+            (balance-y-in-x (div-down collateral-value collateral-price))
         )
         (ok (+ balance-y-in-x balance-x))
     )
@@ -218,7 +218,7 @@
         ;; if no liquidity in the pool, return ltv-0
         (if (is-eq yield-supply u0)
             (ok (get ltv-0 pool))
-            (div-down yield-supply pool-value)
+            (ok (div-down yield-supply pool-value))
         )
     )
 )
@@ -245,23 +245,23 @@
             (let 
                 (
                     ;; assume 15secs per block 
-                    (t (unwrap! (div-down 
-                    (- expiry now) (* u2102400 ONE_8)) ERR-MATH-CALL))
+                    (t (div-down 
+                    (- expiry now) (* u2102400 ONE_8)))
 
                     ;; we calculate d1 first
-                    (spot-term (unwrap! (div-up spot strike) ERR-MATH-CALL))
-                    (pow-bs-vol (unwrap! (div-up 
-                                    (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
+                    (spot-term (div-up spot strike))
+                    (pow-bs-vol (div-up 
+                                    (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000))
                     (vol-term (mul-up t pow-bs-vol))
                     (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
                     (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
             
                     (denominator (mul-down bs-vol sqrt-t))
                     (numerator (+ vol-term (- (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term))))
-                    (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
-                    (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
+                    (d1 (div-up numerator denominator))
+                    (erf-term (unwrap! (erf (div-up d1 sqrt-2)) ERR-MATH-CALL))
                     (complement (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))))
-                    (weight-t (unwrap! (div-up complement u200000000) ERR-MATH-CALL))
+                    (weight-t (div-up complement u200000000))
                     (weighted (+ (mul-down moving-average weight-y) (mul-down ma-comp weight-t)))                    
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
@@ -288,28 +288,28 @@
                 
                 (now (* block-height ONE_8))
                 ;; TODO: assume 10mins per block - something to be reviewed
-                (t (unwrap! (div-down 
-                    (- expiry now) (* u52560 ONE_8)) ERR-MATH-CALL))
+                (t (div-down 
+                    (- expiry now) (* u52560 ONE_8)))
 
                 (token-symbol (try! (contract-call? token get-symbol)))
                 (collateral-symbol (try! (contract-call? collateral get-symbol)))
                 (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
                 (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
             
-                (strike (unwrap-panic (div-down token-price collateral-price)))
+                (strike (div-down token-price collateral-price))
 
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
                 (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
                 (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))            
-                (pow-bs-vol (unwrap! (div-up 
-                                (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000) ERR-MATH-CALL))
+                (pow-bs-vol (div-up 
+                                (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000))
                 (numerator (mul-up t pow-bs-vol))
                 (denominator (mul-down bs-vol sqrt-t))        
-                (d1 (unwrap! (div-up numerator denominator) ERR-MATH-CALL))
-                (erf-term (unwrap! (erf (unwrap! (div-up d1 sqrt-2) ERR-MATH-CALL)) ERR-MATH-CALL))
+                (d1 (div-up numerator denominator))
+                (erf-term (unwrap! (erf (div-up d1 sqrt-2)) ERR-MATH-CALL))
                 (complement (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term)))
-                (weighted (unwrap! (div-up complement u200000000) ERR-MATH-CALL))                
+                (weighted (div-up complement u200000000))                
                 (weight-y (if (> weighted u100000) weighted u100000))
 
                 (weight-x (- ONE_8 weight-y))
@@ -436,7 +436,7 @@
                 (yield-supply (get yield-supply pool))
                 (total-shares (unwrap! (contract-call? the-yield-token get-balance tx-sender) ERR-GET-BALANCE-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-                (shares-to-yield (unwrap! (div-down shares yield-supply) ERR-MATH-CALL))        
+                (shares-to-yield (div-down shares yield-supply))        
 
                 ;; if there are any residual collateral, convert to token
                 (bal-x-to-y (if (is-eq balance-x u0) 
@@ -954,8 +954,8 @@
                 (pool-value-unfloored (try! (get-pool-value-in-token token collateral expiry)))
                 (pool-value-in-y (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
                 (key-value-in-y (if (<= pool-value-in-y yield-supply) u0 (- pool-value-in-y yield-supply)))
-                (key-to-pool (unwrap! (div-down key-value-in-y pool-value-in-y) ERR-MATH-CALL))
-                (shares-to-key (unwrap! (div-down shares key-supply) ERR-MATH-CALL))
+                (key-to-pool (div-down key-value-in-y pool-value-in-y))
+                (shares-to-key (div-down shares key-supply))
                 (shares-to-pool (mul-down key-to-pool shares-to-key))
                     
                 (dx (mul-down shares-to-pool balance-x))
@@ -1031,27 +1031,17 @@
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
