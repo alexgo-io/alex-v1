@@ -75,8 +75,8 @@
         )
         ;;(if (>= a ONE_8) (round-for-up raw TOLERANCE_CONSTANT)
             (if (< raw max-error)
-                (ok u0)
-                (ok (- raw max-error))
+                u0
+                (- raw max-error)
             )
         ;;)
     )

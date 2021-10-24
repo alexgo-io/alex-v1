@@ -31,9 +31,7 @@
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (ok (mul-down 
-                (unwrap-panic (pow-down balance-x weight-x)) 
-                (unwrap-panic (pow-down balance-y weight-y))))       
+        (ok (mul-down (pow-down balance-x weight-x) (pow-down balance-y weight-y)))
     )
 )
 
@@ -82,7 +80,7 @@
                 (uncapped-exponent (div-down weight-x weight-y))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
-                (power (unwrap-panic (pow-down base exponent)))
+                (power (pow-down base exponent))
                 (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
                 (dx (mul-down balance-x ratio))
             )
@@ -113,7 +111,7 @@
             (let 
                 (
                     (base (div-up spot price))
-                    (power (unwrap-panic (pow-down base weight-y)))                
+                    (power (pow-down base weight-y))
                 )
                 (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
             )
@@ -135,7 +133,7 @@
             (let 
                 (
                     (base (div-up spot price))
-                    (power (unwrap-panic (pow-down base weight-y)))
+                    (power (pow-down base weight-y))
                 )
                 (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
             )
@@ -261,8 +259,8 @@
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (ok (- raw max-error))
+          u0
+          (- raw max-error)
         )
     )
 )
