@@ -46,16 +46,13 @@
     total-supply: uint,
     balance-x: uint,
     balance-y: uint,
-    fee-balance-x: uint,
-    fee-balance-y: uint,
-    fee-to-address: principal,
     pool-token: principal,
     listed: uint,
     weight-x-0: uint,
     weight-x-1: uint,
     weight-x-t: uint,
-    fee-rate-x: uint,
-    fee-rate-y: uint       
+    price-x-min: uint,
+    price-x-max: uint    
   }
 )
 
