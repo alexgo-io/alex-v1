@@ -64,7 +64,7 @@
 (define-data-var pools-list (list 2000 uint) (list))
 
 ;; 4 years based on 2102400 blocks per year (i.e. 15 secs per block)
-(define-data-var max-expiry uint (unwrap-panic (scale-up u8409600))) 
+(define-data-var max-expiry uint (scale-up u8409600))
 
 (define-read-only (get-max-expiry)
     (ok (var-get max-expiry))
@@ -713,21 +713,11 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
-    (ok r)
- )
+    (/ a ONE_8)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
