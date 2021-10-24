@@ -6,6 +6,39 @@ import {
   types,
 } from "https://deno.land/x/clarinet@v0.13.0/index.ts";
 
+class ALEXToken {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(contractCaller: Account,wallet: string) {
+    return this.chain.callReadOnlyFn("token-alex", "get-balance", [
+      types.principal(wallet),
+    ], contractCaller.address);
+  }
+
+  transferToken(amount: number, sender: string, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("token-alex", "transfer", [
+          types.uint(amount),
+          types.principal(sender),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], this.deployer.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("token-alex", "get-total-supply", [], this.deployer.address);
+  }
+}
+export { ALEXToken };
 
 class USDAToken {
   chain: Chain;
@@ -139,3 +172,24 @@ class POOLTOKEN_YTP_WBTC_WBTC_79760 {
   }
 }
 export { POOLTOKEN_YTP_WBTC_WBTC_79760 };
+
+class YIELDTOKEN_WBTC_79760 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("yield-wbtc-79760", "get-balance", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("yield-wbtc-79760", "get-total-supply", [], this.deployer.address);
+  }
+}
+export { YIELDTOKEN_WBTC_79760 };

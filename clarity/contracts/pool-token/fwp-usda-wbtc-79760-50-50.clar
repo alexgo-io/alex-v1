@@ -1,13 +1,27 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-pool-token.pool-token-trait)
 
-(define-fungible-token alex)
+(define-fungible-token fwp-usda-wbtc-79760-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var contract-owner principal .fixed-weight-pool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+
+(define-constant ONE_8 (pow u10 u8))
+
+(define-private (pow-decimals)
+  (pow u10 (unwrap-panic (get-decimals)))
+)
+
+(define-read-only (fixed-to-decimals (amount uint))
+  (/ (* amount (pow-decimals)) ONE_8)
+)
+
+(define-private (decimals-to-fixed (amount uint))
+  (/ (* amount ONE_8) (pow-decimals))
+)
 
 (define-read-only (get-owner)
   (ok (var-get contract-owner))
@@ -25,15 +39,15 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (decimals-to-fixed (ft-get-supply alex)))
+  (ok (decimals-to-fixed (ft-get-supply fwp-usda-wbtc-79760-50-50)))
 )
 
 (define-read-only (get-name)
-  (ok "ALEX")
+  (ok "fwp-usda-wbtc-79760-50-50")
 )
 
 (define-read-only (get-symbol)
-  (ok "ALEX")
+  (ok "fwp-usda-wbtc-79760-50-50")
 )
 
 (define-read-only (get-decimals)
@@ -41,7 +55,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (decimals-to-fixed (ft-get-balance alex account)))
+  (ok (decimals-to-fixed (ft-get-balance fwp-usda-wbtc-79760-50-50 account)))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -55,24 +69,10 @@
   (ok (some (var-get token-uri)))
 )
 
-(define-constant ONE_8 (pow u10 u8))
-
-(define-private (pow-decimals)
-  (pow u10 (unwrap-panic (get-decimals)))
-)
-
-(define-read-only (fixed-to-decimals (amount uint))
-  (/ (* amount (pow-decimals)) ONE_8)
-)
-
-(define-private (decimals-to-fixed (amount uint))
-  (/ (* amount ONE_8) (pow-decimals))
-)
-
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? alex (fixed-to-decimals amount) sender recipient)
+    (match (ft-transfer? fwp-usda-wbtc-79760-50-50 (fixed-to-decimals amount) sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -84,20 +84,14 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    ;;(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    ;;(ft-mint? alex (fixed-to-decimals amount) recipient)
-    (ft-mint? alex amount recipient)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ft-mint? fwp-usda-wbtc-79760-50-50 (fixed-to-decimals amount) recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-burn? alex (fixed-to-decimals amount) sender)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ft-burn? fwp-usda-wbtc-79760-50-50 (fixed-to-decimals amount) sender)
   )
-)
-
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? alex u10000 tx-sender))
 )

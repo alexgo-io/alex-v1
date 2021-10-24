@@ -94,10 +94,11 @@
         )
         ;; all usdc amount is transferred
         ;; (print oracle)
+        
         (try! (contract-call? .token-usda transfer usda-amount tx-sender (as-contract tx-sender) none))
-        ;; portion of that (by rebate-rate) is minted as alex and transferred        
+        ;; portion of that (by rebate-rate) is minted as alex and transferred       
         (try! (contract-call? .token-alex mint tx-sender alex-to-rebate))
-    
+        
         (print { object: "reserve-pool", action: "transfer-to-mint", data: alex-to-rebate })
         (ok true)        
     )

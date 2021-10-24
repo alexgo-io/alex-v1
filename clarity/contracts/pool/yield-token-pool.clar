@@ -368,7 +368,7 @@
             )
             ;; TODO : Check whether dy or dx value is valid  
             ;; (asserts! (< min-dy dy) too-much-slippage-err)
-
+            
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx (as-contract tx-sender) tx-sender)))
             (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
 
@@ -463,44 +463,43 @@
         )
         
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
-        (and (> fee-x u0) 
-            (and 
-                ;; first transfer fee-x to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft the-aytoken fee-x (as-contract tx-sender) tx-sender))
-                ;; send fee-x to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq aytoken .token-usda) 
-                            fee-x 
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-aytoken u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-aytoken u50000000 u50000000 fee-x)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-aytoken .token-usda u50000000 u50000000 fee-x)))
-                            )                            
-                        )
-                    )
-                )
-            )
-        )
-
-        ;; (and (> fee-y u0) 
+        ;; (and (> fee-x u0) 
         ;;     (and 
-        ;;         ;; first transfer fee-y to tx-sender
-        ;;         (try! (contract-call? .alex-vault transfer-ft the-token fee-y (as-contract tx-sender) tx-sender))
-        ;;         ;; send fee-y to reserve-pool to mint alex    
+        ;;         ;; first transfer fee-x to tx-sender
+        ;;         (try! (contract-call? .alex-vault transfer-ft the-aytoken fee-x (as-contract tx-sender) tx-sender))
+        ;;         ;; send fee-x to reserve-pool to mint alex    
         ;;         (try! 
         ;;             (contract-call? .alex-reserve-pool transfer-to-mint 
-        ;;                 (if (is-eq token .token-usda) 
-        ;;                     fee-y 
-        ;;                     (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-token u50000000 u50000000))
-        ;;                         (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y)))
-        ;;                         (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-token .token-usda u50000000 u50000000 fee-y)))
-        ;;                     )
+        ;;                 (if (is-eq aytoken .token-usda) 
+        ;;                     fee-x 
+        ;;                     (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-aytoken u50000000 u50000000))
+        ;;                         (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-aytoken u50000000 u50000000 fee-x)))
+        ;;                         (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-aytoken .token-usda u50000000 u50000000 fee-x)))
+        ;;                     )                            
         ;;                 )
         ;;             )
         ;;         )
         ;;     )
-        ;; )         
-
+        ;; )
+        (and (> fee-y u0) 
+            (and 
+                ;; first transfer fee-y to tx-sender
+                (try! (contract-call? .alex-vault transfer-ft the-token fee-y (as-contract tx-sender) tx-sender))
+                ;; send fee-y to reserve-pool to mint alex    
+                (try! 
+                    (contract-call? .alex-reserve-pool transfer-to-mint 
+                        (if (is-eq token .token-usda) 
+                            fee-y 
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-token u50000000 u50000000))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y)))
+                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-token .token-usda u50000000 u50000000 fee-y)))
+                            )
+                        )
+                    )
+                )
+            )
+        )         
+        
         (map-set pools-data-map
             { aytoken: aytoken}
             (merge pool { fee-balance-aytoken: u0, fee-balance-token: u0 })

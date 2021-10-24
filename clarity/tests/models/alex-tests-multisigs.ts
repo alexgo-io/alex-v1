@@ -184,6 +184,28 @@ class MS_YTP_WBT_79760 {
         ]);
         return block.receipts[0].result;
     }
+
+  retreiveRebates(contractCaller: Account,token: string, amount: number, collectID: number) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-ytp-yield-wbtc-79760-wbtc", "retreive-rebate", [
+            types.principal(token),
+            types.uint(amount),
+            types.uint(collectID)
+          ], contractCaller.address),
+        ]);
+        return block.receipts[0].result;
+    }
+
+    returnVotes(token: string, proposalID: number, member: string) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-ytp-yield-wbtc-79760-wbtc", "return-votes-to-member", [
+            types.principal(token),
+            types.uint(proposalID),
+            types.principal(member)
+          ], this.deployer.address),
+        ]);
+        return block.receipts[0].result;
+    }
   
 }
 export { MS_YTP_WBT_79760 };

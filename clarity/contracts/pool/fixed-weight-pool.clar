@@ -296,7 +296,6 @@
                 ;; fee = dy * fee-rate-y
                 (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
                 (dy-net-fees (if (<= dy fee) u0 (unwrap! (sub-fixed dy fee) ERR-MATH-CALL)))
-
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
 
                 (pool-updated
@@ -309,7 +308,7 @@
                     )
                 )
             )
-        
+            
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
