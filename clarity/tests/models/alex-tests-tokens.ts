@@ -119,3 +119,23 @@ class POOLTOKEN_YTP_WBTC_WBTC_59760 {
 }
 export { POOLTOKEN_YTP_WBTC_WBTC_59760 };
 
+class POOLTOKEN_YTP_WBTC_WBTC_79760 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("ytp-yield-wbtc-79760-wbtc", "get-balance", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("ytp-yield-wbtc-79760-wbtc", "get-total-supply", [], this.deployer.address);
+  }
+}
+export { POOLTOKEN_YTP_WBTC_WBTC_79760 };

@@ -150,7 +150,7 @@ path = "contracts/yield-token/yield-wbtc-79760.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-wbtc", "trait-ownable"]
 
 [contracts.multisig-ytp-yield-wbtc-79760-wbtc]
-path = "contracts/multisig/multisig-ytp-yield-wbtc-59760-wbtc.clar"
+path = "contracts/multisig/multisig-ytp-yield-wbtc-79760-wbtc.clar"
 depends_on = ["ytp-yield-wbtc-79760-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-79760"]
 
 [contracts.key-wbtc-79760-usda]

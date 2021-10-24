@@ -21,6 +21,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-COLLECT-FEE (err u8004))
+(define-constant ERR-EXECUTION-FAILED (err u8005))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 
 (define-constant ONE_8 u100000000)
@@ -28,8 +29,7 @@
 ;; Constants
 (define-constant DEFAULT_OWNER tx-sender)
 
-(define-constant NOW-COLLECTING false)
-
+(define-data-var NOW-COLLECTING bool false)
 ;; Proposal variables
 ;; With Vote, we can set :
 ;; 1. contract to have right to mint/burn token 
@@ -242,7 +242,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
+        (total-supply (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)))
         (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
         (yes-votes (get yes-votes proposal))
   )
@@ -256,8 +256,11 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
-    (ok true))
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
+    
+    (if (> yes-votes threshold-count) (ok true) ERR-EXECUTION-FAILED)
+    
+    )
 )
 
 ;; Return votes to voter(member)
@@ -290,7 +293,7 @@
     ;; Setting for Yield Token Pool
     (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-wbtc-79760 new-fee-rate-token))
     (try! (contract-call? .yield-token-pool set-fee-rate-aytoken .yield-wbtc-79760 new-fee-rate-aytoken))
-    
+    ;;(if (> new-fee-rate-token u1) (ok true) (err u1))
     (ok true)
   )
 )
@@ -301,19 +304,17 @@
 (define-public (collect-fees)
   (let (
     (collect-id (+ u1 (var-get collect-round-count)))
+    (total-collected-galex (* (unwrap-panic (contract-call? .token-alex get-balance (as-contract tx-sender))) ONE_8))
   ) 
 
     ;; Assure that Collecting is not currently happening
-    (asserts! (is-eq (var-get NOW-COLLECTING) false))
+    (asserts! (is-eq (var-get NOW-COLLECTING) false) ERR-COLLECT-FEE)
 
     ;; Initialize a new fee collecting round
     (map-set collect-round { id: collect-id } { is-open : true } )
     
     ;; Execute Collect Fee function in pool
-    (asserts! (contract-call? .yield-token-pool collect-fees .yield-wbtc-79760 .token-wbtc) ERR-COLLECT-FEE)
-    
-    ;; Currently accumulated gAlex tokens
-    (total-collected-galex (* (unwrap-panic (contract-call? .token-alex get-balance (as-contract tx-sender))) ONE_8))
+    (try! (contract-call? .yield-token-pool collect-fees .yield-wbtc-79760 .token-wbtc))
     
     ;; Set the flag so only one collecting round can happen
     (var-set NOW-COLLECTING true)
@@ -327,7 +328,7 @@
 (define-public (retreive-rebate (token <ft-trait>) (amount uint) (collect-id uint))
   (let (
 
-    (collect-round (get-collect-round-by-id collect-id))
+    (current-collect-round (get-collect-round-by-id collect-id))
     ;; Total supply of pool token
     (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
     ;; Calculate how much percentage of pool token does user has 
@@ -338,7 +339,7 @@
     (users-rebate (unwrap-panic (contract-call? .math-fixed-point mul-down rebated-galex user-percentage)))
   ) 
     ;; Check whether the collect round is open
-    (asserts! (get is-open collect-round) ERR-NOT-AUTHORIZED)
+    (asserts! (get is-open current-collect-round) ERR-NOT-AUTHORIZED)
 
     ;; Check whether it is valid pool token
     (asserts! (is-token-accepted token) ERR-INVALID-POOL-TOKEN)
@@ -354,11 +355,10 @@
 
     ;; If all pool-token holders finished retreiving, close the colleting round 
     (and 
-        (is-eq (unwrap-panic (contract-call? .token-alex get-balance (as-contract tx-sender)) ONE_8) u0) 
+        (is-eq (unwrap-panic (contract-call? .token-alex get-balance (as-contract tx-sender))) u0) 
     
         (and (map-set collect-round { id: collect-id } { is-open : false }) (var-set NOW-COLLECTING false))
     )
-    
     (ok users-rebate)
   )
 )

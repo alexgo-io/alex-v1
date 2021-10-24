@@ -483,24 +483,24 @@
             )
         )
 
-        (and (> fee-y u0) 
-            (and 
-                ;; first transfer fee-y to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft the-token fee-y (as-contract tx-sender) tx-sender))
-                ;; send fee-y to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq token .token-usda) 
-                            fee-y 
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-token u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-token .token-usda u50000000 u50000000 fee-y)))
-                            )
-                        )
-                    )
-                )
-            )
-        )         
+        ;; (and (> fee-y u0) 
+        ;;     (and 
+        ;;         ;; first transfer fee-y to tx-sender
+        ;;         (try! (contract-call? .alex-vault transfer-ft the-token fee-y (as-contract tx-sender) tx-sender))
+        ;;         ;; send fee-y to reserve-pool to mint alex    
+        ;;         (try! 
+        ;;             (contract-call? .alex-reserve-pool transfer-to-mint 
+        ;;                 (if (is-eq token .token-usda) 
+        ;;                     fee-y 
+        ;;                     (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-token u50000000 u50000000))
+        ;;                         (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y)))
+        ;;                         (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-token .token-usda u50000000 u50000000 fee-y)))
+        ;;                     )
+        ;;                 )
+        ;;             )
+        ;;         )
+        ;;     )
+        ;; )         
 
         (map-set pools-data-map
             { aytoken: aytoken}
