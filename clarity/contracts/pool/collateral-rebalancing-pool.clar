@@ -930,16 +930,8 @@
     )
 )
 
-(define-read-only (get-position-given-burn-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
-    (begin
-        (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)
-        (ok shares)
-    )
-)
-
 (define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (begin         
-        (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)
         (let 
             (
                 (token-x (contract-of collateral))

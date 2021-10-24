@@ -341,7 +341,9 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc79760Address, keywbtc79760Address, multisigncrpwbtc79760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);      
+        
+        
     },    
 });
 
@@ -487,6 +489,7 @@ Clarinet.test({
         position['key-supply'].expectUint(0);        
         position['balance-x'].expectUint(0);
         position['balance-y'].expectUint(0);                
+    
     },    
 });
 
