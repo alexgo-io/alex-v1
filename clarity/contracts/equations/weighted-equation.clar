@@ -55,7 +55,7 @@
                 (uncapped-exponent (div-up weight-x weight-y))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
-                (power (unwrap-panic (pow-up base exponent)))
+                (power (pow-up base exponent))
                 (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
                 (dy (mul-down balance-y complement))
             )
@@ -273,7 +273,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        (ok (+ raw max-error))
+        (+ raw max-error)
     )
 )
 

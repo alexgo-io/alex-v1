@@ -34,7 +34,7 @@
 (define-read-only (get-price (balance-x uint) (balance-y uint) (t uint))
   (begin
     (asserts! (>= balance-y balance-x) invalid-balance-err)      
-    (ok (unwrap-panic (pow-up (div-down balance-y balance-x) t)))
+    (ok (pow-up (div-down balance-y balance-x) t))
   )
 )
 
@@ -99,7 +99,7 @@
         (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
         (x-pow (unwrap-panic (pow-down balance-x t-comp)))
         (y-pow (unwrap-panic (pow-down balance-y t-comp)))
-        (y-dy-pow (unwrap-panic (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp)))
+        (y-dy-pow (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp))
         (add-term (+ x-pow y-pow))
         (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
         (final-term (unwrap-panic (pow-down term t-comp-num)))         
@@ -297,7 +297,7 @@
             (raw (unwrap-panic (pow-fixed a b)))
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        (ok (+ raw max-error))
+        (+ raw max-error)
     )
 )
 

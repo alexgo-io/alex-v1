@@ -27,7 +27,7 @@ Clarinet.test({
                 types.uint(5*ONE_8),
                 types.uint(5*ONE_8)
             ], deployer.address);
-        call.result.expectOk().expectUint(312499955208);
+        call.result.expectUint(312499955208);
 
         // anything ^ 0 = 1
         call = chain.callReadOnlyFn("math-fixed-point", "pow-down",
@@ -42,7 +42,7 @@ Clarinet.test({
                 types.uint(1000000*ONE_8),
                 types.uint(0)
             ], deployer.address);
-        call.result.expectOk().expectUint(100000005);        
+        call.result.expectUint(100000005);        
         
         call = chain.callReadOnlyFn("math-fixed-point", "pow-down",
             [

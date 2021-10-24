@@ -88,7 +88,7 @@
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        (ok (+ raw max-error))
+        (+ raw max-error)
         ;;(if (>= a ONE_10)  (round-for-up raw TOLERANCE_CONSTANT) (+ raw max-error))
     )
 )
