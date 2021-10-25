@@ -177,10 +177,10 @@ class MS_YTP_WBT_79760 {
     }
 
 
-  collectFees() {
+  collectFees(contractprincipal: string) {
       let block = this.chain.mineBlock([
           Tx.contractCall("multisig-ytp-yield-wbtc-79760-wbtc", "collect-fees", [
-          ], this.deployer.address),
+          ], contractprincipal),
         ]);
         return block.receipts[0].result;
     }

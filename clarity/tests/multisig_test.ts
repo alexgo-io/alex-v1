@@ -175,19 +175,20 @@ Clarinet.test({
         call.result.expectOk().expectUint(100*ONE_8);    // 90 % of pool tokens were used for proposal
 
         // 50 % of corresponding alextoken was minted, owned by multisig.  
-        result = MultiSigTest.collectFees()
+        // need to put multisig as account
+        result = MultiSigTest.collectFees(multisigytpyieldwbtc79760)
         result.expectOk().expectUint(94086200*ONE_8) 
 
-        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760, 1, wallet_1.address)
-        result.expectOk()
-        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760, 1, wallet_2.address)
-        result.expectOk()
+        // result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760, 1, wallet_1.address)
+        // result.expectOk()
+        // result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760, 1, wallet_2.address)
+        // result.expectOk()
 
-        call = await ytpPoolToken.balanceOf(wallet_1.address);
-        call.result.expectOk().expectUint(1000*ONE_8);    // 90 % of pool tokens were used for proposal
+        // call = await ytpPoolToken.balanceOf(wallet_1.address);
+        // call.result.expectOk().expectUint(1000*ONE_8);    // 90 % of pool tokens were used for proposal
 
-        call = await alexToken.balanceOf(wallet_1,multisigytpyieldwbtc79760);
-        call.result.expectErr()
+        // call = await alexToken.balanceOf(wallet_1,multisigytpyieldwbtc79760);
+        // call.result.expectErr()
 
         // result = MultiSigTest.retreiveRebates(wallet_1,pooltokenyieldwbtc79760,1000*ONE_8,1)
         // result.expectOk()

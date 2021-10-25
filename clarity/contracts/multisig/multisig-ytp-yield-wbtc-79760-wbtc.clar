@@ -316,7 +316,7 @@
     (var-set NOW-COLLECTING true)
   )
   (let 
-    (
+    ( 
       (total-collected-galex (unwrap-panic (contract-call? .token-alex get-balance tx-sender)))
     )
     (ok total-collected-galex)
