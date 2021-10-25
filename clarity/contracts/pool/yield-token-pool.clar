@@ -513,14 +513,9 @@
 (define-read-only (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
     (let 
         (
-        (aytoken (contract-of the-aytoken))
-        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-        (expiry (get expiry pool))
-        (listed (get listed pool))
-        (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))    
-        (balance-token (get balance-token pool))
-        (dy (try! (contract-call? .yield-token-equation get-y-given-x balance-token balance-aytoken normalized-expiry dx)))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR))
+        (normalized-expiry (try! (get-t (get expiry pool) (get listed pool))))
+        (dy (try! (contract-call? .yield-token-equation get-y-given-x (get balance-token pool) (+ (get balance-aytoken pool) (get balance-virtual pool)) normalized-expiry dx)))
         )
         (asserts! (> (get balance-aytoken pool) dy) dy-bigger-than-available-err)
         (ok dy)        
@@ -531,15 +526,10 @@
     
     (let 
         (
-        (aytoken (contract-of the-aytoken))
-        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-        (expiry (get expiry pool))
-        (listed (get listed pool))
-        (normalized-expiry (try! (get-t expiry listed)))
-        (balance-aytoken (+ (get balance-aytoken pool) (get balance-virtual pool)))
-        (balance-token (get balance-token pool))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR))
+        (normalized-expiry (try! (get-t (get expiry pool) (get listed pool))))
         )
-        (contract-call? .yield-token-equation get-x-given-y balance-token balance-aytoken normalized-expiry dy)
+        (contract-call? .yield-token-equation get-x-given-y (get balance-token pool) (+ (get balance-aytoken pool) (get balance-virtual pool)) normalized-expiry dy)
     )
 )
 
@@ -548,7 +538,7 @@
     (let 
         (
         (aytoken (contract-of the-aytoken))
-        (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
