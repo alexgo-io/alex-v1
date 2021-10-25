@@ -96,17 +96,17 @@
     (let
         (
             (a1x (mul-down a1 x))
-            (x2 (unwrap! (pow-down x u200000000) ERR-MATH-CALL))
+            (x2 (pow-down x u200000000))
             (a2x (mul-down a2 x2))
-            (x3 (unwrap! (pow-down x u300000000) ERR-MATH-CALL))
+            (x3 (pow-down x u300000000))
             (a3x (mul-down a3 x3))
-            (x4 (unwrap! (pow-down x u400000000) ERR-MATH-CALL))
+            (x4 (pow-down x u400000000))
             (a4x (mul-down a4 x4))
             (denom (+ ONE_8 a1x))
             (denom1 (+ denom a2x))
             (denom2 (+ denom1 a3x))
             (denom3 (+ denom2 a4x))
-            (denom4 (unwrap! (pow-down denom3 u400000000) ERR-MATH-CALL))
+            (denom4 (pow-down denom3 u400000000))
             (base (div-down ONE_8 denom4))
         )
         (if (<= ONE_8 base) (ok u0) (ok (- ONE_8 base)))
@@ -250,11 +250,10 @@
 
                     ;; we calculate d1 first
                     (spot-term (div-up spot strike))
-                    (pow-bs-vol (div-up 
-                                    (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000))
+                    (pow-bs-vol (div-up (pow-down bs-vol u200000000) u200000000))
                     (vol-term (mul-up t pow-bs-vol))
-                    (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
-                    (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))
+                    (sqrt-t (pow-down t u50000000))
+                    (sqrt-2 (pow-down u200000000 u50000000))
             
                     (denominator (mul-down bs-vol sqrt-t))
                     (numerator (+ vol-term (- (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term))))
@@ -300,10 +299,9 @@
 
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
-                (sqrt-t (unwrap! (pow-down t u50000000) ERR-MATH-CALL))
-                (sqrt-2 (unwrap! (pow-down u200000000 u50000000) ERR-MATH-CALL))            
-                (pow-bs-vol (div-up 
-                                (unwrap! (pow-down bs-vol u200000000) ERR-MATH-CALL) u200000000))
+                (sqrt-t (pow-down t u50000000))
+                (sqrt-2 (pow-down u200000000 u50000000))
+                (pow-bs-vol (div-up (pow-down bs-vol u200000000) u200000000))
                 (numerator (mul-up t pow-bs-vol))
                 (denominator (mul-down bs-vol sqrt-t))        
                 (d1 (div-up numerator denominator))
@@ -1033,8 +1031,8 @@
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (ok (- raw max-error))
+            u0
+            (- raw max-error)
         )
     )
 )

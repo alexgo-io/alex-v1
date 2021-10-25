@@ -758,8 +758,8 @@
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (ok (- raw max-error))
+            u0
+            (- raw max-error)
         )
     )
 )
