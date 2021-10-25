@@ -355,6 +355,24 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(9760074295);
         position['balance-y'].expectUint(509964006162103);         
+        
+        call = await FWPTest.getYgivenX(wbtcAddress, usdaAddress, weightX, weightY, 1000);
+        call.result.expectOk().expectUint(25498200);
+
+        call = await FWPTest.getYgivenX(wbtcAddress, usdaAddress, weightX, weightY, 0);
+        call.result.expectOk().expectUint(0);
+
+        call = await FWPTest.getYgivenX(wbtcAddress, wbtcAddress, weightX, weightY, 0);
+        call.result.expectErr().expectUint(2001);
+
+        call = await FWPTest.getXgivenY(wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
+        call.result.expectOk().expectUint(1171);
+
+        call = await FWPTest.getXgivenY(wbtcAddress, usdaAddress, weightX, weightY, 0);
+        call.result.expectOk().expectUint(0);
+
+        call = await FWPTest.getXgivenY(wbtcAddress, wbtcAddress, weightX, weightY, 0);
+        call.result.expectErr().expectUint(2001);
     },
 });          
         
