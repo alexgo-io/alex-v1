@@ -46,8 +46,10 @@ Clarinet.test({
         position['balance-x'].expectUint(alexQty);
         position['balance-y'].expectUint(usdaQty);
 
-        console.log(deployer.address);
-        result = LBPTest.setPriceRange(multisigAddress, alexAddress, usdaAddress, expiry, priceMin, priceMax);
+        result = LBPTest.setPoolMultisig(deployer, alexAddress, usdaAddress, expiry, deployer.address);
+        result.expectOk();
+        
+        result = LBPTest.setPriceRange(deployer, alexAddress, usdaAddress, expiry, priceMin, priceMax);
         result.expectOk();
 
         // // Check pool details and print

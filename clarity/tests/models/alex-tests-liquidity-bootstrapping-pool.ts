@@ -40,7 +40,7 @@ import {
       return block.receipts[0].result;
     }
 
-    setPriceRange(multisig: string, tokenX: string, tokenY: string, expiry :number, min_price: number, max_price: number) {
+    setPriceRange(user: Account, tokenX: string, tokenY: string, expiry :number, min_price: number, max_price: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "set-price-range", [
           types.principal(tokenX),
@@ -48,10 +48,22 @@ import {
           types.uint(expiry),
           types.uint(min_price),
           types.uint(max_price)
-        ], multisig),
+        ], user.address),
       ]);
       return block.receipts[0].result;
     }
+
+    setPoolMultisig(user: Account, tokenX: string, tokenY: string, expiry :number, new_multisig: string) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("liquidity-bootstrapping-pool", "set-pool-multisig", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(expiry),
+          types.principal(new_multisig)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }    
   
     reducePosition(user: Account, tokenX: string, tokenY: string, expiry :number, pooltoken: string, percentage: number) {
       let block = this.chain.mineBlock([

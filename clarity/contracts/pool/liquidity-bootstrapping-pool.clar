@@ -21,6 +21,8 @@
 (define-constant ERR-PRICE-LOWER-THAN-MIN (err u2021))
 (define-constant ERR-PRICE-GREATER-THAN-MAX (err u2022))
 
+(define-constant CONTRACT-OWNER tx-sender)
+
 ;; data maps and vars
 ;;
 (define-map pools-map
@@ -311,6 +313,21 @@
 
 (define-read-only (get-pool-multisig (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (ok (get pool-multisig (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR)))
+)
+
+;; testing only
+(define-public (set-pool-multisig (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (new-multisig principal))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool-updated (merge pool {
+                pool-multisig: new-multisig
+                }))            
+        )
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry } pool-updated)
+        (ok true)
+    )
 )
 
 (define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
