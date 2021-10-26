@@ -661,40 +661,24 @@
     )
 )
 
-(define-read-only (get-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (let 
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-        )
-        (ok (get fee-rate-x pool))
-    )
+(define-read-only (get-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
+   (ok (get fee-rate-x (try! (get-pool-details token collateral expiry))))  
 )
 
-(define-read-only (get-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (let 
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-        )
-        (ok (get fee-rate-y pool))
-    )
+(define-read-only (get-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
+   (ok (get fee-rate-y (try! (get-pool-details token collateral expiry))))  
 )
 
 (define-public (set-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-x uint))
     (let 
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (try! (get-pool-details token collateral expiry)))
         )
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
-                token-x: token-x, token-y: token-y, expiry: expiry 
+                token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry 
             }
             (merge pool { fee-rate-x: fee-rate-x })
         )
@@ -704,16 +688,14 @@
 
 (define-public (set-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-y uint))
     (let 
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+        (         
+            (pool (try! (get-pool-details token collateral expiry)))
         )
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
-                token-x: token-x, token-y: token-y, expiry: expiry
+                token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry
             }
             (merge pool { fee-rate-y: fee-rate-y })
         )
