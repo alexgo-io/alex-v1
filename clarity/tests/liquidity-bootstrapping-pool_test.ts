@@ -1,39 +1,24 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import { LBPTestAgent } from './models/alex-tests-liquidity-bootstrapping-pool.ts';
 
-import { 
-    LBPTestAgent,
-  } from './models/alex-tests-liquidity-bootstrapping-pool.ts';
-
-import { 
-    MS_FWP_WBTC_USDA_5050,
-} from './models/alex-tests-multisigs.ts';
-import { OracleManager } from './models/alex-tests-oracle-mock.ts';
-
-import { 
-    USDAToken,
-    ALEXToken,
-  } from './models/alex-tests-tokens.ts';
-
-// Deployer Address Constants 
-const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
+// Deployer Address Constants
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
+const poolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
+const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-lbp-alex-usda-90-10"
 
-const lbpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-59760-usda"
-const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-lbp-alex-59760-usda"
+const ONE_8 = 1e+8;
 
-const ONE_8 = 100000000
+const weightX1 = 0.9 * ONE_8;
+const weightX2 = 0.1 * ONE_8;
+const expiry = 1000 * ONE_8;
 
-const weightX1 = 50000000 //0.5
-const weightX2 = 50000000 //0.5
+const priceMax = 1 * ONE_8;
+const priceMin = 0.2 * ONE_8;
 
-const wbtcPrice = 50000
-const usdaPrice = 1
-const expiry = 59760 * ONE_8
-
-const wbtcQ = 100*ONE_8
+const alexQty = 10000 * ONE_8;
+const usdaQty = Math.round(priceMax * alexQty * (ONE_8 - weightX1) / weightX1 / ONE_8);
 
 
 Clarinet.test({
@@ -42,24 +27,28 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let LBPTest = new LBPTestAgent(chain, deployer);
+
+        console.log('alex qty: ', alexQty / ONE_8, 'usda qty: ', usdaQty / ONE_8);
+
+        let call = chain.callReadOnlyFn("token-alex", "get-balance", 
+            [types.principal(deployer.address)
+            ], deployer.address);
+        call.result.expectOk().expectUint(10000 * ONE_8);         
         
         // Deployer creating a pool, initial tokens injected to the pool
-        let result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry,lbpalexusdaAddress,multisigAddress,1000*ONE_8, 1000*ONE_8);
+        let result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
-        let call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(2236067605752);
-        position['balance-x'].expectUint(wbtcQ);
-        position['balance-y'].expectUint(wbtcQ*wbtcPrice);
+        position['total-supply'].expectUint(802741422430);
+        position['balance-x'].expectUint(alexQty);
+        position['balance-y'].expectUint(usdaQty);
 
-        // // Add extra liquidity (1/4 of initial liquidity)
-        // result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ / 4, wbtcQ*wbtcPrice / 4);
-        // position = result.expectOk().expectTuple();
-        // position['supply'].expectUint(2236067605752 / 4);
-        // position['dx'].expectUint(wbtcQ / 4);
-        // position['dy'].expectUint(wbtcQ*wbtcPrice / 4);
+        console.log(deployer.address);
+        result = LBPTest.setPriceRange(multisigAddress, alexAddress, usdaAddress, expiry, priceMin, priceMax);
+        result.expectOk();
 
         // // Check pool details and print
         // call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress,weightX, weightY);

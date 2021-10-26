@@ -39,17 +39,16 @@ import {
       ]);
       return block.receipts[0].result;
     }
-  
-    addToPosition(user: Account, tokenX: string, tokenY: string, expiry :number, pooltoken: string, dX: number, dY: number) {
+
+    setPriceRange(multisig: string, tokenX: string, tokenY: string, expiry :number, min_price: number, max_price: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "add-to-position", [
+        Tx.contractCall("liquidity-bootstrapping-pool", "set-price-range", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(expiry),
-          types.principal(pooltoken),
-          types.uint(dX),
-          types.uint(dY),
-        ], user.address),
+          types.uint(min_price),
+          types.uint(max_price)
+        ], multisig),
       ]);
       return block.receipts[0].result;
     }
@@ -107,89 +106,6 @@ import {
         types.uint(expiry),
         types.uint(price)
       ], this.deployer.address);
-    } 
-  
-    setFeetoAddress(user: Account, tokenX: string, tokenY: string, expiry: number, address: string) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "set-fee-to-address", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-          types.principal(address) 
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-  
-    getFeetoAddress(user: Account, tokenX: string, tokenY: string, expiry: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "get-fee-to-address", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-
-    getFeeX(user: Account, tokenX: string, tokenY: string, expiry: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "get-fee-rate-x", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-
-    getFeeY(user: Account, tokenX: string, tokenY: string, expiry: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "get-fee-rate-y", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-
-  
-    collectFees(user: Account, tokenX: string, tokenY: string, expiry: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "collect-fees", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-  
-    
-  
-    setFeeRateX(user: Account, tokenX: string, tokenY: string, expiry: number, feerate:number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "set-fee-rate-x", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-          types.uint(feerate)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-  
-    setFeeRateY(user: Account, tokenX: string, tokenY: string, expiry: number, feerate:number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "set-fee-rate-y", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-          types.uint(feerate)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
     }
   
   }
