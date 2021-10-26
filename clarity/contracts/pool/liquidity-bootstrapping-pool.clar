@@ -484,30 +484,20 @@
 (define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
     (let 
         (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
             (weight-x (get weight-x-t pool))
-            (weight-y (- ONE_8 weight-x))
         )
-        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dx)        
     )
 )
 
 (define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint))
     (let 
         (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
             (weight-x (get weight-x-t pool))
-            (weight-y (- ONE_8 weight-x))
         )
-        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
+        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dy)
     )
 )
 
