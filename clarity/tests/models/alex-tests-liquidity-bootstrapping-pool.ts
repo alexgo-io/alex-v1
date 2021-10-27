@@ -94,13 +94,14 @@ import {
       return block.receipts[0].result;
     }
   
-    swapYForX(user: Account, tokenX: string, tokenY: string, expiry: number, dy: number) {
+    swapYForX(user: Account, tokenX: string, tokenY: string, expiry: number, dy: number, min_dx: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "swap-y-for-x", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(expiry),
-          types.uint(dy) 
+          types.uint(dy),
+          types.some(types.uint(min_dx))
         ], user.address),
       ]);
       return block.receipts[0].result;

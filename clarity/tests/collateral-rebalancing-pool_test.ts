@@ -102,13 +102,13 @@ Clarinet.test({
         position['moving-average'].expectUint(moving_average);
         
         // arbtrageur selling 100 usda for wbtc
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
         position['dy'].expectUint(199764); 
 
         // arbtrageur selling 0.002 wbtc for usda
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.002 * ONE_8);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.002 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(18384661200);
         position['dy'].expectUint(0.002 * ONE_8);        
@@ -151,7 +151,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(10056633);              
 
         // arbtrageur selling 100 usda for wbtc
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
         position['dy'].expectUint(116756);         
@@ -176,7 +176,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(92358839);         
         
         // arbtrageur selling 100 usda for wbtc
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
         position['dy'].expectUint(938875);       
@@ -208,7 +208,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(99900000);
         
         // arbtrageur selling 100 usda for wbtc
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
         position['dy'].expectUint(8550);
@@ -414,10 +414,10 @@ Clarinet.test({
         // let's do some arb
         call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(wbtcPrice * 1.25));
         call.result.expectOk().expectUint(52654365137886);         
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 52654365137886)      
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 52654365137886, 0)      
         call = await FWPTest.getYgivenPrice(wbtcAddress, usdaAddress, weightX, weightY, Math.round(wbtcPrice * 1.25 * 1.2));
         call.result.expectOk().expectUint(47460820304103);         
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 47460820304103)                           
+        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 47460820304103, 0)                           
 
         // simulate to expiry + 1
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)    
@@ -554,7 +554,7 @@ Clarinet.test({
 
         call = await CRPTest.getXgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
         call.result.expectOk().expectUint(111379129197);
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 111379129197);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 111379129197, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(111379129197);
         position['dy'].expectUint(2127973);
@@ -566,7 +566,7 @@ Clarinet.test({
         
         call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.98/ ONE_8)));
         call.result.expectOk().expectUint(1223378);
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 1223378);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 1223378, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(76010081782);
         position['dy'].expectUint(1223378);   
@@ -590,7 +590,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // sell some yield-token to create a positive yield
-        result = YTPTest.swapYForX(wallet_1, yieldwbtc59760Address, wbtcAddress, 5*ONE_8);
+        result = YTPTest.swapYForX(wallet_1, yieldwbtc59760Address, wbtcAddress, 5*ONE_8, 0);
         let position:any = result.expectOk().expectTuple();
         
         let call = await YTPTest.getPrice(yieldwbtc59760Address);
@@ -634,7 +634,7 @@ Clarinet.test({
         // pegged CRP throws error if someone tries to swap
         call = await CRPTest.getXgivenPrice(wbtcAddress, wbtcAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
         call.result.expectOk().expectUint(9516775442);
-        result = CRPTest.swapXForY(wallet_1, wbtcAddress, wbtcAddress, expiry, 9516775442);
+        result = CRPTest.swapXForY(wallet_1, wbtcAddress, wbtcAddress, expiry, 9516775442, 0);
         position = result.expectErr().expectUint(2001);
     },    
 });        
@@ -704,35 +704,35 @@ Clarinet.test({
         position = result.expectErr().expectUint(4002)
 
         // arbtrageur attepmts to swap zero value
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0, 0);
         position = result.expectErr().expectUint(2003)
 
         // arbtrageur attepmts to swap small value
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.1* ONE_8);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.1* ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0.1* ONE_8);
         position['dy'].expectUint(198);
 
         // arbtrageur attepmts to swap in full value
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, ONE_8 * ONE_8);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, ONE_8 * ONE_8, 0);
         position = result.expectErr().expectUint(4001)
         
         // arbtrageur attepmts to swap zero value
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0, 0);
         position = result.expectErr().expectUint(2003)  
 
         // arbtrageur attepmts to swap small value
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.000001 * ONE_8);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.000001 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(8782583);
         position['dy'].expectUint(0.000001 * ONE_8);
 
         // arbtrageur attepmts to swap in full value
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8 * ONE_8);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8 * ONE_8, 0);
         position = result.expectErr().expectUint(4002)  
 
         // arbtrageur selling 0.01 wbtc for usda
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.01 * ONE_8);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.01 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(93241485590);
         position['dy'].expectUint(0.01 * ONE_8);     

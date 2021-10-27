@@ -58,7 +58,7 @@ Clarinet.test({
         position['max-price'].expectUint(priceMax);     
 
         // implied price is 0.995064480178316
-        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(ONE_8);
         position['dx'].expectUint(100496000);   
@@ -77,7 +77,7 @@ Clarinet.test({
         position['weight-x-t'].expectUint(89759760);          
         
         // buy some alex so it doesn't fall below min-price.
-        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, 30 * ONE_8);
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, 30 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(30 * ONE_8);
         position['dx'].expectUint(3613023403);
@@ -88,7 +88,7 @@ Clarinet.test({
         position['weight-x-t'].expectUint(50040041);          
 
         // implied price is now 0.14679128195479
-        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(ONE_8);
         position['dx'].expectUint(681239367);
@@ -117,7 +117,7 @@ Clarinet.test({
 
         // no trades between blocks 500 and 998, so weight doesn't change, price doesn't change
         // until swap occurs.
-        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(ONE_8);
         position['dx'].expectUint(678606002);     
@@ -128,7 +128,7 @@ Clarinet.test({
         position['weight-x-t'].expectUint(10160161);     
 
         // resulting in alex price falling below min-price, throwing error
-        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
         position = result.expectErr().expectUint(2021);
 
         // all time passed
