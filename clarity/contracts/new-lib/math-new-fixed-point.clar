@@ -29,30 +29,15 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_10))
-        )
-        (asserts! (is-eq (/ r ONE_10) a) ERR-SCALE-UP-OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_10)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_10)))
-    (asserts! (is-eq (* r ONE_10) a) ERR-SCALE-DOWN-OVERFLOW)
-    (ok r)
- )
+    (/ a ONE_10)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_10))
-    )
+    (/ (* a b) ONE_10)
 )
 
 
@@ -62,46 +47,36 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_10)))
+            u0
+            (+ u1 (/ (- product u1) ONE_10))
        )
    )
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_10))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_10) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_10))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_10) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         ;;(if (>= a ONE_10) (round-for-up raw TOLERANCE_CONSTANT)
             (if (< raw max-error)
-                (ok u0)
-                (ok (- raw max-error))
+                u0
+                (- raw max-error)
             )
         ;;)
     )
@@ -111,9 +86,9 @@
     (let
         (
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        (ok (+ raw max-error))
+        (+ raw max-error)
         ;;(if (>= a ONE_10)  (round-for-up raw TOLERANCE_CONSTANT) (+ raw max-error))
     )
 )

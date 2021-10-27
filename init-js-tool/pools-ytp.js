@@ -47,10 +47,10 @@ const {
     }
   }
 
-  const ytpAddToPosition = async (yiedToken, token, poolToken, dx) => {
+  const ytpAddToPosition = async (yiedToken, token, poolToken, dx, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] add-to-position...', yiedToken, token, poolToken, dx);
-    const privateKey = await getUserPK();
+    const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
@@ -77,7 +77,7 @@ const {
     }
   }  
   
-  const ytpReducePosition = async (yiedToken, token, poolToken, percent, deployer=true) => {
+  const ytpReducePosition = async (yiedToken, token, poolToken, percent, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
     const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
@@ -302,7 +302,7 @@ const {
 
   const ytpGetPositionGivenBurn = async (yieldToken, shares) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[YTP] get-position-given-burn...', yieldToken);
+    console.log('[YTP] get-position-given-burn...', yieldToken, shares);
   
     const options = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,

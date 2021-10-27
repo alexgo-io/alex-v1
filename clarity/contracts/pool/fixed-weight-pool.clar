@@ -210,7 +210,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares)))
                 (dx (get dx reduce-data))
@@ -251,7 +251,7 @@
                 (fee-rate-x (get fee-rate-x pool))
 
                 ;; fee = dx * fee-rate-x
-                (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
+                (fee (mul-up dx fee-rate-x))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
     
                 (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
@@ -294,7 +294,7 @@
                 (fee-balance-y (get fee-balance-y pool))
 
                 ;; fee = dy * fee-rate-y
-                (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
+                (fee (mul-up dy fee-rate-y))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
 
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
@@ -462,26 +462,18 @@
     
     (let 
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        (balance-x (get balance-x pool))
-        (balance-y (get balance-y pool))
+        (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
 (define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint)) 
     (let 
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        (balance-x (get balance-x pool))
-        (balance-y (get balance-y pool))
+        (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
+        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
@@ -588,30 +580,15 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
-    (ok r)
- )
+    (/ a ONE_8)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+    (/ (* a b) ONE_8)
 )
 
 
@@ -621,45 +598,35 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (ok (- raw max-error))
+            u0
+            (- raw max-error)
         )
     )
 )
@@ -668,7 +635,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
     )

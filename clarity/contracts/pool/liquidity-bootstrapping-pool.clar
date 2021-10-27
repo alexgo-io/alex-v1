@@ -95,41 +95,6 @@
     )
 )
 
-(define-private (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
-    (begin
-        ;; swap is allowed only until expiry
-        (asserts! (<= (* block-height ONE_8) expiry) ERR-ALREADY-EXPIRED)
-        (let
-            (
-                (token-x (contract-of token-x-trait))
-                (token-y (contract-of token-y-trait))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-                (balance-x (get balance-x pool))
-                (balance-y (get balance-y pool))       
-
-                ;; swap triggers update of weight
-                (weight-x (try! (get-weight-x token-x-trait token-y-trait expiry)))
-                (weight-y (- ONE_8 weight-x))
-                (dy (try! (get-y-given-x token-x-trait token-y-trait expiry dx)))
-
-                (pool-updated (merge pool {
-                    balance-x: (+ balance-x dx),
-                    balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
-                    weight-x-t: weight-x }))
-            )
-            (asserts! (<= (get price-x-min pool) (unwrap! (div-down dy dx) ERR-MATH-CALL)) ERR-PRICE-LOWER-THAN-MIN)
-            (asserts! (>= (get price-x-max pool) (unwrap! (div-down dy dx) ERR-MATH-CALL)) ERR-PRICE-GREATER-THAN-MAX)
-
-            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
-            ;; post setting
-            (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-            (ok {dx: dx, dy: dy})
-        )
-    )
-)
-
 ;; public functions
 ;;
 
@@ -167,8 +132,8 @@
                 (now-to-listed (- (* block-height ONE_8) listed))
                 (expiry-to-listed (- expiry listed))
                 (weight-diff (- weight-x-0 weight-x-1))
-                (time-ratio (unwrap! (div-down now-to-listed expiry-to-listed) ERR-MATH-CALL))
-                (weight-change (unwrap! (mul-down weight-diff time-ratio) ERR-MATH-CALL)) 
+                (time-ratio (div-down now-to-listed expiry-to-listed))
+                (weight-change (mul-down weight-diff time-ratio))  
             )
             (ok (- weight-x-0 weight-change))
         )
@@ -253,7 +218,7 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))     
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait expiry shares)))
                 (dx (get dx reduce-data))
@@ -271,6 +236,41 @@
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+            (ok {dx: dx, dy: dy})
+        )
+    )
+)
+
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
+    (begin
+        ;; swap is allowed only until expiry
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-ALREADY-EXPIRED)
+        (let
+            (
+                (token-x (contract-of token-x-trait))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))       
+
+                ;; swap triggers update of weight
+                (weight-x (try! (get-weight-x token-x-trait token-y-trait expiry)))
+                (weight-y (- ONE_8 weight-x))
+                (dy (try! (get-y-given-x token-x-trait token-y-trait expiry dx)))
+
+                (pool-updated (merge pool {
+                    balance-x: (+ balance-x dx),
+                    balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
+                    weight-x-t: weight-x }))
+            )
+            (asserts! (<= (get price-x-min pool) (div-down dy dx)) ERR-PRICE-LOWER-THAN-MIN)
+            (asserts! (>= (get price-x-max pool) (div-down dy dx)) ERR-PRICE-GREATER-THAN-MAX)
+
+            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
+            ;; post setting
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+            (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
             (ok {dx: dx, dy: dy})
         )
     )
@@ -298,8 +298,8 @@
                     balance-y: (+ balance-y dy),
                     weight-x-t: weight-x}))
             )
-            (asserts! (<= (get price-x-min pool) (unwrap! (div-down dy dx) ERR-MATH-CALL)) ERR-PRICE-LOWER-THAN-MIN)
-            (asserts! (>= (get price-x-max pool) (unwrap! (div-down dy dx) ERR-MATH-CALL)) ERR-PRICE-GREATER-THAN-MAX)
+            (asserts! (<= (get price-x-min pool) (div-down dy dx)) ERR-PRICE-LOWER-THAN-MIN)
+            (asserts! (>= (get price-x-max pool) (div-down dy dx)) ERR-PRICE-GREATER-THAN-MAX)
 
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
@@ -334,12 +334,9 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (- ONE_8 weight-x))
         )
-        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dx)        
     )
 )
 
@@ -347,8 +344,9 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (weight-x (get weight-x-t pool))
         )
-        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) (get weight-x-t pool) (- ONE_8 (get weight-x-t pool)) dy)
+        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dy)
     )
 )
 
@@ -437,30 +435,15 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
-    (ok r)
- )
+    (/ a ONE_8)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+    (/ (* a b) ONE_8)
 )
 
 
@@ -470,45 +453,35 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (ok (- raw max-error))
+            u0
+            (- raw max-error)
         )
     )
 )
@@ -517,7 +490,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
     )

@@ -89,7 +89,7 @@
     (
       (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
       (fee-with-principal (+ ONE_8 (var-get flash-loan-fee-rate)))
-      (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) ERR-MATH-CALL))
+      (amount-with-fee (contract-call? .math-fixed-point mul-up amount fee-with-principal))
       (recipient tx-sender)
     )
 

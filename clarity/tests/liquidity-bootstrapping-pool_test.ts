@@ -29,8 +29,6 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let LBPTest = new LBPTestAgent(chain, deployer);
 
-        console.log('alex qty: ', alexQty, 'usda qty: ', usdaQty);
-
         let call = chain.callReadOnlyFn("token-alex", "get-balance", 
             [types.principal(deployer.address)
             ], deployer.address);
@@ -105,15 +103,15 @@ Clarinet.test({
         // launch not going well, so withdraw liquidity
         result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, 0.5 * ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(47758469158);
-        position['dy'].expectUint(7148946541);
+        position['dx'].expectUint(47802620615);
+        position['dy'].expectUint(7155555555);
 
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(40174141756);
-        position['balance-x'].expectUint(47846772072);
-        position['balance-y'].expectUint(7162164570);        
+        position['total-supply'].expectUint(40137070878);
+        position['balance-x'].expectUint(47802620615);
+        position['balance-y'].expectUint(7155555556);        
 
         chain.mineEmptyBlockUntil(998);
 
@@ -122,7 +120,7 @@ Clarinet.test({
         result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(ONE_8);
-        position['dx'].expectUint(678596892);     
+        position['dx'].expectUint(678606002);     
         
         // and weight now is at min.
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
@@ -143,15 +141,15 @@ Clarinet.test({
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(40174141756);
-        position['balance-x'].expectUint(47168175180);
-        position['balance-y'].expectUint(7262164570);  
+        position['total-supply'].expectUint(40137070878);
+        position['balance-x'].expectUint(47124014613);
+        position['balance-y'].expectUint(7255555556);  
 
         // withdraw all remaining liquidity
         result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(47081125841);
-        position['dy'].expectUint(7248762172);
+        position['dx'].expectUint(47124014613);
+        position['dy'].expectUint(7255555556);
 
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
