@@ -219,7 +219,7 @@
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
         (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-23670-wbtc get-total-supply)) ONE_8))
-        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 

@@ -206,6 +206,26 @@ import {
       ]);
       return block.receipts[0].result;
     }
+
+    getYgivenX(tokenX: string, tokenY: string, weightX: number, weightY: number, dx: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-y-given-x", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(dx)
+      ], this.deployer.address);
+    }
+    
+    getXgivenY(tokenX: string, tokenY: string, weightX: number, weightY: number, dy: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-y", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(dy)
+      ], this.deployer.address);
+    } 
   
   }
   

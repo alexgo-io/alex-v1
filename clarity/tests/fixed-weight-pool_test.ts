@@ -70,15 +70,15 @@ Clarinet.test({
         // Reduce all liquidlity
         result = FWPTest.reducePosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(12499622000);
-        position['dy'].expectUint(624981100000000);
+        position['dx'].expectUint(12500000000);
+        position['dy'].expectUint(625000000000000);
 
         // Add back some liquidity
         result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ, wbtcQ*wbtcPrice);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(2235639947089);
+        position['supply'].expectUint(2236067605752);
         position['dx'].expectUint(wbtcQ);
-        position['dy'].expectUint(499999999999878);        
+        position['dy'].expectUint(500000000000000);        
 
         // attempt to trade too much (> 90%) will be rejected
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 91*ONE_8, 0);
@@ -88,12 +88,12 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(ONE_8);
-        position['dy'].expectUint(4950462120393);    
+        position['dy'].expectUint(4950465000000);    
         
         // swap some usda into wbtc
         result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(103049813);
+        position['dx'].expectUint(103049997);
         position['dy'].expectUint(wbtcPrice*ONE_8);        
 
         // attempt to swap zero throws an error
@@ -148,7 +148,7 @@ Clarinet.test({
         chain.mineEmptyBlock(1000);
 
         let ROresult:any = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(2795000000000);
+        ROresult.result.expectOk().expectUint(2795084507190);
         
         // 90 % of existing tokens are voted for the proposal
         result = MultiSigTest.voteFor(deployer, fwpwbtcusdaAddress, 1, 2795084507190 * 9 / 10 )
@@ -355,6 +355,24 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(9760074295);
         position['balance-y'].expectUint(509964006162103);         
+        
+        call = await FWPTest.getYgivenX(wbtcAddress, usdaAddress, weightX, weightY, 1000);
+        call.result.expectOk().expectUint(25498200);
+
+        call = await FWPTest.getYgivenX(wbtcAddress, usdaAddress, weightX, weightY, 0);
+        call.result.expectOk().expectUint(0);
+
+        call = await FWPTest.getYgivenX(wbtcAddress, wbtcAddress, weightX, weightY, 0);
+        call.result.expectErr().expectUint(2001);
+
+        call = await FWPTest.getXgivenY(wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
+        call.result.expectOk().expectUint(1171);
+
+        call = await FWPTest.getXgivenY(wbtcAddress, usdaAddress, weightX, weightY, 0);
+        call.result.expectOk().expectUint(0);
+
+        call = await FWPTest.getXgivenY(wbtcAddress, wbtcAddress, weightX, weightY, 0);
+        call.result.expectErr().expectUint(2001);
     },
 });          
         

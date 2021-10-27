@@ -314,8 +314,8 @@ import {
         types.uint(expiry),
         types.uint(price)
       ], this.deployer.address);
-    }       
-
+    }    
+    
   }
   
   export { CRPTestAgent1 };

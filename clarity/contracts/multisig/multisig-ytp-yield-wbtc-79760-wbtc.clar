@@ -243,7 +243,7 @@
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
         (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
-        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 
@@ -331,11 +331,11 @@
     ;; Total supply of pool token
     (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-total-supply)) ONE_8))
     ;; Calculate how much percentage of pool token does user has 
-    (user-percentage (unwrap-panic (contract-call? .math-fixed-point div-down amount total-supply)))
+    (user-percentage (contract-call? .math-fixed-point div-down amount total-supply))
     ;; Get the balance of gAlex token which is owned by Multisig
     (rebated-galex (* (unwrap-panic (contract-call? .token-alex get-balance (as-contract tx-sender))) ONE_8))
     ;; Calculate how much user shall receive
-    (users-rebate (unwrap-panic (contract-call? .math-fixed-point mul-down rebated-galex user-percentage)))
+    (users-rebate (contract-call? .math-fixed-point mul-down rebated-galex user-percentage))
   ) 
     ;; Check whether the collect round is open
     (asserts! (get is-open collect-round) ERR-NOT-AUTHORIZED)
