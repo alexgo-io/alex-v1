@@ -51,7 +51,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u0)
+  (ok u8)
 )
 
 (define-read-only (get-balance (account principal))

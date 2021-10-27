@@ -14,13 +14,13 @@
             (expiry (unwrap! (contract-call? .yield-usda-121195 get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wbtc expiry)))
             (price (try! (contract-call? .yield-token-pool get-price .yield-usda-121195)))
-            (gross-amount (unwrap! (contract-call? .math-fixed-point mul-up amount (unwrap! (contract-call? .math-fixed-point div-down price ltv) math-call-err)) math-call-err))
+            (gross-amount (contract-call? .math-fixed-point mul-up amount (contract-call? .math-fixed-point div-down price ltv)))
             (swapped-token (get dx (try! (contract-call? .collateral-rebalancing-pool add-to-position-and-switch .token-usda .token-wbtc .yield-usda-121195 .key-usda-121195-wbtc gross-amount))))            
         )
         ;; swap token to collateral so we can return flash-loan
         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wbtc .token-usda u50000000 u50000000))
-            (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-wbtc .token-usda u50000000 u50000000 swapped-token))
-            (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda .token-wbtc u50000000 u50000000 swapped-token))
+            (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-wbtc .token-usda u50000000 u50000000 swapped-token none))
+            (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda .token-wbtc u50000000 u50000000 swapped-token none))
         )
         
         (print { object: "flash-loan-user-margin-usda-wbtc-121195", action: "execute", data: gross-amount })

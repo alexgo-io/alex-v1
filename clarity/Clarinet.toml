@@ -184,3 +184,11 @@ depends_on = ["ytp-yield-usda-23040-usda", "trait-yield-token", "trait-sip-010",
 [contracts.multisig-crp-usda-23040-wbtc]
 path = "contracts/multisig/multisig-crp-usda-23040-wbtc.clar"
 depends_on = ["yield-usda-23040", "key-usda-23040-wbtc", "token-wbtc", "token-usda", "trait-sip-010"]
+
+[contracts.lbp-alex-usda-90-10]
+path = "contracts/pool-token/lbp-alex-usda-90-10.clar"
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-ownable"]
+
+[contracts.multisig-lbp-alex-usda-90-10]
+path = "contracts/multisig/multisig-lbp-alex-usda-90-10.clar"
+depends_on = []

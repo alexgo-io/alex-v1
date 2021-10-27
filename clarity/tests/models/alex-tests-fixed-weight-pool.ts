@@ -69,27 +69,29 @@ import {
       return block.receipts[0].result;
     }
   
-    swapXForY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dx: number) {
+    swapXForY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dx: number, dy_min: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("fixed-weight-pool", "swap-x-for-y", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
           types.uint(weightY),
-          types.uint(dx) 
+          types.uint(dx),
+          types.some(types.uint(dy_min))
         ], user.address),
       ]);
       return block.receipts[0].result;
     }
   
-    swapYForX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dy: number) {
+    swapYForX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dy: number, dx_min: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("fixed-weight-pool", "swap-y-for-x", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
           types.uint(weightY),
-          types.uint(dy) 
+          types.uint(dy),
+          types.some(types.uint(dx_min))
         ], user.address),
       ]);
       return block.receipts[0].result;
@@ -204,6 +206,26 @@ import {
       ]);
       return block.receipts[0].result;
     }
+
+    getYgivenX(tokenX: string, tokenY: string, weightX: number, weightY: number, dx: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-y-given-x", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(dx)
+      ], this.deployer.address);
+    }
+    
+    getXgivenY(tokenX: string, tokenY: string, weightX: number, weightY: number, dy: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-y", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+        types.uint(dy)
+      ], this.deployer.address);
+    } 
   
   }
   
