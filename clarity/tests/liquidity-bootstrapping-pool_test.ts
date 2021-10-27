@@ -14,11 +14,12 @@ const weightX1 = 0.9 * ONE_8;
 const weightX2 = 0.1 * ONE_8;
 const expiry = 1000 * ONE_8;
 
-const priceMax = 1 * ONE_8;
-const priceMin = 0.2 * ONE_8;
+const priceMax = 1.5 * ONE_8;
+const priceMin = 0.1 * ONE_8;
+const price0 = 1 * ONE_8;
 
-const alexQty = 10000 * ONE_8;
-const usdaQty = Math.round(priceMax * alexQty * (ONE_8 - weightX1) / weightX1 / ONE_8);
+const alexQty = 1000 * ONE_8;
+const usdaQty = Math.round(price0 * alexQty * (ONE_8 - weightX1) / weightX1 / ONE_8);
 
 
 Clarinet.test({
@@ -28,7 +29,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let LBPTest = new LBPTestAgent(chain, deployer);
 
-        console.log('alex qty: ', alexQty / ONE_8, 'usda qty: ', usdaQty / ONE_8);
+        console.log('alex qty: ', alexQty, 'usda qty: ', usdaQty);
 
         let call = chain.callReadOnlyFn("token-alex", "get-balance", 
             [types.principal(deployer.address)
@@ -42,57 +43,122 @@ Clarinet.test({
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(802741422430);
+        position['total-supply'].expectUint(80274141756);
         position['balance-x'].expectUint(alexQty);
         position['balance-y'].expectUint(usdaQty);
+        position['weight-x-t'].expectUint(90000000);     
 
         result = LBPTest.setPoolMultisig(deployer, alexAddress, usdaAddress, expiry, deployer.address);
         result.expectOk();
-        
+
         result = LBPTest.setPriceRange(deployer, alexAddress, usdaAddress, expiry, priceMin, priceMax);
         result.expectOk();
 
-        // // Check pool details and print
-        // call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress,weightX, weightY);
-        // position = call.result.expectOk().expectTuple();
-        // position['total-supply'].expectUint(2795084507190);
-        // position['balance-x'].expectUint(5/4 * wbtcQ);
-        // position['balance-y'].expectUint(5/4 * wbtcQ*wbtcPrice);        
+        call = await LBPTest.getPriceRange(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['min-price'].expectUint(priceMin);
+        position['max-price'].expectUint(priceMax);     
 
-        // // Reduce all liquidlity
-        // result = FWPTest.reducePosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, ONE_8);
-        // position = result.expectOk().expectTuple();
-        // position['dx'].expectUint(12499622000);
-        // position['dy'].expectUint(624981100000000);
-
-        // // Add back some liquidity
-        // result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ, wbtcQ*wbtcPrice);
-        // position = result.expectOk().expectTuple();
-        // position['supply'].expectUint(2235639947089);
-        // position['dx'].expectUint(wbtcQ);
-        // position['dy'].expectUint(499999999999878);        
-
-        // // attempt to trade too much (> 90%) will be rejected
-        // result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 91*ONE_8);
-        // position = result.expectErr().expectUint(4001);
-
-        // // swap some wbtc into usda
-        // result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8);
-        // position = result.expectOk().expectTuple();
-        // position['dx'].expectUint(ONE_8);
-        // position['dy'].expectUint(4950462120393);    
+        // implied price is 0.995064480178316
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(ONE_8);
+        position['dx'].expectUint(100496000);   
         
-        // // swap some usda into wbtc
-        // result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8);
-        // position = result.expectOk().expectTuple();
-        // position['dx'].expectUint(103049813);
-        // position['dy'].expectUint(wbtcPrice*ONE_8);        
+        // swap triggers change in weight
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['weight-x-t'].expectUint(89759760);       
 
-        // // attempt to swap zero throws an error
-        // result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0);
-        // result.expectErr().expectUint(2003);    
-        // result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0);
-        // result.expectErr().expectUint(2003);               
+        // half time passed
+        chain.mineEmptyBlockUntil(500);
+
+        // no swaps, so weight shouldn't have changed.
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['weight-x-t'].expectUint(89759760);          
+        
+        // buy some alex so it doesn't fall below min-price.
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, 30 * ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(30 * ONE_8);
+        position['dx'].expectUint(3613023403);
+        
+        // after swap, weight now halves.
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['weight-x-t'].expectUint(50040041);          
+
+        // implied price is now 0.14679128195479
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(ONE_8);
+        position['dx'].expectUint(681239367);
+
+        // Check pool details and print
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(80274141756);
+        position['balance-x'].expectUint(95605241230);
+        position['balance-y'].expectUint(14311111111);         
+        
+        // launch not going well, so withdraw liquidity
+        result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, 0.5 * ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(47758469158);
+        position['dy'].expectUint(7148946541);
+
+        // Check pool details and print
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(40174141756);
+        position['balance-x'].expectUint(47846772072);
+        position['balance-y'].expectUint(7162164570);        
+
+        chain.mineEmptyBlockUntil(998);
+
+        // no trades between blocks 500 and 998, so weight doesn't change, price doesn't change
+        // until swap occurs.
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dy'].expectUint(ONE_8);
+        position['dx'].expectUint(678596892);     
+        
+        // and weight now is at min.
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['weight-x-t'].expectUint(10160161);     
+
+        // resulting in alex price falling below min-price, throwing error
+        result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8);
+        position = result.expectErr().expectUint(2021);
+
+        // all time passed
+        chain.mineEmptyBlockUntil(1001);
+
+        // already expired
+        call = await LBPTest.getWeightX(alexAddress, usdaAddress, expiry);
+        call.result.expectErr().expectUint(2011);
+
+        // Check pool details and print
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(40174141756);
+        position['balance-x'].expectUint(47168175180);
+        position['balance-y'].expectUint(7262164570);  
+
+        // withdraw all remaining liquidity
+        result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(47081125841);
+        position['dy'].expectUint(7248762172);
+
+        // Check pool details and print
+        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(0);
+        position['balance-x'].expectUint(0);
+        position['balance-y'].expectUint(0);             
     },
 });
 

@@ -53,6 +53,22 @@ import {
       return block.receipts[0].result;
     }
 
+    getPriceRange(tokenX: string, tokenY: string, expiry: number) {
+      return this.chain.callReadOnlyFn("liquidity-bootstrapping-pool", "get-price-range", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(expiry)
+      ], this.deployer.address);
+    }     
+
+    getWeightX(tokenX: string, tokenY: string, expiry: number) {
+      return this.chain.callReadOnlyFn("liquidity-bootstrapping-pool", "get-weight-x", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(expiry)
+      ], this.deployer.address);
+    }      
+
     setPoolMultisig(user: Account, tokenX: string, tokenY: string, expiry :number, new_multisig: string) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "set-pool-multisig", [
@@ -78,18 +94,6 @@ import {
       return block.receipts[0].result;
     }
   
-    swapXForY(user: Account, tokenX: string, tokenY: string, expiry: number, dx: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("liquidity-bootstrapping-pool", "swap-x-for-y", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(expiry),
-          types.uint(dx) 
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-  
     swapYForX(user: Account, tokenX: string, tokenY: string, expiry: number, dy: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "swap-y-for-x", [
@@ -102,21 +106,21 @@ import {
       return block.receipts[0].result;
     }
 
-    getXgivenPrice(tokenX: string, tokenY: string, expiry: number, price: number) {
-      return this.chain.callReadOnlyFn("liquidity-bootstrapping-pool", "get-x-given-price", [
+    getXgivenY(tokenX: string, tokenY: string, expiry: number, dy: number) {
+      return this.chain.callReadOnlyFn("liquidity-bootstrapping-pool", "get-x-given-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(expiry),
-        types.uint(price)
+        types.uint(dy)
       ], this.deployer.address);
     } 
     
-    getYgivenPrice(tokenX: string, tokenY: string, expiry: number, price: number) {
-      return this.chain.callReadOnlyFn("liquidity-bootstrapping-pool", "get-y-given-price", [
+    getYgivenX(tokenX: string, tokenY: string, expiry: number, dx: number) {
+      return this.chain.callReadOnlyFn("liquidity-bootstrapping-pool", "get-y-given-x", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(expiry),
-        types.uint(price)
+        types.uint(dx)
       ], this.deployer.address);
     }
   
