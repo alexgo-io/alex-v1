@@ -7,6 +7,7 @@ const {
     AnchorMode,
     PostConditionMode,
     uintCV,
+    someCV,
     contractPrincipalCV,
     broadcastTransaction,
     ClarityType
@@ -150,7 +151,7 @@ const {
     }
   }
   
-  const ytpSwapXforY = async (yiedToken, token, dx) => {
+  const ytpSwapXforY = async (yiedToken, token, dx, min_dy) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-x-for-y...', yiedToken, token, dx);
     const privateKey = await getUserPK();
@@ -161,7 +162,8 @@ const {
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),          
-            uintCV(dx)
+            uintCV(dx),
+            someCV(uintCV(min_dy))
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -179,7 +181,7 @@ const {
     }
   }
   
-  const ytpSwapYforX = async (yiedToken, token, dy) => {
+  const ytpSwapYforX = async (yiedToken, token, dy, min_dx) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-y-for-x...', yiedToken, token, dy);
     const privateKey = await getUserPK();
@@ -190,7 +192,8 @@ const {
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),          
-            uintCV(dy)
+            uintCV(dy),
+            someCV(uintCV(min_dx))
         ],
         senderKey: privateKey,
         validateWithAbi: true,
