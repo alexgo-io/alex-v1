@@ -23,12 +23,11 @@
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
-(define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
+(define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
+(define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
+(define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 
-(define-constant alex-symbol "alex")
-(define-constant reserve-usdc-symbol "usdc")
 (define-data-var contract-owner principal tx-sender)
-(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
 (define-map pools-map
@@ -59,7 +58,10 @@
     fee-rate-x: uint,
     fee-rate-y: uint,
     token-x-symbol: (string-ascii 32),
-    token-y-symbol: (string-ascii 32)
+    token-y-symbol: (string-ascii 32),
+    oracle-enabled: bool,
+    oracle-average: uint,
+    oracle-resilient: uint
   }
 )
 
@@ -113,15 +115,71 @@
   )
 )
 
-(define-read-only (get-oracle-src)
-  (ok (var-get oracle-src))
+(define-read-only (get-oracle-enabled (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (ok (get 
+            oracle-enabled 
+            (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR)))
 )
 
-(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
-  (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set oracle-src new-oracle-src))
-  )
+;; oracle can only be enabled
+(define-public (set-oracle-enabled (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+            (pool-updated (merge pool {oracle-enabled: true}))
+        )
+        (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
+        (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (ok true)
+    )    
+)
+
+(define-read-only (get-oracle-average (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (ok (get 
+            oracle-average 
+            (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR)))
+)
+
+(define-public (set-oracle-average (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (new-oracle-average uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+            (pool-updated (merge pool {
+                oracle-average: new-oracle-average,
+                oracle-resilient: (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))
+                }))
+        )
+        (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
+        (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (ok true)
+    )    
+)
+
+(define-read-only (get-oracle-resilient (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok (+ (unwrap! (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))) ERR-MATH-CALL) 
+               (unwrap! (mul-down (get oracle-average pool) (get oracle-resilient pool)) ERR-MATH-CALL)))
+    )
+)
+
+(define-read-only (get-oracle-instant (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok (unwrap! 
+            (div-down (unwrap! (mul-down (get balance-y pool) weight-x) ERR-MATH-CALL) 
+                      (unwrap! (mul-down (get balance-x pool) weight-y) ERR-MATH-CALL)) ERR-MATH-CALL)
+        )
+    )
 )
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
@@ -141,7 +199,10 @@
                 fee-rate-x: u0,
                 fee-rate-y: u0,
                 token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
-                token-y-symbol: (try! (contract-call? token-y-trait get-symbol))
+                token-y-symbol: (try! (contract-call? token-y-trait get-symbol)),
+                oracle-enabled: false,
+                oracle-average: u0,
+                oracle-resilient: u0
             })
         )
         (asserts!
@@ -261,7 +322,11 @@
                         {
                         balance-x: (+ balance-x dx-net-fees),
                         balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
-                        fee-balance-x: (+ fee (get fee-balance-x pool))
+                        fee-balance-x: (+ fee (get fee-balance-x pool)),
+                        oracle-resilient:   (if (get oracle-enabled pool) 
+                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
+                                                u0
+                                            )
                         }
                     )
                 )
@@ -304,7 +369,11 @@
                         {
                         balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
                         balance-y: (+ balance-y dy-net-fees),
-                        fee-balance-y: (+ fee fee-balance-y) 
+                        fee-balance-y: (+ fee fee-balance-y),
+                        oracle-resilient:   (if (get oracle-enabled pool) 
+                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
+                                                u0
+                                            )
                         }
                     )
                 )
