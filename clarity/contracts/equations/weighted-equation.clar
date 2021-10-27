@@ -77,7 +77,7 @@
             (
                 (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
                 (base (div-down balance-y denominator))
-                (uncapped-exponent (div-down weight-x weight-y))
+                (uncapped-exponent (div-down weight-y weight-x))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
                 (power (pow-down base exponent))
