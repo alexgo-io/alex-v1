@@ -311,7 +311,7 @@
     ;; Initialize a new fee collecting round
     (map-set collect-round { id: collect-id } { is-open : true } ) 
     ;; Execute Collect Fee function in pool
-    (try! (contract-call? .yield-token-pool collect-fees .yield-wbtc-79760 .token-wbtc))  
+    (try! (contract-call? .yield-token-pool collect-fees .yield-wbtc-79760 .token-wbtc ))  
     ;; Set the flag so only one collecting round can happen
     (var-set NOW-COLLECTING true)
   )

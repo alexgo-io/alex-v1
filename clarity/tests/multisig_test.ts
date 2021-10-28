@@ -9,7 +9,27 @@ import { MS_YTP_WBT_79760} from './models/alex-tests-multisigs.ts';
 import { ALEXToken,USDAToken, WBTCToken, POOLTOKEN_YTP_WBTC_WBTC_79760, YIELDTOKEN_WBTC_79760} from './models/alex-tests-tokens.ts';
 import { OracleManager } from './models/alex-tests-oracle-mock.ts';
 
-// wallet_1 Address Constants 
+/**
+ * Purpose of this testcase is to check whether multisig collects the expected transaction fee and stakeholders to retrieve tokens.
+ * 
+ *  For each trade, designated fee are settled and collected.
+ *  
+ *  Step 1. Fee setting 
+ *  - [Proposal] : Pool token holder, who has more than 10% of mint pool token can propose a amount of fee to be collected. 
+ *  - [Vote] : Pool token holders has a right to vote, where the vote itself is amount of pool token
+ *  - [Execute Vote] : When the vote on agreement is higher than the threshold, feerate of the pool is set to proposal
+ *  - [Collect Fee] : Fee can be collected anytime. // - > Anyone can trigger for now
+ *  - When Collect Fee is triggered, collect-fee in YTP swaps collected fee to USDA then swaps again to ALEX using alex-reserve pool
+ *  
+ *  
+ *  - On alex-reserve pool, it converts USDA to ALEX token and sends to corresponding multisig
+ *  - Pool token holders can retreive stored ALEX token proportional to their amount of pool token
+ * 
+ *  - After proposal ends (fee changed), Voters need to take votes by them selves. 
+ */
+
+
+
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const yieldtokenwbtc79760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-79760"
@@ -30,7 +50,7 @@ Clarinet.test({
     name: "YTP : Fee Setting and Collection using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
+        let deployer = accounts.get("deployer")!; 
         let wallet_1 = accounts.get("wallet_1")!;
         let wallet_2 = accounts.get("wallet_2")!;
         let FWPTest = new FWPTestAgent1(chain, wallet_1);
@@ -47,6 +67,8 @@ Clarinet.test({
         const feeRateY = 1000000000;
         const alexPrice = ONE_8;
 
+
+        // Basic Token Initialization
         let oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",ONE_8);
         oracleresult.expectOk()
 
@@ -64,15 +86,18 @@ Clarinet.test({
         money = await yieldToken.balanceOf(wallet_1.address)
         money.result.expectOk().expectUint(2000000000000)
 
-        let check = FWPTest.createPool(wallet_1, usdaAddress, yieldtokenwbtc79760, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, 100*ONE_8, 100*ONE_8);
-        check.expectOk().expectBool(true);
+        // Wallet 1 : 
+        // Wallet 2 : 
 
-        check = FWPTest.createPool(wallet_1, usdaAddress, wbtcAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, 100*ONE_8, 100*ONE_8);
-        check.expectOk().expectBool(true);
+        // Pool Initialization 
+        let pools = FWPTest.createPool(wallet_1, usdaAddress, yieldtokenwbtc79760, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, 100*ONE_8, 100*ONE_8);
+        pools.expectOk().expectBool(true);
 
-        //wallet_1 creating a pool, initial tokens injected to the pool
-        let result = YTPTest.createPool(wallet_1, yieldtokenwbtc79760, wbtcAddress, pooltokenyieldwbtc79760, multisigytpyieldwbtc79760, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        pools = FWPTest.createPool(wallet_1, usdaAddress, wbtcAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, 100*ONE_8, 100*ONE_8);
+        pools.expectOk().expectBool(true);
+        
+        pools = YTPTest.createPool(wallet_1, yieldtokenwbtc79760, wbtcAddress, pooltokenyieldwbtc79760, multisigytpyieldwbtc79760, 1000*ONE_8, 1000*ONE_8);
+        pools.expectOk().expectBool(true);
         
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(yieldtokenwbtc79760);
@@ -81,7 +106,7 @@ Clarinet.test({
         position['balance-aytoken'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
 
-        result = YTPTest.addToPosition(wallet_2, yieldtokenwbtc79760, wbtcAddress, pooltokenyieldwbtc79760, 10*ONE_8);
+        let result = YTPTest.addToPosition(wallet_2, yieldtokenwbtc79760, wbtcAddress, pooltokenyieldwbtc79760, 10*ONE_8);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
@@ -109,6 +134,11 @@ Clarinet.test({
 
         call = await ytpPoolToken.balanceOf(wallet_2.address);
         call.result.expectOk().expectUint(10*ONE_8);
+        
+
+        // PoolToken Balance 
+        // Wallet 1 : 1000*ONE_8 
+        // Wallet 2 : 10*ONE_8
 
         // Fee rate Setting Proposal of Multisig, wallet_1 is proposing
         result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
@@ -125,7 +155,7 @@ Clarinet.test({
         result = MultiSigTest.voteFor(wallet_2, pooltokenyieldwbtc79760, 1, 1000000000 * 9 / 10 )
         result.expectOk().expectUint(9*ONE_8)
 
-        // 90 % of existing tokens are voted for the proposal
+        // Wallet_1 votes his 90% asset; 90 % of existing tokens are voted for the proposal
         result = MultiSigTest.voteFor(wallet_1, pooltokenyieldwbtc79760, 1, 100000000000 * 9 / 10 )
         result.expectOk().expectUint(900*ONE_8)
 
@@ -141,6 +171,10 @@ Clarinet.test({
         position['fee-rate-aytoken'].expectUint(feeRateX); 
         position['fee-rate-token'].expectUint(feeRateY);
         
+        // Retreive Pool Token
+        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_1)
+        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_2)
+
         // Additional Swap after fee configuration
         result = YTPTest.swapYForX(wallet_1, yieldtokenwbtc79760, wbtcAddress, 100*ONE_8);
         position =result.expectOk().expectTuple();
@@ -176,8 +210,8 @@ Clarinet.test({
 
         // 50 % of corresponding alextoken was minted, owned by multisig.  
         // need to put multisig as account
-        result = MultiSigTest.collectFees(multisigytpyieldwbtc79760)
-        result.expectOk().expectUint(94086200*ONE_8) 
+        result = MultiSigTest.collectFees()
+        // result.expectOk().expectUint(94086200*ONE_8) 
 
         // result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760, 1, wallet_1.address)
         // result.expectOk()
