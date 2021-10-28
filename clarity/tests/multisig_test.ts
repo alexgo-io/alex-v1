@@ -172,8 +172,8 @@ Clarinet.test({
         position['fee-rate-token'].expectUint(feeRateY);
         
         // Retreive Pool Token
-        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_1)
-        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_2)
+        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_1.address)
+        result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_2.address)
 
         // Additional Swap after fee configuration
         result = YTPTest.swapYForX(wallet_1, yieldtokenwbtc79760, wbtcAddress, 100*ONE_8);
@@ -184,10 +184,10 @@ Clarinet.test({
         //position['dy'].expectUint(499990870);
 
         call = await ytpPoolToken.balanceOf(wallet_1.address);
-        call.result.expectOk().expectUint(100*ONE_8);    // 90 % of pool tokens were used for proposal
+        call.result.expectOk().expectUint(1000*ONE_8);    // 90 % of pool tokens were used for proposal
 
         call = await ytpPoolToken.balanceOf(wallet_2.address);
-        call.result.expectOk().expectUint(ONE_8);   // 90 % of pool tokens were used for proposal
+        call.result.expectOk().expectUint(10*ONE_8);   // 90 % of pool tokens were used for proposal
 
         call = await YTPTest.getPoolDetails(yieldtokenwbtc79760);
         position = call.result.expectOk().expectTuple();
