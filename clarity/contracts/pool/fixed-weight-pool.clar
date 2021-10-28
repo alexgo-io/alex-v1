@@ -24,11 +24,12 @@
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
+(define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
+(define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
+(define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
+(define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 
-(define-constant alex-symbol "alex")
-(define-constant reserve-usdc-symbol "usdc")
 (define-data-var contract-owner principal tx-sender)
-(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
 (define-map pools-map
@@ -59,7 +60,10 @@
     fee-rate-x: uint,
     fee-rate-y: uint,
     token-x-symbol: (string-ascii 32),
-    token-y-symbol: (string-ascii 32)
+    token-y-symbol: (string-ascii 32),
+    oracle-enabled: bool,
+    oracle-average: uint,
+    oracle-resilient: uint
   }
 )
 
@@ -113,15 +117,68 @@
   )
 )
 
-(define-read-only (get-oracle-src)
-  (ok (var-get oracle-src))
+(define-read-only (get-oracle-enabled (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (ok (get 
+            oracle-enabled 
+            (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR)))
 )
 
-(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
-  (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set oracle-src new-oracle-src))
-  )
+;; oracle can only be enabled
+(define-public (set-oracle-enabled (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+            (pool-updated (merge pool {oracle-enabled: true}))
+        )
+        (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
+        (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (ok true)
+    )    
+)
+
+(define-read-only (get-oracle-average (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (ok (get 
+            oracle-average 
+            (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR)))
+)
+
+(define-public (set-oracle-average (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (new-oracle-average uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+            (pool-updated (merge pool {
+                oracle-average: new-oracle-average,
+                oracle-resilient: (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))
+                }))
+        )
+        (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
+        (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
+        (ok true)
+    )    
+)
+
+(define-read-only (get-oracle-resilient (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y)))
+               (mul-down (get oracle-average pool) (get oracle-resilient pool))))
+    )
+)
+
+(define-read-only (get-oracle-instant (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok (div-down (mul-down (get balance-y pool) weight-x) (mul-down (get balance-x pool) weight-y)))
+    )
 )
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
@@ -141,7 +198,10 @@
                 fee-rate-x: u0,
                 fee-rate-y: u0,
                 token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
-                token-y-symbol: (try! (contract-call? token-y-trait get-symbol))
+                token-y-symbol: (try! (contract-call? token-y-trait get-symbol)),
+                oracle-enabled: false,
+                oracle-average: u0,
+                oracle-resilient: u0
             })
         )
         (asserts!
@@ -180,9 +240,9 @@
                 (new-supply (get token add-data))
                 (new-dy (get dy add-data))
                 (pool-updated (merge pool {
-                    total-supply: (unwrap! (add-fixed new-supply total-supply) ERR-MATH-CALL),
-                    balance-x: (unwrap! (add-fixed balance-x dx) ERR-MATH-CALL),
-                    balance-y: (unwrap! (add-fixed balance-y new-dy) ERR-MATH-CALL)
+                    total-supply: (+ new-supply total-supply),
+                    balance-x: (+ balance-x dx),
+                    balance-y: (+ balance-y new-dy)
                 }))
             )
 
@@ -210,15 +270,15 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
-                (shares (if (is-eq percent ONE_8) total-shares (unwrap! (mul-down total-shares percent) ERR-MATH-CALL)))
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares)))
                 (dx (get dx reduce-data))
                 (dy (get dy reduce-data))
                 (pool-updated (merge pool {
-                    total-supply: (if (<= total-supply shares) u0 (unwrap! (sub-fixed total-supply shares) ERR-MATH-CALL)),
-                    balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                    balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL))
+                    total-supply: (if (<= total-supply shares) u0 (- total-supply shares)),
+                    balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                    balance-y: (if (<= balance-y dy) u0 (- balance-y dy))
                     })
                 )
             )
@@ -236,11 +296,9 @@
     )
 )
 
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))    
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
-        ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)        
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -251,21 +309,27 @@
                 (fee-rate-x (get fee-rate-x pool))
 
                 ;; fee = dx * fee-rate-x
-                (fee (unwrap! (mul-up dx fee-rate-x) ERR-MATH-CALL))
-                (dx-net-fees (if (<= dx fee) u0 (unwrap! (sub-fixed dx fee) ERR-MATH-CALL)))
+                (fee (mul-up dx fee-rate-x))
+                (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
     
                 (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (unwrap! (add-fixed balance-x dx-net-fees) ERR-MATH-CALL),
-                        balance-y: (if (<= balance-y dy) u0 (unwrap! (sub-fixed balance-y dy) ERR-MATH-CALL)),
-                        fee-balance-x: (unwrap! (add-fixed fee (get fee-balance-x pool)) ERR-MATH-CALL)
+                        balance-x: (+ balance-x dx-net-fees),
+                        balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
+                        fee-balance-x: (+ fee (get fee-balance-x pool)),
+                        oracle-resilient:   (if (get oracle-enabled pool) 
+                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
+                                                u0
+                                            )
                         }
                     )
                 )
             )
+
+            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
@@ -278,10 +342,8 @@
     )
 )
 
-(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
+(define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
-        ;; TODO : Check whether dy or dx value is valid  
-        ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
             (
@@ -294,21 +356,37 @@
                 (fee-balance-y (get fee-balance-y pool))
 
                 ;; fee = dy * fee-rate-y
+<<<<<<< HEAD
                 (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
                 (dy-net-fees (if (<= dy fee) u0 (unwrap! (sub-fixed dy fee) ERR-MATH-CALL)))
+=======
+                (fee (mul-up dy fee-rate-y))
+                (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
+
+>>>>>>> dev
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (if (<= balance-x dx) u0 (unwrap! (sub-fixed balance-x dx) ERR-MATH-CALL)),
-                        balance-y: (unwrap! (add-fixed balance-y dy-net-fees) ERR-MATH-CALL),
-                        fee-balance-y: (unwrap! (add-fixed fee fee-balance-y) ERR-MATH-CALL)
+                        balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                        balance-y: (+ balance-y dy-net-fees),
+                        fee-balance-y: (+ fee fee-balance-y),
+                        oracle-resilient:   (if (get oracle-enabled pool) 
+                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
+                                                u0
+                                            )
                         }
                     )
                 )
             )
+<<<<<<< HEAD
             
+=======
+
+            (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
+        
+>>>>>>> dev
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
@@ -426,7 +504,7 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-x .token-usda) 
                             fee-x 
-                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
+                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x none)))
                         )
                     )
                 )
@@ -442,7 +520,7 @@
                     (contract-call? .alex-reserve-pool transfer-to-mint 
                         (if (is-eq token-y .token-usda) 
                             fee-y 
-                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
+                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y none)))
                         )
                     )
                 )
@@ -461,26 +539,18 @@
     
     (let 
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        (balance-x (get balance-x pool))
-        (balance-y (get balance-y pool))
+        (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (contract-call? .weighted-equation get-y-given-x balance-x balance-y weight-x weight-y dx)        
+        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
 (define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint)) 
     (let 
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        (balance-x (get balance-x pool))
-        (balance-y (get balance-y pool))
+        (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (contract-call? .weighted-equation get-x-given-y balance-x balance-y weight-x weight-y dy)
+        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
@@ -560,7 +630,7 @@
 
 ;; math-fixed-point
 ;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
+;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
 ;; TODO: overflow causes runtime error, should handle before operation rather than after
 
@@ -587,48 +657,15 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+    (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
-    (ok r)
- )
-)
-
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
+    (/ a ONE_8)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+    (/ (* a b) ONE_8)
 )
 
 
@@ -638,45 +675,35 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (/ (* a ONE_8) b)
+    )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+    (if (is-eq a u0)
+        u0
+        (+ u1 (/ (- (* a ONE_8) u1) b))
+    )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (sub-fixed raw max-error)
+            u0
+            (- raw max-error)
         )
     )
 )
@@ -685,9 +712,9 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 
@@ -695,7 +722,7 @@
 ;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
+;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
 ;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
 
 ;; constants

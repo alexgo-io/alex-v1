@@ -45,7 +45,6 @@
   (ok (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED))
 )
 
-;; TODO: multisig
 (define-public (set-flash-loan-fee-rate (fee uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
@@ -88,8 +87,8 @@
   (let 
     (
       (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
-      (fee-with-principal (unwrap! (contract-call? .math-fixed-point add-fixed ONE_8 (var-get flash-loan-fee-rate)) ERR-MATH-CALL))
-      (amount-with-fee (unwrap! (contract-call? .math-fixed-point mul-up amount fee-with-principal) ERR-MATH-CALL))
+      (fee-with-principal (+ ONE_8 (var-get flash-loan-fee-rate)))
+      (amount-with-fee (contract-call? .math-fixed-point mul-up amount fee-with-principal))
       (recipient tx-sender)
     )
 
