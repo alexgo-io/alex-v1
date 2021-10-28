@@ -215,7 +215,7 @@
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
         (total-supply (unwrap-panic (contract-call? .fwp-wbtc-usda-50-50 get-total-supply)))
-        (threshold-count (unwrap-panic (contract-call? .math-fixed-point mul-up total-supply threshold-percent)))
+        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 

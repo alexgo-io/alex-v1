@@ -1,5 +1,5 @@
 ;; weighted-equation
-;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
+;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
 ;; constants
 ;;
@@ -31,9 +31,7 @@
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (ok (unwrap-panic (mul-down 
-                (unwrap-panic (pow-down balance-x weight-x)) 
-                (unwrap-panic (pow-down balance-y weight-y)))))        
+        (ok (mul-down (pow-down balance-x weight-x) (pow-down balance-y weight-y)))
     )
 )
 
@@ -47,19 +45,19 @@
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down balance-x MAX_IN_RATIO)) ERR-MAX-IN-RATIO)
         (let 
             (
-                (denominator (unwrap-panic (add-fixed balance-x dx)))
-                (base (unwrap-panic (div-up balance-x denominator)))
-                (uncapped-exponent (unwrap-panic (div-up weight-x weight-y)))
+                (denominator (+ balance-x dx))
+                (base (div-up balance-x denominator))
+                (uncapped-exponent (div-up weight-x weight-y))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
-                (power (unwrap-panic (pow-up base exponent)))
-                (complement (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
-                (dy (unwrap-panic (mul-down balance-y complement)))
+                (power (pow-up base exponent))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (dy (mul-down balance-y complement))
             )
-            (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+            (asserts! (< dy (mul-down balance-y MAX_OUT_RATIO)) ERR-MAX-OUT-RATIO)
             (ok dy)
         ) 
     )    
@@ -74,19 +72,19 @@
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (asserts! (< dy (unwrap-panic (mul-down balance-y MAX_OUT_RATIO))) ERR-MAX-OUT-RATIO)
+        (asserts! (< dy (mul-down balance-y MAX_OUT_RATIO)) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (denominator (if (<= balance-y dy) u0 (unwrap-panic (sub-fixed balance-y dy))))
-                (base (unwrap-panic (div-down balance-y denominator)))
-                (uncapped-exponent (unwrap-panic (div-down weight-x weight-y)))
+                (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
+                (base (div-down balance-y denominator))
+                (uncapped-exponent (div-down weight-y weight-x))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
-                (power (unwrap-panic (pow-down base exponent)))
-                (ratio (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
-                (dx (unwrap-panic (mul-down balance-x ratio)))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dx (mul-down balance-x ratio))
             )
-            (asserts! (< dx (unwrap-panic (mul-down balance-x MAX_IN_RATIO))) ERR-MAX-IN-RATIO)
+            (asserts! (< dx (mul-down balance-x MAX_IN_RATIO)) ERR-MAX-IN-RATIO)
             (ok dx)
         )
     )
@@ -105,17 +103,17 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (unwrap-panic (mul-down balance-y weight-x)))
-                (denominator (unwrap-panic (mul-up balance-x weight-y)))
-                (spot (unwrap-panic (div-down numerator denominator)))
+                (numerator (mul-down balance-y weight-x))
+                (denominator (mul-up balance-x weight-y))
+                (spot (div-down numerator denominator))
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (unwrap-panic (div-up spot price)))
-                    (power (unwrap-panic (pow-down base weight-y)))                
+                    (base (div-up spot price))
+                    (power (pow-down base weight-y))
                 )
-                (mul-up balance-x (if (<= power ONE_8) u0 (unwrap-panic (sub-fixed power ONE_8))))
+                (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
             )
         )
     )   
@@ -127,17 +125,17 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (unwrap-panic (mul-down balance-y weight-x)))
-                (denominator (unwrap-panic (mul-up balance-x weight-y)))
-                (spot (unwrap-panic (div-down numerator denominator)))
+                (numerator (mul-down balance-y weight-x))
+                (denominator (mul-up balance-x weight-y))
+                (spot (div-down numerator denominator))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (unwrap-panic (div-up spot price)))
-                    (power (unwrap-panic (pow-down base weight-y)))
+                    (base (div-up spot price))
+                    (power (pow-down base weight-y))
                 )
-                (mul-up balance-y (if (<= ONE_8 power) u0 (unwrap-panic (sub-fixed ONE_8 power))))
+                (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
             )
         )
     )   
@@ -152,10 +150,10 @@
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-                        (new-dy (unwrap-panic (mul-down balance-y 
-                                (unwrap-panic (div-down dx balance-x)))))
-                        (token (unwrap-panic (mul-down total-supply  
-                                (unwrap-panic (div-down dx balance-x)))))
+                        (new-dy (mul-down balance-y 
+                                (div-down dx balance-x)))
+                        (token (mul-down total-supply  
+                                (div-down dx balance-x)))
                     )
                     {token: token, dy: new-dy}
                 )   
@@ -171,10 +169,10 @@
         (let
             (   
                 ;; first calculate what % you need to mint
-                (token-supply (unwrap-panic (div-down token total-supply)))
+                (token-supply (div-down token total-supply))
                 ;; calculate dx as % of balance-x corresponding to % you need to mint
-                (dx (unwrap-panic (mul-down balance-x token-supply)))
-                (dy (unwrap-panic (mul-down balance-y token-supply)))
+                (dx (mul-down balance-x token-supply))
+                (dy (mul-down balance-y token-supply))
             )
             (ok {dx: dx, dy: dy})
         )
@@ -189,9 +187,7 @@
 
 ;; math-fixed-point
 ;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-
-;; TODO: overflow causes runtime error, should handle before operation rather than after
+;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
 ;; constants
 ;;
@@ -216,48 +212,15 @@
 )
 
 (define-read-only (scale-up (a uint))
-    (let
-        (
-            (r (* a ONE_8))
-        )
-        (asserts! (is-eq (/ r ONE_8) a) SCALE_UP_OVERFLOW)
-        (ok r)
-    )
+  (* a ONE_8)
 )
 
 (define-read-only (scale-down (a uint))
-  (let
-    ((r (/ a ONE_8)))
-    (asserts! (is-eq (* r ONE_8) a) SCALE_DOWN_OVERFLOW)
-    (ok r)
- )
-)
-
-(define-read-only (add-fixed (a uint) (b uint))
-    (let
-        (
-            (c (+ a b))
-        )
-        (asserts! (>= c a) ADD_OVERFLOW)
-        (ok c)
-    )
-)
-
-(define-read-only (sub-fixed (a uint) (b uint))
-    (let
-        ()
-        (asserts! (<= b a) SUB_OVERFLOW)
-        (ok (- a b))
-    )
+  (/ a ONE_8)
 )
 
 (define-read-only (mul-down (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-        )
-        (ok (/ product ONE_8))
-    )
+  (/ (* a b) ONE_8)
 )
 
 
@@ -267,45 +230,35 @@
             (product (* a b))
        )
         (if (is-eq product u0)
-            (ok u0)
-            (ok (+ u1 (/ (- product u1) ONE_8)))
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
        )
    )
 )
 
 (define-read-only (div-down (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (/ a-inflated b))
-       )
-   )
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
 
 (define-read-only (div-up (a uint) (b uint))
-    (let
-        (
-            (a-inflated (* a ONE_8))
-       )
-        (if (is-eq a u0)
-            (ok u0)
-            (ok (+ u1 (/ (- a-inflated u1) b)))
-       )
-   )
+  (if (is-eq a u0)
+    u0
+    (+ u1 (/ (- (* a ONE_8) u1) b))
+  )
 )
 
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
-            (ok u0)
-            (sub-fixed raw max-error)
+          u0
+          (- raw max-error)
         )
     )
 )
@@ -314,9 +267,9 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (unwrap-panic (mul-up raw MAX_POW_RELATIVE_ERROR))))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        (add-fixed raw max-error)
+        (+ raw max-error)
     )
 )
 
@@ -324,7 +277,7 @@
 ;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-v2-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
+;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
 ;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
 
 ;; constants

@@ -7,6 +7,7 @@ const {
   AnchorMode,
   PostConditionMode,
   uintCV,
+  someCV,
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType
@@ -173,7 +174,7 @@ const {wait_until_confirmation } = require('./utils');
     }
   }  
 
-  const crpSwapXforY = async (token, collateral, expiry, dx) => {
+  const crpSwapXforY = async (token, collateral, expiry, dx, min_dy) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[CRP] swap-x-for-y...', token, collateral, expiry, dx);
     const privateKey = await getUserPK();
@@ -186,6 +187,7 @@ const {wait_until_confirmation } = require('./utils');
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
             uintCV(expiry),
             uintCV(dx),
+            someCV(uintCV(min_dy))
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -203,7 +205,7 @@ const {wait_until_confirmation } = require('./utils');
     }
   }  
 
-  const crpSwapYforX = async (token, collateral, expiry, dy) => {
+  const crpSwapYforX = async (token, collateral, expiry, dy, min_dx) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[CRP] swap-y-for-x...', token, collateral, expiry, dy);
     const privateKey = await getUserPK();
@@ -216,6 +218,7 @@ const {wait_until_confirmation } = require('./utils');
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
             uintCV(expiry),
             uintCV(dy),
+            someCV(uintCV(min_dx))
         ],
         senderKey: privateKey,
         validateWithAbi: true,
