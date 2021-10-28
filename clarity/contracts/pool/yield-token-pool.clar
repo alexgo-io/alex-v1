@@ -368,14 +368,7 @@
                     )
                 )
             )
-<<<<<<< HEAD
-            ;; TODO : Check whether dy or dx value is valid  
-            ;; (asserts! (< min-dy dy) too-much-slippage-err)
-            
-=======
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
-
->>>>>>> dev
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx (as-contract tx-sender) tx-sender)))
             (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
 

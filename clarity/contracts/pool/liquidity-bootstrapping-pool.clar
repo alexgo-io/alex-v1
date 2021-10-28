@@ -329,74 +329,9 @@
                 pool-multisig: new-multisig
                 }))            
         )
-<<<<<<< HEAD
-        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
-    )
-)
-
-;; TODO: implement reserve pool logic
-(define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
-    (let
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (address (get fee-to-address pool))
-            (fee-x (get fee-balance-x pool))
-            (fee-y (get fee-balance-y pool))
-            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))              
-        )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
-        (and (> fee-x u0) 
-            (and 
-                ;; first transfer fee-x to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft token-x-trait fee-x (as-contract tx-sender) tx-sender))
-                ;; send fee-x to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq token-x .token-usda) 
-                            fee-x 
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token-x-trait u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-x-trait .token-usda u50000000 u50000000 fee-x)))
-                            )                            
-                        )
-                    )
-                    
-                )
-            )
-        )
-
-        (and (> fee-y u0) 
-            (and 
-                ;; first transfer fee-y to tx-sender
-                ;; (unwrap! (contract-call? token-y-trait transfer fee-y .alex-vault tx-sender none) ERR-TRANSFER-Y-FAILED)
-                (try! (contract-call? .alex-vault transfer-ft token-y-trait fee-y (as-contract tx-sender) tx-sender))
-                ;; send fee-y to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq token-y .token-usda) 
-                            fee-y 
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda token-y-trait u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y token-y-trait .token-usda u50000000 u50000000 fee-y)))
-                            )                            
-                        )
-                    )
-                )
-            )
-        )  
-
-        (map-set pools-data-map
-            { token-x: token-x, token-y: token-y, expiry: expiry}
-            (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
-        )
-        (ok {fee-x: fee-x, fee-y: fee-y})
-=======
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+       (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry } pool-updated)
         (ok true)
->>>>>>> dev
     )
 )
 

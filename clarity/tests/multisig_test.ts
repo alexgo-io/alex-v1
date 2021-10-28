@@ -118,7 +118,7 @@ Clarinet.test({
         money = await ytpPoolToken.balanceOf(wallet_2.address)
         money.result.expectOk().expectUint(10*ONE_8)
 
-        result = YTPTest.swapYForX(wallet_1, yieldtokenwbtc79760, wbtcAddress, ONE_8);
+        result = YTPTest.swapYForX(wallet_1, yieldtokenwbtc79760, wbtcAddress, ONE_8, 0);
         position =result.expectOk().expectTuple();
         //position['dx'].expectUint(99978225);
         position['dy'].expectUint(ONE_8);
@@ -176,9 +176,9 @@ Clarinet.test({
         result = MultiSigTest.returnVotes(pooltokenyieldwbtc79760,1,wallet_2.address)
 
         // Additional Swap after fee configuration
-        result = YTPTest.swapYForX(wallet_1, yieldtokenwbtc79760, wbtcAddress, 100*ONE_8);
+        result = YTPTest.swapYForX(wallet_1, yieldtokenwbtc79760, wbtcAddress, 100*ONE_8, 0);
         position =result.expectOk().expectTuple();
-        result = YTPTest.swapXForY(wallet_1, yieldtokenwbtc79760, wbtcAddress, 100*ONE_8);
+        result = YTPTest.swapXForY(wallet_1, yieldtokenwbtc79760, wbtcAddress, 100*ONE_8, 0);
         position =result.expectOk().expectTuple();
         //position['dx'].expectUint(499971640);
         //position['dy'].expectUint(499990870);
@@ -192,7 +192,7 @@ Clarinet.test({
         call = await YTPTest.getPoolDetails(yieldtokenwbtc79760);
         position = call.result.expectOk().expectTuple();
         position['fee-balance-aytoken'].expectUint(1826000); 
-        position['fee-balance-token'].expectUint(184698000);
+        position['fee-balance-token'].expectUint(184693000);
 
         
         // call = await FWPTest.getPoolDetails(usdaAddress, yieldtokenwbtc79760,weightX, weightY);
@@ -206,7 +206,7 @@ Clarinet.test({
         // position = result.expectOk().expectTuple();
 
         call = await ytpPoolToken.balanceOf(wallet_1.address);
-        call.result.expectOk().expectUint(100*ONE_8);    // 90 % of pool tokens were used for proposal
+        call.result.expectOk().expectUint(1000*ONE_8);    // 90 % of pool tokens were used for proposal
 
         // 50 % of corresponding alextoken was minted, owned by multisig.  
         // need to put multisig as account

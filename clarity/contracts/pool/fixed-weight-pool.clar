@@ -356,14 +356,9 @@
                 (fee-balance-y (get fee-balance-y pool))
 
                 ;; fee = dy * fee-rate-y
-<<<<<<< HEAD
-                (fee (unwrap! (mul-up dy fee-rate-y) ERR-MATH-CALL))
-                (dy-net-fees (if (<= dy fee) u0 (unwrap! (sub-fixed dy fee) ERR-MATH-CALL)))
-=======
                 (fee (mul-up dy fee-rate-y))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
 
->>>>>>> dev
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
 
                 (pool-updated
@@ -380,13 +375,8 @@
                     )
                 )
             )
-<<<<<<< HEAD
             
-=======
-
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
-        
->>>>>>> dev
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
