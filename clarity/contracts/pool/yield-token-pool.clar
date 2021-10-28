@@ -27,9 +27,10 @@
 (define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
 (define-constant ERR-GET-SYMBOL-FAIL (err u6000))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
+(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
 ;; TODO: need to be defined properly
-(define-data-var contract-owner principal tx-sender)
+(define-constant CONTRACT-OWNER tx-sender)
 (define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
@@ -73,7 +74,7 @@
 
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
-       (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+       (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
         (ok (var-set max-expiry new-max-expiry)) 
     )
 )
@@ -84,7 +85,7 @@
 
 (define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
     (ok (var-set oracle-src new-oracle-src))
   )
 )
@@ -178,6 +179,7 @@
         ;; create pool only if the correct pair
         (asserts! (is-eq (try! (contract-call? the-aytoken get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
         (asserts! (is-none (map-get? pools-data-map { aytoken: (contract-of the-aytoken) })) ERR-POOL-ALREADY-EXISTS)    
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)     
         (let
             (
                 (aytoken (contract-of the-aytoken))            
@@ -219,7 +221,7 @@
 (define-public (add-to-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
     (begin
         ;; dx must be greater than zero
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)    
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (let
             (
                 (aytoken (contract-of the-aytoken))
@@ -239,6 +241,9 @@
                     balance-virtual: (+ balance-virtual new-dy-vir)   
                 }))
             )
+
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN) 
+
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
             ;; send x to vault
@@ -280,6 +285,8 @@
                     })
                 )
             )
+
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx (as-contract tx-sender) tx-sender)))
             (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-yield the-aytoken dy-act (as-contract tx-sender) tx-sender)))

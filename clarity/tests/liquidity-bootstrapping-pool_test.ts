@@ -7,6 +7,7 @@ const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex"
 const poolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-lbp-alex-usda-90-10"
+const wrongPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
 
 const ONE_8 = 1e+8;
 
@@ -158,5 +159,34 @@ Clarinet.test({
         position['balance-x'].expectUint(0);
         position['balance-y'].expectUint(0);             
     },
+});
+
+Clarinet.test({
+  name: "LBP : Trait check",
+
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+      let deployer = accounts.get("deployer")!;
+      let wallet_1 = accounts.get("wallet_1")!;
+      let LBPTest = new LBPTestAgent(chain, deployer);    
+      
+      // non-deployer creating a pool will throw an error
+      let result = LBPTest.createPool(wallet_1, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
+      result.expectErr().expectUint(1000);
+
+      // Deployer creating a pool, initial tokens injected to the pool
+      result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
+      result.expectOk().expectBool(true);
+
+      // all time passed
+      chain.mineEmptyBlockUntil(1001);
+
+      // supplying a wrong pool token throws an error
+      result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, wrongPoolTokenAddress, ONE_8);
+      result.expectErr().expectUint(2023);
+      
+      // withdraw all remaining liquidity
+      result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, ONE_8);
+      result.expectOk();           
+  },
 });
 

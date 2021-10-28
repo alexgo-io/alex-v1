@@ -23,6 +23,7 @@ const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
 const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
 const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool"
+const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-23040-usda"
 
 const ONE_8 = 100000000
 
@@ -103,6 +104,45 @@ Clarinet.test({
         result.expectErr().expectUint(2003);               
     },
 });
+
+Clarinet.test({
+    name: "FWP : Trait check",
+
+    async fn(chain: Chain, accounts: Map<string, Account>){
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        
+        // non-deployer attempting to create a pool will throw an error
+        let result = FWPTest.createPool(wallet_1, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigAddress, wbtcQ, wbtcQ*wbtcPrice);
+        result.expectErr().expectUint(1000);
+
+        // Deployer creating a pool, initial tokens injected to the pool
+        result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigAddress, wbtcQ, wbtcQ*wbtcPrice);
+        result.expectOk().expectBool(true);
+
+        // Add extra liquidity (1/4 of initial liquidity)
+        result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ / 4, wbtcQ*wbtcPrice / 4);
+        let position:any = result.expectOk().expectTuple();
+        position['supply'].expectUint(2236067605752 / 4);
+        position['dx'].expectUint(wbtcQ / 4);
+        position['dy'].expectUint(wbtcQ*wbtcPrice / 4);
+        
+        // supplying a wrong pool token will throw an error
+        result = FWPTest.addToPosition(wallet_1, wbtcAddress, usdaAddress, weightX, weightY, wrongPooltokenAddress, wbtcQ / 4, wbtcQ*wbtcPrice / 4);
+        result.expectErr().expectUint(2023);
+
+        // supplying a wrong pool token will throw and error
+        result = FWPTest.reducePosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, wrongPooltokenAddress, ONE_8);
+        result.expectErr().expectUint(2023);
+
+        // Reduce all liquidlity
+        result = FWPTest.reducePosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, ONE_8);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(12500000000);
+        position['dy'].expectUint(625000000000000);        
+    }
+})
 
 
 
