@@ -33,14 +33,14 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
-
+(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
 (define-constant a3 u97200)
 (define-constant a4 u7810800)
 
-(define-data-var contract-owner principal tx-sender)
+(define-constant CONTRACT-OWNER tx-sender)
 (define-data-var oracle-src (string-ascii 32) "coingecko")
 ;; data maps and vars
 ;;
@@ -122,7 +122,7 @@
 
 (define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
     (ok (var-set oracle-src new-oracle-src))
   )
 )
@@ -272,21 +272,18 @@
 
 ;; single sided liquidity
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
-    (let
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
-        )
+    (begin
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
         (asserts! 
-            (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
+            (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
             ERR-POOL-ALREADY-EXISTS
-        )    
+        )            
         (let
             (
                 (pool-id (+ (var-get pool-count) u1))
-
-                       
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))
+                (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 
                 (now (* block-height ONE_8))
                 ;; TODO: assume 10mins per block - something to be reviewed
@@ -370,7 +367,7 @@
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
         (asserts! (>= conversion-ltv ltv) ERR-LTV-GREATER-THAN-ONE)
-        (print ltv)
+        (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
         (let
             (
                 (balance-x (get balance-x pool))
@@ -422,6 +419,7 @@
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR)) ERR-EXPIRY)
+        
         (let
             (
                 (token-x (contract-of collateral))
@@ -460,6 +458,8 @@
                     })
                 )
             )
+
+            (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-POOL-TOKEN)
 
             ;; if any conversion happened at contract level, transfer back to vault
             (and 
@@ -519,7 +519,7 @@
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         ;; burn supported only at maturity
-        (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-key-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR)) ERR-EXPIRY)
+        (asserts! (> (* block-height ONE_8) (unwrap! (contract-call? the-key-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR)) ERR-EXPIRY)        
         (let
             (
                 (token-x (contract-of collateral))
@@ -543,6 +543,8 @@
                 )            
             )
 
+            (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-POOL-TOKEN)        
+            
             (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted (as-contract tx-sender) tx-sender)))
             (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted (as-contract tx-sender) tx-sender)))
         

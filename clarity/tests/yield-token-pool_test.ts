@@ -23,6 +23,7 @@ const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const yieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-59760"
 const ytpyieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-59760-wbtc"
 const multisigytpyieldwbtc59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-59760-wbtc"
+const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-23040-usda"
 
 const ONE_8 = 100000000
 const expiry = 59760 * ONE_8
@@ -35,9 +36,9 @@ Clarinet.test({
     name: "YTP : Pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("wallet_1")!;
+        let deployer = accounts.get("deployer")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
-        
+
         //Deployer creating a pool, initial tokens injected to the pool
         let result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
         result.expectOk().expectBool(true);
@@ -66,7 +67,7 @@ Clarinet.test({
         position['balance-token'].expectUint(1010*ONE_8);
         position['balance-aytoken'].expectUint(0);
         position['balance-virtual'].expectUint(1010*ONE_8);        
-
+        
         // Remove all liquidlity
         result = YTPTest.reducePosition(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, ONE_8);
         position =result.expectOk().expectTuple();
@@ -290,7 +291,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn(ytpyieldwbtc59760Address, "get-balance", 
             [types.principal(deployer.address)
             ], deployer.address);
-        call.result.expectOk().expectUint(153094788000);   
+        call.result.expectOk().expectUint(153094788000);        
 
         // Remove all liquidlity
         result = YTPTest.reducePosition(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, ONE_8);
@@ -309,10 +310,41 @@ Clarinet.test({
 });
 
 Clarinet.test({
+    name: "YTP : Trait check",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+
+        //if non-deployer attempts to create a pool, throw an error.
+        let result = YTPTest.createPool(wallet_1, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
+        result.expectErr().expectUint(1000);
+
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
+        result.expectOk().expectBool(true);        
+
+        //if wrong pool token is supplied, then throw an error
+        result = YTPTest.addToPosition(deployer, yieldwbtc59760Address, wbtcAddress, wrongPooltokenAddress, 10*ONE_8);
+        result.expectErr().expectUint(2023);
+
+        // non-deployer can add liquidity
+        result = YTPTest.addToPosition(wallet_1, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 10*ONE_8);
+        result.expectOk();
+        
+        //if wrong pool token is supplied, throw an error
+        result = YTPTest.reducePosition(deployer, yieldwbtc59760Address, wbtcAddress, wrongPooltokenAddress, ONE_8);
+        result.expectErr().expectUint(2023);        
+        
+    }
+})
+
+Clarinet.test({
     name: "YTP : get-x-given-price/yield, get-y-given-price/yield",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("wallet_1")!;
+        let deployer = accounts.get("deployer")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         
         //Deployer creating a pool, initial tokens injected to the pool
@@ -360,12 +392,11 @@ Clarinet.test({
     },    
 });
 
-
 Clarinet.test({
     name: "YTP : Fee Setting and Collection using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("wallet_1")!;
+        let deployer = accounts.get("deployer")!;
         let wallet_2 = accounts.get("wallet_2")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);
@@ -448,7 +479,7 @@ Clarinet.test({
     name: "YTP : Error Test Cases ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("wallet_1")!;
+        let deployer = accounts.get("deployer")!;
         let wallet_2 = accounts.get("wallet_2")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);

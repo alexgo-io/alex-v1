@@ -742,10 +742,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -754,9 +754,9 @@ async function run() {
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
-    // await arbitrage_fwp(dry_run=true);
-    // await arbitrage_crp(dry_run=true, _pools);    
-    // await arbitrage_ytp(dry_run=true, _pools); 
+    await arbitrage_fwp(dry_run=true);
+    await arbitrage_crp(dry_run=true, _pools);    
+    await arbitrage_ytp(dry_run=true, _pools); 
     // await get_pool_details_fwp();
     // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
@@ -776,7 +776,7 @@ async function run() {
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
     
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
-    // await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+    // await get_some_token('ST39X51DANBRF1FQ3ED07Z69NX9GS30Y259Q5R4NZ');
     // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
     // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
 
