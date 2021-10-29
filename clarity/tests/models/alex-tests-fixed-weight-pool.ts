@@ -95,7 +95,7 @@ import {
         ], user.address),
       ]);
       return block.receipts[0].result;
-    }
+    } 
 
     getXgivenPrice(tokenX: string, tokenY: string, weightX: number, weightY: number, price: number) {
       return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-price", [
@@ -157,19 +157,6 @@ import {
     getFeeY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("fixed-weight-pool", "get-fee-rate-y", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(weightX),
-          types.uint(weightY)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-
-  
-    collectFees(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "collect-fees", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),

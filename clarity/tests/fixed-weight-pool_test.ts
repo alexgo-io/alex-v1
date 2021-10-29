@@ -51,7 +51,7 @@ Clarinet.test({
         let position:any = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(2236067605752);
         position['balance-x'].expectUint(wbtcQ);
-        position['balance-y'].expectUint(wbtcQ*wbtcPrice);
+        position['balance-y'].expectUint(wbtcQ*wbtcPrice);     
 
         // Add extra liquidity (1/4 of initial liquidity)
         result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ / 4, wbtcQ*wbtcPrice / 4);

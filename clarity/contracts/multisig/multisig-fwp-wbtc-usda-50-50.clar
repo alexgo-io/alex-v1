@@ -267,13 +267,3 @@
     (ok true)
   )
 )
-
-
-(define-public (collect-fees-to-multisig)
-    ;; TODO : Conditions for moving collected balance to multisig
-    ;; Collect Fee from pool to multisig 
-    (begin
-      (try! (contract-call? .fixed-weight-pool collect-fees .token-wbtc .token-usda u50000000 u50000000))
-      (ok true)
-    )
-)
