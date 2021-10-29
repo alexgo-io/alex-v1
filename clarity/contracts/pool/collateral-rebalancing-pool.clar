@@ -272,18 +272,21 @@
 
 ;; single sided liquidity
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
-    (begin
+    (let
+        (
+            (token-x (contract-of collateral))
+            (token-y (contract-of token))
+            (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
+        )
         (asserts! 
-            (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
+            (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }))
             ERR-POOL-ALREADY-EXISTS
         )    
         (let
             (
                 (pool-id (+ (var-get pool-count) u1))
 
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))            
-                (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
+                       
                 
                 (now (* block-height ONE_8))
                 ;; TODO: assume 10mins per block - something to be reviewed
@@ -292,11 +295,7 @@
 
                 (token-symbol (try! (contract-call? token get-symbol)))
                 (collateral-symbol (try! (contract-call? collateral get-symbol)))
-                (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-                (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            
-                (strike (div-down token-price collateral-price))
-
+               
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
                 (sqrt-t (pow-down t u50000000))
@@ -322,15 +321,15 @@
                     fee-to-address: (contract-of multisig-vote),
                     yield-token: (contract-of the-yield-token),
                     key-token: (contract-of the-key-token),
-                    strike: strike,
+                    strike: (try! (contract-call? .open-oracle calculate-strike (var-get oracle-src) token-symbol collateral-symbol)),
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
                     ltv-0: ltv-0,
                     weight-x: weight-x,
                     weight-y: weight-y,
-                    token-symbol: (unwrap! (contract-call? token get-symbol) ERR-GET-SYMBOL-FAIL),
-                    collateral-symbol: (unwrap! (contract-call? collateral get-symbol) ERR-GET-SYMBOL-FAIL),
+                    token-symbol: token-symbol,
+                    collateral-symbol: collateral-symbol,
                     moving-average: moving-average,
                     conversion-ltv: conversion-ltv
                 })
