@@ -273,11 +273,11 @@
 ;; single sided liquidity
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
     (begin
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)    
         (asserts! 
             (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
             ERR-POOL-ALREADY-EXISTS
-        )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)    
+        )            
         (let
             (
                 (pool-id (+ (var-get pool-count) u1))

@@ -176,10 +176,10 @@
 
 (define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (begin
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)         
         ;; create pool only if the correct pair
         (asserts! (is-eq (try! (contract-call? the-aytoken get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
-        (asserts! (is-none (map-get? pools-data-map { aytoken: (contract-of the-aytoken) })) ERR-POOL-ALREADY-EXISTS)    
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)     
+        (asserts! (is-none (map-get? pools-data-map { aytoken: (contract-of the-aytoken) })) ERR-POOL-ALREADY-EXISTS)
         (let
             (
                 (aytoken (contract-of the-aytoken))            
