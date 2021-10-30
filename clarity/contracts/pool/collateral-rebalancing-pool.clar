@@ -3,7 +3,6 @@
 (use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; collateral-rebalancing-pool
-;; <add a description here>
 ;;
 
 ;; constants
@@ -21,7 +20,6 @@
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
-(define-constant ERR-MATH-CALL (err u4003))
 (define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 (define-constant ERR-GET-WEIGHT-FAIL (err u2012))
 (define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
@@ -40,8 +38,9 @@
 (define-constant a3 u97200)
 (define-constant a4 u7810800)
 
-(define-constant CONTRACT-OWNER tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 (define-data-var oracle-src (string-ascii 32) "coingecko")
+
 ;; data maps and vars
 ;;
 (define-map pools-map
@@ -109,12 +108,28 @@
             (denom4 (pow-down denom3 u400000000))
             (base (div-down ONE_8 denom4))
         )
-        (if (<= ONE_8 base) (ok u0) (ok (- ONE_8 base)))
+        (if (<= ONE_8 base) u0 (- ONE_8 base))
     )
 )
 
 ;; public functions
 ;;
+
+;; @desc get-contract-owner
+;; @returns (var-get CONTRACT-OWNER)
+(define-read-only (get-contract-owner)
+  (var-get CONTRACT-OWNER)
+)
+
+;; @desc set-contract-owner
+;; @param new-contract-owner; new (var-get CONTRACT-OWNER)
+(define-public (set-contract-owner (new-contract-owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set CONTRACT-OWNER new-contract-owner)
+    (ok true)
+  )
+)
 
 (define-read-only (get-oracle-src)
   (ok (var-get oracle-src))
@@ -122,52 +137,60 @@
 
 (define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
   (begin
-    (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set oracle-src new-oracle-src))
   )
 )
 
-;; implement trait-pool
+;; @desc get-pool-count
+;; @returns the number of pools in the contract
 (define-read-only (get-pool-count)
     (ok (var-get pool-count))
 )
 
+;; @desc get-pool-contracts
+;; @param pool-id; pool-id
+;; @returns the details of the pool with the pool-id
 (define-read-only (get-pool-contracts (pool-id uint))
     (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL-ERR))
 )
 
+;; @desc get-pools
+;; @returns map of get-pool-contracts of all pools in the contract.
 (define-read-only (get-pools)
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
-;; additional functions
+;; @desc get-pool-details
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @returns the details of the specified pool
 (define-read-only (get-pool-details (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (let 
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-        )
-        (ok (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-    )
+    (ok (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
 )
 
-;; token / collateral
+;; @desc get-spot
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @returns units of token per unit of collateral
 (define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let 
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))                        
-            (token-symbol (get token-symbol pool))
-            (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) (get token-symbol pool)) ERR-GET-ORACLE-PRICE-FAIL))
+            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) (get collateral-symbol pool)) ERR-GET-ORACLE-PRICE-FAIL))            
         )
         (ok (div-down token-price collateral-price))
     )
 )
 
-
+;; @desc get-pool-value-in-token
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @returns value of pool in units of borrow token
 (define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
@@ -187,6 +210,11 @@
     )
 )
 
+;; @desc get-pool-value-in-collateral
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @returns value of pool in units of collateral token
 (define-read-only (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
@@ -206,6 +234,11 @@
     )
 )
 
+;; @desc get-ltv
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @returns value of yield-token as % of pool value (i.e. loan-to-value)
 (define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
@@ -223,12 +256,17 @@
     )
 )
 
+;; @desc get-weight-y
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @param strike; reference strike price
+;; @param bs-vol; reference black-scholes vol
+;; @returns delta of borrow token (risky asset) based on reference black-scholes option with expiry/strike/bs-vol
 (define-read-only (get-weight-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
     (let
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
             (weight-y (get weight-y pool))
             (moving-average (get moving-average pool))
             (conversion-ltv (get conversion-ltv pool))
@@ -258,7 +296,7 @@
                     (denominator (mul-down bs-vol sqrt-t))
                     (numerator (+ vol-term (- (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term))))
                     (d1 (div-up numerator denominator))
-                    (erf-term (unwrap! (erf (div-up d1 sqrt-2)) ERR-MATH-CALL))
+                    (erf-term (erf (div-up d1 sqrt-2)))
                     (complement (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))))
                     (weight-t (div-up complement u200000000))
                     (weighted (+ (mul-down moving-average weight-y) (mul-down ma-comp weight-t)))                    
@@ -270,10 +308,20 @@
     )
 )
 
-;; single sided liquidity
+;; @desc create-pool with single sided liquidity
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param the-yield-token; yield-token to be minted
+;; @param the-key-token; key-token to be minted
+;; @param multisig-vote; multisig to govern the pool being created
+;; @param ltv-0; initial loan-to-value
+;; @param conversion-ltv; loan-to-value at which conversion into borrow token happens
+;; @param bs-vol; reference black-scholes vol to use 
+;; @param moving-average; weighting smoothing factor
+;; @param dx; amount of collateral token being added
 (define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
     (begin
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! 
             (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
             ERR-POOL-ALREADY-EXISTS
@@ -286,9 +334,9 @@
                 (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 
                 (now (* block-height ONE_8))
-                ;; TODO: assume 10mins per block - something to be reviewed
+                ;; assume 15secs per block
                 (t (div-down 
-                    (- expiry now) (* u52560 ONE_8)))
+                    (- expiry now) (* u2102400 ONE_8)))
 
                 (token-symbol (try! (contract-call? token get-symbol)))
                 (collateral-symbol (try! (contract-call? collateral get-symbol)))
@@ -301,7 +349,7 @@
                 (numerator (mul-up t pow-bs-vol))
                 (denominator (mul-down bs-vol sqrt-t))        
                 (d1 (div-up numerator denominator))
-                (erf-term (unwrap! (erf (div-up d1 sqrt-2)) ERR-MATH-CALL))
+                (erf-term (erf (div-up d1 sqrt-2)))
                 (complement (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term)))
                 (weighted (div-up complement u200000000))                
                 (weight-y (if (> weighted u100000) weighted u100000))
