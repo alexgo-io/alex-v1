@@ -41,7 +41,8 @@
     yes-votes: uint,
     no-votes: uint,
     new-fee-rate-x: uint,
-    new-fee-rate-y: uint
+    new-fee-rate-y: uint,
+    new-fee-rebate: uint
    }
 )
 
@@ -94,7 +95,8 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-x: u0,
-      new-fee-rate-y: u0      
+      new-fee-rate-y: u0,
+      new-fee-rebate: u0      
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -115,6 +117,7 @@
     (url (string-utf8 256))
     (new-fee-rate-x uint)
     (new-fee-rate-y uint)    
+    (new-fee-rebate uint)
   )
   (let (
     (proposer-balance (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-balance tx-sender)))
@@ -138,7 +141,8 @@
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-x: u0,
-        new-fee-rate-y: u0        
+        new-fee-rate-y: u0,
+        new-fee-rebate: u0        
       }
     )
     (var-set proposal-count proposal-id)

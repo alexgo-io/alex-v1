@@ -43,7 +43,8 @@
     yes-votes: uint,
     no-votes: uint,
     new-fee-rate-token: uint,
-    new-fee-rate-aytoken: uint
+    new-fee-rate-aytoken: uint,
+    new-fee-rebate: uint
    }
 )
 
@@ -96,7 +97,8 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-token: u0,    ;; Default token feerate
-      new-fee-rate-aytoken: u0  ;; default aytoken feerate
+      new-fee-rate-aytoken: u0,  ;; default aytoken feerate
+      new-fee-rebate: u0
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -117,6 +119,7 @@
     (url (string-utf8 256))
     (new-fee-rate-token uint)
     (new-fee-rate-aytoken uint)
+    (new-fee-rebate uint)
   )
   (let (
     (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-balance tx-sender)) ONE_8))
@@ -140,7 +143,8 @@
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-token: new-fee-rate-token,
-        new-fee-rate-aytoken: new-fee-rate-aytoken
+        new-fee-rate-aytoken: new-fee-rate-aytoken,
+        new-fee-rebate: new-fee-rebate
       }
     )
     (var-set proposal-count proposal-id)
@@ -218,7 +222,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-total-supply)) ONE_8))
+        (total-supply (unwrap-panic (contract-call? .ytp-yield-wbtc-59760-wbtc get-total-supply)))
         (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
@@ -251,6 +255,7 @@
 
     ;; Return the pool token
     (try! (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none)))
+    
     (ok true)
   )
 )
@@ -261,11 +266,12 @@
     (proposal (get-proposal-by-id proposal-id))
     (new-fee-rate-token (get new-fee-rate-token proposal))
     (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))
+    (new-fee-rebate (get new-fee-rebate proposal))
   ) 
-  
     ;; Setting for Yield Token Pool
     (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-wbtc-59760 new-fee-rate-token))
     (try! (contract-call? .yield-token-pool set-fee-rate-aytoken .yield-wbtc-59760 new-fee-rate-aytoken))
+    (try! (contract-call? .yield-token-pool set-fee-rebate .yield-wbtc-59760 new-fee-rebate))
     
     (ok true)
   )

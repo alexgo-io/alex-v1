@@ -43,7 +43,8 @@
     yes-votes: uint,
     no-votes: uint,
     new-fee-rate-token: uint,
-    new-fee-rate-aytoken: uint
+    new-fee-rate-aytoken: uint,
+    new-fee-rebate: uint
    }
 )
 
@@ -96,7 +97,8 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-token: u0,    ;; Default token feerate
-      new-fee-rate-aytoken: u0  ;; default aytoken feerate
+      new-fee-rate-aytoken: u0,  ;; default aytoken feerate
+      new-fee-rebate: u0
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -117,6 +119,7 @@
     (url (string-utf8 256))
     (new-fee-rate-token uint)
     (new-fee-rate-aytoken uint)
+    (new-fee-rebate uint)
   )
   (let (
     (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-usda-80875-usda get-balance tx-sender)) ONE_8))
@@ -140,7 +143,8 @@
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-token: new-fee-rate-token,
-        new-fee-rate-aytoken: new-fee-rate-aytoken
+        new-fee-rate-aytoken: new-fee-rate-aytoken,
+        new-fee-rebate: new-fee-rebate
       }
     )
     (var-set proposal-count proposal-id)
@@ -261,11 +265,14 @@
     (proposal (get-proposal-by-id proposal-id))
     (new-fee-rate-token (get new-fee-rate-token proposal))
     (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))
+    (new-fee-rebate (get new-fee-rebate proposal))
   ) 
   
     ;; Setting for Yield Token Pool
     (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-usda-80875 new-fee-rate-token))
     (try! (contract-call? .yield-token-pool set-fee-rate-aytoken .yield-usda-80875 new-fee-rate-aytoken))
+    (try! (contract-call? .yield-token-pool set-fee-rebate .yield-usda-80875 new-fee-rebate))
+
     
     (ok true)
   )

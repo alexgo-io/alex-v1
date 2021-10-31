@@ -41,7 +41,8 @@
     yes-votes: uint,
     no-votes: uint,
     new-fee-rate-x: uint,
-    new-fee-rate-y: uint
+    new-fee-rate-y: uint,
+    new-fee-rebate: uint
    }
 )
 
@@ -94,7 +95,8 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-x: u0,    
-      new-fee-rate-y: u0  
+      new-fee-rate-y: u0,
+      new-fee-rebate: u0  
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -115,6 +117,7 @@
     (url (string-utf8 256))
     (new-fee-rate-x uint)
     (new-fee-rate-y uint)
+    (new-fee-rebate uint)
   )
   (let (
     (proposer-balance (unwrap-panic (contract-call? .fwp-usda-23040-usda-74880-50-50 get-balance tx-sender)))
@@ -138,7 +141,8 @@
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-x: new-fee-rate-x,
-        new-fee-rate-y: new-fee-rate-y
+        new-fee-rate-y: new-fee-rate-y,
+        new-fee-rebate: new-fee-rebate
       }
     )
     (var-set proposal-count proposal-id)
@@ -258,12 +262,13 @@
     (proposal (get-proposal-by-id proposal-id))
     (new-fee-rate-x (get new-fee-rate-x proposal))
     (new-fee-rate-y (get new-fee-rate-y proposal))
+    (new-fee-rebate (get new-fee-rebate proposal))
   ) 
   
     ;; Setting for Yield Token Pool
     (try! (contract-call? .fixed-weight-pool set-fee-rate-x .yield-usda-23040 .yield-usda-74880 u50000000 u50000000 new-fee-rate-x))
     (try! (contract-call? .fixed-weight-pool set-fee-rate-y .yield-usda-23040 .yield-usda-74880 u50000000 u50000000 new-fee-rate-y))
-    
+    (try! (contract-call? .fixed-weight-pool set-fee-rebate .yield-usda-23040 .yield-usda-74880 u50000000 u50000000 new-fee-rebate))
     (ok true)
   )
 )

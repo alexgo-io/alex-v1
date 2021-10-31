@@ -373,8 +373,9 @@ Clarinet.test({
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         const buffer = new ArrayBuffer(34)
-        const feeRateX = 5000000; // 5%
-        const feeRateY = 5000000;
+        const feeRateX = 0.1*ONE_8; // 10%
+        const feeRateY = 0.1*ONE_8;
+        const feeRebate = 0.5*ONE_8;
 
         let money = usdaToken.transferToken(10*ONE_8,deployer.address,wallet_2.address, buffer);
         money = wbtcToken.transferToken(10*ONE_8,deployer.address,wallet_2.address, buffer);
@@ -416,7 +417,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(1000000000);
 
         // Fee rate Setting Proposal of Multisig
-        result = MultiSigTest.propose(1000, " Fee Rate Setting to 5%", " https://docs.alexgo.io", feeRateX, feeRateY)
+        result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY, feeRebate)
         result.expectOk().expectUint(1) // First Proposal
     
         // Block 1000 mining
@@ -439,8 +440,34 @@ Clarinet.test({
         // end proposal 
         result = MultiSigTest.endProposal(1)
         result.expectOk().expectBool(true) // Success 
-
         
+
+        // Fee checking
+        call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-aytoken'].expectUint(100000000);
+        position['balance-token'].expectUint(100900027581);
+        position['balance-virtual'].expectUint(101000000000);
+        position['fee-rate-aytoken'].expectUint(0.1*ONE_8);
+        position['fee-rate-token'].expectUint(0.1*ONE_8);
+        position['fee-rebate'].expectUint(0.5*ONE_8);
+        
+        call = await YTPTest.getYield(yieldwbtc59760Address);
+        call.result.expectOk().expectUint(1355);
+
+        // fee-yield = yield * fee-rate-token = 1335 * 0.1*ONE_8 = 133 // (contract-call? .math-fixed-point mul-down 1335 u10000000)
+        // lambda = ONE_8 - fee-yield = ONE_8 - 133 = 99999867 (non-floating point)
+        // dy-net-fees = dy * lambda = 199999730    // (contract-call? .math-fixed-point mul-down u99999867 u200000000)
+        // fee = dy - dy-net-fess = 200000000 - 199999734 = 266
+        // fee-rebate = 266 * 0.5 = 133 
+        // sell some yield-token
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8, 0);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(199969031);
+        position['dy'].expectUint(199999730);
+
+
+
     },    
 });
 
