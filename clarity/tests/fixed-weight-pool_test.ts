@@ -119,8 +119,9 @@ Clarinet.test({
         let wbtcToken = new WBTCToken(chain, deployer);
         let fwpPoolToken = new POOLTOKEN_FWP_WBTC_USDA_5050(chain, deployer);
 
-        const feeRateX = 5000000; // 5%
-        const feeRateY = 5000000;
+        const feeRateX = 0.1*ONE_8; // 10%
+        const feeRateY = 0.1*ONE_8;
+        const feeRebate = 0.5*ONE_8;
 
         // Deployer creating a pool, initial tokens injected to the pool
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigAddress, wbtcQ, wbtcQ*wbtcPrice);
