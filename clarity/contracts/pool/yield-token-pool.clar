@@ -29,7 +29,6 @@
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
-;; TODO: need to be defined properly
 (define-constant CONTRACT-OWNER tx-sender)
 (define-data-var oracle-src (string-ascii 32) "coingecko")
 
@@ -50,12 +49,11 @@
     balance-token: uint, ;; dx    
     balance-aytoken: uint, ;; dy_actual
     balance-virtual: uint, ;; dy_virtual
-    fee-balance-token: uint,    
-    fee-balance-aytoken: uint,
     fee-to-address: principal,
     pool-token: principal,
     fee-rate-token: uint,    
     fee-rate-aytoken: uint,
+    fee-rebate: uint,
     token-symbol: (string-ascii 32),
     expiry: uint,
     listed: uint
@@ -190,12 +188,11 @@
                     balance-token: u0,                
                     balance-aytoken: u0,
                     balance-virtual: u0,
-                    fee-balance-aytoken: u0,
-                    fee-balance-token: u0,
                     fee-to-address: (contract-of multisig-vote),
                     pool-token: (contract-of the-pool-token),
                     fee-rate-aytoken: u0,
                     fee-rate-token: u0,
+                    fee-rebate: u0,
                     token-symbol: (unwrap! (contract-call? the-token get-symbol) ERR-GET-SYMBOL-FAIL),
                     expiry: (unwrap! (contract-call? the-aytoken get-expiry) ERR-GET-EXPIRY-FAIL-ERR),
                     listed: (* block-height ONE_8)          
@@ -307,26 +304,24 @@
                 (aytoken (contract-of the-aytoken))
                 (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
                 (expiry (unwrap! (contract-call? the-aytoken get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
-                (fee-rate-aytoken (get fee-rate-aytoken pool))
                 (balance-token (get balance-token pool))
                 (balance-aytoken (get balance-aytoken pool))
-                (fee-balance-token (get fee-balance-token pool))
 
                 ;; lambda ~= 1 - fee-rate-aytoken * yield
                 (yield (try! (get-yield the-aytoken)))
-                (fee-yield (mul-down yield fee-rate-aytoken))
+                (fee-yield (mul-down yield (get fee-rate-aytoken pool)))
                 (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
                 (dx-net-fees (mul-down dx lambda))
                 (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
+                (fee-rebate (mul-down fee (get fee-rebate pool)))
 
                 (dy (try! (get-y-given-x the-aytoken dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (+ balance-token dx-net-fees),
-                            balance-aytoken: (if (<= balance-aytoken dy) u0 (- balance-aytoken dy)),
-                            fee-balance-token: (+ fee-balance-token fee)
+                            balance-token: (+ (+ balance-token dx-net-fees) fee-rebate),
+                            balance-aytoken: (if (<= balance-aytoken dy) u0 (- balance-aytoken dy))
                         }
                     )
                 )
@@ -352,25 +347,24 @@
             (
                 (aytoken (contract-of the-aytoken))
                 (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-                (fee-rate-token (get fee-rate-token pool))
                 (balance-token (get balance-token pool))
                 (balance-aytoken (get balance-aytoken pool))
-                (fee-balance-aytoken (get fee-balance-aytoken pool))
 
                 ;; lambda ~= 1 - fee-rate-token * yield
                 (yield (try! (get-yield the-aytoken)))
-                (fee-yield (mul-down yield fee-rate-token))
+                (fee-yield (mul-down yield (get fee-rate-token pool)))
                 (lambda (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield)))
                 (dy-net-fees (mul-down dy lambda))
                 (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
+                (fee-rebate (mul-down fee (get fee-rebate pool)))
+
                 (dx (try! (get-x-given-y the-aytoken dy-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
                             balance-token: (if (<= balance-token dx) u0 (- balance-token dx)),
-                            balance-aytoken: (+ balance-aytoken dy-net-fees),
-                            fee-balance-aytoken: (+ fee-balance-aytoken fee)
+                            balance-aytoken: (+ (+ balance-aytoken dy-net-fees) fee-rebate)
                         }
                     )
                 )
@@ -386,6 +380,23 @@
             (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
             (ok {dx: dx, dy: dy-net-fees})
         )
+    )
+)
+
+(define-read-only (get-fee-rebate (the-aytoken <yield-token-trait>))
+    (ok (get fee-rebate (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR)))
+)
+
+(define-public (set-fee-rebate (the-aytoken <yield-token-trait>) (fee-rebate uint))
+    (let 
+        (
+            (aytoken (contract-of the-aytoken))
+            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
+        )
+        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+
+        (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rebate: fee-rebate }))
+        (ok true)
     )
 )
 
@@ -444,77 +455,6 @@
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
         )
         (ok (get fee-to-address pool))
-    )
-)
-
-(define-read-only (get-fees (the-aytoken <yield-token-trait>))
-    (let
-        (
-            (aytoken (contract-of the-aytoken))   
-            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-        )
-        (ok {fee-balance-aytoken: (get fee-balance-aytoken pool), fee-balance-token: (get fee-balance-token pool)})
-    )
-)
-
-;; Returns the fee of current x and y and make balance to 0.
-(define-public (collect-fees (the-aytoken <ft-trait>) (the-token <ft-trait>))
-    (let
-        (
-            (aytoken (contract-of the-aytoken))
-            (token (contract-of the-token))
-            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-            (address (get fee-to-address pool))
-            (fee-x (get fee-balance-aytoken pool))
-            (fee-y (get fee-balance-token pool))
-            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))        
-        )
-        
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
-        
-        (and (> fee-x u0) 
-            (and 
-                ;; first transfer fee-x to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft the-aytoken fee-x (as-contract tx-sender) tx-sender))
-                ;; send fee-x to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq aytoken .token-usda) 
-                            fee-x 
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-aytoken u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-aytoken u50000000 u50000000 fee-x none)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-aytoken .token-usda u50000000 u50000000 fee-x none)))
-                            )                            
-                        )
-                    )
-                )
-            )
-        )
-
-        (and (> fee-y u0) 
-            (and 
-                ;; first transfer fee-y to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft the-token fee-y (as-contract tx-sender) tx-sender))
-                ;; send fee-y to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq token .token-usda) 
-                            fee-y 
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-usda the-token u50000000 u50000000))
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x .token-usda the-token u50000000 u50000000 fee-y none)))
-                                (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y the-token .token-usda u50000000 u50000000 fee-y none)))
-                            )
-                        )
-                    )
-                )
-            )
-        )         
-
-        (map-set pools-data-map
-            { aytoken: aytoken}
-            (merge pool { fee-balance-aytoken: u0, fee-balance-token: u0 })
-        )
-        (ok {fee-x: fee-x, fee-y: fee-y})
     )
 )
 
