@@ -201,12 +201,12 @@ import {
       return block.receipts[0].result;
     }
 
-    setFeeRebate(aytoken: string, rebate : number) {
+    setFeeRebate(user: Account, aytoken: string, rebate : number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("yield-token-pool", "set-fee-rebate", [
           types.principal(aytoken),
           types.uint(rebate)
-        ], this.deployer.address),
+        ], user.address),
       ]);
       return block.receipts[0].result;
     }

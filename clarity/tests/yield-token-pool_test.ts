@@ -367,6 +367,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("wallet_1")!;
         let wallet_2 = accounts.get("wallet_2")!;
+        let contractOwner = accounts.get("deployer")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);
         let ytpPoolToken = new POOLTOKEN_YTP_WBTC_WBTC_59760(chain, deployer);
@@ -417,7 +418,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(1000000000);
 
         // Fee rate Setting Proposal of Multisig
-        result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY, feeRebate)
+        result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
         result.expectOk().expectUint(1) // First Proposal
     
         // Block 1000 mining
@@ -441,6 +442,9 @@ Clarinet.test({
         result = MultiSigTest.endProposal(1)
         result.expectOk().expectBool(true) // Success 
         
+        // deployer (Contract owner) sets rebate rate
+        result = YTPTest.setFeeRebate(contractOwner, yieldwbtc59760Address, feeRebate);
+        result.expectOk().expectBool(true)
 
         // Fee checking
         call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
@@ -460,10 +464,11 @@ Clarinet.test({
         // dy-net-fees = dy * lambda = 199999730    // (contract-call? .math-fixed-point mul-down u99999867 u200000000)
         // fee = dy - dy-net-fess = 200000000 - 199999734 = 266
         // fee-rebate = 266 * 0.5 = 133 
+        
         // sell some yield-token
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(199969031);
+        position['dx'].expectUint(199967096);
         position['dy'].expectUint(199999730);
 
 

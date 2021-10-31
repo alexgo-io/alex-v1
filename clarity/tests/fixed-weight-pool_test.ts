@@ -111,7 +111,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        //let wallet_1 = accounts.get("wallet_1")!;
+        let contractOwner = deployer
 
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_FWP_WBTC_USDA_5050(chain, deployer);
@@ -169,7 +169,7 @@ Clarinet.test({
         result.expectOk().expectUint(0.1*ONE_8)
         
         // deployer (Contract owner) sets rebate rate
-        result = FWPTest.setFeeRebate(deployer, wbtcAddress, usdaAddress, weightX, weightY, feeRebate);
+        result = FWPTest.setFeeRebate(contractOwner, wbtcAddress, usdaAddress, weightX, weightY, feeRebate);
         result.expectOk().expectBool(true)
         
         ROresult = FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
