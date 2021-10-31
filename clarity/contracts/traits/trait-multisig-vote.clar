@@ -2,7 +2,7 @@
 
 (define-trait multisig-vote-trait
   (
-    (propose (uint (string-utf8 256) (string-utf8 256) uint uint uint) (response uint uint))
+    (propose (uint (string-utf8 256) (string-utf8 256) uint uint) (response uint uint))
 
     (vote-for (<ft-trait> uint uint) (response uint uint))  
 

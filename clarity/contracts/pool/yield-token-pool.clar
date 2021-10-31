@@ -386,7 +386,7 @@
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rebate: fee-rebate }))
         (ok true)

@@ -673,7 +673,7 @@
         (
             (pool (try! (get-pool-details token collateral expiry)))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 

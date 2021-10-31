@@ -41,8 +41,7 @@
     yes-votes: uint,
     no-votes: uint,
     new-fee-rate-x: uint,
-    new-fee-rate-y: uint,
-    new-fee-rebate: uint
+    new-fee-rate-y: uint
    }
 )
 
@@ -95,8 +94,7 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-x: u0,    ;; Default token feerate
-      new-fee-rate-y: u0,  ;; default aytoken feerate
-      new-fee-rebate: u0
+      new-fee-rate-y: u0  ;; default aytoken feerate
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -117,7 +115,6 @@
     (url (string-utf8 256))
     (new-fee-rate-x uint)
     (new-fee-rate-y uint)
-    (new-fee-rebate uint)
   )
   (let 
     (
@@ -146,8 +143,7 @@
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-x: new-fee-rate-x,
-        new-fee-rate-y: new-fee-rate-y,
-        new-fee-rebate: new-fee-rebate
+        new-fee-rate-y: new-fee-rate-y
       }
     )
     (var-set proposal-count proposal-id)
@@ -271,12 +267,10 @@
       (proposal (get-proposal-by-id proposal-id))
       (new-fee-rate-x (get new-fee-rate-x proposal))
       (new-fee-rate-y (get new-fee-rate-y proposal))
-      (new-fee-rebate (get new-fee-rebate proposal))
     ) 
   
     (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc u2304000000000 new-fee-rate-x))
     (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc u2304000000000 new-fee-rate-y))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rebate .token-usda .token-wbtc u2304000000000 new-fee-rebate))
     
     (ok true)
   )
