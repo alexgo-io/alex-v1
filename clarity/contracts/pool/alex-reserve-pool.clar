@@ -33,6 +33,8 @@
 (define-constant ERR_CONTRACT_NOT_ACTIVATED (err u10005))
 (define-constant ERR_STAKING_NOT_AVAILABLE (err u10015))
 (define-constant ERR_CANNOT_STAKE (err u10016))
+(define-constant ERR_REWARD_CYCLE_NOT_COMPLETED (err u10017))
+(define-constant ERR_NOTHING_TO_REDEEM (err u10018))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -76,11 +78,6 @@
   (var-get activation-threshold)
 )
 
-;; returns number of registered users, used for activation and tracking user IDs
-(define-read-only (get-registered-users-nonce)
-  (var-get users-nonce)
-)
-
 (define-public (set-activation-block (new-activation-block uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
@@ -89,11 +86,11 @@
   )
 )
 
-(define-read-only (get-contract-owner)
+(define-read-only (get-owner)
   (ok (var-get contract-owner))
 )
 
-(define-public (set-contract-owner (owner principal))
+(define-public (set-owner (owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
@@ -145,7 +142,7 @@
         (new-id (+ u1 (var-get users-nonce)))
       )
       (map-set users new-id user)
-      (map-set users-id user new-id)
+      (map-set user-ids user new-id)
       (var-set users-nonce new-id)
       new-id
     )
@@ -181,7 +178,7 @@
   )
 )
 
-;; STACKING CONFIGURATION
+;; staking CONFIGURATION
 
 (define-constant MAX_REWARD_CYCLES u32)
 (define-constant REWARD_CYCLE_INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
@@ -199,13 +196,13 @@
 
 ;; returns the total stacked tokens and committed uSTX for a given reward cycle
 ;; or, an empty structure
-(define-read-only (get-stacking-stats-at-cycle-or-default (reward-cycle uint))
+(define-read-only (get-staking-stats-at-cycle-or-default (reward-cycle uint))
   (default-to u0 (map-get? staking-stats-at-cycle reward-cycle))
 )
 
 ;; At a given reward cycle and user ID:
 ;; - what is the total tokens Stacked?
-;; - how many tokens should be returned? (based on Stacking period)
+;; - how many tokens should be returned? (based on staking period)
 (define-map staker-at-cycle
   {
     reward-cycle: uint,
@@ -218,7 +215,7 @@
 )
 
 (define-read-only (get-staker-at-cycle (reward-cycle uint) (user-id uint))
-  (map-get? stacker-at-cycle { reward-cycle: reward-cycle, user-id: user-id })
+  (map-get? staker-at-cycle { reward-cycle: reward-cycle, user-id: user-id })
 )
 
 (define-read-only (get-staker-at-cycle-or-default (reward-cycle uint) (user-id uint))
@@ -230,18 +227,18 @@
 (define-read-only (get-reward-cycle (stacks-height uint))
   (let
     (
-      (first-stacking-block (var-get activation-block))
+      (first-staking-block (var-get activation-block))
       (rcLen (var-get reward-cycle-length))
     )
-    (if (>= stacks-height first-stacking-block)
-      (some (/ (- stacks-height first-stacking-block) rcLen))
+    (if (>= stacks-height first-staking-block)
+      (some (/ (- stacks-height first-staking-block) rcLen))
       none)
   )
 )
 
-;; determine if stacking is active in a given cycle
-(define-read-only (stacking-active-at-cycle (reward-cycle uint))
-  (is-some (map-get? stacking-stats-at-cycle reward-cycle))
+;; determine if staking is active in a given cycle
+(define-read-only (staking-active-at-cycle (reward-cycle uint))
+  (is-some (map-get? staking-stats-at-cycle reward-cycle))
 )
 
 ;; get the first Stacks block height for a given reward cycle.
@@ -249,29 +246,29 @@
   (+ (var-get activation-block) (* (var-get reward-cycle-length) reward-cycle))
 )
 
-;; getter for get-entitled-stacking-reward that specifies block height
-(define-read-only (get-stacking-reward (user-id uint) (target-cycle uint))
-  (get-entitled-stacking-reward user-id target-cycle block-height)
+;; getter for get-entitled-staking-reward that specifies block height
+(define-read-only (get-staking-reward (user-id uint) (target-cycle uint))
+  (get-entitled-staking-reward user-id target-cycle block-height)
 )
 
-;; get uSTX a Stacker can claim, given reward cycle they stacked in and current block height
+;; get uSTX a staker can claim, given reward cycle they stacked in and current block height
 ;; this method only returns a positive value if:
 ;; - the current block height is in a subsequent reward cycle
-;; - the stacker actually locked up tokens in the target reward cycle
-;; - the stacker locked up _enough_ tokens to get at least one uSTX
+;; - the staker actually locked up tokens in the target reward cycle
+;; - the staker locked up _enough_ tokens to get at least one uSTX
 ;; it is possible to Stack tokens and not receive uSTX:
 ;; - if no miners commit during this reward cycle
 ;; - the amount stacked by user is too few that you'd be entitled to less than 1 uSTX
-(define-private (get-entitled-stacking-reward (user-id uint) (target-cycle uint) (stacks-height uint))
+(define-private (get-entitled-staking-reward (user-id uint) (target-cycle uint) (stacks-height uint))
   (let
     (
-      (total-staked-this-cycle (get-stacking-stats-at-cycle-or-default target-cycle))
+      (total-staked-this-cycle (get-staking-stats-at-cycle-or-default target-cycle))
       (user-staked-this-cycle (get amount-staked (get-staker-at-cycle-or-default target-cycle user-id)))
     )
     (match (get-reward-cycle stacks-height)
       current-cycle
       (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
-        ;; this cycle hasn't finished, or Stacker contributed nothing
+        ;; this cycle hasn't finished, or staker contributed nothing
         u0
         (/ user-staked-this-cycle total-staked-this-cycle)
       )
@@ -281,25 +278,19 @@
   )
 )
 
-;; STACKING ACTIONS
+;; staking ACTIONS
 
 (define-public (stake-tokens (amount-token uint) (lock-period uint))
-  (let
-    (
-      (user-id )
-    )
-    (try! (stake-tokens-at-cycle tx-sender (get-or-create-user-id tx-sender) amount-token block-height lock-period))
-    (ok true)
-  )
+  (stake-tokens-at-cycle tx-sender (get-or-create-user-id tx-sender) amount-token block-height lock-period)
 )
 
 (define-private (stake-tokens-at-cycle (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
   (let
     (
-      (current-cycle (unwrap! (get-reward-cycle start-height) ERR_STACKING_NOT_AVAILABLE))
+      (current-cycle (unwrap! (get-reward-cycle start-height) ERR_STAKING_NOT_AVAILABLE))
       (target-cycle (+ u1 current-cycle))
       (commitment {
-        stackerId: user-id,
+        staker-id: user-id,
         amount: amount-token,
         first: target-cycle,
         last: (+ target-cycle lock-period)
@@ -309,17 +300,17 @@
     (asserts! (and (> lock-period u0) (<= lock-period MAX_REWARD_CYCLES)) ERR_CANNOT_STAKE)
     (asserts! (> amount-token u0) ERR_CANNOT_STAKE)
     (try! (contract-call? .token-alex transfer amount-token tx-sender (as-contract tx-sender) none))
-    (match (fold stack-tokens-closure REWARD_CYCLE_INDEXES (ok commitment))
+    (match (fold stake-tokens-closure REWARD_CYCLE_INDEXES (ok commitment))
       ok-value (ok true)
       err-value (err err-value)
     )
   )
 )
 
-(define-private (stack-tokens-closure (rewardCycleIdx uint)
-  (commitmentResponse (response 
+(define-private (stake-tokens-closure (reward-cycle-idx uint)
+  (commitment-response (response 
     {
-      stackerId: uint,
+      staker-id: uint,
       amount: uint,
       first: uint,
       last: uint
@@ -327,105 +318,91 @@
     uint
   )))
 
-  (match commitmentResponse
+  (match commitment-response
     commitment 
     (let
       (
-        (stackerId (get stackerId commitment))
-        (amountToken (get amount commitment))
-        (firstCycle (get first commitment))
-        (lastCycle (get last commitment))
-        (targetCycle (+ firstCycle rewardCycleIdx))
-        (stackerAtCycle (get-stacker-at-cycle-or-default targetCycle stackerId))
-        (amountStacked (get amountStacked stackerAtCycle))
-        (toReturn (get toReturn stackerAtCycle))
+        (staker-id (get staker-id commitment))
+        (amount-token (get amount commitment))
+        (first-cycle (get first commitment))
+        (last-cycle (get last commitment))
+        (target-cycle (+ first-cycle reward-cycle-idx))
+        (this-staker-at-cycle (get-staker-at-cycle-or-default target-cycle staker-id))
+        (amount-staked (get amount-staked this-staker-at-cycle))
+        (to-return (get to-return this-staker-at-cycle))
       )
       (begin
-        (if (and (>= targetCycle firstCycle) (< targetCycle lastCycle))
+        (if (and (>= target-cycle first-cycle) (< target-cycle last-cycle))
           (begin
-            (if (is-eq targetCycle (- lastCycle u1))
-              (set-tokens-stacked stackerId targetCycle amountToken amountToken)
-              (set-tokens-stacked stackerId targetCycle amountToken u0)
+            (if (is-eq target-cycle (- last-cycle u1))
+              (set-tokens-staked staker-id target-cycle amount-token amount-token)
+              (set-tokens-staked staker-id target-cycle amount-token u0)
             )
             true
           )
           false
         )
-        commitmentResponse
+        commitment-response
       )
     )
-    errValue commitmentResponse
+    err-value commitment-response
   )
 )
 
-(define-private (set-tokens-stacked (userId uint) (targetCycle uint) (amountStacked uint) (toReturn uint))
+(define-private (set-tokens-staked (user-id uint) (target-cycle uint) (amount-staked uint) (to-return uint))
   (let
     (
-      (rewardCycleStats (get-stacking-stats-at-cycle-or-default targetCycle))
-      (stackerAtCycle (get-stacker-at-cycle-or-default targetCycle userId))
+      (this-staker-at-cycle (get-staker-at-cycle-or-default target-cycle user-id))
     )
-    (map-set StackingStatsAtCycle
-      targetCycle
+    (map-set staking-stats-at-cycle target-cycle (+ amount-staked (get-staking-stats-at-cycle-or-default target-cycle)))
+    (map-set staker-at-cycle
       {
-        amountUstx: (get amountUstx rewardCycleStats),
-        amountToken: (+ amountStacked (get amountToken rewardCycleStats))
-      }
-    )
-    (map-set StackerAtCycle
-      {
-        rewardCycle: targetCycle,
-        userId: userId
+        reward-cycle: target-cycle,
+        user-id: user-id
       }
       {
-        amountStacked: (+ amountStacked (get amountStacked stackerAtCycle)),
-        toReturn: (+ toReturn (get toReturn stackerAtCycle))
+        amount-staked: (+ amount-staked (get amount-staked this-staker-at-cycle)),
+        to-return: (+ to-return (get to-return this-staker-at-cycle))
       }
     )
   )
 )
 
-;; STACKING REWARD CLAIMS
+;; staking REWARD CLAIMS
 
-;; calls function to claim stacking reward in active logic contract
-(define-public (claim-stacking-reward (targetCycle uint))
+;; calls function to claim staking reward in active logic contract
+(define-public (claim-staking-reward (target-cycle uint))
   (begin
-    (try! (claim-stacking-reward-at-cycle tx-sender block-height targetCycle))
+    (try! (claim-staking-reward-at-cycle tx-sender block-height target-cycle))
     (ok true)
   )
 )
 
-(define-private (claim-stacking-reward-at-cycle (user principal) (stacksHeight uint) (targetCycle uint))
+(define-private (claim-staking-reward-at-cycle (user principal) (stacks-height uint) (target-cycle uint))
   (let
     (
-      (currentCycle (unwrap! (get-reward-cycle stacksHeight) ERR_STACKING_NOT_AVAILABLE))
-      (userId (unwrap! (get-user-id user) ERR_USER_ID_NOT_FOUND))
-      (entitledUstx (get-entitled-stacking-reward userId targetCycle stacksHeight))
-      (stackerAtCycle (get-stacker-at-cycle-or-default targetCycle userId))
-      (toReturn (get toReturn stackerAtCycle))
+      (current-cycle (unwrap! (get-reward-cycle stacks-height) ERR_STAKING_NOT_AVAILABLE))
+      (user-id (unwrap! (get-user-id user) ERR_USER_ID_NOT_FOUND))
+      (entitled-token (get-entitled-staking-reward user-id target-cycle stacks-height))
+      (to-return (get to-return (get-staker-at-cycle-or-default target-cycle user-id)))
     )
-    (asserts! (> currentCycle targetCycle) ERR_REWARD_CYCLE_NOT_COMPLETED)
-    (asserts! (or (> toReturn u0) (> entitledUstx u0)) ERR_NOTHING_TO_REDEEM)
+    (asserts! (> current-cycle target-cycle) ERR_REWARD_CYCLE_NOT_COMPLETED)
+    (asserts! (or (> to-return u0) (> entitled-token u0)) ERR_NOTHING_TO_REDEEM)
     ;; disable ability to claim again
-    (map-set StackerAtCycle
+    (map-set staker-at-cycle
       {
-        rewardCycle: targetCycle,
-        userId: userId
+        reward-cycle: target-cycle,
+        user-id: user-id
       }
       {
-        amountStacked: u0,
-        toReturn: u0
+        amount-staked: u0,
+        to-return: u0
       }
     )
     ;; send back tokens if user was eligible
-    (if (> toReturn u0)
-      (try! (as-contract (contract-call? .token-alex transfer (* toReturn ONE_8) tx-sender user none)))
-      true
-    )
+    (and (> to-return u0) (try! (as-contract (contract-call? .token-alex transfer to-return tx-sender user none))))
     ;; send back rewards if user was eligible
-    (if (> entitledUstx u0)
-      (try! (as-contract (stx-transfer? entitledUstx tx-sender user)))
-      true
-    )
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex transfer entitled-token tx-sender user none))))
     (ok true)
   )
 )
@@ -435,49 +412,46 @@
 (define-constant TOKEN_HALVING_BLOCKS u210000)
 
 ;; store block height at each halving, set by register-user in core contract
-(define-data-var coinbaseThreshold1 uint u0)
-(define-data-var coinbaseThreshold2 uint u0)
-(define-data-var coinbaseThreshold3 uint u0)
-(define-data-var coinbaseThreshold4 uint u0)
-(define-data-var coinbaseThreshold5 uint u0)
+(define-data-var coinbase-threshold-1 uint u0)
+(define-data-var coinbase-threshold-2 uint u0)
+(define-data-var coinbase-threshold-3 uint u0)
+(define-data-var coinbase-threshold-4 uint u0)
+(define-data-var coinbase-threshold-5 uint u0)
 
-(define-private (set-coinbase-thresholds (activationBlockVal uint))
+(define-private (set-coinbase-thresholds (activation-block-val uint))
   (begin
-    (var-set coinbaseThreshold1 (+ activationBlockVal TOKEN_HALVING_BLOCKS))
-    (var-set coinbaseThreshold2 (+ activationBlockVal (* u2 TOKEN_HALVING_BLOCKS)))
-    (var-set coinbaseThreshold3 (+ activationBlockVal (* u3 TOKEN_HALVING_BLOCKS)))
-    (var-set coinbaseThreshold4 (+ activationBlockVal (* u4 TOKEN_HALVING_BLOCKS)))
-    (var-set coinbaseThreshold5 (+ activationBlockVal (* u5 TOKEN_HALVING_BLOCKS)))
+    (var-set coinbase-threshold-1 (+ activation-block-val TOKEN_HALVING_BLOCKS))
+    (var-set coinbase-threshold-2 (+ activation-block-val (* u2 TOKEN_HALVING_BLOCKS)))
+    (var-set coinbase-threshold-3 (+ activation-block-val (* u3 TOKEN_HALVING_BLOCKS)))
+    (var-set coinbase-threshold-4 (+ activation-block-val (* u4 TOKEN_HALVING_BLOCKS)))
+    (var-set coinbase-threshold-5 (+ activation-block-val (* u5 TOKEN_HALVING_BLOCKS)))
     (ok true)
   )
 )
 ;; return coinbase thresholds if contract activated
 (define-read-only (get-coinbase-thresholds)
-  (let
-    (
-      (activated (var-get activationReached))
-    )
-    (asserts! activated ERR_CONTRACT_NOT_ACTIVATED)
+  (begin
+    (asserts! (var-get activation-reached) ERR_CONTRACT_NOT_ACTIVATED)
     (ok {
-      coinbaseThreshold1: (var-get coinbaseThreshold1),
-      coinbaseThreshold2: (var-get coinbaseThreshold2),
-      coinbaseThreshold3: (var-get coinbaseThreshold3),
-      coinbaseThreshold4: (var-get coinbaseThreshold4),
-      coinbaseThreshold5: (var-get coinbaseThreshold5)
+      coinbase-threshold-1: (var-get coinbase-threshold-1),
+      coinbase-threshold-2: (var-get coinbase-threshold-2),
+      coinbase-threshold-3: (var-get coinbase-threshold-3),
+      coinbase-threshold-4: (var-get coinbase-threshold-4),
+      coinbase-threshold-5: (var-get coinbase-threshold-5)
     })
   )
 )
 
 ;; function for deciding how many tokens to mint, depending on when they were mined
-(define-read-only (get-coinbase-amount (minerBlockHeight uint))
+(define-read-only (get-coinbase-amount (stacks-height uint))
   (begin
     ;; if contract is not active, return 0
-    (asserts! (>= minerBlockHeight (var-get activationBlock)) u0)
+    (asserts! (>= stacks-height (var-get activation-block)) u0)
     ;; if contract is active, return based on issuance schedule
     ;; halvings occur every 210,000 blocks for 1,050,000 Stacks blocks
     ;; then mining continues indefinitely with 3,125 tokens as the reward
-    (asserts! (> minerBlockHeight (var-get coinbaseThreshold1))
-      (if (<= (- minerBlockHeight (var-get activationBlock)) u10000)
+    (asserts! (> stacks-height (var-get coinbase-threshold-1))
+      (if (<= (- stacks-height (var-get activation-block)) u10000)
         ;; bonus reward first 10,000 blocks
         u250000
         ;; standard reward remaining 200,000 blocks until 1st halving
@@ -485,18 +459,18 @@
       )
     )
     ;; computations based on each halving threshold
-    (asserts! (> minerBlockHeight (var-get coinbaseThreshold2)) u50000)
-    (asserts! (> minerBlockHeight (var-get coinbaseThreshold3)) u25000)
-    (asserts! (> minerBlockHeight (var-get coinbaseThreshold4)) u12500)
-    (asserts! (> minerBlockHeight (var-get coinbaseThreshold5)) u6250)
+    (asserts! (> stacks-height (var-get coinbase-threshold-2)) u50000)
+    (asserts! (> stacks-height (var-get coinbase-threshold-3)) u25000)
+    (asserts! (> stacks-height (var-get coinbase-threshold-4)) u12500)
+    (asserts! (> stacks-height (var-get coinbase-threshold-5)) u6250)
     ;; default value after 5th halving
     u3125
   )
 )
 
 ;; mint new tokens for claimant who won at given Stacks block height
-(define-private (mint-coinbase (recipient principal) (stacksHeight uint))
-  (as-contract (contract-call? .token-alex mint recipient (* (get-coinbase-amount stacksHeight) ONE_8)))
+(define-private (mint-coinbase (recipient principal) (stacks-height uint))
+  (as-contract (contract-call? .token-alex mint recipient (get-coinbase-amount stacks-height)))
 )
 
 
