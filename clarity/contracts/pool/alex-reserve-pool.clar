@@ -264,14 +264,6 @@
   (get-entitled-staking-reward user-id target-cycle block-height)
 )
 
-;; get uSTX a staker can claim, given reward cycle they staked in and current block height
-;; this method only returns a positive value if:
-;; - the current block height is in a subsequent reward cycle
-;; - the staker actually locked up tokens in the target reward cycle
-;; - the staker locked up -enough- tokens to get at least one uSTX
-;; it is possible to Stack tokens and not receive uSTX:
-;; - if no miners commit during this reward cycle
-;; - the amount staked by user is too few that you'd be entitled to less than 1 uSTX
 (define-private (get-entitled-staking-reward (user-id uint) (target-cycle uint) (stacks-height uint))
   (let
     (
@@ -412,14 +404,27 @@
     ;; send back tokens if user was eligible
     (and (> to-return u0) (try! (as-contract (contract-call? .token-alex transfer to-return .alex-vault user none))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex transfer entitled-token .alex-vault user none))))
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint recipient (* entitled-token (get-coinbase-amount target-cycle))))))
     (ok true)
   )
 )
 
 ;; TOKEN CONFIGURATION
 
-(define-constant TOKEN-HALVING-BLOCKS u210000)
+(define-data-var token-halving-cycle u100)
+
+(define-read-only (get-token-halving-cycle)
+  (var-get token-halving-cycle)
+)
+
+(define-public (set-token-halving-cycle (new-token-halving-cycle uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set token-halving-cycle new-token-halving-cycle)
+    (try! (set-coinbase-thresholds))
+    (ok true)
+  )
+)
 
 ;; store block height at each halving, set by register-user in core contract
 (define-data-var coinbase-threshold-1 uint u0)
@@ -428,59 +433,39 @@
 (define-data-var coinbase-threshold-4 uint u0)
 (define-data-var coinbase-threshold-5 uint u0)
 
-(define-private (set-coinbase-thresholds (activation-block-val uint))
+(define-private (set-coinbase-thresholds)
   (begin
-    (var-set coinbase-threshold-1 (+ activation-block-val TOKEN-HALVING-BLOCKS))
-    (var-set coinbase-threshold-2 (+ activation-block-val (* u2 TOKEN-HALVING-BLOCKS)))
-    (var-set coinbase-threshold-3 (+ activation-block-val (* u3 TOKEN-HALVING-BLOCKS)))
-    (var-set coinbase-threshold-4 (+ activation-block-val (* u4 TOKEN-HALVING-BLOCKS)))
-    (var-set coinbase-threshold-5 (+ activation-block-val (* u5 TOKEN-HALVING-BLOCKS)))
+    (var-set coinbase-threshold-1 (var-get token-halving-cycle))
+    (var-set coinbase-threshold-2 (* u2 (var-get token-halving-cycle)))
+    (var-set coinbase-threshold-3 (* u3 (var-get token-halving-cycle)))
+    (var-set coinbase-threshold-4 (* u4 (var-get token-halving-cycle)))
+    (var-set coinbase-threshold-5 (* u5 (var-get token-halving-cycle)))
     (ok true)
   )
 )
 ;; return coinbase thresholds if contract activated
 (define-read-only (get-coinbase-thresholds)
-  (begin
-    (asserts! (var-get activation-reached) ERR-CONTRACT-NOT-ACTIVATED)
-    (ok {
+  (ok {
       coinbase-threshold-1: (var-get coinbase-threshold-1),
       coinbase-threshold-2: (var-get coinbase-threshold-2),
       coinbase-threshold-3: (var-get coinbase-threshold-3),
       coinbase-threshold-4: (var-get coinbase-threshold-4),
       coinbase-threshold-5: (var-get coinbase-threshold-5)
-    })
-  )
+  })
 )
 
 ;; function for deciding how many tokens to mint, depending on when they were mined
-(define-read-only (get-coinbase-amount (stacks-height uint))
+(define-read-only (get-coinbase-amount (reward-cycle uint))
   (begin
-    ;; if contract is not active, return 0
-    (asserts! (>= stacks-height (var-get activation-block)) u0)
-    ;; if contract is active, return based on issuance schedule
-    ;; halvings occur every 210,000 blocks for 1,050,000 Stacks blocks
-    ;; then mining continues indefinitely with 3,125 tokens as the reward
-    (asserts! (> stacks-height (var-get coinbase-threshold-1))
-      (if (<= (- stacks-height (var-get activation-block)) u10000)
-        ;; bonus reward first 10,000 blocks
-        u250000
-        ;; standard reward remaining 200,000 blocks until 1st halving
-        u100000
-      )
-    )
     ;; computations based on each halving threshold
-    (asserts! (> stacks-height (var-get coinbase-threshold-2)) u50000)
-    (asserts! (> stacks-height (var-get coinbase-threshold-3)) u25000)
-    (asserts! (> stacks-height (var-get coinbase-threshold-4)) u12500)
-    (asserts! (> stacks-height (var-get coinbase-threshold-5)) u6250)
+    (asserts! (> reward-cycle (var-get coinbase-threshold-1)) u100000)
+    (asserts! (> reward-cycle (var-get coinbase-threshold-2)) u50000)
+    (asserts! (> reward-cycle (var-get coinbase-threshold-3)) u25000)
+    (asserts! (> reward-cycle (var-get coinbase-threshold-4)) u12500)
+    (asserts! (> reward-cycle (var-get coinbase-threshold-5)) u6250)
     ;; default value after 5th halving
     u3125
   )
-)
-
-;; mint new tokens for claimant who won at given Stacks block height
-(define-private (mint-coinbase (recipient principal) (stacks-height uint))
-  (as-contract (contract-call? .token-alex mint recipient (get-coinbase-amount stacks-height)))
 )
 
 
