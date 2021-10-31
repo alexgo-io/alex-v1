@@ -10,7 +10,7 @@
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
-(define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
+(define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
@@ -25,31 +25,100 @@
 (define-constant ERR-GET-BALANCE-FAIL (err u6001))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
-(define-constant ERR_USER_ALREADY_REGISTERED (err u10001))
-(define-constant ERR_USER_NOT_FOUND (err u10002))
-(define-constant ERR_USER_ID_NOT_FOUND (err u10003))
-(define-constant ERR_ACTIVATION_THRESHOLD_REACHED (err u10004))
-(define-constant ERR_UNABLE_TO_SET_THRESHOLD (err u10021))
-(define-constant ERR_CONTRACT_NOT_ACTIVATED (err u10005))
-(define-constant ERR_STAKING_NOT_AVAILABLE (err u10015))
-(define-constant ERR_CANNOT_STAKE (err u10016))
-(define-constant ERR_REWARD_CYCLE_NOT_COMPLETED (err u10017))
-(define-constant ERR_NOTHING_TO_REDEEM (err u10018))
+(define-constant ERR-USER-ALREADY-REGISTERED (err u10001))
+(define-constant ERR-USER-NOT-FOUND (err u10002))
+(define-constant ERR-USER-ID-NOT-FOUND (err u10003))
+(define-constant ERR-ACTIVATION-THRESHOLD-REACHED (err u10004))
+(define-constant ERR-UNABLE-TO-SET-THRESHOLD (err u10021))
+(define-constant ERR-CONTRACT-NOT-ACTIVATED (err u10005))
+(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
+(define-constant ERR-CANNOT-STAKE (err u10016))
+(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
+(define-constant ERR-NOTHING-TO-REDEEM (err u10018))
+(define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-
 (define-data-var oracle-src (string-ascii 32) "coingecko")
-
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
-(define-data-var activation-block uint u0)
+(define-read-only (get-owner)
+  (ok (var-get contract-owner))
+)
+
+(define-public (set-owner (owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
+  )
+)
+
+(define-read-only (get-oracle-src)
+  (ok (var-get oracle-src))
+)
+
+(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
+  (begin
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set oracle-src new-oracle-src))
+  )
+)
+
+(define-map reserve principal uint)
+
+(define-read-only (get-balance (token <ft-trait>))
+  (default-to u0 (map-get? reserve (contract-of token)))
+)
+
+(define-public (add-to-balance (token <ft-trait>) (amount uint) (sender principal))
+  (begin
+    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
+    (map-set reserve (contract-of token) (+ amount (get-balance token)))
+    (ok true)
+  )
+)
+
+;; if sender is an approved contract, then transfer requested amount from vault to recipient
+(define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+  (begin     
+    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
+    (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
+    (as-contract (unwrap! (contract-call? token transfer amount .alex-vault recipient none) ERR-TRANSFER-FAILED))
+    (ok true)
+  )
+)
+
+;; STAKING CONFIGURATION
+
+(define-constant MAX-REWARD-CYCLES u32)
+(define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
+
+;; how long a reward cycle is
+(define-data-var reward-cycle-length uint u2100)
+
+;; At a given reward cycle, what is the total amount of tokens staked
+(define-map staking-stats-at-cycle uint uint)
+
+;; At a given reward cycle and user ID:
+;; - what is the total tokens staked?
+;; - how many tokens should be returned? (based on staking period)
+(define-map staker-at-cycle
+  {
+    reward-cycle: uint,
+    user-id: uint
+  }
+  {
+    amount-staked: uint,
+    to-return: uint
+  }
+)
+
+(define-data-var activation-block uint u10000000)
 (define-data-var activation-delay uint u150)
 (define-data-var activation-reached bool false)
 (define-data-var activation-threshold uint u20)
 (define-data-var users-nonce uint u0)
-
-(define-map approved-contracts principal bool)
 ;; store user principal by user id
 (define-map users uint principal)
 ;; store user id by user principal
@@ -58,7 +127,7 @@
 ;; returns Stacks block height registration was activated at plus activationDelay
 (define-read-only (get-activation-block)
   (begin
-    (asserts! (var-get activation-reached) ERR_CONTRACT_NOT_ACTIVATED)
+    (asserts! (var-get activation-reached) ERR-CONTRACT-NOT-ACTIVATED)
     (ok (var-get activation-block))
   )
 )
@@ -86,35 +155,15 @@
   )
 )
 
-(define-read-only (get-owner)
-  (ok (var-get contract-owner))
+;; returns the total staked tokens for a given reward cycle
+(define-read-only (get-staking-stats-at-cycle (reward-cycle uint))
+  (map-get? staking-stats-at-cycle reward-cycle)
 )
 
-(define-public (set-owner (owner principal))
-  (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set contract-owner owner))
-  )
-)
-
-(define-read-only (get-oracle-src)
-  (ok (var-get oracle-src))
-)
-
-(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
-  (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set oracle-src new-oracle-src))
-  )
-)
-
-;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
-(define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
-  (begin     
-    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
-    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
-    (ok true)
-  )
+;; returns the total staked tokens for a given reward cycle
+;; or, zero
+(define-read-only (get-staking-stats-at-cycle-or-default (reward-cycle uint))
+  (default-to u0 (map-get? staking-stats-at-cycle reward-cycle))
 )
 
 ;; returns (some user-id) or none
@@ -156,8 +205,8 @@
       (new-id (+ u1 (var-get users-nonce)))
       (threshold (var-get activation-threshold))
     )
-    (asserts! (is-none (map-get? user-ids tx-sender)) ERR_USER_ALREADY_REGISTERED)
-    (asserts! (<= new-id threshold) ERR_ACTIVATION_THRESHOLD_REACHED)
+    (asserts! (is-none (map-get? user-ids tx-sender)) ERR-USER-ALREADY-REGISTERED)
+    (asserts! (<= new-id threshold) ERR-ACTIVATION-THRESHOLD-REACHED)
 
     (if (is-some memo) (print memo) none)
 
@@ -170,48 +219,12 @@
         )
         (var-set activation-reached true)
         (var-set activation-block activation-block-val)
-        (unwrap! (set-coinbase-thresholds activation-block-val) ERR_UNABLE_TO_SET_THRESHOLD)
+        (unwrap! (set-coinbase-thresholds activation-block-val) ERR-UNABLE-TO-SET-THRESHOLD)
         (ok true)
       )
       (ok true)
     )
   )
-)
-
-;; staking CONFIGURATION
-
-(define-constant MAX_REWARD_CYCLES u32)
-(define-constant REWARD_CYCLE_INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
-
-;; how long a reward cycle is
-(define-data-var reward-cycle-length uint u2100)
-
-;; At a given reward cycle, what is the total amount of tokens staked
-(define-map staking-stats-at-cycle uint uint)
-
-;; returns the total stacked tokens and committed uSTX for a given reward cycle
-(define-read-only (get-staking-stats-at-cycle (reward-cycle uint))
-  (map-get? staking-stats-at-cycle reward-cycle)
-)
-
-;; returns the total stacked tokens and committed uSTX for a given reward cycle
-;; or, an empty structure
-(define-read-only (get-staking-stats-at-cycle-or-default (reward-cycle uint))
-  (default-to u0 (map-get? staking-stats-at-cycle reward-cycle))
-)
-
-;; At a given reward cycle and user ID:
-;; - what is the total tokens Stacked?
-;; - how many tokens should be returned? (based on staking period)
-(define-map staker-at-cycle
-  {
-    reward-cycle: uint,
-    user-id: uint
-  }
-  {
-    amount-staked: uint,
-    to-return: uint
-  }
 )
 
 (define-read-only (get-staker-at-cycle (reward-cycle uint) (user-id uint))
@@ -251,14 +264,14 @@
   (get-entitled-staking-reward user-id target-cycle block-height)
 )
 
-;; get uSTX a staker can claim, given reward cycle they stacked in and current block height
+;; get uSTX a staker can claim, given reward cycle they staked in and current block height
 ;; this method only returns a positive value if:
 ;; - the current block height is in a subsequent reward cycle
 ;; - the staker actually locked up tokens in the target reward cycle
-;; - the staker locked up _enough_ tokens to get at least one uSTX
+;; - the staker locked up -enough- tokens to get at least one uSTX
 ;; it is possible to Stack tokens and not receive uSTX:
 ;; - if no miners commit during this reward cycle
-;; - the amount stacked by user is too few that you'd be entitled to less than 1 uSTX
+;; - the amount staked by user is too few that you'd be entitled to less than 1 uSTX
 (define-private (get-entitled-staking-reward (user-id uint) (target-cycle uint) (stacks-height uint))
   (let
     (
@@ -278,7 +291,7 @@
   )
 )
 
-;; staking ACTIONS
+;; STAKING ACTIONS
 
 (define-public (stake-tokens (amount-token uint) (lock-period uint))
   (stake-tokens-at-cycle tx-sender (get-or-create-user-id tx-sender) amount-token block-height lock-period)
@@ -287,7 +300,7 @@
 (define-private (stake-tokens-at-cycle (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
   (let
     (
-      (current-cycle (unwrap! (get-reward-cycle start-height) ERR_STAKING_NOT_AVAILABLE))
+      (current-cycle (unwrap! (get-reward-cycle start-height) ERR-STAKING-NOT-AVAILABLE))
       (target-cycle (+ u1 current-cycle))
       (commitment {
         staker-id: user-id,
@@ -296,11 +309,11 @@
         last: (+ target-cycle lock-period)
       })
     )
-    (asserts! (get-activation-status) ERR_CONTRACT_NOT_ACTIVATED)
-    (asserts! (and (> lock-period u0) (<= lock-period MAX_REWARD_CYCLES)) ERR_CANNOT_STAKE)
-    (asserts! (> amount-token u0) ERR_CANNOT_STAKE)
-    (try! (contract-call? .token-alex transfer amount-token tx-sender (as-contract tx-sender) none))
-    (match (fold stake-tokens-closure REWARD_CYCLE_INDEXES (ok commitment))
+    (asserts! (get-activation-status) ERR-CONTRACT-NOT-ACTIVATED)
+    (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
+    (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
+    (try! (contract-call? .token-alex transfer amount-token tx-sender .alex-vault none))
+    (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
       err-value (err err-value)
     )
@@ -368,26 +381,23 @@
   )
 )
 
-;; staking REWARD CLAIMS
+;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
 (define-public (claim-staking-reward (target-cycle uint))
-  (begin
-    (try! (claim-staking-reward-at-cycle tx-sender block-height target-cycle))
-    (ok true)
-  )
+  (claim-staking-reward-at-cycle tx-sender block-height target-cycle)
 )
 
 (define-private (claim-staking-reward-at-cycle (user principal) (stacks-height uint) (target-cycle uint))
   (let
     (
-      (current-cycle (unwrap! (get-reward-cycle stacks-height) ERR_STAKING_NOT_AVAILABLE))
-      (user-id (unwrap! (get-user-id user) ERR_USER_ID_NOT_FOUND))
+      (current-cycle (unwrap! (get-reward-cycle stacks-height) ERR-STAKING-NOT-AVAILABLE))
+      (user-id (unwrap! (get-user-id user) ERR-USER-ID-NOT-FOUND))
       (entitled-token (get-entitled-staking-reward user-id target-cycle stacks-height))
       (to-return (get to-return (get-staker-at-cycle-or-default target-cycle user-id)))
     )
-    (asserts! (> current-cycle target-cycle) ERR_REWARD_CYCLE_NOT_COMPLETED)
-    (asserts! (or (> to-return u0) (> entitled-token u0)) ERR_NOTHING_TO_REDEEM)
+    (asserts! (> current-cycle target-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (or (> to-return u0) (> entitled-token u0)) ERR-NOTHING-TO-REDEEM)
     ;; disable ability to claim again
     (map-set staker-at-cycle
       {
@@ -400,16 +410,16 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (as-contract (contract-call? .token-alex transfer to-return tx-sender user none))))
+    (and (> to-return u0) (try! (as-contract (contract-call? .token-alex transfer to-return .alex-vault user none))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex transfer entitled-token tx-sender user none))))
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex transfer entitled-token .alex-vault user none))))
     (ok true)
   )
 )
 
 ;; TOKEN CONFIGURATION
 
-(define-constant TOKEN_HALVING_BLOCKS u210000)
+(define-constant TOKEN-HALVING-BLOCKS u210000)
 
 ;; store block height at each halving, set by register-user in core contract
 (define-data-var coinbase-threshold-1 uint u0)
@@ -420,18 +430,18 @@
 
 (define-private (set-coinbase-thresholds (activation-block-val uint))
   (begin
-    (var-set coinbase-threshold-1 (+ activation-block-val TOKEN_HALVING_BLOCKS))
-    (var-set coinbase-threshold-2 (+ activation-block-val (* u2 TOKEN_HALVING_BLOCKS)))
-    (var-set coinbase-threshold-3 (+ activation-block-val (* u3 TOKEN_HALVING_BLOCKS)))
-    (var-set coinbase-threshold-4 (+ activation-block-val (* u4 TOKEN_HALVING_BLOCKS)))
-    (var-set coinbase-threshold-5 (+ activation-block-val (* u5 TOKEN_HALVING_BLOCKS)))
+    (var-set coinbase-threshold-1 (+ activation-block-val TOKEN-HALVING-BLOCKS))
+    (var-set coinbase-threshold-2 (+ activation-block-val (* u2 TOKEN-HALVING-BLOCKS)))
+    (var-set coinbase-threshold-3 (+ activation-block-val (* u3 TOKEN-HALVING-BLOCKS)))
+    (var-set coinbase-threshold-4 (+ activation-block-val (* u4 TOKEN-HALVING-BLOCKS)))
+    (var-set coinbase-threshold-5 (+ activation-block-val (* u5 TOKEN-HALVING-BLOCKS)))
     (ok true)
   )
 )
 ;; return coinbase thresholds if contract activated
 (define-read-only (get-coinbase-thresholds)
   (begin
-    (asserts! (var-get activation-reached) ERR_CONTRACT_NOT_ACTIVATED)
+    (asserts! (var-get activation-reached) ERR-CONTRACT-NOT-ACTIVATED)
     (ok {
       coinbase-threshold-1: (var-get coinbase-threshold-1),
       coinbase-threshold-2: (var-get coinbase-threshold-2),
@@ -480,23 +490,23 @@
 
 ;; constants
 ;;
-(define-constant SCALE_UP_OVERFLOW (err u5001))
-(define-constant SCALE_DOWN_OVERFLOW (err u5002))
-(define-constant ADD_OVERFLOW (err u5003))
-(define-constant SUB_OVERFLOW (err u5004))
-(define-constant MUL_OVERFLOW (err u5005))
-(define-constant DIV_OVERFLOW (err u5006))
-(define-constant POW_OVERFLOW (err u5007))
+(define-constant SCALE-UP-OVERFLOW (err u5001))
+(define-constant SCALE-DOWN-OVERFLOW (err u5002))
+(define-constant ADD-OVERFLOW (err u5003))
+(define-constant SUB-OVERFLOW (err u5004))
+(define-constant MUL-OVERFLOW (err u5005))
+(define-constant DIV-OVERFLOW (err u5006))
+(define-constant POW-OVERFLOW (err u5007))
 
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
-(define-constant MAX_POW_RELATIVE_ERROR u4) 
+(define-constant MAX-POW-RELATIVE-ERROR u4) 
 
 ;; public functions
 ;;
 
-(define-read-only (get_one)
+(define-read-only (get-one)
     (ok ONE_8)
 )
 
@@ -543,7 +553,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
+            (max-error (+ u1 (mul-up raw MAX-POW-RELATIVE-ERROR)))
         )
         (if (< raw max-error)
             u0
@@ -556,7 +566,7 @@
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
+            (max-error (+ u1 (mul-up raw MAX-POW-RELATIVE-ERROR)))
         )
         (+ raw max-error)
     )
@@ -564,7 +574,7 @@
 
 ;; math-log-exp
 ;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
-;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
+;; Exponentiation and logarithm with arbitrary bases (x^y and log-x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
 ;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
 ;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
@@ -582,36 +592,36 @@
 ;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
 ;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
 ;; We use 69.0 and -18.0 to have some safety margin.
-(define-constant MAX_NATURAL_EXPONENT (* 69 iONE_8))
-(define-constant MIN_NATURAL_EXPONENT (* -18 iONE_8))
+(define-constant MAX-NATURAL-EXPONENT (* 69 iONE_8))
+(define-constant MIN-NATURAL-EXPONENT (* -18 iONE_8))
 
-(define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint iONE_8)))
+(define-constant MILD-EXPONENT-BOUND (/ (pow u2 u126) (to-uint iONE_8)))
 
 ;; Because largest exponent is 69, we start from 64
-;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
+;; The first several a-n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
-(define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 6235149080811616882910000000, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+(define-constant x-a-list-no-deci (list 
+{x-pre: 6400000000, a-pre: 6235149080811616882910000000, use-deci: false} ;; x1 = 2^6, a1 = e^(x1)
 ))
 ;; 8 decimal constants
-(define-constant x_a_list (list 
-{x_pre: 3200000000, a_pre: 7896296018268069516100, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
-{x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
-{x_pre: 800000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
-{x_pre: 400000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
-{x_pre: 200000000, a_pre: 738905610, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
-{x_pre: 100000000, a_pre: 271828183, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
-{x_pre: 50000000, a_pre: 164872127, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
-{x_pre: 25000000, a_pre: 128402542, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
-{x_pre: 12500000, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
-{x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
+(define-constant x-a-list (list 
+{x-pre: 3200000000, a-pre: 7896296018268069516100, use-deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x-pre: 1600000000, a-pre: 888611052050787, use-deci: true} ;; x3 = 2^4, a3 = e^(x3)
+{x-pre: 800000000, a-pre: 298095798704, use-deci: true} ;; x4 = 2^3, a4 = e^(x4)
+{x-pre: 400000000, a-pre: 5459815003, use-deci: true} ;; x5 = 2^2, a5 = e^(x5)
+{x-pre: 200000000, a-pre: 738905610, use-deci: true} ;; x6 = 2^1, a6 = e^(x6)
+{x-pre: 100000000, a-pre: 271828183, use-deci: true} ;; x7 = 2^0, a7 = e^(x7)
+{x-pre: 50000000, a-pre: 164872127, use-deci: true} ;; x8 = 2^-1, a8 = e^(x8)
+{x-pre: 25000000, a-pre: 128402542, use-deci: true} ;; x9 = 2^-2, a9 = e^(x9)
+{x-pre: 12500000, a-pre: 113314845, use-deci: true} ;; x10 = 2^-3, a10 = e^(x10)
+{x-pre: 6250000, a-pre: 106449446, use-deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-(define-constant X_OUT_OF_BOUNDS (err u5009))
-(define-constant Y_OUT_OF_BOUNDS (err u5010))
-(define-constant PRODUCT_OUT_OF_BOUNDS (err u5011))
-(define-constant INVALID_EXPONENT (err u5012))
-(define-constant OUT_OF_BOUNDS (err u5013))
+(define-constant X-OUT-OF-BOUNDS (err u5009))
+(define-constant Y-OUT-OF-BOUNDS (err u5010))
+(define-constant PRODUCT-OUT-OF-BOUNDS (err u5011))
+(define-constant INVALID-EXPONENT (err u5012))
+(define-constant OUT-OF-BOUNDS (err u5013))
 
 ;; private functions
 ;;
@@ -620,54 +630,54 @@
 (define-private (ln-priv (a int))
   (let
     (
-      (a_sum_no_deci (fold accumulate_division x_a_list_no_deci {a: a, sum: 0}))
-      (a_sum (fold accumulate_division x_a_list {a: (get a a_sum_no_deci), sum: (get sum a_sum_no_deci)}))
-      (out_a (get a a_sum))
-      (out_sum (get sum a_sum))
-      (z (/ (* (- out_a iONE_8) iONE_8) (+ out_a iONE_8)))
-      (z_squared (/ (* z z) iONE_8))
-      (div_list (list 3 5 7 9 11))
-      (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
-      (seriesSum (get seriesSum num_sum_zsq))
-      (r (+ out_sum (* seriesSum 2)))
+      (a-sum-no-deci (fold accumulate-division x-a-list-no-deci {a: a, sum: 0}))
+      (a-sum (fold accumulate-division x-a-list {a: (get a a-sum-no-deci), sum: (get sum a-sum-no-deci)}))
+      (out-a (get a a-sum))
+      (out-sum (get sum a-sum))
+      (z (/ (* (- out-a iONE_8) iONE_8) (+ out-a iONE_8)))
+      (z-squared (/ (* z z) iONE_8))
+      (div-list (list 3 5 7 9 11))
+      (num-sum-zsq (fold rolling-sum-div div-list {num: z, seriesSum: z, z-squared: z-squared}))
+      (seriesSum (get seriesSum num-sum-zsq))
+      (r (+ out-sum (* seriesSum 2)))
    )
     (ok r)
  )
 )
 
-(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
+(define-private (accumulate-division (x-a-pre (tuple (x-pre int) (a-pre int) (use-deci bool))) (rolling-a-sum (tuple (a int) (sum int))))
   (let
     (
-      (a_pre (get a_pre x_a_pre))
-      (x_pre (get x_pre x_a_pre))
-      (use_deci (get use_deci x_a_pre))
-      (rolling_a (get a rolling_a_sum))
-      (rolling_sum (get sum rolling_a_sum))
+      (a-pre (get a-pre x-a-pre))
+      (x-pre (get x-pre x-a-pre))
+      (use-deci (get use-deci x-a-pre))
+      (rolling-a (get a rolling-a-sum))
+      (rolling-sum (get sum rolling-a-sum))
    )
-    (if (>= rolling_a (if use_deci a_pre (* a_pre iONE_8)))
-      {a: (/ (* rolling_a (if use_deci iONE_8 1)) a_pre), sum: (+ rolling_sum x_pre)}
-      {a: rolling_a, sum: rolling_sum}
+    (if (>= rolling-a (if use-deci a-pre (* a-pre iONE_8)))
+      {a: (/ (* rolling-a (if use-deci iONE_8 1)) a-pre), sum: (+ rolling-sum x-pre)}
+      {a: rolling-a, sum: rolling-sum}
    )
  )
 )
 
-(define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
+(define-private (rolling-sum-div (n int) (rolling (tuple (num int) (seriesSum int) (z-squared int))))
   (let
     (
-      (rolling_num (get num rolling))
-      (rolling_sum (get seriesSum rolling))
-      (z_squared (get z_squared rolling))
-      (next_num (/ (* rolling_num z_squared) iONE_8))
-      (next_sum (+ rolling_sum (/ next_num n)))
+      (rolling-num (get num rolling))
+      (rolling-sum (get seriesSum rolling))
+      (z-squared (get z-squared rolling))
+      (next-num (/ (* rolling-num z-squared) iONE_8))
+      (next-sum (+ rolling-sum (/ next-num n)))
    )
-    {num: next_num, seriesSum: next_sum, z_squared: z_squared}
+    {num: next-num, seriesSum: next-sum, z-squared: z-squared}
  )
 )
 
 ;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+;; Reverts if ln(x) * y is smaller than `MIN-NATURAL-EXPONENT`, or larger than `MAX-NATURAL-EXPONENT`.
 (define-private (pow-priv (x uint) (y uint))
   (let
     (
@@ -676,60 +686,60 @@
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) iONE_8))
     )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) PRODUCT_OUT_OF_BOUNDS)
+    (asserts! (and (<= MIN-NATURAL-EXPONENT logx-times-y) (<= logx-times-y MAX-NATURAL-EXPONENT)) PRODUCT-OUT-OF-BOUNDS)
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
   )
 )
 
 (define-private (exp-pos (x int))
   (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= 0 x) (<= x MAX-NATURAL-EXPONENT)) (err INVALID-EXPONENT))
     (let
       (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+        ;; For each x-n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
         ;; it and compute the accumulated product.
-        (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
-        (x_adj (get x x_product_no_deci))
-        (firstAN (get product x_product_no_deci))
-        (x_product (fold accumulate_product x_a_list {x: x_adj, product: iONE_8}))
-        (product_out (get product x_product))
-        (x_out (get x x_product))
-        (seriesSum (+ iONE_8 x_out))
-        (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        (sum (get seriesSum term_sum_x))
+        (x-product-no-deci (fold accumulate-product x-a-list-no-deci {x: x, product: 1}))
+        (x-adj (get x x-product-no-deci))
+        (firstAN (get product x-product-no-deci))
+        (x-product (fold accumulate-product x-a-list {x: x-adj, product: iONE_8}))
+        (product-out (get product x-product))
+        (x-out (get x x-product))
+        (seriesSum (+ iONE_8 x-out))
+        (div-list (list 2 3 4 5 6 7 8 9 10 11 12))
+        (term-sum-x (fold rolling-div-sum div-list {term: x-out, seriesSum: seriesSum, x: x-out}))
+        (sum (get seriesSum term-sum-x))
      )
-      (ok (* (/ (* product_out sum) iONE_8) firstAN))
+      (ok (* (/ (* product-out sum) iONE_8) firstAN))
    )
  )
 )
 
-(define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
+(define-private (accumulate-product (x-a-pre (tuple (x-pre int) (a-pre int) (use-deci bool))) (rolling-x-p (tuple (x int) (product int))))
   (let
     (
-      (x_pre (get x_pre x_a_pre))
-      (a_pre (get a_pre x_a_pre))
-      (use_deci (get use_deci x_a_pre))
-      (rolling_x (get x rolling_x_p))
-      (rolling_product (get product rolling_x_p))
+      (x-pre (get x-pre x-a-pre))
+      (a-pre (get a-pre x-a-pre))
+      (use-deci (get use-deci x-a-pre))
+      (rolling-x (get x rolling-x-p))
+      (rolling-product (get product rolling-x-p))
    )
-    (if (>= rolling_x x_pre)
-      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) (if use_deci iONE_8 1))}
-      {x: rolling_x, product: rolling_product}
+    (if (>= rolling-x x-pre)
+      {x: (- rolling-x x-pre), product: (/ (* rolling-product a-pre) (if use-deci iONE_8 1))}
+      {x: rolling-x, product: rolling-product}
    )
  )
 )
 
-(define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
+(define-private (rolling-div-sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
     (
-      (rolling_term (get term rolling))
-      (rolling_sum (get seriesSum rolling))
+      (rolling-term (get term rolling))
+      (rolling-sum (get seriesSum rolling))
       (x (get x rolling))
-      (next_term (/ (/ (* rolling_term x) iONE_8) n))
-      (next_sum (+ rolling_sum next_term))
+      (next-term (/ (/ (* rolling-term x) iONE_8) n))
+      (next-sum (+ rolling-sum next-term))
    )
-    {term: next_term, seriesSum: next_sum, x: x}
+    {term: next-term, seriesSum: next-sum, x: x}
  )
 )
 
@@ -737,17 +747,17 @@
 ;;
 
 (define-read-only (get-exp-bound)
-  (ok MILD_EXPONENT_BOUND)
+  (ok MILD-EXPONENT-BOUND)
 )
 
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) X_OUT_OF_BOUNDS)
+    (asserts! (< x (pow u2 u127)) X-OUT-OF-BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) Y_OUT_OF_BOUNDS)
+    (asserts! (< y MILD-EXPONENT-BOUND) Y-OUT-OF-BOUNDS)
 
     (if (is-eq y u0) 
       (ok (to-uint iONE_8))
@@ -760,13 +770,13 @@
 )
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+;; Reverts if `x` is smaller than MIN-NATURAL-EXPONENT, or larger than `MAX-NATURAL-EXPONENT`.
 (define-read-only (exp-fixed (x int))
   (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= MIN-NATURAL-EXPONENT x) (<= x MAX-NATURAL-EXPONENT)) (err INVALID-EXPONENT))
     (if (< x 0)
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
+      ;; fits in the signed 128 bit range (as it is larger than MIN-NATURAL-EXPONENT).
       ;; Fixed point division requires multiplying by iONE_8.
       (ok (/ (* iONE_8 iONE_8) (unwrap-panic (exp-pos (* -1 x)))))
       (exp-pos x)
@@ -789,7 +799,7 @@
 ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-read-only (ln-fixed (a int))
   (begin
-    (asserts! (> a 0) (err OUT_OF_BOUNDS))
+    (asserts! (> a 0) (err OUT-OF-BOUNDS))
     (if (< a iONE_8)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.
