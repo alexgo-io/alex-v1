@@ -313,7 +313,7 @@
                 (pool-updated
                     (merge pool
                         {
-                            balance-token: (+ (+ balance-token dx-net-fees) fee-rebate),
+                            balance-token: (+ balance-token dx-net-fees fee-rebate),
                             balance-aytoken: (if (<= balance-aytoken dy) u0 (- balance-aytoken dy))
                         }
                     )
@@ -357,7 +357,7 @@
                     (merge pool
                         {
                             balance-token: (if (<= balance-token dx) u0 (- balance-token dx)),
-                            balance-aytoken: (+ (+ balance-aytoken dy-net-fees) fee-rebate)
+                            balance-aytoken: (+ balance-aytoken dy-net-fees fee-rebate)
                         }
                     )
                 )

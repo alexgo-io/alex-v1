@@ -308,7 +308,7 @@
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (+ (+ balance-x dx-net-fees) fee-rebate),
+                        balance-x: (+ balance-x dx-net-fees fee-rebate),
                         balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
                         oracle-resilient:   (if (get oracle-enabled pool) 
                                                 (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
@@ -354,7 +354,7 @@
                     (merge pool
                         {
                         balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
-                        balance-y: (+ (+ balance-y dy-net-fees) fee-rebate),
+                        balance-y: (+ balance-y dy-net-fees fee-rebate),
                         oracle-resilient:   (if (get oracle-enabled pool) 
                                                 (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
                                                 u0

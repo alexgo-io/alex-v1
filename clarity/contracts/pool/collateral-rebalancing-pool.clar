@@ -590,7 +590,7 @@
                 (pool-updated
                     (merge pool
                         {
-                            balance-x: (+ (+ balance-x dx-net-fees) fee-rebate),
+                            balance-x: (+ balance-x dx-net-fees fee-rebate),
                             balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
                             weight-x: weight-x,
                             weight-y: weight-y                    
@@ -643,7 +643,7 @@
                     (merge pool
                         {
                             balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
-                            balance-y: (+ (+ balance-y dy-net-fees) fee-rebate),
+                            balance-y: (+ balance-y dy-net-fees fee-rebate),
                             weight-x: weight-x,
                             weight-y: weight-y                        
                         }
