@@ -131,7 +131,7 @@ constructor(chain: Chain, deployer: Account) {
   this.deployer = deployer;
 }
 
-propose(startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
+propose(contractCaller: Account, startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
     let block = this.chain.mineBlock([
         Tx.contractCall("multisig-crp-wbtc-59760-usda", "propose", [
           types.uint(startBlockHeight),
@@ -139,7 +139,7 @@ propose(startBlockHeight: number, proposeTitle: string, proposeURL: string, feeR
           types.utf8(proposeURL),
           types.uint(feeRateX),
           types.uint(feeRateY),
-        ], this.deployer.address),
+        ], contractCaller.address),
       ]);
       return block.receipts[0].result;
   }

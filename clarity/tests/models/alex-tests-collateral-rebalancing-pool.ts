@@ -316,14 +316,14 @@ import {
       ], this.deployer.address);
     }    
 
-    setFeeRebate(token: string, collateral: string, expiry: number, rebate : number) {
+    setFeeRebate(user: Account, token: string, collateral: string, expiry: number, rebate : number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "set-fee-rebate", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
           types.uint(rebate)
-        ], this.deployer.address),
+        ], user.address),
       ]);
       return block.receipts[0].result;
     }
