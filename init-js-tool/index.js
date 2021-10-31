@@ -754,11 +754,11 @@ async function run() {
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
-    await arbitrage_fwp(dry_run=true);
-    await arbitrage_crp(dry_run=true, _pools);    
-    await arbitrage_ytp(dry_run=true, _pools); 
+    // await arbitrage_fwp(dry_run=true);
+    // await arbitrage_crp(dry_run=true, _pools);    
+    // await arbitrage_ytp(dry_run=true, _pools); 
     // await get_pool_details_fwp();
-    // await get_pool_details_crp(_pools);
+    await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
     // await reduce_position_fwp(0.9 * ONE_8);

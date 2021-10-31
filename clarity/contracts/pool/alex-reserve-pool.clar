@@ -74,8 +74,7 @@
 (define-public (add-to-balance (token <ft-trait>) (amount uint) (sender principal))
   (begin
     (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
-    (map-set reserve (contract-of token) (+ amount (get-balance token)))
-    (ok true)
+    (ok (map-set reserve (contract-of token) (+ amount (get-balance token))))
   )
 )
 
@@ -84,8 +83,7 @@
   (begin     
     (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
     (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
-    (as-contract (unwrap! (contract-call? token transfer amount .alex-vault recipient none) ERR-TRANSFER-FAILED))
-    (ok true)
+    (ok (as-contract (unwrap! (contract-call? token transfer amount .alex-vault recipient none) ERR-TRANSFER-FAILED)))
   )
 )
 
@@ -150,8 +148,7 @@
 (define-public (set-activation-block (new-activation-block uint))
   (begin
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (var-set activation-block new-activation-block)
-    (ok true)
+    (ok (var-set activation-block new-activation-block))
   )
 )
 
@@ -219,7 +216,7 @@
         )
         (var-set activation-reached true)
         (var-set activation-block activation-block-val)
-        (unwrap! (set-coinbase-thresholds activation-block-val) ERR-UNABLE-TO-SET-THRESHOLD)
+        (set-coinbase-thresholds)
         (ok true)
       )
       (ok true)
@@ -275,7 +272,7 @@
       (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
         ;; this cycle hasn't finished, or staker contributed nothing
         u0
-        (/ user-staked-this-cycle total-staked-this-cycle)
+        (div-down user-staked-this-cycle total-staked-this-cycle)
       )
       ;; before first reward cycle
       u0
@@ -404,14 +401,14 @@
     ;; send back tokens if user was eligible
     (and (> to-return u0) (try! (as-contract (contract-call? .token-alex transfer to-return .alex-vault user none))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint recipient (* entitled-token (get-coinbase-amount target-cycle))))))
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user (mul-down entitled-token (get-coinbase-amount target-cycle))))))
     (ok true)
   )
 )
 
 ;; TOKEN CONFIGURATION
 
-(define-data-var token-halving-cycle u100)
+(define-data-var token-halving-cycle uint u100)
 
 (define-read-only (get-token-halving-cycle)
   (var-get token-halving-cycle)
@@ -419,9 +416,9 @@
 
 (define-public (set-token-halving-cycle (new-token-halving-cycle uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (var-set token-halving-cycle new-token-halving-cycle)
-    (try! (set-coinbase-thresholds))
+    (set-coinbase-thresholds)
     (ok true)
   )
 )
@@ -440,7 +437,6 @@
     (var-set coinbase-threshold-3 (* u3 (var-get token-halving-cycle)))
     (var-set coinbase-threshold-4 (* u4 (var-get token-halving-cycle)))
     (var-set coinbase-threshold-5 (* u5 (var-get token-halving-cycle)))
-    (ok true)
   )
 )
 ;; return coinbase thresholds if contract activated
@@ -458,13 +454,13 @@
 (define-read-only (get-coinbase-amount (reward-cycle uint))
   (begin
     ;; computations based on each halving threshold
-    (asserts! (> reward-cycle (var-get coinbase-threshold-1)) u100000)
-    (asserts! (> reward-cycle (var-get coinbase-threshold-2)) u50000)
-    (asserts! (> reward-cycle (var-get coinbase-threshold-3)) u25000)
-    (asserts! (> reward-cycle (var-get coinbase-threshold-4)) u12500)
-    (asserts! (> reward-cycle (var-get coinbase-threshold-5)) u6250)
+    (asserts! (> reward-cycle (var-get coinbase-threshold-1)) (* u100000 ONE_8))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-2)) (* u50000 ONE_8))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-3)) (* u25000 ONE_8))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-4)) (* u12500 ONE_8))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-5)) (* u6250 ONE_8))
     ;; default value after 5th halving
-    u3125
+    (* u3125 ONE_8)
   )
 )
 
