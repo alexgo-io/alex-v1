@@ -52,7 +52,7 @@ Clarinet.test({
         let position:any = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(2236067605752);
         position['balance-x'].expectUint(wbtcQ);
-        position['balance-y'].expectUint(wbtcQ*wbtcPrice);
+        position['balance-y'].expectUint(wbtcQ*wbtcPrice);     
 
         // Add extra liquidity (1/4 of initial liquidity)
         result = FWPTest.addToPosition(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, wbtcQ / 4, wbtcQ*wbtcPrice / 4);
@@ -147,11 +147,11 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : Fee Setting and Collection using Multisig ",
+    name: "FWP : Fee Setting using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        //let wallet_1 = accounts.get("wallet_1")!;
+        let contractOwner = deployer
 
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_FWP_WBTC_USDA_5050(chain, deployer);
@@ -159,8 +159,9 @@ Clarinet.test({
         let wbtcToken = new WBTCToken(chain, deployer);
         let fwpPoolToken = new POOLTOKEN_FWP_WBTC_USDA_5050(chain, deployer);
 
-        const feeRateX = 5000000; // 5%
-        const feeRateY = 5000000;
+        const feeRateX = 0.1*ONE_8; // 10%
+        const feeRateY = 0.1*ONE_8;
+        const feeRebate = 0.5*ONE_8;
 
         // Deployer creating a pool, initial tokens injected to the pool
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigAddress, wbtcQ, wbtcQ*wbtcPrice);
@@ -201,33 +202,51 @@ Clarinet.test({
         result = MultiSigTest.endProposal(1)
         result.expectOk().expectBool(true) // Success 
        
-        // Fee set to 5% 
+        // Fee set to 10% 
         result = FWPTest.getFeeX(deployer, wbtcAddress, usdaAddress, weightX, weightY);
-        result.expectOk().expectUint(5000000)
+        result.expectOk().expectUint(0.1*ONE_8)
         result = FWPTest.getFeeY(deployer, wbtcAddress, usdaAddress, weightX, weightY);
-        result.expectOk().expectUint(5000000)
+        result.expectOk().expectUint(0.1*ONE_8)
         
+        // deployer (Contract owner) sets rebate rate
+        result = FWPTest.setFeeRebate(contractOwner, wbtcAddress, usdaAddress, weightX, weightY, feeRebate);
+        result.expectOk().expectBool(true)
+        
+        ROresult = FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        position = ROresult.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(12500000000); 
+        position['balance-y'].expectUint(625000000000000); 
+
         // Swapping 
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(95000000);    // 5% Fee Charged on ONE_8
-        position['dy'].expectUint(4714125000000);    // Corresponding dy value
+        position['dx'].expectUint(90000000);    // 10% Fee Charged on ONE_8
+        position['dy'].expectUint(4467787500000);    // Corresponding dy value
         
+        // fee : 0.1* ONE_8
+        // dx-net-fees : 0.9 * ONE_8
+        // fee-rebate : 0.05 * ONE_8
+
+        ROresult = FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
+        position = ROresult.result.expectOk().expectTuple();
+        position['balance-x'].expectUint(12595000000); // 12500000000 + 0.95 * ONE_8
+        position['balance-y'].expectUint(620532212500000); 
+
         // Swapping 
         result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*wbtcPrice, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(97192466);    // Corresponding dx value
-        position['dy'].expectUint(4750000000000);    // 5% Fee Charged on ONE_8*wbtcPrice
+        position['dx'].expectUint(92002948);    // Corresponding dx value
+        position['dy'].expectUint(4500000000000);    // 10% Fee Charged on ONE_8*wbtcPrice
         
-        // Fee Collected 
+        // fee : 0.1 * ONE_8 * wbtcPrice
+        // dx-net-fees : 0.9 * ONE_8 * wbtcPrice
+        // fee-rebate : 0.05 * ONE_8 * wbtcPrice
+
         ROresult = FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
         position = ROresult.result.expectOk().expectTuple();
-        position['fee-balance-x'].expectUint(5000000); 
-        position['fee-balance-y'].expectUint(250000000000); 
-        
-        // Fee Collect - From pool to Multisig; TO DO after discussion
-        
-        
+        position['balance-x'].expectUint(12502997052); 
+        position['balance-y'].expectUint(625282212500000); // 620532212500000 + 0.95 * ONE_8 * wbtcPrice (4750000000000)
+
     },
 });
 

@@ -201,6 +201,22 @@ import {
       return block.receipts[0].result;
     }
 
+    setFeeRebate(user: Account, aytoken: string, rebate : number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("yield-token-pool", "set-fee-rebate", [
+          types.principal(aytoken),
+          types.uint(rebate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRebate(aytoken: string) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-fee-rebate", [
+        types.principal(aytoken),
+      ], this.deployer.address);
+    }
+
   
   }
   
