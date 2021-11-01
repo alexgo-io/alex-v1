@@ -7,6 +7,7 @@ const {
   AnchorMode,
   PostConditionMode,
   uintCV,
+  someCV,
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType
@@ -178,7 +179,7 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
   }
 };
 
-const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
+const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx, min_dy) => {
   console.log('--------------------------------------------------------------------------');
   console.log('[FWP] swap-x-for-y...', tokenX, tokenY, weightX, weightY, dx);
   const privateKey = await getUserPK();
@@ -191,7 +192,8 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),          
-          uintCV(dx)
+          uintCV(dx),
+          someCV(uintCV(min_dy))
       ],
       senderKey: privateKey,
       validateWithAbi: true,
@@ -210,7 +212,7 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx) => {
   }
 }
 
-const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
+const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy, min_dx) => {
   console.log('--------------------------------------------------------------------------');
   console.log('[FWP] swap-y-for-x...', tokenX, tokenY, weightX, weightY, dy);
   const privateKey = await getUserPK();
@@ -223,7 +225,8 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy) => {
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
           uintCV(weightX),
           uintCV(weightY),          
-          uintCV(dy)
+          uintCV(dy),
+          someCV(uintCV(min_dx))
       ],
       senderKey: privateKey,
       validateWithAbi: true,
