@@ -631,11 +631,16 @@
     )
 )
 
-;; split of balance to yield and key is transparent to traders
+;; @desc swap collateral with token
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @param dx; amount of collateral to be swapped
+;; @param min-dy; max slippage
+;; @post collateral; sender transfers exactly dx collateral to alex-vault
 (define-public (swap-x-for-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
-        ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)    
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         
         ;; swap is supported only if token /= collateral
         (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)
@@ -685,7 +690,13 @@
     )
 )
 
-;; split of balance to yield and key is transparent to traders
+;; @desc swap token with collateral
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @param dy; amount of token to be swapped
+;; @param min-dx; max slippage
+;; @post token; sender transfers exactly dy token to alex-vault
 (define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
@@ -738,14 +749,29 @@
     )
 )
 
+;; @desc get-fee-rate-x
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @returns fee-rate-x
 (define-read-only (get-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
    (ok (get fee-rate-x (try! (get-pool-details token collateral expiry))))  
 )
 
+;; @desc get-fee-rate-y
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @returns fee-rate-y
 (define-read-only (get-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
    (ok (get fee-rate-y (try! (get-pool-details token collateral expiry))))  
 )
 
+;; @desc set-fee-rate-x
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @param fee-rate-x; new fee-rate-x
 (define-public (set-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-x uint))
     (let 
         (
@@ -763,6 +789,11 @@
     )
 )
 
+;; @desc set-fee-rate-y
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @param fee-rate-y; new fee-rate-y
 (define-public (set-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-y uint))
     (let 
         (         
@@ -780,6 +811,11 @@
     )
 )
 
+;; @desc get-fee-to-address
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; borrow expiry
+;; @returns multisig of the pool
 (define-read-only (get-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let 
         (
