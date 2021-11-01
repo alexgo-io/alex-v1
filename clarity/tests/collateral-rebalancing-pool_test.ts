@@ -889,7 +889,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "CRP : Fee collection testing",
+    name: "CRP : Fee setting using Multisig",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -982,7 +982,7 @@ Clarinet.test({
             ], deployer.address),
           ]);
         block.receipts[0].result.expectOk(); 
-                
+
         ROresult = YieldToken.balanceOf(deployer.address)
         ROresult.result.expectOk().expectUint(80807360);
 

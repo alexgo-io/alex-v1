@@ -147,7 +147,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : Fee Setting and Collection using Multisig ",
+    name: "FWP : Fee Setting using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

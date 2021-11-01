@@ -393,7 +393,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "YTP : Fee Setting and Collection using Multisig ",
+    name: "YTP : Fee Setting using Multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -490,11 +490,11 @@ Clarinet.test({
         call = await YTPTest.getYield(yieldwbtc59760Address);
         call.result.expectOk().expectUint(1355);
 
-        // fee-yield = yield * fee-rate-token = 1335 * 0.1*ONE_8 = 133 // (contract-call? .math-fixed-point mul-down 1335 u10000000)
-        // lambda = ONE_8 - fee-yield = ONE_8 - 133 = 99999867 (non-floating point)
+        // fee-yield = yield * fee-rate-token = 1355 * 0.1*ONE_8 = 135 (round-down) // (contract-call? .math-fixed-point mul-down 1335 u10000000)
+        // lambda = ONE_8 - fee-yield = ONE_8 - 135 = 9999865 (non-floating point)
         // dy-net-fees = dy * lambda = 199999730    // (contract-call? .math-fixed-point mul-down u99999867 u200000000)
-        // fee = dy - dy-net-fess = 200000000 - 199999734 = 266
-        // fee-rebate = 266 * 0.5 = 133 
+        // fee = dy - dy-net-fess = 200000000 - 199999730 = 270
+        // fee-rebate = 270 * 0.5 = 135
         
         // sell some yield-token
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 2*ONE_8, 0);
@@ -502,8 +502,11 @@ Clarinet.test({
         position['dx'].expectUint(199967096);
         position['dy'].expectUint(199999730);
 
-
-
+        call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        position = call.result.expectOk().expectTuple();
+        position['balance-aytoken'].expectUint(100000000 + 199999730 + 135); //before + after + fee-rebate
+        position['balance-token'].expectUint(100900027581 - 199967096);
+        position['balance-virtual'].expectUint(101000000000);
     },    
 });
 
