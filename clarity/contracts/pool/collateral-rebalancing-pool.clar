@@ -557,20 +557,19 @@
 
 ;; split of balance to yield and key is transparent to traders
 (define-public (swap-x-for-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
-    (let
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-        )
+    (begin
+
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
         ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)    
         
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token-y token-x)) ERR-INVALID-POOL-ERR)
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
         (let
             (
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (strike (get strike pool))
                 (bs-vol (get bs-vol pool)) 
@@ -612,20 +611,17 @@
 )
 
 (define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
-    (let
-        (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-        )
+    (begin
         ;; TODO : Check whether dy or dx value is valid  
         ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)   
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token-y token-x)) ERR-INVALID-POOL-ERR)   
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)   
         (let
             (
-                
+                (token-x (contract-of collateral))
+                (token-y (contract-of token))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (strike (get strike pool))
                 (bs-vol (get bs-vol pool)) 
