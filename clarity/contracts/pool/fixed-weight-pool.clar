@@ -1109,3 +1109,11 @@
    )
  )
 )
+
+(define-public (get-weighted-dy (token <ft-trait>) (collateral <ft-trait>) (weight-x uint) (weight-y uint) (dx-to-dy uint) (min-dx (optional uint)) (min-dy (optional uint))) 
+   (ok (if (is-some (get-pool-exists token collateral weight-x weight-y))
+                                    (get dx (try! (swap-y-for-x token collateral weight-x weight-y dx-to-dy min-dx)))
+                                    (get dy (try! (swap-x-for-y collateral token weight-x weight-y dx-to-dy min-dy)))
+        )
+   )
+)
