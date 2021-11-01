@@ -18,13 +18,14 @@
 (define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 
 ;; @desc get-max-in-ratio
-;; @returns MAX-IN-RATIO
+;; @returns uint
 (define-read-only (get-max-in-ratio)
   (var-get MAX-IN-RATIO)
 )
 
 ;; @desc set-max-in-ratio
 ;; @param new-max-in-ratio; new MAX-IN-RATIO
+;; @returns (response bool uint)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -34,13 +35,14 @@
 )
 
 ;; @desc get-max-out-ratio
-;; @returns MAX-OUT-RATIO
+;; @returns unit
 (define-read-only (get-max-out-ratio)
   (var-get MAX-OUT-RATIO)
 )
 
 ;; @desc set-max-out-ratio
 ;; @param new-max-out-ratio; new MAX-OUT-RATIO
+;; @returns (response bool uint)
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -50,13 +52,14 @@
 )
 
 ;; @desc get-contract-owner
-;; @returns CONTRACT-OWNER
+;; @returns principal
 (define-read-only (get-contract-owner)
   (var-get CONTRACT-OWNER)
 )
 
 ;; @desc set-contract-owner
 ;; @param new-contract-owner; new CONTRACT-OWNER
+;; @returns (response bool uint)
 (define-public (set-contract-owner (new-contract-owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -71,7 +74,7 @@
 ;; @param balance-y; balance of token-y
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
-;; @returns invariant
+;; @returns (response uint uint)
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -91,7 +94,7 @@
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param dx; amount of token-x added
-;; @returns amount of token-y expected
+;; @returns (response uint uint)
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -124,7 +127,7 @@
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param dy; amount of token-y added
-;; @returns amount of token-x added
+;; @returns (response uint uint)
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -159,7 +162,7 @@
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param price; target price
-;; @returns amount token-x that needs to be swapped to get to target price
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -187,7 +190,7 @@
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param price; target price
-;; @returns amount token-y that needs to be swapped to get to target price
+;; @returns (response uint uint)
 (define-read-only (get-y-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -217,7 +220,7 @@
 ;; @param total-supply; total supply of pool tokens
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
-;; @returns amount of pool token that can be minted given position added
+;; @returns (response (tutple uint uint) uint)
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -246,7 +249,7 @@
 ;; @param weight-y; weight of token-y
 ;; @param total-supply; total supply of pool tokens
 ;; @param token; amount of pool token minted
-;; @returns amount of token-x and token-y required to mint given number of pool tokens
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -271,7 +274,7 @@
 ;; @param weight-y; weight of token-y
 ;; @param total-supply; total supply of pool tokens
 ;; @param token; amount of pool token to be burnt
-;; @returns amount of token-x and token-y to be returned after burning given number of pool tokens
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
     (get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
 )

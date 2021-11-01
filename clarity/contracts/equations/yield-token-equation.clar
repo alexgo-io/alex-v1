@@ -20,13 +20,14 @@
 (define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 
 ;; @desc get-max-in-ratio
-;; @returns MAX-IN-RATIO
+;; @returns uint
 (define-read-only (get-max-in-ratio)
   (var-get MAX-IN-RATIO)
 )
 
 ;; @desc set-max-in-ratio
 ;; @param new-max-in-ratio; new MAX-IN-RATIO
+;; @returns (response bool uint)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -36,13 +37,14 @@
 )
 
 ;; @desc get-max-out-ratio
-;; @returns MAX-OUT-RATIO
+;; @returns uint
 (define-read-only (get-max-out-ratio)
   (var-get MAX-OUT-RATIO)
 )
 
 ;; @desc set-max-out-ratio
 ;; @param new-max-out-ratio; new MAX-OUT-RATIO
+;; @returns (response bool uint)
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -52,13 +54,14 @@
 )
 
 ;; @desc get-contract-owner
-;; @returns CONTRACT-OWNER
+;; @returns principal
 (define-read-only (get-contract-owner)
   (var-get CONTRACT-OWNER)
 )
 
 ;; @desc set-contract-owner
 ;; @param new-contract-owner; new CONTRACT-OWNER
+;; @returns (response bool uint)
 (define-public (set-contract-owner (new-contract-owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -74,7 +77,7 @@
 ;; @param balance-x; balance of token-x (token)
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
-;; @returns units of yield-token per one uint of token
+;; @returns (response uint uint)
 (define-read-only (get-price (balance-x uint) (balance-y uint) (t uint))
   (begin
     (asserts! (>= balance-y balance-x) ERR-INVALID-BAL)      
@@ -86,7 +89,7 @@
 ;; @param balance-x; balance of token-x (token)
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
-;; @returns absolute yield implied from price, i.e. (price - 1)
+;; @returns (response uint uint)
 (define-read-only (get-yield (balance-x uint) (balance-y uint) (t uint))
   (let
     (
@@ -106,7 +109,7 @@
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
 ;; @param dx; amount of token added
-;; @returns expected amount of yield-token removed
+;; @returns (response uint uint)
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
   (begin
     (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BAL)
@@ -141,7 +144,7 @@
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
 ;; @param dy; amount of yield-token added
-;; @returns expected amount of token removed
+;; @returns (response uint uint)
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
   (begin
     (asserts! (>= balance-y dy) ERR-INSUFFICIENT-BAL)
@@ -177,7 +180,7 @@
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
 ;; @param price; target price
-;; @returns expected amount of token required to get to target price
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (t uint) (price uint))
   (begin
     (asserts! (< price (try! (get-price balance-x balance-y t))) ERR-NO-LIQUIDITY) 
@@ -207,7 +210,7 @@
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
 ;; @param price; target price
-;; @returns expected amount of yield-token required to get to target price
+;; @returns (response uint uint)
 (define-read-only (get-y-given-price (balance-x uint) (balance-y uint) (t uint) (price uint))
   (begin
     (asserts! (> price (try! (get-price balance-x balance-y t))) ERR-NO-LIQUIDITY) 
@@ -232,7 +235,7 @@
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
 ;; @param yield; target yield
-;; @returns expected amount of token required to get to target yield
+;; @returns (response uint uint)
 (define-read-only (get-x-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
   (get-x-given-price balance-x balance-y t (+ ONE_8 yield))
 )
@@ -242,7 +245,7 @@
 ;; @param balance-y; balance of token-y (yield-token)
 ;; @param t; time-to-maturity
 ;; @param yield; target yield
-;; @returns expected amount of yield-token required to get to target yield
+;; @returns (response uint uint)
 (define-read-only (get-y-given-yield (balance-x uint) (balance-y uint) (t uint) (yield uint))
   (get-y-given-price balance-x balance-y t (+ ONE_8 yield))
 )
@@ -253,7 +256,7 @@
 ;; @param t; time-to-maturity
 ;; @param total-supply; total supply of pool tokens
 ;; @param dx; amount of token added
-;; @returns expected amount of pool token based on dx
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))
   (begin
     (asserts! (> dx u0) ERR-NO-LIQUIDITY)
@@ -279,7 +282,7 @@
 ;; @param t; time-to-maturity
 ;; @param total-supply; total supply of pool tokens
 ;; @param token; amount of pool token to be minted
-;; @returns the required token/yield-token to mint pool token
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
   (begin
     (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
@@ -300,7 +303,7 @@
 ;; @param t; time-to-maturity
 ;; @param total-supply; total supply of pool tokens
 ;; @param token; amount of pool token to be burnt
-;; @returns the expected token/yield-token to be returned after burning pool token
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
     (get-position-given-mint balance-x balance-y t total-supply token)
 )

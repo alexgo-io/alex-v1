@@ -30,7 +30,7 @@
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
-(define-constant CONTRACT-OWNER tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 
 ;; data maps and vars
 (define-map pools-map
@@ -54,12 +54,11 @@
     total-supply: uint,
     balance-x: uint,
     balance-y: uint,
-    fee-balance-x: uint,
-    fee-balance-y: uint,
     fee-to-address: principal,
     pool-token: principal,
     fee-rate-x: uint,
     fee-rate-y: uint,
+    fee-rebate: uint,
     token-x-symbol: (string-ascii 32),
     token-y-symbol: (string-ascii 32),
     oracle-enabled: bool,
@@ -71,11 +70,31 @@
 (define-data-var pool-count uint u0)
 (define-data-var pools-list (list 2000 uint) (list))
 
-;; implement trait-pool
+;; @desc get-contract-owner
+;; @returns (var-get CONTRACT-OWNER)
+(define-read-only (get-contract-owner)
+  (var-get CONTRACT-OWNER)
+)
+
+;; @desc set-contract-owner
+;; @param new-contract-owner; new (var-get CONTRACT-OWNER)
+(define-public (set-contract-owner (new-contract-owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set CONTRACT-OWNER new-contract-owner)
+    (ok true)
+  )
+)
+
+;; @desc get-pool-count
+;; @returns the number of pools in the contract
 (define-read-only (get-pool-count)
     (ok (var-get pool-count))
 )
 
+;; @desc get-pool-contracts
+;; @param pool-id; pool-id
+;; @returns the details of the pool with the pool-id
 (define-read-only (get-pool-contracts (pool-id uint))
     (let
         (
@@ -86,22 +105,28 @@
     )
 )
 
+;; @desc get-pools
+;; @returns map of get-pool-contracts of all pools in the contract.
 (define-read-only (get-pools)
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
-;; additional functions
+;; @desc get-pool-details
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @returns the details of the specified pool
 (define-read-only (get-pool-details (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
-    (let 
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        )
-        (ok pool)
-   )
+    (ok (unwrap! (get-pool-exists token-x-trait token-y-trait weight-x weight-y) ERR-INVALID-POOL-ERR))
 )
 
+;; @desc get-pool-exists
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @returns the details of the specified pool | 
 (define-read-only (get-pool-exists (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) 
 )
@@ -131,7 +156,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
             (pool-updated (merge pool {oracle-enabled: true}))
         )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
         (ok true)
@@ -153,7 +178,7 @@
                 oracle-resilient: (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))
                 }))
         )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
@@ -192,12 +217,11 @@
                 total-supply: u0,
                 balance-x: u0,
                 balance-y: u0,
-                fee-balance-x: u0,
-                fee-balance-y: u0,
                 fee-to-address: (contract-of multisig-vote),
                 pool-token: (contract-of the-pool-token),
                 fee-rate-x: u0,
                 fee-rate-y: u0,
+                fee-rebate: u0,
                 token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
                 token-y-symbol: (try! (contract-call? token-y-trait get-symbol)),
                 oracle-enabled: false,
@@ -206,7 +230,7 @@
             })
         )
 
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)        
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)        
 
         (asserts!
             (and
@@ -314,20 +338,19 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
-                (fee-rate-x (get fee-rate-x pool))
 
                 ;; fee = dx * fee-rate-x
-                (fee (mul-up dx fee-rate-x))
+                (fee (mul-up dx (get fee-rate-x pool)))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
+                (fee-rebate (mul-down fee (get fee-rebate pool)))
     
                 (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
 
                 (pool-updated
                     (merge pool
                         {
-                        balance-x: (+ balance-x dx-net-fees),
+                        balance-x: (+ balance-x dx-net-fees fee-rebate),
                         balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
-                        fee-balance-x: (+ fee (get fee-balance-x pool)),
                         oracle-resilient:   (if (get oracle-enabled pool) 
                                                 (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
                                                 u0
@@ -360,12 +383,11 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
-                (fee-rate-y (get fee-rate-y pool))
-                (fee-balance-y (get fee-balance-y pool))
 
                 ;; fee = dy * fee-rate-y
-                (fee (mul-up dy fee-rate-y))
+                (fee (mul-up dy (get fee-rate-y pool)))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
+                (fee-rebate (mul-down fee (get fee-rebate pool)))
 
                 (dx (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy-net-fees)))
 
@@ -373,8 +395,7 @@
                     (merge pool
                         {
                         balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
-                        balance-y: (+ balance-y dy-net-fees),
-                        fee-balance-y: (+ fee fee-balance-y),
+                        balance-y: (+ balance-y dy-net-fees fee-rebate),
                         oracle-resilient:   (if (get oracle-enabled pool) 
                                                 (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
                                                 u0
@@ -397,15 +418,31 @@
     )
 )
 
-(define-read-only (get-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+(define-read-only (get-fee-rebate (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (ok (get fee-rebate (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR)))
+)
+
+(define-public (set-fee-rebate (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (fee-rebate uint))
     (let 
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (ok (get fee-rate-x pool))
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+
+        (map-set pools-data-map 
+            { 
+                token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-rebate: fee-rebate })
+        )
+        (ok true)     
     )
+)
+
+(define-read-only (get-fee-rate-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+    (ok (get fee-rate-x (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR)))
 )
 
 (define-read-only (get-fee-rate-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
@@ -466,71 +503,6 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
         (ok (get fee-to-address pool))
-    )
-)
-
-(define-read-only (get-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
-    (let
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))              
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        )        
-        (ok {fee-balance-x: (get fee-balance-x pool), fee-balance-y: (get fee-balance-y pool)})
-    )
-)
-
-;; Returns the fee of current x and y and make balance to 0.
-(define-public (collect-fees (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
-    (let
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-            (address (get fee-to-address pool))
-            (fee-x (get fee-balance-x pool))
-            (fee-y (get fee-balance-y pool))
-            (rebate-rate (unwrap-panic (contract-call? .alex-reserve-pool get-rebate-rate)))
-        )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)        
-
-        (and (> fee-x u0) 
-            (and 
-                ;; first transfer fee-x to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft token-x-trait fee-x (as-contract tx-sender) tx-sender))
-                ;; send fee-x to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq token-x .token-usda) 
-                            fee-x 
-                            (get dx (try! (swap-y-for-x .token-usda token-x-trait u50000000 u50000000 fee-x none)))
-                        )
-                    )
-                )
-            )
-        )
-
-        (and (> fee-y u0) 
-            (and 
-                ;; first transfer fee-y to tx-sender
-                (try! (contract-call? .alex-vault transfer-ft token-y-trait fee-y (as-contract tx-sender) tx-sender))
-                ;; send fee-y to reserve-pool to mint alex    
-                (try! 
-                    (contract-call? .alex-reserve-pool transfer-to-mint 
-                        (if (is-eq token-y .token-usda) 
-                            fee-y 
-                            (get dx (try! (swap-y-for-x .token-usda token-y-trait u50000000 u50000000 fee-y none)))
-                        )
-                    )
-                )
-            )
-        )    
-
-        (map-set pools-data-map
-        { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y}
-        (merge pool { fee-balance-x: u0, fee-balance-y: u0 })
-        )
-        (ok {fee-x: fee-x, fee-y: fee-y})
     )
 )
 
