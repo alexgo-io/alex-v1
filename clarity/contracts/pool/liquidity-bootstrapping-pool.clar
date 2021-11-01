@@ -21,6 +21,7 @@
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-PRICE-LOWER-THAN-MIN (err u2021))
 (define-constant ERR-PRICE-GREATER-THAN-MAX (err u2022))
+(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
 (define-constant CONTRACT-OWNER tx-sender)
 
@@ -65,7 +66,7 @@
 ;; liquidity injection is allowed at the pool creation only
 (define-private (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
     (begin
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)        
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -83,6 +84,9 @@
                     balance-y: (+ balance-y new-dy)
                 }))
             )
+            
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
+
             (asserts! (> new-dy u0) ERR-INVALID-LIQUIDITY)
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
@@ -195,6 +199,8 @@
                 price-x-max: (* ONE_8 ONE_8) ;; something big
             })
         )
+        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)     
+
         (asserts! (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })) ERR-POOL-ALREADY-EXISTS)             
 
         (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
@@ -210,7 +216,7 @@
 
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <pool-token-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)        
+        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE) 
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -231,6 +237,9 @@
                     })
                 )
             )
+            
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)    
+
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
 

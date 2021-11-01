@@ -29,6 +29,7 @@ const vaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
 const reserveAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 const keywbtc59760wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-wbtc"
 const multisigncrpwbtc59760wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-wbtc"
+const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-59760"
 
 const ONE_8 = 100000000
 const expiry = 59760 * ONE_8
@@ -56,6 +57,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
@@ -65,7 +67,7 @@ Clarinet.test({
         oracleresult.expectOk()
         oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
         oracleresult.expectOk()
-        
+
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
 
@@ -255,6 +257,17 @@ Clarinet.test({
         call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
         call.result.expectOk().expectUint(96625742);
 
+        // take away what was minted for testing to another address
+        let block = chain.mineBlock([
+            Tx.contractCall("yield-wbtc-59760", "transfer", [
+              types.uint(2000000000000),
+              types.principal(deployer.address),
+              types.principal(wallet_1.address),
+              types.some(types.buff(new ArrayBuffer(10)))
+            ], deployer.address),
+          ]);
+        block.receipts[0].result.expectOk(); 
+
         // deployer holds less than total supply because he sold some yield-wbtc for wbtc
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, ONE_8);        
         position = result.expectOk().expectTuple();
@@ -299,6 +312,73 @@ Clarinet.test({
         position['balance-x'].expectUint(0);
         position['balance-y'].expectUint(8038537);                
     },    
+});
+
+Clarinet.test({
+    name: "CRP : Trait check",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let CRPTest = new CRPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        let Oracle = new OracleManager(chain, deployer);
+        
+        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
+        oracleresult.expectOk()
+        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
+        oracleresult.expectOk()
+        
+        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result.expectOk().expectBool(true);
+
+        result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
+        result.expectOk().expectBool(true);
+
+        // non-deployer creating a pool will throw an error
+        result = CRPTest.createPool(wallet_1, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectErr().expectUint(1000);
+
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectOk().expectBool(true);     
+        
+        // supplying a wrong pool-token throws an error
+        result = CRPTest.addToPositionAndSwitch(wallet_1, wbtcAddress, usdaAddress, wrongPooltokenAddress, keywbtc59760Address, 5000 * ONE_8);
+        result.expectErr().expectUint(2023);   
+        
+        // same for key-token
+        result = CRPTest.addToPositionAndSwitch(wallet_1, wbtcAddress, usdaAddress, yieldwbtc59760Address, wrongPooltokenAddress, 5000 * ONE_8);
+        result.expectErr().expectUint(2023);        
+
+        // simulate to expiry + 1
+        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)
+
+        // supplying a wrong pool-token throws an error
+        result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, wrongPooltokenAddress, ONE_8);        
+        result.expectErr().expectUint(2023);
+        // same for key-token
+        result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, wrongPooltokenAddress, ONE_8);        
+        result.expectErr().expectUint(2023);
+
+        // take away what was minted for testing to another address
+        let block = chain.mineBlock([
+            Tx.contractCall("yield-wbtc-59760", "transfer", [
+              types.uint(2000000000000),
+              types.principal(deployer.address),
+              types.principal(wallet_1.address),
+              types.some(types.buff(new ArrayBuffer(10)))
+            ], deployer.address),
+          ]);
+        block.receipts[0].result.expectOk(); 
+                
+        // remove all liquidity
+        result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, ONE_8);        
+        result.expectOk();        
+        result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, keywbtc59760Address, ONE_8);        
+        result.expectOk();          
+    }
 });
 
 Clarinet.test({
@@ -438,6 +518,17 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
         position['dy'].expectUint(1599997);
+
+        // take away what was minted for testing to another address
+        block = chain.mineBlock([
+            Tx.contractCall("yield-wbtc-59760", "transfer", [
+              types.uint(2000000000000),
+              types.principal(deployer.address),
+              types.principal(wallet_3.address),
+              types.some(types.buff(new ArrayBuffer(10)))
+            ], deployer.address),
+          ]);
+        block.receipts[0].result.expectOk(); 
 
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, ONE_8);        
         position = result.expectOk().expectTuple();
@@ -580,7 +671,6 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let wallet_1 = accounts.get("wallet_1")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let Oracle = new OracleManager(chain, deployer);
@@ -588,11 +678,11 @@ Clarinet.test({
         let oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice);
         oracleresult.expectOk()
 
-        let result = YTPTest.createPool(wallet_1, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ, wbtcQ);        
+        let result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ, wbtcQ);        
         result.expectOk().expectBool(true);
 
         // sell some yield-token to create a positive yield
-        result = YTPTest.swapYForX(wallet_1, yieldwbtc59760Address, wbtcAddress, 5*ONE_8, 0);
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 5*ONE_8, 0);
         let position:any = result.expectOk().expectTuple();
         
         let call = await YTPTest.getPrice(yieldwbtc59760Address);
@@ -603,41 +693,41 @@ Clarinet.test({
         let bs_vol_0 = 0.1e+8;
         let collateral = ONE_8;
         let moving_average_0 = 0.95e+8
-        // //Deployer creating a pool, initial tokens injected to the pool
-        // result = CRPTest.createPool(wallet_1, wbtcAddress, wbtcAddress, yieldwbtc59760Address, keywbtc59760wbtcAddress, multisigncrpwbtc59760wbtcAddress, ltv_00, conversion_ltv_0, bs_vol_0, moving_average_0, collateral);
-        // result.expectOk().expectBool(true);
+        //Deployer creating a pool, initial tokens injected to the pool
+        result = CRPTest.createPool(deployer, wbtcAddress, wbtcAddress, yieldwbtc59760Address, keywbtc59760wbtcAddress, multisigncrpwbtc59760wbtcAddress, ltv_00, conversion_ltv_0, bs_vol_0, moving_average_0, collateral);
+        result.expectOk().expectBool(true);
 
-        // call = await CRPTest.getPoolValueInToken(wbtcAddress, wbtcAddress, expiry);
-        // call.result.expectOk().expectUint(ONE_8);
+        call = await CRPTest.getPoolValueInToken(wbtcAddress, wbtcAddress, expiry);
+        call.result.expectOk().expectUint(ONE_8);
 
-        // // ltv-0 is 80%, but injecting liquidity pushes up LTV
-        // call = await CRPTest.getLtv(wbtcAddress, wbtcAddress, expiry);
-        // call.result.expectOk().expectUint(ltv_00);
+        // ltv-0 is 80%, but injecting liquidity pushes up LTV
+        call = await CRPTest.getLtv(wbtcAddress, wbtcAddress, expiry);
+        call.result.expectOk().expectUint(ltv_00);
 
-        // // Check pool details and print
-        // call = await CRPTest.getPoolDetails(wbtcAddress, wbtcAddress, expiry);
-        // position = call.result.expectOk().expectTuple(); 
-        // position['yield-supply'].expectUint(91662405); //about 1 / 1.09
-        // position['key-supply'].expectUint(91662405);
-        // position['weight-x'].expectUint(52269481);
-        // position['weight-y'].expectUint(ONE_8 - 52269481);        
-        // position['balance-x'].expectUint(52269481);
-        // position['balance-y'].expectUint(ONE_8 - 52269481);
-        // position['strike'].expectUint(ONE_8);
-        // position['ltv-0'].expectUint(ltv_00);
-        // position['bs-vol'].expectUint(bs_vol_0);
-        // position['conversion-ltv'].expectUint(conversion_ltv_0);
-        // position['moving-average'].expectUint(moving_average_0);
+        // Check pool details and print
+        call = await CRPTest.getPoolDetails(wbtcAddress, wbtcAddress, expiry);
+        position = call.result.expectOk().expectTuple(); 
+        position['yield-supply'].expectUint(91662405); //about 1 / 1.09
+        position['key-supply'].expectUint(91662405);
+        position['weight-x'].expectUint(52269481);
+        position['weight-y'].expectUint(ONE_8 - 52269481);        
+        position['balance-x'].expectUint(52269481);
+        position['balance-y'].expectUint(ONE_8 - 52269481);
+        position['strike'].expectUint(ONE_8);
+        position['ltv-0'].expectUint(ltv_00);
+        position['bs-vol'].expectUint(bs_vol_0);
+        position['conversion-ltv'].expectUint(conversion_ltv_0);
+        position['moving-average'].expectUint(moving_average_0);
 
-        // // WBTC rises by 10%
-        // oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice * 1.1);
-        // oracleresult.expectOk()
+        // WBTC rises by 10%
+        oracleresult = Oracle.updatePrice(deployer,"WBTC", "coingecko", wbtcPrice * 1.1);
+        oracleresult.expectOk()
 
-        // // pegged CRP throws error if someone tries to swap
-        // call = await CRPTest.getXgivenPrice(wbtcAddress, wbtcAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
-        // call.result.expectOk().expectUint(9516775442);
-        // result = CRPTest.swapXForY(wallet_1, wbtcAddress, wbtcAddress, expiry, 9516775442, 0);
-        // position = result.expectErr().expectUint(2001);
+        // pegged CRP throws error if someone tries to swap
+        call = await CRPTest.getXgivenPrice(wbtcAddress, wbtcAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
+        call.result.expectOk().expectUint(9516775442);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, wbtcAddress, expiry, 9516775442, 0);
+        position = result.expectErr().expectUint(2001);
     },    
 });        
 
@@ -750,7 +840,7 @@ Clarinet.test({
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, 0.001 * ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(80807); 
+        position['dy'].expectUint(2000080807); 
 
         // arbtrageur attepmts to retreive back with full value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, 101*ONE_8);        
