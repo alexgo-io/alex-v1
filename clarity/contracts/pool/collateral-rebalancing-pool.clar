@@ -557,11 +557,14 @@
 ;; split of balance to yield and key is transparent to traders
 (define-public (swap-x-for-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
+
+        ;; TODO : Check whether dy or dx value is valid  
+        ;; (asserts! (< min-dy dy) too-much-slippage-err)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY) 
         ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)    
         
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
         (let
             (
                 (token-x (contract-of collateral))
@@ -613,7 +616,7 @@
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)   
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)   
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)   
         (let
             (
                 (token-x (contract-of collateral))
