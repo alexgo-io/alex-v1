@@ -971,8 +971,21 @@ Clarinet.test({
 
         let ROresult:any = YieldToken.totalSupply()
         ROresult.result.expectOk().expectUint(2000088845896);
+
+        // take away what was minted for testing to another address
+        let block = chain.mineBlock([
+            Tx.contractCall("yield-wbtc-59760", "transfer", [
+              types.uint(2000000000000),
+              types.principal(deployer.address),
+              types.principal(wallet_1.address),
+              types.some(types.buff(new ArrayBuffer(10)))
+            ], deployer.address),
+          ]);
+        block.receipts[0].result.expectOk(); 
+                
         ROresult = YieldToken.balanceOf(deployer.address)
         ROresult.result.expectOk().expectUint(80807360);
+
 
         ROresult = KeyToken.totalSupply()
         ROresult.result.expectOk().expectUint(88845896);
