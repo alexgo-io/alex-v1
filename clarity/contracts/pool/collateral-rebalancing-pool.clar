@@ -392,6 +392,15 @@
     )
 )
 
+;; @desc mint yield-token and key-token, swap minted yield-token with token
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param the-yield-token; yield-token to be minted
+;; @param the-key-token; key-token to be minted
+;; @param dx; amount of collateral added
+;; @post collateral; sender transfer exactly dx to alex-vault
+;; @post yield-token; sender transfers > 0 to alex-vault
+;; @post token; alex-vault transfers >0 to sender
 (define-public (add-to-position-and-switch (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))
     (let
         (
@@ -401,7 +410,13 @@
     )
 )
 
-;; note single-sided liquidity
+;; @desc mint yield-token and key-token, with single-sided liquidity
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param the-yield-token; yield-token to be minted
+;; @param the-key-token; key-token to be minted
+;; @param dx; amount of collateral added
+;; @post collateral; sender transfer exactly dx to alex-vault
 (define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (dx uint))    
     (let
         (   
@@ -461,7 +476,12 @@
     )
 )    
 
-;; note single sided liquidity
+;; @desc burn yield-token
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param the-yield-token; yield-token to be burnt
+;; @param percent; % of yield-token held to be burnt
+;; @post yield-token; alex-vault transfer exactly uints of token equal to (percent * yield-token held) to sender
 (define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
@@ -563,6 +583,13 @@
     )
 )
 
+;; @desc burn key-token
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param the-key-token; key-token to be burnt
+;; @param percent; % of key-token held to be burnt
+;; @post token; alex-vault transfers > 0 token to sender
+;; @post collateral; alex-vault transfers > 0 collateral to sender
 (define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
