@@ -7,9 +7,11 @@ const {
     AnchorMode,
     PostConditionMode,
     uintCV,
+    someCV,
     contractPrincipalCV,
     broadcastTransaction,
-    ClarityType
+    ClarityType,
+    bufferCVFromString
 } = require('@stacks/transactions');
 const { wait_until_confirmation } = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
@@ -97,6 +99,35 @@ const burn = async(token, recipient, amount) => {
     }
 }
 
+const transfer = async(token, recipient, amount, deployer=false) => {
+    console.log('[Token] transfer...', token, recipient, amount);
+    const privateKey =  (deployer) ? await getDeployerPK() : await getUserPK();
+    const txOptions = {
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+        contractName: token,
+        functionName: 'transfer',
+        functionArgs: [
+            uintCV(amount),
+            principalCV((deployer) ? process.env.DEPLOYER_ACCOUNT_ADDRESS : process.env.USER_ACCOUNT_ADDRESS),
+            principalCV(recipient),
+            someCV(bufferCVFromString(""))
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 const balance = async(token, owner) => {
     console.log('[Token] get-balance...', token, owner);
 
@@ -143,3 +174,4 @@ exports.mint = mint;
 exports.burn = burn;
 exports.balance = balance;
 exports.getBalance = getBalance;
+exports.transfer = transfer;
