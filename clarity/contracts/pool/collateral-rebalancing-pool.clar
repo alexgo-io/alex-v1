@@ -121,6 +121,7 @@
 )
 
 ;; @desc set-contract-owner
+;; @restricted CONTRACT-OWNER
 ;; @param new-contract-owner; new (var-get CONTRACT-OWNER)
 ;; @returns (response bool uint)
 (define-public (set-contract-owner (new-contract-owner principal))
@@ -314,6 +315,7 @@
 )
 
 ;; @desc create-pool with single sided liquidity
+;; @restricted CONTRACT-OWNER
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param the-yield-token; yield-token to be minted
@@ -768,6 +770,7 @@
 )
 
 ;; @desc set-fee-rebate
+;; @restricted CONTRACT-OWNER
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
@@ -809,10 +812,12 @@
 )
 
 ;; @desc set-fee-rate-x
+;; @restricted fee-to-address
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param fee-rate-x; new fee-rate-x
+;; @returns (response bool uint)
 (define-public (set-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-x uint))
     (let 
         (
@@ -831,10 +836,12 @@
 )
 
 ;; @desc set-fee-rate-y
+;; @restricted fee-to-address
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param fee-rate-y; new fee-rate-y
+;; @returns (response bool uint)
 (define-public (set-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-y uint))
     (let 
         (         
@@ -852,11 +859,11 @@
     )
 )
 
-;; @desc get-fee-to-address
+;; @desc get-fee-to-address (multisig of the pool)
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
-;; @returns multisig of the pool
+;; @returns (response principal uint)
 (define-read-only (get-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let 
         (
@@ -873,7 +880,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param dx; amount of collateral being added
-;; @returns amount of token to be removed
+;; @returns (response uint uint)
 (define-read-only (get-y-given-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
     (let
         (
@@ -897,7 +904,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param dy; amount of token being added
-;; @returns amount of collateral to be removed
+;; @returns (response uint uint)
 (define-read-only (get-x-given-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
 	(let
 		(
@@ -921,7 +928,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param price; target price
-;; @returns amount of collateral to be added
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
     (let 
         (
@@ -942,7 +949,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param price; target price
-;; @returns amount of token to be added
+;; @returns (response uint uint)
 (define-read-only (get-y-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
     (let 
         (
@@ -963,7 +970,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param dx; amount of collateral being added
-;; @returns units of yield-/key-token
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
     (begin
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY)
@@ -987,11 +994,12 @@
 )
 
 ;; @desc units of token/collateral required to mint given units of yield-/key-token
+;; @desc returns dx (single liquidity) based on dx-weighted and dy-weighted
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param shares; units of yield-/key-token to be minted
-;; @returns units of token/collateral
+;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (begin
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY) ;; mint supported until, but excl., expiry
@@ -1034,7 +1042,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param shares; units of yield-/key-token to be burnt
-;; @returns units of token/collateral to be returned
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
     (begin         
         (let 

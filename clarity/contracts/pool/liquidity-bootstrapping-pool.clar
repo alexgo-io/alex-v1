@@ -23,7 +23,7 @@
 (define-constant ERR-PRICE-GREATER-THAN-MAX (err u2022))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
-(define-constant CONTRACT-OWNER tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 
 ;; data maps and vars
 ;;
@@ -103,22 +103,58 @@
 ;; public functions
 ;;
 
-(define-read-only (get-pool-count)
-    (ok (var-get pool-count))
+;; @desc get-contract-owner
+;; @returns principal
+(define-read-only (get-contract-owner)
+  (var-get CONTRACT-OWNER)
 )
 
+;; @desc set-contract-owner
+;; @restricted CONTRACT-OWNER
+;; @param new-contract-owner; new (var-get CONTRACT-OWNER)
+;; @returns (response bool uint)
+(define-public (set-contract-owner (new-contract-owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set CONTRACT-OWNER new-contract-owner)
+    (ok true)
+  )
+)
+
+;; @desc get-pool-count
+;; @returns uint
+(define-read-only (get-pool-count)
+    (var-get pool-count)
+)
+
+;; @desc get-pool-contracts
+;; @param pool-id; pool-id
+;; @returns (response (tutple) uint)
 (define-read-only (get-pool-contracts (pool-id uint))
     (ok (map-get? pools-map {pool-id: pool-id}))
 )
 
+;; @desc get-pools
+;; @returns map of get-pool-contracts
 (define-read-only (get-pools)
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
+;; @desc get-pool-details
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @returns (response (tuple) uint)
 (define-read-only (get-pool-details (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (ok (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
 )
 
+;; @desc get-weight-x
+;; @desc returns weight of token-x (weight of token-y = 1 - weight of token-x)
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @returns (response uint uint)
 (define-read-only (get-weight-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (begin
         (asserts! (<= (* block-height ONE_8) expiry) ERR-ALREADY-EXPIRED)
@@ -145,6 +181,12 @@
     )   
 )
 
+;; @desc get-price-range
+;; @desc returns min/max prices
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-price-range (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (let
         (
@@ -154,6 +196,12 @@
     )
 )
 
+;; @desc set-price-range
+;; @restricted pool-multisig
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @returns (response bool uint)
 (define-public (set-price-range (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (min-price uint) (max-price uint))
     (let
         (
@@ -169,7 +217,11 @@
     )
 )
 
-;; get overall balances for the pair
+;; @desc get-balances ({balance-x, balance-y})
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (let
         (
@@ -179,6 +231,18 @@
     )
 )
 
+;; @desc create-pool
+;; @restricted CONTRACT-OWNER
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param weight-x-0; weight of token-x at start
+;; @param weight-x-1; weight of token-x at end
+;; @param expiry; expiry
+;; @param pool-token; pool token representing ownership of the pool
+;; @param multisig-vote; DAO used by pool token holers
+;; @param dx; amount of token-x added
+;; @param dy; amount of token-y added
+;; @returns (response bool uint)
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (let
         (
@@ -199,7 +263,7 @@
                 price-x-max: (* ONE_8 ONE_8) ;; something big
             })
         )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)     
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)     
 
         (asserts! (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry })) ERR-POOL-ALREADY-EXISTS)             
 
@@ -214,6 +278,14 @@
     )
 )   
 
+;; @desc reduce-position
+;; @desc returns dx and dy due to the position
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param pool-token; pool token representing ownership of the pool
+;; @param percent; percentage of pool token held to reduce
+;; @returns (response (tuple uint uint) uint)
 (define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <pool-token-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE) 
@@ -251,6 +323,13 @@
     )
 )
 
+;; @desc swap-x-for-y
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param dx; amount of token-x to swap
+;; @param min-dy; optional, min amount of token-y to receive
+;; @returns (response (tuple uint uint) uint)
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
         ;; swap is allowed only until expiry
@@ -288,6 +367,13 @@
     )
 )
 
+;; @desc swap-y-for-x
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param dy; amount of token-y to swap
+;; @param min-dx; optional, min amount of token-x to receive
+;; @returns (response (tuple uint uint) uint)
 (define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
         ;; swap is allowed only until expiry
@@ -325,6 +411,11 @@
     )
 )
 
+;; @desc get-pool-multisig
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @returns (response principal uint)
 (define-read-only (get-pool-multisig (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (ok (get pool-multisig (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR)))
 )
@@ -338,12 +429,18 @@
                 pool-multisig: new-multisig
                 }))            
         )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry } pool-updated)
         (ok true)
     )
 )
 
+;; @desc units of token-y given units of token-x
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param dx; amount of token-x being added
+;; @returns (response uint uint)
 (define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint))
     (let 
         (
@@ -354,6 +451,12 @@
     )
 )
 
+;; @desc units of token-x given units of token-y
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param dy; amount of token-y being added
+;; @returns (response uint uint)
 (define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dy uint))
     (let 
         (
@@ -364,6 +467,12 @@
     )
 )
 
+;; @desc units of token-x required for a target price
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (price uint))
     (let 
         (
@@ -377,6 +486,32 @@
     )
 )
 
+;; @desc units of token-y required for a target price
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param price; target price
+;; @returns (response uint uint)
+(define-read-only (get-y-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (price uint))
+    (let 
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+            (weight-x (get weight-x-t pool))
+            (weight-y (- ONE_8 weight-x))            
+        )
+        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+    )
+)
+
+;; @desc units of pool token to be minted given amount of token-x and token-y being added
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param dx; amount of token-x added
+;; @param dy; amount of token-y added
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint) (dy uint))
     (let 
         (
@@ -391,6 +526,12 @@
     )
 )
 
+;; @desc units of token-x/token-y required to mint given units of pool-token
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param token; units of pool token to be minted
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-mint (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
@@ -405,6 +546,12 @@
     )
 )
 
+;; @desc units of token-x/token-y to be returned after burning given units of pool-token
+;; @param token-x-trait; token-x
+;; @param token-y-trait; token-y
+;; @param expiry; expiry
+;; @param token; units of pool token to be burnt
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-burn (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (shares uint))
     (let 
         (
@@ -423,8 +570,6 @@
 ;; math-fixed-point
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-
-;; TODO: overflow causes runtime error, should handle before operation rather than after
 
 ;; constants
 ;;
