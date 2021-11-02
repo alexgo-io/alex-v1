@@ -653,9 +653,8 @@
 (define-public (swap-x-for-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
         (let
             (
                 (token-x (contract-of collateral))
@@ -712,9 +711,8 @@
 (define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
-        ;; (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)   
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq (contract-of token) (contract-of collateral))) ERR-INVALID-POOL-ERR)   
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)   
         (let
             (
                 (token-x (contract-of collateral))
