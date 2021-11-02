@@ -342,9 +342,9 @@
                 (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 
                 (now (* block-height ONE_8))
-                ;; assume 15secs per block
+                ;; assume 10mins per block
                 (t (div-down 
-                    (- expiry now) (* u2102400 ONE_8)))
+                    (- expiry now) (* u52560 ONE_8)))
 
                 (token-symbol (try! (contract-call? token get-symbol)))
                 (collateral-symbol (try! (contract-call? collateral get-symbol)))
@@ -779,7 +779,7 @@
         (
             (pool (try! (get-pool-details token collateral expiry)))
         )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
