@@ -29,7 +29,7 @@
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
-(define-constant CONTRACT-OWNER tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 (define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
@@ -66,13 +66,37 @@
 ;; 4 years based on 2102400 blocks per year (i.e. 15 secs per block)
 (define-data-var max-expiry uint (scale-up u8409600))
 
-(define-read-only (get-max-expiry)
-    (ok (var-get max-expiry))
+;; @desc get-contract-owner
+;; @returns principal
+(define-read-only (get-contract-owner)
+  (var-get CONTRACT-OWNER)
 )
 
+;; @desc set-contract-owner
+;; @restricted CONTRACT-OWNER
+;; @param new-contract-owner; new (var-get CONTRACT-OWNER)
+;; @returns (response bool uint)
+(define-public (set-contract-owner (new-contract-owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set CONTRACT-OWNER new-contract-owner)
+    (ok true)
+  )
+)
+
+;; @desc get-max-expiry
+;; @returns uint
+(define-read-only (get-max-expiry)
+    (var-get max-expiry)
+)
+
+;; @desc set-max-expiry
+;; @restricted CONTRACT-OWNER
+;; @param new-max-expiry; new max-expiry
+;; @returns (response bool uint)
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
-       (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+       (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (ok (var-set max-expiry new-max-expiry)) 
     )
 )
@@ -83,11 +107,16 @@
 
 (define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
   (begin
-    (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set oracle-src new-oracle-src))
   )
 )
 
+;; @desc get-t
+;; @desc get time-to-maturity as a function of max-expiry
+;; @param expiry; when contract expiries
+;; @param listed; when contract was listed
+;; @returns (response uint uint)
 (define-read-only (get-t (expiry uint) (listed uint))
     (begin
         (asserts! (> (var-get max-expiry) expiry) invalid-ERR-EXPIRY)
@@ -103,29 +132,38 @@
     )
 )
 
+;; @desc get-pool-count
+;; @returns uint
 (define-read-only (get-pool-count)
-    (ok (var-get pool-count))
+    (var-get pool-count)
 )
 
+;; @desc get-pool-contracts
+;; @param pool-id; pool-id
+;; @returns (response (tutple) uint)
 (define-read-only (get-pool-contracts (pool-id uint))
     (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL-ERR))
 )
 
+;; @desc get-pools
+;; @returns map of get-pool-contracts
 (define-read-only (get-pools)
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
-;; additional functions
+;; @desc get-pool-details
+;; @param the-aytoken; yield-token
+;; @returns (response (tuple) uint)
 (define-read-only (get-pool-details (the-aytoken <yield-token-trait>))
-    (let 
-        (
-            (aytoken (contract-of the-aytoken))            
-            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-       )
-        (ok pool)
-    )
+    (ok (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR))
 )
 
+
+;; @desc get-pool-value-in-token
+;; @desc value of pool in units of token
+;; @param the-aytoken; yield-token
+;; @param the-token; token
+;; @returns (response uint uint)
 (define-read-only (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
     (let
         (
@@ -141,7 +179,10 @@
     )
 )
 
-;; note yield is not annualised
+;; @desc get-yield
+;; @desc note yield is not annualised
+;; @param the-aytoken; yield-token
+;; @returns (response uint uint)
 (define-read-only (get-yield (the-aytoken <yield-token-trait>))
     (let 
         (
@@ -157,6 +198,9 @@
     )
 )
 
+;; @desc get-price
+;; @param the-aytoken; yield-token
+;; @returns (response uint uint)
 (define-read-only (get-price (the-aytoken <yield-token-trait>))
     (let
         (
@@ -172,9 +216,18 @@
     )
 )
 
+;; @desc create-pool
+;; @restricted CONTRACT-OWNER
+;; @param the-aytoken; yield token
+;; @param the-token; token
+;; @param pool-token; pool token representing ownership of the pool
+;; @param multisig-vote; DAO used by pool token holers
+;; @param dx; amount of token added
+;; @param dy; amount of yield-token added
+;; @returns (response bool uint)
 (define-public (create-pool (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (begin
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)         
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)         
         ;; create pool only if the correct pair
         (asserts! (is-eq (try! (contract-call? the-aytoken get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
         (asserts! (is-none (map-get? pools-data-map { aytoken: (contract-of the-aytoken) })) ERR-POOL-ALREADY-EXISTS)
@@ -215,6 +268,13 @@
     )
 )
 
+;; @desc add-to-position
+;; @desc returns units of pool tokens minted, dx, dy-actual and dy-virtual added
+;; @param the-aytoken; yield token
+;; @param the-token; token
+;; @param pool-token; pool token representing ownership of the pool
+;; @param dx; amount of token added
+;; @returns (response (tuple uint uint uint uint) uint)
 (define-public (add-to-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
     (begin
         ;; dx must be greater than zero
@@ -257,6 +317,13 @@
     )
 )    
 
+;; @desc reduce-position
+;; @desc returns dx and dy-actual due to the position
+;; @param the-aytoken; yield token
+;; @param the-token; token
+;; @param pool-token; pool token representing ownership of the pool
+;; @param percent; percentage of pool token held to reduce
+;; @returns (response (tuple uint uint) uint)
 (define-public (reduce-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
@@ -296,6 +363,12 @@
     )    
 )
 
+;; @desc swap-x-for-y
+;; @param the-aytoken; yield token
+;; @param the-token; token
+;; @param dx; amount of token to swap
+;; @param min-dy; optional, min amount of yield-token to receive
+;; @returns (response (tuple uint uint) uint)
 (define-public (swap-x-for-y (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -340,6 +413,12 @@
     )
 )
 
+;; @desc swap-y-for-x
+;; @param the-aytoken; yield token
+;; @param the-token; token
+;; @param dy; amount of yield token to swap
+;; @param min-dx; optional, min amount of token to receive
+;; @returns (response (tuple uint uint) uint)
 (define-public (swap-y-for-x (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
@@ -383,23 +462,34 @@
     )
 )
 
+;; @desc get-fee-rebate
+;; @param the-aytoken; yield token
+;; @returns (response uint uint)
 (define-read-only (get-fee-rebate (the-aytoken <yield-token-trait>))
     (ok (get fee-rebate (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR)))
 )
 
+;; @desc set-fee-rebate
+;; @restricted CONTRACT-OWNER
+;; @param the-aytoken; yield token
+;; @param fee-rebate; new fee-rebate
+;; @returns (response bool uint)
 (define-public (set-fee-rebate (the-aytoken <yield-token-trait>) (fee-rebate uint))
     (let 
         (
             (aytoken (contract-of the-aytoken))
             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
         )
-        (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { aytoken: aytoken } (merge pool { fee-rebate: fee-rebate }))
         (ok true)
     )
 )
 
+;; @desc get-fee-rate-aytoken
+;; @param the-aytoken; yield token
+;; @returns (response uint uint)
 (define-read-only (get-fee-rate-aytoken (the-aytoken <yield-token-trait>))
     (let 
         (
@@ -410,6 +500,9 @@
     )
 )
 
+;; @desc get-fee-rate-token
+;; @param the-aytoken; yield token
+;; @returns (response uint uint)
 (define-read-only (get-fee-rate-token (the-aytoken <yield-token-trait>))
     (let 
         (
@@ -420,6 +513,11 @@
     )
 )
 
+;; @desc set-fee-rate-aytoken
+;; @restricted fee-to-address
+;; @param the-aytoken; yield token
+;; @param fee-rate-aytoken; new fee-rate-aytoken
+;; @returns (response bool uint)
 (define-public (set-fee-rate-aytoken (the-aytoken <yield-token-trait>) (fee-rate-aytoken uint))
     (let 
         (
@@ -434,6 +532,11 @@
     )
 )
 
+;; @desc set-fee-rate-token
+;; @restricted fee-to-address
+;; @param the-aytoken; yield token
+;; @param fee-rate-token; new fee-rate-token
+;; @returns (response bool uint)
 (define-public (set-fee-rate-token (the-aytoken <yield-token-trait>) (fee-rate-token uint))
     (let 
         (
@@ -447,7 +550,9 @@
     )
 )
 
-;; return principal
+;; @desc get-fee-to-address
+;; @param the-aytoken; yield token
+;; @returns (response principal uint)
 (define-read-only (get-fee-to-address (the-aytoken <yield-token-trait>))
     (let 
         (
@@ -458,6 +563,10 @@
     )
 )
 
+;; @desc units of yield token given units of token
+;; @param the-aytoken; yield token
+;; @param dx; amount of token being added
+;; @returns (response uint uint)
 (define-read-only (get-y-given-x (the-aytoken <yield-token-trait>) (dx uint))
     (let 
         (
@@ -470,6 +579,10 @@
     )
 )
 
+;; @desc units of token given units of yield token
+;; @param the-aytoken; yield token
+;; @param dy; amount of yield token being added
+;; @returns (response uint uint)
 (define-read-only (get-x-given-y (the-aytoken <yield-token-trait>) (dy uint))
     
     (let 
@@ -481,6 +594,10 @@
     )
 )
 
+;; @desc units of token required for a target price
+;; @param the-aytoken; yield token
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (the-aytoken <yield-token-trait>) (price uint))
 
     (let 
@@ -497,6 +614,10 @@
     )
 )
 
+;; @desc units of yield token required for a target price
+;; @param the-aytoken; yield token
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-y-given-price (the-aytoken <yield-token-trait>) (price uint))
 
     (let 
@@ -513,6 +634,10 @@
     )
 )
 
+;; @desc units of token required for a target yield
+;; @param the-aytoken; yield token
+;; @param yield; target yield
+;; @returns (response uint uint)
 (define-read-only (get-x-given-yield (the-aytoken <yield-token-trait>) (yield uint))
 
     (let 
@@ -529,6 +654,10 @@
     )
 )
 
+;; @desc units of yield token required for a target yield
+;; @param the-aytoken; yield token
+;; @param yield; target yield
+;; @returns (response uint uint)
 (define-read-only (get-y-given-yield (the-aytoken <yield-token-trait>) (yield uint))
 
     (let 
@@ -545,6 +674,10 @@
     )
 )
 
+;; @desc units of pool token to be minted, together with break-down of yield-token given amount of token being added
+;; @param the-aytoken; yield token
+;; @param dx; amount of token added
+;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-token-given-position (the-aytoken <yield-token-trait>) (dx uint))
 
     (let 
@@ -571,6 +704,10 @@
 
 )
 
+;; @desc units of token, yield-token and yield-token (virtual) required to mint given units of pool-token
+;; @param the-aytoken; yield token
+;; @param token; units of pool token to be minted
+;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-position-given-mint (the-aytoken <yield-token-trait>) (token uint))
 
     (let 
@@ -596,6 +733,10 @@
     )
 )
 
+;; @desc units of token, yield-token and yield-token (virtual) to be returned after burning given units of pool-token
+;; @param the-aytoken; yield token
+;; @param token; units of pool token to be burnt
+;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-position-given-burn (the-aytoken <yield-token-trait>) (token uint))
     
     (let 
@@ -625,8 +766,6 @@
 ;; math-fixed-point
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-
-;; TODO: overflow causes runtime error, should handle before operation rather than after
 
 ;; constants
 ;;
