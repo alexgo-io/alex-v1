@@ -40,17 +40,17 @@
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-data-var oracle-src (string-ascii 32) "coingecko")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 (define-map approved-contracts principal bool)
 
 (define-read-only (get-owner)
-  (ok (var-get contract-owner))
+  (ok (var-get CONTRACT-OWNER))
 )
 
 (define-public (set-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set contract-owner owner))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set CONTRACT-OWNER owner))
   )
 )
 
@@ -60,7 +60,7 @@
 
 (define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set oracle-src new-oracle-src))
   )
 )
@@ -114,7 +114,6 @@
 
 (define-data-var activation-block uint u10000000)
 (define-data-var activation-delay uint u150)
-(define-data-var activation-reached bool false)
 (define-data-var activation-threshold uint u20)
 (define-data-var users-nonce uint u0)
 ;; store user principal by user id
@@ -125,8 +124,14 @@
 ;; returns Stacks block height registration was activated at plus activationDelay
 (define-read-only (get-activation-block)
   (begin
-    (asserts! (var-get activation-reached) ERR-CONTRACT-NOT-ACTIVATED)
     (ok (var-get activation-block))
+  )
+)
+
+(define-public (set-activation-block (new-activation-block-before-delay uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set activation-block (+ new-activation-block-before-delay (var-get activation-delay))))
   )
 )
 
@@ -135,20 +140,15 @@
   (var-get activation-delay)
 )
 
-;; returns activation status as boolean
-(define-read-only (get-activation-status)
-  (var-get activation-reached)
-)
-
 ;; returns activation threshold
 (define-read-only (get-activation-threshold)
   (var-get activation-threshold)
 )
 
-(define-public (set-activation-block (new-activation-block uint))
+(define-public (set-activation-threshold (new-activation-threshold uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set activation-block new-activation-block))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set activation-threshold new-activation-threshold))
   )
 )
 
@@ -214,7 +214,6 @@
         (
           (activation-block-val (+ block-height (var-get activation-delay)))
         )
-        (var-set activation-reached true)
         (var-set activation-block activation-block-val)
         (set-coinbase-thresholds)
         (ok true)
@@ -298,10 +297,10 @@
         last: (+ target-cycle lock-period)
       })
     )
-    (asserts! (get-activation-status) ERR-CONTRACT-NOT-ACTIVATED)
+    (asserts! (>= block-height (var-get activation-block)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
-    (try! (contract-call? .token-alex transfer amount-token tx-sender .alex-vault none))
+    (unwrap! (contract-call? .token-alex transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
     (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
       err-value (err err-value)
@@ -399,7 +398,7 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (as-contract (contract-call? .token-alex transfer to-return .alex-vault user none))))
+    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft .token-alex to-return (as-contract tx-sender) user)))
     ;; send back rewards if user was eligible
     (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user (mul-down entitled-token (get-coinbase-amount target-cycle))))))
     (ok true)
@@ -416,7 +415,7 @@
 
 (define-public (set-token-halving-cycle (new-token-halving-cycle uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (var-set token-halving-cycle new-token-halving-cycle)
     (set-coinbase-thresholds)
     (ok true)

@@ -1,14 +1,12 @@
 import { Account, Chain, Tx, it } from "./deps.ts";
-import { TokenClient } from "./token-client.ts";
 import { CoreClient } from "./core-client.ts";
-import { TestUtilsClient } from "./test-utils-client.ts";
+import { TokenClient } from "./token-client.ts";
 
 class Accounts extends Map<string, Account> {}
 
 interface Clients {
-  token: TokenClient;
   core: CoreClient;
-  testUtils: TestUtilsClient;
+  token: TokenClient;
 }
 
 function _it(
@@ -25,7 +23,7 @@ function _it(
     let transactions: Array<Tx> = [];
     let result = JSON.parse(
       (Deno as any).core.opSync("setup_chain", {
-        name: "alexcoin",
+        name: "alex-reserve-pool",
         transactions: transactions,
       })
     );
@@ -39,9 +37,8 @@ function _it(
 
     deployer = accounts.get("deployer")!;
     clients = {
-      token: new TokenClient("token-alex", chain, deployer),
-      core: new CoreClient("token-alex-core-v1", chain, deployer),
-      testUtils: new TestUtilsClient("test-utils", chain, deployer),
+      core: new CoreClient("alex-reserve-pool", chain, deployer),
+      token: new TokenClient("token-alex", chain, deployer)
     };
 
     await fn(chain, accounts, clients);
