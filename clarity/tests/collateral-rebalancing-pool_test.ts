@@ -513,75 +513,9 @@ Clarinet.test({
         call = await CRPTest.getBalance("token-usda", reserveAddress);
         call.result.expectOk().expectUint(10000000000000)
 
-        // let's burn some yield token
+        // let's burn some yield token, but it fails because reserve doesn't have enough.
         result = CRPTest.reducePositionYield(wallet_3, wbtcAddress, usdaAddress, yieldwbtc59760Address, ONE_8);        
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(1599997);
-
-        // take away what was minted for testing to another address
-        block = chain.mineBlock([
-            Tx.contractCall("yield-wbtc-59760", "transfer", [
-              types.uint(2000000000000),
-              types.principal(deployer.address),
-              types.principal(wallet_3.address),
-              types.some(types.buff(new ArrayBuffer(10)))
-            ], deployer.address),
-          ]);
-        block.receipts[0].result.expectOk(); 
-
-        result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, yieldwbtc59760Address, ONE_8);        
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(6404480);        
-
-        // ltv > 100%, so we dip into reserve pool
-        // you see reserve balance decreases
-        call = await CRPTest.getBalance("token-usda", reserveAddress);
-        call.result.expectOk().expectUint(9982919000000)
-
-        // most of yield-token burnt, but key-token remains
-        call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(0);                
-        position['yield-supply'].expectUint(0);
-        position['key-supply'].expectUint(8004477);     
-
-        call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(0);         
-        
-        call = await CRPTest.getPositionGivenBurnKey(wbtcAddress, usdaAddress, expiry, ONE_8);
-        position = call.result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(0);
-
-        call = chain.callReadOnlyFn("key-wbtc-59760-usda", "get-balance", 
-            [types.principal(deployer.address)
-            ], deployer.address);
-        call.result.expectOk().expectUint(6404480);
-
-        call = chain.callReadOnlyFn("key-wbtc-59760-usda", "get-total-supply", 
-            [], deployer.address);
-        call.result.expectOk().expectUint(8004477);  
-             
-        // also remove all key tokens
-        result = CRPTest.reducePositionKey(wallet_3, wbtcAddress, usdaAddress, keywbtc59760Address, ONE_8);        
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(0);     
-
-        result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, keywbtc59760Address, ONE_8);        
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(0);          
-        
-        call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
-        position = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(0);
-        position['key-supply'].expectUint(0);        
-        position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(0);                
+        position = result.expectErr().expectUint(2024);        
     
     },    
 });

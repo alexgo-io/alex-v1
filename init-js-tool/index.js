@@ -11,7 +11,7 @@ const {
     flExecuteMarginWbtcUsda34560,
     flExecuteMarginWbtcUsda74880,
 } = require('./flashloan')
-const { flashloan, getBalance, mint, burn, balance } = require('./vault')
+const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens } = require('./faucet')
 const {
     fwpCreate,
@@ -758,8 +758,8 @@ async function run() {
     // await arbitrage_crp(dry_run=true, _pools);    
     // await arbitrage_ytp(dry_run=true, _pools); 
     // await get_pool_details_fwp();
-    // await get_pool_details_crp(_pools);
-    await get_pool_details_ytp(_pools);   
+    await get_pool_details_crp(_pools);
+    // await get_pool_details_ytp(_pools);   
 
     // await reduce_position_fwp(0.9 * ONE_8);
 
@@ -791,5 +791,9 @@ async function run() {
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
     // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
     // console.log(result);
+
+    result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
+    console.log(result);
+    await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
 }
 run();

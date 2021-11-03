@@ -544,39 +544,8 @@
             )
 
             ;; if shares > dy, then transfer the shortfall from reserve.
-            ;; TODO: this goes through swapping, so the amount received is actually slightly less than the shortfall
-            (and (< dy shares) 
-                (let
-                    (
-                        (amount (- shares dy))                    
-                    )                
-                    (if (is-eq token-y .token-usda)
-                        (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount tx-sender tx-sender)))
-                        (let
-                            (
-                                (amount-to-swap 
-                                    (if (is-eq token-y .token-usda)
-                                        amount
-                                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
-                                            (as-contract (try! (contract-call? .fixed-weight-pool get-y-given-x token .token-usda u50000000 u50000000 amount)))
-                                            (as-contract (try! (contract-call? .fixed-weight-pool get-x-given-y .token-usda token u50000000 u50000000 amount)))
-                                        )                                         
-                                        
-                                    )
-                                )
-                            )
-                            (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap tx-sender tx-sender)))
-                            (as-contract (unwrap! (contract-call? token transfer (if (is-eq token-y .token-usda)
-                                                                        amount-to-swap
-                                                                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
-                                                                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token .token-usda u50000000 u50000000 amount-to-swap none)))
-                                                                            (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y .token-usda token u50000000 u50000000 amount-to-swap none)))
-                                                                        )                                                                        
-                                                                    ) tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
-                        )
-                    )                
-                )
-            )       
+            ;; TODO: what if token is exhausted but reserve have others?
+            (and (< dy shares) (try! (contract-call? .alex-reserve-pool remove-from-balance token-y (- shares dy))))            
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
             (try! (contract-call? .alex-vault transfer-ft token shares (as-contract tx-sender) tx-sender))
@@ -688,6 +657,7 @@
 
             (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token dy (as-contract tx-sender) tx-sender))
+            (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -746,6 +716,7 @@
 
             (try! (contract-call? .alex-vault transfer-ft collateral dx (as-contract tx-sender) tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
