@@ -1,5 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 
 ;; alex-reserve-pool
 
@@ -39,7 +40,6 @@
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-data-var oracle-src (string-ascii 32) "coingecko")
 (define-data-var CONTRACT-OWNER principal tx-sender)
 (define-map approved-contracts principal bool)
 
@@ -54,36 +54,24 @@
   )
 )
 
-(define-read-only (get-oracle-src)
-  (ok (var-get oracle-src))
-)
-
-(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set oracle-src new-oracle-src))
-  )
-)
-
 (define-map reserve principal uint)
 
-(define-read-only (get-balance (token <ft-trait>))
-  (default-to u0 (map-get? reserve (contract-of token)))
+(define-read-only (get-balance (token principal))
+  (default-to u0 (map-get? reserve token))
 )
 
-(define-public (add-to-balance (token <ft-trait>) (amount uint) (sender principal))
+(define-public (add-to-balance (token principal) (amount uint))
   (begin
-    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
-    (ok (map-set reserve (contract-of token) (+ amount (get-balance token))))
+    (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
+    (ok (map-set reserve token (+ amount (get-balance token))))
   )
 )
 
-;; if sender is an approved contract, then transfer requested amount from vault to recipient
-(define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
-  (begin     
-    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
-    (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
-    (ok (as-contract (unwrap! (contract-call? token transfer amount .alex-vault recipient none) ERR-TRANSFER-FAILED)))
+(define-public (remove-from-balance (token principal) (amount uint))
+  (begin
+    (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
+    (asserts! (< amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
+    (ok (map-set reserve token (- (get-balance token) amount)))
   )
 )
 
@@ -463,56 +451,8 @@
   )
 )
 
-
-;; math-fixed-point
-;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-
-;; constants
-;;
-(define-constant SCALE-UP-OVERFLOW (err u5001))
-(define-constant SCALE-DOWN-OVERFLOW (err u5002))
-(define-constant ADD-OVERFLOW (err u5003))
-(define-constant SUB-OVERFLOW (err u5004))
-(define-constant MUL-OVERFLOW (err u5005))
-(define-constant DIV-OVERFLOW (err u5006))
-(define-constant POW-OVERFLOW (err u5007))
-
-;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
-;; (i.e. the last digit of the result may be completely lost to this error).
-(define-constant MAX-POW-RELATIVE-ERROR u4) 
-
-;; public functions
-;;
-
-(define-read-only (get-one)
-    (ok ONE_8)
-)
-
-(define-read-only (scale-up (a uint))
-  (* a ONE_8)
-)
-
-(define-read-only (scale-down (a uint))
-  (/ a ONE_8)
-)
-
 (define-read-only (mul-down (a uint) (b uint))
-  (/ (* a b) ONE_8)
-)
-
-
-(define-read-only (mul-up (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-       )
-        (if (is-eq product u0)
-            u0
-            (+ u1 (/ (- product u1) ONE_8))
-       )
-   )
+    (/ (* a b) ONE_8)
 )
 
 (define-read-only (div-down (a uint) (b uint))
@@ -522,275 +462,9 @@
   )
 )
 
-(define-read-only (div-up (a uint) (b uint))
-  (if (is-eq a u0)
-    u0
-    (+ u1 (/ (- (* a ONE_8) u1) b))
-  )
-)
-
-(define-read-only (pow-down (a uint) (b uint))    
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX-POW-RELATIVE-ERROR)))
-        )
-        (if (< raw max-error)
-            u0
-            (- raw max-error)
-        )
-    )
-)
-
-(define-read-only (pow-up (a uint) (b uint))
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX-POW-RELATIVE-ERROR)))
-        )
-        (+ raw max-error)
-    )
-)
-
-;; math-log-exp
-;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
-;; Exponentiation and logarithm with arbitrary bases (x^y and log-x(y)) are implemented by conversion to natural 
-;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
-;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
-
-;; constants
-;;
-;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
-;; two numbers, and multiply by ONE when dividing them.
-;; All arguments and return values are 8 decimal fixed point numbers.
-(define-constant iONE_8 (pow 10 8))
-(define-constant ONE_10 (pow 10 10))
-
-;; The domain of natural exponentiation is bound by the word size and number of decimals used.
-;; The largest possible result is (2^127 - 1) / 10^8, 
-;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
-;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
-;; We use 69.0 and -18.0 to have some safety margin.
-(define-constant MAX-NATURAL-EXPONENT (* 69 iONE_8))
-(define-constant MIN-NATURAL-EXPONENT (* -18 iONE_8))
-
-(define-constant MILD-EXPONENT-BOUND (/ (pow u2 u126) (to-uint iONE_8)))
-
-;; Because largest exponent is 69, we start from 64
-;; The first several a-n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
-;; Instead we store them as plain integers, with 0 decimals.
-(define-constant x-a-list-no-deci (list 
-{x-pre: 6400000000, a-pre: 6235149080811616882910000000, use-deci: false} ;; x1 = 2^6, a1 = e^(x1)
-))
-;; 8 decimal constants
-(define-constant x-a-list (list 
-{x-pre: 3200000000, a-pre: 7896296018268069516100, use-deci: true} ;; x2 = 2^5, a2 = e^(x2)
-{x-pre: 1600000000, a-pre: 888611052050787, use-deci: true} ;; x3 = 2^4, a3 = e^(x3)
-{x-pre: 800000000, a-pre: 298095798704, use-deci: true} ;; x4 = 2^3, a4 = e^(x4)
-{x-pre: 400000000, a-pre: 5459815003, use-deci: true} ;; x5 = 2^2, a5 = e^(x5)
-{x-pre: 200000000, a-pre: 738905610, use-deci: true} ;; x6 = 2^1, a6 = e^(x6)
-{x-pre: 100000000, a-pre: 271828183, use-deci: true} ;; x7 = 2^0, a7 = e^(x7)
-{x-pre: 50000000, a-pre: 164872127, use-deci: true} ;; x8 = 2^-1, a8 = e^(x8)
-{x-pre: 25000000, a-pre: 128402542, use-deci: true} ;; x9 = 2^-2, a9 = e^(x9)
-{x-pre: 12500000, a-pre: 113314845, use-deci: true} ;; x10 = 2^-3, a10 = e^(x10)
-{x-pre: 6250000, a-pre: 106449446, use-deci: true} ;; x11 = 2^-4, a11 = e^x(11)
-))
-
-(define-constant X-OUT-OF-BOUNDS (err u5009))
-(define-constant Y-OUT-OF-BOUNDS (err u5010))
-(define-constant PRODUCT-OUT-OF-BOUNDS (err u5011))
-(define-constant INVALID-EXPONENT (err u5012))
-(define-constant OUT-OF-BOUNDS (err u5013))
-
-;; private functions
-;;
-
-;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-(define-private (ln-priv (a int))
-  (let
-    (
-      (a-sum-no-deci (fold accumulate-division x-a-list-no-deci {a: a, sum: 0}))
-      (a-sum (fold accumulate-division x-a-list {a: (get a a-sum-no-deci), sum: (get sum a-sum-no-deci)}))
-      (out-a (get a a-sum))
-      (out-sum (get sum a-sum))
-      (z (/ (* (- out-a iONE_8) iONE_8) (+ out-a iONE_8)))
-      (z-squared (/ (* z z) iONE_8))
-      (div-list (list 3 5 7 9 11))
-      (num-sum-zsq (fold rolling-sum-div div-list {num: z, seriesSum: z, z-squared: z-squared}))
-      (seriesSum (get seriesSum num-sum-zsq))
-      (r (+ out-sum (* seriesSum 2)))
-   )
-    (ok r)
- )
-)
-
-(define-private (accumulate-division (x-a-pre (tuple (x-pre int) (a-pre int) (use-deci bool))) (rolling-a-sum (tuple (a int) (sum int))))
-  (let
-    (
-      (a-pre (get a-pre x-a-pre))
-      (x-pre (get x-pre x-a-pre))
-      (use-deci (get use-deci x-a-pre))
-      (rolling-a (get a rolling-a-sum))
-      (rolling-sum (get sum rolling-a-sum))
-   )
-    (if (>= rolling-a (if use-deci a-pre (* a-pre iONE_8)))
-      {a: (/ (* rolling-a (if use-deci iONE_8 1)) a-pre), sum: (+ rolling-sum x-pre)}
-      {a: rolling-a, sum: rolling-sum}
-   )
- )
-)
-
-(define-private (rolling-sum-div (n int) (rolling (tuple (num int) (seriesSum int) (z-squared int))))
-  (let
-    (
-      (rolling-num (get num rolling))
-      (rolling-sum (get seriesSum rolling))
-      (z-squared (get z-squared rolling))
-      (next-num (/ (* rolling-num z-squared) iONE_8))
-      (next-sum (+ rolling-sum (/ next-num n)))
-   )
-    {num: next-num, seriesSum: next-sum, z-squared: z-squared}
- )
-)
-
-;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN-NATURAL-EXPONENT`, or larger than `MAX-NATURAL-EXPONENT`.
-(define-private (pow-priv (x uint) (y uint))
-  (let
-    (
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
-    )
-    (asserts! (and (<= MIN-NATURAL-EXPONENT logx-times-y) (<= logx-times-y MAX-NATURAL-EXPONENT)) PRODUCT-OUT-OF-BOUNDS)
-    (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
-  )
-)
-
-(define-private (exp-pos (x int))
-  (begin
-    (asserts! (and (<= 0 x) (<= x MAX-NATURAL-EXPONENT)) (err INVALID-EXPONENT))
-    (let
-      (
-        ;; For each x-n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x-product-no-deci (fold accumulate-product x-a-list-no-deci {x: x, product: 1}))
-        (x-adj (get x x-product-no-deci))
-        (firstAN (get product x-product-no-deci))
-        (x-product (fold accumulate-product x-a-list {x: x-adj, product: iONE_8}))
-        (product-out (get product x-product))
-        (x-out (get x x-product))
-        (seriesSum (+ iONE_8 x-out))
-        (div-list (list 2 3 4 5 6 7 8 9 10 11 12))
-        (term-sum-x (fold rolling-div-sum div-list {term: x-out, seriesSum: seriesSum, x: x-out}))
-        (sum (get seriesSum term-sum-x))
-     )
-      (ok (* (/ (* product-out sum) iONE_8) firstAN))
-   )
- )
-)
-
-(define-private (accumulate-product (x-a-pre (tuple (x-pre int) (a-pre int) (use-deci bool))) (rolling-x-p (tuple (x int) (product int))))
-  (let
-    (
-      (x-pre (get x-pre x-a-pre))
-      (a-pre (get a-pre x-a-pre))
-      (use-deci (get use-deci x-a-pre))
-      (rolling-x (get x rolling-x-p))
-      (rolling-product (get product rolling-x-p))
-   )
-    (if (>= rolling-x x-pre)
-      {x: (- rolling-x x-pre), product: (/ (* rolling-product a-pre) (if use-deci iONE_8 1))}
-      {x: rolling-x, product: rolling-product}
-   )
- )
-)
-
-(define-private (rolling-div-sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
-  (let
-    (
-      (rolling-term (get term rolling))
-      (rolling-sum (get seriesSum rolling))
-      (x (get x rolling))
-      (next-term (/ (/ (* rolling-term x) iONE_8) n))
-      (next-sum (+ rolling-sum next-term))
-   )
-    {term: next-term, seriesSum: next-sum, x: x}
- )
-)
-
-;; public functions
-;;
-
-(define-read-only (get-exp-bound)
-  (ok MILD-EXPONENT-BOUND)
-)
-
-;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
-(define-read-only (pow-fixed (x uint) (y uint))
-  (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) X-OUT-OF-BOUNDS)
-
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD-EXPONENT-BOUND) Y-OUT-OF-BOUNDS)
-
-    (if (is-eq y u0) 
-      (ok (to-uint iONE_8))
-      (if (is-eq x u0) 
-        (ok u0)
-        (pow-priv x y)
-      )
-    )
-  )
-)
-
-;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN-NATURAL-EXPONENT, or larger than `MAX-NATURAL-EXPONENT`.
-(define-read-only (exp-fixed (x int))
-  (begin
-    (asserts! (and (<= MIN-NATURAL-EXPONENT x) (<= x MAX-NATURAL-EXPONENT)) (err INVALID-EXPONENT))
-    (if (< x 0)
-      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN-NATURAL-EXPONENT).
-      ;; Fixed point division requires multiplying by iONE_8.
-      (ok (/ (* iONE_8 iONE_8) (unwrap-panic (exp-pos (* -1 x)))))
-      (exp-pos x)
-    )
-  )
-)
-
-;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-(define-read-only (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-  (let
-    (
-      (logBase (* (unwrap-panic (ln-priv base)) iONE_8))
-      (logArg (* (unwrap-panic (ln-priv arg)) iONE_8))
-   )
-    (ok (/ (* logArg iONE_8) logBase))
- )
-)
-
-;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-(define-read-only (ln-fixed (a int))
-  (begin
-    (asserts! (> a 0) (err OUT-OF-BOUNDS))
-    (if (< a iONE_8)
-      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-      ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by iONE_8.
-      (ok (- 0 (unwrap-panic (ln-priv (/ (* iONE_8 iONE_8) a)))))
-      (ln-priv a)
-   )
- )
-)
-
 ;; contract initialisation
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)  
+  (map-set approved-contracts .fixed-weight-pool true)
+  (map-set approved-contracts .yield-token-pool true)  
 )

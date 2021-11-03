@@ -3,7 +3,7 @@ name = "alex-v1"
 requirements = []
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["token-alex", "token-usda", "open-oracle", "math-fixed-point", "trait-ownable", "alex-vault"]
+depends_on = ["token-alex", "token-usda", "open-oracle", "math-fixed-point", "trait-ownable", "alex-vault", "trait-yield-token", "trait-sip-010"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
