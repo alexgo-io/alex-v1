@@ -515,10 +515,7 @@
                                     balance-x
                                     (begin
                                         (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender tx-sender)))
-                                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                            (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x none))))
-                                            (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x none))))
-                                        )                                                                                
+                                        (as-contract (try! (contract-call? .fixed-weight-pool get-balance-x-to-y token collateral u50000000 u50000000 balance-x none balance-x none)))    
                                     )                                    
                                 )
                             )
