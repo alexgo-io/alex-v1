@@ -212,7 +212,29 @@ import {
         types.uint(weightY),
         types.uint(dy)
       ], this.deployer.address);
-    } 
+    }
+
+    setFeeRebate(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, rebate : number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "set-fee-rebate", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),
+          types.uint(rebate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRebate(tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-fee-rebate", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+      ], this.deployer.address);
+    }
   
   }
   

@@ -11,7 +11,7 @@ const {
     flExecuteMarginWbtcUsda34560,
     flExecuteMarginWbtcUsda74880,
 } = require('./flashloan')
-const { flashloan, getBalance, mint, burn, balance } = require('./vault')
+const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens } = require('./faucet')
 const {
     fwpCreate,
@@ -186,8 +186,8 @@ async function mint_some_usda(recipient) {
 
 async function mint_some_wbtc(recipient) {
     console.log('------ Mint Some WBTC ------');
-    // await mint('token-wbtc', recipient, 5000000000000);
-    await mint('token-wbtc', recipient, Math.round(10000000000 * ONE_8 / 61800));
+    await mint('token-wbtc', recipient, 50000000000);
+    // await mint('token-wbtc', recipient, Math.round(10000000000 * ONE_8 / 61800));
     wbtc_balance = await balance('token-wbtc', recipient);
     console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8));
 }
@@ -776,7 +776,7 @@ async function run() {
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
     
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
-    // await get_some_token('ST39X51DANBRF1FQ3ED07Z69NX9GS30Y259Q5R4NZ');
+    // await get_some_token('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
     // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
     // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
 
@@ -787,9 +787,13 @@ async function run() {
     // console.log(result);
     // await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 500000000e8, 0);
     // await arbitrage_fwp(dry_run = false);
-    // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);    
+    // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
     // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
     // console.log(result);
+
+    result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
+    console.log(result);
+    await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
 }
 run();
