@@ -618,3 +618,52 @@ Clarinet.test({
 
     },    
 });
+
+Clarinet.test({
+    name: "YTP : buy-and-add-to-position",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+
+        //Deployer creating a pool, initial tokens injected to the pool
+        let result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, 1000*ONE_8, 1000*ONE_8);
+        result.expectOk().expectBool(true);
+
+        // Check pool details and print
+        let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        let position:any = call.result.expectOk().expectTuple();
+        position['balance-token'].expectUint(1000*ONE_8);
+        position['balance-aytoken'].expectUint(0);
+        position['balance-virtual'].expectUint(1000*ONE_8);
+
+        // inject some yield-token to pool
+        result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, 10 * ONE_8, 0);
+        position =result.expectOk().expectTuple();
+        position['dx'].expectUint(1000039937);
+        position['dy'].expectUint(10 * ONE_8);
+
+        // Check pool details and print
+        call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(1000*ONE_8);
+        position['balance-token'].expectUint(1000*ONE_8 - 1000039937);
+        position['balance-aytoken'].expectUint(10 * ONE_8);
+        position['balance-virtual'].expectUint(1000*ONE_8);  
+
+        // make sure wallet_1 does not have any yield-token
+        call = chain.callReadOnlyFn(yieldwbtc59760Address, "get-balance", 
+            [types.principal(wallet_1.address)
+            ], wallet_1.address);
+        call.result.expectOk().expectUint(0);            
+        
+        //Add extra liquidity with secondary buying of yield-token
+        result = YTPTest.buyAndAddToPosition(wallet_1, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 10*ONE_8);
+        position = result.expectOk().expectTuple();
+        position['supply'].expectUint(909189000);
+        position['balance-token'].expectUint(900997112);
+        position['balance-aytoken'].expectUint(8191445);
+        position['balance-virtual'].expectUint(909189002);
+    }
+});
