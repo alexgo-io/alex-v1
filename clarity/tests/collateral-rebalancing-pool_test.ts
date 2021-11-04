@@ -76,6 +76,18 @@ Clarinet.test({
         position['balance-x'].expectUint(wbtcQ);
         position['balance-y'].expectUint(Math.round(wbtcQ * wbtcPrice / ONE_8));
 
+        result = FWPTest.setOracleEnabled(deployer, wbtcAddress, usdaAddress, weightX, weightY);
+        result.expectOk().expectBool(true);   
+
+        result = FWPTest.setOracleAverage(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result.expectOk().expectBool(true);  
+        
+        call = await FWPTest.getOracleResilient(wbtcAddress, usdaAddress, weightX, weightY);
+        call.result.expectOk().expectUint(wbtcPrice);
+
+        call = await FWPTest.getOracleInstant(wbtcAddress, usdaAddress, weightX, weightY);
+        call.result.expectOk().expectUint(wbtcPrice);        
+
         result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
 
@@ -84,7 +96,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(100111426);
+        call.result.expectOk().expectUint(100089196);
 
         // ltv-0 is 80%, but injecting liquidity pushes up LTV
         call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
