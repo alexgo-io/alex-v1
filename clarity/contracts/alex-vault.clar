@@ -58,25 +58,25 @@
 )
 
 ;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
-(define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+(define-public (transfer-ft (token <ft-trait>) (amount uint) (recipient principal))
   (begin     
-    (try! (check-is-approved sender))
+    (try! (check-is-approved contract-caller))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
 
-(define-public (transfer-yield (token <yield-token-trait>) (amount uint) (sender principal) (recipient principal))
+(define-public (transfer-yield (token <yield-token-trait>) (amount uint) (recipient principal))
   (begin     
-    (try! (check-is-approved sender))
+    (try! (check-is-approved contract-caller))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
 
-(define-public (transfer-pool (token <pool-token-trait>) (amount uint) (sender principal) (recipient principal))
+(define-public (transfer-pool (token <pool-token-trait>) (amount uint) (recipient principal))
   (begin     
-    (try! (check-is-approved sender))
+    (try! (check-is-approved contract-caller))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
