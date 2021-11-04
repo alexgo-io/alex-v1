@@ -30,7 +30,6 @@
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
-(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
 (define-map pools-map
@@ -101,17 +100,6 @@
     )
 )
 
-(define-read-only (get-oracle-src)
-  (ok (var-get oracle-src))
-)
-
-(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set oracle-src new-oracle-src))
-  )
-)
-
 ;; @desc get-t
 ;; @desc get time-to-maturity as a function of max-expiry
 ;; @param expiry; when contract expiries
@@ -158,26 +146,25 @@
     (ok (unwrap! (map-get? pools-data-map { aytoken: (contract-of the-aytoken) }) ERR-INVALID-POOL-ERR))
 )
 
-
-;; @desc get-pool-value-in-token
-;; @desc value of pool in units of token
-;; @param the-aytoken; yield-token
-;; @param the-token; token
-;; @returns (response uint uint)
-(define-read-only (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
-    (let
-        (
-            (aytoken (contract-of the-aytoken))
-            (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
-            (balance-token (get balance-token pool))
-            (balance-aytoken (get balance-aytoken pool))
-            (token-symbol (get token-symbol pool))         
-            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (balance (+ balance-token balance-aytoken))
-        )
-        (ok (mul-up balance token-price))
-    )
-)
+;; ;; @desc get-pool-value-in-token
+;; ;; @desc value of pool in units of token
+;; ;; @param the-aytoken; yield-token
+;; ;; @param the-token; token
+;; ;; @returns (response uint uint)
+;; (define-read-only (get-pool-value-in-token (the-aytoken <yield-token-trait>) (the-token <ft-trait>))
+;;     (let
+;;         (
+;;             (aytoken (contract-of the-aytoken))
+;;             (pool (unwrap! (map-get? pools-data-map { aytoken: aytoken }) ERR-INVALID-POOL-ERR))
+;;             (balance-token (get balance-token pool))
+;;             (balance-aytoken (get balance-aytoken pool))
+;;             (token-symbol (get token-symbol pool))         
+;;             (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
+;;             (balance (+ balance-token balance-aytoken))
+;;         )
+;;         (ok (mul-up balance token-price))
+;;     )
+;; )
 
 ;; @desc get-yield
 ;; @desc note yield is not annualised
