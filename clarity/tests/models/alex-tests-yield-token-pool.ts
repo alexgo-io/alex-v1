@@ -65,6 +65,18 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+      buyAndAddToPosition(user: Account, aytoken: string, token: string, pooltoken: string, dX: number) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("yield-token-pool", "buy-and-add-to-position", [
+            types.principal(aytoken),
+            types.principal(token),
+            types.principal(pooltoken),
+            types.uint(dX),
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }      
   
       reducePosition(user: Account, aytoken: string, token: string, pooltoken: string, percent: number) {
         let block = this.chain.mineBlock([

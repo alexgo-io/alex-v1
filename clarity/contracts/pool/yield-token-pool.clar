@@ -268,6 +268,26 @@
     )
 )
 
+;; @desc buy-and-add-to-position
+;; @desc helper function to buy required yield-token before adding position
+;; @desc returns units of pool tokens minted, dx, dy-actual and dy-virtual added
+;; @param the-aytoken; yield token
+;; @param the-token; token
+;; @param pool-token; pool token representing ownership of the pool
+;; @param dx; amount of token added (part of which will be used to buy yield-token)
+;; @returns (response (tuple uint uint uint uint) uint)
+(define-public (buy-and-add-to-position (the-aytoken <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
+    (let
+        (
+            (dy-act (get dy-act (try! (get-token-given-position the-aytoken dx))))
+            (dx-adjusted (- dx (div-down dx (+ dx (try! (get-x-given-y the-aytoken dy-act))))))
+            (dx-to-buy-dy-adjusted (- dx dx-adjusted))
+        )
+        (and (> dy-act u0) (is-ok (swap-x-for-y the-aytoken the-token dx-to-buy-dy-adjusted none)))
+        (add-to-position the-aytoken the-token the-pool-token dx-adjusted)
+    )
+)
+
 ;; @desc add-to-position
 ;; @desc returns units of pool tokens minted, dx, dy-actual and dy-virtual added
 ;; @param the-aytoken; yield token
