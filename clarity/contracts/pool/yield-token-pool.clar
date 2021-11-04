@@ -372,8 +372,8 @@
 
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
 
-            (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx (as-contract tx-sender) tx-sender)))
-            (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-yield the-aytoken dy-act (as-contract tx-sender) tx-sender)))
+            (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
+            (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-yield the-aytoken dy-act tx-sender)))
 
             (map-set pools-data-map { aytoken: aytoken } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
@@ -423,7 +423,7 @@
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED))
-            (and (> dy u0) (try! (contract-call? .alex-vault transfer-yield the-aytoken dy (as-contract tx-sender) tx-sender)))
+            (and (> dy u0) (try! (contract-call? .alex-vault transfer-yield the-aytoken dy tx-sender)))
 
             ;; post setting
             (map-set pools-data-map { aytoken: aytoken } pool-updated)
@@ -470,7 +470,7 @@
             )
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx (as-contract tx-sender) tx-sender)))
+            (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
             (and (> dy u0) (unwrap! (contract-call? the-aytoken transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
 
             (print dy)

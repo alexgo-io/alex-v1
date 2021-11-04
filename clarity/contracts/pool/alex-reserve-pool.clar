@@ -64,9 +64,9 @@
 )
 
 ;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
-(define-public (transfer-ft (token <ft-trait>) (amount uint) (sender principal) (recipient principal))
+(define-public (transfer-ft (token <ft-trait>) (amount uint) (recipient principal))
   (begin     
-    (asserts! (default-to false (map-get? approved-contracts sender)) ERR-NOT-AUTHORIZED)
+    (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
