@@ -29,15 +29,14 @@ const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
 
-const wbtcPrice = 50000
+const wbtcPrice = 50000 / ONE_8 / 1e2; //wbtc per dollar -> satoshi per dollar -> satoshi per cent
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
 
 /**
- * Yield Token Pool Test Cases  
+ * Flash Loan Test Cases  
  * 
- *  TODO: test shortfall case with reserve-pool
  */
 
 Clarinet.test({
@@ -56,7 +55,7 @@ Clarinet.test({
         call = await FLTest.getBalance(usdaAddress, wallet_1.address);
         position = call.result.expectOk().expectUint(20000000000000);        
         
-        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(500000e+8 * ONE_8 / wbtcPrice), 500000e+8);
+        let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(50000000e+8 * ONE_8 / wbtcPrice), 50000000e+8);
         result.expectOk().expectBool(true);
         result = FWPTest.setOracleEnabled(deployer, wbtcAddress, usdaAddress, weightX, weightY);
         result.expectOk().expectBool(true);   
@@ -65,14 +64,14 @@ Clarinet.test({
 
         call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(Math.round(500000e+8 * ONE_8 / wbtcPrice));
-        position['balance-y'].expectUint(500000e+8);
+        position['balance-x'].expectUint(Math.round(50000000e+8 * ONE_8 / wbtcPrice));
+        position['balance-y'].expectUint(50000000e+8);
 
-        result = YTPTest.createPool(deployer, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 50000000e+8, 50000000e+8);        
         result.expectOk().expectBool(true);
 
         //Deployer creating a pool, initial tokens injected to the pool
-        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
+        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8 * 1e+8);
         result.expectOk().expectBool(true);
 
         call = await CRPTest.getSpot(usdaAddress, wbtcAddress);
