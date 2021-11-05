@@ -312,9 +312,8 @@
             
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)    
 
-            (try! (contract-call? .alex-vault transfer-ft token-x-trait dx (as-contract tx-sender) tx-sender))
-            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy (as-contract tx-sender) tx-sender))
-
+            (try! (contract-call? .alex-vault ft-transfer-multi token-x-trait dx token-y-trait dy (as-contract tx-sender) tx-sender))
+            
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })

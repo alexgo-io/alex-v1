@@ -457,7 +457,7 @@
 
                 (dy-weighted (if (is-eq token-x token-y)
                                 dx-to-dy
-                                (try! (contract-call? .fixed-weight-pool get-weighted-dy token collateral u50000000 u50000000 dx-to-dy none none))
+                                (try! (contract-call? .fixed-weight-pool swap token collateral u50000000 u50000000 dx-to-dy none))
                              )
                 )
 
@@ -515,7 +515,7 @@
                                     balance-x
                                     (begin
                                         (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender tx-sender)))
-                                        (as-contract (try! (contract-call? .fixed-weight-pool get-balance-x-to-y token collateral u50000000 u50000000 balance-x none balance-x none)))    
+                                        (as-contract (try! (contract-call? .fixed-weight-pool swap token collateral u50000000 u50000000 balance-x none)))
                                     )                                    
                                 )
                             )
@@ -942,10 +942,7 @@
                 (ltv (try! (get-ltv token collateral expiry)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
-                        (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                            (try! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx))
-                            (try! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dx))
-                        )                    
+                        (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dx))                    
                     )
                 )
                 (ltv-dy (mul-down ltv dy))
@@ -987,10 +984,7 @@
                 ;; always convert to collateral ccy
                 (dy-to-dx (if (is-eq token-x token-y)
                             dy-weighted
-                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                (try! (contract-call? .fixed-weight-pool get-y-given-x token collateral u50000000 u50000000 dy-weighted))
-                                (try! (contract-call? .fixed-weight-pool get-x-given-y collateral token u50000000 u50000000 dy-weighted))
-                            )                            
+                            (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dy-weighted))                    
                         )
                 )   
                 (dx (+ dx-weighted dy-to-dx))
