@@ -447,7 +447,6 @@
             (
                 (yield-token (contract-of the-yield-token))
                 (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
-                (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
 
@@ -476,6 +475,7 @@
 
             (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED))
             (and (> dy u0) (try! (contract-call? .alex-vault transfer-yield the-yield-token dy tx-sender)))
+            (try! (contract-call? .alex-reserve-pool add-to-balance (contract-of the-token) (- fee fee-rebate)))
 
             ;; post setting
             (map-set pools-data-map { yield-token: yield-token } pool-updated)
@@ -525,8 +525,8 @@
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
             (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+            (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate)))
 
-            (print dy)
             ;; post setting
             (map-set pools-data-map { yield-token: yield-token } pool-updated)
             (print { object: "pool", action: "swap-y-for-x", data: pool-updated })

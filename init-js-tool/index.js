@@ -758,7 +758,11 @@ async function run() {
     // await arbitrage_crp(dry_run=true, _pools);    
     // await arbitrage_ytp(dry_run=true, _pools); 
     // await get_pool_details_fwp();
+<<<<<<< HEAD
     // await get_pool_details_crp(_pools);
+=======
+    await get_pool_details_crp(_pools);
+>>>>>>> 151aa8eae59ffe5504951b55eb105d49f9edb5ff
     // await get_pool_details_ytp(_pools);   
 
     // await reduce_position_fwp(0.9 * ONE_8);
@@ -792,7 +796,6 @@ async function run() {
     // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
     // console.log(result);
 
-<<<<<<< HEAD
     // result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
     // console.log(result);
     // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
@@ -801,16 +804,7 @@ async function run() {
     for (let i = 0; i < _list.length; i++){
         // result = await balance(_list[i], process.env.DEPLOYER_ACCOUNT_ADDRESS);
         // console.log(result);
-        await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
+        await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     }
-=======
-    // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);    
-    result = await balance('ytp-yield-wbtc-51840-wbtc', process.env.DEPLOYER_ACCOUNT_ADDRESS);        
-    // result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
-    console.log(result);
-    // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
-    // await transfer('fwp-wbtc-usda-50-50', 'ST3YWEVAEB33P3QXQ16D5HRKX4DGKN501ED4M3JVY', 41099046866212, deployer=true);    
-    await transfer('ytp-yield-wbtc-51840-wbtc', 'ST3YWEVAEB33P3QXQ16D5HRKX4DGKN501ED4M3JVY', 100000000, deployer=true);
->>>>>>> dev
 }
 run();
