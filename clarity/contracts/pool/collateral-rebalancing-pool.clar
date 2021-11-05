@@ -474,7 +474,7 @@
                                 (if (is-eq token-x token-y)
                                     balance-x
                                     (begin
-                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender tx-sender)))
+                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender)))
                                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
                                             (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x none))))
                                             (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x none))))
@@ -511,7 +511,7 @@
                         (amount (- shares dy))                    
                     )                
                     (if (is-eq token-y .token-usda)
-                        (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount tx-sender tx-sender)))
+                        (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount tx-sender)))
                         (let
                             (
                                 (amount-to-swap 
@@ -525,7 +525,7 @@
                                     )
                                 )
                             )
-                            (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap tx-sender tx-sender)))
+                            (as-contract (try! (contract-call? .alex-reserve-pool transfer-ft .token-usda amount-to-swap tx-sender)))
                             (as-contract (unwrap! (contract-call? token transfer (if (is-eq token-y .token-usda)
                                                                         amount-to-swap
                                                                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token .token-usda u50000000 u50000000))
@@ -539,7 +539,7 @@
             )       
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (try! (contract-call? .alex-vault transfer-ft token shares (as-contract tx-sender) tx-sender))
+            (try! (contract-call? .alex-vault transfer-ft token shares tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-yield-token burn tx-sender shares))
@@ -588,8 +588,8 @@
 
             (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-POOL-TOKEN)        
             
-            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted (as-contract tx-sender) tx-sender)))
-            (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted (as-contract tx-sender) tx-sender)))
+            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted tx-sender)))
+            (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-key-token burn tx-sender shares))
@@ -647,7 +647,7 @@
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token dy (as-contract tx-sender) tx-sender))
+            (try! (contract-call? .alex-vault transfer-ft token dy tx-sender))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -704,7 +704,7 @@
 
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (try! (contract-call? .alex-vault transfer-ft collateral dx (as-contract tx-sender) tx-sender))
+            (try! (contract-call? .alex-vault transfer-ft collateral dx tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
             ;; post setting
