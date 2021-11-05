@@ -47,7 +47,7 @@ Clarinet.test({
         let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         let position:any = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
 
         let listed = 100000000;
@@ -57,7 +57,7 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(10*ONE_8);
 
         // Check pool details and print
@@ -65,7 +65,7 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(1010*ONE_8);
         position['balance-token'].expectUint(1010*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1010*ONE_8);        
         
         // Remove all liquidlity
@@ -79,7 +79,7 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(0);
         position['balance-token'].expectUint(0);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(0);          
 
         // Add back some liquidity
@@ -87,7 +87,7 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(1000*ONE_8);
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);     
         
         // check t
@@ -123,7 +123,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(99800024763);
-        position['balance-aytoken'].expectUint(2*ONE_8);
+        position['balance-yield-token'].expectUint(2*ONE_8);
         position['balance-virtual'].expectUint(1000*ONE_8);         
             
         // now that yield token supply > token supply, yield is positive.
@@ -147,7 +147,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(99900024763);
-        position['balance-aytoken'].expectUint(99971142);
+        position['balance-yield-token'].expectUint(99971142);
         position['balance-virtual'].expectUint(1000*ONE_8); 
 
         // after buying back some yield token, yield decreases.
@@ -231,7 +231,7 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(103094788000);
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(3086908988);
+        position['balance-yield-token'].expectUint(3086908988);
         position['balance-virtual'].expectUint(103094788085);    
         
         call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
@@ -285,7 +285,7 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(153094788000);
         position['balance-token'].expectUint(150399056950);
-        position['balance-aytoken'].expectUint(2683996920);
+        position['balance-yield-token'].expectUint(2683996920);
         position['balance-virtual'].expectUint(153094788043);          
         
         call = chain.callReadOnlyFn(ytpyieldwbtc59760Address, "get-balance", 
@@ -304,7 +304,7 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(0);
         position['balance-token'].expectUint(0);
-        position['balance-aytoken'].expectUint(114);
+        position['balance-yield-token'].expectUint(114);
         position['balance-virtual'].expectUint(0);    
     },    
 });
@@ -355,7 +355,7 @@ Clarinet.test({
         let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         let position:any = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
 
         call = await YTPTest.getYield(yieldwbtc59760Address);
@@ -421,14 +421,14 @@ Clarinet.test({
         let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         let position:any = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
 
         result = YTPTest.addToPosition(wallet_2, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, 10*ONE_8);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(10*ONE_8);   
 
         result = YTPTest.swapYForX(deployer, yieldwbtc59760Address, wbtcAddress, ONE_8, 0);
@@ -439,7 +439,7 @@ Clarinet.test({
         call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         position = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(100900027581); // u99900045311
-        position['balance-aytoken'].expectUint(ONE_8);
+        position['balance-yield-token'].expectUint(ONE_8);
         position['balance-virtual'].expectUint(1010*ONE_8);
 
         call = await ytpPoolToken.balanceOf(deployer.address);
@@ -480,10 +480,10 @@ Clarinet.test({
         // Fee checking
         call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         position = call.result.expectOk().expectTuple();
-        position['balance-aytoken'].expectUint(100000000);
+        position['balance-yield-token'].expectUint(100000000);
         position['balance-token'].expectUint(100900027581);
         position['balance-virtual'].expectUint(101000000000);
-        position['fee-rate-aytoken'].expectUint(0.1*ONE_8);
+        position['fee-rate-yield-token'].expectUint(0.1*ONE_8);
         position['fee-rate-token'].expectUint(0.1*ONE_8);
         position['fee-rebate'].expectUint(0.5*ONE_8);
         
@@ -504,7 +504,7 @@ Clarinet.test({
 
         call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         position = call.result.expectOk().expectTuple();
-        position['balance-aytoken'].expectUint(100000000 + 199999730 + 135); //before + after + fee-rebate
+        position['balance-yield-token'].expectUint(100000000 + 199999730 + 135); //before + after + fee-rebate
         position['balance-token'].expectUint(100900027581 - 199967096);
         position['balance-virtual'].expectUint(101000000000);
     },    
@@ -539,7 +539,7 @@ Clarinet.test({
         let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         let position:any = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
         
         // Attempts to inject zero liquidity
@@ -567,7 +567,7 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(1000*ONE_8);
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);     
 
         // Another User adds liquidity
@@ -575,7 +575,7 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(10*ONE_8);     
 
         // Another user attempts to reduce liquidity with zero value
@@ -635,7 +635,7 @@ Clarinet.test({
         let call = await YTPTest.getPoolDetails(yieldwbtc59760Address);
         let position:any = call.result.expectOk().expectTuple();
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-aytoken'].expectUint(0);
+        position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
 
         // inject some yield-token to pool
@@ -649,7 +649,7 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(1000*ONE_8);
         position['balance-token'].expectUint(1000*ONE_8 - 1000039937);
-        position['balance-aytoken'].expectUint(10 * ONE_8);
+        position['balance-yield-token'].expectUint(10 * ONE_8);
         position['balance-virtual'].expectUint(1000*ONE_8);  
 
         // make sure wallet_1 does not have any yield-token
@@ -663,7 +663,7 @@ Clarinet.test({
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(909189000);
         position['balance-token'].expectUint(900997112);
-        position['balance-aytoken'].expectUint(8191445);
+        position['balance-yield-token'].expectUint(8191445);
         position['balance-virtual'].expectUint(909189002);
     }
 });

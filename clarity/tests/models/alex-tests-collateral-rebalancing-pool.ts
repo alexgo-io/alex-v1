@@ -49,6 +49,13 @@ import {
       ], this.deployer.address);
     }
 
+    getSpot(token: string, collateral: string){
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-spot", [
+        types.principal(token),
+        types.principal(collateral)
+      ], this.deployer.address);
+    }    
+
     getLtv(token: string, collateral: string, expiry: number){
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-ltv", [
         types.principal(token),
@@ -201,17 +208,6 @@ import {
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
-  
-    collectFees(user: Account, token: string, collateral: string, expiry: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "collect-fees", [
-            types.principal(token),
-            types.principal(collateral),
-            types.uint(expiry)
         ], user.address),
       ]);
       return block.receipts[0].result;

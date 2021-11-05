@@ -59,8 +59,6 @@
     fee-rate-x: uint,
     fee-rate-y: uint,
     fee-rebate: uint,
-    token-x-symbol: (string-ascii 32),
-    token-y-symbol: (string-ascii 32),
     oracle-enabled: bool,
     oracle-average: uint,
     oracle-resilient: uint
@@ -222,13 +220,25 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
-    (let
-        (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        )
-        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y)))
-               (mul-down (get oracle-average pool) (get oracle-resilient pool))))
+    (begin
+        (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
+            (let
+                (
+                    (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+                )
+                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+                (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))) 
+                       (mul-down (get oracle-average pool) (get oracle-resilient pool))))
+            )
+            (let
+                (
+                    (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-y-trait), token-y: (contract-of token-x-trait), weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL-ERR))
+                )
+                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+                (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))) 
+                       (mul-down (get oracle-average pool) (div-down ONE_8 (get oracle-resilient pool)))))
+            )
+        )            
     )
 )
 
@@ -240,12 +250,23 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
-    (let
-        (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+    (begin                
+        (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
+            (let
+                (
+                    (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+                )
+                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+                (ok (div-down (mul-down (get balance-y pool) weight-x) (mul-down (get balance-x pool) weight-y)))
+            )
+            (let
+                (
+                    (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-y-trait), token-y: (contract-of token-x-trait), weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL-ERR))
+                )
+                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+                (ok (div-down (mul-down (get balance-x pool) weight-y) (mul-down (get balance-y pool) weight-x)))
+            )
         )
-        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (div-down (mul-down (get balance-y pool) weight-x) (mul-down (get balance-x pool) weight-y)))
     )
 )
 
@@ -275,8 +296,6 @@
                 fee-rate-x: u0,
                 fee-rate-y: u0,
                 fee-rebate: u0,
-                token-x-symbol: (try! (contract-call? token-x-trait get-symbol)),
-                token-y-symbol: (try! (contract-call? token-y-trait get-symbol)),
                 oracle-enabled: false,
                 oracle-average: u0,
                 oracle-resilient: u0

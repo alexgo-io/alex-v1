@@ -792,6 +792,18 @@ async function run() {
     // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
     // console.log(result);
 
+<<<<<<< HEAD
+    // result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
+    // console.log(result);
+    // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
+
+    _list = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda']
+    for (let i = 0; i < _list.length; i++){
+        // result = await balance(_list[i], process.env.DEPLOYER_ACCOUNT_ADDRESS);
+        // console.log(result);
+        await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
+    }
+=======
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);    
     result = await balance('ytp-yield-wbtc-51840-wbtc', process.env.DEPLOYER_ACCOUNT_ADDRESS);        
     // result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
@@ -799,5 +811,6 @@ async function run() {
     // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
     // await transfer('fwp-wbtc-usda-50-50', 'ST3YWEVAEB33P3QXQ16D5HRKX4DGKN501ED4M3JVY', 41099046866212, deployer=true);    
     await transfer('ytp-yield-wbtc-51840-wbtc', 'ST3YWEVAEB33P3QXQ16D5HRKX4DGKN501ED4M3JVY', 100000000, deployer=true);
+>>>>>>> dev
 }
 run();

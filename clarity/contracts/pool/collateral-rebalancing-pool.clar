@@ -39,7 +39,6 @@
 (define-constant a4 u7810800)
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
-(define-data-var oracle-src (string-ascii 32) "coingecko")
 
 ;; data maps and vars
 ;;
@@ -74,8 +73,6 @@
     fee-rebate: uint,
     weight-x: uint,
     weight-y: uint,
-    token-symbol: (string-ascii 32),
-    collateral-symbol: (string-ascii 32),
     moving-average: uint,
     conversion-ltv: uint
   }
@@ -132,17 +129,6 @@
   )
 )
 
-(define-read-only (get-oracle-src)
-  (ok (var-get oracle-src))
-)
-
-(define-public (set-oracle-src (new-oracle-src (string-ascii 32)))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set oracle-src new-oracle-src))
-  )
-)
-
 ;; @desc get-pool-count
 ;; @returns uint
 (define-read-only (get-pool-count)
@@ -177,14 +163,10 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (let 
-        (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) (get token-symbol pool)) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) (get collateral-symbol pool)) ERR-GET-ORACLE-PRICE-FAIL))            
-        )
-        (ok (div-down token-price collateral-price))
+(define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>))
+    (if (is-eq token collateral)
+        (ok ONE_8)
+        (contract-call? .fixed-weight-pool get-oracle-resilient token collateral u50000000 u50000000)
     )
 )
 
@@ -197,17 +179,9 @@
 (define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))            
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))   
-            (token-symbol (get token-symbol pool))
-            (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
-            (token-value (mul-down balance-x collateral-price))
-            (balance-x-in-y (div-down token-value token-price))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
+            (balance-y (get balance-y pool))
+            (balance-x-in-y (div-down (get balance-x pool) (try! (get-spot token collateral))))
         )
         (ok (+ balance-x-in-y balance-y))
     )
@@ -222,17 +196,9 @@
 (define-read-only (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))   
-            (token-symbol (get token-symbol pool))
-            (collateral-symbol (get collateral-symbol pool))
-            (token-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) token-symbol) ERR-GET-ORACLE-PRICE-FAIL))
-            (collateral-price (unwrap! (contract-call? .open-oracle get-price (var-get oracle-src) collateral-symbol) ERR-GET-ORACLE-PRICE-FAIL))  
-            (collateral-value (mul-down balance-y token-price))
-            (balance-y-in-x (div-down collateral-value collateral-price))
+            (balance-y-in-x (mul-down (get balance-y pool) (try! (get-spot token collateral))))
         )
         (ok (+ balance-y-in-x balance-x))
     )
@@ -247,9 +213,7 @@
 (define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (yield-supply (get yield-supply pool)) ;; in token
             (pool-value (try! (get-pool-value-in-token token collateral expiry))) ;; also in token
         )
@@ -278,9 +242,7 @@
             (conversion-ltv (get conversion-ltv pool))
             (ma-comp (- ONE_8 moving-average))
 
-            ;; determine spot using open oracle
-            ;; token / collateral
-            (spot (unwrap! (get-spot token collateral expiry) ERR-GET-ORACLE-PRICE-FAIL))
+            (spot (try! (get-spot token collateral)))
             (now (* block-height ONE_8))
             (ltv (try! (get-ltv token collateral expiry)))
         )
@@ -345,9 +307,6 @@
                 ;; assume 10mins per block
                 (t (div-down 
                     (- expiry now) (* u52560 ONE_8)))
-
-                (token-symbol (try! (contract-call? token get-symbol)))
-                (collateral-symbol (try! (contract-call? collateral get-symbol)))
                
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
@@ -372,7 +331,7 @@
                     fee-to-address: (contract-of multisig-vote),
                     yield-token: (contract-of the-yield-token),
                     key-token: (contract-of the-key-token),
-                    strike: (try! (contract-call? .open-oracle calculate-strike (var-get oracle-src) token-symbol collateral-symbol)),
+                    strike: (try! (get-spot token collateral)),
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
@@ -380,8 +339,6 @@
                     ltv-0: ltv-0,
                     weight-x: weight-x,
                     weight-y: weight-y,
-                    token-symbol: token-symbol,
-                    collateral-symbol: collateral-symbol,
                     moving-average: moving-average,
                     conversion-ltv: conversion-ltv
                 })

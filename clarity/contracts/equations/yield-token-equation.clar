@@ -71,7 +71,7 @@
 )
 
 ;; @desc get-price
-;; @desc b_y = balance-aytoken
+;; @desc b_y = balance-yield-token
 ;; @desc b_x = balance-token
 ;; @desc price = (b_y / b_x) ^ t
 ;; @param balance-x; balance of token-x (token)
