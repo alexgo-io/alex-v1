@@ -29,7 +29,7 @@ const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
 
-const wbtcPrice = 50000e+8
+const wbtcPrice = 50000
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
@@ -52,9 +52,9 @@ Clarinet.test({
         let FLTest = new FLTestAgent1(chain, deployer);
 
         let call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
-        let position:any = call.result.expectOk().expectUint(2000000000000);  
+        let position:any = call.result.expectOk().expectUint(200000000000000000000);  
         call = await FLTest.getBalance(usdaAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(200000000000);        
+        position = call.result.expectOk().expectUint(20000000000000);        
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(500000e+8 * ONE_8 / wbtcPrice), 500000e+8);
         result.expectOk().expectBool(true);
