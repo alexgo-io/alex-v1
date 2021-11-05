@@ -5,7 +5,6 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
-import { OracleManager } from './models/alex-tests-oracle-mock.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';  
 import { FLTestAgent1 } from './models/alex-tests-flash-loan.ts';
 
@@ -30,8 +29,7 @@ const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
 
-const wbtcPrice = 44000e+8
-const usdaPrice = 1e+8
+const wbtcPrice = 50000e+8
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
@@ -51,14 +49,7 @@ Clarinet.test({
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
-        let Oracle = new OracleManager(chain, deployer);
         let FLTest = new FLTestAgent1(chain, deployer);
-        
-        let oracleresult = Oracle.updatePrice(deployer,"WBTC","coingecko",wbtcPrice);
-        oracleresult.expectOk()
-
-        oracleresult = Oracle.updatePrice(deployer,"USDA","coingecko",usdaPrice);
-        oracleresult.expectOk()
 
         let call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
         let position:any = call.result.expectOk().expectUint(2000000000000);  
@@ -66,6 +57,10 @@ Clarinet.test({
         position = call.result.expectOk().expectUint(200000000000);        
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(500000e+8 * ONE_8 / wbtcPrice), 500000e+8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setOracleEnabled(deployer, wbtcAddress, usdaAddress, weightX, weightY);
+        result.expectOk().expectBool(true);   
+        result = FWPTest.setOracleAverage(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);
 
         call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
@@ -80,11 +75,17 @@ Clarinet.test({
         result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
         result.expectOk().expectBool(true);
 
+        call = await CRPTest.getSpot(usdaAddress, wbtcAddress);
+        call.result.expectOk().expectUint(2008);
+
+        call = await CRPTest.getSpot(wbtcAddress, usdaAddress);
+        call.result.expectOk().expectUint(4981337432709);        
+
         call = await CRPTest.getPoolValueInToken(usdaAddress, wbtcAddress, expiry);
-        call.result.expectOk().expectUint(4341455224000);
+        call.result.expectOk().expectUint(4912705519920);
 
         call = await CRPTest.getLtv(usdaAddress, wbtcAddress, expiry);
-        call.result.expectOk().expectUint(74520874);
+        call.result.expectOk().expectUint(74019490);
         
         // sell some yield-token
         result = YTPTest.swapYForX(wallet_1, yieldusda23040Address, usdaAddress, 10000*ONE_8, 0);
@@ -115,12 +116,12 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999999998496);  
+        position = call.result.expectOk().expectUint(1999999998541);  
         call = await FLTest.getBalance(usdaAddress, wallet_1.address);
         position = call.result.expectOk().expectUint(1200041000000);            
         // should see change in key token
         call = await FLTest.getBalance(keyusda23040Address, wallet_1.address);
-        position = call.result.expectOk().expectUint(117000000);
+        position = call.result.expectOk().expectUint(133000000);
         // but nothing with yield token
         call = await FLTest.getBalance(yieldusda23040Address, wallet_1.address);
         position = call.result.expectOk().expectUint(1999999000000000000);                

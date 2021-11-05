@@ -47,7 +47,7 @@
     yes-votes: uint,
     no-votes: uint,
     new-fee-rate-token: uint,
-    new-fee-rate-aytoken: uint
+    new-fee-rate-yield-token: uint
    }
 )
 
@@ -109,7 +109,7 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-token: u0,    ;; Default token feerate
-      new-fee-rate-aytoken: u0  ;; default aytoken feerate
+      new-fee-rate-yield-token: u0  ;; default yield-token feerate
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -140,7 +140,7 @@
     (title (string-utf8 256))
     (url (string-utf8 256))
     (new-fee-rate-token uint)
-    (new-fee-rate-aytoken uint)
+    (new-fee-rate-yield-token uint)
   )
   (let (
     (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-wbtc-79760-wbtc get-balance tx-sender)) ONE_8))
@@ -164,7 +164,7 @@
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-token: new-fee-rate-token,
-        new-fee-rate-aytoken: new-fee-rate-aytoken
+        new-fee-rate-yield-token: new-fee-rate-yield-token
       }
     )
     (var-set proposal-count proposal-id)
@@ -256,7 +256,7 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token aytoken)))
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id token yield-token)))
     (ok true))
 )
 
@@ -284,12 +284,12 @@
   (let (
     (proposal (get-proposal-by-id proposal-id))
     (new-fee-rate-token (get new-fee-rate-token proposal))
-    (new-fee-rate-aytoken (get new-fee-rate-aytoken proposal))
+    (new-fee-rate-yield-token (get new-fee-rate-yield-token proposal))
   ) 
   
     ;; Setting for Yield Token Pool
     (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-wbtc-79760 new-fee-rate-token))
-    (try! (contract-call? .yield-token-pool set-fee-rate-aytoken .yield-wbtc-79760 new-fee-rate-aytoken))
+    (try! (contract-call? .yield-token-pool set-fee-rate-yield-token .yield-wbtc-79760 new-fee-rate-yield-token))
     
     (ok true)
   )

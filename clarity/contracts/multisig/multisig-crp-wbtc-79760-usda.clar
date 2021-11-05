@@ -96,7 +96,7 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-x: u0,    ;; Default token feerate
-      new-fee-rate-y: u0  ;; default aytoken feerate
+      new-fee-rate-y: u0  ;; default yield-token feerate
     }
     (map-get? proposals { id: proposal-id })
   )
