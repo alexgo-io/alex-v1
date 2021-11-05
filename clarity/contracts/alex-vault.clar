@@ -107,6 +107,14 @@
   )
 )
 
+(define-public (ft-transfer-multi (token-x <ft-trait>) (amount-x uint) (token-y <ft-trait>) (amount-y uint) (recipient principal))
+  (begin 
+    (try! (transfer-ft token-x amount-x recipient)) 
+    (try! (transfer-ft token-y amount-y recipient))
+    (ok true)
+  )
+)
+
 ;; contract initialisation
 (begin
   (map-set approved-contracts .alex-reserve-pool true)
