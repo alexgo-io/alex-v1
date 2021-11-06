@@ -4,6 +4,7 @@
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-STX-TRANSFER-FAILED (err u6004))
+(define-constant ERR-EXCEEDS-MAX-USE (err u9001))
 
 (define-constant contract-owner tx-sender)
 (define-constant ONE_8 (pow u10 u8))
@@ -11,6 +12,29 @@
 (define-data-var usda-amount uint u0)
 (define-data-var wbtc-amount uint u0)
 (define-data-var stx-amount uint u0)
+(define-data-var alex-amount uint u0)
+
+;; save faucet users and no. of times the user used faucet
+(define-map users principal uint)
+
+;; default max-use is once
+(define-data-var max-use uint u1)
+
+(define-read-only (get-max-use)
+    (ok (var-get max-use))
+)
+
+(define-public (set-max-use (amount uint))
+    (begin
+        (asserts! (is-eq contract-caller contract-owner) ERR-NOT-AUTHORIZED)
+        (ok (var-set max-use amount))
+    )
+)
+
+;; returns (some uint) or none
+(define-read-only (get-user-use (user principal))
+  (map-get? users user)
+)
 
 (define-read-only (get-usda-amount)
     (ok (var-get usda-amount))
@@ -22,6 +46,10 @@
 
 (define-read-only (get-stx-amount)
     (ok (var-get stx-amount))
+)
+
+(define-read-only (get-alex-amount)
+    (ok (var-get alex-amount))
 )
 
 (define-public (set-usda-amount (amount uint))
@@ -45,13 +73,44 @@
     )
 )
 
-(define-public (get-some-tokens (recipient principal))
+(define-public (set-alex-amount (amount uint))
     (begin
         (asserts! (is-eq contract-caller contract-owner) ERR-NOT-AUTHORIZED)
-        (try! (contract-call? .token-wbtc mint recipient (var-get wbtc-amount)))
-        (try! (contract-call? .token-usda mint recipient (var-get usda-amount)))
-        (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED)
-        (ok true)        
+        (ok (var-set alex-amount amount))
+    )
+)
+
+(define-public (get-some-tokens (recipient principal))
+    (begin
+        (match (map-get? users recipient)
+            old-use
+            (begin
+                (asserts! (< (+ u1 old-use) (var-get max-use)) ERR-EXCEEDS-MAX-USE)
+                (map-set users recipient (+ u1 old-use))
+            )
+            (map-set users recipient u1)
+        )
+        (as-contract (try! (contract-call? .token-wbtc mint recipient (var-get wbtc-amount))))
+        (as-contract (try! (contract-call? .token-usda mint recipient (var-get usda-amount))))
+        (as-contract (try! (contract-call? .token-alex mint recipient (var-get alex-amount))))
+        (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) (as-contract tx-sender) recipient) ERR-STX-TRANSFER-FAILED)
+        (ok true)
+    )
+)
+
+;; SEND-MANY
+
+(define-public (send-many (recipients (list 200 principal)))
+    (fold check-err
+        (map get-some-tokens recipients)
+        (ok true)
+    )
+)
+
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
     )
 )
 

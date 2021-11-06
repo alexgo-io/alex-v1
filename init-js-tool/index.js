@@ -764,16 +764,17 @@ async function run() {
     //                     9:_deploy[11]
     //                 };
     // const _pools = { 0:_deploy[6], 1:_deploy[7] };
-    const _pools = _deploy;
+    const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
+    // const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -795,9 +796,9 @@ async function run() {
     // await reduce_position_ytp(_reduce, 0.9*ONE_8, deployer=true);
     // await get_pool_details_ytp(_subset=_reduce);   
 
-    // await reduce_position_ytp(_pools, 0.5*ONE_8, deployer=true);
+    // await reduce_position_ytp(_pools, 0.1*ONE_8, deployer=true);
     // await reduce_position_crp(_pools, ONE_8, 'yield');
-    // await reduce_position_crp(_pools, ONE_8, 'key');    
+    await reduce_position_crp(_pools, ONE_8, 'key');    
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);    
 
