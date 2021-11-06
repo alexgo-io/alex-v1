@@ -1,3 +1,4 @@
+(impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait yield-token-trait .trait-yield-token.yield-token-trait)
@@ -34,6 +35,17 @@
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
+(define-read-only (get-owner)
+  (ok (var-get CONTRACT-OWNER))
+)
+
+(define-public (set-owner (owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set CONTRACT-OWNER owner))
+  )
+)
+
 ;; data maps and vars
 (define-map pools-map
   { pool-id: uint }
@@ -69,24 +81,6 @@
 
 ;; 4 years based on 2102400 blocks per year (i.e. 15 secs per block)
 (define-data-var max-expiry uint (scale-up u8409600))
-
-;; @desc get-contract-owner
-;; @returns principal
-(define-read-only (get-contract-owner)
-  (var-get CONTRACT-OWNER)
-)
-
-;; @desc set-contract-owner
-;; @restricted CONTRACT-OWNER
-;; @param new-contract-owner; new (var-get CONTRACT-OWNER)
-;; @returns (response bool uint)
-(define-public (set-contract-owner (new-contract-owner principal))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (var-set CONTRACT-OWNER new-contract-owner)
-    (ok true)
-  )
-)
 
 ;; @desc get-max-expiry
 ;; @returns uint

@@ -265,7 +265,7 @@
   
     ;; Setting for Yield Token Pool
     (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-usda-132481 new-fee-rate-token))
-    (try! (contract-call? .yield-token-pool set-fee-rate-aytoken .yield-usda-132481 new-fee-rate-yield-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-yield-token .yield-usda-132481 new-fee-rate-yield-token))
     
     (ok true)
   )
