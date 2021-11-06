@@ -1,3 +1,5 @@
+(impl-trait .trait-ownable.ownable-trait)
+
 ;; weighted-equation
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
@@ -51,16 +53,16 @@
   )
 )
 
-;; @desc get-contract-owner
+;; @desc get-owner
 ;; @returns principal
-(define-read-only (get-contract-owner)
-  (var-get CONTRACT-OWNER)
+(define-read-only (get-owner)
+  (ok (var-get CONTRACT-OWNER))
 )
 
-;; @desc set-contract-owner
+;; @desc set-owner
 ;; @param new-contract-owner; new CONTRACT-OWNER
 ;; @returns (response bool uint)
-(define-public (set-contract-owner (new-contract-owner principal))
+(define-public (set-owner (new-contract-owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (var-set CONTRACT-OWNER new-contract-owner)

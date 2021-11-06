@@ -19,7 +19,7 @@
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 
-(define-data-var contract-owner principal tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 
 (define-map approved-contracts principal bool)
 
@@ -27,13 +27,13 @@
 (define-data-var flash-loan-fee-rate uint u0)
 
 (define-read-only (get-owner)
-  (ok (var-get contract-owner))
+  (ok (var-get CONTRACT-OWNER))
 )
 
 (define-public (set-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set contract-owner owner))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set CONTRACT-OWNER owner))
   )
 )
 
@@ -47,7 +47,7 @@
 
 (define-public (set-flash-loan-fee-rate (fee uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set flash-loan-fee-rate fee))
   )
 )
