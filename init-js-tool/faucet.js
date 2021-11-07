@@ -20,7 +20,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet',
+        contractName: 'faucet-v2',
         functionName: 'set-usda-amount',
         functionArgs: [         
             uintCV(amount)
@@ -46,7 +46,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet',
+        contractName: 'faucet-v2',
         functionName: 'set-wbtc-amount',
         functionArgs: [         
             uintCV(amount)
@@ -72,8 +72,34 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet',
+        contractName: 'faucet-v2',
         functionName: 'set-stx-amount',
+        functionArgs: [         
+            uintCV(amount)
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid);
+    } catch (error) {
+        console.log(error);
+    }
+  }
+
+  const setAlexAmount = async (amount) => {
+    console.log('[Faucet] set-alex-amount...', amount);
+    const privateKey = await getDeployerPK();
+    const txOptions = {
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+        contractName: 'faucet-v2',
+        functionName: 'set-alex-amount',
         functionArgs: [         
             uintCV(amount)
         ],
@@ -98,7 +124,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet',
+        contractName: 'faucet-v2',
         functionName: 'get-some-tokens',
         functionArgs: [     
           principalCV(recipient)    
@@ -123,4 +149,5 @@ const {
   exports.setWbtcAmount = setWbtcAmount;
   exports.setStxAmount = setStxAmount;
   exports.getSomeTokens = getSomeTokens;
+  exports.setAlexAmount = setAlexAmount;
   

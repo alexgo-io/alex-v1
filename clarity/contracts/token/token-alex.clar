@@ -103,11 +103,12 @@
 
 (begin
   (map-set approved-contracts .alex-reserve-pool true)
+  (map-set approved-contracts .faucet true)
 )
 
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? alex u10000 tx-sender))
+  (try! (ft-mint? alex u1000000000 tx-sender))  
 )
 
 
