@@ -12,7 +12,7 @@ const {
     flExecuteMarginWbtcUsda74880,
 } = require('./flashloan')
 const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
-const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens } = require('./faucet')
+const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
     fwpCreate,
     fwpAddToPosition,
@@ -290,6 +290,7 @@ async function set_faucet_amounts() {
     await setUsdaAmount(500000e+8);
     await setWbtcAmount(5e+8);
     await setStxAmount(250e+8);
+    await setAlexAmount(10e+8)
 }
 
 async function get_some_token(recipient) {
@@ -745,6 +746,7 @@ _white_list = {
 
 async function run() {
     // await set_faucet_amounts();
+    // await get_some_token('STR3ZNZ7VZGAJFVBS69DQ1Z5APW0MWS7E2P4EFP6');
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
@@ -798,7 +800,7 @@ async function run() {
 
     // await reduce_position_ytp(_pools, 0.1*ONE_8, deployer=true);
     // await reduce_position_crp(_pools, ONE_8, 'yield');
-    await reduce_position_crp(_pools, ONE_8, 'key');    
+    // await reduce_position_crp(_pools, ONE_8, 'key');    
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);    
 

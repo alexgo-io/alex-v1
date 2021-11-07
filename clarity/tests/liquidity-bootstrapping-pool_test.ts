@@ -33,7 +33,7 @@ Clarinet.test({
         let call = chain.callReadOnlyFn("token-alex", "get-balance", 
             [types.principal(deployer.address)
             ], deployer.address);
-        call.result.expectOk().expectUint(10000 * ONE_8);         
+        call.result.expectOk().expectUint(100000000000000000);         
         
         // Deployer creating a pool, initial tokens injected to the pool
         let result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
@@ -162,7 +162,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "LBP : Trait check",
+  name: "LBP : trait check",
 
   async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;

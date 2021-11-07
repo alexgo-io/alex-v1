@@ -85,10 +85,11 @@ let contract_paths = [
     // "pool-token/ytp-yield-usda-132481-usda.clar",       
     // "multisig/multisig-crp-wbtc-132481-usda.clar",  
     // "multisig/multisig-crp-usda-132481-wbtc.clar",      
-    "multisig/multisig-ytp-yield-wbtc-132481-wbtc.clar",  
-    "multisig/multisig-ytp-yield-usda-132481-usda.clar",    
+    // "multisig/multisig-ytp-yield-wbtc-132481-wbtc.clar",  
+    // "multisig/multisig-ytp-yield-usda-132481-usda.clar",    
     // "flash-loan-user-margin-usda-wbtc-132481.clar", 
-    // "flash-loan-user-margin-wbtc-usda-132481.clar"     
+    // "flash-loan-user-margin-wbtc-usda-132481.clar"  
+    "faucet-v2.clar"   
 ]
 
 async function get_version(){
