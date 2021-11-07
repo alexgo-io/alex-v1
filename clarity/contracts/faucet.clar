@@ -3,8 +3,11 @@
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-STX-TRANSFER-FAILED (err u6004))
-(define-constant ERR-EXCEEDS-MAX-USE (err u9001))
+(define-constant ERR-USDA-TRANSFER-FAILED (err u9001))
+(define-constant ERR-WBTC-TRANSFER-FAILED (err u9002))
+(define-constant ERR-STX-TRANSFER-FAILED (err u9003))
+(define-constant ERR-ALEX-TRANSFER-FAILED (err u9004))
+(define-constant ERR-EXCEEDS-MAX-USE (err u9000))
 
 (define-constant contract-owner tx-sender)
 (define-constant ONE_8 (pow u10 u8))
@@ -85,15 +88,15 @@
         (match (map-get? users recipient)
             old-use
             (begin
-                (asserts! (< (+ u1 old-use) (var-get max-use)) ERR-EXCEEDS-MAX-USE)
+                (asserts! (<= (+ u1 old-use) (var-get max-use)) ERR-EXCEEDS-MAX-USE)
                 (map-set users recipient (+ u1 old-use))
             )
             (map-set users recipient u1)
         )
-        (as-contract (try! (contract-call? .token-wbtc mint recipient (var-get wbtc-amount))))
-        (as-contract (try! (contract-call? .token-usda mint recipient (var-get usda-amount))))
-        (as-contract (try! (contract-call? .token-alex mint recipient (var-get alex-amount))))
-        (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) (as-contract tx-sender) recipient) ERR-STX-TRANSFER-FAILED)
+        (and (> (var-get wbtc-amount) u0) (as-contract (unwrap! (contract-call? .token-wbtc mint recipient (var-get wbtc-amount)) ERR-WBTC-TRANSFER-FAILED)))
+        (and (> (var-get usda-amount) u0) (as-contract (unwrap! (contract-call? .token-usda mint recipient (var-get usda-amount)) ERR-USDA-TRANSFER-FAILED)))
+        (and (> (var-get alex-amount) u0) (as-contract (unwrap! (contract-call? .token-alex mint recipient (var-get alex-amount)) ERR-ALEX-TRANSFER-FAILED)))
+        (and (> (var-get stx-amount) u0) (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) (as-contract tx-sender) recipient) ERR-STX-TRANSFER-FAILED))
         (ok true)
     )
 )
@@ -101,9 +104,9 @@
 ;; SEND-MANY
 
 (define-public (send-many (recipients (list 200 principal)))
-    (fold check-err
-        (map get-some-tokens recipients)
-        (ok true)
+    (begin
+        (asserts! (is-eq contract-caller contract-owner) ERR-NOT-AUTHORIZED)
+        (fold check-err (map get-some-tokens recipients) (ok true))    
     )
 )
 
