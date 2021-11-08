@@ -15,7 +15,7 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-p
 
 [contracts.faucet]
 path = "contracts/faucet.clar"
-depends_on = ["token-wbtc", "token-usda"]
+depends_on = ["token-wbtc", "token-usda", "token-wstx"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/pool/fixed-weight-pool.clar"
@@ -60,6 +60,10 @@ depends_on = ["trait-pool-token", "trait-ownable"]
 [contracts.token-wbtc]
 path = "contracts/token/token-wbtc.clar"
 depends_on = ["trait-pool-token", "trait-ownable"]
+
+[contracts.token-wstx]
+path = "contracts/token/token-wstx.clar"
+depends_on = ["trait-pool-token", "trait-ownable", "alex-vault"]
 
 [contracts.trait-flash-loan-user]
 path = "contracts/traits/trait-flash-loan-user.clar"

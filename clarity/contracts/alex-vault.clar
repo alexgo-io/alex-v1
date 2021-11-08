@@ -66,6 +66,14 @@
   )
 )
 
+(define-public (transfer-stx (amount uint) (sender principal) (recipient principal))
+  (begin
+    (try! (check-is-approved sender))
+    (as-contract (unwrap! (stx-transfer? amount tx-sender recipient) ERR-TRANSFER-FAILED))
+    (ok true)
+  )
+)
+
 (define-public (transfer-yield (token <yield-token-trait>) (amount uint) (recipient principal))
   (begin     
     (try! (check-is-approved contract-caller))
@@ -122,4 +130,5 @@
   (map-set approved-contracts .fixed-weight-pool true)  
   (map-set approved-contracts .liquidity-bootstrapping-pool true)  
   (map-set approved-contracts .yield-token-pool true)  
+  (map-set approved-contracts .token-wstx true)
 )
