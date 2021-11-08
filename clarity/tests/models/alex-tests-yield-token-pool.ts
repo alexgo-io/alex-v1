@@ -229,6 +229,26 @@ import {
       ], this.deployer.address);
     }
 
+    setOracleEnabled(user: Account, aytoken: string) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("yield-token-pool", "set-oracle-enabled", [
+          types.principal(aytoken),
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }      
+
+    setOracleAverage(user: Account, aytoken: string, average: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("yield-token-pool", "set-oracle-average", [
+          types.principal(aytoken),
+          types.uint(average),
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }    
+
+
   
   }
   

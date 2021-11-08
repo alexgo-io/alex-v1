@@ -287,7 +287,7 @@
         (asserts! 
             (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR) }))
             ERR-POOL-ALREADY-EXISTS
-        )            
+        )       
         (let
             (
                 (pool-id (+ (var-get pool-count) u1))
@@ -335,10 +335,9 @@
                     conversion-ltv: conversion-ltv
                 })
             )
-
             (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
-        
+
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
             (try! (add-to-position token collateral the-yield-token the-key-token dx))
