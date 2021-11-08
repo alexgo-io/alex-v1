@@ -113,7 +113,18 @@ class Faucet {
           ], sender.address),
         ]);
         return block.receipts[0].result;
-  }    
+    }    
+
+    mintAlexMany(sender: Account, recipients: Array<MintAlexManyRecord>) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("faucet", "mint-alex-many", [
+            types.list(recipients.map((record) => { 
+              return types.tuple({ to: types.principal(record.to.address), amount: types.uint(record.amount) });
+            }))
+          ], sender.address),
+        ]);
+        return block.receipts[0].result;
+    }      
     
     getBalance(token: string, owner: string) {
         return this.chain.callReadOnlyFn(token, "get-balance", [
@@ -121,6 +132,12 @@ class Faucet {
         ], this.deployer.address);
     }    
 
+}
+export class MintAlexManyRecord {
+  constructor(
+    readonly to: Account,
+    readonly amount: number
+  ) {}
 }
 
 /**
@@ -246,5 +263,30 @@ Clarinet.test({
         result.result.expectOk().expectUint(300 * ONE_8);   
         result = await FaucetTest.getBalance('token-alex', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
+
+        // testing mint-alex-many
+        const recipients: Array<Account> = [ accounts.get("wallet_6")!, accounts.get("wallet_7")! ];
+        const amounts: Array<number> = [100 * ONE_8, 200 * ONE_8];
+
+        const mintAlexManyRecords: MintAlexManyRecord[] = [];
+
+        recipients.forEach((recipient, recipientIdx) => {
+          let record = new MintAlexManyRecord(
+            recipient,
+            amounts[recipientIdx]
+          );
+          mintAlexManyRecords.push(record);
+        });
+        
+        // non contract-owner calling mint-alex-many throws an error.
+        result = await FaucetTest.mintAlexMany(wallet_6, mintAlexManyRecords);
+        result.expectErr().expectUint(1000);
+
+        result = await FaucetTest.mintAlexMany(deployer, mintAlexManyRecords);
+        result.expectOk().expectBool(true);
+        result = await FaucetTest.getBalance('token-alex', wallet_6.address);
+        result.result.expectOk().expectUint(200 * ONE_8);
+        result = await FaucetTest.getBalance('token-alex', wallet_7.address);
+        result.result.expectOk().expectUint(500 * ONE_8);        
     },    
 });

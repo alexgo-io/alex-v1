@@ -130,3 +130,14 @@
     )
 )
 
+(define-private (mint-alex (recipient { to: principal, amount: uint }))
+    (ok (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-alex mint (get to recipient) (get amount recipient)) ERR-ALEX-TRANSFER-FAILED)))
+)
+
+(define-public (mint-alex-many (recipients (list 200 { to: principal, amount: uint })))
+    (begin
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (fold check-err (map mint-alex recipients) (ok true))
+    )
+)
+

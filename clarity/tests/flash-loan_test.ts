@@ -124,6 +124,6 @@ Clarinet.test({
         position = call.result.expectOk().expectUint(133000000);
         // but nothing with yield token
         call = await FLTest.getBalance(yieldusda23040Address, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999999000000000000);                
+        position = call.result.expectOk().expectUint(1999999000000000000);   
     },    
 });
