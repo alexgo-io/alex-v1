@@ -404,7 +404,7 @@
                 (dx-weighted (mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
 
-                (dy-weighted (try! (contract-call? .yield-token-pool swap token collateral dx-to-dy none)))
+                (dy-weighted (get dy (try! (contract-call? .yield-token-pool swap-x-for-y collateral token dx-to-dy none))))
 
                 (pool-updated (merge pool {
                     yield-supply: (+ yield-new-supply yield-supply),
@@ -458,7 +458,7 @@
                                 u0 
                                     (begin
                                         (as-contract (try! (contract-call? .alex-vault transfer-yield collateral balance-x tx-sender)))
-                                        (as-contract (try! (contract-call? .yield-token-pool swap token collateral balance-x none)))
+                                        (get dy (as-contract (try! (contract-call? .yield-token-pool swap-x-for-y collateral token balance-x none))))
                                     )                                    
                                 
                             )
@@ -885,7 +885,7 @@
                 (ltv (try! (get-ltv token collateral expiry)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
-                        (try! (contract-call? .yield-token-pool get-x-y token collateral dx))                    
+                        (try! (contract-call? .yield-token-pool get-x-given-y collateral dx))                    
                     )
                 )
                 (ltv-dy (mul-down ltv dy))
@@ -925,7 +925,7 @@
                 (dy-weighted (get dy pos-data))
 
                 ;; always convert to collateral ccy
-                (dy-to-dx (try! (contract-call? .yield-token-pool get-x-y token collateral dy-weighted)))   
+                (dy-to-dx (try! (contract-call? .yield-token-pool get-x-given-y collateral dy-weighted)))   
                 (dx (+ dx-weighted dy-to-dx))
             )
             (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
