@@ -885,7 +885,7 @@
                 (ltv (try! (get-ltv token collateral expiry)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
-                        (try! (contract-call? .yield-token-pool get-x-given-y collateral dx))                    
+                        (try! (contract-call? .yield-token-pool get-y-given-x collateral dx))                    
                     )
                 )
                 (ltv-dy (mul-down ltv dy))
