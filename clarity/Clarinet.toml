@@ -15,7 +15,7 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-p
 
 [contracts.collateral-rebalancing-pool-yt]
 path = "contracts/pool/collateral-rebalancing-pool-yt.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool-yt", "token-usda", "token-alex", "alex-reserve-pool", "yield-token-pool"]
+depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-point", "weighted-equation", "yield-token-pool", "token-usda", "token-alex", "alex-reserve-pool", "yield-token-pool"]
 
 [contracts.faucet]
 path = "contracts/faucet.clar"
@@ -24,10 +24,6 @@ depends_on = ["token-wbtc", "token-usda"]
 [contracts.fixed-weight-pool]
 path = "contracts/pool/fixed-weight-pool.clar"
 depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "alex-reserve-pool", "token-usda", "trait-multisig-vote"]
-
-[contracts.fixed-weight-pool-yt]
-path = "contracts/pool/fixed-weight-pool-yt.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "alex-reserve-pool", "token-usda", "trait-multisig-vote"]
 
 [contracts.flash-loan-user-margin-usda-wbtc-59760]
 path = "contracts/flash-loan-user-margin-usda-wbtc-59760.clar"

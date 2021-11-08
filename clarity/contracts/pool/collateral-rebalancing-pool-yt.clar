@@ -159,7 +159,7 @@
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
 (define-read-only (get-spot (token <ft-trait>) (collateral <yield-token-trait>))
-        (contract-call? .fixed-weight-pool-yt get-oracle-resilient token collateral u50000000 u50000000)
+        (contract-call? .yield-token-pool get-oracle-resilient collateral)
 )
 
 ;; @desc get-pool-value-in-token
@@ -404,7 +404,7 @@
                 (dx-weighted (mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
 
-                (dy-weighted (try! (contract-call? .fixed-weight-pool-yt swap token collateral u50000000 u50000000 dx-to-dy none)))
+                (dy-weighted (try! (contract-call? .yield-token-pool swap token collateral dx-to-dy none)))
 
                 (pool-updated (merge pool {
                     yield-supply: (+ yield-new-supply yield-supply),
@@ -457,8 +457,8 @@
                 (bal-x-to-y (if (is-eq balance-x u0) 
                                 u0 
                                     (begin
-                                        (as-contract (try! (contract-call? .alex-vault transfer-yt collateral balance-x tx-sender)))
-                                        (as-contract (try! (contract-call? .fixed-weight-pool-yt swap token collateral u50000000 u50000000 balance-x none)))
+                                        (as-contract (try! (contract-call? .alex-vault transfer-yield collateral balance-x tx-sender)))
+                                        (as-contract (try! (contract-call? .yield-token-pool swap token collateral balance-x none)))
                                     )                                    
                                 
                             )
@@ -537,7 +537,7 @@
 
             (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-POOL-TOKEN)        
             
-            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-yt collateral dx-weighted tx-sender)))
+            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-yield collateral dx-weighted tx-sender)))
             (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -654,7 +654,7 @@
 
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (try! (contract-call? .alex-vault transfer-yt collateral dx tx-sender))
+            (try! (contract-call? .alex-vault transfer-yield collateral dx tx-sender))
             (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
             (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
 
@@ -885,7 +885,7 @@
                 (ltv (try! (get-ltv token collateral expiry)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
-                        (try! (contract-call? .fixed-weight-pool-yt get-x-y token collateral u50000000 u50000000 dx))                    
+                        (try! (contract-call? .yield-token-pool get-x-y token collateral dx))                    
                     )
                 )
                 (ltv-dy (mul-down ltv dy))
@@ -925,7 +925,7 @@
                 (dy-weighted (get dy pos-data))
 
                 ;; always convert to collateral ccy
-                (dy-to-dx (try! (contract-call? .fixed-weight-pool-yt get-x-y token collateral u50000000 u50000000 dy-weighted)))   
+                (dy-to-dx (try! (contract-call? .yield-token-pool get-x-y token collateral dy-weighted)))   
                 (dx (+ dx-weighted dy-to-dx))
             )
             (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})

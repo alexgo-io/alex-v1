@@ -145,6 +145,14 @@
     (ok (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
 )
 
+
+;; @desc get-pool-exists
+;; @param the-yield-token; yield-token
+;; @returns (optional (tuple))
+(define-read-only (get-pool-exists (the-yield-token <yield-token-trait>))
+    (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) 
+)
+
 ;; @desc get-yield
 ;; @desc note yield is not annualised
 ;; @param the-yield-token; yield-token
@@ -1154,4 +1162,21 @@
       (ln-priv a)
    )
  )
+)
+
+
+(define-public (swap (token <ft-trait>) (collateral <yield-token-trait>) (dx uint) (min-dy (optional uint)))
+    (ok (if (is-some (get-pool-exists collateral))
+                        (get dx (try! (swap-y-for-x collateral token dx min-dy)))
+                        (get dy (try! (swap-x-for-y collateral token dx min-dy)))
+        )
+   )
+)
+
+(define-read-only (get-x-y  (token <ft-trait>) (collateral <yield-token-trait>) (dx uint))
+    (ok (if (is-some (get-pool-exists collateral))
+                        (try! (get-x-given-y collateral dx))
+                        (try! (get-y-given-x collateral dx))
+        )
+    )    
 )
