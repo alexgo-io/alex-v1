@@ -311,6 +311,7 @@
       (current-cycle (unwrap! (get-reward-cycle token start-height) ERR-STAKING-NOT-AVAILABLE))
       (target-cycle (+ u1 current-cycle))
       (commitment {
+        token: token,
         staker-id: user-id,
         amount: amount-token,
         first: target-cycle,
@@ -332,6 +333,7 @@
 (define-private (stake-tokens-closure (reward-cycle-idx uint)
   (commitment-response (response 
     {
+      token: principal,
       staker-id: uint,
       amount: uint,
       first: uint,
@@ -344,12 +346,13 @@
     commitment 
     (let
       (
+        (token (get token commitment))
         (staker-id (get staker-id commitment))
         (amount-token (get amount commitment))
         (first-cycle (get first commitment))
         (last-cycle (get last commitment))
         (target-cycle (+ first-cycle reward-cycle-idx))
-        (this-staker-at-cycle (get-staker-at-cycle-or-default target-cycle staker-id))
+        (this-staker-at-cycle (get-staker-at-cycle-or-default token target-cycle staker-id))
         (amount-staked (get amount-staked this-staker-at-cycle))
         (to-return (get to-return this-staker-at-cycle))
       )
@@ -357,8 +360,8 @@
         (if (and (>= target-cycle first-cycle) (< target-cycle last-cycle))
           (begin
             (if (is-eq target-cycle (- last-cycle u1))
-              (set-tokens-staked staker-id target-cycle amount-token amount-token)
-              (set-tokens-staked staker-id target-cycle amount-token u0)
+              (set-tokens-staked token staker-id target-cycle amount-token amount-token)
+              (set-tokens-staked token staker-id target-cycle amount-token u0)
             )
             true
           )
@@ -371,14 +374,15 @@
   )
 )
 
-(define-private (set-tokens-staked (user-id uint) (target-cycle uint) (amount-staked uint) (to-return uint))
+(define-private (set-tokens-staked (token principal) (user-id uint) (target-cycle uint) (amount-staked uint) (to-return uint))
   (let
     (
-      (this-staker-at-cycle (get-staker-at-cycle-or-default target-cycle user-id))
+      (this-staker-at-cycle (get-staker-at-cycle-or-default token target-cycle user-id))
     )
-    (map-set staking-stats-at-cycle target-cycle (+ amount-staked (get-staking-stats-at-cycle-or-default target-cycle)))
+    (map-set staking-stats-at-cycle {token: token, reward-cycle: target-cycle} (+ amount-staked (get-staking-stats-at-cycle-or-default token target-cycle)))
     (map-set staker-at-cycle
       {
+        token: token,
         reward-cycle: target-cycle,
         user-id: user-id
       }
@@ -393,23 +397,25 @@
 ;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
-(define-public (claim-staking-reward (target-cycle uint))
-  (claim-staking-reward-at-cycle tx-sender block-height target-cycle)
+(define-public (claim-staking-reward (token principal) (target-cycle uint))
+  (claim-staking-reward-at-cycle token tx-sender block-height target-cycle)
 )
 
-(define-private (claim-staking-reward-at-cycle (user principal) (stacks-height uint) (target-cycle uint))
+(define-private (claim-staking-reward-at-cycle (token-trait <ft-trait>) (user principal) (stacks-height uint) (target-cycle uint))
   (let
     (
-      (current-cycle (unwrap! (get-reward-cycle stacks-height) ERR-STAKING-NOT-AVAILABLE))
-      (user-id (unwrap! (get-user-id user) ERR-USER-ID-NOT-FOUND))
-      (entitled-token (get-entitled-staking-reward user-id target-cycle stacks-height))
-      (to-return (get to-return (get-staker-at-cycle-or-default target-cycle user-id)))
+      (token (contract-of token-trait))
+      (current-cycle (unwrap! (get-reward-cycle token stacks-height) ERR-STAKING-NOT-AVAILABLE))
+      (user-id (unwrap! (get-user-id token user) ERR-USER-ID-NOT-FOUND))
+      (entitled-token (get-entitled-staking-reward token user-id target-cycle stacks-height))
+      (to-return (get to-return (get-staker-at-cycle-or-default token target-cycle user-id)))
     )
     (asserts! (> current-cycle target-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (or (> to-return u0) (> entitled-token u0)) ERR-NOTHING-TO-REDEEM)
     ;; disable ability to claim again
     (map-set staker-at-cycle
       {
+        token: token,
         reward-cycle: target-cycle,
         user-id: user-id
       }
@@ -419,9 +425,9 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft .token-alex to-return user)))
+    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user (mul-down entitled-token (get-coinbase-amount target-cycle))))))
+    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user (mul-down entitled-token (get-coinbase-amount token target-cycle))))))
     (ok true)
   )
 )
@@ -459,6 +465,7 @@
     (var-set coinbase-threshold-5 (* u5 (var-get token-halving-cycle)))
   )
 )
+
 ;; return coinbase thresholds if contract activated
 (define-read-only (get-coinbase-thresholds)
   (ok {
@@ -468,6 +475,33 @@
       coinbase-threshold-4: (var-get coinbase-threshold-4),
       coinbase-threshold-5: (var-get coinbase-threshold-5)
   })
+)
+
+;; token <> coinbase-amounts
+(define-map coinbase-amounts 
+  principal
+  {
+    coinbase-amount-1: uint,
+    coinbase-amount-2: uint,
+    coinbase-amount-3: uint,
+    coinbase-amount-4: uint,
+    coinbase-amount-5: uint
+  }
+)
+
+(define-public (set-coinbase-amount (token principal) (coinbase-1 uint) (coinbase-2 uint) (coinbase-3 uint) (coinbase-4 uint) (coinbase-5 uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (map-set coinbase-amounts token 
+      {
+        coinbase-amount-1: coinbase-1,
+        coinbase-amount-2: coinbase-2,
+        coinbase-amount-3: coinbase-3,
+        coinbase-amount-4: coinbase-4,
+        coinbase-amount-5: coinbase-5
+      }
+    )
+  )
 )
 
 ;; function for deciding how many tokens to mint, depending on when they were mined
