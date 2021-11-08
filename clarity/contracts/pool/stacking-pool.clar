@@ -10,22 +10,10 @@
 ;;
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
-(define-constant invalid-pool-err (err u2001))
-(define-constant no-liquidity-err (err u2002))
-(define-constant invalid-liquidity-err (err u2003))
-(define-constant transfer-x-failed-err (err u3001))
-(define-constant transfer-y-failed-err (err u3002))
-(define-constant pool-already-exists-err (err u2000))
-(define-constant too-many-pools-err (err u2004))
-(define-constant percent-greater-than-one (err u5000))
-(define-constant no-fee-x-err (err u2005))
-(define-constant no-fee-y-err (err u2006))
-(define-constant already-expiry-err (err u2010))
-(define-constant weighted-equation-call-err (err u2009))
-(define-constant math-call-err (err u2010))
-(define-constant internal-function-call-err (err u1001))
-(define-constant internal-get-weight-err (err u2012))
-(define-constant stacking-in-progress-err (err u2018))
+(define-constant ERR-INVALID-POOL (err u2001))
+(define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
+(define-constant ERR-STACKING-IN-PROGRESS (err u2018))
 
 (define-constant BLOCK-PER-CYCLE u2100)
 
@@ -77,13 +65,27 @@
 )
 
 ;; to be replaced by proper calls to CityCoins
-(define-private (get-stacking-reward (reward-cycle uint)) u1)
-(define-private (register-user) true)
-(define-private (get-user-id) u1)
-(define-private (get-reward-cycle (stack-height uint)) u0)
-(define-private (stack-tokens (amount-tokens uint) (lock-period uint)) true)
-(define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint)) u1)
-(define-private (claim-stacking-reward (reward-cycle uint)) true)
+(define-private (get-stacking-reward (reward-cycle uint))
+  (contract-call? .alex-reserve-pool get-staking-reward reward-cycle)
+)
+(define-private (register-user)
+  (as-contract (contract-call? .alex-reserve-pool register-user none))
+)
+(define-private (get-user-id)
+  (default-to u0 (contract-call? .alex-reserve-pool get-user-id (as-contract tx-sender)))
+)
+(define-private (get-reward-cycle (stack-height uint))
+  (contract-call? .alex-reserve-pool get-reward-cycle stack-height)
+)
+(define-private (stack-tokens (amount-tokens uint) (lock-period uint))
+  (as-contract (contract-call? .alex-reserve-pool stake-tokens amount-tokens lock-period))
+)
+(define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint))
+  (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle reward-cycle)
+)
+(define-private (claim-stacking-reward (reward-cycle uint))
+  (as-contract (contract-call? .alex-reserve-pool claim-staking-reward reward-cycle))
+)
 
 ;; public functions
 ;;
@@ -92,7 +94,7 @@
 )
 
 (define-read-only (get-pool-contracts (pool-id uint))
-    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) invalid-pool-err))
+    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL))
 )
 
 (define-read-only (get-pools)
@@ -100,11 +102,11 @@
 )
 
 (define-read-only (get-pool-details (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint))
-    (ok (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) invalid-pool-err))
+    (ok (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL))
 )
 
 (define-read-only (get-balance (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint))
-    (ok (get total-supply (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) invalid-pool-err)))
+    (ok (get total-supply (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL)))
 )
 
 (define-public (create-pool (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <yield-token-trait>) (multisig <multisig-trait>)) 
@@ -124,14 +126,14 @@
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
 
         ;; register if not registered
-        (as-contract (register-user))
+        (register-user)
 
-        (asserts! (is-none (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle })) pool-already-exists-err)
+        (asserts! (is-none (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle })) ERR-POOL-ALREADY-EXISTS)
 
         (map-set pools-map { pool-id: pool-id } { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle })
         (map-set pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle } pool-data)
         
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) too-many-pools-err))
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
         (print { object: "pool", action: "created", pool-data: pool-data })
         (ok true)
@@ -143,18 +145,18 @@
         (
             (poxl-token (contract-of poxl-token-trait))
             (reward-token (contract-of reward-token-trait))
-            (pool (unwrap! (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle }) invalid-pool-err))
+            (pool (unwrap! (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
             (total-supply (get total-supply pool))
             (pool-updated (merge pool {
                 total-supply: (+ dx total-supply)
             }))
         )
         ;; check if stacking already started
-        (asserts! (is-eq start-cycle (get-reward-cycle block-height)) stacking-in-progress-err)
+        (asserts! (is-eq start-cycle (get-reward-cycle block-height)) ERR-STACKING-IN-PROGRESS)
         
         ;; transfer dx to contract and send to stack
         (try! (contract-call? poxl-token-trait transfer dx tx-sender (as-contract tx-sender) none))
-        (as-contract (stack-tokens dx u32))
+        (stack-tokens dx u32)
         
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
@@ -169,7 +171,7 @@
         (
             (poxl-token (contract-of poxl-token-trait))
             (reward-token (contract-of reward-token-trait))
-            (pool (unwrap! (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle }) invalid-pool-err))
+            (pool (unwrap! (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
             (shares (mul-down (unwrap-panic (contract-call? yield-token get-balance tx-sender)) percent))
             (total-supply (get total-supply pool))
             (pool-updated (merge pool {
@@ -182,10 +184,10 @@
             (portioned-rewards (unwrap! (contract-call? .math-fixed-point mul-down total-rewards shares-to-supply) math-call-err))
         )
 
-        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle (+ start-cycle u32)) BLOCK-PER-CYCLE)) stacking-in-progress-err)
+        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle (+ start-cycle u32)) BLOCK-PER-CYCLE)) ERR-STACKING-IN-PROGRESS)
         
         ;; the first call claims rewards
-        (as-contract (map claim-stacking-reward reward-cycles))
+        (map claim-stacking-reward reward-cycles)
 
         (try! (contract-call? poxl-token-trait transfer shares (as-contract tx-sender) tx-sender none))
         (try! (contract-call? reward-token-trait transfer portioned-rewards (as-contract tx-sender) tx-sender none))
