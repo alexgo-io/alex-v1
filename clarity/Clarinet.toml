@@ -15,7 +15,7 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-vault", "math-fixed-p
 
 [contracts.faucet]
 path = "contracts/faucet.clar"
-depends_on = ["token-wbtc", "token-usda", "token-t-alex"]
+depends_on = ["token-wbtc", "token-usda", "token-t-alex", "token-wstx"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/pool/fixed-weight-pool.clar"
