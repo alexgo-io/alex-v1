@@ -1,6 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 
 ;; alex-reserve-pool
 
@@ -37,6 +36,8 @@
 (define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
 (define-constant ERR-NOTHING-TO-REDEEM (err u10018))
 (define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
+(define-constant ERR-TOO-MANY-TOKENS (err u2025))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -76,9 +77,7 @@
 )
 
 ;; STAKING CONFIGURATION
-
-(define-data-var token-count uint u0)
-(define-data-var tokens-list (list 2000 principal) (list))
+(define-map approved-tokens principal bool)
 
 (define-constant MAX-REWARD-CYCLES u32)
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
@@ -136,11 +135,22 @@
   uint
 )
 
-;; returns Stacks block height registration was activated at plus activationDelay
-(define-read-only (get-activation-block (token principal))
+(define-read-only (is-token-approved (token principal))
+  (is-some (map-get? approved-tokens token))
+)
+
+(define-public (add-token (token principal) (activation-block-before-delay uint))
   (begin
-    (ok (get token activation-block))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (map-set approved-tokens token true)
+    (map-set users-nonce token u0)
+    (set-activation-block token activation-block-before-delay)
   )
+)
+
+;; returns Stacks block height registration was activated at plus activationDelay
+(define-read-only (get-activation-block-or-default (token principal))
+  (default-to u100000000 (map-get? activation-block token))
 )
 
 (define-public (set-activation-block (token principal) (new-activation-block-before-delay uint))
@@ -221,6 +231,7 @@
       (new-id (+ u1 (get-registered-users-nonce-or-default token)))
       (threshold (var-get activation-threshold))
     )
+    (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN)
     (asserts! (is-none (map-get? user-ids {token: token, user: tx-sender})) ERR-USER-ALREADY-REGISTERED)
     (asserts! (<= new-id threshold) ERR-ACTIVATION-THRESHOLD-REACHED)
 
@@ -234,7 +245,6 @@
           (activation-block-val (+ block-height (var-get activation-delay)))
         )
         (map-set activation-block token activation-block-val)
-        (set-coinbase-thresholds token)
         (ok true)
       )
       (ok true)
@@ -255,23 +265,24 @@
 (define-read-only (get-reward-cycle (token principal) (stacks-height uint))
   (let
     (
-      (first-staking-block (get-activation-block token))
+      (first-staking-block (get-activation-block-or-default token))
       (rcLen (var-get reward-cycle-length))
     )
     (if (>= stacks-height first-staking-block)
       (some (/ (- stacks-height first-staking-block) rcLen))
-      none)
+      none
+    )
   )
 )
 
 ;; determine if staking is active in a given cycle
 (define-read-only (staking-active-at-cycle (token principal) (reward-cycle uint))
-  (is-some (map-get? staking-stats-at-cycle token reward-cycle))
+  (is-some (map-get? staking-stats-at-cycle {token: token, reward-cycle: reward-cycle}))
 )
 
 ;; get the first Stacks block height for a given reward cycle.
 (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
-  (+ (get-activation-block token) (* (var-get reward-cycle-length) reward-cycle))
+  (+ (get-activation-block-or-default token) (* (var-get reward-cycle-length) reward-cycle))
 )
 
 ;; getter for get-entitled-staking-reward that specifies block height
@@ -300,11 +311,14 @@
 
 ;; STAKING ACTIONS
 
-(define-public (stake-tokens (token-trait <ft-trait>) (amount-token uint) (lock-period uint))
-  (stake-tokens-at-cycle token tx-sender (get-or-create-user-id token tx-sender) amount-token block-height lock-period)
+(define-public (stake-tokens (token-trait <pool-token-trait>) (amount-token uint) (lock-period uint))
+  (begin
+    (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
+    (stake-tokens-at-cycle token-trait tx-sender (get-or-create-user-id (contract-of token-trait) tx-sender) amount-token block-height lock-period)
+  )
 )
 
-(define-private (stake-tokens-at-cycle (token-trait <ft-trait>) (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
+(define-private (stake-tokens-at-cycle (token-trait <pool-token-trait>) (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
   (let
     (
       (token (contract-of token-trait))
@@ -317,8 +331,8 @@
         first: target-cycle,
         last: (+ target-cycle lock-period)
       })
-    )
-    (asserts! (>= block-height (get-activation-block token) ERR-CONTRACT-NOT-ACTIVATED)
+    )    
+    (asserts! (>= block-height (get-activation-block-or-default token)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
     (unwrap! (contract-call? token-trait transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -397,11 +411,14 @@
 ;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
-(define-public (claim-staking-reward (token principal) (target-cycle uint))
-  (claim-staking-reward-at-cycle token tx-sender block-height target-cycle)
+(define-public (claim-staking-reward (token-trait <pool-token-trait>) (target-cycle uint))
+  (begin
+    (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
+    (claim-staking-reward-at-cycle token-trait tx-sender block-height target-cycle)
+  )
 )
 
-(define-private (claim-staking-reward-at-cycle (token-trait <ft-trait>) (user principal) (stacks-height uint) (target-cycle uint))
+(define-private (claim-staking-reward-at-cycle (token-trait <pool-token-trait>) (user principal) (stacks-height uint) (target-cycle uint))
   (let
     (
       (token (contract-of token-trait))
@@ -425,9 +442,10 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
+    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-pool token-trait to-return user)))
+    (and (> to-return u0) (try! (remove-from-balance (contract-of token-trait) to-return)))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user (mul-down entitled-token (get-coinbase-amount token target-cycle))))))
+    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user (mul-down entitled-token (get-coinbase-amount-or-default token target-cycle))))))
     (ok true)
   )
 )
@@ -450,11 +468,11 @@
 )
 
 ;; store block height at each halving, set by register-user in core contract
-(define-data-var coinbase-threshold-1 uint u0)
-(define-data-var coinbase-threshold-2 uint u0)
-(define-data-var coinbase-threshold-3 uint u0)
-(define-data-var coinbase-threshold-4 uint u0)
-(define-data-var coinbase-threshold-5 uint u0)
+(define-data-var coinbase-threshold-1 uint (var-get token-halving-cycle))
+(define-data-var coinbase-threshold-2 uint (* u2 (var-get token-halving-cycle)))
+(define-data-var coinbase-threshold-3 uint (* u3 (var-get token-halving-cycle)))
+(define-data-var coinbase-threshold-4 uint (* u4 (var-get token-halving-cycle)))
+(define-data-var coinbase-threshold-5 uint (* u5 (var-get token-halving-cycle)))
 
 (define-private (set-coinbase-thresholds)
   (begin
@@ -501,20 +519,32 @@
         coinbase-amount-5: coinbase-5
       }
     )
+    (ok true)
   )
 )
 
 ;; function for deciding how many tokens to mint, depending on when they were mined
-(define-read-only (get-coinbase-amount (reward-cycle uint))
-  (begin
+(define-read-only (get-coinbase-amount-or-default (token principal) (reward-cycle uint))
+  (let
+    (
+      (coinbase (default-to {
+                              coinbase-amount-1: u0,
+                              coinbase-amount-2: u0,
+                              coinbase-amount-3: u0,
+                              coinbase-amount-4: u0,
+                              coinbase-amount-5: u0
+                            } 
+                            (map-get? coinbase-amounts token))
+      )
+    )
     ;; computations based on each halving threshold
-    (asserts! (> reward-cycle (var-get coinbase-threshold-1)) (* u100000 ONE_8))
-    (asserts! (> reward-cycle (var-get coinbase-threshold-2)) (* u50000 ONE_8))
-    (asserts! (> reward-cycle (var-get coinbase-threshold-3)) (* u25000 ONE_8))
-    (asserts! (> reward-cycle (var-get coinbase-threshold-4)) (* u12500 ONE_8))
-    (asserts! (> reward-cycle (var-get coinbase-threshold-5)) (* u6250 ONE_8))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-1)) (get coinbase-amount-1 coinbase))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-2)) (get coinbase-amount-2 coinbase))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-3)) (get coinbase-amount-3 coinbase))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-4)) (get coinbase-amount-4 coinbase))
+    (asserts! (> reward-cycle (var-get coinbase-threshold-5)) (get coinbase-amount-5 coinbase))
     ;; default value after 5th halving
-    (* u3125 ONE_8)
+    u0
   )
 )
 
