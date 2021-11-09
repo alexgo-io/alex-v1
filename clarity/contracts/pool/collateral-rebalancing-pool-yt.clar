@@ -402,7 +402,6 @@
 
                 (dx-weighted (mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
-
                 (dy-weighted (get dy (try! (contract-call? .yield-token-pool swap-x-for-y collateral token dx-to-dy none))))
 
                 (pool-updated (merge pool {
@@ -412,7 +411,6 @@
                     balance-y: (+ balance-y dy-weighted)
                 }))
             )     
-
             (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 

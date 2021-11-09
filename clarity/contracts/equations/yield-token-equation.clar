@@ -115,7 +115,8 @@
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
   (begin
     (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BAL)
-    (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
+    (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)   
+     
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))

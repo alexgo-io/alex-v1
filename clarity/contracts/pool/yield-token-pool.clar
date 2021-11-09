@@ -445,6 +445,7 @@
 (define-public (swap-x-for-y (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        ;;(asserts! (> u2 u5) (err dx))
         (let
             (
                 (yield-token (contract-of the-yield-token))
@@ -472,7 +473,6 @@
                     )
                 )
             )
-
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED))
@@ -643,6 +643,8 @@
 ;; @param dx; amount of token being added
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-x (the-yield-token <yield-token-trait>) (dx uint))
+    ;;(begin
+    ;;(asserts! (> u3 u4) (err dx))
     (let 
         (
         (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
@@ -651,7 +653,7 @@
         )
         (asserts! (> (get balance-yield-token pool) dy) dy-bigger-than-available-err)
         (ok dy)        
-    )
+    );;)
 )
 
 ;; @desc units of token given units of yield token

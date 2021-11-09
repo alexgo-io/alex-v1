@@ -8,7 +8,7 @@ import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
 import { CRPYTTestAgent } from './models/alex-tests-collateral-rebalancing-pool-yt.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';
 import { MS_CRP_WBTC_USDA_59760} from './models/alex-tests-multisigs.ts';
-import { USDAToken,WBTCToken,YIELD_WBTC_59760,KEY_WBTC_59760_USDA } from './models/alex-tests-tokens.ts';
+import { USDAToken,WBTCToken,YIELD_WBTC_59760,KEY_WBTC_59760_USDA, YIELD_USDA_59760 } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
@@ -19,6 +19,8 @@ const yieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-w
 const yieldusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-59760"
 const keywbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-usda"
 const ytpyieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-59760-wbtc"
+// const keyusda80875Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-80875-wbtc"
+// const multisigncrpusda80875Address = 
 const multisigncrpwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-usda"
 const multisigytpyieldwbtc59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-59760-wbtc"
 const yieldwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-79760"
@@ -31,6 +33,7 @@ const reserveAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-p
 const keywbtc59760wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-wbtc"
 const multisigncrpwbtc59760wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-wbtc"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-59760"
+const collateralRebalancingPool = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.collateral-rebalancing-pool"
 
 const ONE_8 = 100000000
 const expiry = 59760 * ONE_8
@@ -62,7 +65,8 @@ Clarinet.test({
         let CRPTest = new CRPYTTestAgent(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
-
+        let YIELDToken = new YIELD_USDA_59760(chain, deployer);
+        
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
 
@@ -70,7 +74,7 @@ Clarinet.test({
         let position:any = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(wbtcQ);
         position['balance-y'].expectUint(Math.round(wbtcQ * wbtcPrice / ONE_8));
-
+ 
         result = FWPTest.setOracleEnabled(deployer, wbtcAddress, usdaAddress, weightX, weightY);
         result.expectOk().expectBool(true);   
         result = FWPTest.setOracleAverage(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0.95e8);
@@ -88,6 +92,12 @@ Clarinet.test({
         result.expectOk().expectBool(true);  
 
         // //Deployer creating a pool, initial tokens injected to the pool
+        // result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda59760Address, keyusda59760Address, multisigncrpusda59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        // result.expectOk().expectBool(true);
+
+        let Balance:any = YIELDToken.balanceOf(deployer.address);
+        Balance.result.expectOk().expectBool(true);  
+        //Deployer creating a pool, initial tokens injected to the pool
         // result = CRPTest.createPool(deployer, wbtcAddress, yieldusda59760Address, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
         // result.expectOk().expectBool(true);
 

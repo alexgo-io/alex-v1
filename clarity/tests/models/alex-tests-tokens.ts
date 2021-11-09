@@ -161,3 +161,36 @@ class KEY_WBTC_59760_USDA {
   }
 }
 export { KEY_WBTC_59760_USDA };
+
+class YIELD_USDA_59760 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("yield-usda-59760", "get-balance", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("yield-usda-59760", "get-total-supply", [], this.deployer.address);
+  }
+
+  mint(owner:Account, recipient: string, amount: number) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("yield-usda-59760", "mint", [
+          types.principal(recipient),
+          types.uint(amount)
+        ], owner.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+
+}
+export { YIELD_USDA_59760 };
