@@ -103,7 +103,7 @@
 
 (begin
   (map-set approved-contracts .alex-reserve-pool true)
-  (map-set approved-contracts .faucet true)
+  (map-set approved-contracts .faucet-v5 true)
 )
 
 ;; Initialize the contract for Testing.
