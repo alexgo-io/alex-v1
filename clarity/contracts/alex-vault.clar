@@ -12,6 +12,7 @@
 (define-constant ERR-INVALID-POST-LOAN-BALANCE (err u3004))
 (define-constant ERR-USER-EXECUTE (err u3005))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
+(define-constant ERR-STX-TRANSFER-FAILED (err u3001))
 (define-constant ERR-LOAN-TRANSFER-FAILED (err u3006))
 (define-constant ERR-POST-LOAN-TRANSFER-FAILED (err u3007))
 (define-constant ERR-INVALID-FLASH-LOAN (err u3008))
@@ -62,6 +63,14 @@
   (begin     
     (try! (check-is-approved contract-caller))
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
+    (ok true)
+  )
+)
+
+(define-public (transfer-stx (amount uint) (sender principal) (recipient principal))
+  (begin
+    (try! (check-is-approved sender))
+    (as-contract (unwrap! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -122,4 +131,5 @@
   (map-set approved-contracts .fixed-weight-pool true)  
   (map-set approved-contracts .liquidity-bootstrapping-pool true)  
   (map-set approved-contracts .yield-token-pool true)  
+  (map-set approved-contracts .token-wstx true)
 )
