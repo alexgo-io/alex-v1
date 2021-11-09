@@ -8,6 +8,7 @@
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-NOT-TOKEN-OWNER (err u1001))
 
 (define-read-only (get-owner)
   (ok (var-get contract-owner))
@@ -85,15 +86,16 @@
 ;; This can only be called by recipient since stx-transfer is involved ;; tx-sender -> .alex-vault
 (define-public (mint (recipient principal) (amount uint)) 
   (begin
-    (try! (stx-transfer? amount recipient .alex-vault))
+    (asserts! (is-eq tx-sender recipient) ERR-NOT-TOKEN-OWNER)
+    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) recipient .alex-vault))
     (ft-mint? wstx (fixed-to-decimals amount) recipient)
   )
 )
 
-;; This can only be called by contract since stx-transfer is involved ;; .alex-vault -> sender
+;; This can only be called by sender since ft-burn is involved
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender sender) ERR-NOT-TOKEN-OWNER)
     (as-contract (try! (contract-call? .alex-vault transfer-stx amount tx-sender sender)))
     (ft-burn? wstx (fixed-to-decimals amount) sender)
   )
