@@ -34,11 +34,11 @@
 )
 
 (define-read-only (get-name)
-  (ok "ALEX")
+  (ok "tALEX")
 )
 
 (define-read-only (get-symbol)
-  (ok "ALEX")
+  (ok "tALEX")
 )
 
 (define-read-only (get-decimals)
