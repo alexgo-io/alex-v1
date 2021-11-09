@@ -198,7 +198,7 @@ Clarinet.test({
         result.result.expectOk().expectUint(100 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8);          
-        result = await FaucetTest.getBalance('token-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8);  
         
         // non contract-owner attempting to call get-some-tokens throws an error.
@@ -226,7 +226,7 @@ Clarinet.test({
         result.result.expectOk().expectUint(200 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);   
-        result = await FaucetTest.getBalance('token-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);        
 
         // using more than max-use throws an error
@@ -255,13 +255,13 @@ Clarinet.test({
         result.result.expectOk().expectUint(100 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);   
-        result = await FaucetTest.getBalance('token-alex', wallet_6.address);
+        result = await FaucetTest.getBalance('token-t-alex', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);    
         result = await FaucetTest.getBalance('token-usda', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);   
-        result = await FaucetTest.getBalance('token-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
 
         // testing mint-alex-many
@@ -284,9 +284,9 @@ Clarinet.test({
 
         result = await FaucetTest.mintAlexMany(deployer, mintAlexManyRecords);
         result.expectOk().expectBool(true);
-        result = await FaucetTest.getBalance('token-alex', wallet_6.address);
+        result = await FaucetTest.getBalance('token-t-alex', wallet_6.address);
         result.result.expectOk().expectUint(200 * ONE_8);
-        result = await FaucetTest.getBalance('token-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
         result.result.expectOk().expectUint(500 * ONE_8);        
     },    
 });
