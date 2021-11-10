@@ -92,6 +92,7 @@
 )
 
 ;; perform flash loan
+;; (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (string-utf8 256))))
 (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint))
   (let 
     (
@@ -108,6 +109,7 @@
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
 
     ;; flash-loan-user executes with loan received
+    ;; (try! (contract-call? flash-loan-user execute token amount memo))
     (try! (contract-call? flash-loan-user execute token amount))
 
     ;; return the loan + fee
