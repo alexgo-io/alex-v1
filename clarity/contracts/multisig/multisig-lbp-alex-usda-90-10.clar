@@ -114,7 +114,7 @@
     (title (string-utf8 256))
     (url (string-utf8 256))
     (new-fee-rate-x uint)
-    (new-fee-rate-y uint)    
+    (new-fee-rate-y uint)
   )
   (let (
     (proposer-balance (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-balance tx-sender)))

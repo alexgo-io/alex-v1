@@ -1,8 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-vault.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -75,25 +74,16 @@
   )
 )
 
-(define-public (transfer-yield (token <yield-token-trait>) (amount uint) (recipient principal))
+(define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
     (try! (check-is-approved contract-caller))
-    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
-    (ok true)
-  )
-)
-
-(define-public (transfer-pool (token <pool-token-trait>) (amount uint) (recipient principal))
-  (begin     
-    (try! (check-is-approved contract-caller))
-    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer token-id amount tx-sender recipient) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
 
 ;; perform flash loan
-;; (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (string-utf8 256))))
-(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint))
+(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional uint)))
   (let 
     (
       (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
@@ -109,8 +99,7 @@
     (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
 
     ;; flash-loan-user executes with loan received
-    ;; (try! (contract-call? flash-loan-user execute token amount memo))
-    (try! (contract-call? flash-loan-user execute token amount))
+    (try! (contract-call? flash-loan-user execute token amount memo))
 
     ;; return the loan + fee
     (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED)

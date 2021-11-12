@@ -1,6 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 
 ;; alex-reserve-pool
 

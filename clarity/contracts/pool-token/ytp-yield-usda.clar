@@ -1,6 +1,10 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-semi-fungible-token.semi-fungible-token-trait)
 
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
+(define-constant ERR-INVALID-BALANCE (err u2008))
+
 (define-fungible-token ytp-yield-usda)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
@@ -19,9 +23,7 @@
   )
 )
 
-(define-constant err-owner-only (err u100))
-(define-constant err-insufficient-balance (err u1))
-(define-constant err-invalid-sender (err u4))
+
 
 (define-read-only (get-token-owned (owner principal))
     (default-to (list) (map-get? token-owned owner))
@@ -68,9 +70,9 @@
 		(
 			(sender-balance (get-balance-or-default token-id sender))
 		)
-		(asserts! (is-eq tx-sender sender) err-invalid-sender)
-		(asserts! (<= amount sender-balance) err-insufficient-balance)
-		(try! (ft-transfer? semi-fungible-token amount sender recipient))
+		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
+		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
+		(try! (ft-transfer? ytp-yield-usda amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
@@ -104,7 +106,7 @@
 
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(asserts! (is-eq contract-caller contract-owner) err-owner-only)
+		(asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
 		(try! (ft-mint? ytp-yield-usda amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
@@ -115,7 +117,7 @@
 
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(asserts! (is-eq contract-caller contract-owner) err-owner-only)
+		(asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
 		(try! (ft-burn? ytp-yield-usda amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))

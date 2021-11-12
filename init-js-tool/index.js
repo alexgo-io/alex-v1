@@ -752,7 +752,7 @@ async function run() {
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
-    await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
+    // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
 
     // const _pools = {    0:_deploy[2], 
     //                     1:_deploy[3], 
@@ -827,11 +827,11 @@ async function run() {
     // console.log(result);
     // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
 
-    // _list = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda']
-    // for (let i = 0; i < _list.length; i++){
-    //     // result = await balance(_list[i], process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    //     // console.log(result);
-    //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
-    // }
+    _list = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda']
+    for (let i = 0; i < _list.length; i++){
+        // result = await balance(_list[i], process.env.DEPLOYER_ACCOUNT_ADDRESS);
+        // console.log(result);
+        await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
+    }
 }
 run();

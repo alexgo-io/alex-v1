@@ -5,7 +5,7 @@
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-INVALID-BALANCE (err u2008))
 
-(define-fungible-token yield-usda)
+(define-fungible-token key-usda-wbtc)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
 (define-map token-owned principal (list 2000 uint))
@@ -46,7 +46,7 @@
 )
 
 (define-read-only (get-overall-balance (who principal))
-	(ok (ft-get-balance yield-usda who))
+	(ok (ft-get-balance key-usda-wbtc who))
 )
 
 (define-read-only (get-total-supply (token-id uint))
@@ -54,7 +54,7 @@
 )
 
 (define-read-only (get-overall-supply)
-	(ok (ft-get-supply yield-usda))
+	(ok (ft-get-supply key-usda-wbtc))
 )
 
 (define-read-only (get-decimals (token-id uint))
@@ -72,7 +72,7 @@
 		)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? yield-usda amount sender recipient))
+		(try! (ft-transfer? key-usda-wbtc amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
@@ -107,7 +107,7 @@
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
 		(asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-		(try! (ft-mint? yield-usda amount recipient))
+		(try! (ft-mint? key-usda-wbtc amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint_event", token-id: token-id, amount: amount, recipient: recipient})
@@ -118,7 +118,7 @@
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
 		(asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-		(try! (ft-burn? yield-usda amount sender))
+		(try! (ft-burn? key-usda-wbtc amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn_event", token-id: token-id, amount: amount, sender: sender})
