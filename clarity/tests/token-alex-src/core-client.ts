@@ -34,6 +34,11 @@ export class CoreClient extends Client {
   // REGISTRATION
   //////////////////////////////////////////////////
 
+
+  getActivationBlockOrHeight(token: string): ReadOnlyFn {
+    return this.callReadOnlyFn("get-activation-block-or-default", [types.principal(token)]);
+  }
+
   getActivationBlock(): ReadOnlyFn {
     return this.callReadOnlyFn("get-activation-block");
   }
@@ -50,11 +55,12 @@ export class CoreClient extends Client {
     return this.callReadOnlyFn("get-activation-threshold");
   }
 
-  registerUser(sender: Account, memo: string | undefined = undefined): Tx {
+  registerUser(sender: Account, token: string, memo: string | undefined = undefined): Tx {
     return Tx.contractCall(
       this.contractName,
       "register-user",
       [
+        types.principal(token),
         typeof memo == "undefined"
           ? types.none()
           : types.some(types.utf8(memo)),
@@ -63,23 +69,26 @@ export class CoreClient extends Client {
     );
   }
 
-  getRegisteredUsersNonce(): ReadOnlyFn {
-    return this.callReadOnlyFn("get-registered-users-nonce");
+  getRegisteredUsersNonce(token: string): ReadOnlyFn {
+    return this.callReadOnlyFn("get-registered-users-nonce", [types.principal(token)]);
   }
 
-  getUserId(user: Account): ReadOnlyFn {
-    return this.callReadOnlyFn("get-user-id", [types.principal(user.address)]);
+  getUserId(token: string, user: Account): ReadOnlyFn {
+    return this.callReadOnlyFn("get-user-id", [
+      types.principal(token),
+      types.principal(user.address)]);
   }
 
   getUser(userId: number): ReadOnlyFn {
     return this.callReadOnlyFn("get-user", [types.uint(userId)]);
   }
 
-  setActivationBlock(sender: Account, activation: number): Tx {
+  setActivationBlock(sender: Account, activation: number, token: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "set-activation-block",
       [
+        types.principal(token),
         types.uint(activation)
       ],
       sender.address
@@ -97,12 +106,25 @@ export class CoreClient extends Client {
     );
   }
 
+  addToken(sender: Account, token: string, activationBlock: number): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "add-token",
+      [
+        types.principal(token),
+        types.uint(activationBlock)
+      ],
+      sender.address
+    );
+  }
+
   //////////////////////////////////////////////////
   // STAKING CONFIGURATION
   //////////////////////////////////////////////////
 
-  getStakerAtCycleOrDefault(rewardCycle: number, userId: number): ReadOnlyFn {
+  getStakerAtCycleOrDefault(rewardCycle: number, userId: number, token: string): ReadOnlyFn {
     return this.callReadOnlyFn("get-staker-at-cycle-or-default", [
+      types.principal(token),
       types.uint(rewardCycle),
       types.uint(userId),
     ]);
@@ -119,11 +141,11 @@ export class CoreClient extends Client {
   // STAKING ACTIONS
   //////////////////////////////////////////////////
 
-  stakeTokens(amountTokens: number, lockPeriod: number, staker: Account): Tx {
+  stakeTokens(amountTokens: number, lockPeriod: number, staker: Account, token: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "stake-tokens",
-      [types.uint(amountTokens), types.uint(lockPeriod)],
+      [types.principal(token), types.uint(amountTokens), types.uint(lockPeriod)],
       staker.address
     );
   }
@@ -132,11 +154,11 @@ export class CoreClient extends Client {
   // STAKING REWARD CLAIMS
   //////////////////////////////////////////////////
 
-  claimStakingReward(targetCycle: number, sender: Account): Tx {
+  claimStakingReward(targetCycle: number, sender: Account, token: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "claim-staking-reward",
-      [types.uint(targetCycle)],
+      [types.principal(token), types.uint(targetCycle)],
       sender.address
     );
   }
