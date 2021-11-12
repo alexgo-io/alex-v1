@@ -75,10 +75,10 @@
   )
 )
 
-(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <ft-trait>))
+(define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <sft-trait>) (expiry uint))
   (default-to 
     { amount: u0 }
-    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token) }) 
+    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token), expiry: expiry }) 
   )
 )
 
@@ -88,6 +88,7 @@
     {
       id: u0,
       proposer: DEFAULT_OWNER,
+      expiry: u0,
       title: u"",
       url: u"",
       is-open: false,
@@ -103,8 +104,8 @@
 )
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
-(define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .ytp-yield-usda-11520-usda)
+(define-read-only (is-token-accepted (token <sft-trait>))
+    (is-eq (contract-of token) .ytp-yield-usda)
 )
 
 
@@ -112,6 +113,7 @@
 ;; Requires 10% of the supply in your wallet
 ;; Default voting period is 10 days (144 * 10 blocks)
 (define-public (propose
+    (expiry uint)
     (start-block-height uint)
     (title (string-utf8 256))
     (url (string-utf8 256))
@@ -119,8 +121,8 @@
     (new-fee-rate-yield-token uint)
   )
   (let (
-    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-usda-11520-usda get-balance tx-sender)) ONE_8))
-    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda-11520-usda get-total-supply)) ONE_8))
+    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-usda get-balance expiry tx-sender)) ONE_8))
+    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply expiry)) ONE_8))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -132,6 +134,7 @@
       {
         id: proposal-id,
         proposer: tx-sender,
+        expiry: expiry,
         title: title,
         url: url,
         is-open: true,
