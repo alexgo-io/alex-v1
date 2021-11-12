@@ -290,7 +290,7 @@ async function set_faucet_amounts() {
     await setUsdaAmount(500000e+8);
     await setWbtcAmount(5e+8);
     await setStxAmount(250e+8);
-    await setAlexAmount(10e+8)
+    await setAlexAmount(0);
 }
 
 async function get_some_token(recipient) {
@@ -752,7 +752,7 @@ async function run() {
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
-    // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
+    await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
 
     // const _pools = {    0:_deploy[2], 
     //                     1:_deploy[3], 

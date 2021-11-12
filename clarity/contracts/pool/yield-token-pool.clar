@@ -1,8 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 (use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
+(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
 
 ;; yield-token-pool
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -51,12 +50,14 @@
   { pool-id: uint }
   {
     yield-token: principal, ;; yield-token, dy
+    expiry: uint
   }
 )
 
 (define-map pools-data-map
   {
     yield-token: principal    
+    expiry: uint
   }
   {
     total-supply: uint,    
@@ -68,7 +69,6 @@
     fee-rate-token: uint,    
     fee-rate-yield-token: uint,
     fee-rebate: uint,
-    expiry: uint,
     listed: uint,
     oracle-enabled: bool,
     oracle-average: uint,
@@ -141,20 +141,19 @@
 ;; @desc get-pool-details
 ;; @param the-yield-token; yield-token
 ;; @returns (response (tuple) uint)
-(define-read-only (get-pool-details (the-yield-token <yield-token-trait>))
-    (ok (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+(define-read-only (get-pool-details (the-yield-token <sft-trait>) (expiry uint))
+    (ok (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
 )
 
 ;; @desc get-yield
 ;; @desc note yield is not annualised
 ;; @param the-yield-token; yield-token
 ;; @returns (response uint uint)
-(define-read-only (get-yield (the-yield-token <yield-token-trait>))
+(define-read-only (get-yield (the-yield-token <sft-trait>) (expiry uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
-            (expiry (get expiry pool))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry}) ERR-INVALID-POOL-ERR))
             (listed (get listed pool))
             (balance-token (get balance-token pool)) 
             (balance-yield-token (+ (get balance-yield-token pool) (get balance-virtual pool)))
@@ -167,12 +166,11 @@
 ;; @desc get-price
 ;; @param the-yield-token; yield-token
 ;; @returns (response uint uint)
-(define-read-only (get-price (the-yield-token <yield-token-trait>))
+(define-read-only (get-price (the-yield-token <sft-trait>) (expiry uint))
     (let
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
-            (expiry (get expiry pool))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
             (listed (get listed pool))
             (balance-token (get balance-token pool)) 
             (balance-yield-token (+ (get balance-yield-token pool) (get balance-virtual pool)))
@@ -185,8 +183,8 @@
 ;; @desc get-oracle-enabled
 ;; @param the-yield-token; yield-token
 ;; @returns (response bool uint)
-(define-read-only (get-oracle-enabled (the-yield-token <yield-token-trait>))
-    (ok (get oracle-enabled (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR)))
+(define-read-only (get-oracle-enabled (the-yield-token <sft-trait>) (expiry uint))
+    (ok (get oracle-enabled (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR)))
 )
 
 ;; @desc set-oracle-enabled
@@ -194,15 +192,15 @@
 ;; @restricted CONTRACT-OWNER
 ;; @param the-yield-token; yield-token
 ;; @returns (response bool uint)
-(define-public (set-oracle-enabled (the-yield-token <yield-token-trait>))
+(define-public (set-oracle-enabled (the-yield-token <sft-trait>) (expiry uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
             (pool-updated (merge pool {oracle-enabled: true}))
         )
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
-        (map-set pools-data-map { yield-token: (contract-of the-yield-token) } pool-updated)
+        (map-set pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry } pool-updated)
         (ok true)
     )    
 )
@@ -211,18 +209,18 @@
 ;; @desc returns the moving average used to determine oracle price
 ;; @param the-yield-token; yield-token
 ;; @returns (response uint uint)
-(define-read-only (get-oracle-average (the-yield-token <yield-token-trait>))
-    (ok (get oracle-average (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR)))
+(define-read-only (get-oracle-average (the-yield-token <sft-trait>) (expiry uint))
+    (ok (get oracle-average (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR)))
 )
 
 ;; @desc set-oracle-average
 ;; @restricted CONTRACT-OWNER
 ;; @param the-yield-token; yield-token
 ;; @returns (response bool uint)
-(define-public (set-oracle-average (the-yield-token <yield-token-trait>) (new-oracle-average uint))
+(define-public (set-oracle-average (the-yield-token <sft-trait>) (expiry uint) (new-oracle-average uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
             (pool-updated (merge pool {
                 oracle-average: new-oracle-average,
                 oracle-resilient: (try! (get-oracle-instant the-yield-token))
@@ -231,7 +229,7 @@
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
-        (map-set pools-data-map { yield-token: (contract-of the-yield-token) } pool-updated)
+        (map-set pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry } pool-updated)
         (ok true)
     )    
 )
@@ -240,10 +238,10 @@
 ;; @desc price-oracle that is less up to date but more resilient to manipulation
 ;; @param the-yield-token; yield-token
 ;; @returns (response uint uint)
-(define-read-only (get-oracle-resilient (the-yield-token <yield-token-trait>))
+(define-read-only (get-oracle-resilient (the-yield-token <sft-trait>) (expiry uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant the-yield-token)))
@@ -255,8 +253,8 @@
 ;; @desc price-oracle that is more up to date but less resilient to manipulation
 ;; @param the-yield-token; yield-token
 ;; @returns (response uint uint)
-(define-read-only (get-oracle-instant (the-yield-token <yield-token-trait>))
-    (ok (div-down ONE_8 (try! (get-price the-yield-token))))
+(define-read-only (get-oracle-instant (the-yield-token <sft-trait>) (expiry uint))
+    (ok (div-down ONE_8 (try! (get-price the-yield-token expiry))))
 )
 
 ;; @desc create-pool
@@ -268,17 +266,16 @@
 ;; @param dx; amount of token added
 ;; @param dy; amount of yield-token added
 ;; @returns (response bool uint)
-(define-public (create-pool (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (the-yield-token <sft-trait>) (expiry uint) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (begin
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)         
-        ;; create pool only if the correct pair
-        (asserts! (is-eq (try! (contract-call? the-yield-token get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
-        (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of the-yield-token) })) ERR-POOL-ALREADY-EXISTS)
+        ;; ;; create pool only if the correct pair
+        ;; (asserts! (is-eq (try! (contract-call? the-yield-token get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
+        (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
         (let
             (
                 (yield-token (contract-of the-yield-token))            
                 (pool-id (+ (var-get pool-count) u1))
-                (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))
                 (pool-data {
                     total-supply: u0,
                     balance-token: u0,                
@@ -289,7 +286,6 @@
                     fee-rate-yield-token: u0,
                     fee-rate-token: u0,
                     fee-rebate: u0,
-                    expiry: (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR),
                     listed: (* block-height ONE_8),
                     oracle-enabled: false,
                     oracle-average: u0,
@@ -297,15 +293,15 @@
                 })
             )
         
-            (map-set pools-map { pool-id: pool-id } { yield-token: yield-token })
-            (map-set pools-data-map { yield-token: yield-token } pool-data)
+            (map-set pools-map { pool-id: pool-id } { yield-token: yield-token, expiry: expiry })
+            (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-data)
         
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
             ;; ;; if yield-token added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
             ;; (var-set max-expiry (if (< (var-get max-expiry) expiry) (+ expiry ONE_8) (var-get max-expiry)))
-            (try! (add-to-position the-yield-token the-token the-pool-token dx))
+            (try! (add-to-position the-yield-token expiry the-token the-pool-token dx))
 
             (print { object: "pool", action: "created", data: pool-data })
             (ok true)
@@ -321,15 +317,15 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param dx; amount of token added (part of which will be used to buy yield-token)
 ;; @returns (response (tuple uint uint uint uint) uint)
-(define-public (buy-and-add-to-position (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
+(define-public (buy-and-add-to-position (the-yield-token <sft-trait>) (expiry uint) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
     (let
         (
-            (dy-act (get dy-act (try! (get-token-given-position the-yield-token dx))))
-            (dx-adjusted (- dx (div-down dx (+ dx (try! (get-x-given-y the-yield-token dy-act))))))
+            (dy-act (get dy-act (try! (get-token-given-position the-yield-token expiry dx))))
+            (dx-adjusted (- dx (div-down dx (+ dx (try! (get-x-given-y the-yield-token expiry dy-act))))))
             (dx-to-buy-dy-adjusted (- dx dx-adjusted))
         )
-        (and (> dy-act u0) (is-ok (swap-x-for-y the-yield-token the-token dx-to-buy-dy-adjusted none)))
-        (add-to-position the-yield-token the-token the-pool-token dx-adjusted)
+        (and (> dy-act u0) (is-ok (swap-x-for-y the-yield-token expiry the-token dx-to-buy-dy-adjusted none)))
+        (add-to-position the-yield-token expiry the-token the-pool-token dx-adjusted)
     )
 )
 
@@ -340,14 +336,14 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param dx; amount of token added
 ;; @returns (response (tuple uint uint uint uint) uint)
-(define-public (add-to-position (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
+(define-public (add-to-position (the-yield-token <sft-trait>) (expiry uint) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (dx uint))
     (begin
         ;; dx must be greater than zero
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (let
             (
                 (yield-token (contract-of the-yield-token))
-                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-token (get balance-token pool))            
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))
@@ -371,10 +367,10 @@
             ;; send x to vault
             (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             ;; send y to vault
-            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer new-dy-act tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer expiry new-dy-act tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
         
             ;; mint pool token and send to tx-sender
-            (map-set pools-data-map { yield-token: yield-token } pool-updated)    
+            (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
             (try! (contract-call? the-pool-token mint tx-sender new-supply))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {supply: new-supply, balance-token: dx, balance-yield-token: new-dy-act, balance-virtual: new-dy-vir})
@@ -389,13 +385,13 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param percent; percentage of pool token held to reduce
 ;; @returns (response (tuple uint uint) uint)
-(define-public (reduce-position (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
+(define-public (reduce-position (the-yield-token <sft-trait>) (expiry uint) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         (let
             (
                 (yield-token (contract-of the-yield-token))
-                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))                
@@ -418,9 +414,9 @@
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
-            (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-yield the-yield-token dy-act tx-sender)))
+            (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-yield the-yield-token expiry dy-act tx-sender)))
 
-            (map-set pools-data-map { yield-token: yield-token } pool-updated)
+            (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (try! (contract-call? the-pool-token burn tx-sender shares))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
@@ -438,14 +434,14 @@
 ;; @param the-pool-token-to-roll; pool token representing ownership of the pool to roll to
 ;; @returns (response (tuple uint uint) uint)
 (define-public (roll-position 
-    (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint) 
-    (the-yield-token-to-roll <yield-token-trait>) (the-pool-token-to-roll <pool-token-trait>))
+    (the-yield-token <sft-trait>) (expiry uint) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint) 
+    (expiry-to-roll uint) (the-pool-token-to-roll <pool-token-trait>))
     (let
         (
-            (reduce-data (unwrap! (reduce-position the-yield-token the-token the-pool-token percent) (err u11111)))
-            (dy-to-dx (get dx (unwrap! (swap-y-for-x the-yield-token the-token (get dy reduce-data) none) (err u22222))))
+            (reduce-data (unwrap! (reduce-position the-yield-token expiry the-token the-pool-token percent) (err u11111)))
+            (dy-to-dx (get dx (unwrap! (swap-y-for-x the-yield-token expiry the-token (get dy reduce-data) none) (err u22222))))
         )
-        (buy-and-add-to-position the-yield-token-to-roll the-token the-pool-token-to-roll (+ (get dx reduce-data) dy-to-dx))
+        (buy-and-add-to-position the-yield-token expiry-to-roll the-token the-pool-token-to-roll (+ (get dx reduce-data) dy-to-dx))
     )
 )
 
@@ -455,13 +451,13 @@
 ;; @param dx; amount of token to swap
 ;; @param min-dy; optional, min amount of yield-token to receive
 ;; @returns (response (tuple uint uint) uint)
-(define-public (swap-x-for-y (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (dx uint) (min-dy (optional uint)))
+(define-public (swap-x-for-y (the-yield-token <sft-trait>) (the-token <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (let
             (
                 (yield-token (contract-of the-yield-token))
-                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
 
@@ -493,7 +489,7 @@
             (try! (contract-call? .alex-reserve-pool add-to-balance (contract-of the-token) (- fee fee-rebate)))
 
             ;; post setting
-            (map-set pools-data-map { yield-token: yield-token } pool-updated)
+            (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
             (ok {dx: dx-net-fees, dy: dy})
         )
@@ -506,13 +502,13 @@
 ;; @param dy; amount of yield token to swap
 ;; @param min-dx; optional, min amount of token to receive
 ;; @returns (response (tuple uint uint) uint)
-(define-public (swap-y-for-x (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (dy uint) (min-dx (optional uint)))
+(define-public (swap-y-for-x (the-yield-token <sft-trait>) (the-token <ft-trait>) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
             (
                 (yield-token (contract-of the-yield-token))
-                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
 
@@ -543,7 +539,7 @@
             (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate)))
 
             ;; post setting
-            (map-set pools-data-map { yield-token: yield-token } pool-updated)
+            (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
             (ok {dx: dx, dy: dy-net-fees})
         )
@@ -553,8 +549,8 @@
 ;; @desc get-fee-rebate
 ;; @param the-yield-token; yield token
 ;; @returns (response uint uint)
-(define-read-only (get-fee-rebate (the-yield-token <yield-token-trait>))
-    (ok (get fee-rebate (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR)))
+(define-read-only (get-fee-rebate (the-yield-token <sft-trait>) (expiry uint))
+    (ok (get fee-rebate (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR)))
 )
 
 ;; @desc set-fee-rebate
@@ -562,15 +558,15 @@
 ;; @param the-yield-token; yield token
 ;; @param fee-rebate; new fee-rebate
 ;; @returns (response bool uint)
-(define-public (set-fee-rebate (the-yield-token <yield-token-trait>) (fee-rebate uint))
+(define-public (set-fee-rebate (the-yield-token <sft-trait>) (fee-rebate uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
 
-        (map-set pools-data-map { yield-token: yield-token } (merge pool { fee-rebate: fee-rebate }))
+        (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rebate: fee-rebate }))
         (ok true)
     )
 )
@@ -578,11 +574,11 @@
 ;; @desc get-fee-rate-yield-token
 ;; @param the-yield-token; yield token
 ;; @returns (response uint uint)
-(define-read-only (get-fee-rate-yield-token (the-yield-token <yield-token-trait>))
+(define-read-only (get-fee-rate-yield-token (the-yield-token <sft-trait>) (expiry uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (ok (get fee-rate-yield-token pool))
     )
@@ -591,11 +587,11 @@
 ;; @desc get-fee-rate-token
 ;; @param the-yield-token; yield token
 ;; @returns (response uint uint)
-(define-read-only (get-fee-rate-token (the-yield-token <yield-token-trait>))
+(define-read-only (get-fee-rate-token (the-yield-token <sft-trait>) (expiry uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (ok (get fee-rate-token pool))
     )
@@ -606,15 +602,15 @@
 ;; @param the-yield-token; yield token
 ;; @param fee-rate-yield-token; new fee-rate-yield-token
 ;; @returns (response bool uint)
-(define-public (set-fee-rate-yield-token (the-yield-token <yield-token-trait>) (fee-rate-yield-token uint))
+(define-public (set-fee-rate-yield-token (the-yield-token <sft-trait>) (fee-rate-yield-token uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
-        (map-set pools-data-map { yield-token: yield-token } (merge pool { fee-rate-yield-token: fee-rate-yield-token }))
+        (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-yield-token: fee-rate-yield-token }))
         (ok true)
     
     )
@@ -625,15 +621,15 @@
 ;; @param the-yield-token; yield token
 ;; @param fee-rate-token; new fee-rate-token
 ;; @returns (response bool uint)
-(define-public (set-fee-rate-token (the-yield-token <yield-token-trait>) (fee-rate-token uint))
+(define-public (set-fee-rate-token (the-yield-token <sft-trait>) (fee-rate-token uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
-        (map-set pools-data-map { yield-token: yield-token } (merge pool { fee-rate-token: fee-rate-token }))
+        (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
 )
@@ -641,11 +637,11 @@
 ;; @desc get-fee-to-address
 ;; @param the-yield-token; yield token
 ;; @returns (response principal uint)
-(define-read-only (get-fee-to-address (the-yield-token <yield-token-trait>))
+(define-read-only (get-fee-to-address (the-yield-token <sft-trait>) (expiry uint))
     (let 
         (
             (yield-token (contract-of the-yield-token))       
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (ok (get fee-to-address pool))
     )
@@ -655,10 +651,10 @@
 ;; @param the-yield-token; yield token
 ;; @param dx; amount of token being added
 ;; @returns (response uint uint)
-(define-read-only (get-y-given-x (the-yield-token <yield-token-trait>) (dx uint))
+(define-read-only (get-y-given-x (the-yield-token <sft-trait>) (dx uint))
     (let 
         (
-        (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
         (normalized-expiry (try! (get-t (get expiry pool) (get listed pool))))
         (dy (try! (contract-call? .yield-token-equation get-y-given-x (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) normalized-expiry dx)))
         )
@@ -671,11 +667,11 @@
 ;; @param the-yield-token; yield token
 ;; @param dy; amount of yield token being added
 ;; @returns (response uint uint)
-(define-read-only (get-x-given-y (the-yield-token <yield-token-trait>) (dy uint))
+(define-read-only (get-x-given-y (the-yield-token <sft-trait>) (dy uint))
     
     (let 
         (
-        (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
         (normalized-expiry (try! (get-t (get expiry pool) (get listed pool))))
         )
         (contract-call? .yield-token-equation get-x-given-y (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) normalized-expiry dy)
@@ -686,12 +682,12 @@
 ;; @param the-yield-token; yield token
 ;; @param price; target price
 ;; @returns (response uint uint)
-(define-read-only (get-x-given-price (the-yield-token <yield-token-trait>) (price uint))
+(define-read-only (get-x-given-price (the-yield-token <sft-trait>) (price uint))
 
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token) }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
@@ -706,12 +702,12 @@
 ;; @param the-yield-token; yield token
 ;; @param price; target price
 ;; @returns (response uint uint)
-(define-read-only (get-y-given-price (the-yield-token <yield-token-trait>) (price uint))
+(define-read-only (get-y-given-price (the-yield-token <sft-trait>) (price uint))
 
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
@@ -726,12 +722,12 @@
 ;; @param the-yield-token; yield token
 ;; @param yield; target yield
 ;; @returns (response uint uint)
-(define-read-only (get-x-given-yield (the-yield-token <yield-token-trait>) (yield uint))
+(define-read-only (get-x-given-yield (the-yield-token <sft-trait>) (yield uint))
 
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
@@ -746,12 +742,12 @@
 ;; @param the-yield-token; yield token
 ;; @param yield; target yield
 ;; @returns (response uint uint)
-(define-read-only (get-y-given-yield (the-yield-token <yield-token-trait>) (yield uint))
+(define-read-only (get-y-given-yield (the-yield-token <sft-trait>) (yield uint))
 
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
@@ -766,12 +762,12 @@
 ;; @param the-yield-token; yield token
 ;; @param dx; amount of token added
 ;; @returns (response (tuple uint uint uint) uint)
-(define-read-only (get-token-given-position (the-yield-token <yield-token-trait>) (dx uint))
+(define-read-only (get-token-given-position (the-yield-token <sft-trait>) (dx uint))
 
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
@@ -796,12 +792,12 @@
 ;; @param the-yield-token; yield token
 ;; @param token; units of pool token to be minted
 ;; @returns (response (tuple uint uint uint) uint)
-(define-read-only (get-position-given-mint (the-yield-token <yield-token-trait>) (token uint))
+(define-read-only (get-position-given-mint (the-yield-token <sft-trait>) (token uint))
 
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))
@@ -825,12 +821,12 @@
 ;; @param the-yield-token; yield token
 ;; @param token; units of pool token to be burnt
 ;; @returns (response (tuple uint uint uint) uint)
-(define-read-only (get-position-given-burn (the-yield-token <yield-token-trait>) (token uint))
+(define-read-only (get-position-given-burn (the-yield-token <sft-trait>) (token uint))
     
     (let 
         (
         (yield-token (contract-of the-yield-token))
-        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token }) ERR-INVALID-POOL-ERR))
+        (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         (expiry (get expiry pool))
         (listed (get listed pool))
         (normalized-expiry (try! (get-t expiry listed)))

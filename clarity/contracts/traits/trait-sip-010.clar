@@ -2,7 +2,7 @@
 ;; trait-sip-010
 ;; <add a description here>
 
-;; sip-010-trait must implement fixed point - see get-decimals()
+;; sip-010-trait
 (define-trait sip-010-trait
   (
     ;; Transfer from the caller to a new principal

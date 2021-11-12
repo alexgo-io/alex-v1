@@ -1,9 +1,5 @@
-
-
 (define-trait yield-token-trait
   (
-    ;; sip-010
-
     ;; Transfer from the caller to a new principal
     (transfer (uint principal principal (optional (buff 34))) (response bool uint))
 
@@ -37,6 +33,6 @@
     (get-token () (response principal uint))
 
     ;; the expiry
-    (get-expiry () (response uint uint))
+    (get-expiry () (response uint uint))	
   )
 )
