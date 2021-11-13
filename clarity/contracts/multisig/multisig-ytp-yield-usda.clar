@@ -8,7 +8,7 @@
 ;; A proposal will just update the DAO with new contracts.
 
 ;; Voting can be done by locking up the corresponding pool token. 
-;; This prototype is for ayusda-usda pool token. 
+;; This prototype is for aywbtc-wbtc pool token. 
 ;; Common Trait and for each pool, implementation is required. 
 ;; 
 

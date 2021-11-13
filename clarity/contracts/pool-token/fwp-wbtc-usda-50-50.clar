@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-pool-token.pool-token-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
 
 (define-fungible-token fwp-wbtc-usda-50-50)
 

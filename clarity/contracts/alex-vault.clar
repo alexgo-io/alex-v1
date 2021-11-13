@@ -54,14 +54,14 @@
 
 ;; return token balance held by vault
 (define-public (get-balance (token <ft-trait>))
-  (contract-call? token get-balance (as-contract tx-sender))
+  (contract-call? token get-balance-fixed (as-contract tx-sender))
 )
 
 ;; if sender is an approved contract, then transfer requested amount :qfrom vault to recipient
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (recipient principal))
   (begin     
     (try! (check-is-approved contract-caller))
-    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -77,7 +77,7 @@
 (define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
     (try! (check-is-approved contract-caller))
-    (as-contract (unwrap! (contract-call? token transfer token-id amount tx-sender recipient) ERR-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer-fixed token-id amount tx-sender recipient) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -96,7 +96,7 @@
     (asserts! (> pre-bal amount) ERR-INSUFFICIENT-FLASH-LOAN-BALANCE)
 
     ;; transfer loan to flash-loan-user
-    (as-contract (unwrap! (contract-call? token transfer amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
 
     ;; flash-loan-user executes with loan received
     (try! (contract-call? flash-loan-user execute token amount memo))

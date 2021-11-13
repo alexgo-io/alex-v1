@@ -1,16 +1,6 @@
 require('dotenv').config();
 const { ClarityType, getNonce } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle } = require('./oracles').default
-const {
-    flExecuteMarginUsdaWbtc23670,
-    flExecuteMarginUsdaWbtc59760,
-    flExecuteMarginUsdaWbtc23040,
-    flExecuteMarginUsdaWbtc34560,
-    flExecuteMarginUsdaWbtc74880,
-    flExecuteMarginWbtcUsda23040,
-    flExecuteMarginWbtcUsda34560,
-    flExecuteMarginWbtcUsda74880,
-} = require('./flashloan')
 const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
@@ -24,6 +14,7 @@ const {
     fwpSwapXforY,
     fwpSwapYforX,
     fwpGetPoolDetails,
+    fwpGetPositionGivenBurn
 } = require('./pools-fwp')
 const {
     crpCreate,
@@ -820,18 +811,21 @@ async function run() {
     // await arbitrage_fwp(dry_run = false);
     // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
-    // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
-    // console.log(result);
+    
+    result = await fwpGetPositionGivenBurn('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 325.48 * 1e3 * 1e8);
+    printResult(result);
+    result = await ytpGetPositionGivenBurn('yield-wbtc-92160', 0.5 * 1e8);      
+    printResult(result);
 
     // result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
     // console.log(result);
     // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
 
-    _list = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda']
-    for (let i = 0; i < _list.length; i++){
-        // result = await balance(_list[i], process.env.DEPLOYER_ACCOUNT_ADDRESS);
-        // console.log(result);
-        await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
-    }
+    // _list = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda']
+    // for (let i = 0; i < _list.length; i++){
+    //     // result = await balance(_list[i], process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    //     // console.log(result);
+    //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
+    // }
 }
 run();

@@ -30,8 +30,17 @@
 		;; Transfer many tokens at once with memos.
 		(transfer-many-memo ((list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})) (response bool uint))
 
-    	(mint (uint uint principal) (response bool uint))
-    
-    	(burn (uint uint principal) (response bool uint))		
+    	(mint (uint uint principal) (response bool uint))    
+    	(burn (uint uint principal) (response bool uint))
+
+		;; helper functions for 8-digit fixed notation
+		(transfer-fixed (uint uint principal principal) (response bool uint))
+    	(get-balance-fixed (uint principal) (response uint uint))
+    	(get-total-supply-fixed (uint) (response uint uint))
+		(get-overall-balance-fixed (uint principal) (response uint uint))
+		(get-total-supply-fixed (uint uint) (response uint uint))
+		(get-overall-supply (uint) (response uint uint))	
+		(mint-fixed (uint principal) (response bool uint))
+		(burn-fixed (uint principal) (response bool uint))    		
 	)
 )

@@ -161,3 +161,25 @@ class KEY_WBTC_59760_USDA {
   }
 }
 export { KEY_WBTC_59760_USDA };
+
+class YIELD_WBTC {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+  
+  mint(expiry: number, amount: number, recipient: string) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("yield-wbtc", "transfer", [
+        types.uint(expiry),
+        types.uint(amount,)
+        types.principal(recipient)
+      ], this.deployer.address),
+    ]);
+    return block.receipts[0].result;
+  }
+}
+export { YIELD_WBTC };

@@ -287,7 +287,7 @@
     (asserts! (>= block-height (var-get activation-block)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
-    (unwrap! (contract-call? .token-alex transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+    (unwrap! (contract-call? .token-alex transfer-fixed amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
     (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
       err-value (err err-value)
@@ -387,7 +387,7 @@
     ;; send back tokens if user was eligible
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft .token-alex to-return user)))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user (mul-down entitled-token (get-coinbase-amount target-cycle))))))
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint-fixed (mul-down entitled-token (get-coinbase-amount target-cycle)) user))))
     (ok true)
   )
 )

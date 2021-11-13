@@ -23,8 +23,6 @@
   )
 )
 
-
-
 (define-read-only (get-token-owned (owner principal))
     (default-to (list) (map-get? token-owned owner))
 )
@@ -124,4 +122,46 @@
 		(print {type: "sft_burn_event", token-id: token-id, amount: amount, sender: sender})
 		(ok true)
 	)
+)
+
+(define-constant ONE_8 (pow u10 u8))
+
+(define-private (pow-decimals)
+  	(pow u10 (unwrap-panic (get-decimals)))
+)
+
+(define-read-only (fixed-to-decimals (amount uint))
+  	(/ (* amount (pow-decimals)) ONE_8)
+)
+
+(define-private (decimals-to-fixed (amount uint))
+  	(/ (* amount ONE_8) (pow-decimals))
+)
+
+(define-read-only (get-total-supply-fixed (token-id uint))
+  	(ok (decimals-to-fixed (default-to u0 (map-get? token-supplies token-id))))
+)
+
+(define-read-only (get-balance-fixed (token-id uint) (who principal))
+  	(ok (decimals-to-fixed (get-balance-or-default token-id who)))
+)
+
+(define-read-only (get-overall-supply-fixed)
+	(ok (decimals-to-fixed (ft-get-supply ytp-yield-usda)))
+)
+
+(define-read-only (get-overall-balance-fixed (who principal))
+	(ok (decimals-to-fixed (ft-get-balance ytp-yield-usda who)))
+)
+
+(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  	(transfer token-id (fixed-to-decimals amount) sender recipient memo)
+)
+
+(define-public (mint-fixed (token-id uint) (amount uint) (recipient principal))
+  	(mint token-id (fixed-to-decimals amount) recipient)
+)
+
+(define-public (burn-fixed (token-id uint) (amount uint) (sender principal))
+  	(burn token-id (fixed-to-decimals amount) sender)
 )
