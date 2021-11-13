@@ -100,7 +100,7 @@ const _deploy = {
         collateral_crp: 1500000e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.093486,
+        target_apy: 0.06354,
         expiry: 51840e+8,
     },
     3: {
@@ -115,7 +115,7 @@ const _deploy = {
         collateral_crp: 25e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.10768,
+        target_apy: 0.086475,
         expiry: 51840e+8,
     },
     4: {token: 'token-wbtc',
@@ -157,7 +157,7 @@ const _deploy = {
         collateral_crp: 1500000e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.18469,
+        target_apy: 0.09469,
         expiry: 132481e+8,
     },
     7: {token: 'token-usda',
@@ -171,9 +171,38 @@ const _deploy = {
         collateral_crp: 25e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
-        target_apy: 0.16950,
+        target_apy: 0.10950,
         expiry: 132481e+8,
     },      
+    8: {token: 'token-wbtc',
+        collateral: 'token-usda',
+        yield_token: 'yield-wbtc-172802',
+        key_token: 'key-wbtc-172802-usda',
+        pool_token: 'ytp-yield-wbtc-172802-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-172802-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-172802-usda',
+        liquidity_ytp: 100e+8,
+        collateral_crp: 1500000e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.18469,
+        expiry: 172802e+8,
+    },
+    9: {token: 'token-usda',
+        collateral: 'token-wbtc',
+        yield_token: 'yield-usda-172802',
+        key_token: 'key-usda-172802-wbtc',
+        pool_token: 'ytp-yield-usda-172802-usda',
+        multisig_ytp: 'multisig-ytp-yield-usda-172802-usda',
+        multisig_crp: 'multisig-crp-usda-172802-wbtc',
+        liquidity_ytp: 6000000e+8,
+        collateral_crp: 25e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.16950,
+        expiry: 172802e+8,
+    },   
+
 }
 
 const ONE_8 = 100000000
@@ -765,18 +794,18 @@ async function run() {
     //                     8:_deploy[10],
     //                     9:_deploy[11]
     //                 };
-    // const _pools = { 0:_deploy[6], 1:_deploy[7] };
-    const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
-    // const _pools = _deploy;
+    // const _pools = { 0:_deploy[8], 1:_deploy[9] };
+    // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
+    const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    // await arbitrage_fwp(dry_run = false);
-    // await arbitrage_crp(dry_run = false, _pools);
-    // await arbitrage_ytp(dry_run = false, _pools);
-    // await arbitrage_fwp(dry_run = false);
+    await arbitrage_fwp(dry_run = false);
+    await arbitrage_crp(dry_run = false, _pools);
+    await arbitrage_ytp(dry_run = false, _pools);
+    await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
