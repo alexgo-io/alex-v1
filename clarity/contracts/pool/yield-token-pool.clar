@@ -367,7 +367,7 @@
             ;; send x to vault
             (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             ;; send y to vault
-            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer expiry new-dy-act tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
+            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer expiry new-dy-act tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
         
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
@@ -396,7 +396,7 @@
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))                
                 (total-supply (get total-supply pool))
-                (total-shares (unwrap-panic (contract-call? the-pool-token get-balance-fixed expiry tx-sender)))
+                (total-shares (unwrap! (contract-call? the-pool-token get-balance-fixed expiry tx-sender) (err u11111)))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (reduce-data (try! (get-position-given-burn expiry the-yield-token shares)))
                 (dx (get dx reduce-data))

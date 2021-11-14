@@ -5,9 +5,9 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { YTPTestAgent1, } from './models/alex-tests-yield-token-pool.ts';
 
-import { MS_YTP_WBT_59760 } from './models/alex-tests-multisigs.ts';
+import { MS_YTP_YIELD_WBTC } from './models/alex-tests-multisigs.ts';
 
-import { USDAToken, WBTCToken, YIELD_WBTC } from './models/alex-tests-tokens.ts';
+import { USDAToken, WBTCToken, YIELD_WBTC, YTP_YIELD_WBTC } from './models/alex-tests-tokens.ts';
 
 
 // Deployer Address Constants 
@@ -32,9 +32,13 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
+        let yieldWBTC = new YIELD_WBTC(chain, deployer);
+
+        let result = yieldWBTC.mintFixed(expiry, 100000 * ONE_8, deployer.address);
+        result.expectOk().expectBool(true);
 
         //Deployer creating a pool, initial tokens injected to the pool
-        let result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
+        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
@@ -394,8 +398,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let contractOwner = accounts.get("deployer")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
-        let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);
-        let ytpPoolToken = new POOLTOKEN_YTP_WBTC_WBTC_59760(chain, deployer);
+        let MultiSigTest = new MS_YTP_YIELD_WBTC(chain, deployer);
+        let ytpPoolToken = new YTP_YIELD_WBTC(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         const buffer = new ArrayBuffer(34)
@@ -436,21 +440,21 @@ Clarinet.test({
         position['balance-yield-token'].expectUint(ONE_8);
         position['balance-virtual'].expectUint(1010*ONE_8);
 
-        call = await ytpPoolToken.balanceOf(deployer.address);
+        call = await ytpPoolToken.balanceOf(expiry, deployer.address);
         call.result.expectOk().expectUint(100000000000);    // u100000000000
 
-        call = await ytpPoolToken.balanceOf(wallet_2.address);
+        call = await ytpPoolToken.balanceOf(expiry, wallet_2.address);
         call.result.expectOk().expectUint(1000000000);
 
         // Fee rate Setting Proposal of Multisig
-        result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
+        result = MultiSigTest.propose(expiry, 1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
         result.expectOk().expectUint(1) // First Proposal
     
         // Block 1000 mining
         chain.mineEmptyBlock(1000);
 
         // Deployer has 99 % of pool token
-        let ROresult:any = ytpPoolToken.balanceOf(deployer.address);
+        let ROresult:any = ytpPoolToken.balanceOf(expiry, deployer.address);
         ROresult.result.expectOk().expectUint(100000000000);
         
         // Wallet_2 votes his 90% asset
@@ -511,8 +515,8 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_2 = accounts.get("wallet_2")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
-        let MultiSigTest = new MS_YTP_WBT_59760(chain, deployer);
-        let ytpPoolToken = new POOLTOKEN_YTP_WBTC_WBTC_59760(chain, deployer);
+        let MultiSigTest = new MS_YTP_YIELD_WBTC(chain, deployer);
+        let ytpPoolToken = new YTP_YIELD_WBTC(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         const buffer = new ArrayBuffer(0)   // Optional memo

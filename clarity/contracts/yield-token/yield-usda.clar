@@ -10,7 +10,8 @@
 (define-map token-supplies uint uint)
 (define-map token-owned principal (list 2000 uint))
 
-(define-data-var contract-owner principal .collateral-rebalancing-pool)
+(define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
 (define-read-only (get-owner)
   (ok (var-get contract-owner))
@@ -21,6 +22,10 @@
     (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
 (define-read-only (get-token-owned (owner principal))
@@ -55,7 +60,7 @@
 	(ok (ft-get-supply yield-usda))
 )
 
-(define-read-only (get-decimals (token-id uint))
+(define-read-only (get-decimals)
 	(ok u0)
 )
 
@@ -63,7 +68,7 @@
 	(ok none)
 )
 
-(define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal))
+(define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(let
 		(
 			(sender-balance (get-balance-or-default token-id sender))
@@ -73,38 +78,14 @@
 		(try! (ft-transfer? yield-usda amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
-		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
+		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
 		(ok true)
 	)
-)
-
-(define-public (transfer-memo (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)))
-	(begin
-		(try! (transfer token-id amount sender recipient))
-		(print memo)
-		(ok true)
-	)
-)
-
-(define-private (transfer-many-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal}) (previous-response (response bool uint)))
-	(match previous-response prev-ok (transfer (get token-id item) (get amount item) (get sender item) (get recipient item)) prev-err previous-response)
-)
-
-(define-public (transfer-many (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})))
-	(fold transfer-many-iter transfers (ok true))
-)
-
-(define-private (transfer-many-memo-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)}) (previous-response (response bool uint)))
-	(match previous-response prev-ok (transfer-memo (get token-id item) (get amount item) (get sender item) (get recipient item) (get memo item)) prev-err previous-response)
-)
-
-(define-public (transfer-many-memo (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})))
-	(fold transfer-many-memo-iter transfers (ok true))
 )
 
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+		(try! (check-is-approved contract-caller))
 		(try! (ft-mint? yield-usda amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
@@ -115,7 +96,7 @@
 
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+		(try! (check-is-approved contract-caller))
 		(try! (ft-burn? yield-usda amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
@@ -154,8 +135,8 @@
 	(ok (decimals-to-fixed (ft-get-balance yield-usda who)))
 )
 
-(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  	(transfer token-id (fixed-to-decimals amount) sender recipient memo)
+(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal))
+  	(transfer token-id (fixed-to-decimals amount) sender recipient)
 )
 
 (define-public (mint-fixed (token-id uint) (amount uint) (recipient principal))
@@ -164,4 +145,8 @@
 
 (define-public (burn-fixed (token-id uint) (amount uint) (sender principal))
   	(burn token-id (fixed-to-decimals amount) sender)
+)
+
+(begin
+  (map-set approved-contracts .collateral-rebalancing-pool true)
 )

@@ -102,7 +102,7 @@ import {
         let block = this.chain.mineBlock([
           Tx.contractCall("yield-token-pool", "reduce-position", [
             types.uint(expiry),
-          types.principal(aytoken),
+            types.principal(aytoken),
             types.principal(token),
             types.principal(pooltoken),
             types.uint(percent)

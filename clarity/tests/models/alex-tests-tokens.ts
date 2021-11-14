@@ -77,7 +77,7 @@ export { WBTCToken };
 
 
 
-class POOLTOKEN_FWP_WBTC_USDA_5050 {
+class FWP_WBTC_USDA_5050 {
   chain: Chain;
   deployer: Account;
 
@@ -96,9 +96,9 @@ class POOLTOKEN_FWP_WBTC_USDA_5050 {
     return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-total-supply", [], this.deployer.address);
   }
 }
-export { POOLTOKEN_FWP_WBTC_USDA_5050 };
+export { FWP_WBTC_USDA_5050 };
 
-class POOLTOKEN_YTP_WBTC_WBTC_59760 {
+class YTP_YIELD_WBTC {
   chain: Chain;
   deployer: Account;
 
@@ -107,19 +107,21 @@ class POOLTOKEN_YTP_WBTC_WBTC_59760 {
     this.deployer = deployer;
   }
 
-  balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("ytp-yield-wbtc-59760-wbtc", "get-balance", [
-      types.principal(wallet),
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn("ytp-yield-wbtc", "get-balance", [
+      types.uint(expiry), types.principal(wallet),
     ], this.deployer.address);
   }
   
-  totalSupply() {
-    return this.chain.callReadOnlyFn("ytp-yield-wbtc-59760-wbtc", "get-total-supply", [], this.deployer.address);
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn("ytp-yield-wbtc", "get-total-supply", [
+      types.uint(expiry)
+    ], this.deployer.address);
   }
 }
-export { POOLTOKEN_YTP_WBTC_WBTC_59760 };
+export { YTP_YIELD_WBTC };
 
-class YIELD_WBTC_59760 {
+class KEY_USDA_WBTC {
   chain: Chain;
   deployer: Account;
 
@@ -128,39 +130,20 @@ class YIELD_WBTC_59760 {
     this.deployer = deployer;
   }
 
-  balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("yield-wbtc-59760", "get-balance", [
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn("key-usda-wbtc", "get-balance", [
+      types.uint(expiry),
       types.principal(wallet),
     ], this.deployer.address);
   }
   
-  totalSupply() {
-    return this.chain.callReadOnlyFn("yield-wbtc-59760", "get-total-supply", [], this.deployer.address);
-  }
-
-}
-export { YIELD_WBTC_59760 };
-
-class KEY_WBTC_59760_USDA {
-  chain: Chain;
-  deployer: Account;
-
-  constructor(chain: Chain, deployer: Account) {
-    this.chain = chain;
-    this.deployer = deployer;
-  }
-
-  balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("key-wbtc-59760-usda", "get-balance", [
-      types.principal(wallet),
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn("key-usda-wbtc", "get-total-supply", [
+      types.uint(expiry)
     ], this.deployer.address);
   }
-  
-  totalSupply() {
-    return this.chain.callReadOnlyFn("key-wbtc-59760-usda", "get-total-supply", [], this.deployer.address);
-  }
 }
-export { KEY_WBTC_59760_USDA };
+export { KEY_USDA_WBTC };
 
 class YIELD_WBTC {
   chain: Chain;
@@ -171,11 +154,11 @@ class YIELD_WBTC {
     this.deployer = deployer;
   }
   
-  mint(expiry: number, amount: number, recipient: string) {
+  mintFixed(expiry: number, amount: number, recipient: string) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("yield-wbtc", "transfer", [
+      Tx.contractCall("yield-wbtc", "mint-fixed", [
         types.uint(expiry),
-        types.uint(amount,)
+        types.uint(amount),
         types.principal(recipient)
       ], this.deployer.address),
     ]);
