@@ -7,7 +7,7 @@ import { MS_FWP_WBTC_USDA_5050 } from './models/alex-tests-multisigs.ts';
 import { 
     USDAToken,
     WBTCToken,
-    POOLTOKEN_FWP_WBTC_USDA_5050
+    FWP_WBTC_USDA_5050
   } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
@@ -17,6 +17,7 @@ const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-u
 const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
 const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-23040-usda"
+const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
 const ONE_8 = 100000000
 
@@ -34,7 +35,18 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let FWPTest = new FWPTestAgent1(chain, deployer);
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        // Deployer minting initial tokens
+        usdaToken.mintFixed(deployer.address, 1000000000);
+        usdaToken.mintFixed(alexReservePoolAddress, 10000000);
+        usdaToken.mintFixed(wallet_1.address, 200000);
+        
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
         
         // Deployer creating a pool, initial tokens injected to the pool
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigAddress, wbtcQ, wbtcQ*wbtcPrice);
@@ -150,7 +162,7 @@ Clarinet.test({
         let MultiSigTest = new MS_FWP_WBTC_USDA_5050(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let fwpPoolToken = new POOLTOKEN_FWP_WBTC_USDA_5050(chain, deployer);
+        let fwpPoolToken = new FWP_WBTC_USDA_5050(chain, deployer);
 
         const feeRateX = 0.1*ONE_8; // 10%
         const feeRateY = 0.1*ONE_8;

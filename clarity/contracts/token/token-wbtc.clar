@@ -124,9 +124,3 @@
 (begin
   (map-set approved-contracts .faucet true)
 )
-
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? wbtc u20000000000 tx-sender))
-  (try! (ft-mint? wbtc u20000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
-)

@@ -7,7 +7,7 @@ import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.t
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';  
 import { FLTestAgent1 } from './models/alex-tests-flash-loan.ts';
-import { WBTCToken } from './models/alex-tests-tokens.ts';
+import { WBTCToken, USDAToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
@@ -26,6 +26,7 @@ const ytpyieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-
 const multisigncrpusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-51840-wbtc"
 const multisigytpyieldusda51840 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-51840-usda"
 const loanuser51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-51840"
+const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
 const ONE_8 = 100000000
 const expiry = 23040e+8
@@ -50,12 +51,22 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let wallet_5 = accounts.get("wallet_5")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let FLTest = new FLTestAgent1(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);     
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        // Deployer minting initial tokens
+        usdaToken.mintFixed(deployer.address, 1000000000);
+        usdaToken.mintFixed(alexReservePoolAddress, 10000000);
+        usdaToken.mintFixed(wallet_1.address, 200000);
+        
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
         
         wbtcToken.transferToken(ONE_8,deployer.address, wallet_5.address, new ArrayBuffer(30));        
 
@@ -69,7 +80,7 @@ Clarinet.test({
         result = FWPTest.setOracleAverage(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);
 
-        result = YTPTest.createPool(deployer, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
         result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
         result.expectOk().expectBool(true);
@@ -103,7 +114,7 @@ Clarinet.test({
         result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, yieldusda51840Address, usdaAddress, ytpyieldusda51840Address, multisigytpyieldusda51840, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldusda51840Address, usdaAddress, ytpyieldusda51840Address, multisigytpyieldusda51840, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
         result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda51840Address, keyusda51840Address, multisigncrpusda51840Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
         result.expectOk().expectBool(true);        

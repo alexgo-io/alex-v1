@@ -120,9 +120,3 @@
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
 )
-
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? wstx u2000000000000 tx-sender))
-  (try! (ft-mint? wstx u2000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
-)
