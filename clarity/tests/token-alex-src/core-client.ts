@@ -118,6 +118,18 @@ export class CoreClient extends Client {
     );
   }
 
+  addToBalance(sender: Account, amount: number, token: string): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "add-to-balance",
+      [
+        types.principal(token),
+        types.uint(amount)
+      ],
+      sender.address
+    );
+  }
+
   //////////////////////////////////////////////////
   // STAKING CONFIGURATION
   //////////////////////////////////////////////////
@@ -130,8 +142,9 @@ export class CoreClient extends Client {
     ]);
   }
 
-  getStakingReward(rewardCycle: number, userId: number): ReadOnlyFn {
+  getStakingReward(rewardCycle: number, userId: number, token: string): ReadOnlyFn {
     return this.callReadOnlyFn("get-staking-reward", [
+      types.principal(token),
       types.uint(rewardCycle),
       types.uint(userId),
     ]);
@@ -163,9 +176,23 @@ export class CoreClient extends Client {
     );
   }
 
-  getCoinbaseAmount(rewardCycle: number): ReadOnlyFn {
-    return this.callReadOnlyFn("get-coinbase-amount", [
+  getCoinbaseAmount(rewardCycle: number, token: string): ReadOnlyFn {
+    return this.callReadOnlyFn("get-coinbase-amount-or-default", [
+      types.principal(token),
       types.uint(rewardCycle)
     ]);
+  }  
+
+  setCoinbaseAmount(user: Account, token: string, coinbaseOne: number, coinbaseTwo: number,
+    coinbaseThree: number, coinbaseFour: number, coinbaseFive: number): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "set-coinbase-amount",
+      [
+        types.principal(token), types.uint(coinbaseOne), types.uint(coinbaseTwo), 
+        types.uint(coinbaseThree) ,types.uint(coinbaseFour), types.uint(coinbaseFive)
+      ],
+      user.address
+    );
   }  
 }

@@ -71,7 +71,7 @@
 (define-public (remove-from-balance (token principal) (amount uint))
   (begin
     (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
-    (asserts! (< amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
+    (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
     (ok (map-set reserve token (- (get-balance token) amount)))
   )
 )
@@ -336,7 +336,7 @@
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
     (unwrap! (contract-call? token-trait transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-    (try! (add-to-balance token amount-token))
+    (try! (as-contract (add-to-balance token amount-token)))
     (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
       err-value (err err-value)
@@ -443,7 +443,7 @@
     )
     ;; send back tokens if user was eligible
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-pool token-trait to-return user)))
-    (and (> to-return u0) (try! (remove-from-balance (contract-of token-trait) to-return)))
+    (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
     (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user (mul-down entitled-token (get-coinbase-amount-or-default token target-cycle))))))
     (ok true)
@@ -563,5 +563,6 @@
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
-  (map-set approved-contracts .yield-token-pool true)  
+  (map-set approved-contracts .yield-token-pool true)
+  (map-set approved-contracts .alex-reserve-pool true)  
 )

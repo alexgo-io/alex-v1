@@ -579,12 +579,14 @@ describe("[ALEX STAKING]", () => {
       it("throws ERR_STAKING_NOT_AVAILABLE when staking is not yet available", (chain, accounts, clients) => {
         // arrange
         const staker = accounts.get("wallet_1")!;
+        const deployer = accounts.get("deployer")!;   
         const targetCycle = 1;
 
         // act
         const receipt = chain.mineBlock([
+          clients.core.addToken(deployer, token, 1),
           clients.core.claimStakingReward(targetCycle, staker, token),
-        ]).receipts[0];
+        ]).receipts[1];
 
         // assert
         receipt.result
@@ -601,6 +603,7 @@ describe("[ALEX STAKING]", () => {
         const setupBlock = chain.mineBlock([
 
           clients.core.setActivationThreshold(deployer, 1),
+          clients.core.addToken(deployer, token, 1),
           clients.core.registerUser(otherUser, token),
         ]);
         chain.mineEmptyBlockUntil(
@@ -625,6 +628,7 @@ describe("[ALEX STAKING]", () => {
         const targetCycle = 1;
         const setupBlock = chain.mineBlock([
           clients.core.setActivationThreshold(deployer, 1),
+          clients.core.addToken(deployer, token, 1),
           clients.core.registerUser(staker, token),
         ]);
         chain.mineEmptyBlockUntil(
@@ -649,6 +653,7 @@ describe("[ALEX STAKING]", () => {
         const targetCycle = 1;
         const setupBlock = chain.mineBlock([
           clients.core.setActivationThreshold(deployer, 1),
+          clients.core.addToken(deployer, token, 1),
           clients.core.registerUser(staker, token),
         ]);
         chain.mineEmptyBlockUntil(
@@ -677,6 +682,7 @@ describe("[ALEX STAKING]", () => {
         const amount = 200 * ONE_8;
         const setupBlock = chain.mineBlock([
           clients.core.setActivationThreshold(deployer, 1),
+          clients.core.addToken(deployer, token, 1),
           clients.core.registerUser(staker, token),
           clients.token.mint(amount, staker, deployer),
         ]);
@@ -690,9 +696,10 @@ describe("[ALEX STAKING]", () => {
 
         // act
         const receipt = chain.mineBlock([
+          clients.core.setCoinbaseAmount(deployer, token, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
           clients.core.claimStakingReward(targetCycle, staker, token),
           clients.core.claimStakingReward(targetCycle, staker, token),
-        ]).receipts[1];
+        ]).receipts[2];
 
         // assert
         receipt.result
@@ -715,19 +722,20 @@ describe("[ALEX STAKING]", () => {
         chain.mineEmptyBlockUntil(
           setupBlock.height + CoreClient.ACTIVATION_DELAY + 1
         );
-        chain.mineBlock([clients.core.stakeTokens(amountTokens, 1, staker, token)]);
+        let res = chain.mineBlock([clients.core.stakeTokens(amountTokens, 1, staker, token)]);
         chain.mineEmptyBlock(CoreClient.REWARD_CYCLE_LENGTH * 2);
 
         // act
-        const receipt = chain.mineBlock([
+        const receipts = chain.mineBlock([
+          clients.core.setCoinbaseAmount(deployer, token, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
           clients.core.claimStakingReward(targetCycle, staker, token),
-        ]).receipts[0];
+        ]).receipts;
 
         // assert
-        receipt.result.expectOk().expectBool(true);
-        assertEquals(receipt.events.length, 3);
+        receipts[1].result.expectOk().expectBool(true);
+        assertEquals(receipts[1].events.length, 3);
 
-        receipt.events.expectFungibleTokenTransferEvent(
+        receipts[1].events.expectFungibleTokenTransferEvent(
           amountTokens / ONE_8,
           clients.core.getVaultAddress(),
           staker.address,
@@ -769,6 +777,7 @@ describe("[ALEX STAKING]", () => {
 
         const block = chain.mineBlock([
           clients.core.setActivationThreshold(deployer, 1),
+          clients.core.addToken(deployer, token, 1),
           clients.core.registerUser(staker, token),
           clients.token.mint(totalAmountTokens, staker, deployer),
         ]);
@@ -797,11 +806,14 @@ describe("[ALEX STAKING]", () => {
           CoreClient.REWARD_CYCLE_LENGTH * (maxCycle + 1)
         );
 
+        chain.mineBlock([
+          clients.core.setCoinbaseAmount(deployer, token, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8)]);
+
         // act + assert
-        for (let rewardCycle = 0; rewardCycle <= maxCycle; rewardCycle++) {
+        for (let rewardCycle = 0; rewardCycle < maxCycle; rewardCycle++) {
           let toReturn = 0;
-          let coinbaseAmount = parseFloat(clients.core.getCoinbaseAmount(rewardCycle).result.substr(1));
-          let stakingReward = parseFloat(clients.core.getStakingReward(1, rewardCycle).result.substr(1)); 
+          let coinbaseAmount = parseFloat(clients.core.getCoinbaseAmount(rewardCycle, token).result.substr(1));
+          let stakingReward = parseFloat(clients.core.getStakingReward(1, rewardCycle, token).result.substr(1)); 
           let entitledToken = coinbaseAmount * stakingReward / ONE_8;          
 
           StakingRecords.forEach((record) => {
@@ -815,7 +827,7 @@ describe("[ALEX STAKING]", () => {
           const receipt = chain.mineBlock([
             clients.core.claimStakingReward(rewardCycle, staker, token),
           ]).receipts[0];
-
+         
           if (toReturn === 0 && entitledToken === 0) {
             receipt.result.expectErr();
           } else if (toReturn === 0) {
