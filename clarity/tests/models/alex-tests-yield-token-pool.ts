@@ -65,6 +65,32 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+      buyAndAddToPosition(user: Account, aytoken: string, token: string, pooltoken: string, dX: number) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("yield-token-pool", "buy-and-add-to-position", [
+            types.principal(aytoken),
+            types.principal(token),
+            types.principal(pooltoken),
+            types.uint(dX),
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }    
+      
+      rollPosition(user: Account, aytoken: string, token: string, pooltoken: string, percent: number, aytoken2: string, pooltoken2: string) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("yield-token-pool", "roll-position", [
+            types.principal(aytoken),
+            types.principal(token),
+            types.principal(pooltoken),
+            types.uint(percent),
+            types.principal(aytoken2),
+            types.principal(pooltoken2)
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }         
   
       reducePosition(user: Account, aytoken: string, token: string, pooltoken: string, percent: number) {
         let block = this.chain.mineBlock([
@@ -199,6 +225,22 @@ import {
         ], user.address),
       ]);
       return block.receipts[0].result;
+    }
+
+    setFeeRebate(user: Account, aytoken: string, rebate : number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("yield-token-pool", "set-fee-rebate", [
+          types.principal(aytoken),
+          types.uint(rebate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRebate(aytoken: string) {
+      return this.chain.callReadOnlyFn("yield-token-pool", "get-fee-rebate", [
+        types.principal(aytoken),
+      ], this.deployer.address);
     }
 
   

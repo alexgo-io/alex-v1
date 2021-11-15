@@ -23,6 +23,49 @@ import {
         types.uint(weightY),
       ], this.deployer.address);
     }
+
+    getOracleResilient(tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-oracle-resilient", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+      ], this.deployer.address);
+    }    
+
+    getOracleInstant(tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-oracle-instant", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+      ], this.deployer.address);
+    }      
+
+    setOracleEnabled(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "set-oracle-enabled", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }      
+
+    setOracleAverage(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, average: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "set-oracle-average", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),
+          types.uint(average)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }    
   
     createPool(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, multisig: string, balanceX: number, balanceY: number) {
       let block = this.chain.mineBlock([
@@ -95,7 +138,7 @@ import {
         ], user.address),
       ]);
       return block.receipts[0].result;
-    }
+    } 
 
     getXgivenPrice(tokenX: string, tokenY: string, weightX: number, weightY: number, price: number) {
       return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-price", [
@@ -165,19 +208,6 @@ import {
       ]);
       return block.receipts[0].result;
     }
-
-  
-    collectFees(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "collect-fees", [
-          types.principal(tokenX),
-          types.principal(tokenY),
-          types.uint(weightX),
-          types.uint(weightY)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
   
     
   
@@ -225,7 +255,29 @@ import {
         types.uint(weightY),
         types.uint(dy)
       ], this.deployer.address);
-    } 
+    }
+
+    setFeeRebate(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, rebate : number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "set-fee-rebate", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),
+          types.uint(rebate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRebate(tokenX: string, tokenY: string, weightX: number, weightY: number) {
+      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-fee-rebate", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(weightX),
+        types.uint(weightY),
+      ], this.deployer.address);
+    }
   
   }
   

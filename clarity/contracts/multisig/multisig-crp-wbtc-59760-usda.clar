@@ -94,7 +94,7 @@
       yes-votes: u0,
       no-votes: u0,
       new-fee-rate-x: u0,    ;; Default token feerate
-      new-fee-rate-y: u0  ;; default aytoken feerate
+      new-fee-rate-y: u0  ;; default yield-token feerate
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -223,7 +223,7 @@
         (threshold-percent (var-get threshold))
         (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-59760 get-total-supply)))
         (total-key-supply (unwrap-panic (contract-call? .key-wbtc-59760-usda get-total-supply)))
-        (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
+        (total-supply (+ total-yield-supply total-key-supply))
         (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )

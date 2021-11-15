@@ -119,3 +119,45 @@ class POOLTOKEN_YTP_WBTC_WBTC_59760 {
 }
 export { POOLTOKEN_YTP_WBTC_WBTC_59760 };
 
+class YIELD_WBTC_59760 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("yield-wbtc-59760", "get-balance", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("yield-wbtc-59760", "get-total-supply", [], this.deployer.address);
+  }
+
+}
+export { YIELD_WBTC_59760 };
+
+class KEY_WBTC_59760_USDA {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("key-wbtc-59760-usda", "get-balance", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("key-wbtc-59760-usda", "get-total-supply", [], this.deployer.address);
+  }
+}
+export { KEY_WBTC_59760_USDA };

@@ -49,6 +49,13 @@ import {
       ], this.deployer.address);
     }
 
+    getSpot(token: string, collateral: string){
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-spot", [
+        types.principal(token),
+        types.principal(collateral)
+      ], this.deployer.address);
+    }    
+
     getLtv(token: string, collateral: string, expiry: number){
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-ltv", [
         types.principal(token),
@@ -205,17 +212,6 @@ import {
       ]);
       return block.receipts[0].result;
     }
-  
-    collectFees(user: Account, token: string, collateral: string, expiry: number) {
-      let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "collect-fees", [
-            types.principal(token),
-            types.principal(collateral),
-            types.uint(expiry)
-        ], user.address),
-      ]);
-      return block.receipts[0].result;
-    }
 
     setFeeRateX(user: Account, token: string, collateral: string, expiry: number, feerate:number) {
       let block = this.chain.mineBlock([
@@ -315,6 +311,26 @@ import {
         types.uint(price)
       ], this.deployer.address);
     }    
+
+    setFeeRebate(user: Account, token: string, collateral: string, expiry: number, rebate : number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-fee-rebate", [
+          types.principal(token),
+          types.principal(collateral),
+          types.uint(expiry),
+          types.uint(rebate)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+
+    getFeeRebate(token: string, collateral: string, expiry: number) {
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-fee-rebate", [
+        types.principal(token),
+        types.principal(collateral),
+        types.uint(expiry)
+      ], this.deployer.address);
+    }
     
   }
   

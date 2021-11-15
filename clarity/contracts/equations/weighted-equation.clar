@@ -1,3 +1,5 @@
+(impl-trait .trait-ownable.ownable-trait)
+
 ;; weighted-equation
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
@@ -5,29 +7,76 @@
 ;;
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
-(define-constant ERR-MATH-CALL (err 4003))
+
+(define-data-var CONTRACT-OWNER principal tx-sender)
 
 ;; max in/out as % of liquidity
-(define-constant MAX_IN_RATIO (* u30 (pow u10 u6))) ;; 30%
-(define-constant MAX_OUT_RATIO (* u30 (pow u10 u6))) ;; 30%
-;;(define-constant EQUATION_TOLERANCE u10)
+(define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
+(define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 
-;; data maps and vars
-;;
+;; @desc get-max-in-ratio
+;; @returns uint
+(define-read-only (get-max-in-ratio)
+  (var-get MAX-IN-RATIO)
+)
 
-;; private functions
-;;
+;; @desc set-max-in-ratio
+;; @param new-max-in-ratio; new MAX-IN-RATIO
+;; @returns (response bool uint)
+(define-public (set-max-in-ratio (new-max-in-ratio uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set MAX-IN-RATIO new-max-in-ratio)
+    (ok true)
+  )
+)
 
-;; public functions
-;;
-;;
+;; @desc get-max-out-ratio
+;; @returns unit
+(define-read-only (get-max-out-ratio)
+  (var-get MAX-OUT-RATIO)
+)
 
-;; get-invariant
-;; invariant = b_x ^ w_x * b_y ^ w_y 
+;; @desc set-max-out-ratio
+;; @param new-max-out-ratio; new MAX-OUT-RATIO
+;; @returns (response bool uint)
+(define-public (set-max-out-ratio (new-max-out-ratio uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set MAX-OUT-RATIO new-max-out-ratio)
+    (ok true)
+  )
+)
+
+;; @desc get-owner
+;; @returns principal
+(define-read-only (get-owner)
+  (ok (var-get CONTRACT-OWNER))
+)
+
+;; @desc set-owner
+;; @param new-contract-owner; new CONTRACT-OWNER
+;; @returns (response bool uint)
+(define-public (set-owner (new-contract-owner principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (var-set CONTRACT-OWNER new-contract-owner)
+    (ok true)
+  )
+)
+
+;; @desc get-invariant
+;; @desc invariant = b_x ^ w_x * b_y ^ w_y 
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @returns (response uint uint)
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -35,17 +84,23 @@
     )
 )
 
-;; get-y-given-x
-;; d_y = dy
-;; b_y = balance-y
-;; b_x = balance-x                /      /            b_x             \    (w_x / w_y) \           
-;; d_x = dx          d_y = b_y * |  1 - | ---------------------------  | ^             |          
-;; w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
-;; w_y = weight-y                                                                       
+;; @desc get-y-given-x
+;; @desc d_y = dy
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x                /      /            b_x             \    (w_x / w_y) \           
+;; @desc d_x = dx          d_y = b_y * |  1 - | ---------------------------  | ^             |          
+;; @desc w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
+;; @desc w_y = weight-y                                                                       
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dx; amount of token-x added
+;; @returns (response uint uint)
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (asserts! (< dx (mul-down balance-x MAX_IN_RATIO)) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
         (let 
             (
                 (denominator (+ balance-x dx))
@@ -57,22 +112,28 @@
                 (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
                 (dy (mul-down balance-y complement))
             )
-            (asserts! (< dy (mul-down balance-y MAX_OUT_RATIO)) ERR-MAX-OUT-RATIO)
+            (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
             (ok dy)
         ) 
     )    
 )
 
-;; d_y = dy                                                                            
-;; b_y = balance-y
-;; b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
-;; d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
-;; w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
-;; w_y = weight-y                                                           
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
+;; @desc d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
-        (asserts! (< dy (mul-down balance-y MAX_OUT_RATIO)) ERR-MAX-OUT-RATIO)
+        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
                 (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
@@ -84,20 +145,26 @@
                 (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
                 (dx (mul-down balance-x ratio))
             )
-            (asserts! (< dx (mul-down balance-x MAX_IN_RATIO)) ERR-MAX-IN-RATIO)
+            (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
             (ok dx)
         )
     )
 )
 
-;; d_x = dx
-;; d_y = dy 
-;; b_x = balance-x
-;; b_y = balance-y
-;; w_x = weight-x 
-;; w_y = weight-y
-;; spot = b_y * w_x / b_x / w_y
-;; d_x = b_x * ((spot / price) ^ w_y - 1)
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc w_x = weight-x 
+;; @desc w_y = weight-y
+;; @desc spot = b_y * w_x / b_x / w_y
+;; @desc d_x = b_x * ((spot / price) ^ w_y - 1)
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -119,7 +186,13 @@
     )   
 )
 
-;; follows from the above
+;; @desc follows from get-x-given-price
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-y-given-price (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -141,6 +214,15 @@
     )   
 )
 
+;; @desc get-token-given-position
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param dx; amount of token-x added
+;; @param dy; amount of token-y added
+;; @returns (response (tutple uint uint) uint)
 (define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -162,6 +244,14 @@
     )    
 )
 
+;; @desc get-position-given-mint
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token minted
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
@@ -179,10 +269,17 @@
     )
 )
 
+;; @desc get-position-given-burn
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token to be burnt
+;; @returns (response (tuple uint uint) uint)
 (define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
     (get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
 )
-
 
 
 ;; math-fixed-point
@@ -508,26 +605,5 @@
       (ok (- 0 (unwrap-panic (ln-priv (/ (* iONE_8 iONE_8) a)))))
       (ln-priv a)
    )
- )
-)
-
-(define-read-only (test)
-  (let
-    (
-      (x (* u7 (pow u10 u6)))
-      (y (* u233 (pow u10 u6)))
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
-      ;;(r (exp-pos (* -1 logx-times-y)))
-
-      ;;(arg (* 69 iONE_8))
-      ;;(r (exp-pos arg))
-      ;;(x_product (fold accumulate_product x_a_list {x: arg, product: iONE_8}))
-  )
-  ;;(ok logx-times-y)
-  ;;x_product
-  (ok (pow-fixed x y))
  )
 )

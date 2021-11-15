@@ -4,20 +4,25 @@
 (define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-read-only (get-owner)
-  (ok (var-get contract-owner))
+  (ok (var-get CONTRACT-OWNER))
 )
 
 (define-public (set-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set contract-owner owner))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set CONTRACT-OWNER owner))
   )
+)
+
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get CONTRACT-OWNER))) ERR-NOT-AUTHORIZED))
 )
 
 ;; ---------------------------------------------------------
@@ -29,11 +34,11 @@
 )
 
 (define-read-only (get-name)
-  (ok "ALEX")
+  (ok "alex")
 )
 
 (define-read-only (get-symbol)
-  (ok "ALEX")
+  (ok "alex")
 )
 
 (define-read-only (get-decimals)
@@ -46,7 +51,7 @@
 
 (define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
   )
 )
@@ -84,19 +89,26 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved contract-caller))
     (ft-mint? alex (fixed-to-decimals amount) recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved contract-caller))
     (ft-burn? alex (fixed-to-decimals amount) sender)
   )
 )
 
+(begin
+  (map-set approved-contracts .alex-reserve-pool true)
+  (map-set approved-contracts .faucet true)
+)
+
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? alex u10000 tx-sender))
+  (try! (ft-mint? alex u1000000000 tx-sender))  
 )
+
+
