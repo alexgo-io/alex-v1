@@ -14,22 +14,17 @@ const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
 const multisigfwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
-const yieldusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-23040"
-const keyusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-23040-wbtc"
-const ytpyieldusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-23040-usda"
-const multisigncrpusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-23040-wbtc"
-const multisigytpyieldusda23040 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-23040-usda"
-const loanuser23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-23040"
-const yieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-51840"
-const keyusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-51840-wbtc"
-const ytpyieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-51840-usda"
-const multisigncrpusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-51840-wbtc"
-const multisigytpyieldusda51840 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-51840-usda"
-const loanuser51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-51840"
+const yieldusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda"
+const keyusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-wbtc"
+const ytpyieldusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda"
+const multisigncrpusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-wbtc"
+const multisigytpyieldusda = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda"
+const loanuserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda"
 const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
 const ONE_8 = 100000000
 const expiry = 23040e+8
+const nextExpiry = 51840e+8
 const ltv_0 = 0.8e+8
 const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
@@ -61,14 +56,12 @@ Clarinet.test({
         let wbtcToken = new WBTCToken(chain, deployer);
 
         // Deployer minting initial tokens
-        usdaToken.mintFixed(deployer.address, 1000000000);
-        usdaToken.mintFixed(alexReservePoolAddress, 10000000);
-        usdaToken.mintFixed(wallet_1.address, 200000);
+        usdaToken.mintFixed(deployer.address, 1000000000 * ONE_8);
+        usdaToken.mintFixed(wallet_1.address, 200000 * ONE_8);
+        wbtcToken.mintFixed(deployer.address, 10000 * ONE_8);
+        wbtcToken.mintFixed(wallet_1.address, 10000 * ONE_8);
         
-        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
-        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
-        
-        wbtcToken.transferToken(ONE_8,deployer.address, wallet_5.address, new ArrayBuffer(30));        
+        wbtcToken.transferToken(ONE_8, deployer.address, wallet_5.address, new ArrayBuffer(30));        
 
         let call = await FLTest.getBalance(wbtcAddress, wallet_5.address);
         let position:any = call.result.expectOk().expectUint(ONE_8);
