@@ -64,7 +64,7 @@ Clarinet.test({
         wbtcToken.transferToken(ONE_8, deployer.address, wallet_5.address, new ArrayBuffer(30));        
 
         let call = await FLTest.getBalance(wbtcAddress, wallet_5.address);
-        let position:any = call.result.expectOk().expectUint(ONE_8);
+        let position:any = call.result.expectOk().expectUint(1000000);
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(500000e+8 * ONE_8 / wbtcPrice), 500000e+8);
         result.expectOk().expectBool(true);

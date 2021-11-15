@@ -32,8 +32,13 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
 
         let result = yieldWBTC.mintFixed(expiry, 10000 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);
@@ -320,6 +325,10 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
 
         //if non-deployer attempts to create a pool, throw an error.
         let result = YTPTest.createPool(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
@@ -349,8 +358,13 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
 
         let result = yieldWBTC.mintFixed(expiry, 10000 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);        
@@ -405,6 +419,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let wallet_2 = accounts.get("wallet_2")!;
         let contractOwner = accounts.get("deployer")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
@@ -413,6 +428,9 @@ Clarinet.test({
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
+
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
 
         let result = yieldWBTC.mintFixed(expiry, 10000 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);  
@@ -452,7 +470,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn(wbtcAddress, "get-balance-fixed", 
             [types.principal(deployer.address)
             ], deployer.address);
-        call.result.expectOk().expectUint(1899000000000);
+        call.result.expectOk().expectUint(899000000000); //1899000000000
         call = chain.callReadOnlyFn(wbtcAddress, "get-balance-fixed", 
             [types.principal(deployer.address + ".alex-vault")
             ], deployer.address);
@@ -542,6 +560,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let wallet_2 = accounts.get("wallet_2")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_YTP_YIELD_WBTC(chain, deployer);
@@ -549,6 +568,9 @@ Clarinet.test({
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
+
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
 
         let result = yieldWBTC.mintFixed(expiry, 100 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);  
@@ -659,6 +681,10 @@ Clarinet.test({
         let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
 
         let result = yieldWBTC.mintFixed(expiry, 100 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);          
@@ -712,7 +738,11 @@ Clarinet.test({
         let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
 
+        wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
+        
         let result = yieldWBTC.mintFixed(expiry, 100 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);            
         result = yieldWBTC.mintFixed(anotherExpiry, 100 * ONE_8, deployer.address);
