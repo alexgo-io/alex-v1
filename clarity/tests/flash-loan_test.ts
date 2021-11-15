@@ -64,14 +64,14 @@ Clarinet.test({
         usdaToken.mintFixed(deployer.address, 1000000000);
         usdaToken.mintFixed(alexReservePoolAddress, 10000000);
         usdaToken.mintFixed(wallet_1.address, 200000);
-        
+
         wbtcToken.mintFixed(deployer.address, 10000*ONE_8)
         wbtcToken.mintFixed(wallet_1.address, 10000*ONE_8)
         
         wbtcToken.transferToken(ONE_8,deployer.address, wallet_5.address, new ArrayBuffer(30));        
 
         let call = await FLTest.getBalance(wbtcAddress, wallet_5.address);
-        let position:any = call.result.expectOk().expectUint(ONE_8);
+        let position:any = call.result.expectOk().expectUint(1000000);
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(500000e+8 * ONE_8 / wbtcPrice), 500000e+8);
         result.expectOk().expectBool(true);

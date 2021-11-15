@@ -248,6 +248,18 @@ class YIELD_WBTC {
     this.chain = chain;
     this.deployer = deployer;
   }
+
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn("yield-wbtc", "get-balance-fixed", [
+      types.uint(expiry), types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn("yield-wbtc", "get-total-supply-fixed", [
+      types.uint(expiry)
+    ], this.deployer.address);
+  }
   
   mintFixed(expiry: number, amount: number, recipient: string) {
     let block = this.chain.mineBlock([
