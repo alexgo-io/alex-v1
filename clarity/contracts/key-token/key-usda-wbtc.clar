@@ -135,8 +135,8 @@
 	(ok (decimals-to-fixed (ft-get-balance key-usda-wbtc who)))
 )
 
-(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal))
-  	(transfer token-id (fixed-to-decimals amount) sender recipient)
+(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  	(transfer token-id (fixed-to-decimals amount) sender recipient memo)
 )
 
 (define-public (mint-fixed (token-id uint) (amount uint) (recipient principal))

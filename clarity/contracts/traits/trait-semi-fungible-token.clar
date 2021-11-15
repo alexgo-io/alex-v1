@@ -27,7 +27,7 @@
     	(burn (uint uint principal) (response bool uint))
 
 		;; helper functions for 8-digit fixed notation
-		(transfer-fixed (uint uint principal principal) (response bool uint))
+		(transfer-fixed (uint uint principal principal (optional (buff 34))) (response bool uint))
     	(get-balance-fixed (uint principal) (response uint uint))
     	(get-total-supply-fixed (uint) (response uint uint))
 		(get-total-supply-fixed (uint) (response uint uint))

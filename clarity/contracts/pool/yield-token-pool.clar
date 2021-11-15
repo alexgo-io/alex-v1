@@ -18,7 +18,7 @@
 (define-constant invalid-token-err (err u2007))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant invalid-ERR-EXPIRY (err u2009))
+(define-constant ERR-INVALID-EXPIRY (err u2009))
 (define-constant fixed-point-err (err 5014))
 (define-constant ERR-MATH-CALL (err u4003))
 (define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
@@ -106,8 +106,8 @@
 ;; @returns (response uint uint)
 (define-read-only (get-t (expiry uint) (listed uint))
     (begin
-        (asserts! (> (var-get max-expiry) expiry) invalid-ERR-EXPIRY)
-        (asserts! (> (var-get max-expiry) (* block-height ONE_8)) invalid-ERR-EXPIRY)        
+        (asserts! (> (var-get max-expiry) expiry) ERR-INVALID-EXPIRY)
+        (asserts! (> (var-get max-expiry) (* block-height ONE_8)) ERR-INVALID-EXPIRY)        
         (let
             (
                 (t (div-down
@@ -365,13 +365,13 @@
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
             ;; send x to vault
-            (unwrap! (contract-call? the-token transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             ;; send y to vault
-            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer expiry new-dy-act tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
         
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
-            (try! (contract-call? the-pool-token mint expiry new-supply tx-sender))
+            (try! (contract-call? the-pool-token mint-fixed expiry new-supply tx-sender))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {supply: new-supply, balance-token: dx, balance-yield-token: new-dy-act, balance-virtual: new-dy-vir})
         )
@@ -396,7 +396,7 @@
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))                
                 (total-supply (get total-supply pool))
-                (total-shares (unwrap! (contract-call? the-pool-token get-balance-fixed expiry tx-sender) (err u11111)))
+                (total-shares (unwrap-panic (contract-call? the-pool-token get-balance-fixed expiry tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (reduce-data (try! (get-position-given-burn expiry the-yield-token shares)))
                 (dx (get dx reduce-data))
@@ -417,7 +417,7 @@
             (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy-act tx-sender)))
 
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
-            (try! (contract-call? the-pool-token burn expiry shares tx-sender))
+            (try! (contract-call? the-pool-token burn-fixed expiry shares tx-sender))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
         )    
@@ -535,7 +535,7 @@
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
-            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
+            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
             (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate)))
 
             ;; post setting

@@ -77,7 +77,7 @@
 (define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
     (try! (check-is-approved contract-caller))
-    (as-contract (unwrap! (contract-call? token transfer-fixed token-id amount tx-sender recipient) ERR-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer-fixed token-id amount tx-sender recipient none) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
