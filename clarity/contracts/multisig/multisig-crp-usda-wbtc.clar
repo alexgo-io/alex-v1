@@ -121,11 +121,11 @@
   )
   (let 
     (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda get-balance expiry tx-sender)))
-      (proposer-key-balance (unwrap-panic (contract-call? .key-usda-wbtc get-balance expiry tx-sender)))
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda get-balance-fixed expiry tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-usda-wbtc get-balance-fixed expiry tx-sender)))
       (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-usda get-total-supply expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc get-total-supply expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-usda get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (proposal-id (+ u1 (var-get proposal-count)))
     )
@@ -172,7 +172,7 @@
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer expiry amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender) none))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -203,7 +203,7 @@
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer expiry amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender) none))
 
     ;; Mutate
     (map-set proposals
@@ -226,10 +226,10 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-usda get-total-supply expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc get-total-supply expiry)))
-      (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
-      (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-usda get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-usda-wbtc get-total-supply-fixed expiry)))
+      (total-supply (+ total-yield-supply total-key-supply))
+      (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
     )
 
@@ -261,7 +261,7 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer expiry token-count (as-contract tx-sender) member none)))
+    (try! (as-contract (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member none)))
     (ok true)
   )
 )
@@ -281,4 +281,15 @@
     
     (ok true)
   )
+)
+(define-private (mul-up (a uint) (b uint))
+    (let
+        (
+            (product (* a b))
+       )
+        (if (is-eq product u0)
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
+       )
+   )
 )

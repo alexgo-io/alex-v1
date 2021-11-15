@@ -42,7 +42,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u0)
+   	(ok u6)
 )
 
 (define-read-only (get-balance (account principal))
@@ -127,6 +127,6 @@
 
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? wbtc u2000000000000 tx-sender))
-  (try! (ft-mint? wbtc u2000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
+  (try! (ft-mint? wbtc u20000000000 tx-sender))
+  (try! (ft-mint? wbtc u20000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )

@@ -17,14 +17,14 @@ class USDAToken {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-usda", "get-balance", [
+    return this.chain.callReadOnlyFn("token-usda", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   transferToken(amount: number, sender: string, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("token-usda", "transfer", [
+        Tx.contractCall("token-usda", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender),
           types.principal(receiver),
@@ -36,7 +36,7 @@ class USDAToken {
 
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("token-usda", "get-total-supply", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("token-usda", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { USDAToken };
@@ -52,14 +52,14 @@ class WBTCToken {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-balance", [
+    return this.chain.callReadOnlyFn("token-wbtc", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   transferToken(amount: number, sender: string, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("token-wbtc", "transfer", [
+        Tx.contractCall("token-wbtc", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender),
           types.principal(receiver),
@@ -70,7 +70,7 @@ class WBTCToken {
   }
 
   totalSupply() {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-total-supply", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("token-wbtc", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { WBTCToken };
@@ -87,13 +87,13 @@ class FWP_WBTC_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-balance", [
+    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-total-supply", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_WBTC_USDA_5050 };
@@ -108,13 +108,13 @@ class YTP_YIELD_WBTC {
   }
 
   balanceOf(expiry: number, wallet: string) {
-    return this.chain.callReadOnlyFn("ytp-yield-wbtc", "get-balance", [
+    return this.chain.callReadOnlyFn("ytp-yield-wbtc", "get-balance-fixed", [
       types.uint(expiry), types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply(expiry: number) {
-    return this.chain.callReadOnlyFn("ytp-yield-wbtc", "get-total-supply", [
+    return this.chain.callReadOnlyFn("ytp-yield-wbtc", "get-total-supply-fixed", [
       types.uint(expiry)
     ], this.deployer.address);
   }
@@ -131,14 +131,14 @@ class KEY_USDA_WBTC {
   }
 
   balanceOf(expiry: number, wallet: string) {
-    return this.chain.callReadOnlyFn("key-usda-wbtc", "get-balance", [
+    return this.chain.callReadOnlyFn("key-usda-wbtc", "get-balance-fixed", [
       types.uint(expiry),
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply(expiry: number) {
-    return this.chain.callReadOnlyFn("key-usda-wbtc", "get-total-supply", [
+    return this.chain.callReadOnlyFn("key-usda-wbtc", "get-total-supply-fixed", [
       types.uint(expiry)
     ], this.deployer.address);
   }

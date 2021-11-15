@@ -117,8 +117,8 @@
     (new-fee-rate-y uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-balance tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply)))
+    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-balance-fixed tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply-fixed)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -153,8 +153,7 @@
     (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
     
-  )
-
+    )
     ;; Can vote with corresponding pool token
     (asserts! (is-token-accepted token) ERR-INVALID-POOL-TOKEN)
     ;; Proposal should be open for voting
@@ -163,7 +162,7 @@
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed amount tx-sender (as-contract tx-sender) none))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -193,7 +192,7 @@
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed amount tx-sender (as-contract tx-sender) none))
 
     ;; Mutate
     (map-set proposals
@@ -214,8 +213,8 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply)))
-        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
+        (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply-fixed)))
+        (threshold-count (mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 
@@ -247,7 +246,19 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer token-count (as-contract tx-sender) member none)))
+    (try! (as-contract (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
     (ok true)
   )
+)
+
+(define-private (mul-up (a uint) (b uint))
+    (let
+        (
+            (product (* a b))
+       )
+        (if (is-eq product u0)
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
+       )
+   )
 )

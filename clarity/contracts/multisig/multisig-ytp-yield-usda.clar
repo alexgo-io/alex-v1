@@ -18,7 +18,6 @@
 (define-constant ERR-INVALID-POOL-TOKEN (err u8002))
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-MATH-CALL (err u2010))
 
 (define-constant ONE_8 u100000000)
 
@@ -121,8 +120,8 @@
     (new-fee-rate-yield-token uint)
   )
   (let (
-    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-usda get-balance expiry tx-sender)) ONE_8))
-    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply expiry)) ONE_8))
+    (proposer-balance (unwrap-panic (contract-call? .ytp-yield-usda get-balance-fixed expiry tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply-fixed expiry)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -168,7 +167,7 @@
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer expiry amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender) none))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -202,7 +201,7 @@
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer expiry amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender) none))
 
     ;; Mutate
     (map-set proposals
@@ -225,8 +224,8 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply expiry)) ONE_8))
-      (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
+      (total-supply (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply-fixed expiry)))
+      (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
     )
 
@@ -240,7 +239,8 @@
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
     (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-    (ok true))
+    (ok true)
+  )
 )
 
 ;; Return votes to voter(member)
@@ -258,7 +258,7 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer expiry token-count (as-contract tx-sender) member none)))
+    (try! (as-contract (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member none)))
     (ok true)
   )
 )
@@ -278,4 +278,16 @@
     
     (ok true)
   )
+)
+
+(define-private (mul-up (a uint) (b uint))
+    (let
+        (
+            (product (* a b))
+       )
+        (if (is-eq product u0)
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
+       )
+   )
 )

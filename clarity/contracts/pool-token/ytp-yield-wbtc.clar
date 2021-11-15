@@ -61,7 +61,7 @@
 )
 
 (define-read-only (get-decimals)
-	(ok u8)
+	(ok u6)
 )
 
 (define-read-only (get-token-uri (token-id uint))

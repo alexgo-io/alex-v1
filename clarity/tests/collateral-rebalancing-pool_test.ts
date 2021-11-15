@@ -156,7 +156,7 @@ Clarinet.test({
 
         // take away what was minted for testing to another address
         let block = chain.mineBlock([
-            Tx.contractCall("yield-wbtc-59760", "transfer", [
+            Tx.contractCall("yield-wbtc-59760", "transfer-fixed", [
               types.uint(2000000000000),
               types.principal(deployer.address),
               types.principal(wallet_1.address),
@@ -243,7 +243,7 @@ Clarinet.test({
 
         // take away what was minted for testing to another address
         let block = chain.mineBlock([
-            Tx.contractCall("yield-wbtc-59760", "transfer", [
+            Tx.contractCall("yield-wbtc-59760", "transfer-fixed", [
               types.uint(2000000000000),
               types.principal(deployer.address),
               types.principal(wallet_1.address),
@@ -567,7 +567,7 @@ Clarinet.test({
 
         // take away what was minted for testing to another address
         let block = chain.mineBlock([
-            Tx.contractCall("yield-wbtc-59760", "transfer", [
+            Tx.contractCall("yield-wbtc-59760", "transfer-fixed", [
               types.uint(2000000000000),
               types.principal(deployer.address),
               types.principal(wallet_1.address),
