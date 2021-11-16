@@ -1,7 +1,6 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(define-constant math-call-err (err u2010))
 (define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
 
 (define-constant ONE_8 (pow u10 u8))

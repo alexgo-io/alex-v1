@@ -12,8 +12,8 @@
 (define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
-(define-constant ERR-INSUFFICIENT-BAL (err u4004))
-(define-constant ERR-INVALID-BAL (err u2008))
+(define-constant ERR-INSUFFICIENT-BALANCE (err u4004))
+(define-constant ERR-INVALID-BALANCE (err u2008))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
@@ -82,7 +82,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-price (balance-x uint) (balance-y uint) (t uint))
   (begin
-    (asserts! (>= balance-y balance-x) ERR-INVALID-BAL)      
+    (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
     (ok (pow-up (div-down balance-y balance-x) t))
   )
 )
@@ -114,7 +114,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
   (begin
-    (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BAL)
+    (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BALANCE)
     (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
     (let 
       (
@@ -149,7 +149,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
   (begin
-    (asserts! (>= balance-y dy) ERR-INSUFFICIENT-BAL)
+    (asserts! (>= balance-y dy) ERR-INSUFFICIENT-BALANCE)
     (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
     (let 
       (          

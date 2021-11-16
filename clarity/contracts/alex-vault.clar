@@ -15,7 +15,6 @@
 (define-constant ERR-LOAN-TRANSFER-FAILED (err u3006))
 (define-constant ERR-POST-LOAN-TRANSFER-FAILED (err u3007))
 (define-constant ERR-INVALID-FLASH-LOAN (err u3008))
-(define-constant ERR-INVALID-BALANCE (err u3011))
 (define-constant ERR-MATH-CALL (err u2010))
 (define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 
