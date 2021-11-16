@@ -8,7 +8,7 @@ depends_on = ["trait-sip-010", "trait-yield-token", "trait-flash-loan-user"]
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["token-alex", "token-usda", "math-fixed-point", "trait-ownable", "trait-sip-010", "alex-vault"]
+depends_on = ["trait-ownable", "trait-pool-token", "alex-vault"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
