@@ -4,7 +4,7 @@
 
 (define-constant ONE_8 (pow u10 u8))
 
-(define-public (roll-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-key-token <sft-trait>) (flash-loan-user <flash-loan-user-trait>) (expiry-to-roll uint))
+(define-public (roll-position (token <ft-trait>) (collateral <ft-trait>) (the-key-token <sft-trait>) (flash-loan-user <flash-loan-user-trait>) (expiry uint) (expiry-to-roll uint))
     (let
         (
             (reduce-data (try! (contract-call? .collateral-rebalancing-pool reduce-position-key token collateral expiry the-key-token ONE_8)))
@@ -17,6 +17,6 @@
                                 )
             )
         )
-        (contract-call? .alex-vault flash-loan flash-loan-user collateral (+ collateral-amount token-to-collateral) (some expiry))
+        (contract-call? .alex-vault flash-loan flash-loan-user collateral (+ collateral-amount token-to-collateral) (some expiry-to-roll))
     )
 )

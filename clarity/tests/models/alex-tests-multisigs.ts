@@ -178,3 +178,59 @@ endProposal(proposalID: number) {
   }
 }
 export { MS_CRP_USDA_WBTC };
+
+class MS_CRP_WBTC_USDA {
+  chain: Chain;
+  deployer: Account;
+  
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+  
+  propose(contractCaller: Account, expiry: number, startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-crp-wbtc-usda", "propose", [
+            types.uint(expiry),
+            types.uint(startBlockHeight),
+            types.utf8(proposeTitle),
+            types.utf8(proposeURL),
+            types.uint(feeRateX),
+            types.uint(feeRateY),
+          ], contractCaller.address),
+        ]);
+        return block.receipts[0].result;
+    }
+  
+  voteFor(contractCaller: Account, token: string, proposalID: number, amount: number) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-crp-wbtc-usda", "vote-for", [
+            types.principal(token),
+            types.uint(proposalID),
+            types.uint(amount)
+          ], contractCaller.address),
+        ]);
+        return block.receipts[0].result;
+    }
+  
+  voteAgainst(contractCaller: Account, token: string, proposalID: number, amount: number) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-crp-wbtc-usda", "vote-against", [
+            types.principal(token),
+            types.uint(proposalID),
+            types.uint(amount)
+          ], contractCaller.address),
+        ]);
+        return block.receipts[0].result;
+    }
+  
+  endProposal(proposalID: number) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-crp-wbtc-usda", "end-proposal", [
+            types.uint(proposalID),
+          ], this.deployer.address),
+        ]);
+        return block.receipts[0].result;
+    }
+  }
+  export { MS_CRP_WBTC_USDA };

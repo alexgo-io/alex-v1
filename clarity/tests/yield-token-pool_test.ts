@@ -233,7 +233,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn(yieldwbtcAddress, "get-balance-fixed", 
             [types.uint(expiry), types.principal(deployer.address)
             ], deployer.address);
-        call.result.expectOk().expectUint(998502878000);        
+        call.result.expectOk().expectUint(998502878167);        
 
         // Add back some liquidity
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8);

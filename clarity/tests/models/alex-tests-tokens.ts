@@ -7,6 +7,60 @@ import {
 } from "https://deno.land/x/clarinet@v0.13.0/index.ts";
 
 
+class ALEXToken {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("token-alex", "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+
+  getBalance(account: string) {
+    return this.chain.callReadOnlyFn("token-alex", "get-balance", [
+      types.principal(account),
+    ], this.deployer.address);
+  }
+
+  // Always need to called by deployer
+  mint(recipient: string, amount : number) {
+    return this.chain.callReadOnlyFn("token-alex", "mint", [
+      types.uint(amount),
+      types.principal(recipient),
+    ], this.deployer.address);
+  }
+
+  mintFixed(recipient: string, amount : number) {
+    return this.chain.callReadOnlyFn("token-alex", "mint-fixed", [
+      types.uint(amount),
+      types.principal(recipient),
+    ], this.deployer.address);
+  }
+  
+  transferToken(amount: number, sender: string, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("token-alex", "transfer-fixed", [
+          types.uint(amount),
+          types.principal(sender),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], this.deployer.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  totalSupply() {
+    return this.chain.callReadOnlyFn("token-alex", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { ALEXToken };
+
 class USDAToken {
   chain: Chain;
   deployer: Account;
@@ -239,6 +293,30 @@ class KEY_USDA_WBTC {
   }
 }
 export { KEY_USDA_WBTC };
+
+class KEY_WBTC_USDA {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn("key-wbtc-usda", "get-balance-fixed", [
+      types.uint(expiry),
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn("key-wbtc-usda", "get-total-supply-fixed", [
+      types.uint(expiry)
+    ], this.deployer.address);
+  }
+}
+export { KEY_WBTC_USDA };
 
 class YIELD_WBTC {
   chain: Chain;
