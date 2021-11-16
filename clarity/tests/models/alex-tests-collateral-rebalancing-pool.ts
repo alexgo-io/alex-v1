@@ -278,7 +278,7 @@ import {
     }
 
     transfer(user: Account, token: string, amount: number, sender: string, recipient: string, memo: ArrayBuffer) {
-      let block = this.chain.mineBlock([Tx.contractCall(token, "transfer", [
+      let block = this.chain.mineBlock([Tx.contractCall(token, "transfer-fixed", [
         types.uint(amount),
         types.principal(sender),
         types.principal(recipient),

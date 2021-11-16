@@ -40,7 +40,7 @@ import {
     }
 
     getBalance(token: string, owner: string) {
-      return this.chain.callReadOnlyFn(token, "get-balance", [
+      return this.chain.callReadOnlyFn(token, "get-balance-fixed", [
         types.principal(owner)
       ], this.deployer.address);
     }    
