@@ -15,7 +15,7 @@
 		(get-overall-supply () (response uint uint))
 
 		;; Get the number of decimal places of a token type.
-		(get-decimals () (response uint uint))
+		(get-decimals (uint) (response uint uint))
 
 		;; Get an optional token URI that represents metadata for a specific token.
 		(get-token-uri (uint) (response (optional (string-utf8 256)) uint))

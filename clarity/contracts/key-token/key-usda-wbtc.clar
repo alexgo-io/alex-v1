@@ -60,7 +60,7 @@
 	(ok (ft-get-supply key-usda-wbtc))
 )
 
-(define-read-only (get-decimals)
+(define-read-only (get-decimals (token-id uint))
   	(ok u8)
 )
 
@@ -123,7 +123,7 @@
 (define-constant ONE_8 (pow u10 u8))
 
 (define-private (pow-decimals)
-  	(pow u10 (unwrap-panic (get-decimals)))
+  	(pow u10 (unwrap-panic (get-decimals u0)))
 )
 
 (define-read-only (fixed-to-decimals (amount uint))
