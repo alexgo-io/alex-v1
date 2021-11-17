@@ -8,15 +8,11 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INSUFFICIENT-FLASH-LOAN-BALANCE (err u3003))
-(define-constant ERR-INVALID-POST-LOAN-BALANCE (err u3004))
-(define-constant ERR-USER-EXECUTE (err u3005))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-STX-TRANSFER-FAILED (err u9003))
 (define-constant ERR-LOAN-TRANSFER-FAILED (err u3006))
 (define-constant ERR-POST-LOAN-TRANSFER-FAILED (err u3007))
 (define-constant ERR-INVALID-FLASH-LOAN (err u3008))
-(define-constant ERR-MATH-CALL (err u2010))
-(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 

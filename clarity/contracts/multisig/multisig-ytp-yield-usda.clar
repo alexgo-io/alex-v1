@@ -14,7 +14,6 @@
 
 ;; Errors
 (define-constant ERR-NOT-ENOUGH-BALANCE (err u8000))
-(define-constant ERR-NO-FEE-CHANGE (err u8001))
 (define-constant ERR-INVALID-POOL-TOKEN (err u8002))
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))

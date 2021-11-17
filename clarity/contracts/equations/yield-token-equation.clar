@@ -9,7 +9,6 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-NO-LIQUIDITY (err u2002))
-(define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
 (define-constant ERR-INSUFFICIENT-BALANCE (err u4004))
