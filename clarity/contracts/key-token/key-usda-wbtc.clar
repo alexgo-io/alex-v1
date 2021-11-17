@@ -68,7 +68,22 @@
 	(ok none)
 )
 
-(define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+(define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal))
+	(let
+		(
+			(sender-balance (get-balance-or-default token-id sender))
+		)
+		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
+		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
+		(try! (ft-transfer? key-usda-wbtc amount sender recipient))
+		(try! (set-balance token-id (- sender-balance amount) sender))
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
+		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
+		(ok true)
+	)
+)
+
+(define-public (transfer-memo (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)))
 	(let
 		(
 			(sender-balance (get-balance-or-default token-id sender))
@@ -135,7 +150,11 @@
 	(ok (decimals-to-fixed (ft-get-balance key-usda-wbtc who)))
 )
 
-(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+(define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal))
+  	(transfer token-id (fixed-to-decimals amount) sender recipient)
+)
+
+(define-public (transfer-memo-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)))
   	(transfer token-id (fixed-to-decimals amount) sender recipient memo)
 )
 

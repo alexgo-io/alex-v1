@@ -283,13 +283,12 @@ import {
       return block.receipts[0].result;    
     }
 
-    transfer(user: Account, token: string, expiry: number, amount: number, sender: string, recipient: string, memo: ArrayBuffer) {
+    transfer(user: Account, token: string, expiry: number, amount: number, sender: string, recipient: string) {
       let block = this.chain.mineBlock([Tx.contractCall(token, "transfer-fixed", [
         types.uint(expiry),
         types.uint(amount),
         types.principal(sender),
         types.principal(recipient),
-        types.some(types.buff(memo))
       ], user.address),
       ]);
       return block.receipts[0].result;    

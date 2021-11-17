@@ -366,7 +366,7 @@
             ;; send x to vault
             (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             ;; send y to vault
-            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
         
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
@@ -534,7 +534,7 @@
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
-            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
             (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate)))
 
             ;; post setting

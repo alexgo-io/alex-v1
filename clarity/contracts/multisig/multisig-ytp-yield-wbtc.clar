@@ -167,7 +167,7 @@
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender)))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -197,7 +197,7 @@
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
     ;; Voter should stake the corresponding pool token to the vote contract. 
-    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender)))
 
     ;; Mutate
     (map-set proposals
@@ -253,7 +253,7 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member none)))
+    (try! (as-contract (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member)))
     (ok true)
   )
 )
