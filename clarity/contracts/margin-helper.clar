@@ -1,13 +1,13 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 (pow u10 u8))
 
-(define-public (roll-position (token <ft-trait>) (collateral <ft-trait>) (the-key-token <yield-token-trait>) (next-flash-loan-user <flash-loan-user-trait>))
+(define-public (roll-position (token <ft-trait>) (collateral <ft-trait>) (the-key-token <sft-trait>) (flash-loan-user <flash-loan-user-trait>) (expiry uint) (expiry-to-roll uint))
     (let
         (
-            (reduce-data (try! (contract-call? .collateral-rebalancing-pool reduce-position-key token collateral the-key-token ONE_8)))
+            (reduce-data (try! (contract-call? .collateral-rebalancing-pool reduce-position-key token collateral expiry the-key-token ONE_8)))
             (collateral-amount (get dx reduce-data))
             (token-amount (get dy reduce-data))
             (token-to-collateral 
@@ -17,6 +17,6 @@
                                 )
             )
         )
-        (contract-call? .alex-vault flash-loan next-flash-loan-user collateral (+ collateral-amount token-to-collateral))
+        (contract-call? .alex-vault flash-loan flash-loan-user collateral (+ collateral-amount token-to-collateral) (some expiry-to-roll))
     )
 )

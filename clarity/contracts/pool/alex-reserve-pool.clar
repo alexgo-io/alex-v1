@@ -1,6 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 
 ;; alex-reserve-pool
 
@@ -12,7 +11,7 @@
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
-(define-constant ERR-NO-FEE (err u2005))
+(define-constant ERR-NO-FEE-X (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-MATH-CALL (err u2010))
@@ -288,7 +287,7 @@
     (asserts! (>= block-height (var-get activation-block)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
-    (unwrap! (contract-call? .token-alex transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+    (unwrap! (contract-call? .token-alex transfer-fixed amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
     (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
       err-value (err err-value)
@@ -388,7 +387,7 @@
     ;; send back tokens if user was eligible
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft .token-alex to-return user)))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user (mul-down entitled-token (get-coinbase-amount target-cycle))))))
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint-fixed (mul-down entitled-token (get-coinbase-amount target-cycle)) user))))
     (ok true)
   )
 )

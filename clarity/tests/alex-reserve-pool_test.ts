@@ -293,7 +293,6 @@ describe("[ALEX STAKING]", () => {
         const amountTokens = 20 * ONE_8;
         const lockPeriod = 5;
         const block = chain.mineBlock([
-
           clients.core.setActivationThreshold(deployer, 1),
           clients.core.registerUser(staker),
           clients.token.mint(amountTokens, staker, deployer),
@@ -309,10 +308,10 @@ describe("[ALEX STAKING]", () => {
 
         // assert
         receipt.result.expectOk().expectBool(true);
-                
+        console.log(amountTokens);
         assertEquals(receipt.events.length, 2);
         receipt.events.expectFungibleTokenTransferEvent(
-          amountTokens / ONE_8,
+          amountTokens,
           staker.address,
           clients.core.getVaultAddress(),
           "alex"
@@ -353,7 +352,7 @@ describe("[ALEX STAKING]", () => {
           assertEquals(receipt.events.length, 2);
 
           receipt.events.expectFungibleTokenTransferEvent(
-            amountTokens / ONE_8,
+            amountTokens,
             staker.address,
             clients.core.getVaultAddress(),
             "alex"
@@ -688,7 +687,7 @@ describe("[ALEX STAKING]", () => {
         assertEquals(receipt.events.length, 3);
 
         receipt.events.expectFungibleTokenTransferEvent(
-          amountTokens / ONE_8,
+          amountTokens,
           clients.core.getVaultAddress(),
           staker.address,
           "alex"
@@ -786,7 +785,7 @@ describe("[ALEX STAKING]", () => {
             assertEquals(receipt.events.length, 3);
 
             receipt.events.expectFungibleTokenTransferEvent(
-              toReturn / ONE_8,
+              toReturn,
               clients.core.getVaultAddress(),
               staker.address,
               "alex"

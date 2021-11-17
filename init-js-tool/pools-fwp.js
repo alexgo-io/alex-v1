@@ -356,6 +356,32 @@ const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
   }
 };
 
+const fwpGetPositionGivenBurn = async (tokenX, tokenY, weightX, weightY, token) => {
+  console.log('--------------------------------------------------------------------------');
+  console.log('[FWP] get-position-given-burn...', tokenX, tokenY, weightX, weightY, token);
+
+  const options = {
+    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    contractName: 'fixed-weight-pool',
+    functionName: 'get-position-given-burn',
+    functionArgs: [
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
+      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      uintCV(token)
+    ],
+    network: network,
+    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+  };
+  try {
+    return callReadOnlyFunction(options);
+    
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
   console.log('--------------------------------------------------------------------------');
   console.log('[FWP] get-pool-details...]', tokenX, tokenY, weightX, weightY);
@@ -392,3 +418,4 @@ exports.fwpSwapXforY = fwpSwapXforY;
 exports.fwpSwapYforX = fwpSwapYforX;
 exports.fwpSetOracleEnbled = fwpSetOracleEnbled;
 exports.fwpSetOracleAverage = fwpSetOracleAverage;
+exports.fwpGetPositionGivenBurn = fwpGetPositionGivenBurn;
