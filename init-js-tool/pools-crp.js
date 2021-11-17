@@ -404,9 +404,9 @@ const {wait_until_confirmation } = require('./utils');
     }
   };
 
-  const crpGetSpot = async (token, collateral, expiry) => {
+  const crpGetSpot = async (token, collateral) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] get-spot...', token, collateral, expiry);
+    console.log('[CRP] get-spot...', token, collateral);
   
     const options = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -414,8 +414,7 @@ const {wait_until_confirmation } = require('./utils');
       functionName: 'get-spot',
       functionArgs: [
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),     
-        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
-        uintCV(expiry)
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral)
       ],
       network: network,
       senderAddress: process.env.USER_ACCOUNT_ADDRESS,
