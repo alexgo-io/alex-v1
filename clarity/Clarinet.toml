@@ -12,7 +12,11 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["token-alex", "token-usda", "math-fixed-point", "trait-ownable", "trait-sip-010", "alex-vault"]
+depends_on = ["trait-ownable", "trait-sip-010", "alex-vault"]
+
+[contracts.stacking-pool]
+path = "contracts/pool/stacking-pool.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "trait-semi-fungible-token", "trait-multisig-vote"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"

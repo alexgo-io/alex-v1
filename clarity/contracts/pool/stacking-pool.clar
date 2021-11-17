@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
+(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
 (use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; stacked-poxl-pool
@@ -10,10 +10,12 @@
 ;;
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-STACKING-IN-PROGRESS (err u2018))
+(define-constant ERR-STACKING-NOT-AVAILABLE (err u2027))
 
 (define-constant BLOCK-PER-CYCLE u2100)
 
@@ -60,31 +62,32 @@
 
 ;; private functions
 ;;
-(define-private (sum-stacking-reward (reward-cycle uint) (sum-so-far uint))
-    (+ sum-so-far (get-stacking-reward (get-user-id) reward-cycle))
+(define-private (sum-stacking-reward (reward-cycle uint) (token-reward { token: principal, sum-so-far: uint }))
+  {
+    token: (get token token-reward),
+    sum-so-far: (+ (get sum-so-far token-reward) (get-stacking-reward (get token token-reward) reward-cycle))
+  } 
 )
-
-;; to be replaced by proper calls to CityCoins
-(define-private (get-stacking-reward (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-staking-reward reward-cycle)
+(define-private (get-stacking-reward (token principal) (reward-cycle uint))
+  (contract-call? .alex-reserve-pool get-staking-reward token (get-user-id) reward-cycle)
 )
-(define-private (register-user)
-  (as-contract (contract-call? .alex-reserve-pool register-user none))
+(define-private (register-user (token principal))
+  (as-contract (contract-call? .alex-reserve-pool register-user token none))
 )
-(define-private (get-user-id)
-  (default-to u0 (contract-call? .alex-reserve-pool get-user-id (as-contract tx-sender)))
+(define-private (get-user-id (token principal))
+  (default-to u0 (contract-call? .alex-reserve-pool get-user-id token (as-contract tx-sender)))
 )
-(define-private (get-reward-cycle (stack-height uint))
-  (contract-call? .alex-reserve-pool get-reward-cycle stack-height)
+(define-private (get-reward-cycle (token principal) (stack-height uint))
+  (contract-call? .alex-reserve-pool get-reward-cycle token stack-height)
 )
-(define-private (stack-tokens (amount-tokens uint) (lock-period uint))
-  (as-contract (contract-call? .alex-reserve-pool stake-tokens amount-tokens lock-period))
+(define-private (stack-tokens (token-trait <ft-trait>) (amount-tokens uint) (lock-period uint))
+  (as-contract (contract-call? .alex-reserve-pool stake-tokens token-trait amount-tokens lock-period))
 )
-(define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle reward-cycle)
+(define-private (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
+  (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle token reward-cycle)
 )
-(define-private (claim-stacking-reward (reward-cycle uint))
-  (as-contract (contract-call? .alex-reserve-pool claim-staking-reward reward-cycle))
+(define-private (claim-stacking-reward (token-trait <ft-trait>) (reward-cycle uint))
+  (as-contract (contract-call? .alex-reserve-pool claim-staking-reward token-trait reward-cycle))
 )
 
 ;; public functions
@@ -109,7 +112,7 @@
     (ok (get total-supply (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL)))
 )
 
-(define-public (create-pool (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <yield-token-trait>) (multisig <multisig-trait>)) 
+(define-public (create-pool (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <sft-trait>) (multisig <multisig-trait>)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -126,7 +129,7 @@
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
 
         ;; register if not registered
-        (register-user)
+        (try! (register-user))
 
         (asserts! (is-none (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle })) ERR-POOL-ALREADY-EXISTS)
 
@@ -140,7 +143,7 @@
    )
 )   
 
-(define-public (add-to-position (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <yield-token-trait>) (dx uint))
+(define-public (add-to-position (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (dx uint))
     (let
         (
             (poxl-token (contract-of poxl-token-trait))
@@ -150,29 +153,34 @@
             (pool-updated (merge pool {
                 total-supply: (+ dx total-supply)
             }))
+            (current-cycle (unwrap! (get-reward-cycle poxl-token block-height) ERR-STACKING-NOT-AVAILABLE))
         )
         ;; check if stacking already started
-        (asserts! (is-eq start-cycle (get-reward-cycle block-height)) ERR-STACKING-IN-PROGRESS)
-        
+        (asserts! (> start-cycle current-cycle) ERR-STACKING-IN-PROGRESS)
+
         ;; transfer dx to contract and send to stack
-        (try! (contract-call? poxl-token-trait transfer dx tx-sender (as-contract tx-sender) none))
-        (stack-tokens dx u32)
+        (try! (contract-call? poxl-token-trait transfer-fixed dx tx-sender (as-contract tx-sender) none))
+        (try! (stack-tokens poxl-token-trait dx u32))
         
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token mint tx-sender dx))
+        (try! (contract-call? yield-token mint-fixed start-cycle dx tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
 )
 
-(define-public (reduce-position (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <yield-token-trait>) (percent uint))
+(define-private (create-tuple (token principal) (reward-cycle uint))
+  {token: token, reward-cycle: reward-cycle}
+)
+
+(define-public (reduce-position (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (percent uint))
     (let
         (
             (poxl-token (contract-of poxl-token-trait))
             (reward-token (contract-of reward-token-trait))
             (pool (unwrap! (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
-            (shares (mul-down (unwrap-panic (contract-call? yield-token get-balance tx-sender)) percent))
+            (shares (mul-down (unwrap-panic (contract-call? yield-token get-balance-fixed start-cycle tx-sender)) percent))
             (total-supply (get total-supply pool))
             (pool-updated (merge pool {
                 total-supply: (- total-supply shares)
@@ -180,21 +188,32 @@
             )
             (reward-cycles (get reward-cycles pool))
             (shares-to-supply (div-down shares total-supply))
-            (total-rewards (fold sum-stacking-reward reward-cycles u0))
-            (portioned-rewards (unwrap! (contract-call? .math-fixed-point mul-down total-rewards shares-to-supply) math-call-err))
+            (total-rewards (get sum-so-far (fold sum-stacking-reward reward-cycles { token: poxl-token, sum-so-far: u0 })))
+            (portioned-rewards (mul-down total-rewards shares-to-supply))
         )
 
-        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle (+ start-cycle u32)) BLOCK-PER-CYCLE)) ERR-STACKING-IN-PROGRESS)
+        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle poxl-token (+ start-cycle u32)) BLOCK-PER-CYCLE)) ERR-STACKING-IN-PROGRESS)
         
         ;; the first call claims rewards
-        (map claim-stacking-reward reward-cycles)
+        (map claim-stacking-reward poxl-token-trait reward-cycles)
 
-        (try! (contract-call? poxl-token-trait transfer shares (as-contract tx-sender) tx-sender none))
-        (try! (contract-call? reward-token-trait transfer portioned-rewards (as-contract tx-sender) tx-sender none))
+        (try! (contract-call? poxl-token-trait transfer-fixed shares (as-contract tx-sender) tx-sender none))
+        (try! (contract-call? reward-token-trait transfer-fixed portioned-rewards (as-contract tx-sender) tx-sender none))
 
         (map-set pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token burn tx-sender shares))
+        (try! (contract-call? yield-token burn-fixed start-cycle tx-sender shares))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {poxl-token: shares, reward-token: portioned-rewards})
     )
+)
+
+(define-read-only (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+(define-read-only (div-down (a uint) (b uint))
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
