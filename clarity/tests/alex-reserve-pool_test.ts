@@ -341,7 +341,6 @@ describe("STAKING :", () => {
 
         // assert
         receipt.result.expectOk().expectBool(true);
-        console.log(amountTokens);
         assertEquals(receipt.events.length, 2);
         receipt.events.expectFungibleTokenTransferEvent(
           amountTokens,
