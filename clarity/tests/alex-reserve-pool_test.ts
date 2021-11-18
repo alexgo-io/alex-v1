@@ -5,7 +5,7 @@ import { it } from "./token-alex-src/testutil.ts";
 const ONE_8 = 1e8;
 const token = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex';
 
-describe("[ALEX STAKING]", () => {
+describe("STAKING :", () => {
 
   //////////////////////////////////////////////////
   // REGISTRATION
