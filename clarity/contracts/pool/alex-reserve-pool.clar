@@ -274,7 +274,7 @@
       (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
         ;; this cycle hasn't finished, or staker contributed nothing
         u0
-        (div-down user-staked-this-cycle (mul-down (get-coinbase-amount target-cycle) total-staked-this-cycle))
+        (mul-down (get-coinbase-amount target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
       )
       ;; before first reward cycle
       u0
