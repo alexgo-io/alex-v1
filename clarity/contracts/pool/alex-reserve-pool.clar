@@ -109,6 +109,21 @@
 ;; store user id by user principal
 (define-map user-ids principal uint)
 
+
+;; helper functions:
+(define-private (get-staker-at-cycle-or-default-by-tx-sender (reward-cycle uint))
+  (get-staker-at-cycle-or-default reward-cycle (default-to u0 (get-user-id tx-sender)))
+)
+(define-read-only (get-staked (reward-cycles (list 2000 uint)))
+  (map get-staker-at-cycle-or-default-by-tx-sender reward-cycles)
+)
+(define-private (get-staking-reward-by-tx-sender (target-cycle uint))
+  (get-staking-reward (default-to u0 (get-user-id tx-sender)) target-cycle)
+)
+(define-read-only (get-staking-rewards (reward-cycles (list 2000 uint)))
+  (map get-staking-reward-by-tx-sender reward-cycles)
+)
+
 ;; returns Stacks block height registration was activated at plus activationDelay
 (define-read-only (get-activation-block)
   (begin
@@ -259,7 +274,7 @@
       (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
         ;; this cycle hasn't finished, or staker contributed nothing
         u0
-        (div-down user-staked-this-cycle total-staked-this-cycle)
+        (div-down user-staked-this-cycle (mul-down (get-coinbase-amount target-cycle) total-staked-this-cycle))
       )
       ;; before first reward cycle
       u0
@@ -388,7 +403,7 @@
     ;; send back tokens if user was eligible
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft .token-alex to-return user)))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user (mul-down entitled-token (get-coinbase-amount target-cycle))))))
+    (and (> entitled-token u0) (try! (as-contract (contract-call? .token-alex mint user entitled-token))))
     (ok true)
   )
 )
