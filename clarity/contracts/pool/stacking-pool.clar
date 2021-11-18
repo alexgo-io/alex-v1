@@ -17,8 +17,6 @@
 (define-constant ERR-STACKING-IN-PROGRESS (err u2018))
 (define-constant ERR-STACKING-NOT-AVAILABLE (err u2027))
 
-(define-constant BLOCK-PER-CYCLE u2100)
-
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
 (define-read-only (get-owner)
@@ -86,7 +84,7 @@
 (define-private (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle token reward-cycle)
 )
-(define-private (claim-stacking-reward (token-trait <ft-trait>) (reward-cycle uint))
+(define-private (claim-stacking-reward (reward-cycle uint) (token-trait <ft-trait>))
   (as-contract (contract-call? .alex-reserve-pool claim-staking-reward token-trait reward-cycle))
 )
 
@@ -192,10 +190,11 @@
             (portioned-rewards (mul-down total-rewards shares-to-supply))
         )
 
-        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle poxl-token (+ start-cycle u32)) BLOCK-PER-CYCLE)) ERR-STACKING-IN-PROGRESS)
+        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle poxl-token (+ start-cycle u32)) (contract-call? .alex-reserve-pool get-reward-cycle-length))) ERR-STACKING-IN-PROGRESS)
         
         ;; the first call claims rewards
-        (map claim-stacking-reward poxl-token-trait reward-cycles)
+        ;; TODO: how can we pass trait to fold?
+        (map claim-stacking-reward reward-cycles poxl-token-trait)
 
         (try! (contract-call? poxl-token-trait transfer-fixed shares (as-contract tx-sender) tx-sender none))
         (try! (contract-call? reward-token-trait transfer-fixed portioned-rewards (as-contract tx-sender) tx-sender none))

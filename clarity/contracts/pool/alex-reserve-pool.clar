@@ -133,6 +133,10 @@
   uint
 )
 
+(define-read-only (get-reward-cycle-length)
+  (var-get reward-cycle-length)
+)
+
 (define-read-only (is-token-approved (token principal))
   (is-some (map-get? approved-tokens token))
 )
