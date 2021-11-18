@@ -14,9 +14,9 @@ const {
     fwpSwapXforY,
     fwpSwapYforX,
     fwpGetPoolDetails,
-    fwpGetPositionGivenBurn,
     fwpSetOracleAverage,
-    fwpSetOracleEnbled
+    fwpSetOracleEnbled,
+    fwpGetPositionGivenBurn
 } = require('./pools-fwp')
 const {
     crpCreate,

@@ -416,6 +416,6 @@ exports.fwpGetYgivenX = fwpGetYgivenX;
 exports.fwpGetXgivenY = fwpGetXgivenY;
 exports.fwpSwapXforY = fwpSwapXforY;
 exports.fwpSwapYforX = fwpSwapYforX;
-exports.fwpGetPositionGivenBurn = fwpGetPositionGivenBurn;
 exports.fwpSetOracleEnbled = fwpSetOracleEnbled;
 exports.fwpSetOracleAverage = fwpSetOracleAverage;
+exports.fwpGetPositionGivenBurn = fwpGetPositionGivenBurn;

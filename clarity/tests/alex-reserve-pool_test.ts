@@ -732,7 +732,10 @@ describe("STAKING :", () => {
         ]).receipts;
 
         // assert
-        receipts[1].result.expectOk().expectBool(true);
+        let result:any = receipts[1].result.expectOk().expectTuple();
+        result['entitled-token'].expectUint(ONE_8);
+        result['to-return'].expectUint(amountTokens);
+
         assertEquals(receipts[1].events.length, 3);
 
         receipts[1].events.expectFungibleTokenTransferEvent(
@@ -832,10 +835,13 @@ describe("STAKING :", () => {
             receipt.result.expectErr();
           } else if (toReturn === 0) {
             // only mints entitled tokens
-            receipt.result.expectOk().expectBool(true);
+            let result:any = receipt.result.expectOk().expectTuple();
+            result['entitled-token'].expectUint(ONE_8);
+            result['to-return'].expectUint(0);
             assertEquals(receipt.events.length, 1);
           } else {        
-            receipt.result.expectOk().expectBool(true);
+            let result:any = receipt.result.expectOk().expectTuple();
+            result['entitled-token'].expectUint(ONE_8);
             assertEquals(receipt.events.length, 3);
 
             receipt.events.expectFungibleTokenTransferEvent(

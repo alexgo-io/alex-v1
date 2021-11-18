@@ -14,6 +14,10 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 path = "contracts/pool/alex-reserve-pool.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "alex-vault"]
 
+[contracts.alex-futures-pool]
+path = "contracts/pool/alex-futures-pool.clar"
+depends_on = ["trait-ownable", "token-alex", "trait-semi-fungible-token", "trait-multisig-vote", "alex-reserve-pool"]
+
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
 depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fixed-point", "trait-ownable", "trait-semi-fungible-token"]

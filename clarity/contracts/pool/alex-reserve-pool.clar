@@ -112,6 +112,10 @@
   uint
 )
 
+(define-read-only (get-reward-cycle-length)
+  (var-get reward-cycle-length)
+)
+
 (define-read-only (is-token-approved (token principal))
   (is-some (map-get? approved-tokens token))
 )
@@ -278,7 +282,7 @@
       (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
         ;; this cycle hasn't finished, or staker contributed nothing
         u0
-        (div-down user-staked-this-cycle total-staked-this-cycle)
+        (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
       )
       ;; before first reward cycle
       u0
@@ -422,8 +426,8 @@
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint-fixed (mul-down entitled-token (get-coinbase-amount-or-default token target-cycle)) user))))
-    (ok true)
+    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint-fixed entitled-token user))))
+    (ok { to-return: to-return, entitled-token: entitled-token })
   )
 )
 
