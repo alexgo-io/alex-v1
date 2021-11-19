@@ -7,8 +7,12 @@ path = "contracts/traits/trait-semi-fungible-token.clar"
 depends_on = []
 
 [contracts.margin-helper]
-path = "contracts/margin-helper.clar"
+path = "contracts/helpers/margin-helper.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user"]
+
+[contracts.alex-staking-helper]
+path = "contracts/helpers/alex-staking-helper.clar"
+depends_on = ["alex-reserve-pool"]
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
