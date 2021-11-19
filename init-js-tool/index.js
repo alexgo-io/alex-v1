@@ -50,6 +50,14 @@ const {
     ytpGetYgivenYield,
     ytpGetPositionGivenBurn
 } = require('./pools-ytp')
+const {
+    multisigPropose,
+    multisigVoteFor,
+    multisigVoteAgainst,
+    multisigEndProposal,
+    multisigReturnVotes,
+    multisigGetProposalById
+} = require('./multisigs')
 
 const _deploy = {
     0: {token: 'token-wbtc',
@@ -679,10 +687,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -739,5 +747,15 @@ async function run() {
     //     // console.log(result);
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
+    // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
+    // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // console.log(result);
+    // result = await multisigVoteFor('multisig-fwp-wbtc-usda-50-50', 'fwp-wbtc-usda-50-50', 1, 19502551000000);
+    // console.log(result);
+    result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 1);
+    console.log(result);
+    // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
+    // console.log(result);
+
 }
 run();

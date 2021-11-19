@@ -413,6 +413,52 @@
     )
 )
 
+(define-public (swap-x-for-base (token-x-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
+    (begin
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
+        (let
+            (
+                (token-x (contract-of token-x-trait))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+
+                ;; fee = dx * fee-rate-x
+                (fee (mul-up dx (get fee-rate-x pool)))
+                (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
+                (fee-rebate (mul-down fee (get fee-rebate pool)))
+    
+                (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
+
+                (pool-updated
+                    (merge pool
+                        {
+                        balance-x: (+ balance-x dx-net-fees fee-rebate),
+                        balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
+                        oracle-resilient:   (if (get oracle-enabled pool) 
+                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
+                                                u0
+                                            )
+                        }
+                    )
+                )
+            )
+
+            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+        
+            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
+            (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))            
+
+            ;; post setting
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+            (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
+            (ok {dx: dx-net-fees, dy: dy})
+        )
+    )
+)
+
 ;; @desc swap-x-for-y
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
