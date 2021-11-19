@@ -3,12 +3,16 @@ name = "alex-v1"
 requirements = []
 
 [contracts.margin-helper]
-path = "contracts/margin-helper.clar"
+path = "contracts/helpers/margin-helper.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "trait-flash-loan-user"]
+
+[contracts.alex-staking-helper]
+path = "contracts/helpers/alex-staking-helper.clar"
+depends_on = ["alex-reserve-pool"]
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["token-alex", "token-usda", "math-fixed-point", "trait-ownable", "trait-sip-010", "alex-vault"]
+depends_on = ["trait-ownable", "trait-pool-token", "alex-vault"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
