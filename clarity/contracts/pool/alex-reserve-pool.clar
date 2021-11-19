@@ -109,8 +109,8 @@
   }
 )
 
-(define-data-var activation-delay uint u150)
-(define-data-var activation-threshold uint u20)
+(define-data-var activation-delay uint u1) ;;u150
+(define-data-var activation-threshold uint u1) ;;u20
 
 ;; activation-block for each stake-able token
 (define-map activation-block principal uint)
