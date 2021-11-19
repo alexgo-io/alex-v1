@@ -139,12 +139,12 @@
   (is-some (map-get? approved-tokens token))
 )
 
-(define-public (add-token (token principal) (activation-block-before-delay uint))
+(define-public (add-token (token principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (map-set approved-tokens token true)
     (map-set users-nonce token u0)
-    (set-activation-block token activation-block-before-delay)
+    (ok true)
   )
 )
 
@@ -153,16 +153,16 @@
   (default-to u100000000 (map-get? activation-block token))
 )
 
-(define-public (set-activation-block (token principal) (new-activation-block-before-delay uint))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (map-set activation-block token (+ new-activation-block-before-delay (var-get activation-delay))))
-  )
-)
-
 ;; returns activation delay
 (define-read-only (get-activation-delay)
   (var-get activation-delay)
+)
+
+(define-public (set-activation-delay (new-activation-delay uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set activation-delay new-activation-delay))
+  )
 )
 
 ;; returns activation threshold
@@ -240,11 +240,8 @@
     (get-or-create-user-id token tx-sender)
 
     (if (is-eq new-id threshold)
-      (let
-        (
-          (activation-block-val (+ block-height (var-get activation-delay)))
-        )
-        (map-set activation-block token activation-block-val)
+      (begin
+        (map-set activation-block token (+ block-height (var-get activation-delay)))
         (ok true)
       )
       (ok true)
