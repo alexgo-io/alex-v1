@@ -83,7 +83,7 @@
     (
       (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
       (fee-with-principal (+ ONE_8 (var-get flash-loan-fee-rate)))
-      (amount-with-fee (contract-call? .math-fixed-point mul-up amount fee-with-principal))
+      (amount-with-fee (mul-up amount fee-with-principal))
       (recipient tx-sender)
     )
 
@@ -108,6 +108,22 @@
     (try! (transfer-ft token-y amount-y recipient))
     (ok true)
   )
+)
+
+(define-read-only (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+(define-read-only (mul-up (a uint) (b uint))
+    (let
+        (
+            (product (* a b))
+       )
+        (if (is-eq product u0)
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
+       )
+   )
 )
 
 ;; contract initialisation
