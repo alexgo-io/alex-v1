@@ -28,14 +28,14 @@ let contract_paths = [
     // "token/token-wbtc.clar",
     // "token/token-t-alex.clar",
     // "alex-vault.clar",    
-    "token/token-wstx.clar",    
+    // "token/token-wstx.clar",    
     // "open-oracle.clar",    
     // "pool/alex-reserve-pool.clar",
     // "pool/fixed-weight-pool.clar",
     // "pool/liquidity-bootstrapping-pool.clar",
     // "pool/yield-token-pool.clar",
     // "pool/collateral-rebalancing-pool.clar",
-    "faucet.clar",
+    // "faucet.clar",
     // "pool-token/fwp-wbtc-usda-50-50.clar",    
     // "multisig/multisig-fwp-wbtc-usda-50-50.clar",  
 
@@ -52,6 +52,8 @@ let contract_paths = [
     // "flash-loan-user-margin-usda-wbtc-34560.clar", 
     // "flash-loan-user-margin-wbtc-usda-34560.clar"  
 
+    "pool/alex-reserve-pool-v4.clar",
+    "helpers/alex-staking-helper-v4.clar"
 ]
 
 async function get_version(){
