@@ -413,14 +413,13 @@
     )
 )
 
-(define-public (swap-x-for-base (token-x-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
+(define-public (swap-base-for-y (token-trait <ft-trait>) (weight uint) (dtoken uint) (min-dbase (optional uint)))    
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
-                (token-x (contract-of token-x-trait))
-                (token-y (contract-of token-y-trait))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+                (token (contract-of token-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token, weight-x: (- ONE_8 weight), weight-y: weight }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
 
