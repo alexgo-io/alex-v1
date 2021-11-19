@@ -28,7 +28,7 @@ depends_on = ["token-wbtc", "token-usda", "token-t-alex", "token-wstx"]
 
 [contracts.fixed-weight-pool]
 path = "contracts/pool/fixed-weight-pool.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "alex-reserve-pool", "token-usda", "trait-multisig-vote"]
+depends_on = ["trait-sip-010", "trait-pool-token", "trait-vault", "math-fixed-point", "weighted-equation", "token-alex", "alex-reserve-pool", "token-usda", "trait-multisig-vote", "token-wstx"]
 
 [contracts.fwp-wbtc-usda-50-50]
 path = "contracts/pool-token/fwp-wbtc-usda-50-50.clar"

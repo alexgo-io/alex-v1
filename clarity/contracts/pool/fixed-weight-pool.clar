@@ -413,13 +413,14 @@
     )
 )
 
-(define-public (swap-base-for-y (token-trait <ft-trait>) (weight uint) (dtoken uint) (min-dbase (optional uint)))    
+(define-public (swap-base-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
-                (token (contract-of token-trait))
-                (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token, weight-x: (- ONE_8 weight), weight-y: weight }) ERR-INVALID-POOL-ERR))
+                (weight-x (- ONE_8 weight-y))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
 
@@ -428,7 +429,7 @@
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
     
-                (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
+                (dy (try! (get-y-given-x .token-wstx token-y-trait weight-x weight-y dx-net-fees)))
 
                 (pool-updated
                     (merge pool
@@ -436,7 +437,7 @@
                         balance-x: (+ balance-x dx-net-fees fee-rebate),
                         balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
                         oracle-resilient:   (if (get oracle-enabled pool) 
-                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
+                                                (try! (get-oracle-resilient .token-wstx token-y-trait weight-x weight-y))
                                                 u0
                                             )
                         }
@@ -446,14 +447,60 @@
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? .token-wstx transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))            
+            (try! (contract-call? .alex-reserve-pool add-to-balance .token-wstx (- fee fee-rebate)))            
 
             ;; post setting
-            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+            (map-set pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
             (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
             (ok {dx: dx-net-fees, dy: dy})
+        )
+    )
+)
+
+(define-public (swap-y-for-base (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
+    (begin
+        (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
+        (let
+            (
+                (weight-x (- ONE_8 weight-y))
+                (token-y (contract-of token-y-trait))
+                (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+
+                ;; fee = dy * fee-rate-y
+                (fee (mul-up dy (get fee-rate-y pool)))
+                (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
+                (fee-rebate (mul-down fee (get fee-rebate pool)))
+
+                (dx (try! (get-x-given-y .token-wstx token-y-trait weight-x weight-y dy-net-fees)))
+
+                (pool-updated
+                    (merge pool
+                        {
+                        balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                        balance-y: (+ balance-y dy-net-fees fee-rebate),
+                        oracle-resilient:   (if (get oracle-enabled pool) 
+                                                (try! (get-oracle-resilient .token-wstx token-y-trait weight-x weight-y))
+                                                u0
+                                            )
+                        }
+                    )
+                )
+            )
+
+            (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
+        
+            (try! (contract-call? .alex-vault transfer-ft .token-wstx dx tx-sender))
+            (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
+
+            ;; post setting
+            (map-set pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
+            (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
+            (ok {dx: dx, dy: dy-net-fees})
         )
     )
 )
@@ -467,48 +514,9 @@
 ;; @param min-dy; optional, min amount of token-y to receive
 ;; @returns (response (tuple uint uint) uint)
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
-    (begin
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
-        (let
-            (
-                (token-x (contract-of token-x-trait))
-                (token-y (contract-of token-y-trait))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-                (balance-x (get balance-x pool))
-                (balance-y (get balance-y pool))
-
-                ;; fee = dx * fee-rate-x
-                (fee (mul-up dx (get fee-rate-x pool)))
-                (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
-                (fee-rebate (mul-down fee (get fee-rebate pool)))
-    
-                (dy (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx-net-fees)))
-
-                (pool-updated
-                    (merge pool
-                        {
-                        balance-x: (+ balance-x dx-net-fees fee-rebate),
-                        balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
-                        oracle-resilient:   (if (get oracle-enabled pool) 
-                                                (try! (get-oracle-resilient token-x-trait token-y-trait weight-x weight-y))
-                                                u0
-                                            )
-                        }
-                    )
-                )
-            )
-
-            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
-        
-            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))            
-
-            ;; post setting
-            (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-            (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
-            (ok {dx: dx-net-fees, dy: dy})
-        )
+    (if (is-eq (contract-of token-x-trait) .token-wstx)
+        (swap-base-for-y token-y-trait weight-y dx min-dy)
+        (swap-base-for-y token-y-trait weight-y (get dy (try! (swap-y-for-base token-x-trait weight-x dx none))) min-dy)
     )
 )
 
