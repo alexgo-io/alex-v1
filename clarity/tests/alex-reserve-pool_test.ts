@@ -341,10 +341,9 @@ describe("STAKING :", () => {
 
         // assert
         receipt.result.expectOk().expectBool(true);
-                
         assertEquals(receipt.events.length, 2);
         receipt.events.expectFungibleTokenTransferEvent(
-          amountTokens / ONE_8,
+          amountTokens,
           staker.address,
           clients.core.getVaultAddress(),
           "alex"
@@ -387,7 +386,7 @@ describe("STAKING :", () => {
           assertEquals(receipt.events.length, 2);
 
           receipt.events.expectFungibleTokenTransferEvent(
-            amountTokens / ONE_8,
+            amountTokens,
             staker.address,
             clients.core.getVaultAddress(),
             "alex"
@@ -732,11 +731,14 @@ describe("STAKING :", () => {
         ]).receipts;
 
         // assert
-        receipts[1].result.expectOk().expectBool(true);
+        let result:any = receipts[1].result.expectOk().expectTuple();
+        result['entitled-token'].expectUint(ONE_8);
+        result['to-return'].expectUint(amountTokens);
+
         assertEquals(receipts[1].events.length, 3);
 
         receipts[1].events.expectFungibleTokenTransferEvent(
-          amountTokens / ONE_8,
+          amountTokens,
           clients.core.getVaultAddress(),
           staker.address,
           "alex"
@@ -832,14 +834,17 @@ describe("STAKING :", () => {
             receipt.result.expectErr();
           } else if (toReturn === 0) {
             // only mints entitled tokens
-            receipt.result.expectOk().expectBool(true);
+            let result:any = receipt.result.expectOk().expectTuple();
+            result['entitled-token'].expectUint(ONE_8);
+            result['to-return'].expectUint(0);
             assertEquals(receipt.events.length, 1);
           } else {        
-            receipt.result.expectOk().expectBool(true);
+            let result:any = receipt.result.expectOk().expectTuple();
+            result['entitled-token'].expectUint(ONE_8);
             assertEquals(receipt.events.length, 3);
 
             receipt.events.expectFungibleTokenTransferEvent(
-              toReturn / ONE_8,
+              toReturn,
               clients.core.getVaultAddress(),
               staker.address,
               "alex"

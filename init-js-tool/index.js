@@ -15,7 +15,8 @@ const {
     fwpSwapYforX,
     fwpGetPoolDetails,
     fwpSetOracleAverage,
-    fwpSetOracleEnbled
+    fwpSetOracleEnbled,
+    fwpGetPositionGivenBurn
 } = require('./pools-fwp')
 const {
     crpCreate,
@@ -726,8 +727,11 @@ async function run() {
     // await arbitrage_fwp(dry_run = false);
     // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
-    // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
-    // console.log(result);
+    
+    result = await fwpGetPositionGivenBurn('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 325.48 * 1e3 * 1e8);
+    printResult(result);
+    result = await ytpGetPositionGivenBurn('yield-wbtc-92160', 0.5 * 1e8);      
+    printResult(result);
 
     // result = await balance('key-usda-34560-wbtc', process.env.USER_ACCOUNT_ADDRESS);
     // console.log(result);

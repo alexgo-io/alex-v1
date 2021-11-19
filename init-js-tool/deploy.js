@@ -51,7 +51,6 @@ let contract_paths = [
     // "multisig/multisig-ytp-yield-usda-34560-usda.clar",    
     // "flash-loan-user-margin-usda-wbtc-34560.clar", 
     // "flash-loan-user-margin-wbtc-usda-34560.clar"  
-
 ]
 
 async function get_version(){

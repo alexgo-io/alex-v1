@@ -6,13 +6,6 @@
 ;; constants
 ;;
 (define-constant ONE_10 (pow u10 u10)) ;; 10 decimal places
-(define-constant ERR-SCALE-UP-OVERFLOW (err u5001))
-(define-constant ERR-SCALE-DOWN-OVERFLOW (err u5002))
-(define-constant ERR-ADD-OVERFLOW (err u5003))
-(define-constant ERR-SUB-OVERFLOW (err u5004))
-(define-constant ERR-MUL-OVERFLOW (err u5005))
-(define-constant ERR-DIV-OVERFLOW (err u5006))
-(define-constant ERR-POW-OVERFLOW (err u5007))
 
 ;; With 10 fixed digits you would have a maximum error of 0.5 * 10^-10 in each entry, 
 ;; which could aggregate to about 10 x 0.5 * 10^-10 = 4 * 10^-10 relative error 
