@@ -413,7 +413,7 @@
     )
 )
 
-(define-public (swap-base-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
+(define-public (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
@@ -459,7 +459,7 @@
     )
 )
 
-(define-public (swap-y-for-base (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
+(define-public (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
@@ -515,10 +515,10 @@
 ;; @returns (response (tuple uint uint) uint)
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (if (is-eq (contract-of token-x-trait) .token-wstx)
-        (swap-base-for-y token-y-trait weight-y dx min-dy)
+        (swap-wstx-for-y token-y-trait weight-y dx min-dy)
         (if (is-eq (contract-of token-y-trait) .token-wstx)
-            (swap-y-for-base token-x-trait weight-x dx min-dy)
-            (swap-base-for-y token-y-trait weight-y (get dy (try! (swap-y-for-base token-x-trait weight-x dx none))) min-dy)
+            (swap-y-for-wstx token-x-trait weight-x dx min-dy)
+            (swap-wstx-for-y token-y-trait weight-y (get dy (try! (swap-y-for-wstx token-x-trait weight-x dx none))) min-dy)
         )
     )
 )
@@ -533,10 +533,10 @@
 ;; @returns (response (tuple uint uint) uint)
 (define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (if (is-eq (contract-of token-x-trait) .token-wstx)
-        (swap-base-for-y token-y-trait weight-y dx min-dy)
+        (swap-y-for-wstx token-y-trait weight-y dy min-dx)
         (if (is-eq (contract-of token-y-trait) .token-wstx)
-            (swap-y-for-base token-x-trait weight-x dx min-dy)
-            (swap-base-for-y token-y-trait weight-y (get dy (try! (swap-y-for-base token-x-trait weight-x dx none))) min-dy)
+            (swap-wstx-for-y token-x-trait weight-x dy min-dx)
+            (swap-wstx-for-y token-x-trait weight-x (get dy (try! (swap-y-for-wstx token-y-trait weight-y dy none))) min-dx)
         )
     )
 )
