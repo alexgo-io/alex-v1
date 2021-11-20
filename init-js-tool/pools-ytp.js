@@ -133,7 +133,7 @@ const {
     }
   }
   
-  const ytpGetYield = async(yieldToken) => {
+  const ytpGetYield = async(expiry, yieldToken) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-yield...', yieldToken);
   
@@ -142,6 +142,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-yield',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
       ],
       network: network,
@@ -155,7 +156,7 @@ const {
     }
   }
   
-  const ytpSwapXforY = async (yiedToken, token, dx, min_dy) => {
+  const ytpSwapXforY = async (expiry, yiedToken, token, dx, min_dy) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-x-for-y...', yiedToken, token, dx);
     const privateKey = await getUserPK();
@@ -164,6 +165,7 @@ const {
         contractName: 'yield-token-pool',
         functionName: 'swap-x-for-y',
         functionArgs: [
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),          
             uintCV(dx),
@@ -185,7 +187,7 @@ const {
     }
   }
   
-  const ytpSwapYforX = async (yiedToken, token, dy, min_dx) => {
+  const ytpSwapYforX = async (expiry, yiedToken, token, dy, min_dx) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] swap-y-for-x...', yiedToken, token, dy);
     const privateKey = await getUserPK();
@@ -194,6 +196,7 @@ const {
         contractName: 'yield-token-pool',
         functionName: 'swap-y-for-x',
         functionArgs: [
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),          
             uintCV(dy),
@@ -215,7 +218,7 @@ const {
     }
   }
   
-  const ytpGetXgivenY = async (yieldToken, dy) => {
+  const ytpGetXgivenY = async (expiry, yieldToken, dy) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-x-given-y...', yieldToken, dy);
   
@@ -224,6 +227,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-x-given-y',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(dy)
       ],
@@ -238,7 +242,7 @@ const {
     }
   };  
   
-  const ytpGetYgivenX = async (yieldToken, dx) => {
+  const ytpGetYgivenX = async (expiry, yieldToken, dx) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-y-given-x...', yieldToken, dx);
   
@@ -247,6 +251,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-y-given-x',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(dx)
       ],
@@ -261,7 +266,7 @@ const {
     }
   };
 
-  const ytpGetXgivenYield = async (yieldToken, yied) => {
+  const ytpGetXgivenYield = async (expiry, yieldToken, yied) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-x-given-yield...', yieldToken, yied);
   
@@ -270,6 +275,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-x-given-yield',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(yied)
       ],
@@ -284,7 +290,7 @@ const {
     }
   };  
   
-  const ytpGetYgivenYield = async (yieldToken, yied) => {
+  const ytpGetYgivenYield = async (expiry, yieldToken, yied) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-y-given-yield...', yieldToken, yied);
   
@@ -293,6 +299,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-y-given-yield',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(yied)
       ],
@@ -307,7 +314,7 @@ const {
     }
   };  
 
-  const ytpGetPositionGivenBurn = async (yieldToken, shares) => {
+  const ytpGetPositionGivenBurn = async (expiry, yieldToken, shares) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-position-given-burn...', yieldToken, shares);
   
@@ -316,6 +323,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-position-given-burn',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
         uintCV(shares)
       ],
@@ -329,7 +337,7 @@ const {
     }
   };  
   
-  const ytpGetPoolDetails = async (yieldToken) => {
+  const ytpGetPoolDetails = async (expiry, yieldToken) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-pool-details...', yieldToken);
   
@@ -338,6 +346,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-pool-details',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken)
       ],
       network: network,
