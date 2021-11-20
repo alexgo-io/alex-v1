@@ -16,15 +16,16 @@ const {
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
   
-  const ytpCreate = async (yiedToken, token, poolToken, multiSig, dx, dy) => {
+  const ytpCreate = async (expiry, yiedToken, token, poolToken, multiSig, dx, dy) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[YTP] create-pool...', yiedToken, token, poolToken, multiSig, dx, dy);
+    console.log('[YTP] create-pool...', expiry, yiedToken, token, poolToken, multiSig, dx, dy);
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'yield-token-pool',
         functionName: 'create-pool',
         functionArgs: [
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
@@ -48,7 +49,7 @@ const {
     }
   }
 
-  const ytpAddToPosition = async (yiedToken, token, poolToken, dx, deployer=false) => {
+  const ytpAddToPosition = async (expiry, yiedToken, token, poolToken, dx, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] add-to-position...', yiedToken, token, poolToken, dx);
     const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
@@ -57,6 +58,7 @@ const {
         contractName: 'yield-token-pool',
         functionName: 'add-to-position',
         functionArgs: [
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),           
@@ -78,7 +80,7 @@ const {
     }
   }  
   
-  const ytpReducePosition = async (yiedToken, token, poolToken, percent, deployer=false) => {
+  const ytpReducePosition = async (expiry, yiedToken, token, poolToken, percent, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] reduce-position...', yiedToken, token, poolToken, percent);
     const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
@@ -87,6 +89,7 @@ const {
         contractName: 'yield-token-pool',
         functionName: 'reduce-position',
         functionArgs: [
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yiedToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),           
@@ -108,7 +111,7 @@ const {
     }
   }  
   
-  const ytpGetPrice = async(yieldToken) => {
+  const ytpGetPrice = async(expiry, yieldToken) => {
     console.log('--------------------------------------------------------------------------');
     console.log('[YTP] get-price...', yieldToken);
   
@@ -117,6 +120,7 @@ const {
       contractName: 'yield-token-pool',
       functionName: 'get-price',
       functionArgs: [
+        uintCV(expiry),
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
       ],
       network: network,

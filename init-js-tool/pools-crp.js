@@ -15,9 +15,9 @@ const {
 const {wait_until_confirmation } = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
-  const crpCreate = async (token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
+  const crpCreate = async (token, collateral, expiry, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] create-pool...', token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
+    console.log('[CRP] create-pool...', token, collateral, expiry, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -26,6 +26,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, keyToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, multiSig),
@@ -51,9 +52,9 @@ const {wait_until_confirmation } = require('./utils');
     }
   }
   
-  const crpAddToPostionAndSwitch = async (token, collateral, yieldToken, keyToken, dx) => {
+  const crpAddToPostionAndSwitch = async (token, collateral, expiry, yieldToken, keyToken, dx) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] add-to-position-and-switch...', token, collateral, yieldToken, keyToken, dx);
+    console.log('[CRP] add-to-position-and-switch...', token, collateral, expiry, yieldToken, keyToken, dx);
     const privateKey = await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -62,6 +63,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, keyToken),
             uintCV(dx),
@@ -82,9 +84,9 @@ const {wait_until_confirmation } = require('./utils');
     }
   }
 
-  const crpAddToPostion = async (token, collateral, yieldToken, keyToken, dx) => {
+  const crpAddToPostion = async (token, collateral, expiry, yieldToken, keyToken, dx) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] add-to-position..', token, collateral, yieldToken, keyToken, dx);
+    console.log('[CRP] add-to-position..', token, collateral, expiry, yieldToken, keyToken, dx);
     const privateKey = await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -93,6 +95,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, keyToken),
             uintCV(dx),
@@ -113,9 +116,9 @@ const {wait_until_confirmation } = require('./utils');
     }
   }  
 
-  const crpReducePostionYield = async (token, collateral, yieldToken, percent, deployer=false) => {
+  const crpReducePostionYield = async (token, collateral, expiry, yieldToken, percent, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] reduce-position-yield..', token, collateral, yieldToken, percent);
+    console.log('[CRP] reduce-position-yield..', token, collateral, expiry, yieldToken, percent);
     const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -124,6 +127,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, yieldToken),
             uintCV(percent),
         ],
@@ -143,9 +147,9 @@ const {wait_until_confirmation } = require('./utils');
     }
   }  
 
-  const crpReducePostionKey = async (token, collateral, keyToken, percent, deployer=false) => {
+  const crpReducePostionKey = async (token, collateral, expiry, keyToken, percent, deployer=false) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] reduce-position-key..', token, collateral, keyToken, percent);
+    console.log('[CRP] reduce-position-key..', token, collateral, expiry, keyToken, percent);
 
     const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
     const txOptions = {
@@ -155,6 +159,7 @@ const {wait_until_confirmation } = require('./utils');
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
+            uintCV(expiry),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, keyToken),
             uintCV(percent),
         ],
