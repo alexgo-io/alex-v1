@@ -50,8 +50,15 @@ let contract_paths = [
     // "multisig/multisig-ytp-yield-wbtc-34560-wbtc.clar",  
     // "multisig/multisig-ytp-yield-usda-34560-usda.clar",    
     // "flash-loan-user-margin-usda-wbtc-34560.clar", 
+<<<<<<< HEAD
     // "flash-loan-user-margin-wbtc-usda-34560.clar"
     
+=======
+    // "flash-loan-user-margin-wbtc-usda-34560.clar"  
+
+    "pool/alex-reserve-pool-v4.clar",
+    "helpers/alex-staking-helper-v4.clar"
+>>>>>>> 3ffcb3c978ff80271561e91961e2c6fb6a66b097
 ]
 
 async function get_version(){

@@ -51,6 +51,15 @@ const {
     ytpGetPositionGivenBurn
 } = require('./pools-ytp')
 const {
+<<<<<<< HEAD
+=======
+    reserveAddToken,
+    reserveSetActivationDelay,
+    reserveSetActicationThreshold,
+    reserveRegisterUser
+} = require('./reserve')
+const {
+>>>>>>> 3ffcb3c978ff80271561e91961e2c6fb6a66b097
     multisigPropose,
     multisigVoteFor,
     multisigVoteAgainst,
@@ -747,6 +756,12 @@ async function run() {
     //     // console.log(result);
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
+
+    result = await reserveAddToken('token-t-alex');
+    console.log(result);
+    result = await reserveRegisterUser('token-t-alex');
+    console.log(result);
+
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // console.log(result);
@@ -755,7 +770,6 @@ async function run() {
     result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 1);
     console.log(result);
     // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
-    // console.log(result);
-
+    // console.log(result);    
 }
 run();

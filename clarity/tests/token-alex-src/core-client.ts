@@ -83,18 +83,6 @@ export class CoreClient extends Client {
     return this.callReadOnlyFn("get-user", [types.uint(userId)]);
   }
 
-  setActivationBlock(sender: Account, activation: number, token: string): Tx {
-    return Tx.contractCall(
-      this.contractName,
-      "set-activation-block",
-      [
-        types.principal(token),
-        types.uint(activation)
-      ],
-      sender.address
-    );
-  }
-
   setActivationThreshold(sender: Account, threshold: number): Tx {
     return Tx.contractCall(
       this.contractName,
@@ -106,13 +94,12 @@ export class CoreClient extends Client {
     );
   }
 
-  addToken(sender: Account, token: string, activationBlock: number): Tx {
+  addToken(sender: Account, token: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "add-token",
       [
-        types.principal(token),
-        types.uint(activationBlock)
+        types.principal(token)
       ],
       sender.address
     );
