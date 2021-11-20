@@ -1,4 +1,5 @@
 (impl-trait .trait-multisig-vote.multisig-vote-trait)
+(use-trait yield-token-trait .trait-yield-token.yield-token-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 
@@ -21,6 +22,7 @@
 (define-constant ERR-MATH-CALL (err u2010))
 
 (define-constant ONE_8 u100000000)
+
 ;; Constants
 (define-constant DEFAULT_OWNER tx-sender)
 
@@ -40,8 +42,8 @@
     end-block-height: uint,
     yes-votes: uint,
     no-votes: uint,
-    new-fee-rate-x: uint,
-    new-fee-rate-y: uint
+    new-fee-rate-token: uint,
+    new-fee-rate-yield-token: uint
    }
 )
 
@@ -93,8 +95,8 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      new-fee-rate-x: u0,    ;; Default token feerate
-      new-fee-rate-y: u0  ;; default yield-token feerate
+      new-fee-rate-token: u0,    ;; Default token feerate
+      new-fee-rate-yield-token: u0  ;; default yield-token feerate
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -102,7 +104,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <ft-trait>))
-    (or (is-eq (contract-of token) .yield-usda-80875) (is-eq (contract-of token) .key-usda-80875-wbtc))
+    (is-eq (contract-of token) .ytp-yield-usda-74880-usda)
 )
 
 
@@ -113,19 +115,14 @@
     (start-block-height uint)
     (title (string-utf8 256))
     (url (string-utf8 256))
-    (new-fee-rate-x uint)
-    (new-fee-rate-y uint)
+    (new-fee-rate-token uint)
+    (new-fee-rate-yield-token uint)
   )
-  (let 
-    (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda-80875 get-balance tx-sender)))
-      (proposer-key-balance (unwrap-panic (contract-call? .key-usda-80875-wbtc get-balance tx-sender)))
-      (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-usda-80875 get-total-supply)))
-      (total-key-supply (unwrap-panic (contract-call? .key-usda-80875-wbtc get-total-supply)))
-      (total-supply (+ total-yield-supply total-key-supply))
-      (proposal-id (+ u1 (var-get proposal-count)))
-    )
+  (let (
+    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-usda-74880-usda get-balance tx-sender)) ONE_8))
+    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda-74880-usda get-total-supply)) ONE_8))
+    (proposal-id (+ u1 (var-get proposal-count)))
+  )
 
     ;; Requires 10% of the supply 
     (asserts! (>= (* proposer-balance u10) total-supply) ERR-NOT-ENOUGH-BALANCE)
@@ -142,8 +139,8 @@
         end-block-height: (+ start-block-height u1440),
         yes-votes: u0,
         no-votes: u0,
-        new-fee-rate-x: new-fee-rate-x,
-        new-fee-rate-y: new-fee-rate-y
+        new-fee-rate-token: new-fee-rate-token,
+        new-fee-rate-yield-token: new-fee-rate-yield-token
       }
     )
     (var-set proposal-count proposal-id)
@@ -221,9 +218,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-yield-supply (unwrap-panic (contract-call? .yield-usda-80875 get-total-supply)))
-        (total-key-supply (unwrap-panic (contract-call? .key-usda-80875-wbtc get-total-supply)))
-        (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
+        (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda-74880-usda get-total-supply)) ONE_8))
         (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
@@ -246,7 +241,7 @@
 (define-public (return-votes-to-member (token <ft-trait>) (proposal-id uint) (member principal))
   (let 
     (
-      (token-count (get amount (get-tokens-by-member-by-id proposal-id member token)))
+      (token-count (/ (get amount (get-tokens-by-member-by-id proposal-id member token)) ONE_8))
       (proposal (get-proposal-by-id proposal-id))
     )
 
@@ -262,15 +257,15 @@
 
 ;; Make needed contract changes on DAO
 (define-private (execute-proposal (proposal-id uint))
-  (let 
-    (
-      (proposal (get-proposal-by-id proposal-id))
-      (new-fee-rate-x (get new-fee-rate-x proposal))
-      (new-fee-rate-y (get new-fee-rate-y proposal))
-    ) 
+  (let (
+    (proposal (get-proposal-by-id proposal-id))
+    (new-fee-rate-token (get new-fee-rate-token proposal))
+    (new-fee-rate-yield-token (get new-fee-rate-yield-token proposal))
+  ) 
   
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc u8087500000000 new-fee-rate-x))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc u8087500000000 new-fee-rate-y))
+    ;; Setting for Yield Token Pool
+    (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-usda-74880 new-fee-rate-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-yield-token .yield-usda-74880 new-fee-rate-yield-token))
     
     (ok true)
   )
