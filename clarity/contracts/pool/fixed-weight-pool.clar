@@ -413,7 +413,7 @@
     )
 )
 
-(define-public (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
+(define-private (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
@@ -459,7 +459,7 @@
     )
 )
 
-(define-public (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
+(define-private (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
