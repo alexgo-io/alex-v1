@@ -513,14 +513,21 @@
 ;; @param dx; amount of token-x to swap
 ;; @param min-dy; optional, min amount of token-y to receive
 ;; @returns (response (tuple uint uint) uint)
-(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))    
-    (if (is-eq (contract-of token-x-trait) .token-wstx)
-        (swap-wstx-for-y token-y-trait weight-y dx min-dy)
-        (if (is-eq (contract-of token-y-trait) .token-wstx)
-            (swap-y-for-wstx token-x-trait weight-x dx min-dy)
-            (swap-wstx-for-y token-y-trait weight-y (get dy (try! (swap-y-for-wstx token-x-trait weight-x dx none))) min-dy)
-        )
+(define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
+    (ok 
+        {
+            dx: dx, 
+            dy: 
+                (if (is-eq (contract-of token-x-trait) .token-wstx)
+                    (get dy (try! (swap-wstx-for-y token-y-trait weight-y dx min-dy)))
+                    (if (is-eq (contract-of token-y-trait) .token-wstx)
+                        (get dx (try! (swap-y-for-wstx token-x-trait weight-x dx min-dy)))
+                        (get dy (try! (swap-wstx-for-y token-y-trait weight-y (get dx (try! (swap-y-for-wstx token-x-trait weight-x dx none))) min-dy)))
+                    )
+                )
+        }
     )
+
 )
 
 ;; @desc swap-y-for-x
@@ -532,12 +539,18 @@
 ;; @param min-dx; optional, min amount of token-x to receive
 ;; @returns (response (tuple uint uint) uint)
 (define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint) (min-dx (optional uint)))
-    (if (is-eq (contract-of token-x-trait) .token-wstx)
-        (swap-y-for-wstx token-y-trait weight-y dy min-dx)
-        (if (is-eq (contract-of token-y-trait) .token-wstx)
-            (swap-wstx-for-y token-x-trait weight-x dy min-dx)
-            (swap-wstx-for-y token-x-trait weight-x (get dy (try! (swap-y-for-wstx token-y-trait weight-y dy none))) min-dx)
-        )
+    (ok 
+        {
+            dx:
+                (if (is-eq (contract-of token-x-trait) .token-wstx)
+                    (get dx (try! (swap-y-for-wstx token-y-trait weight-y dy min-dx)))
+                    (if (is-eq (contract-of token-y-trait) .token-wstx)
+                        (get dy (try! (swap-wstx-for-y token-x-trait weight-x dy min-dx)))
+                        (get dy (try! (swap-wstx-for-y token-x-trait weight-x (get dx (try! (swap-y-for-wstx token-y-trait weight-y dy none))) min-dx)))
+                    )
+                ),
+            dy: dy
+        }
     )
 )
 
@@ -676,6 +689,27 @@
     )
 )
 
+(define-private (get-y-given-wstx (token-y-trait <ft-trait>) (weight-y uint) (dx uint))
+    
+    (let 
+        (
+            (weight-x (- ONE_8 weight-y))
+            (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+        )
+        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
+    )
+)
+
+(define-private (get-wstx-given-y (token-y-trait <ft-trait>) (weight-y uint) (dy uint)) 
+    (let 
+        (
+            (weight-x (- ONE_8 weight-y))
+            (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+        )
+        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
+    )
+)
+
 ;; @desc units of token-y given units of token-x
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
@@ -684,12 +718,12 @@
 ;; @param dx; amount of token-x being added
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
-    
-    (let 
-        (
-        (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+    (if (is-eq (contract-of token-x-trait) .token-wstx)
+        (get-y-given-wstx token-y-trait weight-y dx)
+        (if (is-eq (contract-of token-y-trait) .token-wstx)
+            (get-wstx-given-y token-x-trait weight-x dx)
+            (get-y-given-wstx token-y-trait weight-y (try! (get-wstx-given-y token-x-trait weight-x dx)))
         )
-        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
@@ -701,11 +735,12 @@
 ;; @param dy; amount of token-y being added
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint)) 
-    (let 
-        (
-        (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
+    (if (is-eq (contract-of token-x-trait) .token-wstx)
+        (get-wstx-given-y token-y-trait weight-y dy)
+        (if (is-eq (contract-of token-y-trait) .token-wstx)
+            (get-y-given-wstx token-x-trait weight-x dy)
+            (get-y-given-wstx token-x-trait weight-x (try! (get-wstx-given-y token-y-trait weight-y dy)))
         )
-        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
@@ -717,16 +752,11 @@
 ;; @param price; target price
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (price uint))
-
     (let 
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        (balance-x (get balance-x pool))
-        (balance-y (get balance-y pool))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
+        (contract-call? .weighted-equation get-x-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
     )
 )
 
@@ -738,16 +768,11 @@
 ;; @param price; target price
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-price (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (price uint))
-
     (let 
         (
-        (token-x (contract-of token-x-trait))
-        (token-y (contract-of token-y-trait))
-        (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
-        (balance-x (get balance-x pool))
-        (balance-y (get balance-y pool))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+        (contract-call? .weighted-equation get-y-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
     )
 )
 
