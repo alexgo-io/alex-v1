@@ -33,7 +33,8 @@ const {
     crpGetPoolValueInToken,
     crpGetWeightY,
     crpSwapXforY,
-    crpSwapYforX
+    crpSwapYforX,
+    crpGetPositionGivenBurnKey
 } = require('./pools-crp')
 const {
     ytpCreate,
@@ -176,7 +177,7 @@ async function see_balance(owner) {
     console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8));
 }
 
-async function create_fwp(add_only) {
+async function create_fwp(add_only, deployer=false) {
     console.log("------ FWP Creation / Add Liquidity ------");
     let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
 
@@ -195,7 +196,7 @@ async function create_fwp(add_only) {
 
     for (const key in _pools) {
         if (add_only) {
-            await fwpAddToPosition(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['left_side'], _pools[key]['right_side']);
+            await fwpAddToPosition(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['left_side'], _pools[key]['right_side'], deployer);
         } else {
             await fwpCreate(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['multisig'], _pools[key]['left_side'], _pools[key]['right_side']);
             await fwpSetOracleEnbled(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y']);
@@ -713,23 +714,23 @@ async function run() {
     //                     8:_deploy[10],
     //                     9:_deploy[11]
     //                 };
-    // const _pools = { 0:_deploy[2], 1:_deploy[3] };
+    const _pools = { 0:_deploy[0], 1:_deploy[1] };
     // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
-    const _pools = _deploy;
+    // const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
 
-    // await create_fwp(add_only=true);
+    // await create_fwp(add_only=true, deployer=true);
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
@@ -768,8 +769,8 @@ async function run() {
     // await arbitrage_fwp(dry_run = false);
     // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
-    // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
-    // console.log(result);
+    result = await crpGetPositionGivenBurnKey('token-wbtc', 'token-usda', 34560e8, 0.873e8);      
+    console.log(printResult(result));
 
     // result = await balance('key-usda-34560-wbtc', process.env.USER_ACCOUNT_ADDRESS);
     // console.log(result);
