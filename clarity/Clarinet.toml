@@ -210,18 +210,6 @@ depends_on = ["trait-sip-010", "trait-pool-token", "trait-ownable"]
 path = "contracts/multisig/multisig-lbp-alex-usda-90-10.clar"
 depends_on = []
 
-[contracts.yield-wbtc-80875]
-path = "contracts/yield-token/yield-wbtc-80875.clar"
-depends_on = ["trait-sip-010", "trait-yield-token", "token-wbtc", "trait-ownable"]
-
-[contracts.multisig-ytp-yield-wbtc-80875-wbtc]
-path = "contracts/multisig/multisig-ytp-yield-wbtc-80875-wbtc.clar"
-depends_on = ["ytp-yield-wbtc-80875-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-80875"]
-
-[contracts.ytp-yield-wbtc-80875-wbtc]
-path = "contracts/pool-token/ytp-yield-wbtc-80875-wbtc.clar"
-depends_on = ["trait-sip-010", "trait-pool-token", "trait-ownable"]
-
 [contracts.yield-usda-51840]
 path = "contracts/yield-token/yield-usda-51840.clar"
 depends_on = ["trait-sip-010", "trait-yield-token", "token-usda", "trait-ownable"]
