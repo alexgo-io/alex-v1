@@ -54,8 +54,9 @@ const {
 const {
     reserveAddToken,
     reserveSetActivationDelay,
-    reserveSetActicationThreshold,
-    reserveRegisterUser
+    reserveSetActivationThreshold,
+    reserveRegisterUser,
+    reserveSetCoinbaseAmount
 } = require('./reserve')
 const {
     multisigPropose,
@@ -769,8 +770,8 @@ async function run() {
     // await arbitrage_fwp(dry_run = false);
     // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
-    result = await crpGetPositionGivenBurnKey('token-wbtc', 'token-usda', 34560e8, 0.873e8);      
-    console.log(printResult(result));
+    // result = await crpGetPositionGivenBurnKey('token-wbtc', 'token-usda', 34560e8, 0.873e8);      
+    // console.log(printResult(result));
 
     // result = await balance('key-usda-34560-wbtc', process.env.USER_ACCOUNT_ADDRESS);
     // console.log(result);
@@ -783,10 +784,11 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    // result = await reserveAddToken('token-t-alex');
-    // console.log(result);
-    // result = await reserveRegisterUser('token-t-alex');
-    // console.log(result);
+    result = await reserveAddToken('token-t-alex');
+    result = await reserveSetActivationThreshold(1);
+    result = await reserveSetActivationDelay(1);
+    result = await reserveRegisterUser('token-t-alex');
+    result = await reserveSetCoinbaseAmount('token-t-alex', 50000e8, 25000e8, 12500e8, 6250e8, 3750e8);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);

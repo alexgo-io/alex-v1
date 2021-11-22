@@ -24,7 +24,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v4',
+        contractName: 'alex-reserve-pool-v6',
         functionName: 'add-token',
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token)
@@ -51,7 +51,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v4',
+        contractName: 'alex-reserve-pool-v6',
         functionName: 'set-activation-threshold',
         functionArgs: [
             uintCV(activation_threshold)
@@ -78,7 +78,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v4',
+        contractName: 'alex-reserve-pool-v6',
         functionName: 'set-activation-delay',
         functionArgs: [
             uintCV(activation_delay)
@@ -105,7 +105,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v4',
+        contractName: 'alex-reserve-pool-v6',
         functionName: 'register-user',
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -127,8 +127,41 @@ const {
     }
   };  
 
+  const reserveSetCoinbaseAmount = async (token, coinbase1, coinbase2, coinbase3, coinbase4, coinbase5) => {
+    console.log('--------------------------------------------------------------------------');
+    console.log('[reserve] set-coinbase-amount...', token, coinbase1, coinbase2, coinbase3, coinbase4, coinbase5);
+    const privateKey = await getDeployerPK();
+    const txOptions = {
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+        contractName: 'alex-reserve-pool-v6',
+        functionName: 'set-coinbase-amount',
+        functionArgs: [
+            contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
+            uintCV(coinbase1),
+            uintCV(coinbase2),
+            uintCV(coinbase3),
+            uintCV(coinbase4),
+            uintCV(coinbase5)
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        return await wait_until_confirmation(broadcastResponse.txid);
+    } catch (error) {
+        console.log(error);
+    }
+  };  
+
   exports.reserveAddToken = reserveAddToken;
   exports.reserveSetActivationDelay = reserveSetActivationDelay;
   exports.reserveSetActivationThreshold = reserveSetActivationThreshold;
   exports.reserveRegisterUser = reserveRegisterUser;
+  exports.reserveSetCoinbaseAmount = reserveSetCoinbaseAmount;
   
