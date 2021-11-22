@@ -160,7 +160,12 @@
 (define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>))
     (if (is-eq token collateral)
         (ok ONE_8)
-        (contract-call? .fixed-weight-pool get-oracle-resilient token collateral u50000000 u50000000)
+        (ok 
+            (div-down 
+                (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
+                (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))
+            )
+        )
     )
 )
 
