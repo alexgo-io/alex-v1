@@ -102,7 +102,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <ft-trait>))
-    (or (is-eq (contract-of token) .yield-usda-92160) (is-eq (contract-of token) .key-wbtc-51840-yield-usda-92160))
+    (or (is-eq (contract-of token) .yield-wbtc-51840) (is-eq (contract-of token) .key-wbtc-51840-yield-usda-92160))
 )
 
 
@@ -118,10 +118,10 @@
   )
   (let 
     (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda-92160 get-balance tx-sender)))
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-wbtc-51840 get-balance tx-sender)))
       (proposer-key-balance (unwrap-panic (contract-call? .key-wbtc-51840-yield-usda-92160 get-balance tx-sender)))
       (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-usda-92160 get-total-supply)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-51840 get-total-supply)))
       (total-key-supply (unwrap-panic (contract-call? .key-wbtc-51840-yield-usda-92160 get-total-supply)))
       (total-supply (+ total-yield-supply total-key-supply))
       (proposal-id (+ u1 (var-get proposal-count)))
@@ -221,7 +221,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-yield-supply (unwrap-panic (contract-call? .yield-usda-92160 get-total-supply)))
+        (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-51840 get-total-supply)))
         (total-key-supply (unwrap-panic (contract-call? .key-wbtc-51840-yield-usda-92160 get-total-supply)))
         (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
         (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
@@ -269,8 +269,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .yield-usda-92160 u9216000000000 new-fee-rate-x))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .yield-usda-92160 u9216000000000 new-fee-rate-y))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-wbtc .yield-usda-92160 u5184000000000 new-fee-rate-x))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-wbtc .yield-usda-92160 u5184000000000 new-fee-rate-y))
     
     (ok true)
   )

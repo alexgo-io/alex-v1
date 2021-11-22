@@ -21,14 +21,12 @@ const yieldusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-u
 
 const keywbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-usda"
 const keyusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-59760-wbtc"
-const keyusda59760ytAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-59760-yield-usda-59760"
 
 const ytpyieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-59760-wbtc"
 const ytpyieldusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-59760-usda"
 
 const multisigncrpwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-usda"
 const multisigncrpusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-59760-wbtc"
-const multisigncrpwbtc59760ytAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-yield-usda-59760"
 
 const multisigytpyieldwbtc59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-59760-wbtc"
 const multisigytpyieldusda59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-59760-usda"
@@ -40,7 +38,7 @@ const multisigytpyieldusda92160 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.mul
 const yieldusda92160Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-92160"
 const yieldwbtc51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-51840"
 const keywbtc51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-51840-usda"
-const multisigcrpwbtc51840yieldusda92160 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-51840-yield-usda-92160"
+const multisigncrpwbtc51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-51840-yield-usda-92160"
 
 const yieldwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-79760"
 const keywbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-79760-usda"
@@ -121,7 +119,7 @@ Clarinet.test({
         //Deployer creating a pool, initial tokens injected to the pool
         //createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number)
         //(create-pool (token <ft-trait>) (collateral <yield-token-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint))
-        result = CRPYTTest.createPool(deployer, wbtcAddress, yieldusda92160Address, yieldwbtc51840Address, keywbtc51840Address, multisigcrpwbtc51840yieldusda92160, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result = CRPYTTest.createPool(deployer, wbtcAddress, yieldusda92160Address, yieldwbtc51840Address, keywbtc51840Address, multisigncrpwbtc51840Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
         result.expectOk().expectBool(true); 
         //err 4004 on 50000*ONE_8 
         //err 2016 on 1*ONE_8 

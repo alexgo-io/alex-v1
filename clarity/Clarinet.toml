@@ -95,7 +95,7 @@ depends_on = ["yield-usda-59760", "key-usda-59760-wbtc", "token-wbtc", "token-us
 
 [contracts.multisig-crp-wbtc-51840-yield-usda-92160]
 path = "contracts/multisig/multisig-crp-wbtc-51840-yield-usda-92160.clar"
-depends_on = ["yield-usda-92160", "key-wbtc-51840-yield-usda-92160", "token-wbtc", "token-usda", "trait-sip-010"]
+depends_on = ["yield-usda-92160", "yield-wbtc-51840", "key-wbtc-51840-yield-usda-92160", "token-wbtc", "trait-sip-010"]
 
 [contracts.multisig-crp-wbtc-59760-usda]
 path = "contracts/multisig/multisig-crp-wbtc-59760-usda.clar"
