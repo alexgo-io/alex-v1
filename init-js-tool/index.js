@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { ClarityType, getNonce } = require('@stacks/transactions');
-const { initCoinPrice, setOpenOracle, getOpenOracle } = require('./oracles').default
+const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
 const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
@@ -16,7 +16,6 @@ const {
     fwpGetPoolDetails,
     fwpSetOracleAverage,
     fwpSetOracleEnbled,
-    fwpGetPositionGivenBurn
 } = require('./pools-fwp')
 const {
     crpCreate,
@@ -137,7 +136,9 @@ async function see_balance(owner) {
 
 async function create_fwp(add_only) {
     console.log("------ FWP Creation / Add Liquidity ------");
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;    
 
     _pools = {
         1: {
@@ -213,8 +214,10 @@ async function arbitrage_fwp(dry_run = true) {
 
     const threshold = 0.002;
 
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
 
     let printed = parseFloat(wbtcPrice / usdaPrice);
 
@@ -283,8 +286,10 @@ async function arbitrage_crp(dry_run = true, _subset=_deploy) {
     console.log(timestamp());
 
     const threshold = 0.002;
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;    
 
     for (const key in _subset) {
         // console.log(_subset[key]);
@@ -431,7 +436,7 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
                                 dx_fwp = await fwpGetYgivenX(_subset[key]['collateral'], _subset[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
                             }
                             if (dx.type == 7 && dx_fwp.type == 7) {
-                                await crpAddToPostionAndSwitch(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], dy_ltv);
+                                await crpAddToPostionAndSwitch(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['expiry'], _subset[key]['yield_token'], _subset[key]['key_token'], dy_ltv);
                             } else {
                                 console.log('error (ytp): ', dx.value.value, 'error (fwp): ', dx_fwp.value.value);
                                 dy_ltv = Math.round(dy_ltv / 10);
@@ -445,7 +450,7 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
                                         dx_fwp_i = await fwpGetYgivenX(_subset[key]['collateral'], _subset[key]['token'], 0.5e+8, 0.5e+8, dy_ltv);
                                     }
                                     if (dx_i.type == 7 && dx_fwp_i.type == 7) {
-                                        await crpAddToPostionAndSwitch(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], dy_ltv);
+                                        await crpAddToPostionAndSwitch(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['expiry'], _subset[key]['yield_token'], _subset[key]['key_token'], dy_ltv);
                                     } else {
                                         console.log('error (ytp): ', dx_i.value.value, 'error (fwp): ', dx_fwp_i.value.value);
                                         break;
@@ -470,8 +475,10 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
 async function test_spot_trading() {
     console.log("------ Testing Spot Trading ------");
     console.log(timestamp());
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;    
 
     let from_amount = ONE_8;
     let to_amount = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount)).value.value);
@@ -491,8 +498,10 @@ async function test_spot_trading() {
 async function test_margin_trading() {
     console.log("------ Testing Margin Trading (Long BTC vs USD) ------");
     console.log(timestamp());
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
 
     let expiry_0 = 34560e+8
     let amount = 1 * ONE_8; //gross exposure of 1 BTC
@@ -675,14 +684,14 @@ async function run() {
     // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
     const _pools = _deploy;
 
-    await create_fwp(add_only=false);
+    // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    // await arbitrage_fwp(dry_run = false);
-    // await arbitrage_crp(dry_run = false, _pools);
-    // await arbitrage_ytp(dry_run = false, _pools);
-    // await arbitrage_fwp(dry_run = false);
+    await arbitrage_fwp(dry_run = false);
+    await arbitrage_crp(dry_run = false, _pools);
+    await arbitrage_ytp(dry_run = false, _pools);
+    await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
