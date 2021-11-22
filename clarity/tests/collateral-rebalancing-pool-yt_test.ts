@@ -15,14 +15,33 @@ const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
 const multisigfwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
+
 const yieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-59760"
 const yieldusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-59760"
+
 const keywbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-59760-usda"
+const keyusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-59760-wbtc"
+const keyusda59760ytAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-59760-yield-usda-59760"
+
 const ytpyieldwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-59760-wbtc"
-// const keyusda80875Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-80875-wbtc"
-// const multisigncrpusda80875Address = 
+const ytpyieldusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-59760-usda"
+
 const multisigncrpwbtc59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-usda"
+const multisigncrpusda59760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-59760-wbtc"
+const multisigncrpwbtc59760ytAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-59760-yield-usda-59760"
+
 const multisigytpyieldwbtc59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-59760-wbtc"
+const multisigytpyieldusda59760 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-59760-usda"
+
+const ytpyieldwbtc51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-51840-wbtc"
+const multisigytpyieldwbtc51840 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc-51840-wbtc"
+const ytpyieldusda92160Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-92160-usda"
+const multisigytpyieldusda92160 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-92160-usda"
+const yieldusda92160Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-92160"
+const yieldwbtc51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-51840"
+const keywbtc51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-51840-usda"
+const multisigcrpwbtc51840yieldusda92160 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-wbtc-51840-yield-usda-92160"
+
 const yieldwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc-79760"
 const keywbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-wbtc-79760-usda"
 const ytpyieldwbtc79760Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-wbtc-79760-wbtc"
@@ -57,12 +76,12 @@ const wbtcQ = 100*ONE_8
  */
 
 Clarinet.test({
-    name: "CRP : pool creation, adding values and reducing values",
+    name: "CRPYT : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
-        let CRPTest = new CRPYTTestAgent(chain, deployer);
+        let CRPYTTest = new CRPYTTestAgent(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let YIELDToken = new YIELD_USDA_59760(chain, deployer);
@@ -80,26 +99,33 @@ Clarinet.test({
         result = FWPTest.setOracleAverage(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);  
 
-        result = YTPTest.createPool(deployer, yieldwbtc59760Address, wbtcAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
+        // createPool(user: Account, aytoken: string, token: string, pooltoken: string, multiSig: string, dX: number, dY: number)
+        result = YTPTest.createPool(deployer, yieldwbtc51840Address, wbtcAddress, ytpyieldwbtc51840Address, multisigytpyieldwbtc51840, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
 
-        result = YTPTest.createPool(deployer, yieldusda59760Address, usdaAddress, ytpyieldwbtc59760Address, multisigytpyieldwbtc59760, wbtcQ / 10, wbtcQ / 10);        
+        result = YTPTest.createPool(deployer, yieldusda92160Address, usdaAddress, ytpyieldusda92160Address, multisigytpyieldusda92160, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
 
-        result = YTPTest.setOracleEnabled(deployer, yieldusda59760Address);
+        result = YTPTest.setOracleEnabled(deployer, yieldusda92160Address);
         result.expectOk().expectBool(true);   
-        result = YTPTest.setOracleAverage(deployer, yieldusda59760Address, 0.95e8);
+        result = YTPTest.setOracleAverage(deployer, yieldusda92160Address, 0.95e8);
         result.expectOk().expectBool(true);  
 
         // //Deployer creating a pool, initial tokens injected to the pool
-        // result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda59760Address, keyusda59760Address, multisigncrpusda59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
-        // result.expectOk().expectBool(true);
+        // result = CRPYTTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda59760Address, keyusda59760Address, multisigncrpusda59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        // result.expectOk().expectBool(true); //cannot work because WBTCAddress is not a yeild token
 
         let Balance:any = YIELDToken.balanceOf(deployer.address);
-        Balance.result.expectOk().expectBool(true);  
+        Balance.result.expectOk().expectUint(0)
+        
         //Deployer creating a pool, initial tokens injected to the pool
-        // result = CRPTest.createPool(deployer, wbtcAddress, yieldusda59760Address, yieldwbtc59760Address, keywbtc59760Address, multisigncrpwbtc59760Address, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
-        // result.expectOk().expectBool(true);
+        //createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number)
+        //(create-pool (token <ft-trait>) (collateral <yield-token-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint))
+        result = CRPYTTest.createPool(deployer, wbtcAddress, yieldusda92160Address, yieldwbtc51840Address, keywbtc51840Address, multisigcrpwbtc51840yieldusda92160, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        result.expectOk().expectBool(true); 
+        //err 4004 on 50000*ONE_8 
+        //err 2016 on 1*ONE_8 
+        //err 4001 on 10*ONE_8
 
         // call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
         // call.result.expectOk().expectUint(100089055);
