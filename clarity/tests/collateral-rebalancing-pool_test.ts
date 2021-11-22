@@ -85,21 +85,21 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         let call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(100089055);
+        call.result.expectOk().expectUint(99942609);
 
         // ltv-0 is 80%, but injecting liquidity pushes up LTV
         call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(80735461);
+        call.result.expectOk().expectUint(80044738);
 
         // Check pool details and print
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(80807360);
-        position['key-supply'].expectUint(80807360);
-        position['weight-x'].expectUint(66534526);
-        position['weight-y'].expectUint(ONE_8 - 66534526);        
-        position['balance-x'].expectUint(3326726300000);
-        position['balance-y'].expectUint(33576900);
+        position['yield-supply'].expectUint(79998800);
+        position['key-supply'].expectUint(79998800);
+        position['weight-x'].expectUint(66534136);
+        position['weight-y'].expectUint(ONE_8 - 66534136);        
+        position['balance-x'].expectUint(3326706800000);
+        position['balance-y'].expectUint(33464100);
         position['strike'].expectUint(50000 * ONE_8);
         position['ltv-0'].expectUint(ltv_0);
         position['bs-vol'].expectUint(bs_vol);
@@ -110,7 +110,7 @@ Clarinet.test({
         result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
-        position['dy'].expectUint(199764); 
+        position['dy'].expectUint(199091); 
 
         // arbtrageur selling 0.002 wbtc for usda
         result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.002 * ONE_8, 0);
