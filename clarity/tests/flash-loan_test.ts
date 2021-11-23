@@ -18,17 +18,17 @@ const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-w
 const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-50-50"
 const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50"
 const yieldusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-23040"
-const keyusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-23040-wbtc"
+const keyusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-23040-wstx"
 const ytpyieldusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-23040-usda"
-const multisigncrpusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-23040-wbtc"
+const multisigncrpusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-23040-wstx"
 const multisigytpyieldusda23040 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-23040-usda"
-const loanuser23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-23040"
+const loanuser23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wstx-usda-23040"
 const yieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-51840"
-const keyusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-51840-wbtc"
+const keyusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-51840-wstx"
 const ytpyieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-51840-usda"
-const multisigncrpusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-51840-wbtc"
+const multisigncrpusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-51840-wstx"
 const multisigytpyieldusda51840 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-51840-usda"
-const loanuser51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-51840"
+const loanuser51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wstx-usda-51840"
 
 const ONE_8 = 100000000
 const expiry = 23040e+8
@@ -81,13 +81,8 @@ Clarinet.test({
 
         result = YTPTest.createPool(deployer, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
-        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
-        result.expectOk().expectBool(true);
-
-        // result = CRPTest.addToPositionAndSwitch(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, ONE_8);
-        // position = result.expectOk().expectTuple();
-        // position['dy'].expectUint(3921903118746);        
-        // position['dx'].expectUint(3922734337244);        
+        result = CRPTest.createPool(deployer, usdaAddress, wstxAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 10000e+8);
+        result.expectOk().expectBool(true);    
       
         call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
@@ -95,7 +90,7 @@ Clarinet.test({
         position = call.result.expectOk().expectUint(0);
 
         // Let's borrow 1 BTC to lever up
-        result = FLTest.flashLoan(wallet_5, loanuser23040Address, wbtcAddress, ONE_8);
+        result = FLTest.flashLoan(wallet_5, loanuser23040Address, wstxAddress, 10000*ONE_8);
         result.expectOk();
 
         // // spent ~$231 to buy levered position (0.02 uints)

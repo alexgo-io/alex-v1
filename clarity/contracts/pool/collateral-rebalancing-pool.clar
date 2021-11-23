@@ -160,10 +160,16 @@
 (define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>))
     (if (is-eq token collateral)
         (ok ONE_8)
-        (ok 
-            (div-down 
-                (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
-                (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))
+        (if (is-eq (contract-of token) .token-wstx)
+            (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000)
+            (if (is-eq (contract-of collateral) .token-wstx)
+                (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))))
+                (ok
+                    (div-down 
+                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
+                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))
+                    )
+                )   
             )
         )
     )
@@ -304,8 +310,7 @@
                 
                 (now (* block-height ONE_8))
                 ;; assume 10mins per block
-                (t (div-down 
-                    (- expiry now) (* u52560 ONE_8)))
+                (t (div-down (- expiry now) (* u52560 ONE_8)))
                
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
