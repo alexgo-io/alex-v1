@@ -180,27 +180,24 @@
             (pool (unwrap! (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
             (shares (mul-down (unwrap-panic (contract-call? yield-token get-balance-fixed start-cycle tx-sender)) percent))
             (total-supply (get total-supply pool))
-            (pool-updated (merge pool {
-                total-supply: (- total-supply shares)
-                })
-            )
+            (pool-updated (merge pool { total-supply: (- total-supply shares) }))
             (reward-cycles (get reward-cycles pool))
             (shares-to-supply (div-down shares total-supply))
             (total-rewards (get sum-so-far (fold sum-stacking-reward reward-cycles { token: poxl-token, sum-so-far: u0 })))
             (portioned-rewards (mul-down total-rewards shares-to-supply))
+            (trait-lists (list poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait))
         )
 
         (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle poxl-token (+ start-cycle u32)) (contract-call? .alex-reserve-pool get-reward-cycle-length))) ERR-STACKING-IN-PROGRESS)
         
         ;; the first call claims rewards
-        ;; TODO: how can we pass trait to fold?
-        (map claim-stacking-reward reward-cycles poxl-token-trait)
+        (map claim-stacking-reward reward-cycles trait-lists)
 
         (try! (contract-call? poxl-token-trait transfer-fixed shares (as-contract tx-sender) tx-sender none))
         (try! (contract-call? reward-token-trait transfer-fixed portioned-rewards (as-contract tx-sender) tx-sender none))
 
         (map-set pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token burn-fixed start-cycle tx-sender shares))
+        (try! (contract-call? yield-token burn-fixed start-cycle shares tx-sender))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {poxl-token: shares, reward-token: portioned-rewards})
     )
