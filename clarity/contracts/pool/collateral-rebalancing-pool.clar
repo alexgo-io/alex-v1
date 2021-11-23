@@ -421,7 +421,10 @@
 
                 (dy-weighted (if (is-eq token-x token-y)
                                 dx-to-dy
-                                (try! (contract-call? .fixed-weight-pool swap token collateral u50000000 u50000000 dx-to-dy none))
+                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
+                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
+                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy none)))
+                                )
                              )
                 )
 

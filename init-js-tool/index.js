@@ -764,8 +764,8 @@ async function run() {
     // result = await ytpGetYgivenX('yield-wbtc-51840', 1e8);
     // console.log(result);
 
-    result = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 0.01e8);
-    console.log(result);
+    // result = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 0.01e8);
+    // console.log(result);
     
     // await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 0.01e8, 56319120000);
     // result = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 1000000);
@@ -807,5 +807,7 @@ async function run() {
     // console.log(result);
     // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
     // console.log(result);    
+
+    await mint('token-t-alex', 'ST2PMTQVZVCVSMH5XHYYES3EV9JW22G0VT2C56AY4', 1000 * ONE_8);    
 }
 run();
