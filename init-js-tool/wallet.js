@@ -26,7 +26,7 @@ const getUserPK = async ()=>{
 // const network = new StacksRegtest({
 const network = new StacksMocknet({
 // const network = new StacksMainnet({    
-    url:'https://regtest-2.alexgo.io'
+    url:'https://regtest-3.alexgo.io'
 })
 exports.getDeployerPK = getDeployerPK;
 exports.getUserPK = getUserPK;

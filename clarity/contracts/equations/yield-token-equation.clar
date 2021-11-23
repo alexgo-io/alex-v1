@@ -9,11 +9,10 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-NO-LIQUIDITY (err u2002))
-(define-constant ERR-WEIGHT-SUM (err u4000))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
-(define-constant ERR-INSUFFICIENT-BAL (err u4004))
-(define-constant ERR-INVALID-BAL (err u2008))
+(define-constant ERR-INSUFFICIENT-BALANCE (err u4004))
+(define-constant ERR-INVALID-BALANCE (err u2008))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
@@ -82,7 +81,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-price (balance-x uint) (balance-y uint) (t uint))
   (begin
-    (asserts! (>= balance-y balance-x) ERR-INVALID-BAL)      
+    (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
     (ok (pow-up (div-down balance-y balance-x) t))
   )
 )
@@ -114,9 +113,8 @@
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
   (begin
-    (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BAL)
-    (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)   
-     
+    (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
@@ -150,7 +148,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
   (begin
-    (asserts! (>= balance-y dy) ERR-INSUFFICIENT-BAL)
+    (asserts! (>= balance-y dy) ERR-INSUFFICIENT-BALANCE)
     (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
     (let 
       (          
@@ -315,16 +313,6 @@
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
-;; constants
-;;
-(define-constant SCALE_UP_OVERFLOW (err u5001))
-(define-constant SCALE_DOWN_OVERFLOW (err u5002))
-(define-constant ADD_OVERFLOW (err u5003))
-(define-constant SUB_OVERFLOW (err u5004))
-(define-constant MUL_OVERFLOW (err u5005))
-(define-constant DIV_OVERFLOW (err u5006))
-(define-constant POW_OVERFLOW (err u5007))
-
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
@@ -332,18 +320,6 @@
 
 ;; public functions
 ;;
-
-(define-read-only (get_one)
-    (ok ONE_8)
-)
-
-(define-read-only (scale-up (a uint))
-  (* a ONE_8)
-)
-
-(define-read-only (scale-down (a uint))
-  (/ a ONE_8)
-)
 
 (define-read-only (mul-down (a uint) (b uint))
   (/ (* a b) ONE_8)
@@ -366,13 +342,6 @@
   (if (is-eq a u0)
     u0
     (/ (* a ONE_8) b)
-  )
-)
-
-(define-read-only (div-up (a uint) (b uint))
-  (if (is-eq a u0)
-    u0
-    (+ u1 (/ (- (* a ONE_8) u1) b))
   )
 )
 
@@ -444,11 +413,11 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-(define-constant X_OUT_OF_BOUNDS (err u5009))
-(define-constant Y_OUT_OF_BOUNDS (err u5010))
-(define-constant PRODUCT_OUT_OF_BOUNDS (err u5011))
-(define-constant INVALID_EXPONENT (err u5012))
-(define-constant OUT_OF_BOUNDS (err u5013))
+(define-constant ERR_X_OUT_OF_BOUNDS (err u5009))
+(define-constant ERR_Y_OUT_OF_BOUNDS (err u5010))
+(define-constant ERR_PRODUCT_OUT_OF_BOUNDS (err u5011))
+(define-constant ERR_INVALID_EXPONENT (err u5012))
+(define-constant ERR_OUT_OF_BOUNDS (err u5013))
 
 ;; private functions
 ;;
@@ -513,14 +482,14 @@
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) iONE_8))
     )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) PRODUCT_OUT_OF_BOUNDS)
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR_PRODUCT_OUT_OF_BOUNDS)
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
   )
 )
 
 (define-private (exp-pos (x int))
   (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (let
       (
         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
@@ -581,10 +550,10 @@
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) X_OUT_OF_BOUNDS)
+    (asserts! (< x (pow u2 u127)) ERR_X_OUT_OF_BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) Y_OUT_OF_BOUNDS)
+    (asserts! (< y MILD_EXPONENT_BOUND) ERR_Y_OUT_OF_BOUNDS)
 
     (if (is-eq y u0) 
       (ok (to-uint iONE_8))
@@ -600,7 +569,7 @@
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
 (define-read-only (exp-fixed (x int))
   (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (if (< x 0)
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
@@ -611,22 +580,10 @@
   )
 )
 
-;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-(define-read-only (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-  (let
-    (
-      (logBase (* (unwrap-panic (ln-priv base)) iONE_8))
-      (logArg (* (unwrap-panic (ln-priv arg)) iONE_8))
-   )
-    (ok (/ (* logArg iONE_8) logBase))
- )
-)
-
 ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-read-only (ln-fixed (a int))
   (begin
-    (asserts! (> a 0) (err OUT_OF_BOUNDS))
+    (asserts! (> a 0) ERR_OUT_OF_BOUNDS)
     (if (< a iONE_8)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.
@@ -634,26 +591,5 @@
       (ok (- 0 (unwrap-panic (ln-priv (/ (* iONE_8 iONE_8) a)))))
       (ln-priv a)
    )
- )
-)
-
-(define-read-only (test)
-  (let
-    (
-      (x (* u7 (pow u10 u6)))
-      (y (* u233 (pow u10 u6)))
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
-      ;;(r (exp-pos (* -1 logx-times-y)))
-
-      ;;(arg (* 69 iONE_8))
-      ;;(r (exp-pos arg))
-      ;;(x_product (fold accumulate_product x_a_list {x: arg, product: iONE_8}))
-  )
-  ;;(ok logx-times-y)
-  ;;x_product
-  (ok (pow-fixed x y))
  )
 )

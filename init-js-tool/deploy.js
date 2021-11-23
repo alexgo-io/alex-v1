@@ -13,11 +13,10 @@ let VERSION;
 let contract_paths = [
     // "lib/math-log-exp.clar",
     // "lib/math-fixed-point.clar",
-    // "traits/trait-sip-010.clar",    
+    // "traits/trait-sip-010.clar",
+    // "traits/trait-semi-fungible-token.clar",    
     // "traits/trait-flash-loan-user.clar",
     // "traits/trait-oracle.clar",
-    // "traits/trait-pool-token.clar",
-    // "traits/trait-yield-token.clar",
     // "traits/trait-ownable.clar",
     // "traits/trait-vault.clar",
     // "traits/trait-multisig-vote.clar",
@@ -26,70 +25,34 @@ let contract_paths = [
     // "token/token-alex.clar",
     // "token/token-usda.clar",
     // "token/token-wbtc.clar",
+    // "token/token-t-alex.clar",
     // "alex-vault.clar",    
+    // "token/token-wstx.clar",    
     // "open-oracle.clar",    
     // "pool/alex-reserve-pool.clar",
     // "pool/fixed-weight-pool.clar",
     // "pool/liquidity-bootstrapping-pool.clar",
     // "pool/yield-token-pool.clar",
     // "pool/collateral-rebalancing-pool.clar",
+    // "pool/alex-futures-pool.clar",
     // "faucet.clar",
-    // "pool-token/fwp-wbtc-usda-50-50.clar",    
-    // "multisig/multisig-fwp-wbtc-usda-50-50.clar",  
-    
+    // "pool-token/fwp-wbtc-usda-50-50.clar",
+    // "pool-token/lbp-alex-usda-90-10.clar",
+    // "multisig/multisig-fwp-wbtc-usda-50-50.clar",
+    // "multisig/multisig-lbp-alex-usda-90-10.clar",
 
-    // "yield-token/yield-wbtc-11520.clar",
-    // "yield-token/yield-usda-11520.clar",    
-    // "key-token/key-usda-11520-wbtc.clar",        
-    // "key-token/key-wbtc-11520-usda.clar",   
-    // "pool-token/ytp-yield-wbtc-11520-wbtc.clar",   
-    // "pool-token/ytp-yield-usda-11520-usda.clar",       
-    // "multisig/multisig-crp-wbtc-11520-usda.clar",  
-    // "multisig/multisig-crp-usda-11520-wbtc.clar",      
-    // "multisig/multisig-ytp-yield-wbtc-11520-wbtc.clar",  
-    // "multisig/multisig-ytp-yield-usda-11520-usda.clar",    
-    // "flash-loan-user-margin-usda-wbtc-11520.clar", 
-    // "flash-loan-user-margin-wbtc-usda-11520.clar",      
-    
-    // "yield-token/yield-wbtc-51840.clar",
-    // "yield-token/yield-usda-51840.clar",    
-    // "key-token/key-usda-51840-wbtc.clar",        
-    // "key-token/key-wbtc-51840-usda.clar",   
-    // "pool-token/ytp-yield-wbtc-51840-wbtc.clar",   
-    // "pool-token/ytp-yield-usda-51840-usda.clar",       
-    // "multisig/multisig-crp-wbtc-51840-usda.clar",  
-    // "multisig/multisig-crp-usda-51840-wbtc.clar",      
-    // "multisig/multisig-ytp-yield-wbtc-51840-wbtc.clar",  
-    // "multisig/multisig-ytp-yield-usda-51840-usda.clar",    
-    // "flash-loan-user-margin-usda-wbtc-51840.clar", 
-    // "flash-loan-user-margin-wbtc-usda-51840.clar",    
-
-    // "yield-token/yield-wbtc-92160.clar",
-    // "yield-token/yield-usda-92160.clar",    
-    // "key-token/key-usda-92160-wbtc.clar",        
-    // "key-token/key-wbtc-92160-usda.clar",   
-    // "pool-token/ytp-yield-wbtc-92160-wbtc.clar",   
-    // "pool-token/ytp-yield-usda-92160-usda.clar",       
-    // "multisig/multisig-crp-wbtc-92160-usda.clar",  
-    // "multisig/multisig-crp-usda-92160-wbtc.clar",      
-    // "multisig/multisig-ytp-yield-wbtc-92160-wbtc.clar",  
-    // "multisig/multisig-ytp-yield-usda-92160-usda.clar",    
-    // "flash-loan-user-margin-usda-wbtc-92160.clar", 
-    // "flash-loan-user-margin-wbtc-usda-92160.clar",
-
-    // "yield-token/yield-wbtc-132481.clar",
-    // "yield-token/yield-usda-132481.clar",    
-    // "key-token/key-usda-132481-wbtc.clar",        
-    // "key-token/key-wbtc-132481-usda.clar",   
-    // "pool-token/ytp-yield-wbtc-132481-wbtc.clar",   
-    // "pool-token/ytp-yield-usda-132481-usda.clar",       
-    // "multisig/multisig-crp-wbtc-132481-usda.clar",  
-    // "multisig/multisig-crp-usda-132481-wbtc.clar",      
-    // "multisig/multisig-ytp-yield-wbtc-132481-wbtc.clar",  
-    // "multisig/multisig-ytp-yield-usda-132481-usda.clar",    
-    // "flash-loan-user-margin-usda-wbtc-132481.clar", 
-    // "flash-loan-user-margin-wbtc-usda-132481.clar"  
-    "faucet-v2.clar"   
+    // "yield-token/yield-wbtc.clar",
+    // "yield-token/yield-usda.clar",    
+    // "key-token/key-usda-wbtc.clar",        
+    // "key-token/key-wbtc-usda.clar",   
+    // "pool-token/ytp-yield-wbtc.clar",   
+    // "pool-token/ytp-yield-usda.clar",       
+    // "multisig/multisig-crp-wbtc-usda.clar",  
+    // "multisig/multisig-crp-usda-wbtc.clar",      
+    // "multisig/multisig-ytp-yield-wbtc.clar",  
+    // "multisig/multisig-ytp-yield-usda.clar",    
+    // "flash-loan-user-margin-usda-wbtc.clar", 
+    "flash-loan-user-margin-wbtc-usda.clar"  
 ]
 
 async function get_version(){
@@ -129,10 +92,10 @@ async function deploy(filePath, contractName){
     const transaction = await makeContractDeploy(txOptions);
     const broadcast_id = await broadcastTransaction(transaction, network);
     // console.log(broadcast_id)
-    //console.log(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
+    //console.log(`https://regtest-3.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
     while (true){
         await sleep(3000);
-        let truth = await fetch(`https://regtest-2.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
+        let truth = await fetch(`https://regtest-3.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
         let res = await truth.json();
         console.log(`Waiting... ${broadcast_id.txid}`)
         if (res['tx_status'] === 'success'){

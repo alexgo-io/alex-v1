@@ -15,6 +15,7 @@
 
 (define-data-var usda-amount uint u0)
 (define-data-var wbtc-amount uint u0)
+(define-data-var wstx-amount uint u0)
 (define-data-var stx-amount uint u0)
 (define-data-var alex-amount uint u0)
 
@@ -59,6 +60,10 @@
     (ok (var-get wbtc-amount))
 )
 
+(define-read-only (get-wstx-amount)
+    (ok (var-get wstx-amount))
+)
+
 (define-read-only (get-stx-amount)
     (ok (var-get stx-amount))
 )
@@ -78,6 +83,13 @@
     (begin
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (ok (var-set wbtc-amount amount))
+    )
+)
+
+(define-public (set-wstx-amount (amount uint))
+    (begin
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (ok (var-set wstx-amount amount))
     )
 )
 
@@ -106,12 +118,16 @@
             )
             (map-set users recipient u1)
         )
-        (and (> (var-get wbtc-amount) u0) (unwrap! (contract-call? .token-wbtc mint recipient (var-get wbtc-amount)) ERR-WBTC-TRANSFER-FAILED))
-        (and (> (var-get usda-amount) u0) (unwrap! (contract-call? .token-usda mint recipient (var-get usda-amount)) ERR-USDA-TRANSFER-FAILED))
-        (and (> (var-get alex-amount) u0) (unwrap! (contract-call? .token-alex mint recipient (var-get alex-amount)) ERR-ALEX-TRANSFER-FAILED))
+        (and (> (var-get wbtc-amount) u0) (unwrap! (contract-call? .token-wbtc mint (var-get wbtc-amount) recipient) ERR-WBTC-TRANSFER-FAILED))
+        (and (> (var-get usda-amount) u0) (unwrap! (contract-call? .token-usda mint (var-get usda-amount) recipient) ERR-USDA-TRANSFER-FAILED))
+        (and (> (var-get alex-amount) u0) (unwrap! (contract-call? .token-t-alex mint (var-get alex-amount) recipient) ERR-ALEX-TRANSFER-FAILED))
         (and (> (var-get stx-amount) u0) (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
         (ok true)
     )
+)
+
+(define-public (get-some-wstx-tokens)
+    (contract-call? .token-wstx mint (var-get wstx-amount) tx-sender)
 )
 
 ;; SEND-MANY
@@ -127,6 +143,17 @@
     (match prior 
         ok-value result
         err-value (err err-value)
+    )
+)
+
+(define-private (mint-alex (recipient { to: principal, amount: uint }))
+    (ok (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint (get amount recipient) (get to recipient)) ERR-ALEX-TRANSFER-FAILED)))
+)
+
+(define-public (mint-alex-many (recipients (list 200 { to: principal, amount: uint })))
+    (begin
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (fold check-err (map mint-alex recipients) (ok true))
     )
 )
 
