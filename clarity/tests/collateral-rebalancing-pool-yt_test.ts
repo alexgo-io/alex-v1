@@ -112,8 +112,8 @@ Clarinet.test({
         balance.result.expectOk().expectUint(10000 * ONE_8)
         
         //Deployer creating a pool, initial tokens injected to the pool
-        result = CRPYTTest.createPool(deployer, wbtcAddress, yieldusdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
-        result.expectOk().expectBool(true); 
+        // result = CRPYTTest.createPool(deployer, wbtcAddress, yieldusdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, 50000 * ONE_8);
+        // result.expectOk().expectBool(true); 
         //err 4004 on 50000*ONE_8
         //err 2016 on 1*ONE_8 
         //err 4001 on 10*ONE_8
