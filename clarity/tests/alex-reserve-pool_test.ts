@@ -646,7 +646,7 @@ describe("STAKING :", () => {
           .expectUint(CoreClient.ErrCode.ERR_REWARD_CYCLE_NOT_COMPLETED);
       });
 
-      it("throws ERR_NOTHING_TO_REDEEM when staker didn't stack at all", (chain, accounts, clients) => {
+      it("returns nothing when staker didn't stack at all", (chain, accounts, clients) => {
         // arrange
         const staker = accounts.get("wallet_1")!;
         const deployer = accounts.get("deployer")!;
@@ -669,12 +669,12 @@ describe("STAKING :", () => {
         ]).receipts[0];
 
         // assert
-        receipt.result
-          .expectErr()
-          .expectUint(CoreClient.ErrCode.ERR_NOTHING_TO_REDEEM);
+        let output:any = receipt.result.expectOk().expectTuple();
+        output['entitled-token'].expectUint(0);
+        output['to-return'].expectUint(0);
       });
 
-      it("throws ERR_NOTHING_TO_REDEEM while trying to claim reward 2nd time", (chain, accounts, clients) => {
+      it("returns nothing while trying to claim reward 2nd time", (chain, accounts, clients) => {
         // arrange
         const staker = accounts.get("wallet_1")!;
         const deployer = accounts.get("deployer")!;        
@@ -702,9 +702,9 @@ describe("STAKING :", () => {
         ]).receipts[2];
 
         // assert
-        receipt.result
-          .expectErr()
-          .expectUint(CoreClient.ErrCode.ERR_NOTHING_TO_REDEEM);
+        let output:any = receipt.result.expectOk().expectTuple();
+        output['entitled-token'].expectUint(0);
+        output['to-return'].expectUint(0);
       });
 
       it("succeeds and cause ft_transfer events", (chain, accounts, clients) => {
@@ -732,7 +732,10 @@ describe("STAKING :", () => {
         ]).receipts;
 
         // assert
-        receipts[1].result.expectOk().expectBool(true);
+        let output:any = receipts[1].result.expectOk().expectTuple();
+        output['entitled-token'].expectUint(100000000);
+        output['to-return'].expectUint(20000000000);
+
         assertEquals(receipts[1].events.length, 3);
 
         receipts[1].events.expectFungibleTokenTransferEvent(
@@ -829,13 +832,15 @@ describe("STAKING :", () => {
           ]).receipts[0];
          
           if (toReturn === 0 && entitledToken === 0) {
-            receipt.result.expectErr();
+            let output:any = receipt.result.expectOk().expectTuple();
+            output['entitled-token'].expectUint(0);
+            output['to-return'].expectUint(0);
           } else if (toReturn === 0) {
             // only mints entitled tokens
-            receipt.result.expectOk().expectBool(true);
+            receipt.result.expectOk().expectTuple();
             assertEquals(receipt.events.length, 1);
           } else {        
-            receipt.result.expectOk().expectBool(true);
+            receipt.result.expectOk().expectTuple();
             assertEquals(receipt.events.length, 3);
 
             receipt.events.expectFungibleTokenTransferEvent(

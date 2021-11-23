@@ -1178,10 +1178,10 @@
    )
 )
 
-(define-read-only (get-x-y  (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
+(define-read-only (get-x-y  (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
     (ok (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
-                        (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dx))
-                        (try! (get-y-given-x token-y-trait token-x-trait weight-x weight-y dx))
+                        (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy))
+                        (try! (get-y-given-x token-y-trait token-x-trait weight-x weight-y dy))
         )
     )    
 )
