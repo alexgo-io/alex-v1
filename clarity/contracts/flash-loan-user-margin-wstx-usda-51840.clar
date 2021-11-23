@@ -15,7 +15,8 @@
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wstx expiry)))
             (price (try! (contract-call? .yield-token-pool get-price .yield-usda-51840)))
             (gross-amount (contract-call? .math-fixed-point mul-up amount (contract-call? .math-fixed-point div-down price ltv)))
-            (swapped-token (get dx (try! (contract-call? .collateral-rebalancing-pool add-to-position-and-switch .token-usda .token-wstx .yield-usda-51840 .key-usda-51840-wstx gross-amount))))            
+            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .token-wstx .yield-usda-51840 .key-usda-51840-wstx gross-amount))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x .yield-usda-51840 .token-usda minted-yield-token none))))
         )
         ;; swap token to collateral so we can return flash-loan
         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx .token-usda u50000000 u50000000))

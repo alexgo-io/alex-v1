@@ -429,7 +429,7 @@
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
     
-                (dy (try! (get-y-given-x .token-wstx token-y-trait weight-x weight-y dx-net-fees)))
+                (dy (try! (get-y-given-wstx token-y-trait weight-y dx-net-fees)))
 
                 (pool-updated
                     (merge pool
@@ -475,7 +475,7 @@
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
 
-                (dx (try! (get-x-given-y .token-wstx token-y-trait weight-x weight-y dy-net-fees)))
+                (dx (try! (get-wstx-given-y token-y-trait weight-y dy-net-fees)))
 
                 (pool-updated
                     (merge pool
