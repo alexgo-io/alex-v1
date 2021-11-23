@@ -33,6 +33,7 @@ const ltv_0 = 0.8e+8
 const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
+const token_to_maturity = 2100e8;
 
 const wbtcPrice = 50000e+8
 
@@ -71,7 +72,7 @@ Clarinet.test({
 
         result = YTPTest.createPool(deployer, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
-        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
+        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectBool(true);
       
         call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
@@ -105,7 +106,7 @@ Clarinet.test({
         // but let's set up new pools
         result = YTPTest.createPool(deployer, yieldusda51840Address, usdaAddress, ytpyieldusda51840Address, multisigytpyieldusda51840, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
-        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda51840Address, keyusda51840Address, multisigncrpusda51840Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
+        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda51840Address, keyusda51840Address, multisigncrpusda51840Address, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectBool(true);        
 
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1);
