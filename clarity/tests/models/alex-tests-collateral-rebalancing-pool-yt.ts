@@ -73,11 +73,12 @@ import {
       ], this.deployer.address);
     }    
   
-    createPool(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number) {
+    createPool(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool-yt", "create-pool", [
           types.principal(token),
           types.principal(collateral),
+          types.uint(expiry),
           types.principal(yieldToken),
           types.principal(keyToken),
           types.principal(multiSig),
@@ -91,11 +92,12 @@ import {
       return block.receipts[0].result;
     }
   
-    addToPosition(user: Account, token: string, collateral: string, yieldToken: string, keyToken:string, dX: number) {
-        let block = this.chain.mineBlock([
+    addToPosition(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken:string, dX: number) {
+      let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool-yt", "add-to-position", [
             types.principal(token),
             types.principal(collateral),
+            types.uint(expiry),            
             types.principal(yieldToken),
             types.principal(keyToken),
             types.uint(dX)
@@ -104,11 +106,12 @@ import {
         return block.receipts[0].result;
       }
 
-      addToPositionAndSwitch(user: Account, token: string, collateral: string, yieldToken: string, keyToken: string, dX: number) {
+      addToPositionAndSwitch(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken: string, dX: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool-yt", "add-to-position-and-switch", [
             types.principal(token),
             types.principal(collateral),
+            types.uint(expiry),            
             types.principal(yieldToken),
             types.principal(keyToken),
             types.uint(dX)
@@ -117,11 +120,12 @@ import {
         return block.receipts[0].result;        
       }
   
-      reducePositionYield(user: Account, token: string, collateral: string, yieldToken: string, percent: number) {
+      reducePositionYield(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, percent: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool-yt", "reduce-position-yield", [
             types.principal(token),
             types.principal(collateral),
+            types.uint(expiry),
             types.principal(yieldToken),
             types.uint(percent)
           ], user.address),
@@ -129,11 +133,12 @@ import {
         return block.receipts[0].result;
       }
 
-      reducePositionKey(user: Account, token: string, collateral: string, keyToken: string, percent: number) {
+      reducePositionKey(user: Account, token: string, collateral: string, expiry: number, keyToken: string, percent: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool-yt", "reduce-position-key", [
             types.principal(token),
             types.principal(collateral),
+            types.uint(expiry),
             types.principal(keyToken),
             types.uint(percent)
           ], user.address),
@@ -268,28 +273,30 @@ import {
       ], this.deployer.address);
     }
 
-    burnKeyToken(user: Account, amount: number) {
-      let block = this.chain.mineBlock([Tx.contractCall("key-wbtc-59760-usda", "burn", [
-        types.principal(user.address),
-        types.uint(amount)
+    burnKeyToken(user: Account, expiry: number, amount: number) {
+      let block = this.chain.mineBlock([Tx.contractCall("key-wbtc-usda", "burn-fixed", [
+        types.uint(expiry),
+        types.uint(amount),
+        types.principal(user.address)        
       ], user.address),
       ]);
       return block.receipts[0].result;    
     }
 
-    transfer(user: Account, token: string, amount: number, sender: string, recipient: string, memo: ArrayBuffer) {
-      let block = this.chain.mineBlock([Tx.contractCall(token, "transfer", [
+    transfer(user: Account, token: string, expiry: number, amount: number, sender: string, recipient: string) {
+      let block = this.chain.mineBlock([Tx.contractCall(token, "transfer-fixed", [
+        types.uint(expiry),
         types.uint(amount),
         types.principal(sender),
         types.principal(recipient),
-        types.some(types.buff(memo))
       ], user.address),
       ]);
       return block.receipts[0].result;    
     }
 
-    getBalance(token: string, owner: string) {
-      return this.chain.callReadOnlyFn(token, "get-balance", [
+    getBalance(token: string, expiry: number, owner: string) {
+      return this.chain.callReadOnlyFn(token, "get-balance-fixed", [
+        types.uint(expiry),
         types.principal(owner)
       ], this.deployer.address);
     }

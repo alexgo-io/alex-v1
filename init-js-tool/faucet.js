@@ -20,7 +20,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet-v2',
+        contractName: 'faucet',
         functionName: 'set-usda-amount',
         functionArgs: [         
             uintCV(amount)
@@ -46,7 +46,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet-v2',
+        contractName: 'faucet',
         functionName: 'set-wbtc-amount',
         functionArgs: [         
             uintCV(amount)
@@ -72,7 +72,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet-v2',
+        contractName: 'faucet',
         functionName: 'set-stx-amount',
         functionArgs: [         
             uintCV(amount)
@@ -98,7 +98,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet-v2',
+        contractName: 'faucet',
         functionName: 'set-alex-amount',
         functionArgs: [         
             uintCV(amount)
@@ -124,7 +124,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'faucet-v2',
+        contractName: 'faucet',
         functionName: 'get-some-tokens',
         functionArgs: [     
           principalCV(recipient)    

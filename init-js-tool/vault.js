@@ -17,7 +17,7 @@ const { wait_until_confirmation } = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 
-const flashloan = async(loan_contract, token, amount) => {
+const flashloan = async(loan_contract, token, amount, expiry) => {
     console.log('[Vault] flash-loan...', loan_contract, token, amount);
     const privateKey = await getUserPK();
     const txOptions = {
@@ -28,6 +28,7 @@ const flashloan = async(loan_contract, token, amount) => {
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, loan_contract),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             uintCV(amount),
+            someCV(uintCV(expiry))
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -51,10 +52,10 @@ const mint = async(token, recipient, amount) => {
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
-        functionName: 'mint',
-        functionArgs: [
-            principalCV(recipient),
+        functionName: 'mint-fixed',
+        functionArgs: [            
             uintCV(amount),
+            principalCV(recipient),
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -78,10 +79,10 @@ const burn = async(token, recipient, amount) => {
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
-        functionName: 'burn',
-        functionArgs: [
-            principalCV(recipient),
+        functionName: 'burn-fixed',
+        functionArgs: [            
             uintCV(amount),
+            principalCV(recipient),
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -105,7 +106,7 @@ const transfer = async(token, recipient, amount, deployer=false) => {
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
-        functionName: 'transfer',
+        functionName: 'transfer-fixed',
         functionArgs: [
             uintCV(amount),
             principalCV((deployer) ? process.env.DEPLOYER_ACCOUNT_ADDRESS : process.env.USER_ACCOUNT_ADDRESS),
@@ -134,7 +135,7 @@ const balance = async(token, owner) => {
     const options = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
-        functionName: 'get-balance',
+        functionName: 'get-balance-fixed',
         functionArgs: [
         principalCV(owner),
         ],
@@ -154,7 +155,7 @@ const getBalance = async(token) => {
     const options = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: 'alex-vault',
-        functionName: 'get-balance',
+        functionName: 'get-balance-fixed',
         functionArgs: [
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
         ],
