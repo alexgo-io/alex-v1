@@ -808,6 +808,6 @@ async function run() {
     // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
     // console.log(result);    
 
-    await mint('token-t-alex', 'ST2PMTQVZVCVSMH5XHYYES3EV9JW22G0VT2C56AY4', 1000 * ONE_8);    
+    // await mint('token-t-alex', 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK', 1000 * ONE_8);    
 }
 run();
