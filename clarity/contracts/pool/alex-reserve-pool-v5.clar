@@ -1,19 +1,42 @@
 (impl-trait .trait-ownable.ownable-trait)
-(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 
 ;; alex-reserve-pool
 
+(define-constant ERR-INVALID-POOL-ERR (err u2001))
+(define-constant ERR-NO-LIQUIDITY (err u2002))
+(define-constant ERR-INVALID-LIQUIDITY (err u2003))
+(define-constant ERR-TRANSFER-X-FAILED (err u3001))
+(define-constant ERR-TRANSFER-Y-FAILED (err u3002))
+(define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
+(define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
+(define-constant ERR-NO-FEE (err u2005))
+(define-constant ERR-NO-FEE-Y (err u2006))
+(define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
+(define-constant ERR-MATH-CALL (err u2010))
+(define-constant ERR-INTERNAL-FUNCTION-CALL (err u1001))
+(define-constant ERR-GET-WEIGHT-FAIL (err u2012))
+(define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
+(define-constant ERR-GET-PRICE-FAIL (err u2015))
+(define-constant ERR-GET-SYMBOL-FAIL (err u6000))
+(define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
+(define-constant ERR-EXPIRY (err u2017))
+(define-constant ERR-GET-BALANCE-FAIL (err u6001))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-USER-ALREADY-REGISTERED (err u10001))
+(define-constant ERR-USER-NOT-FOUND (err u10002))
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
 (define-constant ERR-ACTIVATION-THRESHOLD-REACHED (err u10004))
+(define-constant ERR-UNABLE-TO-SET-THRESHOLD (err u10021))
 (define-constant ERR-CONTRACT-NOT-ACTIVATED (err u10005))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-CANNOT-STAKE (err u10016))
 (define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
 (define-constant ERR-NOTHING-TO-REDEEM (err u10018))
 (define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
+(define-constant ERR-TOO-MANY-TOKENS (err u2025))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -86,8 +109,8 @@
   }
 )
 
-(define-data-var activation-delay uint u150)
-(define-data-var activation-threshold uint u20)
+(define-data-var activation-delay uint u1) ;;u150
+(define-data-var activation-threshold uint u1) ;;u20
 
 ;; activation-block for each stake-able token
 (define-map activation-block principal uint)
@@ -110,10 +133,6 @@
     user: principal
   }
   uint
-)
-
-(define-read-only (get-reward-cycle-length)
-  (var-get reward-cycle-length)
 )
 
 (define-read-only (is-token-approved (token principal))
@@ -279,7 +298,7 @@
       (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
         ;; this cycle hasn't finished, or staker contributed nothing
         u0
-        (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
+        (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))        
       )
       ;; before first reward cycle
       u0
@@ -289,14 +308,14 @@
 
 ;; STAKING ACTIONS
 
-(define-public (stake-tokens (token-trait <ft-trait>) (amount-token uint) (lock-period uint))
+(define-public (stake-tokens (token-trait <pool-token-trait>) (amount-token uint) (lock-period uint))
   (begin
     (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
     (stake-tokens-at-cycle token-trait tx-sender (get-or-create-user-id (contract-of token-trait) tx-sender) amount-token block-height lock-period)
   )
 )
 
-(define-private (stake-tokens-at-cycle (token-trait <ft-trait>) (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
+(define-private (stake-tokens-at-cycle (token-trait <pool-token-trait>) (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
   (let
     (
       (token (contract-of token-trait))
@@ -313,7 +332,7 @@
     (asserts! (>= block-height (get-activation-block-or-default token)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
-    (unwrap! (contract-call? token-trait transfer-fixed amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+    (unwrap! (contract-call? token-trait transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
     (try! (as-contract (add-to-balance token amount-token)))
     (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
@@ -389,14 +408,14 @@
 ;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
-(define-public (claim-staking-reward (token-trait <ft-trait>) (target-cycle uint))
+(define-public (claim-staking-reward (token-trait <pool-token-trait>) (target-cycle uint))
   (begin
     (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
     (claim-staking-reward-at-cycle token-trait tx-sender block-height target-cycle)
   )
 )
 
-(define-private (claim-staking-reward-at-cycle (token-trait <ft-trait>) (user principal) (stacks-height uint) (target-cycle uint))
+(define-private (claim-staking-reward-at-cycle (token-trait <pool-token-trait>) (user principal) (stacks-height uint) (target-cycle uint))
   (let
     (
       (token (contract-of token-trait))
@@ -406,6 +425,7 @@
       (to-return (get to-return (get-staker-at-cycle-or-default token target-cycle user-id)))
     )
     (asserts! (> current-cycle target-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (or (> to-return u0) (> entitled-token u0)) ERR-NOTHING-TO-REDEEM)
     ;; disable ability to claim again
     (map-set staker-at-cycle
       {
@@ -419,11 +439,11 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
+    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-pool token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint-fixed entitled-token user))))
-    (ok { to-return: to-return, entitled-token: entitled-token })
+    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user entitled-token))))
+    (ok true)
   )
 )
 
@@ -536,17 +556,11 @@
   )
 )
 
-(define-public (set-reward-cycle-length (new-reward-cycle-length uint))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set reward-cycle-length new-reward-cycle-length))
-  )
-)
-
 ;; contract initialisation
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .yield-token-pool true)
-  (map-set approved-contracts (as-contract tx-sender) true)  
+  (map-set approved-contracts .alex-reserve-pool true)
+  (map-set approved-contracts (as-contract tx-sender) true)
 )

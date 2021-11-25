@@ -73,7 +73,7 @@ import {
       ], this.deployer.address);
     }    
   
-    createPool(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, dX: number) {
+    createPool(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, token_to_maturity: number, dX: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
           types.principal(token),
@@ -86,6 +86,7 @@ import {
           types.uint(conversion_ltv),
           types.uint(bs_vol),
           types.uint(moving_average),
+          types.uint(token_to_maturity),
           types.uint(dX)
         ], user.address),
       ]);
