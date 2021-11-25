@@ -550,17 +550,11 @@
   )
 )
 
-(define-public (set-reward-cycle-length (new-reward-cycle-length uint))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set reward-cycle-length new-reward-cycle-length))
-  )
-)
-
 ;; contract initialisation
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .yield-token-pool true)
+  (map-set approved-contracts .alex-reserve-pool true)  
   (map-set approved-contracts (as-contract tx-sender) true)  
 )
