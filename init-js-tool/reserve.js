@@ -24,7 +24,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v7',
+        contractName: 'alex-reserve-pool-v8',
         functionName: 'add-token',
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token)
@@ -51,7 +51,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v7',
+        contractName: 'alex-reserve-pool-v8',
         functionName: 'set-activation-threshold',
         functionArgs: [
             uintCV(activation_threshold)
@@ -78,7 +78,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v7',
+        contractName: 'alex-reserve-pool-v8',
         functionName: 'set-activation-delay',
         functionArgs: [
             uintCV(activation_delay)
@@ -105,7 +105,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v7',
+        contractName: 'alex-reserve-pool-v8',
         functionName: 'register-user',
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -133,7 +133,7 @@ const {
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-        contractName: 'alex-reserve-pool-v7',
+        contractName: 'alex-reserve-pool-v8',
         functionName: 'set-coinbase-amount',
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),

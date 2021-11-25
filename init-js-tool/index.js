@@ -742,7 +742,7 @@ async function run() {
     // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
-    // await reduce_position_fwp(0.9 * ONE_8);
+    // await reduce_position_fwp(0.5 * ONE_8, deployer=true);
 
     // const _reduce = { 0: _deploy[14] , 1: _deploy[15] };
     // await reduce_position_ytp(_reduce, 0.9*ONE_8, deployer=true);
@@ -756,7 +756,7 @@ async function run() {
 
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
     
-    // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
+    // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token('STG8B2770SPDM68BYEPGQHB3GNQ8J9D0SY6FZCFC');
     // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
     // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
@@ -793,7 +793,7 @@ async function run() {
     // result = await reserveSetActivationThreshold(1);
     // result = await reserveSetActivationDelay(1);
     // result = await reserveRegisterUser('token-t-alex');
-    // result = await reserveSetCoinbaseAmount('token-t-alex', 50000e8, 25000e8, 12500e8, 6250e8, 3750e8);
+    // result = await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
@@ -807,7 +807,8 @@ async function run() {
     // console.log(result);
     // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
     // console.log(result);    
-
-    // await mint('token-t-alex', 'ST3N9GSEWX710RE5PSD110APZGKSD1EFMBEC7PFWK', 1000 * ONE_8);    
+    
+    // await get_some_token('ST2YTHSPHE3H9R4EP5QTQN30NTEV1DE9N5K31J0NK');
+    await mint('token-t-alex', 'ST3NPXKC8VEDN29YRWTEC1RYTMP8VQA600ZBH6SF1', 1000 * ONE_8);    
 }
 run();
