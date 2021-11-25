@@ -451,6 +451,14 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+        let yieldWBTC = new YIELD_WBTC(chain, deployer);
+
+        // Deployer minting initial tokens
+        usdaToken.mintFixed(deployer.address, 1000000000 * ONE_8);
+        wbtcToken.mintFixed(deployer.address, 10000 * ONE_8);        
+        yieldWBTC.mintFixed(expiry, 100 * ONE_8, deployer.address);
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, wbtcQ, Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
