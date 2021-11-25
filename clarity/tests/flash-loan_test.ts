@@ -23,7 +23,8 @@ const loanuserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-us
 const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
 const ONE_8 = 100000000
-const expiry = 23040e+8
+const expiry = 23040e+8 //0x0218711A0000 => 2304000000000
+const expiryBuff = new Uint8Array([0x02,0x18,0x71,0x1A,0x00,0x00]).buffer
 const nextExpiry = 51840e+8
 const ltv_0 = 0.8e+8
 const conversion_ltv = 0.95e+8
@@ -84,7 +85,7 @@ Clarinet.test({
         position = call.result.expectOk().expectUint(0);
 
         // Let's borrow 1 BTC to lever up
-        result = FLTest.flashLoan(wallet_5, loanuserAddress, wbtcAddress, ONE_8, expiry);
+        result = FLTest.flashLoan(wallet_5, loanuserAddress, wbtcAddress, ONE_8, expiryBuff);
         result.expectOk();
 
         // spent ~$231 to buy levered position (0.02 uints)

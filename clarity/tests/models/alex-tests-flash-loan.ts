@@ -16,13 +16,13 @@ import {
       this.deployer = deployer;
     }
   
-    flashLoan(user: Account, loanuser:string, token:string, amount: number, memo: number) {
+    flashLoan(user: Account, loanuser:string, token:string, amount: number, memo: ArrayBuffer) {
       let block = this.chain.mineBlock([
         Tx.contractCall("alex-vault", "flash-loan", [
           types.principal(loanuser),
           types.principal(token),
           types.uint(amount),
-          types.some(types.uint(memo))
+          types.some(types.buff(memo))
         ], user.address),
       ]);
       return block.receipts[0].result;
