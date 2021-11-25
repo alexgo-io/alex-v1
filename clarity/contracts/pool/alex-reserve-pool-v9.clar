@@ -83,7 +83,7 @@
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
 
 ;; how long a reward cycle is
-(define-data-var reward-cycle-length uint u2100)
+(define-data-var reward-cycle-length uint u525)
 
 ;; At a given reward cycle, what is the total amount of tokens staked
 (define-map staking-stats-at-cycle 
@@ -327,7 +327,7 @@
     (asserts! (>= block-height (get-activation-block-or-default token)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
-    (unwrap! (contract-call? token-trait transfer amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+    (unwrap! (contract-call? token-trait transfer amount-token tx-sender .alex-vault-v2 none) ERR-TRANSFER-FAILED)
     (try! (as-contract (add-to-balance token amount-token)))
     (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
       ok-value (ok true)
@@ -434,7 +434,7 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-pool token-trait to-return user)))
+    (and (> to-return u0) (try! (contract-call? .alex-vault-v2 transfer-pool token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
     (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user entitled-token))))
@@ -563,5 +563,6 @@
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .yield-token-pool true)
+  (map-set approved-contracts .alex-reserve-pool true)  
   (map-set approved-contracts (as-contract tx-sender) true)  
 )
