@@ -34,6 +34,7 @@ const initCoinPrice = async () => {
     btc: btcPrice
   };
 };
+
 //Call open-oracle to set price
 const setOpenOracle = async (symbol, src, price) => {
   console.log('Setting oracle...', symbol, src, price);
