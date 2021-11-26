@@ -52,9 +52,10 @@ let contract_paths = [
     // "flash-loan-user-margin-usda-wbtc-74880.clar", 
     // "flash-loan-user-margin-wbtc-usda-74880.clar"  
 
-    "alex-vault-v2.clar",
-    "pool/alex-reserve-pool-v9.clar",
-    "helpers/alex-staking-helper-v9.clar"
+    "alex-vault-v3.clar",
+    "token/token-t-alex-v2.clar",
+    "pool/alex-reserve-pool-v10.clar",
+    "helpers/alex-staking-helper-v10.clar"
 ]
 
 async function get_version(){

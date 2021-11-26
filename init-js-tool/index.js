@@ -56,7 +56,10 @@ const {
     reserveSetActivationDelay,
     reserveSetActivationThreshold,
     reserveRegisterUser,
-    reserveSetCoinbaseAmount
+    reserveSetCoinbaseAmount,
+    reserveGetUserId,
+    reserveGetStakerAtCycleOrDefault,
+    reserveSetRewardCycleLength
 } = require('./reserve')
 const {
     multisigPropose,
@@ -784,11 +787,16 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    // result = await reserveAddToken('token-t-alex');
-    // result = await reserveSetActivationThreshold(1);
-    // result = await reserveSetActivationDelay(1);
-    // result = await reserveRegisterUser('token-t-alex');
-    // result = await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
+    // await reserveAddToken('token-t-alex-v2');
+    // await reserveSetActivationThreshold(1);
+    // await reserveSetActivationDelay(1);
+    // await reserveSetRewardCycleLength(525);
+    // await reserveRegisterUser('token-t-alex-v2');
+    // await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
+    // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
+    // console.log(result);
+    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex-v2', 3, 5);
+    // console.log(result);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);

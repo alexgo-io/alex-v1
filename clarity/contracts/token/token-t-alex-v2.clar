@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-pool-token.pool-token-trait)
 
-(define-fungible-token t-alex)
+(define-fungible-token t-alex-v2)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var CONTRACT-OWNER principal tx-sender)
@@ -30,15 +30,15 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (decimals-to-fixed (ft-get-supply t-alex)))
+  (ok (decimals-to-fixed (ft-get-supply t-alex-v2)))
 )
 
 (define-read-only (get-name)
-  (ok "t-alex")
+  (ok "t-alex-v2")
 )
 
 (define-read-only (get-symbol)
-  (ok "t-alex")
+  (ok "t-alex-v2")
 )
 
 (define-read-only (get-decimals)
@@ -46,7 +46,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (decimals-to-fixed (ft-get-balance t-alex account)))
+  (ok (decimals-to-fixed (ft-get-balance t-alex-v2 account)))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -77,7 +77,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? t-alex (fixed-to-decimals amount) sender recipient)
+    (match (ft-transfer? t-alex-v2 (fixed-to-decimals amount) sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -90,33 +90,25 @@
 (define-public (mint (recipient principal) (amount uint))
   (begin
     (try! (check-is-approved contract-caller))
-    (ft-mint? t-alex (fixed-to-decimals amount) recipient)
+    (ft-mint? t-alex-v2 (fixed-to-decimals amount) recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
     (try! (check-is-approved contract-caller))
-    (ft-burn? t-alex (fixed-to-decimals amount) sender)
-  )
-)
-
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
+    (ft-burn? t-alex-v2 (fixed-to-decimals amount) sender)
   )
 )
 
 (begin
-  (map-set approved-contracts .alex-reserve-pool true)  
+  (map-set approved-contracts .alex-reserve-pool-v10 true)  
   (map-set approved-contracts .faucet true)
 )
 
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? t-alex u1000000000 tx-sender))  
+  (try! (ft-mint? t-alex-v2 u1000000000 tx-sender))  
 )
 
 

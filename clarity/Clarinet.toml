@@ -245,3 +245,19 @@ depends_on = ["trait-sip-010", "trait-pool-token", "trait-ownable"]
 [contracts.multisig-ytp-yield-wbtc-80875-wbtc]
 path = "contracts/multisig/multisig-ytp-yield-wbtc-80875-wbtc.clar"
 depends_on = ["ytp-yield-wbtc-80875-wbtc", "trait-yield-token", "trait-sip-010", "yield-token-pool", "yield-wbtc-80875"]
+
+[contracts.alex-reserve-pool-v10]
+path = "contracts/pool/alex-reserve-pool-v10.clar"
+depends_on = ["trait-ownable", "trait-pool-token", "alex-vault-v3"]
+
+[contracts.alex-vault-v3]
+path = "contracts/alex-vault-v3.clar"
+depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fixed-point", "trait-ownable", "trait-yield-token"]
+
+[contracts.token-t-alex-v2]
+path = "contracts/token/token-t-alex-v2.clar"
+depends_on = ["trait-pool-token", "trait-ownable"]
+
+[contracts.alex-staking-helper-v10]
+path = "contracts/helpers/alex-staking-helper-v10.clar"
+depends_on = ["alex-reserve-pool-v10", "token-t-alex-v2"]
