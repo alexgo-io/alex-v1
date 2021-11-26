@@ -7,7 +7,7 @@ import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.t
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';  
 import { FLTestAgent1 } from './models/alex-tests-flash-loan.ts';
-import { WBTCToken, WSTXToken } from './models/alex-tests-tokens.ts';
+import { USDAToken ,WBTCToken, WSTXToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
@@ -59,8 +59,17 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let FLTest = new FLTestAgent1(chain, deployer);
+        let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);   
-        let wstxToken = new WSTXToken(chain, deployer);  
+        let wstxToken = new WSTXToken(chain, deployer);
+        
+        // Deployer minting initial tokens
+        usdaToken.mintFixed(deployer.address, 1000000000 * ONE_8);        
+        usdaToken.mintFixed(wallet_1.address, 200000 * ONE_8);        
+        wbtcToken.mintFixed(deployer.address, 10000 * ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000 * ONE_8)
+        wstxToken.mintFixed(deployer.address, 10000 * ONE_8)
+        wstxToken.mintFixed(wallet_1.address, 10000 * ONE_8)
         
         wbtcToken.transferToken(ONE_8, deployer.address, wallet_5.address, new ArrayBuffer(30));        
         wstxToken.transferToken(100*ONE_8, deployer.address, wallet_5.address, new ArrayBuffer(30));
