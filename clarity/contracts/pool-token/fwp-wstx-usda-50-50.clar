@@ -1,37 +1,28 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-pool-token.pool-token-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
 
 (define-fungible-token fwp-wstx-usda-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal .fixed-weight-pool)
+(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant ONE_8 (pow u10 u8))
-
-(define-private (pow-decimals)
-  (pow u10 (unwrap-panic (get-decimals)))
-)
-
-(define-read-only (fixed-to-decimals (amount uint))
-  (/ (* amount (pow-decimals)) ONE_8)
-)
-
-(define-private (decimals-to-fixed (amount uint))
-  (/ (* amount ONE_8) (pow-decimals))
-)
-
 (define-read-only (get-owner)
-  (ok (var-get contract-owner))
+  (ok (var-get CONTRACT-OWNER))
 )
 
 (define-public (set-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set contract-owner owner))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set CONTRACT-OWNER owner))
   )
+)
+
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get CONTRACT-OWNER))) ERR-NOT-AUTHORIZED))
 )
 
 ;; ---------------------------------------------------------
@@ -39,7 +30,7 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-usda-50-50)))
+  (ok (ft-get-supply fwp-wstx-usda-50-50))
 )
 
 (define-read-only (get-name)
@@ -55,12 +46,12 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-usda-50-50 account)))
+  (ok (ft-get-balance fwp-wstx-usda-50-50 account))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
   )
 )
@@ -72,7 +63,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? fwp-wstx-usda-50-50 (fixed-to-decimals amount) sender recipient)
+    (match (ft-transfer? fwp-wstx-usda-50-50 amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -82,16 +73,54 @@
   )
 )
 
-(define-public (mint (recipient principal) (amount uint))
+(define-public (mint (amount uint) (recipient principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-mint? fwp-wstx-usda-50-50 (fixed-to-decimals amount) recipient)
+    (try! (check-is-approved contract-caller))
+    (ft-mint? fwp-wstx-usda-50-50 amount recipient)
   )
 )
 
-(define-public (burn (sender principal) (amount uint))
+(define-public (burn (amount uint) (sender principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ft-burn? fwp-wstx-usda-50-50 (fixed-to-decimals amount) sender)
+    (try! (check-is-approved contract-caller))
+    (ft-burn? fwp-wstx-usda-50-50 amount sender)
   )
+)
+
+(define-constant ONE_8 (pow u10 u8))
+
+(define-private (pow-decimals)
+  (pow u10 (unwrap-panic (get-decimals)))
+)
+
+(define-read-only (fixed-to-decimals (amount uint))
+  (/ (* amount (pow-decimals)) ONE_8)
+)
+
+(define-private (decimals-to-fixed (amount uint))
+  (/ (* amount ONE_8) (pow-decimals))
+)
+
+(define-read-only (get-total-supply-fixed)
+  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-usda-50-50)))
+)
+
+(define-read-only (get-balance-fixed (account principal))
+  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-usda-50-50 account)))
+)
+
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (transfer (fixed-to-decimals amount) sender recipient memo)
+)
+
+(define-public (mint-fixed (amount uint) (recipient principal))
+  (mint (fixed-to-decimals amount) recipient)
+)
+
+(define-public (burn-fixed (amount uint) (sender principal))
+  (burn (fixed-to-decimals amount) sender)
+)
+
+(begin
+  (map-set approved-contracts .fixed-weight-pool true)
 )
