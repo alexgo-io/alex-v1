@@ -38,6 +38,7 @@ const token_to_maturity = 2100e8;
 
 const wbtcPrice = 50000e+8
 const wbtcQ = 100*ONE_8
+const amount = 5000000*ONE_8
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
@@ -66,16 +67,25 @@ Clarinet.test({
         // Deployer minting initial tokens
         usdaToken.mintFixed(deployer.address, 1000000000 * ONE_8);        
         usdaToken.mintFixed(wallet_1.address, 200000 * ONE_8);        
-        wbtcToken.mintFixed(deployer.address, 10000 * ONE_8)
-        wbtcToken.mintFixed(wallet_1.address, 10000 * ONE_8)
         wstxToken.mintFixed(deployer.address, 10000 * ONE_8)
         wstxToken.mintFixed(wallet_1.address, 10000 * ONE_8)
+        wbtcToken.mintFixed(deployer.address, 10000 * ONE_8)
+        wbtcToken.mintFixed(wallet_1.address, 10000 * ONE_8)
         
         wbtcToken.transferToken(ONE_8, deployer.address, wallet_5.address, new ArrayBuffer(30));        
         wstxToken.transferToken(100*ONE_8, deployer.address, wallet_5.address, new ArrayBuffer(30));
 
         let call = await FLTest.getBalance(wbtcAddress, wallet_5.address);
-        let position:any = call.result.expectOk().expectUint(100000000);
+        let position:any = call.result.expectOk().expectUint(ONE_8);
+
+        call = await FLTest.getBalance(wstxAddress, wallet_5.address);
+        position = call.result.expectOk().expectUint(100*ONE_8);
+
+        call = await FLTest.getBalance(wbtcAddress, deployer.address);
+        position = call.result.expectOk().expectUint(9999*ONE_8);
+
+        call = await FLTest.getBalance(wstxAddress, deployer.address);
+        position = call.result.expectOk().expectUint(9900*ONE_8);
         
         let result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
