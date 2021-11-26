@@ -218,7 +218,6 @@ class WSTXToken {
       ]);
       return block.receipts[0].result;
   }
-
   
   totalSupply() {
     return this.chain.callReadOnlyFn("token-wstx", "get-total-supply-fixed", [], this.deployer.address);
@@ -226,7 +225,7 @@ class WSTXToken {
 }
 export { WSTXToken };
 
-class POOLTOKEN_FWP_WSTX_USDA_5050 {
+class FWP_WSTX_USDA_5050 {
   chain: Chain;
   deployer: Account;
 
@@ -236,50 +235,16 @@ class POOLTOKEN_FWP_WSTX_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-balance", [
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
-
-  getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-wstx", "get-balance", [
-      types.principal(account),
-    ], this.deployer.address);
-  }
-
-  // Always need to called by deployer
-  mint(recipient: string, amount : number) {
-    return this.chain.callReadOnlyFn("token-wstx", "mint", [
-      types.uint(amount),
-      types.principal(recipient),
-    ], this.deployer.address);
-  }
-
-  mintFixed(recipient: string, amount : number) {
-    return this.chain.callReadOnlyFn("token-wstx", "mint-fixed", [
-      types.uint(amount),
-      types.principal(recipient),
-    ], this.deployer.address);
-  }
-
-  transferToken(amount: number, sender: string, receiver: string, memo:ArrayBuffer) {
-    let block = this.chain.mineBlock([
-        Tx.contractCall("token-wstx", "transfer-fixed", [
-          types.uint(amount),
-          types.principal(sender),
-          types.principal(receiver),
-          types.some(types.buff(memo))
-        ], this.deployer.address),
-      ]);
-      return block.receipts[0].result;
-  }
-
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-total-supply", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
-export { POOLTOKEN_FWP_WSTX_USDA_5050 };
+export { FWP_WSTX_USDA_5050 };
 
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
