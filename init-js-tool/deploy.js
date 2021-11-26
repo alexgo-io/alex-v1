@@ -13,11 +13,10 @@ let VERSION;
 let contract_paths = [
     // "lib/math-log-exp.clar",
     // "lib/math-fixed-point.clar",
-    // "traits/trait-sip-010.clar",    
+    // "traits/trait-sip-010.clar",
+    // "traits/trait-semi-fungible-token.clar",    
     // "traits/trait-flash-loan-user.clar",
     // "traits/trait-oracle.clar",
-    // "traits/trait-pool-token.clar",
-    // "traits/trait-yield-token.clar",
     // "traits/trait-ownable.clar",
     // "traits/trait-vault.clar",
     // "traits/trait-multisig-vote.clar",
@@ -35,25 +34,25 @@ let contract_paths = [
     // "pool/liquidity-bootstrapping-pool.clar",
     // "pool/yield-token-pool.clar",
     // "pool/collateral-rebalancing-pool.clar",
+    // "pool/alex-futures-pool.clar",
     // "faucet.clar",
-    // "pool-token/fwp-wbtc-usda-50-50.clar",    
-    // "multisig/multisig-fwp-wbtc-usda-50-50.clar",  
-    
-    // "yield-token/yield-wbtc-74880.clar",
-    // "yield-token/yield-usda-74880.clar",    
-    // "key-token/key-usda-74880-wbtc.clar",        
-    // "key-token/key-wbtc-74880-usda.clar",   
-    // "pool-token/ytp-yield-wbtc-74880-wbtc.clar",   
-    // "pool-token/ytp-yield-usda-74880-usda.clar",       
-    // "multisig/multisig-crp-wbtc-74880-usda.clar",  
-    // "multisig/multisig-crp-usda-74880-wbtc.clar",      
-    // "multisig/multisig-ytp-yield-wbtc-74880-wbtc.clar",  
-    // "multisig/multisig-ytp-yield-usda-74880-usda.clar",    
-    // "flash-loan-user-margin-usda-wbtc-74880.clar", 
-    // "flash-loan-user-margin-wbtc-usda-74880.clar"  
+    // "pool-token/fwp-wbtc-usda-50-50.clar",
+    // "pool-token/lbp-alex-usda-90-10.clar",
+    // "multisig/multisig-fwp-wbtc-usda-50-50.clar",
+    // "multisig/multisig-lbp-alex-usda-90-10.clar",
 
-    "pool/alex-reserve-pool-v8.clar",
-    "helpers/alex-staking-helper-v8.clar"
+    // "yield-token/yield-wbtc.clar",
+    // "yield-token/yield-usda.clar",    
+    // "key-token/key-usda-wbtc.clar",        
+    // "key-token/key-wbtc-usda.clar",   
+    // "pool-token/ytp-yield-wbtc.clar",   
+    // "pool-token/ytp-yield-usda.clar",       
+    // "multisig/multisig-crp-wbtc-usda.clar",  
+    // "multisig/multisig-crp-usda-wbtc.clar",      
+    // "multisig/multisig-ytp-yield-wbtc.clar",  
+    // "multisig/multisig-ytp-yield-usda.clar",    
+    // "flash-loan-user-margin-usda-wbtc.clar", 
+    "flash-loan-user-margin-wbtc-usda.clar"  
 ]
 
 async function get_version(){
@@ -93,10 +92,10 @@ async function deploy(filePath, contractName){
     const transaction = await makeContractDeploy(txOptions);
     const broadcast_id = await broadcastTransaction(transaction, network);
     // console.log(broadcast_id)
-    //console.log(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
+    //console.log(`https://regtest-3.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
     while (true){
         await sleep(3000);
-        let truth = await fetch(`https://regtest-2.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
+        let truth = await fetch(`https://regtest-3.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
         let res = await truth.json();
         console.log(`Waiting... ${broadcast_id.txid}`)
         if (res['tx_status'] === 'success'){

@@ -1,6 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
 (use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; fixed-weight-pool
@@ -11,20 +10,12 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL-ERR (err u2001))
-(define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
-(define-constant ERR-INVALID-BALANCE (err u2008))
-(define-constant ERR-INVALID-TOKEN (err u2007))
-(define-constant ERR-NO-FEE (err u2005))
-(define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
-(define-constant ERR-MATH-CALL (err u2010))
-(define-constant ERR-GET-ORACLE-PRICE-FAIL (err u7000))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
 (define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
@@ -119,13 +110,13 @@
     (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) 
 )
 
-;; @desc get-balances ({balance-x, balance-y})
+;; @desc get-balance-fixeds ({balance-x, balance-y})
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
+(define-read-only (get-balance-fixeds (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
   (let
     (
       (token-x (contract-of token-x-trait))
@@ -275,7 +266,7 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response bool uint)
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -328,7 +319,7 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response (tuple uint uint uint) uint)
-(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (dx uint) (dy uint))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (dx uint) (dy uint))
     (begin
         (asserts! (and (> dx u0) (> dy u0)) ERR-INVALID-LIQUIDITY)
 
@@ -357,7 +348,7 @@
 
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-            (try! (contract-call? the-pool-token mint tx-sender new-supply))
+            (try! (contract-call? the-pool-token mint new-supply tx-sender))
             
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {supply: new-supply, dx: dx, dy: new-dy})
@@ -374,7 +365,7 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param percent; percentage of pool token held to reduce
 ;; @returns (response (tuple uint uint) uint)
-(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <pool-token-trait>) (percent uint))
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
         (let
@@ -384,7 +375,7 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
-                (total-shares (unwrap-panic (contract-call? the-pool-token get-balance tx-sender)))
+                (total-shares (unwrap-panic (contract-call? the-pool-token get-balance-fixed tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))
                 (reduce-data (try! (get-position-given-burn token-x-trait token-y-trait weight-x weight-y shares)))
@@ -405,7 +396,7 @@
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
-            (try! (contract-call? the-pool-token burn tx-sender shares))
+            (try! (contract-call? the-pool-token burn shares tx-sender))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
@@ -848,16 +839,6 @@
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
-;; constants
-;;
-(define-constant SCALE_UP_OVERFLOW (err u5001))
-(define-constant SCALE_DOWN_OVERFLOW (err u5002))
-(define-constant ADD_OVERFLOW (err u5003))
-(define-constant SUB_OVERFLOW (err u5004))
-(define-constant MUL_OVERFLOW (err u5005))
-(define-constant DIV_OVERFLOW (err u5006))
-(define-constant POW_OVERFLOW (err u5007))
-
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
@@ -865,18 +846,6 @@
 
 ;; public functions
 ;;
-
-(define-read-only (get_one)
-    (ok ONE_8)
-)
-
-(define-read-only (scale-up (a uint))
-    (* a ONE_8)
-)
-
-(define-read-only (scale-down (a uint))
-    (/ a ONE_8)
-)
 
 (define-read-only (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
@@ -977,11 +946,11 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-(define-constant X_OUT_OF_BOUNDS (err u5009))
-(define-constant Y_OUT_OF_BOUNDS (err u5010))
-(define-constant PRODUCT_OUT_OF_BOUNDS (err u5011))
-(define-constant INVALID_EXPONENT (err u5012))
-(define-constant OUT_OF_BOUNDS (err u5013))
+(define-constant ERR_X_OUT_OF_BOUNDS (err u5009))
+(define-constant ERR_Y_OUT_OF_BOUNDS (err u5010))
+(define-constant ERR_PRODUCT_OUT_OF_BOUNDS (err u5011))
+(define-constant ERR_INVALID_EXPONENT (err u5012))
+(define-constant ERR_OUT_OF_BOUNDS (err u5013))
 
 ;; private functions
 ;;
@@ -1046,14 +1015,14 @@
       (lnx (unwrap-panic (ln-priv x-int)))
       (logx-times-y (/ (* lnx y-int) iONE_8))
     )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) PRODUCT_OUT_OF_BOUNDS)
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR_PRODUCT_OUT_OF_BOUNDS)
     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
   )
 )
 
 (define-private (exp-pos (x int))
   (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (let
       (
         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
@@ -1114,10 +1083,10 @@
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) X_OUT_OF_BOUNDS)
+    (asserts! (< x (pow u2 u127)) ERR_X_OUT_OF_BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) Y_OUT_OF_BOUNDS)
+    (asserts! (< y MILD_EXPONENT_BOUND) ERR_Y_OUT_OF_BOUNDS)
 
     (if (is-eq y u0) 
       (ok (to-uint iONE_8))
@@ -1133,7 +1102,7 @@
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
 (define-read-only (exp-fixed (x int))
   (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err INVALID_EXPONENT))
+    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (if (< x 0)
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
@@ -1144,22 +1113,10 @@
   )
 )
 
-;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-(define-read-only (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-  (let
-    (
-      (logBase (* (unwrap-panic (ln-priv base)) iONE_8))
-      (logArg (* (unwrap-panic (ln-priv arg)) iONE_8))
-   )
-    (ok (/ (* logArg iONE_8) logBase))
- )
-)
-
 ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-read-only (ln-fixed (a int))
   (begin
-    (asserts! (> a 0) (err OUT_OF_BOUNDS))
+    (asserts! (> a 0) ERR_OUT_OF_BOUNDS)
     (if (< a iONE_8)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.

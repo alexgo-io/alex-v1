@@ -1,6 +1,7 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { LBPTestAgent } from './models/alex-tests-liquidity-bootstrapping-pool.ts';
+import { USDAToken, ALEXToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
@@ -29,18 +30,19 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let LBPTest = new LBPTestAgent(chain, deployer);
+        let usdaToken = new USDAToken(chain, deployer);
+        let alexToken = new ALEXToken(chain, deployer);
 
-        let call = chain.callReadOnlyFn("token-alex", "get-balance", 
-            [types.principal(deployer.address)
-            ], deployer.address);
-        call.result.expectOk().expectUint(100000000000000000);         
+        // Deployer minting initial tokens        
+        usdaToken.mintFixed(deployer.address, 1000000000 * ONE_8);
+        alexToken.mintFixed(deployer.address, 1000000000 * ONE_8);       
         
         // Deployer creating a pool, initial tokens injected to the pool
         let result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
-        call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
+        let call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(80274141756);
         position['balance-x'].expectUint(alexQty);
@@ -168,6 +170,12 @@ Clarinet.test({
       let deployer = accounts.get("deployer")!;
       let wallet_1 = accounts.get("wallet_1")!;
       let LBPTest = new LBPTestAgent(chain, deployer);    
+      let usdaToken = new USDAToken(chain, deployer);
+      let alexToken = new ALEXToken(chain, deployer);
+
+      // Deployer minting initial tokens        
+      usdaToken.mintFixed(deployer.address, 1000000000 * ONE_8);
+      alexToken.mintFixed(deployer.address, 1000000000 * ONE_8);         
       
       // non-deployer creating a pool will throw an error
       let result = LBPTest.createPool(wallet_1, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
