@@ -29,9 +29,15 @@ class AlexStakingHelper {
         return block.receipts[0].result;
     }
     
-    getStaked(sender: Account, reward_cycle: number) {
-        return this.chain.callReadOnlyFn(helperContract, "get-staker-at-cycle-or-default-by-tx-sender", [
-          types.uint(reward_cycle)
+    // getStaked(sender: Account, reward_cycle: number) {
+    //     return this.chain.callReadOnlyFn(helperContract, "get-staker-at-cycle-or-default-by-tx-sender", [
+    //       types.uint(reward_cycle)
+    //     ], sender.address);
+    // }
+
+    getStaked(sender: Account, reward_cycles: Array<number>) {
+        return this.chain.callReadOnlyFn(helperContract, "get-staked", [
+          types.list(reward_cycles.map(e=>{return types.uint(e)}))
         ], sender.address);
     }
 
@@ -164,20 +170,19 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // you can stake only from next cycle
-        let call:any = await StakingTest.getStaked(wallet_6, 0);
-        result = call.result.expectTuple();
-        result['amount-staked'].expectUint(0);
-        result['to-return'].expectUint(0);
+        let call:any = await StakingTest.getStaked(wallet_6, [0,1,3]);
+        result = call.result.expectList();
+        let result0:any = result[0].expectTuple();
+        result0['amount-staked'].expectUint(0);
+        result0['to-return'].expectUint(0);
 
-        call = await StakingTest.getStaked(wallet_6, 1);
-        result = call.result.expectTuple();
-        result['amount-staked'].expectUint(100e8);
-        result['to-return'].expectUint(0);        
-        
-        call = await StakingTest.getStaked(wallet_6, 3);
-        result = call.result.expectTuple();
-        result['amount-staked'].expectUint(100e8);
-        result['to-return'].expectUint(100e8);
+        result0 = result[1].expectTuple();
+        result0['amount-staked'].expectUint(100e8);
+        result0['to-return'].expectUint(0);
+
+        result0 = result[2].expectTuple();
+        result0['amount-staked'].expectUint(100e8);
+        result0['to-return'].expectUint(100e8);        
 
         call = await StakingTest.getFirstStacksBlocksInRewardCycle(alexAddress, 1);
         result = call.result.expectUint(8 + reward_cycle_length);
