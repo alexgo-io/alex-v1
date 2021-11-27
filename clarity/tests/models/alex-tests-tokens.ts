@@ -218,13 +218,33 @@ class WSTXToken {
       ]);
       return block.receipts[0].result;
   }
-
   
   totalSupply() {
     return this.chain.callReadOnlyFn("token-wstx", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { WSTXToken };
+
+class FWP_WSTX_USDA_5050 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FWP_WSTX_USDA_5050 };
 
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
