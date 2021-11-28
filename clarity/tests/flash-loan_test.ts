@@ -91,7 +91,7 @@ Clarinet.test({
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token
         call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
-        position = call.result.expectOk().expectUint(4094610000000);
+        position = call.result.expectOk().expectUint(4094610276984);
         // but nothing with yield token
         call = await FLTest.getBalance(yieldusda23040Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);         
@@ -118,7 +118,7 @@ Clarinet.test({
         call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalance(keyusda51840Address, wallet_5.address);
-        position = call.result.expectOk().expectUint(1793499000000);
+        position = call.result.expectOk().expectUint(1793499970806);
         // but nothing with yield-usda-51840
         call = await FLTest.getBalance(yieldusda51840Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);

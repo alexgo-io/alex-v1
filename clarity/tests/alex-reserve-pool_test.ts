@@ -344,7 +344,7 @@ describe("STAKING :", () => {
                 
         assertEquals(receipt.events.length, 2);
         receipt.events.expectFungibleTokenTransferEvent(
-          amountTokens / ONE_8,
+          amountTokens,
           staker.address,
           clients.core.getVaultAddress(),
           "alex"
@@ -387,7 +387,7 @@ describe("STAKING :", () => {
           assertEquals(receipt.events.length, 2);
 
           receipt.events.expectFungibleTokenTransferEvent(
-            amountTokens / ONE_8,
+            amountTokens,
             staker.address,
             clients.core.getVaultAddress(),
             "alex"
@@ -739,7 +739,7 @@ describe("STAKING :", () => {
         assertEquals(receipts[1].events.length, 3);
 
         receipts[1].events.expectFungibleTokenTransferEvent(
-          amountTokens / ONE_8,
+          amountTokens,
           clients.core.getVaultAddress(),
           staker.address,
           "alex"
@@ -844,7 +844,7 @@ describe("STAKING :", () => {
             assertEquals(receipt.events.length, 3);
 
             receipt.events.expectFungibleTokenTransferEvent(
-              toReturn / ONE_8,
+              toReturn,
               clients.core.getVaultAddress(),
               staker.address,
               "alex"
