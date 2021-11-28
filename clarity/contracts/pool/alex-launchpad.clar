@@ -23,7 +23,6 @@
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
-(define-map approved-contracts principal bool)
 
 (define-read-only (get-owner)
   (ok (var-get CONTRACT-OWNER))
@@ -49,7 +48,8 @@
     activation-delay: uint,
     activation-threshold: uint,
     users-nonce: uint,
-    last-random: uint
+    last-random: uint,
+    tickets-won: uint
   }
 )
 
@@ -100,7 +100,8 @@
         activation-delay: activation-delay,
         activation-threshold: activation-threshold,
         users-nonce: u0,
-        last-random: u0
+        last-random: u0,
+        tickets-won: u0
       }
     )
     (unwrap! (contract-call? token-trait transfer-fixed (* amount-per-ticket total-tickets ONE_8) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
@@ -200,28 +201,51 @@
         (user-id (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND))
         (sub-details (get-subscriber-at-token-or-default token user-id))
         (activation-block (get activation-block details))
+        (total-tickets (get total-tickets details))
+        (total-subscribed (get total-subscribed details))
+        (tickets-won (get tickets-won details))
         (vrf-seed (unwrap! (get-random-uint-at-block activation-block) ERR_NO_VRF_SEED_FOUND))
-        (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed (get total-subscribed details)) (get last-random details)))
-        (this-random (mod (get-next-random last-random) (get total-subscribed details)))
-        (details-updated (merge details { last-random: this-random }))
-        (sub-details-updated (merge sub-details { ticket-balance: (- token-balance u1) }))
+        (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed total-subscribed) (get last-random details)))
+        (this-random (mod (get-next-random last-random) total-subscribed))
+        (value-low (get value-low sub-details))
+        (value-high (get value-high sub-details))
+        (value-low-adjusted 
+          (if (< value-low (/ total-tickets u2)) 
+            u0 
+            (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
+              (- value-low (- total-tickets (- total-subscribed value-high))) ;; this will panic
+              (- value-low (/ total-tickets u2))
+            )
+          )
+        )
+        (value-high-adjusted 
+          (if (< value-low (/ total-tickets u2)) 
+            (+ value-high (- total-tickets value-low)) 
+            (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
+              total-subscribed
+              (+ value-high (/ total-tickets u2))
+            )
+          )
+        )                  
       )
+
       (asserts! (> block-height activation-block) ERR-CONTRACT-NOT-ACTIVATED)
       (asserts! (is-eq (contract-of ticket-trait) (get ticket details)) ERR-INVALID-TICKET)
 
-      (map-set subscriber-at-token { token: token, user-id: user-id} sub-details-updated)
-      (map-set token-list token details-updated)
+      (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- token-balance u1) }))      
       
-      (if (and (>= this-random (get value-low sub-details)) (<= this-random (get value-high sub-details)))
+      (if (and (<= tickets-won total-tickets) (>= this-random value-low-adjusted) (<= this-random value-high-adjusted))
         (begin
           (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) (as-contract tx-sender) tx-sender none) ERR-TRANSFER-FAILED)
           (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) (as-contract tx-sender) (get fee-to-address details) none) ERR-TRANSFER-FAILED)
           (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender))
+          (map-set token-list token (merge details { last-random: this-random, tickets-won: (+ tickets-won u1) }))          
           (ok true)
         )
         (begin
           (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) (as-contract tx-sender) tx-sender none) ERR-TRANSFER-FAILED)
           (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender))
+          (map-set token-list token (merge details { last-random: this-random }))
           (ok false)
         )
       )

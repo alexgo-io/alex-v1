@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { ClarityType, getNonce } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
-const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
+const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
     fwpCreate,
@@ -732,10 +732,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -810,6 +810,11 @@ async function run() {
     // result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 1);
     // console.log(result);
     // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
-    // console.log(result);    
+    // console.log(result);  
+    
+    // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
+    // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
+    // await mint_sft('yield-usda', 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
+    await get_some_token('ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
 }
 run();
