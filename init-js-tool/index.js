@@ -127,6 +127,34 @@ const _deploy = {
         target_apy: 0.086475,
         expiry: 74880e+8,
     },    
+    4: {token: 'token-wbtc',
+        collateral: 'token-usda',
+        yield_token: 'yield-wbtc-92160',
+        key_token: 'key-wbtc-92160-usda',
+        pool_token: 'ytp-yield-wbtc-92160-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-92160-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-92160-usda',
+        liquidity_ytp: 100e+8,
+        collateral_crp: 1500000e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.06354,
+        expiry: 92160e+8,
+    },
+    5: {token: 'token-usda',
+        collateral: 'token-wbtc',
+        yield_token: 'yield-usda-92160',
+        key_token: 'key-usda-92160-wbtc',
+        pool_token: 'ytp-yield-usda-92160-usda',
+        multisig_ytp: 'multisig-ytp-yield-usda-92160-usda',
+        multisig_crp: 'multisig-crp-usda-92160-wbtc',
+        liquidity_ytp: 6000000e+8,
+        collateral_crp: 25e+8,
+        ltv_0: 0.7e+8,
+        bs_vol: 0.8e+8,
+        target_apy: 0.086475,
+        expiry: 92160e+8,
+    },       
 }
 
 const ONE_8 = 100000000
@@ -718,18 +746,18 @@ async function run() {
     //                     8:_deploy[10],
     //                     9:_deploy[11]
     //                 };
-    const _pools = { 0:_deploy[0], 1:_deploy[1] };
+    // const _pools = { 0:_deploy[4], 1:_deploy[5] };
     // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
-    // const _pools = _deploy;
+    const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    // await arbitrage_fwp(dry_run = false);
-    // await arbitrage_crp(dry_run = false, _pools);
-    // await arbitrage_ytp(dry_run = false, _pools);
-    // await arbitrage_fwp(dry_run = false);
+    await arbitrage_fwp(dry_run = false);
+    await arbitrage_crp(dry_run = false, _pools);
+    await arbitrage_ytp(dry_run = false, _pools);
+    await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -811,7 +839,8 @@ async function run() {
     // result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e8, 0.5e8);
     // printResult(result);
 
-    await mint('token-t-alex-v2', 'ST13F0C8HFJC9H1FR7S7WFZ9FEMNV1PBEG346P1ZP', 1000e8);    
+    // await mint('token-t-alex-v2', 'ST13F0C8HFJC9H1FR7S7WFZ9FEMNV1PBEG346P1ZP', 1000e8);    
 
+    // await get_some_token('ST15SC7G0PBTS0WPDC0ZX96X1CXE76Y22EATCWXAE');
 }
 run();
