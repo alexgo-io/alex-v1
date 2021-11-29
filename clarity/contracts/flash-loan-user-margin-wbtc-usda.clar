@@ -12,10 +12,10 @@
             ;; buff to uint conversion
             (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wbtc .token-usda memo-uint)))
-            ;; buff to uint conversion
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-wbtc)))
             (gross-amount (mul-up amount (div-down price ltv)))
-            (swapped-token (get dx (try! (contract-call? .collateral-rebalancing-pool add-to-position-and-switch .token-wbtc .token-usda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))            
+            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wbtc .token-usda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-wbtc .token-wbtc minted-yield-token none))))
         )
         ;; swap token to collateral so we can return flash-loan
         (try! (contract-call? .fixed-weight-pool swap .token-usda .token-wbtc u50000000 u50000000 swapped-token none))
