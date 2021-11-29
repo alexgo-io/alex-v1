@@ -31,13 +31,13 @@
   )
 )
 
-(define-map token-list 
+(define-map listing 
   principal
-  {
-    amount-per-ticket: uint,
+  {    
     ticket: principal,
     fee-to-address: principal,
     total-tickets: uint,
+    amount-per-ticket: uint,
     wstx-per-ticket-in-fixed: uint,
     total-subscribed: uint,
     activation-block: uint,
@@ -80,18 +80,18 @@
 
 ;; wstx-per-ticket-in-fixed => 8 decimal
 ;; all others => zero decimal
-(define-public (add-or-update-token (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (total-tickets uint) (wstx-per-ticket-in-fixed uint) (activation-delay uint) (activation-threshold uint))
+(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (activation-delay uint) (activation-threshold uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (map-set token-list 
+    (map-set listing 
       (contract-of token-trait)
-      {
-        amount-per-ticket: amount-per-ticket,
+      {        
         ticket: (contract-of ticket-trait), 
         fee-to-address: fee-to-address,
-        total-tickets: total-tickets, 
+        amount-per-ticket: amount-per-ticket,
         wstx-per-ticket-in-fixed: wstx-per-ticket-in-fixed, 
         total-subscribed: u0,
+        total-tickets: u0, 
         activation-block: u340282366920938463463374607431768211455,
         activation-delay: activation-delay,
         activation-threshold: activation-threshold,
@@ -99,29 +99,44 @@
         last-random: u0,
         tickets-won: u0
       }
+    )    
+    (ok true)
+  )
+)
+
+(define-public (add-to-position (token-trait <ft-trait>) (tickets uint))
+  (let
+    (
+      (details (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN)) 
     )
-    (unwrap! (contract-call? token-trait transfer-fixed (* amount-per-ticket total-tickets ONE_8) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
+    (asserts! (is-eq (get fee-to-address details) tx-sender) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq (get activation-block details) u340282366920938463463374607431768211455) ERR-ACTIVATION-THRESHOLD-REACHED)
+    (asserts! (> tickets u0) ERR-INVALID-TICKET)
+
+    (map-set listing (contract-of token-trait) (merge details { total-tickets: (+ (get total-tickets details) tickets ) }))
+
+    (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) tickets ONE_8) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
     (ok true)
   )
 )
 
 ;; returns Stacks block height registration was activated at plus activationDelay
 (define-read-only (get-activation-block (token principal))
-  (ok (get activation-block (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN)))
+  (ok (get activation-block (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 ;; returns activation delay
 (define-read-only (get-activation-delay (token principal))
-  (ok (get activation-delay (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN)))
+  (ok (get activation-delay (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 ;; returns activation threshold
 (define-read-only (get-activation-threshold (token principal))
-  (ok (get activation-threshold (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN)))
+  (ok (get activation-threshold (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 (define-read-only (get-token-details (token principal))
-  (map-get? token-list token)
+  (map-get? listing token)
 )
 
 ;; returns (some user-id) or none
@@ -136,7 +151,7 @@
 
 ;; returns (some number of registered users), used for activation and tracking user IDs, or none
 (define-read-only (get-registered-users-nonce (token principal))
-  (ok (get users-nonce (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN)))
+  (ok (get users-nonce (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 ;; returns user ID if it has been created, or creates and returns new ID
@@ -148,12 +163,12 @@
     (let
       (
         (new-id (+ u1 (try! (get-registered-users-nonce token))))
-        (details (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN))
+        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
         (details-updated (merge details { users-nonce: new-id }))
       )
       (map-insert users {token: token, user-id: new-id} user)
       (map-insert user-ids {token: token, user: user} new-id)
-      (map-set token-list token details-updated)
+      (map-set listing token details-updated)
       (ok new-id)
     )
   )
@@ -164,7 +179,7 @@
     (asserts! (is-none (get-user-id token tx-sender)) ERR-USER-ALREADY-REGISTERED)    
     (let
       (
-        (details (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN))
+        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
         (user-id (try! (get-or-create-user-id token tx-sender)))
         (value-low (+ u1 (get total-subscribed details)))
         (value-high (- (+ value-low ticket-amount) u1))
@@ -178,8 +193,8 @@
       (unwrap! (contract-call? .token-wstx transfer-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
 
       (map-set subscriber-at-token { token: token, user-id: user-id} { ticket-balance: ticket-amount, value-low: value-low, value-high: value-high })
-      (map-set token-list token details-updated)
-      (and (is-eq user-id (try! (get-activation-threshold token))) (map-set token-list token (merge details { activation-block: (+ block-height (get activation-delay details)) })))      
+      (map-set listing token details-updated)
+      (and (is-eq user-id (try! (get-activation-threshold token))) (map-set listing token (merge details { activation-block: (+ block-height (get activation-delay details)) })))      
       (ok true)
     )
   )
@@ -191,11 +206,11 @@
 
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
-    (asserts! (>= (get total-subscribed (unwrap! (map-get? token-list (contract-of token-trait)) ERR-INVALID-TOKEN)) (get total-tickets (unwrap! (map-get? token-list (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-TOKEN-UNDER-SUBSCRIBED)
+    (asserts! (>= (get total-subscribed (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN)) (get total-tickets (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-TOKEN-UNDER-SUBSCRIBED)
     (let
       (
         (token (contract-of token-trait))
-        (details (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN))
+        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
         (user-id (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND))
         (sub-details (get-subscriber-at-token-or-default token user-id))
         (activation-block (get activation-block details))
@@ -238,13 +253,13 @@
           (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) (as-contract tx-sender) tx-sender none) ERR-TRANSFER-FAILED)
           (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) (as-contract tx-sender) (get fee-to-address details) none) ERR-TRANSFER-FAILED)
           (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender))
-          (map-set token-list token (merge details { last-random: this-random, tickets-won: (+ tickets-won u1) }))          
+          (map-set listing token (merge details { last-random: this-random, tickets-won: (+ tickets-won u1) }))          
           (ok true)
         )
         (begin
           (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) (as-contract tx-sender) tx-sender none) ERR-TRANSFER-FAILED)
           (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender))
-          (map-set token-list token (merge details { last-random: this-random }))
+          (map-set listing token (merge details { last-random: this-random }))
           (ok false)
         )
       )
