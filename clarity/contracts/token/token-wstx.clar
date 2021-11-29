@@ -73,7 +73,7 @@
 (define-public (mint (amount uint) (recipient principal)) 
   (begin
     (asserts! (is-eq tx-sender recipient) ERR-NOT-TOKEN-OWNER)
-    (try! (stx-transfer? amount recipient .alex-vault))
+    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) recipient .alex-vault))
     (ft-mint? wstx amount recipient)
   )
 )
@@ -82,7 +82,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (asserts! (is-eq tx-sender sender) ERR-NOT-TOKEN-OWNER)
-    (as-contract (try! (contract-call? .alex-vault transfer-stx amount tx-sender sender)))
+    (as-contract (try! (contract-call? .alex-vault transfer-stx (decimals-to-fixed amount) tx-sender sender)))
     (ft-burn? wstx amount sender)
   )
 )
