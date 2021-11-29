@@ -2,9 +2,6 @@
 name = "alex-v1"
 requirements = []
 costs_version = 1
-[contracts.alex-futures-pool]
-path = "contracts/pool/alex-futures-pool.clar"
-depends_on = ["trait-ownable", "token-alex", "trait-semi-fungible-token", "trait-multisig-vote", "alex-reserve-pool"]
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
