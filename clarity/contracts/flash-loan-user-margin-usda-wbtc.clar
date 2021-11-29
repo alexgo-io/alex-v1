@@ -2,6 +2,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 (define-constant ONE_8 (pow u10 u8))
+(define-constant ERR-EXPIRY-IS-NONE (err u2027))
 
 (define-public (execute (collateral <ft-trait>) (amount uint) (memo (optional (buff 16))))
     (let
@@ -9,7 +10,7 @@
             ;; gross amount * ltv / price = amount
             ;; gross amount = amount * price / ltv
             ;; buff to uint conversion
-            (memo-uint (buff-to-uint (unwrap-panic memo)))
+            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wbtc memo-uint)))
             ;; buff to uint conversion
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
