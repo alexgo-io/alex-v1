@@ -240,8 +240,14 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-    (ok true))
+    (if (> yes-votes threshold-count) 
+      (begin
+        (try! (execute-proposal proposal-id))
+        (ok true)
+      )
+      (ok false)
+    )
+  )
 )
 
 ;; Return votes to voter(member)
@@ -290,4 +296,8 @@
             (+ u1 (/ (- product u1) ONE_8))
        )
    )
+)
+
+(define-read-only (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
 )

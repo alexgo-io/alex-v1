@@ -254,13 +254,13 @@ Clarinet.test({
 
         ROresult = FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
         position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(50000000000000 + 0.95 * ONE_8 * wbtcPrice); // ~50000000000000 + 0.95 * ONE_8 * wbtcPrice
+        position['balance-x'].expectUint(55277772500000); // ~50000000000000 + 0.95 * ONE_8 * wbtcPrice
         position['balance-y'].expectUint(50000000000000 - 4545445000000); 
 
         // Swapping 
         result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*wbtcPrice, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(93533070);    // Corresponding dx value
+        position['dx'].expectUint(132252659);    // Corresponding dx value
         position['dy'].expectUint(ONE_8*wbtcPrice);    // 10% fee charged on wstx-usda leg, so you don't see
         
         // fee : 0.1 * ONE_8 * wbtcPrice
@@ -269,8 +269,8 @@ Clarinet.test({
 
         ROresult = FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
         position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(500171479051334); 
-        position['balance-y'].expectUint(500000000000000 - 4504430000000 + 0.95 * ONE_8*wbtcPrice); // 620532212500000 + 0.95 * ONE_8 * wbtcPrice (4750000000000)
+        position['balance-x'].expectUint(49203975232689); 
+        position['balance-y'].expectUint(50000000000000 - 4545445000000 + 0.95 * ONE_8*wbtcPrice); // 620532212500000 + 0.95 * ONE_8 * wbtcPrice (4750000000000)
 
     },
 });
@@ -308,7 +308,7 @@ Clarinet.test({
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
-        result.expectErr().expectUint(3002);
+        result.expectErr().expectUint(3001);
 
         // Tx-sender tries to add zero balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress,0, 0);
@@ -328,14 +328,14 @@ Clarinet.test({
 
         let ROresult = FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
         position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(625000000000000);
-        position['balance-y'].expectUint(625000000000000);           
+        position['balance-x'].expectUint(62500000000000);
+        position['balance-y'].expectUint(62500000000000);           
 
         // Swapping 
         result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, wbtcPrice*ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(wbtcPrice*ONE_8);
-        position['dy'].expectUint(4960262500000);   
+        position['dy'].expectUint(4629624375000);   
 
         // Attempts to trade more than limit
         result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8*ONE_8, 0);
@@ -350,21 +350,21 @@ Clarinet.test({
         result.expectOk().expectUint(1) // First Proposal
     
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(624999894686910);
+        ROresult.result.expectOk().expectUint(62499990428152);
 
         // Attempt to vote before start 
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, 624999894686910 * 9 / 10 )
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(62499990428152 * 9 / 10));
         result.expectErr().expectUint(1000); 
         
         // Mine Block
         chain.mineEmptyBlock(1000);
 
         // Not enough balance for voting
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, 624999894686910 * 12 / 10 )
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(62499990428152 * 12 / 10));
         result.expectErr().expectUint(1); 
 
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, 624999894686910 * 9 / 10 )
-        result.expectOk().expectUint(562499905218219); 
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(62499990428152 * 9 / 10));
+        result.expectOk().expectUint(Math.round(62499990428152 * 9 / 10)); 
 
         // Attempt to end proposal before block height
         result = MultiSigTest.endProposal(1)
@@ -415,17 +415,17 @@ Clarinet.test({
         
         // let's do some arb
         call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, weightX, weightY, Math.round(ONE_8*1.1));
-        call.result.expectOk().expectUint(23268715000000);         
-        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, 23268715000000, 0)
+        call.result.expectOk().expectUint(2326871500000);         
+        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, 2326871500000, 0)
         position = result.expectOk().expectTuple();
-        position['dy'].expectUint(23268715000000);
-        position['dx'].expectUint(24404380000000);
+        position['dy'].expectUint(2326871500000);
+        position['dx'].expectUint(2440438000000);
 
         // now pool price implies 1.1
         call = await FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(500000000000000 - 24404380000000);
-        position['balance-y'].expectUint(500000000000000 + 23268715000000);       
+        position['balance-x'].expectUint(50000000000000 - 2440438000000);
+        position['balance-y'].expectUint(50000000000000 + 2326871500000);       
         
         // let's do some arb
         // but calling get-y-given-price throws an error
@@ -433,20 +433,20 @@ Clarinet.test({
         call.result.expectErr().expectUint(2002);
         // we need to call get-x-given-price
         call = await FWPTest.getXgivenPrice(wstxAddress, usdaAddress, weightX, weightY, Math.round(ONE_8 * 1.1 * 0.95));
-        call.result.expectOk().expectUint(12408089975640);                 
-        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, 12408089975640, 0)
+        call.result.expectOk().expectUint(1240808997564);                 
+        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, 1240808997564, 0)
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(12408089975640);         
-        position['dy'].expectUint(13304708837897);      
+        position['dx'].expectUint(1240808997564);         
+        position['dy'].expectUint(1330470883789);      
 
         // now pool price implies 1.1*0.95 ~= 1.045
         call = await FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(500000000000000 - 24404380000000 + 12408089975640);
-        position['balance-y'].expectUint(500000000000000 + 23268715000000 - 13304708837897);         
+        position['balance-x'].expectUint(50000000000000 - 2440438000000 + 1240808997564);
+        position['balance-y'].expectUint(50000000000000 + 2326871500000 - 1330470883789);         
         
         call = await FWPTest.getYgivenX(wstxAddress, usdaAddress, weightX, weightY, 50000*ONE_8);
-        call.result.expectOk().expectUint(5171973356255);
+        call.result.expectOk().expectUint(4739404547452);
 
         call = await FWPTest.getYgivenX(wstxAddress, usdaAddress, weightX, weightY, 0);
         call.result.expectOk().expectUint(0);
@@ -455,7 +455,7 @@ Clarinet.test({
         call.result.expectErr().expectUint(2001);
 
         call = await FWPTest.getXgivenY(wstxAddress, usdaAddress, weightX, weightY, 50000*ONE_8);
-        call.result.expectOk().expectUint(4832012654657);
+        call.result.expectOk().expectUint(5304797480934);
 
         call = await FWPTest.getXgivenY(wstxAddress, usdaAddress, weightX, weightY, 0);
         call.result.expectOk().expectUint(0);
