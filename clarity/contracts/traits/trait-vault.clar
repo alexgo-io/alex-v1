@@ -8,7 +8,7 @@
         (get-balance (<ft-trait>) (response uint uint))
 
         ;; flash loan currently supports single token loan
-        (flash-loan (<flash-loan-user-trait> <ft-trait> uint (optional uint)) (response uint uint))
+        (flash-loan (<flash-loan-user-trait> <ft-trait> uint (optional (buff 16))) (response uint uint))
     
     )
 )

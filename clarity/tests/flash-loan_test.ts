@@ -28,7 +28,8 @@ const multisigncrpusdawbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.m
 const loanuserwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-usda-wbtc"
 
 const ONE_8 = 100000000
-const expiry = 23040e+8
+const expiry = 23040e+8 //0x0218711A0000 => 2304000000000
+const expiryBuff = new Uint8Array([0x02,0x18,0x71,0x1A,0x00,0x00]).buffer
 const nextExpiry = 51840e+8
 const ltv_0 = 0.8e+8
 const conversion_ltv = 0.95e+8
@@ -113,7 +114,7 @@ Clarinet.test({
         // position = call.result.expectOk().expectUint(0);        
 
         // Let's borrow 100 WSTX to lever up
-        result = FLTest.flashLoan(wallet_5, loanuserAddress, wstxAddress, 1000*ONE_8, expiry);
+        result = FLTest.flashLoan(wallet_5, loanuserAddress, wstxAddress, 1000*ONE_8, expiryBuff);
         result.expectOk();
         // result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, ONE_8, expiry);
         // result.expectOk();        
