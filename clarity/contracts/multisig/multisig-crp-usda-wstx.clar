@@ -102,7 +102,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <sft-trait>))
-    (or (is-eq (contract-of token) .yield-wbtc) (is-eq (contract-of token) .key-wbtc-usda))
+    (or (is-eq (contract-of token) .yield-usda) (is-eq (contract-of token) .key-usda-wstx))
 )
 
 
@@ -119,11 +119,11 @@
   )
   (let 
     (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-wbtc get-balance-fixed expiry tx-sender)))
-      (proposer-key-balance (unwrap-panic (contract-call? .key-wbtc-usda get-balance-fixed expiry tx-sender)))
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda get-balance-fixed expiry tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-usda-wstx get-balance-fixed expiry tx-sender)))
       (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc get-total-supply-fixed expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-wbtc-usda get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-usda get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-usda-wstx get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (proposal-id (+ u1 (var-get proposal-count)))
     )
@@ -224,8 +224,8 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc get-total-supply-fixed expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-wbtc-usda get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-usda get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-usda-wstx get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
@@ -240,14 +240,8 @@
       (merge proposal { is-open: false }))
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
-    (if (> yes-votes threshold-count) 
-      (begin
-        (try! (execute-proposal proposal-id))
-        (ok true)
-      )
-      (ok false)
-    )
-  )
+    (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
+    (ok true))
 )
 
 ;; Return votes to voter(member)
@@ -280,8 +274,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-wbtc .token-usda expiry new-fee-rate-x))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-wbtc .token-usda expiry new-fee-rate-y))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc expiry new-fee-rate-x))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc expiry new-fee-rate-y))
     
     (ok true)
   )
@@ -296,8 +290,4 @@
             (+ u1 (/ (- product u1) ONE_8))
        )
    )
-)
-
-(define-read-only (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
 )

@@ -25,6 +25,7 @@
 (define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
+(define-constant ERR-POOL-AT-CAPACITY (err u2027))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -78,7 +79,8 @@
     weight-x: uint,
     weight-y: uint,
     moving-average: uint,
-    conversion-ltv: uint
+    conversion-ltv: uint,
+    token-to-maturity: uint
   }
 )
 
@@ -152,7 +154,18 @@
 (define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>))
     (if (is-eq token collateral)
         (ok ONE_8)
-        (contract-call? .fixed-weight-pool get-oracle-resilient token collateral u50000000 u50000000)
+        (if (is-eq (contract-of token) .token-wstx)
+            (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000)
+            (if (is-eq (contract-of collateral) .token-wstx)
+                (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))))
+                (ok
+                    (div-down 
+                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
+                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))
+                    )
+                )   
+            )
+        )
     )
 )
 
@@ -223,25 +236,19 @@
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (weight-y (get weight-y pool))
             (moving-average (get moving-average pool))
-            (conversion-ltv (get conversion-ltv pool))
-            (ma-comp (- ONE_8 moving-average))
-
-            (spot (try! (get-spot token collateral)))
             (now (* block-height ONE_8))
-            (ltv (try! (get-ltv token collateral expiry)))
         )
-        (if (or (> ltv conversion-ltv) (>= now expiry))
+        (if (or (> (try! (get-ltv token collateral expiry)) (get conversion-ltv pool)) (>= now expiry))
             (ok u99900000)   
             (let 
                 (
                     ;; assume 15secs per block 
-                    (t (div-down 
-                    (- expiry now) (* u2102400 ONE_8)))
+                    (t (div-down (- expiry now) (* u2102400 ONE_8)))
+                    (t-2 (div-down (- expiry now) (get token-to-maturity pool)))
 
                     ;; we calculate d1 first
-                    (spot-term (div-up spot strike))
+                    (spot-term (div-up (try! (get-spot token collateral)) strike))
                     (pow-bs-vol (div-up (pow-down bs-vol u200000000) u200000000))
                     (vol-term (mul-up t pow-bs-vol))
                     (sqrt-t (pow-down t u50000000))
@@ -253,7 +260,15 @@
                     (erf-term (erf (div-up d1 sqrt-2)))
                     (complement (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))))
                     (weight-t (div-up complement u200000000))
-                    (weighted (+ (mul-down moving-average weight-y) (mul-down ma-comp weight-t)))                    
+                    (weighted 
+                        (+ 
+                            (mul-down moving-average (get weight-y pool)) 
+                            (mul-down 
+                                (- ONE_8 moving-average) 
+                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) u99900000)))
+                            )
+                        )
+                    )                    
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
                 (ok (if (> weighted u100000) weighted u100000))
@@ -275,7 +290,7 @@
 ;; @param moving-average; weighting smoothing factor
 ;; @param dx; amount of collateral token being added
 ;; @returns (response bool uint)
-(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (the-key-token <sft-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
+(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (the-key-token <sft-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint)) 
     (begin
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! 
@@ -290,8 +305,7 @@
                 
                 (now (* block-height ONE_8))
                 ;; assume 10mins per block
-                (t (div-down 
-                    (- expiry now) (* u52560 ONE_8)))
+                (t (div-down (- expiry now) (* u52560 ONE_8)))
                
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
@@ -325,7 +339,8 @@
                     weight-x: weight-x,
                     weight-y: weight-y,
                     moving-average: moving-average,
-                    conversion-ltv: conversion-ltv
+                    conversion-ltv: conversion-ltv,
+                    token-to-maturity: token-to-maturity
                 })
             )
 
@@ -374,12 +389,10 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (conversion-ltv (get conversion-ltv pool))
-            (ltv (try! (get-ltv token collateral expiry)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
-        (asserts! (>= conversion-ltv ltv) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv token collateral expiry))) ERR-LTV-GREATER-THAN-ONE)
         (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
         (let
             (
@@ -398,7 +411,10 @@
 
                 (dy-weighted (if (is-eq token-x token-y)
                                 dx-to-dy
-                                (try! (contract-call? .fixed-weight-pool swap token collateral u50000000 u50000000 dx-to-dy none))
+                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
+                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
+                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy none)))
+                                )
                              )
                 )
 
@@ -408,10 +424,15 @@
                     balance-x: (+ balance-x dx-weighted),
                     balance-y: (+ balance-y dy-weighted)
                 }))
-            )     
+            ) 
 
-            (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (if (is-eq token-x token-y)
+                u0
+                (unwrap! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
+            )
+
+            (unwrap! (contract-call? collateral transfer-fixed dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? token transfer-fixed dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
