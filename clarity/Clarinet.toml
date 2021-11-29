@@ -181,3 +181,7 @@ depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 [contracts.flash-loan-user-margin-usda-wbtc]
 path = "contracts/flash-loan-user-margin-usda-wbtc.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user", "yield-usda", "key-usda-wbtc"]
+
+[contracts.alex-launchpad]
+path = "contracts/pool/alex-launchpad.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-wstx"]

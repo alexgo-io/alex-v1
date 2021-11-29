@@ -9,16 +9,12 @@
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
 (define-constant ERR-ACTIVATION-THRESHOLD-REACHED (err u10004))
 (define-constant ERR-CONTRACT-NOT-ACTIVATED (err u10005))
-(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
-(define-constant ERR-CANNOT-STAKE (err u10016))
-(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
-(define-constant ERR-NOTHING-TO-REDEEM (err u10018))
-(define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-INVALID-TICKET (err u2028))
 (define-constant ERR-TICKET-TRANSFER-FAILED (err u2029))
 (define-constant ERR_NO_VRF_SEED_FOUND (err u2030))
 (define-constant ERR-CLAIM-NOT-AVAILABLE (err u2031))
+(define-constant ERR-TOKEN-UNDER-SUBSCRIBED (err u2032))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -92,7 +88,7 @@
       {
         amount-per-ticket: amount-per-ticket,
         ticket: (contract-of ticket-trait), 
-        fee-to-address: project-address,
+        fee-to-address: fee-to-address,
         total-tickets: total-tickets, 
         wstx-per-ticket-in-fixed: wstx-per-ticket-in-fixed, 
         total-subscribed: u0,
@@ -147,7 +143,8 @@
 (define-private (get-or-create-user-id (token principal) (user principal))
   (match
     (map-get? user-ids {token: token, user: user})
-    value value
+    value
+    (ok value)
     (let
       (
         (new-id (+ u1 (try! (get-registered-users-nonce token))))
@@ -157,7 +154,7 @@
       (map-insert users {token: token, user-id: new-id} user)
       (map-insert user-ids {token: token, user: user} new-id)
       (map-set token-list token details-updated)
-      new-id
+      (ok new-id)
     )
   )
 )
@@ -168,7 +165,7 @@
     (let
       (
         (details (unwrap! (map-get? token-list token) ERR-INVALID-TOKEN))
-        (user-id (get-or-create-user-id token tx-sender))
+        (user-id (try! (get-or-create-user-id token tx-sender)))
         (value-low (+ u1 (get total-subscribed details)))
         (value-high (- (+ value-low ticket-amount) u1))
         (details-updated (merge details { total-subscribed: value-high }))
@@ -183,6 +180,7 @@
       (map-set subscriber-at-token { token: token, user-id: user-id} { ticket-balance: ticket-amount, value-low: value-low, value-high: value-high })
       (map-set token-list token details-updated)
       (and (is-eq user-id (try! (get-activation-threshold token))) (map-set token-list token (merge details { activation-block: (+ block-height (get activation-delay details)) })))      
+      (ok true)
     )
   )
 )
@@ -193,7 +191,7 @@
 
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
-    (asserts! (> (get token-balance (get-subscriber-at-token-or-default token user-id)) u0) ERR-CLAIM-NOT-AVAILABLE)    
+    (asserts! (>= (get total-subscribed (unwrap! (map-get? token-list (contract-of token-trait)) ERR-INVALID-TOKEN)) (get total-tickets (unwrap! (map-get? token-list (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-TOKEN-UNDER-SUBSCRIBED)
     (let
       (
         (token (contract-of token-trait))
@@ -204,6 +202,7 @@
         (total-tickets (get total-tickets details))
         (total-subscribed (get total-subscribed details))
         (tickets-won (get tickets-won details))
+        (ticket-balance (get ticket-balance sub-details))
         (vrf-seed (unwrap! (get-random-uint-at-block activation-block) ERR_NO_VRF_SEED_FOUND))
         (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed total-subscribed) (get last-random details)))
         (this-random (mod (get-next-random last-random) total-subscribed))
@@ -213,7 +212,7 @@
           (if (< value-low (/ total-tickets u2)) 
             u0 
             (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
-              (- value-low (- total-tickets (- total-subscribed value-high))) ;; this will panic
+              (- (- total-subscribed total-tickets) (- value-high value-low))
               (- value-low (/ total-tickets u2))
             )
           )
@@ -227,12 +226,12 @@
             )
           )
         )                  
-      )
-
+      )      
       (asserts! (> block-height activation-block) ERR-CONTRACT-NOT-ACTIVATED)
       (asserts! (is-eq (contract-of ticket-trait) (get ticket details)) ERR-INVALID-TICKET)
-
-      (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- token-balance u1) }))      
+      (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)    
+      
+      (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- ticket-balance u1) }))      
       
       (if (and (<= tickets-won total-tickets) (>= this-random value-low-adjusted) (<= this-random value-high-adjusted))
         (begin
