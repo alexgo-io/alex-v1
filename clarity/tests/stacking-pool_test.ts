@@ -5,7 +5,7 @@ import { StackingPool } from "./models/alex-tests-stacking-pool.ts";
 const ONE_8 = 100000000
 
 const alexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex";
-const yieldWbtcTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc";
+const stakedAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex";
 
 Clarinet.test({
     name: "STACKING POOL: Ensure that set-owner can only be called by contract owner",
@@ -31,7 +31,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>){
         var notContractOwner = accounts.get("wallet_1")!;
         var stackingPool = new StackingPool(chain, notContractOwner)
-        var result = stackingPool.createPool(alexTokenAddress, alexTokenAddress, [], yieldWbtcTokenAddress)
+        var result = stackingPool.createPool(alexTokenAddress, alexTokenAddress, [], stakedAlexAddress)
         result.expectErr().expectUint(1000);
     }
 })
@@ -53,7 +53,7 @@ Clarinet.test({
         result = stackingPool.registerUser(alexTokenAddress, "")
         result.expectOk().expectBool(true)
         
-        result = stackingPool.createPool(alexTokenAddress, alexTokenAddress, rewardCycles, yieldWbtcTokenAddress)
+        var result = stackingPool.createPool(alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress)
         result.expectErr().expectUint(2026); //ERR-INVALID-TOKEN
     }
 })

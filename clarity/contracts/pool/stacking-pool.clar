@@ -124,7 +124,7 @@
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
 
         ;; register if not registered
-        (try! (register-user))
+        (try! (register-user (contract-of poxl-token-trait)))
 
         (asserts! (is-none (map-get? pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle })) ERR-POOL-ALREADY-EXISTS)
 
