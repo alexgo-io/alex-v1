@@ -14,6 +14,7 @@ const {
     ClarityType
   } = require('@stacks/transactions');
   const {wait_until_confirmation} = require('./utils');
+const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
 //   (propose (uint (string-utf8 256) (string-utf8 256) uint uint) (response uint uint))
   const multisigPropose = async (contract_name, start_block_height, title, url, new_fee_rate_x, new_fee_rate_y) => {
@@ -146,7 +147,8 @@ const multisigReturnVotes = async (contract_name, token, proposal_id) => {
         functionName: 'return-votes-to-member',
         functionArgs: [
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
-            uintCV(proposal_id)
+            uintCV(proposal_id),
+            principalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS)
         ],
         senderKey: privateKey,
         validateWithAbi: true,
