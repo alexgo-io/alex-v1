@@ -18,10 +18,6 @@ depends_on = ["alex-reserve-pool"]
 path = "contracts/pool/alex-reserve-pool.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "alex-vault"]
 
-[contracts.alex-futures-pool]
-path = "contracts/pool/alex-futures-pool.clar"
-depends_on = ["trait-ownable", "token-alex", "trait-semi-fungible-token", "trait-multisig-vote", "alex-reserve-pool"]
-
 [contracts.stacking-pool]
 path = "contracts/pool/stacking-pool.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible-token", "trait-multisig-vote", "alex-reserve-pool"]

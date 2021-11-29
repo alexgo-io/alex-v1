@@ -1,7 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
-(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; stacked-poxl-pool
 ;;
@@ -49,7 +48,6 @@
   }
   {
     total-supply: uint,
-    fee-to-address: principal,
     pool-token: principal,
     reward-cycles: (list 32 uint)
   }
@@ -110,7 +108,7 @@
     (ok (get total-supply (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL)))
 )
 
-(define-public (create-pool (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <sft-trait>) (multisig <multisig-trait>)) 
+(define-public (create-pool (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <sft-trait>)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -118,7 +116,6 @@
             (reward-token (contract-of reward-token-trait))
             (pool-data {
                 total-supply: u0,
-                fee-to-address: (contract-of multisig),
                 pool-token: (contract-of yield-token),
                 reward-cycles: reward-cycles
             })
