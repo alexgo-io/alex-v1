@@ -440,13 +440,13 @@ class YIELD_USDA {
     ], this.deployer.address);
   }
   
-  mintFixed(expiry: number, amount: number, recipient: string) {
+  mintFixed(sender: Account, expiry: number, amount: number, recipient: string) {
     let block = this.chain.mineBlock([
       Tx.contractCall("yield-usda", "mint-fixed", [
         types.uint(expiry),
         types.uint(amount),
         types.principal(recipient)
-      ], this.deployer.address),
+      ], sender.address),
     ]);
     return block.receipts[0].result;
   }
