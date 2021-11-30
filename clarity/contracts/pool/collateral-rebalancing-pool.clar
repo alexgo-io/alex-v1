@@ -343,7 +343,6 @@
                     token-to-maturity: token-to-maturity
                 })
             )
-
             (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
         
@@ -408,14 +407,11 @@
 
                 (dx-weighted (mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
-
-                (dy-weighted (if (is-eq token-x token-y)
-                                dx-to-dy
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
-                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy none)))
-                                )
-                             )
+                (dy-weighted 
+                    (if (is-eq token-x token-y)
+                        dx-to-dy
+                        (try! (contract-call? .fixed-weight-pool swap token collateral u50000000 u50000000 dx-to-dy none))
+                    )
                 )
 
                 (pool-updated (merge pool {
@@ -939,10 +935,11 @@
                 (dy-weighted (get dy pos-data))
 
                 ;; always convert to collateral ccy
-                (dy-to-dx (if (is-eq token-x token-y)
-                            dy-weighted
-                            (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dy-weighted))                    
-                        )
+                (dy-to-dx 
+                    (if (is-eq token-x token-y)
+                        dy-weighted
+                        (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dy-weighted))                    
+                    )
                 )   
                 (dx (+ dx-weighted dy-to-dx))
             )
