@@ -3,13 +3,14 @@ import {Clarinet, Tx, Chain, Account, types} from "https://deno.land/x/clarinet@
 
 class StackingPool{
     chain: Chain;
+    deployer: Account;
 
-    constructor(chain: Chain) {
+    constructor(chain: Chain, deployer: Account) {
         this.chain = chain;
+        this.deployer = deployer;
     }
 
-    //(contract-call? .stacking-pool create-pool 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex (list u1) 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex)
-    createPool(sender: Account, poxlTokenTrait: string, rewardTokenTrait: string, rewardCycles: Array<string>, yieldToken: string){
+    createPool(poxlTokenTrait: string, rewardTokenTrait: string, rewardCycles: Array<string>, yieldToken: string){
         return Tx.contractCall(
             "stacking-pool",
             "create-pool",
@@ -19,36 +20,33 @@ class StackingPool{
                 types.list(rewardCycles),
                 types.principal(yieldToken),
             ],
-            sender.address
+            this.deployer.address
         );
     }
 
-    //(contract-call? .alex-reserve-pool set-activation-threshold u1)
-    setActivationThreshold(sender: Account, threshold: number): Tx {
+    setActivationThreshold(threshold: number): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "set-activation-threshold",
             [
                 types.uint(threshold)
             ],
-            sender.address
+            this.deployer.address
         );
     }
 
-    //(contract-call? .alex-reserve-pool add-token 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1)
-    addToken(sender: Account, token: string): Tx {
+    addToken(token: string): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "add-token",
             [
                 types.principal(token)
             ],
-            sender.address
+            this.deployer.address
         );
     }
 
-    //(contract-call? .alex-reserve-pool register-user 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex none)
-    registerUser(sender: Account, token: string, memo: string | undefined = undefined): Tx {
+    registerUser(token: string, memo: string | undefined = undefined): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "register-user",
@@ -58,11 +56,10 @@ class StackingPool{
                     ? types.none()
                     : types.some(types.utf8(memo)),
             ],
-            sender.address
+            this.deployer.address
         );
     }
 
-    //(contract-call? .stacking-pool add-to-position 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex u1000000000)
     addToPosition(sender: Account, token: string, reward: string, startCycle: number, yieldToken: string, dx: number): Tx {
         return Tx.contractCall(
             "stacking-pool",
@@ -78,7 +75,6 @@ class StackingPool{
         );
     }
 
-    //(contract-call? .stacking-pool reduce-position 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex u10)
     reducePosition(sender: Account, token: string, reward: string, startCycle: number, yieldToken: string, percent: number): Tx {
         return Tx.contractCall(
             "stacking-pool",
