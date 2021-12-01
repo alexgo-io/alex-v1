@@ -96,9 +96,18 @@ Clarinet.test({
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
+        result = YTPTest.setOracleEnabled(deployer, expiry, yieldwbtcAddress);
+        result.expectOk().expectBool(true);
+        result = YTPTest.setOracleAverage(deployer, expiry, yieldwbtcAddress, 0.95e8);
+        result.expectOk().expectBool(true);
 
         result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, Math.round(wbtcPrice * wbtcQ / ONE_8 / 10), Math.round(wbtcPrice * wbtcQ / ONE_8 / 10));        
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);    
+        result.expectOk().expectBool(true);
+        result = YTPTest.setOracleEnabled(deployer, expiry, yieldusdaAddress);
+        result.expectOk().expectBool(true);
+        result = YTPTest.setOracleAverage(deployer, expiry, yieldusdaAddress, 0.95e8);
+        result.expectOk().expectBool(true);    
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
