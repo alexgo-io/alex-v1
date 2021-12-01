@@ -8,12 +8,13 @@ const ONE_8 = 100000000
 const alexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex";
 const stakedAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.staked-alex";
 const ACTIVATION_DELAY = 150
+const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
 
 Clarinet.test({
     name: "STACKING POOL: Ensure that set-owner can only be called by contract owner",
     async fn(chain: Chain, accounts: Map<string, Account>) {
-        var notContractOwner = accounts.get("wallet_1")!;
-        var wallet_2 = accounts.get("wallet_2")!;
+        const notContractOwner = accounts.get("wallet_1")!;
+        const wallet_2 = accounts.get("wallet_2")!;
 
         let block = chain.mineBlock([
         Tx.contractCall(
@@ -40,7 +41,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that register-user can only be called by valid token"
 Clarinet.test({
     name: "STACKING POOL: Ensure that register-user can only be called by valid token",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -55,7 +55,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that register-user can only register new users"
 Clarinet.test({
     name: "STACKING POOL: Ensure that register-user can only register new users",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -83,10 +82,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that pool doesn't exist when creating pool"
-// Wont get 2000 error because I cannot create pool the same twice: Conflicting asserts of Contract owner and register-user
-
-// name: "STACKING POOL: Ensure that stacking is available when adding to position"
 Clarinet.test({
     name: "STACKING POOL: Ensure that stacking is available when adding to position",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -113,7 +108,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that stacking is not in progress when adding to position"
 Clarinet.test({
     name: "STACKING POOL: Ensure that stacking is not in progress when adding to position",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -141,7 +135,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that add-to-position works on a valid pool"
 Clarinet.test({
     name: "STACKING POOL: Ensure that add-to-position works on a valid pool",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -149,7 +142,6 @@ Clarinet.test({
         const wallet_2 = accounts.get("wallet_2")!;
         const futuresPool = new FuturesPool(chain)
         const alexToken = new ALEXToken(chain, deployer)
-        const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
         const dx = 200*ONE_8
 
         alexToken.mintFixed(deployer, wallet_2.address, 200 * ONE_8);
@@ -174,7 +166,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that reduce-position is called when stacking is not in progress"
 Clarinet.test({
     name: "STACKING POOL: Ensure that reduce-position is called when stacking is not in progress",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -182,10 +173,9 @@ Clarinet.test({
         const wallet_1 = accounts.get("wallet_1")!;
         const futuresPool = new FuturesPool(chain)
         const alexToken = new ALEXToken(chain, deployer)
-        const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
         
         //mint alex tokens
-        alexToken.mintFixed(deployer, wallet_1.address, 200 * ONE_8);
+        alexToken.mintFixed(deployer, wallet_2.address, 200 * ONE_8);
 
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
@@ -209,7 +199,6 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that deployer can create-pool, add-to-position and reduce-to-position"
 Clarinet.test({
     name: "STACKING POOL: Ensure that deployer can create-pool, add-to-position and reduce-to-position",
     async fn(chain: Chain, accounts: Map<string, Account>){
@@ -217,11 +206,10 @@ Clarinet.test({
         const wallet_1 = accounts.get("wallet_1")!;
         const futuresPool = new FuturesPool(chain)
         const alexToken = new ALEXToken(chain, deployer)
-        const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
         
         //mint alex tokens
         alexToken.mintFixed(deployer, deployer.address, 200 * ONE_8);
-        alexToken.mintFixed(deployer, wallet_1.address, 200 * ONE_8);
+        alexToken.mintFixed(deployer, wallet_2.address, 200 * ONE_8);
 
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
