@@ -65,7 +65,7 @@
   } 
 )
 (define-private (get-stacking-reward (token principal) (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-staking-reward token (get-user-id) reward-cycle)
+  (contract-call? .alex-reserve-pool get-staking-reward token (get-user-id token) reward-cycle)
 )
 (define-private (register-user (token principal))
   (as-contract (contract-call? .alex-reserve-pool register-user token none))
