@@ -55,6 +55,9 @@
 ;;
 
 ;; Internal natural logarithm (ln(a)) with signed 10 decimal fixed point argument.
+;; @desc ln-priv
+;; @params a
+;; @returns (response uing)
 (define-read-only (ln-priv (a int))
   (let
     (
@@ -73,6 +76,10 @@
  )
 )
 
+;; @desc accumulate_division
+;; @params x_a_pre; tuple 
+;; @param rolling_a_sum; tuple
+;; @returns tuple
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
@@ -89,6 +96,10 @@
  )
 )
 
+;; @desc rolling_sum_div
+;; @params n 
+;; @paramsrolling; tuple
+;; @returns tuple
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
   (let
     (
@@ -106,6 +117,10 @@
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
 ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+;; @desc pow-priv
+;; @params x
+;; @params y
+;; @returns (response uint)
 (define-read-only (pow-priv (x uint) (y uint))
   (let
     (
@@ -120,6 +135,9 @@
   )
 )
 
+;; @desc exp-pos
+;; @params x
+;; @returns (response uing)
 (define-read-only (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
@@ -143,6 +161,10 @@
  )
 )
 
+;; @desc accumulate_product 
+;; @params x_a_pre; tuple
+;; @params rolling_x_p; tuple
+;; @returns tuple
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
@@ -159,6 +181,10 @@
  )
 )
 
+;; @desc rolling_div_sum 
+;; @params n 
+;; @params rolling; tuple 
+;; @returns tuple 
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
     (
@@ -175,11 +201,17 @@
 ;; public functions
 ;;
 
+;; @desc get-exp-bound
+;; @returns (response uint)
 (define-read-only (get-exp-bound)
   (ok MILD_EXPONENT_BOUND)
 )
 
 ;; Exponentiation (x^y) with unsigned 10 decimal fixed point base and exponent.
+;; @desc pow-fixed
+;; @params x
+;; @params y
+;; @returns (response uint)
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
@@ -200,6 +232,9 @@
 
 ;; Natural exponentiation (e^x) with signed 10 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+;; @desc exp-fixed
+;; @params x
+;; @returns (response uint)
 (define-read-only (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
@@ -214,6 +249,10 @@
 )
 
 ;; Logarithm (log(arg, base), with signed 10 decimal fixed point base and argument.
+;; @desc log-fixed
+;; @params arg
+;; @params base
+;; @returns (response uint)
 (define-read-only (log-fixed (arg int) (base int))
   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
   (let
@@ -226,6 +265,9 @@
 )
 
 ;; Natural logarithm (ln(a)) with signed 10 decimal fixed point argument.
+;; @desc ln-fixed
+;; @params a
+;; @returns (response uint)
 (define-read-only (ln-fixed (a int))
   (begin
     (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
@@ -239,6 +281,8 @@
  )
 )
 
+;; @desc test
+;; @returns (response uint)
 (define-read-only (test)
   (let
     (

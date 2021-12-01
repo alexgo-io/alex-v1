@@ -19,10 +19,16 @@
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
+;; @desc get-owner
+;; @returns (response principal)
 (define-read-only (get-owner)
   (ok (var-get CONTRACT-OWNER))
 )
 
+;; @desc set-owner
+;; @restricted Contract-Owner
+;; @params owner
+;; @returns (reponse boolean)
 (define-public (set-owner (owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -60,56 +66,117 @@
 
 ;; private functions
 ;;
+;; @desc sum-stacking-reward
+;; @params reward-cycle
+;; @params token-reward; tuple
 (define-private (sum-stacking-reward (reward-cycle uint) (token-reward { token: principal, sum-so-far: uint }))
   {
     token: (get token token-reward),
     sum-so-far: (+ (get sum-so-far token-reward) (get-stacking-reward (get token token-reward) reward-cycle))
   } 
 )
+
+;; @desc get-stacking-reward
+;; @params token
+;; @params reward-cycle
+;; @returns uing
 (define-private (get-stacking-reward (token principal) (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staking-reward token (get-user-id) reward-cycle)
 )
+
+;; @desc register-user
+;; @params token
+;; @returns (response bool)
 (define-private (register-user (token principal))
   (as-contract (contract-call? .alex-reserve-pool register-user token none))
 )
+
+;; @desc get-user-id
+;; @params token
+;; @returns uint
 (define-private (get-user-id (token principal))
   (default-to u0 (contract-call? .alex-reserve-pool get-user-id token (as-contract tx-sender)))
 )
+
+;; @desc get-reward-cycle
+;; @params token
+;; @params stack-height
+;; @returns response
 (define-private (get-reward-cycle (token principal) (stack-height uint))
   (contract-call? .alex-reserve-pool get-reward-cycle token stack-height)
 )
+
+;; @desc stack-tokens
+;; @params token-trait; ft-trait
+;; @params amount-tokens
+;; @params lock-period
+;; @returns response
 (define-private (stack-tokens (token-trait <ft-trait>) (amount-tokens uint) (lock-period uint))
   (as-contract (contract-call? .alex-reserve-pool stake-tokens token-trait amount-tokens lock-period))
 )
+
+;; @desc get-first-stacks-block-in-reward-cycle 
+;; @params token
+;; @params reward-cycle
+;; @returns uint
 (define-private (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle token reward-cycle)
 )
+
+;; @desc claim-stacking-reward 
+;; @params reward-cycle 
+;; @params token-trait; ft-trait
+;; @returns (response tuple)
 (define-private (claim-stacking-reward (reward-cycle uint) (token-trait <ft-trait>))
   (as-contract (contract-call? .alex-reserve-pool claim-staking-reward token-trait reward-cycle))
 )
 
 ;; public functions
 ;;
+;; @desc get-pool-count
+;; @returns uint
 (define-read-only (get-pool-count)
     (ok (var-get pool-count))
 )
 
+;; @desc get-pool-contracts
+;; @param pool-id; pool-id
+;; @returns (response (tuple) uint)
 (define-read-only (get-pool-contracts (pool-id uint))
     (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL))
 )
 
+;; @desc get-pools
+;; @returns (optional (tuple))
 (define-read-only (get-pools)
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
+;; @desc get-pool-details
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param expiry; expiry block-height
+;; @returns (response (tuple) uint)
 (define-read-only (get-pool-details (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint))
     (ok (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL))
 )
 
+;; @desc get-balance 
+;; @params poxl-token-trait; ft-trait
+;; @params reward-token-trait ; ft-trait
+;; @params start-cycle
+;; @returns (response uint)
 (define-read-only (get-balance (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint))
     (ok (get total-supply (unwrap! (map-get? pools-data-map { poxl-token: (contract-of poxl-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL)))
 )
 
+;; @desc create-pool 
+;; @params poxl-token-trait; ft-trait
+;; @params reward-token-trait; ft-trait
+;; @params reward-cycles
+;; @params yield-token; sft-trait
+;; @params multisig
+;; @returns (response bool)
 (define-public (create-pool (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <sft-trait>) (multisig <multisig-trait>)) 
     (let
         (
@@ -141,6 +208,13 @@
    )
 )   
 
+;; @desc add-to-position
+;; @params poxl-token-trait; ft-trait
+;; @params reward-token-trait; ft-trait
+;; @params start-cycle uint
+;; @params yield-token;sft-trait
+;; @params dx
+;; @returns (response bool)
 (define-public (add-to-position (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (dx uint))
     (let
         (
@@ -168,10 +242,21 @@
    )
 )
 
+;; @desc create-tuple
+;; @params token
+;; @params reward-cycle
+;; @returns tuple
 (define-private (create-tuple (token principal) (reward-cycle uint))
   {token: token, reward-cycle: reward-cycle}
 )
 
+;; @desc reduce-position
+;; @params poxl-token-trait; ft-trait
+;; @params reward-token-trait; ft-trait
+;; @params start-cycle
+;; @params yield-token; sft-trait
+;; @params percent
+;; @returns (response tuple)
 (define-public (reduce-position (poxl-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (percent uint))
     (let
         (
@@ -206,10 +291,18 @@
     )
 )
 
+;; @desc mul-down
+;; @params a
+;; @param b
+;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
+;; @desc div-down
+;; @params a
+;; @param b
+;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0

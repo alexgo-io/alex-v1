@@ -54,16 +54,24 @@
 (define-map tokens-by-member { proposal-id: uint, member: principal, token: principal } { amount: uint })
 
 ;; Get all proposals in detail
+;; @desc get-proposals
+;; @returns (response optional (tuple))
 (define-read-only (get-proposals)
   (ok (map get-proposal-by-id (var-get proposal-ids)))
 )
 
 ;; Get all proposal ID in list
+;; @desc get-proposal-ids
+;; @returns (ok list)
 (define-read-only (get-proposal-ids)
   (ok (var-get proposal-ids))
 )
 
 ;; Get votes for a member on proposal
+;; @desc get-votes-by-member-by-id
+;; @params proposal-id
+;; @params member
+;; @returns (optional (tuple))
 (define-read-only (get-votes-by-member-by-id (proposal-id uint) (member principal))
   (default-to 
     { vote-count: u0 }
@@ -71,6 +79,12 @@
   )
 )
 
+;; @desc get-tokens-by-member-by-id 
+;; @params proposal-id
+;; @params member 
+;; @params token; sft-trait
+;; @params expiry 
+;; @returns (optional (tuple))
 (define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <ft-trait>))
   (default-to 
     { amount: u0 }
@@ -79,6 +93,9 @@
 )
 
 ;; Get proposal
+;; @desc get-proposal-by-id
+;; @params proposal-id
+;; @returns (optional (tuple))
 (define-read-only (get-proposal-by-id (proposal-id uint))
   (default-to
     {
@@ -99,6 +116,9 @@
 )
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
+;; @desc is-token-accepted
+;; @params token; sft-trait
+;; @returns bool
 (define-read-only (is-token-accepted (token <ft-trait>))
     (is-eq (contract-of token) .lbp-alex-usda-90-10)
 )
@@ -107,6 +127,14 @@
 ;; Start a proposal
 ;; Requires 10% of the supply in your wallet
 ;; Default voting period is 10 days (144 * 10 blocks)
+;; @desc propose
+;; @params expiry
+;; @params start-block-height
+;; @params title
+;; @params url 
+;; @params new-fee-rate-x
+;; @params new-fee-rate-y
+;; @returns uint
 (define-public (propose
     (start-block-height uint)
     (title (string-utf8 256))
@@ -145,6 +173,11 @@
   )
 )
 
+;; @desc vote-for 
+;; @params token; sft-trait
+;; @params proposal-id uint
+;; @params amount
+;; @returns (response uint)
 (define-public (vote-for (token <ft-trait>) (proposal-id uint) (amount uint))
   (let (
     (proposal (get-proposal-by-id proposal-id))
@@ -177,6 +210,11 @@
     )
   )
 
+;; @desc vote-against 
+;; @params token;sft-trait
+;; @params proposal-id 
+;; @params amount 
+;; @returns (response uint)
 (define-public (vote-against (token <ft-trait>) (proposal-id uint) (amount uint))
   (let (
     (proposal (get-proposal-by-id proposal-id))
@@ -208,6 +246,9 @@
     
     )
 
+;; @desc end-proposal
+;; @params proposal-id
+;; @returns (response bool)
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
@@ -232,6 +273,11 @@
 
 ;; Return votes to voter(member)
 ;; This function needs to be called for all members
+;; @desc return-votes-to-member 
+;; @params token; sft-trait
+;; @params proposal-id
+;; @params member
+;; @returns (response bool)
 (define-public (return-votes-to-member (token <ft-trait>) (proposal-id uint) (member principal))
   (let 
     (
@@ -249,6 +295,10 @@
   )
 )
 
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-private (mul-up (a uint) (b uint))
     (let
         (

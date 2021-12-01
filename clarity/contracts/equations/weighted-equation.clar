@@ -1,6 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
 
-;; test
 ;; weighted-equation
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
@@ -28,7 +27,7 @@
 
 ;; @desc set-max-in-ratio
 ;; @param new-max-in-ratio; new MAX-IN-RATIO
-;; @returns (response bool uint)
+;; @returns (response bool)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -295,11 +294,18 @@
 ;; public functions
 ;;
 
+;; @desc mul-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
   (/ (* a b) ONE_8)
 )
 
-
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (mul-up (a uint) (b uint))
     (let
         (
@@ -312,6 +318,10 @@
    )
 )
 
+;; @desc div-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0
@@ -319,6 +329,10 @@
   )
 )
 
+;; @desc div-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (div-up (a uint) (b uint))
   (if (is-eq a u0)
     u0
@@ -326,6 +340,10 @@
   )
 )
 
+;; @desc pow-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
@@ -339,6 +357,10 @@
     )
 )
 
+;; @desc pow-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
@@ -403,6 +425,9 @@
 ;;
 
 ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+;; @desc ln-priv
+;; @params a
+;; @ returns (response uint)
 (define-private (ln-priv (a int))
   (let
     (
@@ -421,6 +446,10 @@
  )
 )
 
+;; @desc accumulate_division
+;; @params x_a_pre ; tuple(x_pre a_pre use_deci)
+;; @params rolling_a_sum ; tuple (a sum)
+;; @returns uint
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
@@ -437,6 +466,10 @@
  )
 )
 
+;; @desc rolling_sum_div
+;; @params n
+;; @params rolling ; tuple (num seriesSum z_squared)
+;; returns tuple
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
   (let
     (
@@ -454,6 +487,10 @@
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
 ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+;; @desc pow-priv
+;; @params x
+;; @params y
+;; @returns (response uint)
 (define-private (pow-priv (x uint) (y uint))
   (let
     (
@@ -467,6 +504,9 @@
   )
 )
 
+;; @desc exp-pos
+;; @params x
+;; @returns (response uint)
 (define-private (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
@@ -490,6 +530,10 @@
  )
 )
 
+;; @desc accumulate_product
+;; @params x_a_pre ; tuple (x_pre a_pre use_deci)
+;; @params rolling_x_p ; tuple (x product)
+;; @returns tuple
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
@@ -506,6 +550,10 @@
  )
 )
 
+;; @desc rolling_div_sum
+;; @params n
+;; @params rolling ; tuple (term seriesSum x)
+;; @returns tuple
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
     (
@@ -522,11 +570,17 @@
 ;; public functions
 ;;
 
+;; @desc get-exp-bound
+;; @returns (response uint)
 (define-read-only (get-exp-bound)
   (ok MILD_EXPONENT_BOUND)
 )
 
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
+;; @desc pow-fixed
+;; @params x
+;; @params y
+;; @returns (response uint)
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
@@ -547,6 +601,9 @@
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+;; @desc exp-fixed
+;; @params x
+;; @returns (response uint)
 (define-read-only (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)

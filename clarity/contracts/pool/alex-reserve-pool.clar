@@ -21,10 +21,16 @@
 (define-data-var CONTRACT-OWNER principal tx-sender)
 (define-map approved-contracts principal bool)
 
+;; @desc get-owner
+;; @returns (response principal)
 (define-read-only (get-owner)
   (ok (var-get CONTRACT-OWNER))
 )
 
+;; @desc set-owner
+;; @restricted Contract-Owner
+;; @params owner
+;; @returns (reponse boolean)
 (define-public (set-owner (owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -34,10 +40,17 @@
 
 (define-map reserve principal uint)
 
+;; @des get-balance 
+;; @params token
+;; @returns uint
 (define-read-only (get-balance (token principal))
   (default-to u0 (map-get? reserve token))
 )
 
+;; @desc add-to-balance 
+;; @params token 
+;; @params amount 
+;; @returns (response bool)
 (define-public (add-to-balance (token principal) (amount uint))
   (begin
     (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
@@ -45,6 +58,10 @@
   )
 )
 
+;; @desc remove-from-balance 
+;; @params token 
+;; @params amount
+;; @returns (response bool)
 (define-public (remove-from-balance (token principal) (amount uint))
   (begin
     (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
@@ -112,14 +129,22 @@
   uint
 )
 
+;; @desc get-reward-cycle-length
+;; @returns uint
 (define-read-only (get-reward-cycle-length)
   (var-get reward-cycle-length)
 )
 
+;; @desc is-token-approved
+;; @params token
+;; @returns bool
 (define-read-only (is-token-approved (token principal))
   (is-some (map-get? approved-tokens token))
 )
 
+;; @desc add-token 
+;; @params token
+;; @returns (response bool)
 (define-public (add-token (token principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -129,16 +154,22 @@
   )
 )
 
-;; returns Stacks block height registration was activated at plus activationDelay
+;; @desc get-activation-block-or-default 
+;; @params token
+;; @returns uint; Stacks block height registration was activated at plus activationDelay
 (define-read-only (get-activation-block-or-default (token principal))
   (default-to u100000000 (map-get? activation-block token))
 )
 
-;; returns activation delay
+;; @desc get-activation-delay
+;; @returns uint
 (define-read-only (get-activation-delay)
   (var-get activation-delay)
 )
 
+;; @desc set-activation-delay 
+;; @params new-activation-delay
+;; @returns (response bool)
 (define-public (set-activation-delay (new-activation-delay uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -146,11 +177,16 @@
   )
 )
 
-;; returns activation threshold
+;; @desc get-activation-threshold
+;; @returns uint
 (define-read-only (get-activation-threshold)
   (var-get activation-threshold)
 )
 
+;; @desc set-activation-threshold 
+;; @restricted Contract-Owner
+;; @params new-activation-threshold
+;; @returns (response bool)
 (define-public (set-activation-threshold (new-activation-threshold uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -159,36 +195,60 @@
 )
 
 ;; returns the total staked tokens for a given reward cycle
+;; @desc get-staking-stats-at-cycle 
+;; @params token 
+;; @params reward-cycle
+;; @returns (optional (tuple))
 (define-read-only (get-staking-stats-at-cycle (token principal) (reward-cycle uint))
   (map-get? staking-stats-at-cycle {token: token, reward-cycle: reward-cycle})
 )
 
 ;; returns the total staked tokens for a given reward cycle
 ;; or, zero
+;; @desc get-staking-stats-at-cycle-or-default
+;; @params token
+;; @params reward-cycle
+;; @returns uint
 (define-read-only (get-staking-stats-at-cycle-or-default (token principal) (reward-cycle uint))
   (default-to u0 (get-staking-stats-at-cycle token reward-cycle))
 )
 
-;; returns (some user-id) or none
+;; @desc get-user-id
+;; @params token
+;; @params user
+;; @returns (some user-id) or none
 (define-read-only (get-user-id (token principal) (user principal))
   (map-get? user-ids {token: token, user: user})
 )
 
-;; returns (some user-principal) or none
+;; @desc get-user
+;; @params token
+;; @params user-id
+;; @returns (some user-principal) or none
 (define-read-only (get-user (token principal) (user-id uint))
   (map-get? users {token: token, user-id: user-id})
 )
 
 ;; returns (some number of registered users), used for activation and tracking user IDs, or none
+;; @desc get-registered-users-nonce 
+;; @params token 
+;; @returns (optional (tuple))
 (define-read-only (get-registered-users-nonce (token principal))
   (map-get? users-nonce token)
 )
 
+;; @desc get-registered-users-nonce-or-default 
+;; @params token
+;; @returns uint
 (define-read-only (get-registered-users-nonce-or-default (token principal))
   (default-to u0 (get-registered-users-nonce token))
 )
 
 ;; returns user ID if it has been created, or creates and returns new ID
+;; @desc get-or-create-user-id 
+;; @params token 
+;; @params user
+;; @returns (response bool)/ (optional (tuple))
 (define-private (get-or-create-user-id (token principal) (user principal))
   (match
     (map-get? user-ids {token: token, user: user})
@@ -206,6 +266,10 @@
 )
 
 ;; registers users that signal activation of contract until threshold is met
+;; @desc register-user
+;; @params token
+;; @params memo; expiry
+;; @returns (response bool)
 (define-public (register-user (token principal) (memo (optional (string-utf8 50))))
   (let
     (
@@ -230,16 +294,29 @@
   )
 )
 
+;; @desc get-staker-at-cycle 
+;; @params token 
+;; @params reward-cycl
+;; @params user-id 
+;; @returns (optional (tuple))
 (define-read-only (get-staker-at-cycle (token principal) (reward-cycle uint) (user-id uint))
   (map-get? staker-at-cycle { token: token, reward-cycle: reward-cycle, user-id: user-id })
 )
-
+;; @desc get-staker-at-cycle-or-default 
+;; @params token 
+;; @params reward-cycle
+;; @params user-id
+;; @returns (optional (tuple))
 (define-read-only (get-staker-at-cycle-or-default (token principal) (reward-cycle uint) (user-id uint))
   (default-to { amount-staked: u0, to-return: u0 }
     (map-get? staker-at-cycle { token: token, reward-cycle: reward-cycle, user-id: user-id }))
 )
 
 ;; get the reward cycle for a given Stacks block height
+;; @desc get-reward-cycle 
+;; @params token 
+;; @params stacks-height
+;; @returns response
 (define-read-only (get-reward-cycle (token principal) (stacks-height uint))
   (let
     (
@@ -254,20 +331,39 @@
 )
 
 ;; determine if staking is active in a given cycle
+;; @desc staking-active-at-cycle 
+;; @params token 
+;; @params reward-cycle
+;; @response bool
 (define-read-only (staking-active-at-cycle (token principal) (reward-cycle uint))
   (is-some (map-get? staking-stats-at-cycle {token: token, reward-cycle: reward-cycle}))
 )
 
 ;; get the first Stacks block height for a given reward cycle.
+;; @desc get-first-stacks-block-in-reward-cycle
+;; @params token 
+;; @params reward-cycle 
+;; @returns uint
 (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
   (+ (get-activation-block-or-default token) (* (var-get reward-cycle-length) reward-cycle))
 )
 
 ;; getter for get-entitled-staking-reward that specifies block height
+;; @desc get-staking-reward
+;; @params token
+;; @params user-id
+;; @params target-cycle
+;; @returns uint
 (define-read-only (get-staking-reward (token principal) (user-id uint) (target-cycle uint))
   (get-entitled-staking-reward token user-id target-cycle block-height)
 )
 
+;; @desc get-entitled-staking-reward
+;; @params token
+;; @params user-id
+;; @params target-cycle
+;; @params stacks-height
+;; @returns uint
 (define-private (get-entitled-staking-reward (token principal) (user-id uint) (target-cycle uint) (stacks-height uint))
   (let
     (
@@ -289,6 +385,11 @@
 
 ;; STAKING ACTIONS
 
+;; @desc stake-tokens
+;; @params token-trait; ft-trait
+;; @params amount-token
+;; @params lock-period
+;; @response (ok response)
 (define-public (stake-tokens (token-trait <ft-trait>) (amount-token uint) (lock-period uint))
   (begin
     (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
@@ -296,6 +397,14 @@
   )
 )
 
+;; @desc stake-tokens-at-cycle
+;; @params token-trait; ft-trait
+;; @params user
+;; @params user-id
+;; @params amount-token
+;; @params start-height 
+;; @params lock-period
+;; @returns (ok response)
 (define-private (stake-tokens-at-cycle (token-trait <ft-trait>) (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
   (let
     (
@@ -322,6 +431,9 @@
   )
 )
 
+;; @desc stake-tokens-closure
+;; @params reward-cycle-idx
+;; @returns bool/error
 (define-private (stake-tokens-closure (reward-cycle-idx uint)
   (commitment-response (response 
     {
@@ -366,6 +478,13 @@
   )
 )
 
+;; @desc set-tokens-staked
+;; @params token
+;; @params user-id
+;; @params target-cycle
+;; @params amount-staked
+;; @params to-return
+;; @returns (response bool)
 (define-private (set-tokens-staked (token principal) (user-id uint) (target-cycle uint) (amount-staked uint) (to-return uint))
   (let
     (
@@ -389,6 +508,10 @@
 ;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
+;; @desc claim-staking-reward
+;; @params token-trait; ft-trait
+;; @params target-cycle
+;; @returns (response tuple)
 (define-public (claim-staking-reward (token-trait <ft-trait>) (target-cycle uint))
   (begin
     (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
@@ -396,6 +519,12 @@
   )
 )
 
+;; @desc claim-staking-reward-at-cycle
+;; @params token-trait; ft-trait
+;; @params user
+;; @params stacks-height
+;; @params target-cycle
+;; @returns (response tuple)
 (define-private (claim-staking-reward-at-cycle (token-trait <ft-trait>) (user principal) (stacks-height uint) (target-cycle uint))
   (let
     (
@@ -431,10 +560,15 @@
 
 (define-data-var token-halving-cycle uint u100)
 
+;; @desc get-token-halving-cycle
+;; @returns uint
 (define-read-only (get-token-halving-cycle)
   (var-get token-halving-cycle)
 )
 
+;; @desc set-token-halving-cycle
+;; @params new-token-halving-cycle
+;; @returns (response bool)
 (define-public (set-token-halving-cycle (new-token-halving-cycle uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -451,6 +585,8 @@
 (define-data-var coinbase-threshold-4 uint (* u4 (var-get token-halving-cycle)))
 (define-data-var coinbase-threshold-5 uint (* u5 (var-get token-halving-cycle)))
 
+;; @desc set-coinbase-thresholds
+;; @returns (response bool)
 (define-private (set-coinbase-thresholds)
   (begin
     (var-set coinbase-threshold-1 (var-get token-halving-cycle))
@@ -462,6 +598,8 @@
 )
 
 ;; return coinbase thresholds if contract activated
+;; @desc get-coinbase-thresholds
+;; @returns (response tuple)
 (define-read-only (get-coinbase-thresholds)
   (ok {
       coinbase-threshold-1: (var-get coinbase-threshold-1),
@@ -484,6 +622,15 @@
   }
 )
 
+;; @desc set-coinbase-amount
+;; @restricted Contract-Owner
+;; @params token
+;; @params coinbase-1
+;; @params coinbase-2
+;; @params coinbase-3
+;; @params coinbase-4
+;; @params coinbase-5
+;; @returns (response bool)
 (define-public (set-coinbase-amount (token principal) (coinbase-1 uint) (coinbase-2 uint) (coinbase-3 uint) (coinbase-4 uint) (coinbase-5 uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
@@ -501,6 +648,10 @@
 )
 
 ;; function for deciding how many tokens to mint, depending on when they were mined
+;; @desc get-coinbase-amount-or-default
+;; @params token
+;; @params reward-cycle
+;; @returns uint
 (define-read-only (get-coinbase-amount-or-default (token principal) (reward-cycle uint))
   (let
     (
@@ -525,10 +676,18 @@
   )
 )
 
+;; @desc mul-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
+;; @desc div-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0
@@ -536,6 +695,10 @@
   )
 )
 
+;; @desc set-reward-cycle-length
+;; @restricted Contract-Owner
+;; @params new-reward-cycle-length
+;; @returns (response bool)
 (define-public (set-reward-cycle-length (new-reward-cycle-length uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)

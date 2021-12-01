@@ -4,6 +4,14 @@
 
 (define-constant ONE_8 (pow u10 u8))
 
+;; @desc roll-position
+;; @param token; ft-trait
+;; @param collateral; ft-trait
+;; @param the-key-token; sft-trait
+;; @param flash-loan-user; flash-loan-user-trait
+;; @param expiry; 
+;; @param expiry-to-roll
+;; @returns uint
 (define-public (roll-position (token <ft-trait>) (collateral <ft-trait>) (the-key-token <sft-trait>) (flash-loan-user <flash-loan-user-trait>) (expiry uint) (expiry-to-roll uint))
     (let
         (
@@ -25,6 +33,9 @@
 (define-data-var so-far uint u0)
 (define-data-var out-buf (buff 16) 0x)
 
+;; @desc uint-to-buff
+;; @params n; uint
+;; @returns buff
 (define-private (uint-to-buff (n uint))
     (if (is-eq n u0) 0x00
     (begin 
@@ -76,10 +87,16 @@
     )
 )
 
+;; @desc val-append
+;; @params vmod
+;; @returns some or none
 (define-private (val-append (vmod uint))
     (unwrap-panic (as-max-len? (concat (unwrap-panic (element-at BUFF-TO-BYTE vmod)) (var-get out-buf)) u16))
 )
 
+;; @desc mod-256
+;; @params vmod
+;; @returns uint
 (define-private (mod-256 (vmod bool))
     (let 
         (

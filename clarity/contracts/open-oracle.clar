@@ -24,6 +24,12 @@
 
 ;; For Testing Purpose, need for mocking oracle. 
 ;; price must be in fixed point integer
+;; @desc update-price
+;; @restriced Oracle-Owner
+;; @params symbol
+;; @params oracle-src
+;; @params price
+;; @returns (response uint)
 (define-public (update-price (symbol (string-ascii 32)) (oracle-src (string-ascii 32)) (price uint))
   (begin
     (asserts! (is-eq tx-sender (var-get oracle-owner)) ERR-NOT-AUTHORIZED)
@@ -34,6 +40,10 @@
 
 ;; oracle-src : Source of Oracle, lets keep for test-oracle for now. 
 ;; symbol : Token Symbol
+;; @desc get-price
+;; @params oracle-src
+;; @params symbol
+;; @returns (response uint)
 (define-read-only (get-price (oracle-src (string-ascii 32)) (symbol (string-ascii 32)))
   (let
     (
@@ -44,6 +54,10 @@
   )
 )
 
+;; @desc div-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
   (if (is-eq a u0)
       u0
@@ -51,6 +65,11 @@
   )
 )
 
+;; @desc calculate-strike
+;; @params oracle-src
+;; @params token-symbol
+;; @params collateral-symbol 
+;; @returns (response uint)
 (define-read-only (calculate-strike (oracle-src (string-ascii 32)) (token-symbol (string-ascii 32)) (collateral-symbol (string-ascii 32)))
   (ok (div-down (try! (get-price oracle-src token-symbol)) 
                 (try! (get-price oracle-src collateral-symbol))
