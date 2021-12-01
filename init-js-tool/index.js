@@ -820,7 +820,7 @@ async function run() {
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
     // await reserveRegisterUser('token-t-alex-v2');
-    // await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
+    // await reserveSetCoinbaseAmount('token-t-alex', 625e7, 625e7, 625e7, 625e7, 625e7);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
     // result = await reserveGetStakerAtCycleOrDefault('token-t-alex-v2', 3, 5);
