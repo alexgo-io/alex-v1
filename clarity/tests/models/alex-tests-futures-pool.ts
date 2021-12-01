@@ -3,11 +3,9 @@ import {Clarinet, Tx, Chain, Account, types} from "https://deno.land/x/clarinet@
 
 class FuturesPool{
     chain: Chain;
-    deployer: Account;
 
-    constructor(chain: Chain, deployer: Account) {
+    constructor(chain: Chain) {
         this.chain = chain;
-        this.deployer = deployer;
     }
 
     //(contract-call? .futures-pool create-pool 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex (list u1) 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex)
@@ -21,33 +19,36 @@ class FuturesPool{
                 types.list(rewardCycles),
                 types.principal(yieldToken),
             ],
-            this.deployer.address
+            sender.address
         );
     }
 
-    setActivationThreshold(threshold: number): Tx {
+    //(contract-call? .alex-reserve-pool set-activation-threshold u1)
+    setActivationThreshold(sender: Account, threshold: number): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "set-activation-threshold",
             [
                 types.uint(threshold)
             ],
-            this.deployer.address
+            sender.address
         );
     }
 
-    addToken(token: string): Tx {
+    //(contract-call? .alex-reserve-pool add-token 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1)
+    addToken(sender: Account, token: string): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "add-token",
             [
                 types.principal(token)
             ],
-            this.deployer.address
+            sender.address
         );
     }
 
-    registerUser(token: string, memo: string | undefined = undefined): Tx {
+    //(contract-call? .alex-reserve-pool register-user 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex none)
+    registerUser(sender: Account, token: string, memo: string | undefined = undefined): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "register-user",
@@ -57,7 +58,7 @@ class FuturesPool{
                     ? types.none()
                     : types.some(types.utf8(memo)),
             ],
-            this.deployer.address
+            sender.address
         );
     }
 
