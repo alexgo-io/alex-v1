@@ -36,13 +36,12 @@ class StackingPool{
     }
 
     //(contract-call? .alex-reserve-pool add-token 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1)
-    addToken(sender: Account, token: string, activationBlock: number): Tx {
+    addToken(sender: Account, token: string): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
             "add-token",
             [
-                types.principal(token),
-                types.uint(activationBlock)
+                types.principal(token)
             ],
             sender.address
         );
@@ -112,6 +111,19 @@ class StackingPool{
             sender.address
         )
     }
+
+    setCoinbaseAmount(sender: Account, token: string, coinbaseOne: number, coinbaseTwo: number,
+      coinbaseThree: number, coinbaseFour: number, coinbaseFive: number): Tx {
+      return Tx.contractCall(
+        "alex-reserve-pool",
+        "set-coinbase-amount",
+        [
+          types.principal(token), types.uint(coinbaseOne), types.uint(coinbaseTwo), 
+          types.uint(coinbaseThree) ,types.uint(coinbaseFour), types.uint(coinbaseFive)
+        ],
+        sender.address
+      );
+    }     
 }
 
 export { StackingPool }

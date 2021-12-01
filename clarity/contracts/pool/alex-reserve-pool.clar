@@ -120,12 +120,12 @@
   (is-some (map-get? approved-tokens token))
 )
 
-(define-public (add-token (token principal) (activation-block-before-delay uint))
+(define-public (add-token (token principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (map-set approved-tokens token true)
     (map-set users-nonce token u0)
-    (set-activation-block token activation-block-before-delay)
+    (ok true)
   )
 )
 
@@ -134,16 +134,16 @@
   (default-to u100000000 (map-get? activation-block token))
 )
 
-(define-public (set-activation-block (token principal) (new-activation-block-before-delay uint))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (map-set activation-block token (+ new-activation-block-before-delay (var-get activation-delay))))
-  )
-)
-
 ;; returns activation delay
 (define-read-only (get-activation-delay)
   (var-get activation-delay)
+)
+
+(define-public (set-activation-delay (new-activation-delay uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set activation-delay new-activation-delay))
+  )
 )
 
 ;; returns activation threshold
@@ -221,11 +221,8 @@
     (get-or-create-user-id token tx-sender)
 
     (if (is-eq new-id threshold)
-      (let
-        (
-          (activation-block-val (+ block-height (var-get activation-delay)))
-        )
-        (map-set activation-block token activation-block-val)
+      (begin
+        (map-set activation-block token (+ block-height (var-get activation-delay)))
         (ok true)
       )
       (ok true)
@@ -409,7 +406,6 @@
       (to-return (get to-return (get-staker-at-cycle-or-default token target-cycle user-id)))
     )
     (asserts! (> current-cycle target-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (or (> to-return u0) (> entitled-token u0)) ERR-NOTHING-TO-REDEEM)
     ;; disable ability to claim again
     (map-set staker-at-cycle
       {
@@ -540,10 +536,17 @@
   )
 )
 
+(define-public (set-reward-cycle-length (new-reward-cycle-length uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set reward-cycle-length new-reward-cycle-length))
+  )
+)
+
 ;; contract initialisation
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .yield-token-pool true)
-  (map-set approved-contracts .alex-reserve-pool true)  
+  (map-set approved-contracts (as-contract tx-sender) true)  
 )

@@ -8,6 +8,7 @@ const {
   PostConditionMode,
   uintCV,
   someCV,
+  stringAsciiCV,
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType
@@ -405,6 +406,37 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
     console.log(error);
   }
 };
+
+const multisigProposeWBTCUSDA = async (start_block_height, title, url, new_fee_rate_x, new_fee_rate_y) => {
+  console.log('--------------------------------------------------------------------------');
+  console.log('[multisig] propose...', start_block_height, title, url, new_fee_rate_x, new_fee_rate_y);
+  const privateKey = await getDeployerPK();
+  const txOptions = {
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+      contractName: 'multisig-fwp-wbtc-usda-50-50',
+      functionName: 'propose',
+      functionArgs: [
+          uintCV(start_block_height),
+          stringAsciiCV(title),
+          stringAsciiCV(url),
+          uintCV(new_fee_rate_x),
+          uintCV(new_fee_rate_y)
+      ],
+      senderKey: privateKey,
+      validateWithAbi: true,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+      const transaction = await makeContractCall(txOptions);
+      const broadcastResponse = await broadcastTransaction(transaction, network);
+      console.log(broadcastResponse);
+      return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+      console.log(error);
+  }
+}
 
 exports.fwpCreate = fwpCreate;
 exports.fwpAddToPosition = fwpAddToPosition;

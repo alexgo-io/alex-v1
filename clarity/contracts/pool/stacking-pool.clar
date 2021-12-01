@@ -183,20 +183,28 @@
             (total-rewards (get sum-so-far (fold sum-stacking-reward reward-cycles { token: poxl-token, sum-so-far: u0 })))
             (portioned-rewards (mul-down total-rewards shares-to-supply))
             (trait-lists (list poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait poxl-token-trait))
+            (recipient tx-sender)
         )
 
         (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle poxl-token (+ start-cycle u32)) (contract-call? .alex-reserve-pool get-reward-cycle-length))) ERR-STACKING-IN-PROGRESS)
         
         ;; the first call claims rewards
-        (map claim-stacking-reward reward-cycles trait-lists)
+        (try! (fold check-err (map claim-stacking-reward reward-cycles trait-lists) (ok { entitled-token: u0, to-return: u0 })))
 
-        (try! (contract-call? poxl-token-trait transfer-fixed shares (as-contract tx-sender) tx-sender none))
-        (try! (contract-call? reward-token-trait transfer-fixed portioned-rewards (as-contract tx-sender) tx-sender none))
+        (and (> shares u0) (as-contract (try! (contract-call? poxl-token-trait transfer-fixed shares tx-sender recipient none))))
+        (and (> portioned-rewards u0) (as-contract (try! (contract-call? reward-token-trait transfer-fixed portioned-rewards tx-sender recipient none))))
 
         (map-set pools-data-map { poxl-token: poxl-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token burn-fixed start-cycle shares tx-sender))
+        (try! (contract-call? yield-token burn-fixed start-cycle shares recipient))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {poxl-token: shares, reward-token: portioned-rewards})
+    )
+)
+
+(define-private (check-err (result (response (tuple (entitled-token uint) (to-return uint)) uint)) (prior (response (tuple (entitled-token uint) (to-return uint)) uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
     )
 )
 

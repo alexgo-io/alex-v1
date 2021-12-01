@@ -61,13 +61,13 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>){
         var deployer = accounts.get("deployer")!;
         const otherUser = accounts.get("wallet_2")!;
-        const stackingPool = new StackingPool(chain)
+        const stackingPool = new StackingPool(chain);
         const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
 
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
             stackingPool.setActivationThreshold(deployer, 1),
-            stackingPool.addToken(deployer, alexTokenAddress, 1),
+            stackingPool.addToken(deployer, alexTokenAddress),
             stackingPool.registerUser(otherUser, alexTokenAddress),
         ]);
         chain.mineEmptyBlockUntil(
@@ -99,7 +99,7 @@ Clarinet.test({
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
             stackingPool.setActivationThreshold(deployer, 1),
-            stackingPool.addToken(deployer, alexTokenAddress, 1),
+            stackingPool.addToken(deployer, alexTokenAddress),
             stackingPool.registerUser(deployer, alexTokenAddress),
         ]);
 
@@ -124,7 +124,7 @@ Clarinet.test({
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
             stackingPool.setActivationThreshold(deployer, 1),
-            stackingPool.addToken(deployer, alexTokenAddress, 1),
+            stackingPool.addToken(deployer, alexTokenAddress),
             stackingPool.registerUser(deployer, alexTokenAddress),
         ]);
         chain.mineEmptyBlockUntil(
@@ -152,12 +152,12 @@ Clarinet.test({
         const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
         const dx = 200*ONE_8
 
-        alexToken.mintFixed(wallet_2.address, 200 * ONE_8);
+        alexToken.mintFixed(deployer, wallet_2.address, 200 * ONE_8);
 
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
             stackingPool.setActivationThreshold(deployer, 1),
-            stackingPool.addToken(deployer, alexTokenAddress, 1),
+            stackingPool.addToken(deployer, alexTokenAddress),
             stackingPool.registerUser(wallet_2, alexTokenAddress),
         ]);
         chain.mineEmptyBlockUntil(
@@ -185,12 +185,12 @@ Clarinet.test({
         const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
         
         //mint alex tokens
-        alexToken.mintFixed(wallet_1.address, 200 * ONE_8);
+        alexToken.mintFixed(deployer, wallet_1.address, 200 * ONE_8);
 
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
             stackingPool.setActivationThreshold(deployer, 1),
-            stackingPool.addToken(deployer, alexTokenAddress, 1),
+            stackingPool.addToken(deployer, alexTokenAddress),
             stackingPool.registerUser(wallet_1, alexTokenAddress),
         ]);
         chain.mineEmptyBlockUntil(
@@ -220,13 +220,14 @@ Clarinet.test({
         const rewardCycles: Array<string> = ["u1","u2","u3","u4","u5","u6","u7","u8","u9","u10","u11","u12","u13","u14","u15","u16","u17","u18","u19","u20","u21","u22","u23","u24","u25","u26","u27","u28","u29","u30","u31","u32"]
         
         //mint alex tokens
-        alexToken.mintFixed(deployer.address, 200 * ONE_8);
-        alexToken.mintFixed(wallet_1.address, 200 * ONE_8);
+        alexToken.mintFixed(deployer, deployer.address, 200 * ONE_8);
+        alexToken.mintFixed(deployer, wallet_1.address, 200 * ONE_8);
 
         // setting up a working stacking pool
         const setupBlock = chain.mineBlock([
             stackingPool.setActivationThreshold(deployer, 1),
-            stackingPool.addToken(deployer, alexTokenAddress, 1),
+            stackingPool.addToken(deployer, alexTokenAddress),
+            stackingPool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             stackingPool.registerUser(deployer, alexTokenAddress),
             stackingPool.registerUser(wallet_1, alexTokenAddress),
         ]);
@@ -236,24 +237,28 @@ Clarinet.test({
 
         // creating a new pool
         const stackingPoolBlock = chain.mineBlock([
-            stackingPool.createPool(deployer, alexTokenAddress, alexTokenAddress, ["u1"], stakedAlexAddress),
+            stackingPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress),
             stackingPool.addToPosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, 200*ONE_8),
         ]);
         stackingPoolBlock.receipts[0].result.expectOk().expectBool(true)    
         stackingPoolBlock.receipts[1].result.expectOk().expectBool(true);
 
-        // console.log(stackingPool.getRewardCycleLength(deployer).result)
-        // console.log(stackingPool.getFirstStacksBlockInRewardCycle(deployer, alexTokenAddress, 1 + 32).result) 
-        // // 71551
+        console.log(stackingPool.getRewardCycleLength(deployer).result)
+        console.log(stackingPool.getFirstStacksBlockInRewardCycle(deployer, alexTokenAddress, 1 + 32).result) 
+        // 71553
 
-        // chain.mineEmptyBlockUntil(71551 + 1);
+        // chain.mineEmptyBlockUntil(
+        //     Number(stackingPool.getRewardCycleLength(deployer).result) +
+        //     Number(stackingPool.getFirstStacksBlockInRewardCycle(deployer, alexTokenAddress, 1 + 32).result) +
+        //      + 1);
+        chain.mineEmptyBlockUntil(71553 + 1);
 
-        // const reducePosBlock = chain.mineBlock([
-        //     stackingPool.reducePosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, 10)
-        // ]);
+        const reducePosBlock = chain.mineBlock([
+            stackingPool.reducePosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, ONE_8)
+        ]);
 
-        //FAILING u1000
-
-        // reducePosBlock.receipts[0].result.expectOk().expectBool(true);
+        let tuple:any = reducePosBlock.receipts[0].result.expectOk().expectTuple();
+        tuple['poxl-token'].expectUint(200e8);
+        tuple['reward-token'].expectUint(32 * ONE_8);
     }
 })
