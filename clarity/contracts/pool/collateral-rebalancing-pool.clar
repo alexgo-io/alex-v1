@@ -576,6 +576,8 @@
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; swap is supported only if token /= collateral
         (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
+        ;; CR-03
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)
         (let
             (
                 (token-x (contract-of collateral))
@@ -634,7 +636,9 @@
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)   
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
+        ;; CR-03
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)   
         (let
             (
                 (token-x (contract-of collateral))
