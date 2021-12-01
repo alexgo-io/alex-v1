@@ -214,7 +214,6 @@
     )
     (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN)
     (asserts! (is-none (map-get? user-ids {token: token, user: tx-sender})) ERR-USER-ALREADY-REGISTERED)
-    (asserts! (<= new-id threshold) ERR-ACTIVATION-THRESHOLD-REACHED)
 
     (if (is-some memo) (print memo) none)
 
