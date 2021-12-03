@@ -47,7 +47,9 @@ let contract_paths = [
     "multisig/multisig-ytp-yield-wbtc-34560-wbtc.clar",  
     "multisig/multisig-ytp-yield-usda-34560-usda.clar",    
     "flash-loan-user-margin-usda-wbtc-34560.clar", 
-    "flash-loan-user-margin-wbtc-usda-34560.clar"
+    "flash-loan-user-margin-wbtc-usda-34560.clar",
+
+    "helpers/alex-staking-helper.clar"
 
     // "open-oracle.clar",        
 ]
@@ -68,9 +70,8 @@ function sleep(ms) {
     );
 }
 async function walkDir() {
-    // console.log(paths)
-    console.log("making sure deployer has enough stx");
-    await genesis_transfer();    
+    // console.log(paths) 
+
     await contract_paths.reduce(async (memo, path) => {
         await memo
         let contract_file = path.split('/').at(-1)
@@ -91,10 +92,10 @@ async function deploy(filePath, contractName){
     const transaction = await makeContractDeploy(txOptions);
     const broadcast_id = await broadcastTransaction(transaction, network);
     // console.log(broadcast_id)
-    //console.log(`https://regtest-3.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
+    //console.log(`https://regtest-2.alexgo.io/extended/v1/tx/0x${broadcast_id.txid}`)
     while (true){
         await sleep(3000);
-        let truth = await fetch(`https://regtest-3.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
+        let truth = await fetch(`https://regtest-2.alexgo.io/extended/v1/tx/${broadcast_id.txid}`)
         let res = await truth.json();
         console.log(`Waiting... ${broadcast_id.txid}`)
         if (res['tx_status'] === 'success'){
@@ -116,7 +117,9 @@ async function deploy(filePath, contractName){
 }
 
 async function run(){
-    VERSION = await get_version()
+    // VERSION = await get_version()
+    console.log("making sure deployer has enough stx");
+    await genesis_transfer();   
     //walk the batches directory and deploy
     await walkDir();
     //write to file

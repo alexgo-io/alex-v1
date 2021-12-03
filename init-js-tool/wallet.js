@@ -29,7 +29,7 @@ const getUserPK = async ()=>{
 // const network = new StacksRegtest({
 const network = new StacksMocknet({
 // const network = new StacksMainnet({    
-    url:'https://regtest-3.alexgo.io'
+    url:'https://regtest-2.alexgo.io'
 })
 
 const BigNum = require("bn.js");
@@ -41,7 +41,7 @@ const genesis_transfer = async() => {
       recipient: process.env.DEPLOYER_ACCOUNT_ADDRESS,
       amount: new BigNum(1000000000000000),
       senderKey:
-        "cb3df38053d132895220b9ce471f6b676db5b9bf0b4adefb55f2118ece2478df01",
+        "21d43d2ae0da1d9d04cfcaac7d397a33733881081f0b2cd038062cf0ccbb752601",
       network: network,
     };
     
