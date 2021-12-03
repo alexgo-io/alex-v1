@@ -23,29 +23,32 @@ import {
       ], this.deployer.address);
     }    
 
-    getPoolValueInToken(token: string, collateral: string, expiry: number) {
+    getPoolValueInToken(token: string, collateral: string, expiry: number, spot: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-token", [
         types.principal(token),
         types.principal(collateral),
-        types.uint(expiry)
+        types.uint(expiry),
+        types.uint(spot)
       ], this.deployer.address);
     }
 
-    getPoolValueInCollateral(token: string, collateral: string, expiry: number) {
+    getPoolValueInCollateral(token: string, collateral: string, expiry: number, spot: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-collateral", [
         types.principal(token),
         types.principal(collateral),
-        types.uint(expiry)
+        types.uint(expiry),
+        types.uint(spot)
       ], this.deployer.address);
     }    
     
-    getWeightY(token: string, collateral: string, expiry: number, strike: number, bs_vol: number) {
+    getWeightY(token: string, collateral: string, expiry: number, strike: number, bs_vol: number, spot: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-y", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry),
         types.uint(strike),
-        types.uint(bs_vol)
+        types.uint(bs_vol),
+        types.unit(spot)
       ], this.deployer.address);
     }
 
@@ -56,11 +59,12 @@ import {
       ], this.deployer.address);
     }    
 
-    getLtv(token: string, collateral: string, expiry: number){
+    getLtv(token: string, collateral: string, expiry: number, spot: number){
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-ltv", [
         types.principal(token),
         types.principal(collateral),
-        types.uint(expiry)
+        types.uint(expiry),
+        types.uint(spot)
       ], this.deployer.address);
     }
 

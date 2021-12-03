@@ -175,12 +175,12 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (balance-y (get balance-y pool))
-            (balance-x-in-y (div-down (get balance-x pool) (try! (get-spot token collateral))))
+            (balance-x-in-y (div-down (get balance-x pool) spot))
         )
         (ok (+ balance-x-in-y balance-y))
     )
@@ -192,12 +192,12 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (balance-x (get balance-x pool))
-            (balance-y-in-x (mul-down (get balance-y pool) (try! (get-spot token collateral))))
+            (balance-y-in-x (mul-down (get balance-y pool) spot))
         )
         (ok (+ balance-y-in-x balance-x))
     )
@@ -209,12 +209,12 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (yield-supply (get yield-supply pool)) ;; in token
-            (pool-value (try! (get-pool-value-in-token token collateral expiry))) ;; also in token
+            (pool-value (try! (get-pool-value-in-token token collateral expiry spot))) ;; also in token
         )
         ;; if no liquidity in the pool, return ltv-0
         (if (is-eq yield-supply u0)
@@ -232,7 +232,7 @@
 ;; @param strike; reference strike price
 ;; @param bs-vol; reference black-scholes vol
 ;; @returns (response uint uint)
-(define-read-only (get-weight-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
+(define-read-only (get-weight-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint) (spot uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
@@ -248,7 +248,7 @@
                     (t-2 (div-down (- expiry now) (get token-to-maturity pool)))
 
                     ;; we calculate d1 first
-                    (spot-term (div-up (try! (get-spot token collateral)) strike))
+                    (spot-term (div-up spot strike))
                     (pow-bs-vol (div-up (pow-down bs-vol u200000000) u200000000))
                     (vol-term (mul-up t pow-bs-vol))
                     (sqrt-t (pow-down t u50000000))
@@ -389,12 +389,10 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (conversion-ltv (get conversion-ltv pool))
-            (ltv (try! (get-ltv token collateral expiry)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
-        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv token collateral expiry))) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv token collateral expiry (try! (get-spot token collateral))))) ERR-LTV-GREATER-THAN-ONE)
         (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
         (let
             (
@@ -591,7 +589,7 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol) ERR-GET-WEIGHT-FAIL))
+                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol (try! (get-spot token collateral))) ERR-GET-WEIGHT-FAIL))
                 (weight-x (- ONE_8 weight-y))            
             
                 ;; fee = dx * fee-rate-x
@@ -650,7 +648,7 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol) ERR-GET-WEIGHT-FAIL))
+                (weight-y (unwrap! (get-weight-y token collateral expiry strike bs-vol (try! (get-spot token collateral))) ERR-GET-WEIGHT-FAIL))
                 (weight-x (- ONE_8 weight-y))   
 
                 ;; fee = dy * fee-rate-y
@@ -901,7 +899,7 @@
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY)
         (let 
             (
-                (ltv (try! (get-ltv token collateral expiry)))
+                (ltv (try! (get-ltv token collateral expiry (try! (get-spot token collateral)))))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
                         (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dx))                    
@@ -936,7 +934,7 @@
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))
             
-                (ltv (try! (get-ltv token collateral expiry)))
+                (ltv (try! (get-ltv token collateral expiry (try! (get-spot token collateral)))))
 
                 (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
 
@@ -975,7 +973,7 @@
                 (key-supply (get key-supply pool))
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))
-                (pool-value-unfloored (try! (get-pool-value-in-token token collateral expiry)))
+                (pool-value-unfloored (try! (get-pool-value-in-token token collateral expiry (try! (get-spot token collateral)))))
                 (pool-value-in-y (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
                 (key-value-in-y (if (<= pool-value-in-y yield-supply) u0 (- pool-value-in-y yield-supply)))
                 (key-to-pool (div-down key-value-in-y pool-value-in-y))
