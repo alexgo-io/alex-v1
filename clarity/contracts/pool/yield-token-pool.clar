@@ -19,7 +19,7 @@
 (define-constant invalid-token-err (err u2007))
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
-(define-constant invalid-ERR-EXPIRY (err u2009))
+(define-constant ERR-INVALID-EXPIRY (err u2009))
 (define-constant fixed-point-err (err 5014))
 (define-constant ERR-MATH-CALL (err u4003))
 (define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
@@ -94,7 +94,9 @@
 ;; @returns (response bool uint)
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
-       (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        ;; MI-05
+        (asserts! (> new-max-expiry (* block-height ONE_8)) ERR-INVALID-EXPIRY)
         (ok (var-set max-expiry new-max-expiry)) 
     )
 )
@@ -106,8 +108,8 @@
 ;; @returns (response uint uint)
 (define-read-only (get-t (expiry uint) (listed uint))
     (begin
-        (asserts! (> (var-get max-expiry) expiry) invalid-ERR-EXPIRY)
-        (asserts! (> (var-get max-expiry) (* block-height ONE_8)) invalid-ERR-EXPIRY)        
+        (asserts! (> (var-get max-expiry) expiry) ERR-INVALID-EXPIRY)
+        (asserts! (> (var-get max-expiry) (* block-height ONE_8)) ERR-INVALID-EXPIRY)        
         (let
             (
                 (t (div-down
