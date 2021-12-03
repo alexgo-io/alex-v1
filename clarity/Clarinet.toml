@@ -7,6 +7,10 @@ costs_version = 1
 path = "contracts/pool/alex-reserve-pool.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "alex-vault"]
 
+[contracts.futures-pool]
+path = "contracts/pool/futures-pool.clar"
+depends_on = ["trait-ownable", "trait-semi-fungible-token", "trait-multisig-vote", "alex-reserve-pool"]
+
 [contracts.alex-staking-helper]
 path = "contracts/helpers/alex-staking-helper.clar"
 depends_on = ["alex-reserve-pool", "token-alex"]
@@ -197,6 +201,10 @@ depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 
 [contracts.ytp-yield-wbtc]
 path = "contracts/pool-token/ytp-yield-wbtc.clar"
+depends_on = ["trait-ownable", "trait-semi-fungible-token"]
+
+[contracts.staked-alex]
+path = "contracts/staked-token/staked-alex.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 
 [contracts.flash-loan-user-margin-wbtc-usda]

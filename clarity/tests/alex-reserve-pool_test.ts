@@ -155,27 +155,6 @@ describe("STAKING :", () => {
           .expectErr()
           .expectUint(CoreClient.ErrCode.ERR_USER_ALREADY_REGISTERED);
       });
-
-      it("throws ERR_ACTIVATION_THRESHOLD_REACHED error when user wants to register after reaching activation threshold", (chain, accounts, clients) => {
-        // arrange
-        const user1 = accounts.get("wallet_4")!;
-        const user2 = accounts.get("wallet_5")!;
-        const deployer = accounts.get("deployer")!;
-        chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.registerUser(user1, token),
-        ]);
-
-        // act
-        const receipt = chain.mineBlock([clients.core.registerUser(user2, token)])
-          .receipts[0];
-
-        // assert
-        receipt.result
-          .expectErr()
-          .expectUint(CoreClient.ErrCode.ERR_ACTIVATION_THRESHOLD_REACHED);
-      });
     });
   });
 
