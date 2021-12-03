@@ -314,6 +314,29 @@ class YTP_YIELD_WBTC {
 }
 export { YTP_YIELD_WBTC };
 
+class YTP_YIELD_USDA {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn("ytp-yield-usda", "get-balance-fixed", [
+      types.uint(expiry), types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn("ytp-yield-usda", "get-total-supply-fixed", [
+      types.uint(expiry)
+    ], this.deployer.address);
+  }
+}
+export { YTP_YIELD_USDA };
+
 class KEY_USDA_WBTC {
   chain: Chain;
   deployer: Account;
@@ -395,3 +418,37 @@ class YIELD_WBTC {
   }
 }
 export { YIELD_WBTC };
+
+class YIELD_USDA {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn("yield-usda", "get-balance-fixed", [
+      types.uint(expiry), types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn("yield-usda", "get-total-supply-fixed", [
+      types.uint(expiry)
+    ], this.deployer.address);
+  }
+  
+  mintFixed(sender: Account, expiry: number, amount: number, recipient: string) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("yield-usda", "mint-fixed", [
+        types.uint(expiry),
+        types.uint(amount),
+        types.principal(recipient)
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+}
+export { YIELD_USDA };
