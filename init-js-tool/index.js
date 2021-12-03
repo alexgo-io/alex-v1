@@ -697,10 +697,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -763,7 +763,7 @@ async function run() {
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
     // await reserveRegisterUser('token-t-alex');
-    // await reserveSetCoinbaseAmount('token-t-alex', 625e7, 625e7, 625e7, 625e7, 625e7);
+    await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
     // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
@@ -782,7 +782,7 @@ async function run() {
     // result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e8, 0.5e8);
     // printResult(result);
 
-    // await mint('token-t-alex-v2', 'ST13F0C8HFJC9H1FR7S7WFZ9FEMNV1PBEG346P1ZP', 1000e8);    
+    // await mint('token-t-alex', 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 100000e8);    
 
     // await get_some_token('ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ');
 }
