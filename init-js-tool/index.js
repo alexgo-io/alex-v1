@@ -313,7 +313,7 @@ async function arbitrage_crp(dry_run = true, _subset=_deploy) {
             printed = Number(wbtcPrice) / Number(usdaPrice);
         }
 
-        let node_info = await (await fetch('https://regtest-3.alexgo.io/v2/info')).json();
+        let node_info = await (await fetch('https://regtest-2.alexgo.io/v2/info')).json();
         let time_to_maturity = (Math.round(_subset[key]['expiry'] / ONE_8) - node_info['burn_block_height']) / 2102400;
 
         if (time_to_maturity > 0) {
@@ -401,7 +401,7 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
         result = await ytpGetYield(_subset[key]['yield_token']);
         implied_yield = Number(result.value.value) / ONE_8;
 
-        let node_info = await (await fetch('https://regtest-3.alexgo.io/v2/info')).json();
+        let node_info = await (await fetch('https://regtest-2.alexgo.io/v2/info')).json();
         let time_to_maturity = (Math.round(_subset[key]['expiry'] / ONE_8) - node_info['burn_block_height']) / 2102400;
 
         if (time_to_maturity > 0) {
@@ -697,10 +697,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    // await arbitrage_fwp(dry_run = false);
-    // await arbitrage_crp(dry_run = false, _pools);
-    // await arbitrage_ytp(dry_run = false, _pools);
-    // await arbitrage_fwp(dry_run = false);
+    await arbitrage_fwp(dry_run = false);
+    await arbitrage_crp(dry_run = false, _pools);
+    await arbitrage_ytp(dry_run = false, _pools);
+    await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -758,16 +758,16 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    await reserveAddToken('token-t-alex');
-    await reserveSetActivationThreshold(1);
-    await reserveSetActivationDelay(1);
-    await reserveSetRewardCycleLength(525);
-    await reserveRegisterUser('token-t-alex');
-    await reserveSetCoinbaseAmount('token-t-alex', 625e7, 625e7, 625e7, 625e7, 625e7);
-    result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
-    console.log(result);
-    result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
-    console.log(result);
+    // await reserveAddToken('token-t-alex');
+    // await reserveSetActivationThreshold(1);
+    // await reserveSetActivationDelay(1);
+    // await reserveSetRewardCycleLength(525);
+    // await reserveRegisterUser('token-t-alex');
+    // await reserveSetCoinbaseAmount('token-t-alex', 625e7, 625e7, 625e7, 625e7, 625e7);
+    // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
+    // console.log(result);
+    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
+    // console.log(result);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
