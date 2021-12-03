@@ -451,4 +451,5 @@ class YIELD_USDA {
     return block.receipts[0].result;
   }
 }
+
 export { YIELD_USDA };
