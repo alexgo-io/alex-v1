@@ -84,6 +84,7 @@ const _deploy = {
         bs_vol: 0.8e+8,
         target_apy: 0.06354,
         expiry: 34560e+8,
+        token_to_maturity: 11520e+8
     },
     1: {token: 'token-usda',
         collateral: 'token-wbtc',
@@ -98,63 +99,8 @@ const _deploy = {
         bs_vol: 0.8e+8,
         target_apy: 0.086475,
         expiry: 34560e+8,
-    },
-    2: {token: 'token-wbtc',
-        collateral: 'token-usda',
-        yield_token: 'yield-wbtc-74880',
-        key_token: 'key-wbtc-74880-usda',
-        pool_token: 'ytp-yield-wbtc-74880-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-74880-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-74880-usda',
-        liquidity_ytp: 100e+8,
-        collateral_crp: 1500000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.06354,
-        expiry: 74880e+8,
-    },
-    3: {token: 'token-usda',
-        collateral: 'token-wbtc',
-        yield_token: 'yield-usda-74880',
-        key_token: 'key-usda-74880-wbtc',
-        pool_token: 'ytp-yield-usda-74880-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-74880-usda',
-        multisig_crp: 'multisig-crp-usda-74880-wbtc',
-        liquidity_ytp: 6000000e+8,
-        collateral_crp: 25e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.086475,
-        expiry: 74880e+8,
-    },    
-    4: {token: 'token-wbtc',
-        collateral: 'token-usda',
-        yield_token: 'yield-wbtc-92160',
-        key_token: 'key-wbtc-92160-usda',
-        pool_token: 'ytp-yield-wbtc-92160-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-92160-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-92160-usda',
-        liquidity_ytp: 100e+8,
-        collateral_crp: 1500000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.06354,
-        expiry: 92160e+8,
-    },
-    5: {token: 'token-usda',
-        collateral: 'token-wbtc',
-        yield_token: 'yield-usda-92160',
-        key_token: 'key-usda-92160-wbtc',
-        pool_token: 'ytp-yield-usda-92160-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-92160-usda',
-        multisig_crp: 'multisig-crp-usda-92160-wbtc',
-        liquidity_ytp: 6000000e+8,
-        collateral_crp: 25e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.086475,
-        expiry: 92160e+8,
-    },       
+        token_to_maturity: 11520e+8
+    },     
 }
 
 const ONE_8 = 100000000
@@ -221,7 +167,7 @@ async function create_fwp(add_only, deployer=false) {
             weight_y: 0.5e+8,
             pool_token: 'fwp-wbtc-usda-50-50',
             multisig: 'multisig-fwp-wbtc-usda-50-50',
-            left_side: Math.round(50000000 * ONE_8 * ONE_8 / Number(wbtcPrice)),
+            left_side: Math.round(50000000 * ONE_8 / Number(wbtcPrice)),
             right_side: 50000000 * ONE_8            
         },
     }
@@ -261,7 +207,7 @@ async function create_crp(add_only, _subset=_deploy) {
         if (add_only) {
             await crpAddToPostion(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], _subset[key]['collateral_crp']);
         } else {
-            await crpCreate(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], _subset[key]['multisig_crp'], _subset[key]['ltv_0'], conversion_ltv, _subset[key]['bs_vol'], moving_average, _subset[key]['collateral_crp']);
+            await crpCreate(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], _subset[key]['multisig_crp'], _subset[key]['ltv_0'], conversion_ltv, _subset[key]['bs_vol'], moving_average, _subset[key]['token_to_maturity'], _subset[key]['collateral_crp']);
         }
     }
 }
@@ -271,7 +217,7 @@ async function set_faucet_amounts() {
     await setUsdaAmount(500000e+8);
     await setWbtcAmount(5e+8);
     await setStxAmount(250e+8);
-    await setAlexAmount(0e+8)
+    await setAlexAmount(10e+8)
 }
 
 async function get_some_token(recipient) {
@@ -727,9 +673,6 @@ _white_list = {
 
 async function run() {
     // await set_faucet_amounts();
-    // await get_some_token('STR3ZNZ7VZGAJFVBS69DQ1Z5APW0MWS7E2P4EFP6');
-    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
@@ -754,10 +697,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -815,15 +758,15 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    // await reserveAddToken('token-t-alex-v2');
+    // await reserveAddToken('token-t-alex');
     // await reserveSetActivationThreshold(1);
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
-    // await reserveRegisterUser('token-t-alex-v2');
-    // await reserveSetCoinbaseAmount('token-t-alex', 625e7, 625e7, 625e7, 625e7, 625e7);
+    // await reserveRegisterUser('token-t-alex');
+    await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
-    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex-v2', 3, 5);
+    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
     // console.log(result);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
@@ -839,8 +782,8 @@ async function run() {
     // result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e8, 0.5e8);
     // printResult(result);
 
-    // await mint('token-t-alex-v2', 'ST13F0C8HFJC9H1FR7S7WFZ9FEMNV1PBEG346P1ZP', 1000e8);    
+    // await mint('token-t-alex', 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 100000e8);    
 
-    // await get_some_token('ST15SC7G0PBTS0WPDC0ZX96X1CXE76Y22EATCWXAE');
+    // await get_some_token('ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ');
 }
 run();

@@ -118,7 +118,7 @@ Clarinet.test({
         call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalance(keyusda51840Address, wallet_5.address);
-        position = call.result.expectOk().expectUint(1793447191026);
+        position = call.result.expectOk().expectUint(1333936486830);
         // but nothing with yield-usda-51840
         call = await FLTest.getBalance(yieldusda51840Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);

@@ -176,7 +176,7 @@ Clarinet.test({
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(9942250);                
+        position['balance-y'].expectUint(28983944);                
         position['yield-supply'].expectUint(8046214);
         position['key-supply'].expectUint(88853574);
              
@@ -184,14 +184,14 @@ Clarinet.test({
         result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, keywbtc59760Address, ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(1896035);     
+        position['dy'].expectUint(20937730);     
         
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['yield-supply'].expectUint(8046214);
         position['key-supply'].expectUint(0);        
         position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(8046215);                
+        position['balance-y'].expectUint(8046214);                
     },    
 });
 
