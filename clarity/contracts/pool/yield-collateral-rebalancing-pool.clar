@@ -179,12 +179,13 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <sft-trait>) (collateral-token <ft-trait>) (expiry uint))
+(define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <sft-trait>) (collateral-token <ft-trait>) (expiry uint) (spot uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (balance-y (get balance-y pool))
-            (balance-x-in-y (div-down (get balance-x pool) (try! (get-spot token collateral collateral-token expiry))))
+            ;; (balance-x-in-y (div-down (get balance-x pool) (try! (get-spot token collateral collateral-token expiry))))
+            (balance-x-in-y (div-down (get balance-x pool) spot))
         )
         (ok (+ balance-x-in-y balance-y))
     )
@@ -218,7 +219,8 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
             (yield-supply (get yield-supply pool)) ;; in token
-            (pool-value (try! (get-pool-value-in-token token collateral collateral-token expiry))) ;; also in token
+            (spot (try! (get-spot token collateral collateral-token expiry)))
+            (pool-value (try! (get-pool-value-in-token token collateral collateral-token expiry spot))) ;; also in token
         )
         ;; if no liquidity in the pool, return ltv-0
         (if (is-eq yield-supply u0)
@@ -958,7 +960,8 @@
                 (key-supply (get key-supply pool))
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))
-                (pool-value-unfloored (try! (get-pool-value-in-token token collateral collateral-token expiry)))
+                (spot (try! (get-spot token collateral collateral-token expiry)))
+                (pool-value-unfloored (try! (get-pool-value-in-token token collateral collateral-token expiry spot)))
                 (pool-value-in-y (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
                 (key-value-in-y (if (<= pool-value-in-y yield-supply) u0 (- pool-value-in-y yield-supply)))
                 (key-to-pool (div-down key-value-in-y pool-value-in-y))
