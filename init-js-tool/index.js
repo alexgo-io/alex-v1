@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { ClarityType, getNonce } = require('@stacks/transactions');
+const { getDeployerPK, getUserPK, network } = require('./wallet');
+const { ClarityType, getNonce, callReadOnlyFunction, contractPrincipalCV, listCV, uintCV } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
 const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
@@ -712,7 +713,7 @@ async function run() {
     // await arbitrage_fwp(dry_run=true);
     // await arbitrage_crp(dry_run=true, _pools);    
     // await arbitrage_ytp(dry_run=true, _pools); 
-    // await get_pool_details_fwp();
+    await get_pool_details_fwp();
     // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
@@ -763,7 +764,7 @@ async function run() {
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
     // await reserveRegisterUser('token-t-alex');
-    await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
+    // await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
     // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
@@ -785,5 +786,19 @@ async function run() {
     // await mint('token-t-alex', 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 100000e8);    
 
     // await get_some_token('ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ');
+
+    // const options = {
+    //     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    //     contractName: 'alex-staking-helper-laplace',
+    //     functionName: 'get-staking-stats-coinbase-as-list',
+    //     functionArgs: [
+    //       contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, 'token-t-alex'),     
+    //       listCV([4,5,6,7,8,9,10,11].map(e=>{return uintCV(e)}))
+    //     ],
+    //     network: network,
+    //     senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    //   };
+    //   let result = await callReadOnlyFunction(options);        
+    //   result.list.map(e=>{console.log(e.data)});
 }
 run();
