@@ -4,20 +4,20 @@
 (define-fungible-token wstx)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var contract-owner principal tx-sender)
+(define-data-var CONTRACT-OWNER principal tx-sender)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-NOT-TOKEN-OWNER (err u1001))
 
 (define-read-only (get-owner)
-  (ok (var-get contract-owner))
+  (ok (var-get CONTRACT-OWNER))
 )
 
 (define-public (set-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set contract-owner owner))
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set CONTRACT-OWNER owner))
   )
 )
 
@@ -38,7 +38,7 @@
 )
 
 (define-read-only (get-decimals)
-   	(ok u8)
+  (ok u8)
 )
 
 (define-read-only (get-balance (account principal))
@@ -47,7 +47,7 @@
 
 (define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
   )
 )
@@ -73,7 +73,7 @@
 (define-public (mint (amount uint) (recipient principal)) 
   (begin
     (asserts! (is-eq tx-sender recipient) ERR-NOT-TOKEN-OWNER)
-    (try! (stx-transfer? amount recipient .alex-vault))
+    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) recipient .alex-vault))
     (ft-mint? wstx amount recipient)
   )
 )
@@ -82,7 +82,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (asserts! (is-eq tx-sender sender) ERR-NOT-TOKEN-OWNER)
-    (as-contract (try! (contract-call? .alex-vault transfer-stx amount tx-sender sender)))
+    (as-contract (try! (contract-call? .alex-vault transfer-stx (decimals-to-fixed amount) tx-sender sender)))
     (ft-burn? wstx amount sender)
   )
 )

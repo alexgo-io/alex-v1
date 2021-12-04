@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
-(define-fungible-token t-alex)
+(define-fungible-token fwp-wstx-usda-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var CONTRACT-OWNER principal tx-sender)
@@ -30,15 +30,15 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply t-alex))
+  (ok (ft-get-supply fwp-wstx-usda-50-50))
 )
 
 (define-read-only (get-name)
-  (ok "t-alex")
+  (ok "fwp-wstx-usda-50-50")
 )
 
 (define-read-only (get-symbol)
-  (ok "t-alex")
+  (ok "fwp-wstx-usda-50-50")
 )
 
 (define-read-only (get-decimals)
@@ -46,7 +46,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance t-alex account))
+  (ok (ft-get-balance fwp-wstx-usda-50-50 account))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -63,7 +63,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? t-alex amount sender recipient)
+    (match (ft-transfer? fwp-wstx-usda-50-50 amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -76,14 +76,14 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved contract-caller))
-    (ft-mint? t-alex amount recipient)
+    (ft-mint? fwp-wstx-usda-50-50 amount recipient)
   )
 )
 
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved contract-caller))
-    (ft-burn? t-alex amount sender)
+    (ft-burn? fwp-wstx-usda-50-50 amount sender)
   )
 )
 
@@ -102,11 +102,11 @@
 )
 
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply t-alex)))
+  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-usda-50-50)))
 )
 
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance t-alex account)))
+  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-usda-50-50 account)))
 )
 
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
@@ -121,17 +121,6 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
-  )
-)
-
 (begin
-  (map-set approved-contracts .alex-reserve-pool true)  
-  (map-set approved-contracts .faucet true)
+  (map-set approved-contracts .fixed-weight-pool true)
 )
-
-

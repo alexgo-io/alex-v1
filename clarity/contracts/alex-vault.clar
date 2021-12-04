@@ -78,7 +78,7 @@
 )
 
 ;; perform flash loan
-(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional uint)))
+(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
   (let 
     (
       (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
