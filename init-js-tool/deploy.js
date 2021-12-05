@@ -11,30 +11,29 @@ const { exit } = require('process');
 let contract_records = {"Contracts":[]}
 let VERSION;
 let contract_paths = [
-    "lib/math-log-exp.clar",
-    "lib/math-fixed-point.clar",
-    "traits/trait-sip-010.clar",
-    "traits/trait-semi-fungible-token.clar",    
-    "traits/trait-flash-loan-user.clar",
-    "traits/trait-oracle.clar",
-    "traits/trait-ownable.clar",
-    "traits/trait-vault.clar",
-    "traits/trait-multisig-vote.clar",
-    "equations/weighted-equation.clar",
-    "equations/yield-token-equation.clar",    
-    "token/token-alex.clar",
-    "token/token-usda.clar",
-    "token/token-wbtc.clar",
-    "token/token-t-alex.clar",
-    "alex-vault.clar",    
-    "token/token-wstx.clar",    
-    "open-oracle.clar",    
-    "pool/alex-reserve-pool.clar",
-    "pool/fixed-weight-pool.clar",
-    "pool/liquidity-bootstrapping-pool.clar",
-    "pool/yield-token-pool.clar",
-    "pool/collateral-rebalancing-pool.clar",
-    "pool/alex-futures-pool.clar",
+    // "lib/math-log-exp.clar",
+    // "lib/math-fixed-point.clar",
+    // "traits/trait-sip-010.clar",
+    // "traits/trait-semi-fungible-token.clar",    
+    // "traits/trait-flash-loan-user.clar",
+    // "traits/trait-oracle.clar",
+    // "traits/trait-ownable.clar",
+    // "traits/trait-vault.clar",
+    // "traits/trait-multisig-vote.clar",
+    // "equations/weighted-equation.clar",
+    // "equations/yield-token-equation.clar",    
+    // "token/token-alex.clar",
+    // "token/token-usda.clar",
+    // "token/token-wbtc.clar",
+    // "token/token-t-alex.clar",
+    // "alex-vault.clar",    
+    // "token/token-wstx.clar",    
+    // "open-oracle.clar",    
+    // "pool/alex-reserve-pool.clar",
+    // "pool/fixed-weight-pool.clar",
+    // "pool/liquidity-bootstrapping-pool.clar",
+    // "pool/yield-token-pool.clar",
+    // "pool/collateral-rebalancing-pool.clar",
     "faucet.clar",
     "pool-token/fwp-wbtc-usda-50-50.clar",
     "pool-token/lbp-alex-usda-90-10.clar",
@@ -120,7 +119,7 @@ async function deploy(filePath, contractName){
 
 async function run(){
     // VERSION = await get_version()
-    await genesis_transfer();
+    // await genesis_transfer();
     //walk the batches directory and deploy
     await walkDir();
     //write to file
