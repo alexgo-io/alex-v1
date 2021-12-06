@@ -15,9 +15,9 @@ const {
 const {wait_until_confirmation } = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
-  const crpCreate = async (token, collateral, expiry, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
+  const crpCreate = async (token, collateral, expiry, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, dx) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] create-pool...', token, collateral, expiry, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
+    console.log('[CRP] create-pool...', token, collateral, expiry, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, dx);
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -34,6 +34,7 @@ const {wait_until_confirmation } = require('./utils');
             uintCV(conversion_ltv),
             uintCV(bs_vol),
             uintCV(moving_average),
+            uintCV(token_to_maturity),
             uintCV(dx),
         ],
         senderKey: privateKey,

@@ -11,7 +11,8 @@ const {
     contractPrincipalCV,
     broadcastTransaction,
     ClarityType,
-    bufferCVFromString
+    bufferCVFromString,
+    makeSTXTokenTransfer
 } = require('@stacks/transactions');
 const { wait_until_confirmation } = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
@@ -48,7 +49,7 @@ const flashloan = async(loan_contract, token, amount, expiry) => {
 
 const mint = async(token, recipient, amount) => {
     console.log('[Token] mint...', token, recipient, amount);
-    const privateKey = await getDeployerPK();
+    const privateKey = await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
@@ -129,6 +130,26 @@ const transfer = async(token, recipient, amount, deployer=false) => {
     }
 }
 
+const transferSTX = async(recipient, amount) => {
+    console.log('transferSTX...', recipient, amount);
+
+    const txOptions = {
+      recipient: recipient,
+      amount: amount,
+      senderKey: await getDeployerPK(),
+      network: network,
+    };
+    
+    try {
+        const transaction = await makeSTXTokenTransfer(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 const balance = async(token, owner) => {
     console.log('[Token] get-balance...', token, owner);
 
@@ -176,3 +197,4 @@ exports.burn = burn;
 exports.balance = balance;
 exports.getBalance = getBalance;
 exports.transfer = transfer;
+exports.transferSTX = transferSTX;
