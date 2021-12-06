@@ -15,7 +15,7 @@ class ALEXLaunchpad {
         this.deployer = deployer;
     }
 
-    createPool(token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, activationDelay: number, activationThreshold: number) {
+    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, activationDelay: number, activationThreshold: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "create-pool", [
                     types.principal(token),
@@ -26,67 +26,47 @@ class ALEXLaunchpad {
                     types.uint(activationDelay),
                     types.uint(activationThreshold),
                 ],
-                this.deployer.address
+                sender.address
             ),
         ]);
         return block;
     }
     
-    addToPosition(token: string, tickets: number ) {
+    addToPosition(sender:Account, token: string, tickets: number ) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "add-to-position", [
                 types.principal(token),
                 types.uint(tickets),
             ],
-            this.deployer.address
+            sender.address
         ),
         ]);
         return block;
     }
 
-    register(token: string, ticketTrait: string, ticketAmount: number) {
+    register(sender:Account, token: string, ticketTrait: string, ticketAmount: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "register", [
                 types.principal(token),
                 types.principal(ticketTrait),
                 types.uint(ticketAmount),
                 ],
-                this.deployer.address
+                sender.address
             ),
         ]);
         return block.receipts[0].result;
     }
 
-    claim(tokenTrait: string, ticketTrait: string) {
+    claim(sender: Account, tokenTrait: string, ticketTrait: string) {
         let block = this.chain.mineBlock([
             Tx.contractCall( "alex-launchpad", "claim", [
                 types.principal(tokenTrait),
                 types.principal(ticketTrait),
                 ],
-                this.deployer.address
+                sender.address
             ),
         ]);
         return block;
-    }
-
-    setTicketTraitOwner (ticketTrait: string, owner: string) {
-        let block = this.chain.mineBlock([
-            Tx.contractCall(ticketTrait, "set-owner", [
-                types.principal(owner)
-            ],
-            this.deployer.address
-            ),
-        ]);
-        return block;
-    }
-
-    getTicketTraitOwner (ticketTrait: string):ReadOnlyFn {
-        return this.chain.callReadOnlyFn(
-            ticketTrait, 
-            "get-owner", 
-            [], 
-            this.deployer.address
-        );
     }
 
     getActivationBlock(token: string): ReadOnlyFn {
@@ -109,7 +89,7 @@ class ALEXLaunchpad {
         );
     }
 
-    setOwner(owner: string) {
+    setOwner(sender: Account, owner: string) {
         let block = this.chain.mineBlock([
             Tx.contractCall(
                 "alex-launchpad",
@@ -117,7 +97,7 @@ class ALEXLaunchpad {
                 [
                     types.principal(owner)
                 ],
-                this.deployer.address
+                sender.address
             )
         ]);
         return block.receipts[0].result;

@@ -214,3 +214,7 @@ depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 [contracts.flash-loan-user-margin-wbtc-usda]
 path = "contracts/flash-loan-user-margin-wbtc-usda.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user", "token-usda", "yield-wbtc", "key-wbtc-usda"]
+
+[contracts.lottery-t-alex]
+path = "contracts/lottery-tokens/lottery-t-alex.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]

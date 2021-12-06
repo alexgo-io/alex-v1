@@ -12,9 +12,10 @@
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-INVALID-TICKET (err u2028))
 (define-constant ERR-TICKET-TRANSFER-FAILED (err u2029))
-(define-constant ERR_NO_VRF_SEED_FOUND (err u2030))
+(define-constant ERR-NO-VRF-SEED-FOUND (err u2030))
 (define-constant ERR-CLAIM-NOT-AVAILABLE (err u2031))
 (define-constant ERR-TOKEN-UNDER-SUBSCRIBED (err u2032))
+(define-constant ERR-NO-TOKENS-TO-WIN (err u2033))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -57,7 +58,8 @@
   {
     ticket-balance: uint,
     value-low: uint,
-    value-high: uint
+    value-high: uint,
+    tickets-won: uint
   }
 )
 
@@ -163,12 +165,9 @@
     (let
       (
         (new-id (+ u1 (try! (get-registered-users-nonce token))))
-        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
-        (details-updated (merge details { users-nonce: new-id }))
       )
       (map-insert users {token: token, user-id: new-id} user)
       (map-insert user-ids {token: token, user: user} new-id)
-      (map-set listing token details-updated)
       (ok new-id)
     )
   )
@@ -183,16 +182,14 @@
         (user-id (try! (get-or-create-user-id token tx-sender)))
         (value-low (+ u1 (get total-subscribed details)))
         (value-high (- (+ value-low ticket-amount) u1))
-        (details-updated (merge details { total-subscribed: value-high }))
+        (details-updated (merge details { total-subscribed: value-high, users-nonce: user-id }))
       )
       (asserts! (and (is-eq (contract-of ticket-trait) (get ticket details)) (> ticket-amount u0)) ERR-INVALID-TICKET)
-
-      (asserts! (< block-height (get activation-block details)) ERR-ACTIVATION-THRESHOLD-REACHED)
     
       (unwrap! (contract-call? ticket-trait transfer-fixed (* ticket-amount ONE_8) tx-sender (as-contract tx-sender) none) ERR-TICKET-TRANSFER-FAILED)
       (unwrap! (contract-call? .token-wstx transfer-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
 
-      (map-set subscriber-at-token { token: token, user-id: user-id} { ticket-balance: ticket-amount, value-low: value-low, value-high: value-high })
+      (map-set subscriber-at-token { token: token, user-id: user-id} { ticket-balance: ticket-amount, value-low: value-low, value-high: value-high, tickets-won: u0 })
       (map-set listing token details-updated)
       (and (is-eq user-id (try! (get-activation-threshold token))) (map-set listing token (merge details-updated { activation-block: (+ block-height (get activation-delay details)) })))      
       (ok true)
@@ -201,7 +198,9 @@
 )
 
 (define-read-only (get-subscriber-at-token-or-default (token principal) (user-id uint))
-  (default-to { ticket-balance: u0, value-low: u0, value-high: u0 } (map-get? subscriber-at-token { token: token, user-id: user-id }))
+  (default-to 
+    { ticket-balance: u0, value-low: u0, value-high: u0, tickets-won: u0 } 
+    (map-get? subscriber-at-token { token: token, user-id: user-id }))
 )
 
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
@@ -209,6 +208,7 @@
     (asserts! (>= (get total-subscribed (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN)) (get total-tickets (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-TOKEN-UNDER-SUBSCRIBED)
     (let
       (
+        (claimer tx-sender)
         (token (contract-of token-trait))
         (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
         (user-id (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND))
@@ -218,9 +218,9 @@
         (total-subscribed (get total-subscribed details))
         (tickets-won (get tickets-won details))
         (ticket-balance (get ticket-balance sub-details))
-        (vrf-seed (unwrap! (get-random-uint-at-block activation-block) ERR_NO_VRF_SEED_FOUND))
-        (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed total-subscribed) (get last-random details)))
-        (this-random (mod (get-next-random last-random) total-subscribed))
+        (vrf-seed (unwrap! (get-random-uint-at-block activation-block) ERR-NO-VRF-SEED-FOUND))
+        (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed u13495287074701800000000000000) (get last-random details)))
+        (this-random (get-next-random last-random))
         (value-low (get value-low sub-details))
         (value-high (get value-high sub-details))
         (value-low-adjusted 
@@ -245,21 +245,22 @@
       (asserts! (> block-height activation-block) ERR-CONTRACT-NOT-ACTIVATED)
       (asserts! (is-eq (contract-of ticket-trait) (get ticket details)) ERR-INVALID-TICKET)
       (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)    
+      (asserts! (< tickets-won total-tickets) ERR-NO-TOKENS-TO-WIN)  
       
-      (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- ticket-balance u1) }))      
-      
-      (if (and (<= tickets-won total-tickets) (>= this-random value-low-adjusted) (<= this-random value-high-adjusted))
+      (if (and (>= (mod this-random total-subscribed) value-low-adjusted) (<= (mod this-random total-subscribed) value-high-adjusted))
         (begin
-          (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) (as-contract tx-sender) tx-sender none) ERR-TRANSFER-FAILED)
-          (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) (as-contract tx-sender) (get fee-to-address details) none) ERR-TRANSFER-FAILED)
-          (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender))
+          (as-contract (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) tx-sender claimer none) (err u101))) ;;ERR-TRANSFER-FAILED))
+          (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) tx-sender (get fee-to-address details) none) (err u102))) ;;ERR-TRANSFER-FAILED))
+          (as-contract (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender)))
           (map-set listing token (merge details { last-random: this-random, tickets-won: (+ tickets-won u1) }))          
+          (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- ticket-balance u1), tickets-won: (+ (get tickets-won sub-details) u1) }))      
           (ok true)
         )
         (begin
-          (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) (as-contract tx-sender) tx-sender none) ERR-TRANSFER-FAILED)
-          (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender))
+          (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) tx-sender claimer none) (err u103))) ;;ERR-TRANSFER-FAILED))
+          (as-contract (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender)))
           (map-set listing token (merge details { last-random: this-random }))
+          (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- ticket-balance u1) }))      
           (ok false)
         )
       )
@@ -267,9 +268,9 @@
   )
 )
 
-;; implementation of Linear congruential generator following Numerical Recipes
-(define-private (get-next-random (last-random uint))  
-    (mod (+ (* u1664525 last-random) u1013904223) (pow u2 u32))
+;; implementation of Linear congruential generator following POSIX rand48
+(define-private (get-next-random (last-random uint))
+    (mod (+ (* u25214903917 last-random) u11) (pow u2 u48))
 )
 
 ;; VRF
