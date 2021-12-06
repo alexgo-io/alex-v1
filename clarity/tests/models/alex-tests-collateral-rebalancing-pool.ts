@@ -48,7 +48,7 @@ import {
         types.uint(expiry),
         types.uint(strike),
         types.uint(bs_vol),
-        types.unit(spot)
+        types.uint(spot)
       ], this.deployer.address);
     }
 
