@@ -69,6 +69,50 @@ class ALEXLaunchpad {
         ]);
         return block;
     }
+
+    getRegistrationStart(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "get-registration-start", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
+
+    isListingCompleted(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "is-listing-completed", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
+
+    isListingActivated(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "is-listing-activated", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
+
+    getActivationBlock(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "get-activation-block", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
     
     getOwner():ReadOnlyFn {
         return this.chain.callReadOnlyFn(
@@ -104,6 +148,18 @@ class ALEXLaunchpad {
         )
     }
 
+    getSubscriberAtTokenOrDefault(token: string, userId: number): ReadOnlyFn{
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "get-subscriber-at-token-or-default",
+            [
+                types.principal(token),
+                types.uint(userId)
+            ],
+            this.deployer.address
+        )
+    }
+
     getActivationThreshold(token: string): ReadOnlyFn{
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
@@ -126,4 +182,22 @@ class ALEXLaunchpad {
         )
     }
 }
-export { ALEXLaunchpad }
+export { ALEXLaunchpad, ErrCode }
+
+enum ErrCode {
+    ERR_TRANSFER_FAILED = 3000,
+    ERR_UNAUTHORIZED = 1000,
+    ERR_USER_ALREADY_REGISTERED = 10001,
+    ERR_USER_ID_NOT_FOUND = 10003,
+    ERR_ACTIVATION_THRESHOLD_REACHED = 10004,
+    ERR_INVALID_TOKEN = 2026,
+    ERR_INVALID_TICKET = 2028,
+    ERR_TICKET_TRANSFER_FAILED = 2029,
+    ERR_NO_VRF_SEED_FOUND = 2030,
+    ERR_CLAIM_NOT_AVAILABLE = 2031,
+    ERR_TOKEN_UNDER_SUBSCIBED = 2032,
+    ERR_LISTING_FINISHED = 2033,
+    ERR_REGISTRATION_NOT_STARTED = 2034,
+    ERR_REFUNDS_NOT_AVAILABLE = 2035,
+    ERR_LISTING_NOT_ACTIVATED = 2036,
+}
