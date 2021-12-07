@@ -430,6 +430,27 @@
     )    
 )
 
+;; @desc roll-position
+;; @desc roll given liquidity position to another pool
+;; @param the-yield-token; yield token
+;; @param the-token; token
+;; @param pool-token; pool token representing ownership of the pool
+;; @param percent; percentage of pool token held to reduce
+;; @param the-yield-token-to-roll; yield token to roll
+;; @param the-pool-token-to-roll; pool token representing ownership of the pool to roll to
+;; @returns (response (tuple uint uint) uint)
+(define-public (roll-position 
+    (the-yield-token <yield-token-trait>) (the-token <ft-trait>) (the-pool-token <pool-token-trait>) (percent uint) 
+    (the-yield-token-to-roll <yield-token-trait>) (the-pool-token-to-roll <pool-token-trait>))
+    (let
+        (
+            (reduce-data (unwrap! (reduce-position the-yield-token the-token the-pool-token percent) (err u11111)))
+            (dy-to-dx (get dx (unwrap! (swap-y-for-x the-yield-token the-token (get dy reduce-data) none) (err u22222))))
+        )
+        (buy-and-add-to-position the-yield-token-to-roll the-token the-pool-token-to-roll (+ (get dx reduce-data) dy-to-dx))
+    )
+)
+
 ;; @desc swap-x-for-y
 ;; @param the-yield-token; yield token
 ;; @param the-token; token

@@ -5,6 +5,7 @@
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var CONTRACT-OWNER principal tx-sender)
+(define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -18,6 +19,10 @@
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set CONTRACT-OWNER owner))
   )
+)
+
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get CONTRACT-OWNER))) ERR-NOT-AUTHORIZED))
 )
 
 ;; ---------------------------------------------------------
@@ -37,7 +42,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u2)
+  (ok u8)
 )
 
 (define-read-only (get-balance (account principal))
@@ -84,21 +89,25 @@
 
 (define-public (mint (recipient principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved contract-caller))
     (ft-mint? usda (fixed-to-decimals amount) recipient)
   )
 )
 
 (define-public (burn (sender principal) (amount uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved contract-caller))
     (ft-burn? usda (fixed-to-decimals amount) sender)
   )
 )
 
+(begin
+  (map-set approved-contracts .faucet true)
+)
+
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? usda u1000000000 tx-sender))
-  (try! (ft-mint? usda u10000000 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool))
-  (try! (ft-mint? usda u200000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
+  (try! (ft-mint? usda u1000000000000000 tx-sender))
+  (try! (ft-mint? usda u10000000000000 .alex-reserve-pool))
+  (try! (ft-mint? usda u200000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )

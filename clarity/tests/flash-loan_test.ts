@@ -7,20 +7,25 @@ import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.t
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';  
 import { FLTestAgent1 } from './models/alex-tests-flash-loan.ts';
+import { WBTCToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
+const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
+const multisigfwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
 const yieldusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-23040"
 const keyusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-23040-wbtc"
-const fwpwbtcusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wbtc-usda-50-50"
 const ytpyieldusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-23040-usda"
 const multisigncrpusda23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-23040-wbtc"
-const multisigfwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wbtc-usda-50-50"
 const multisigytpyieldusda23040 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-23040-usda"
-const vaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-vault"
-const reserveAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
-const loanuserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-23040"
+const loanuser23040Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-23040"
+const yieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda-51840"
+const keyusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-51840-wbtc"
+const ytpyieldusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda-51840-usda"
+const multisigncrpusda51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-51840-wbtc"
+const multisigytpyieldusda51840 = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda-51840-usda"
+const loanuser51840Address = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda-51840"
 
 const ONE_8 = 100000000
 const expiry = 23040e+8
@@ -28,6 +33,7 @@ const ltv_0 = 0.8e+8
 const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
+const token_to_maturity = 2100e8;
 
 const wbtcPrice = 50000e+8
 
@@ -45,16 +51,17 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_5 = accounts.get("wallet_5")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let FLTest = new FLTestAgent1(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);     
+        
+        wbtcToken.transferToken(ONE_8,deployer.address, wallet_5.address, new ArrayBuffer(30));        
 
-        let call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
-        let position:any = call.result.expectOk().expectUint(2000000000000);  
-        call = await FLTest.getBalance(usdaAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(200000000000);        
+        let call = await FLTest.getBalance(wbtcAddress, wallet_5.address);
+        let position:any = call.result.expectOk().expectUint(ONE_8);
         
         let result = FWPTest.createPool(deployer, wbtcAddress, usdaAddress, weightX, weightY, fwpwbtcusdaAddress, multisigfwpAddress, Math.round(500000e+8 * ONE_8 / wbtcPrice), 500000e+8);
         result.expectOk().expectBool(true);
@@ -63,67 +70,58 @@ Clarinet.test({
         result = FWPTest.setOracleAverage(deployer, wbtcAddress, usdaAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);
 
-        call = await FWPTest.getPoolDetails(wbtcAddress, usdaAddress, weightX, weightY);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(Math.round(500000e+8 * ONE_8 / wbtcPrice));
-        position['balance-y'].expectUint(500000e+8);
-
         result = YTPTest.createPool(deployer, yieldusda23040Address, usdaAddress, ytpyieldusda23040Address, multisigytpyieldusda23040, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
-
-        //Deployer creating a pool, initial tokens injected to the pool
-        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, 1e+8);
+        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda23040Address, keyusda23040Address, multisigncrpusda23040Address, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectBool(true);
-
-        call = await CRPTest.getSpot(usdaAddress, wbtcAddress);
-        call.result.expectOk().expectUint(2008);
-
-        call = await CRPTest.getSpot(wbtcAddress, usdaAddress);
-        call.result.expectOk().expectUint(4981337432709);        
-
-        call = await CRPTest.getPoolValueInToken(usdaAddress, wbtcAddress, expiry);
-        call.result.expectOk().expectUint(4912705519920);
-
-        call = await CRPTest.getLtv(usdaAddress, wbtcAddress, expiry);
-        call.result.expectOk().expectUint(74019490);
-        
-        // sell some yield-token
-        result = YTPTest.swapYForX(wallet_1, yieldusda23040Address, usdaAddress, 10000*ONE_8, 0);
-        position =result.expectOk().expectTuple();
-        position['dx'].expectUint(1000041600834);
-        position['dy'].expectUint(10000*ONE_8);
-
-        call = await YTPTest.getPrice(yieldusda23040Address);
-        call.result.expectOk().expectUint(100010963);
-
-        // remember ltv to be used for margin is:
-        // ltv = (.collateral-rebalancing-pool get-ltv) / (.yield-token-pool get-price)
-        let ltv:number = 74520874 / ONE_8;
-        let margin:number = 0.00001 * ONE_8;
-        let amount:number = Math.round(margin / (1 - ltv));
-        let borrow:number = amount - margin;
       
-        call = await FLTest.getBalance(keyusda23040Address, wallet_1.address);
+        call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
-        call = await FLTest.getBalance(yieldusda23040Address, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999999000000000000);
+        call = await FLTest.getBalance(yieldusda23040Address, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);
 
-        // result = FLTest.executeMarginUsdaWbtc59760(wallet_1, amount);
-        // result.expectOk();
-
-        result = FLTest.flashLoan(wallet_1, loanuserAddress, wbtcAddress, borrow);
+        // Let's borrow 1 BTC to lever up
+        result = FLTest.flashLoan(wallet_5, loanuser23040Address, wbtcAddress, ONE_8);
         result.expectOk();
 
         // spent ~$231 to buy levered position (0.02 uints)
-        call = await FLTest.getBalance(wbtcAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999999998541);  
-        call = await FLTest.getBalance(usdaAddress, wallet_1.address);
-        position = call.result.expectOk().expectUint(1200041000000);            
+        call = await FLTest.getBalance(wbtcAddress, wallet_5.address);
+        position = call.result.expectOk().expectUint(72376535);
+        call = await FLTest.getBalance(usdaAddress, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);            
         // should see change in key token
-        call = await FLTest.getBalance(keyusda23040Address, wallet_1.address);
-        position = call.result.expectOk().expectUint(133000000);
+        call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
+        position = call.result.expectOk().expectUint(4094576653834);
         // but nothing with yield token
-        call = await FLTest.getBalance(yieldusda23040Address, wallet_1.address);
-        position = call.result.expectOk().expectUint(1999999000000000000);                
+        call = await FLTest.getBalance(yieldusda23040Address, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);         
+
+        // let's test roll-position from margin-helper
+
+        chain.mineEmptyBlockUntil(10000);
+        // trying to roll before maturity throws error
+        result = FLTest.rollPosition(wallet_5, usdaAddress, wbtcAddress, keyusda23040Address, loanuser51840Address);
+        result.expectErr().expectUint(2017);
+
+        // but let's set up new pools
+        result = YTPTest.createPool(deployer, yieldusda51840Address, usdaAddress, ytpyieldusda51840Address, multisigytpyieldusda51840, 500000e+8, 500000e+8);        
+        result.expectOk().expectBool(true);
+        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, yieldusda51840Address, keyusda51840Address, multisigncrpusda51840Address, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
+        result.expectOk().expectBool(true);        
+
+        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1);
+        // roll right after expiry succeeds.
+        result = FLTest.rollPosition(wallet_5, usdaAddress, wbtcAddress, keyusda23040Address, loanuser51840Address);
+        result.expectOk();
+
+        // key-usda-23040-wbtc should be zero, with non-zero positions in key-usda-51840
+        call = await FLTest.getBalance(keyusda23040Address, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);
+        call = await FLTest.getBalance(keyusda51840Address, wallet_5.address);
+        position = call.result.expectOk().expectUint(1333936486830);
+        // but nothing with yield-usda-51840
+        call = await FLTest.getBalance(yieldusda51840Address, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);
+        
     },    
 });

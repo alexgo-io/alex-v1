@@ -15,9 +15,9 @@ const {
 const {wait_until_confirmation } = require('./utils');
   const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
   
-  const crpCreate = async (token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx) => {
+  const crpCreate = async (token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, dx) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] create-pool...', token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, dx);
+    console.log('[CRP] create-pool...', token, collateral, yieldToken, keyToken, multiSig, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, dx);
     const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -33,6 +33,7 @@ const {wait_until_confirmation } = require('./utils');
             uintCV(conversion_ltv),
             uintCV(bs_vol),
             uintCV(moving_average),
+            uintCV(token_to_maturity),
             uintCV(dx),
         ],
         senderKey: privateKey,
@@ -331,7 +332,7 @@ const {wait_until_confirmation } = require('./utils');
     } catch (error) {
       console.log(error);
     }
-  };  
+  }; 
 
   const crpGetXgivenPrice = async (token, collateral, expiry, price) => {
     console.log('--------------------------------------------------------------------------');
@@ -346,6 +347,30 @@ const {wait_until_confirmation } = require('./utils');
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
         uintCV(expiry),
         uintCV(price)
+      ],
+      network: network,
+      senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    };
+    try {
+      return callReadOnlyFunction(options);
+    } catch (error) {
+      console.log(error);
+    }
+  };  
+
+  const crpGetPositionGivenBurnKey = async (token, collateral, expiry, shares) => {
+    console.log('--------------------------------------------------------------------------');
+    console.log('[CRP] get-position-given-burn-key...', token, collateral, expiry, shares);
+  
+    const options = {
+      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+      contractName: 'collateral-rebalancing-pool',
+      functionName: 'get-position-given-burn-key',
+      functionArgs: [
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),     
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
+        uintCV(expiry),
+        uintCV(shares)
       ],
       network: network,
       senderAddress: process.env.USER_ACCOUNT_ADDRESS,
@@ -404,9 +429,9 @@ const {wait_until_confirmation } = require('./utils');
     }
   };
 
-  const crpGetSpot = async (token, collateral, expiry) => {
+  const crpGetSpot = async (token, collateral) => {
     console.log('--------------------------------------------------------------------------');
-    console.log('[CRP] get-spot...', token, collateral, expiry);
+    console.log('[CRP] get-spot...', token, collateral);
   
     const options = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -414,8 +439,7 @@ const {wait_until_confirmation } = require('./utils');
       functionName: 'get-spot',
       functionArgs: [
         contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),     
-        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral),
-        uintCV(expiry)
+        contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, collateral)
       ],
       network: network,
       senderAddress: process.env.USER_ACCOUNT_ADDRESS,
@@ -469,4 +493,5 @@ const {wait_until_confirmation } = require('./utils');
   exports.crpSwapXforY = crpSwapXforY;
   exports.crpSwapYforX = crpSwapYforX;
   exports.crpGetSpot = crpGetSpot;
+  exports.crpGetPositionGivenBurnKey = crpGetPositionGivenBurnKey;
   

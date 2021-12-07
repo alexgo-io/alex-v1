@@ -1,18 +1,9 @@
 require('dotenv').config();
-const { ClarityType, getNonce } = require('@stacks/transactions');
-const { initCoinPrice, setOpenOracle, getOpenOracle } = require('./oracles').default
-const {
-    flExecuteMarginUsdaWbtc23670,
-    flExecuteMarginUsdaWbtc59760,
-    flExecuteMarginUsdaWbtc23040,
-    flExecuteMarginUsdaWbtc34560,
-    flExecuteMarginUsdaWbtc74880,
-    flExecuteMarginWbtcUsda23040,
-    flExecuteMarginWbtcUsda34560,
-    flExecuteMarginWbtcUsda74880,
-} = require('./flashloan')
+const { getDeployerPK, getUserPK, network } = require('./wallet');
+const { ClarityType, getNonce, callReadOnlyFunction, contractPrincipalCV, listCV, uintCV } = require('@stacks/transactions');
+const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
 const { flashloan, getBalance, mint, burn, balance, transfer } = require('./vault')
-const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens } = require('./faucet')
+const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
     fwpCreate,
     fwpAddToPosition,
@@ -24,6 +15,8 @@ const {
     fwpSwapXforY,
     fwpSwapYforX,
     fwpGetPoolDetails,
+    fwpSetOracleAverage,
+    fwpSetOracleEnbled
 } = require('./pools-fwp')
 const {
     crpCreate,
@@ -41,7 +34,8 @@ const {
     crpGetPoolValueInToken,
     crpGetWeightY,
     crpSwapXforY,
-    crpSwapYforX
+    crpSwapYforX,
+    crpGetPositionGivenBurnKey
 } = require('./pools-crp')
 const {
     ytpCreate,
@@ -58,122 +52,56 @@ const {
     ytpGetYgivenYield,
     ytpGetPositionGivenBurn
 } = require('./pools-ytp')
+const {
+    reserveAddToken,
+    reserveSetActivationDelay,
+    reserveSetActivationThreshold,
+    reserveRegisterUser,
+    reserveSetCoinbaseAmount,
+    reserveGetUserId,
+    reserveGetStakerAtCycleOrDefault,
+    reserveSetRewardCycleLength
+} = require('./reserve')
+const {
+    multisigPropose,
+    multisigVoteFor,
+    multisigVoteAgainst,
+    multisigEndProposal,
+    multisigReturnVotes,
+    multisigGetProposalById
+} = require('./multisig')
 
 const _deploy = {
     0: {token: 'token-wbtc',
         collateral: 'token-usda',
-        yield_token: 'yield-wbtc-11520',
-        key_token: 'key-wbtc-11520-usda',
-        pool_token: 'ytp-yield-wbtc-11520-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-11520-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-11520-usda',
+        yield_token: 'yield-wbtc-34560',
+        key_token: 'key-wbtc-34560-usda',
+        pool_token: 'ytp-yield-wbtc-34560-wbtc',
+        multisig_ytp: 'multisig-ytp-yield-wbtc-34560-wbtc',
+        multisig_crp: 'multisig-crp-wbtc-34560-usda',
         liquidity_ytp: 100e+8,
         collateral_crp: 1500000e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
         target_apy: 0.06354,
-        expiry: 11520e+8,
+        expiry: 34560e+8,
+        token_to_maturity: 11520e+8
     },
     1: {token: 'token-usda',
         collateral: 'token-wbtc',
-        yield_token: 'yield-usda-11520',
-        key_token: 'key-usda-11520-wbtc',
-        pool_token: 'ytp-yield-usda-11520-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-11520-usda',
-        multisig_crp: 'multisig-crp-usda-11520-wbtc',
+        yield_token: 'yield-usda-34560',
+        key_token: 'key-usda-34560-wbtc',
+        pool_token: 'ytp-yield-usda-34560-usda',
+        multisig_ytp: 'multisig-ytp-yield-usda-34560-usda',
+        multisig_crp: 'multisig-crp-usda-34560-wbtc',
         liquidity_ytp: 6000000e+8,
         collateral_crp: 25e+8,
         ltv_0: 0.7e+8,
         bs_vol: 0.8e+8,
         target_apy: 0.086475,
-        expiry: 11520e+8,
-    },
-    2: {
-        token: 'token-wbtc',
-        collateral: 'token-usda',
-        yield_token: 'yield-wbtc-51840',
-        key_token: 'key-wbtc-51840-usda',
-        pool_token: 'ytp-yield-wbtc-51840-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-51840-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-51840-usda',
-        liquidity_ytp: 100e+8,
-        collateral_crp: 1500000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.093486,
-        expiry: 51840e+8,
-    },
-    3: {
-        token: 'token-usda',
-        collateral: 'token-wbtc',
-        yield_token: 'yield-usda-51840',
-        key_token: 'key-usda-51840-wbtc',
-        pool_token: 'ytp-yield-usda-51840-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-51840-usda',
-        multisig_crp: 'multisig-crp-usda-51840-wbtc',
-        liquidity_ytp: 6000000e+8,
-        collateral_crp: 25e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.10768,
-        expiry: 51840e+8,
-    },
-    4: {token: 'token-wbtc',
-        collateral: 'token-usda',
-        yield_token: 'yield-wbtc-92160',
-        key_token: 'key-wbtc-92160-usda',
-        pool_token: 'ytp-yield-wbtc-92160-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-92160-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-92160-usda',
-        liquidity_ytp: 100e+8,
-        collateral_crp: 1500000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.09469,
-        expiry: 92160e+8,
-    },
-    5: {token: 'token-usda',
-        collateral: 'token-wbtc',
-        yield_token: 'yield-usda-92160',
-        key_token: 'key-usda-92160-wbtc',
-        pool_token: 'ytp-yield-usda-92160-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-92160-usda',
-        multisig_crp: 'multisig-crp-usda-92160-wbtc',
-        liquidity_ytp: 6000000e+8,
-        collateral_crp: 25e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.10950,
-        expiry: 92160e+8,
+        expiry: 34560e+8,
+        token_to_maturity: 11520e+8
     },     
-    6: {token: 'token-wbtc',
-        collateral: 'token-usda',
-        yield_token: 'yield-wbtc-132481',
-        key_token: 'key-wbtc-132481-usda',
-        pool_token: 'ytp-yield-wbtc-132481-wbtc',
-        multisig_ytp: 'multisig-ytp-yield-wbtc-132481-wbtc',
-        multisig_crp: 'multisig-crp-wbtc-132481-usda',
-        liquidity_ytp: 100e+8,
-        collateral_crp: 1500000e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.18469,
-        expiry: 132481e+8,
-    },
-    7: {token: 'token-usda',
-        collateral: 'token-wbtc',
-        yield_token: 'yield-usda-132481',
-        key_token: 'key-usda-132481-wbtc',
-        pool_token: 'ytp-yield-usda-132481-usda',
-        multisig_ytp: 'multisig-ytp-yield-usda-132481-usda',
-        multisig_crp: 'multisig-crp-usda-132481-wbtc',
-        liquidity_ytp: 6000000e+8,
-        collateral_crp: 25e+8,
-        ltv_0: 0.7e+8,
-        bs_vol: 0.8e+8,
-        target_apy: 0.16950,
-        expiry: 132481e+8,
-    },      
 }
 
 const ONE_8 = 100000000
@@ -228,9 +156,9 @@ async function see_balance(owner) {
     console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8));
 }
 
-async function create_fwp(add_only) {
+async function create_fwp(add_only, deployer=false) {
     console.log("------ FWP Creation / Add Liquidity ------");
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
+    let wbtcPrice = await fetch_btc('usd');
 
     _pools = {
         1: {
@@ -240,18 +168,18 @@ async function create_fwp(add_only) {
             weight_y: 0.5e+8,
             pool_token: 'fwp-wbtc-usda-50-50',
             multisig: 'multisig-fwp-wbtc-usda-50-50',
-            // left_side: Math.round(Number(100000000000000000) / 2 * ONE_8 / Number(wbtcPrice)),
-            // right_side: Number(100000000000000000) / 2
-            left_side: Math.round(10000000000 * ONE_8 * ONE_8 / Number(wbtcPrice)),
-            right_side: 10000000000 * ONE_8            
+            left_side: Math.round(50000000 * ONE_8 / Number(wbtcPrice)),
+            right_side: Math.round(50000000 * ONE_8 * 1.1)
         },
     }
 
     for (const key in _pools) {
         if (add_only) {
-            await fwpAddToPosition(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['left_side'], _pools[key]['right_side']);
+            await fwpAddToPosition(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['left_side'], _pools[key]['right_side'], deployer);
         } else {
             await fwpCreate(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['multisig'], _pools[key]['left_side'], _pools[key]['right_side']);
+            await fwpSetOracleEnbled(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y']);
+            await fwpSetOracleAverage(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], 0.95e8);
         }
     }
 }
@@ -280,7 +208,7 @@ async function create_crp(add_only, _subset=_deploy) {
         if (add_only) {
             await crpAddToPostion(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], _subset[key]['collateral_crp']);
         } else {
-            await crpCreate(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], _subset[key]['multisig_crp'], _subset[key]['ltv_0'], conversion_ltv, _subset[key]['bs_vol'], moving_average, _subset[key]['collateral_crp']);
+            await crpCreate(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['yield_token'], _subset[key]['key_token'], _subset[key]['multisig_crp'], _subset[key]['ltv_0'], conversion_ltv, _subset[key]['bs_vol'], moving_average, _subset[key]['token_to_maturity'], _subset[key]['collateral_crp']);
         }
     }
 }
@@ -290,6 +218,7 @@ async function set_faucet_amounts() {
     await setUsdaAmount(500000e+8);
     await setWbtcAmount(5e+8);
     await setStxAmount(250e+8);
+    await setAlexAmount(10e+8)
 }
 
 async function get_some_token(recipient) {
@@ -305,8 +234,8 @@ async function arbitrage_fwp(dry_run = true) {
 
     const threshold = 0.002;
 
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = await fetch_btc('usd');
+    let usdaPrice = await fetch_usdc('usd');
 
     let printed = parseFloat(wbtcPrice / usdaPrice);
 
@@ -375,8 +304,8 @@ async function arbitrage_crp(dry_run = true, _subset=_deploy) {
     console.log(timestamp());
 
     const threshold = 0.002;
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = await fetch_btc('usd');
+    let usdaPrice = await fetch_usdc('usd');
 
     for (const key in _subset) {
         // console.log(_subset[key]);
@@ -510,7 +439,7 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
                         let dy = await ytpGetYgivenYield(_subset[key]['yield_token'], Math.round(target_yield * ONE_8));
 
                         if (dy.type === 7 && dy.value.value > 0n) {
-                            let spot = Number((await crpGetSpot(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['expiry'])).value.value) / ONE_8;
+                            let spot = Number((await crpGetSpot(_subset[key]['token'], _subset[key]['collateral'])).value.value) / ONE_8;
                             let dy_collateral = Number(dy.value.value) * spot;
                             let ltv = Number((await crpGetLtv(_subset[key]['token'], _subset[key]['collateral'], _subset[key]['expiry'])).value.value);
                             ltv /= Number((await ytpGetPrice(_subset[key]['yield_token'])).value.value);
@@ -562,8 +491,8 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
 async function test_spot_trading() {
     console.log("------ Testing Spot Trading ------");
     console.log(timestamp());
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = await fetch_btc('usd');
+    let usdaPrice = await fetch_usdc('usd');
 
     let from_amount = ONE_8;
     let to_amount = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount)).value.value);
@@ -583,38 +512,38 @@ async function test_spot_trading() {
 async function test_margin_trading() {
     console.log("------ Testing Margin Trading (Long BTC vs USD) ------");
     console.log(timestamp());
-    let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
+    let wbtcPrice = await fetch_btc('usd');
+    let usdaPrice = await fetch_usdc('usd');
 
-    let expiry_0 = 11520e+8
+    let expiry_0 = 34560e+8
     let amount = 1 * ONE_8; //gross exposure of 1 BTC
     let trade_price = Number((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, amount)).value.value); // in USD    
     let trade_amount = amount; // in BTC
     let ltv = Number((await crpGetLtv('token-usda', 'token-wbtc', expiry_0)).value.value);
-    ltv /= Number((await ytpGetPrice("yield-usda-11520")).value.value);
+    ltv /= Number((await ytpGetPrice("yield-usda-34560")).value.value);
     let margin = Math.round(amount * (1 - ltv)); // in BTC
     let leverage = 1 / (1 - ltv);
 
     console.log("ltv: ", format_number(ltv, 2), "; amount (BTC): ", format_number(amount, 8), "; margin (BTC): ", format_number(margin, 8));
     console.log("leverage: ", format_number(leverage, 2), "; trade_price (USD): ", format_number(trade_price, 2));
 
-    await flashloan('flash-loan-user-margin-wbtc-usda-11520', 'token-wbtc', (amount - margin));
+    await flashloan('flash-loan-user-margin-wbtc-usda-34560', 'token-wbtc', (amount - margin));
 
     console.log("------ Testing Margin Trading (Short BTC vs USD) ------");
     console.log(timestamp());
-    expiry_0 = 11520e+8
+    expiry_0 = 34560e+8
     amount = 1 * ONE_8; //gross exposure of 1 BTC
     trade_price = Number((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, amount)).value.value); // in USD
     trade_amount = amount; // in BTC
     ltv = Number((await crpGetLtv('token-wbtc', 'token-usda', expiry_0)).value.value);
-    ltv /= Number((await ytpGetPrice("yield-wbtc-11520")).value.value);
+    ltv /= Number((await ytpGetPrice("yield-wbtc-34560")).value.value);
     margin = Math.round(amount * (1 - ltv) * Number(wbtcPrice) / ONE_8); // in USD
     leverage = 1 / (1 - ltv);
 
     console.log("ltv: ", format_number(ltv, 2), "; amount (BTC): ", format_number(amount, 8), "; margin (USD): ", format_number(margin, 2));
     console.log("leverage: ", format_number(leverage, 2), "; trade_price (USD): ", format_number(trade_price, 2))
 
-    await flashloan('flash-loan-user-margin-usda-wbtc-11520', 'token-usda', (trade_price - margin));
+    await flashloan('flash-loan-user-margin-usda-wbtc-34560', 'token-usda', (trade_price - margin));
 }
 
 function format_number(number, fixed = 2) {
@@ -650,7 +579,7 @@ async function get_pool_details_ytp(_subset=_deploy) {
         let yied = await ytpGetYield(_subset[key]['yield_token']);
         let price = await ytpGetPrice(_subset[key]['yield_token']);
         let details = await ytpGetPoolDetails(_subset[key]['yield_token']);
-        let balance_aytoken = details.value.data['balance-aytoken'];
+        let balance_aytoken = details.value.data['balance-yield-token'];
         let balance_virtual = details.value.data['balance-virtual'];
         let balance_token = details.value.data['balance-token'];
         let total_supply = details.value.data['total-supply'];
@@ -745,8 +674,6 @@ _white_list = {
 
 async function run() {
     // await set_faucet_amounts();
-    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await update_price_oracle();    
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
@@ -763,22 +690,23 @@ async function run() {
     //                     8:_deploy[10],
     //                     9:_deploy[11]
     //                 };
-    // const _pools = { 0:_deploy[6], 1:_deploy[7] };
+    // const _pools = { 0:_deploy[4], 1:_deploy[5] };
+    // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
     const _pools = _deploy;
 
     // await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
 
-    // await create_fwp(add_only=true);
+    await create_fwp(add_only=true, deployer=true);
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
@@ -789,13 +717,13 @@ async function run() {
     // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
-    // await reduce_position_fwp(0.9 * ONE_8);
+    // await reduce_position_fwp(0.5 * ONE_8, deployer=true);
 
     // const _reduce = { 0: _deploy[14] , 1: _deploy[15] };
     // await reduce_position_ytp(_reduce, 0.9*ONE_8, deployer=true);
     // await get_pool_details_ytp(_subset=_reduce);   
 
-    // await reduce_position_ytp(_pools, 0.5*ONE_8, deployer=true);
+    // await reduce_position_ytp(_pools, 0.1*ONE_8, deployer=true);
     // await reduce_position_crp(_pools, ONE_8, 'yield');
     // await reduce_position_crp(_pools, ONE_8, 'key');    
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
@@ -803,7 +731,7 @@ async function run() {
 
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
     
-    // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
+    // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
     // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
     // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
@@ -817,12 +745,12 @@ async function run() {
     // await arbitrage_fwp(dry_run = false);
     // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
-    // result = await ytpGetPositionGivenBurn('yield-wbtc-200335', 625000000000, deployer=true);      
-    // console.log(result);
+    // result = await crpGetPositionGivenBurnKey('token-wbtc', 'token-usda', 34560e8, 0.873e8);      
+    // console.log(printResult(result));
 
-    // result = await balance('key-usda-11520-wbtc', process.env.USER_ACCOUNT_ADDRESS);
+    // result = await balance('key-usda-34560-wbtc', process.env.USER_ACCOUNT_ADDRESS);
     // console.log(result);
-    // await transfer('key-usda-11520-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
+    // await transfer('key-usda-34560-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
 
     // _list = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda']
     // for (let i = 0; i < _list.length; i++){
@@ -830,5 +758,47 @@ async function run() {
     //     // console.log(result);
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
+
+    // await reserveAddToken('token-t-alex');
+    // await reserveSetActivationThreshold(1);
+    // await reserveSetActivationDelay(1);
+    // await reserveSetRewardCycleLength(525);
+    // await reserveRegisterUser('token-t-alex');
+    // await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
+    // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
+    // console.log(result);
+    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
+    // console.log(result);
+
+    // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
+    // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // console.log(result);
+    // result = await multisigVoteFor('multisig-fwp-wbtc-usda-50-50', 'fwp-wbtc-usda-50-50', 1, 19502551000000);
+    // console.log(result);
+    // result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 2);
+    // console.log(result);
+    // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 2);
+    // console.log(result);    
+    // await multisigReturnVotes('multisig-fwp-wbtc-usda-50-50', 'fwp-wbtc-usda-50-50', 2);
+    // result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e8, 0.5e8);
+    // printResult(result);
+
+    // await mint('token-t-alex', 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 100000e8);    
+
+    // await get_some_token('ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ');
+
+    // const options = {
+    //     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    //     contractName: 'alex-staking-helper-laplace',
+    //     functionName: 'get-staking-stats-coinbase-as-list',
+    //     functionArgs: [
+    //       contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, 'token-t-alex'),     
+    //       listCV([4,5,6,7,8,9,10,11].map(e=>{return uintCV(e)}))
+    //     ],
+    //     network: network,
+    //     senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    //   };
+    //   let result = await callReadOnlyFunction(options);        
+    //   result.list.map(e=>{console.log(e.data)});
 }
 run();

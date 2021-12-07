@@ -33,6 +33,7 @@
 (define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
+(define-constant ERR-POOL-AT-CAPACITY (err u2027))
 
 (define-constant a1 u27839300)
 (define-constant a2 u23038900)
@@ -86,7 +87,8 @@
     weight-x: uint,
     weight-y: uint,
     moving-average: uint,
-    conversion-ltv: uint
+    conversion-ltv: uint,
+    token-to-maturity: uint
   }
 )
 
@@ -103,17 +105,17 @@
     (let
         (
             (a1x (mul-down a1 x))
-            (x2 (pow-down x u200000000))
+            (x2 (mul-down x x))
             (a2x (mul-down a2 x2))
-            (x3 (pow-down x u300000000))
+            (x3 (mul-down x (mul-down x x)))
             (a3x (mul-down a3 x3))
-            (x4 (pow-down x u400000000))
+            (x4 (mul-down x (mul-down x (mul-down x x))))
             (a4x (mul-down a4 x4))
             (denom (+ ONE_8 a1x))
             (denom1 (+ denom a2x))
             (denom2 (+ denom1 a3x))
             (denom3 (+ denom2 a4x))
-            (denom4 (pow-down denom3 u400000000))
+            (denom4 (mul-down denom3 (mul-down denom3 (mul-down denom3 denom3))))
             (base (div-down ONE_8 denom4))
         )
         (if (<= ONE_8 base) u0 (- ONE_8 base))
@@ -231,26 +233,20 @@
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
-            (weight-y (get weight-y pool))
             (moving-average (get moving-average pool))
-            (conversion-ltv (get conversion-ltv pool))
-            (ma-comp (- ONE_8 moving-average))
-
-            (spot (try! (get-spot token collateral)))
             (now (* block-height ONE_8))
-            (ltv (try! (get-ltv token collateral expiry)))
         )
-        (if (or (> ltv conversion-ltv) (>= now expiry))
+        (if (or (> (try! (get-ltv token collateral expiry)) (get conversion-ltv pool)) (>= now expiry))
             (ok u99900000)   
             (let 
                 (
                     ;; assume 15secs per block 
-                    (t (div-down 
-                    (- expiry now) (* u2102400 ONE_8)))
+                    (t (div-down (- expiry now) (* u2102400 ONE_8)))
+                    (t-2 (div-down (- expiry now) (get token-to-maturity pool)))
 
                     ;; we calculate d1 first
-                    (spot-term (div-up spot strike))
-                    (pow-bs-vol (div-up (pow-down bs-vol u200000000) u200000000))
+                    (spot-term (div-up (try! (get-spot token collateral)) strike))
+                    (pow-bs-vol (div-up (mul-down bs-vol bs-vol) u200000000))
                     (vol-term (mul-up t pow-bs-vol))
                     (sqrt-t (pow-down t u50000000))
                     (sqrt-2 (pow-down u200000000 u50000000))
@@ -261,7 +257,15 @@
                     (erf-term (erf (div-up d1 sqrt-2)))
                     (complement (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))))
                     (weight-t (div-up complement u200000000))
-                    (weighted (+ (mul-down moving-average weight-y) (mul-down ma-comp weight-t)))                    
+                    (weighted 
+                        (+ 
+                            (mul-down moving-average (get weight-y pool)) 
+                            (mul-down 
+                                (- ONE_8 moving-average) 
+                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) u99900000)))
+                            )
+                        )
+                    )                    
                 )
                 ;; make sure weight-x > 0 so it works with weighted-equation
                 (ok (if (> weighted u100000) weighted u100000))
@@ -283,7 +287,7 @@
 ;; @param moving-average; weighting smoothing factor
 ;; @param dx; amount of collateral token being added
 ;; @returns (response bool uint)
-(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (dx uint)) 
+(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (the-yield-token <yield-token-trait>) (the-key-token <yield-token-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint)) 
     (begin
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (asserts! 
@@ -299,14 +303,13 @@
                 
                 (now (* block-height ONE_8))
                 ;; assume 10mins per block
-                (t (div-down 
-                    (- expiry now) (* u52560 ONE_8)))
+                (t (div-down (- expiry now) (* u52560 ONE_8)))
                
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
                 (sqrt-t (pow-down t u50000000))
                 (sqrt-2 (pow-down u200000000 u50000000))
-                (pow-bs-vol (div-up (pow-down bs-vol u200000000) u200000000))
+                (pow-bs-vol (div-up (mul-down bs-vol bs-vol) u200000000))
                 (numerator (mul-up t pow-bs-vol))
                 (denominator (mul-down bs-vol sqrt-t))        
                 (d1 (div-up numerator denominator))
@@ -334,7 +337,8 @@
                     weight-x: weight-x,
                     weight-y: weight-y,
                     moving-average: moving-average,
-                    conversion-ltv: conversion-ltv
+                    conversion-ltv: conversion-ltv,
+                    token-to-maturity: token-to-maturity
                 })
             )
 
@@ -384,12 +388,10 @@
             (token-y (contract-of token))             
             (expiry (unwrap! (contract-call? the-yield-token get-expiry) ERR-GET-EXPIRY-FAIL-ERR))                   
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))            
-            (conversion-ltv (get conversion-ltv pool))
-            (ltv (try! (get-ltv token collateral expiry)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
-        (asserts! (>= conversion-ltv ltv) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv token collateral expiry))) ERR-LTV-GREATER-THAN-ONE)
         (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
         (let
             (
@@ -413,12 +415,17 @@
                 )
 
                 (pool-updated (merge pool {
-                    yield-supply: (+ yield-new-supply yield-supply),
+                    yield-supply: (+ yield-new-supply yield-supply),                    
                     key-supply: (+ key-new-supply key-supply),
                     balance-x: (+ balance-x dx-weighted),
                     balance-y: (+ balance-y dy-weighted)
                 }))
-            )     
+            ) 
+
+            (if (is-eq token-x token-y)
+                u0
+                (unwrap! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
+            )
 
             (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
@@ -456,8 +463,7 @@
                 (balance-y (get balance-y pool))
                 (yield-supply (get yield-supply pool))
                 (total-shares (unwrap! (contract-call? the-yield-token get-balance tx-sender) ERR-GET-BALANCE-FAIL))
-                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-                (shares-to-yield (div-down shares yield-supply))        
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))        
 
                 ;; if there are any residual collateral, convert to token
                 (bal-x-to-y (if (is-eq balance-x u0) 
