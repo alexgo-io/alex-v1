@@ -84,7 +84,18 @@ class ALEXLaunchpad {
     isListingCompleted(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
-            "get-registration-start", 
+            "is-listing-completed", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
+
+    isListingActivated(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "is-listing-activated", 
             [
                 types.principal(token)
             ], 

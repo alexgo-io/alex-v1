@@ -183,23 +183,32 @@ Clarinet.test({
         result.receipts[0].result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
-        result.expectOk().expectBool(true);
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1);
+        result.receipts[0].result.expectOk().expectBool(true);
 
+        // Claim at this point should return ERR-LISTING-NOT-ACTIVATED
+        result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS);
+        result.receipts[0].result.expectErr().expectUint(2036);
+
+        // Register with the Token and Ticket with which the pool is created
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
         result.expectOk().expectBool(true);
+        
+        // As activation block i.e. 9 hasn't reached yet, so ERR_NO_VRF_SEED_FOUND should be thrown
+        result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_NO_VRF_SEED_FOUND);
+        
+        // Wrong ticket param should throw ERR_INVALID_TICKET
+        result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TOKEN_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_INVALID_TICKET);
 
-        chain.mineEmptyBlockUntil(9 + 2);
+        // Wrong token param should throw ERR_INVALID_TOKEN
+        result = ALPTest.claim (wallet_1, TICKET_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN);
 
-        result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS);
-        result.receipts[0].result.expectOk();
-        assertEquals(result.receipts[0].events.length, 5);
-
-        result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS);
-        console.log(result)
-      //  result.receipts[0].result.expectErr().expect(ErrCode.ERR_LISTING_FINISHED);
-    
-    
+        // Test with accurate combination of ticket token trait should pass
+        result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result.expectOk().expectBool(true);
     }
 })
 
