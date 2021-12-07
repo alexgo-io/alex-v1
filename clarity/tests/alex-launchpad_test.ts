@@ -99,8 +99,8 @@ Clarinet.test({
     name: "ALP: Claim tokens",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let wallet_1 = accounts.get("wallet_2")!;
-        let wallet_2 = accounts.get("wallet_3")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
         let wstxToken = new WSTXToken(chain, deployer);
