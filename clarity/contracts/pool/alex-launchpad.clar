@@ -223,7 +223,7 @@
       )
       (map-set listing token details-updated)
       (and (>= value-high (try! (get-activation-threshold token))) (map-set listing token (merge details-updated { activation-block: (+ block-height (get activation-delay details)) })))      
-      (ok true)
+      (ok user-id)
     )
   )
 )

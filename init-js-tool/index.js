@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { ClarityType, getNonce } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
-const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft, transferSTX } = require('./vault')
+const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft, transferSTX, mint_ft } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
     fwpCreate,
@@ -69,6 +69,7 @@ const {
     multisigReturnVotes,
     multisigGetProposalById
 } = require('./multisigs')
+const { launchCreate, launchAddToPosition, launchRegister, launchGetTokenDetails, launchGetSubscriberAtToken } = require('./pools-launch')
 
 const _deploy = {
     0: {token: 'token-wbtc',
@@ -733,10 +734,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -829,6 +830,30 @@ async function run() {
     // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
     // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
     // await mint_sft('yield-usda', 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
-    await get_some_token('ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
+    // await get_some_token('ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
+
+    // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);    
+    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);        
+    // result = await launchCreate(
+    //     'token-t-alex', 
+    //     'lottery-t-alex', 
+    //     process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    //     100,
+    //     25e8,
+    //     11000,
+    //     10000,
+    //     100
+    //     );
+    // await launchAddToPosition('token-t-alex', 1000);
+    // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
+    // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
+    // result = await launchGetTokenDetails('token-t-alex');
+    // console.log(result.value.data);
+
+    result = await launchGetSubscriberAtToken('token-t-alex', 1);
+    console.log(result.data);
+    result = await launchGetSubscriberAtToken('token-t-alex', 2);
+    console.log(result.data);    
 }
 run();
