@@ -129,8 +129,13 @@ Clarinet.test({
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
         result.expectOk().expectBool(true);
 
-        // result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS)
-        // result.receipts[0].result.expectOk();
+        chain.mineEmptyBlockUntil(9 + 2);
+
+        result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS);
+        result.receipts[0].result.expectOk();
+        assertEquals(result.receipts[0].events.length, 5);
+    
+    
     }
 })
 
