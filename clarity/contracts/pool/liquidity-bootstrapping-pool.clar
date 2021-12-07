@@ -238,7 +238,8 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response bool uint)
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
+;; MI-04
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (the-pool-token <pool-token-trait>) (multisig-vote <multisig-trait>) (price-x-min uint) (price-x-max uint) (dx uint) (dy uint)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
@@ -254,8 +255,8 @@
                 weight-x-0: weight-x-0,
                 weight-x-1: weight-x-1,
                 weight-x-t: weight-x-0,
-                price-x-min: u0,
-                price-x-max: (* ONE_8 ONE_8) ;; something big
+                price-x-min: price-x-min,
+                price-x-max: price-x-max
             })
         )
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)     

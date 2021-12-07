@@ -535,11 +535,10 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))            
-                (key-supply (get key-supply pool))            
-                (yield-supply (get yield-supply pool))            
+                (key-supply (get key-supply pool))  
+                (yield-supply (get yield-supply pool))                                   
                 (total-shares (unwrap! (contract-call? the-key-token get-balance tx-sender) ERR-GET-BALANCE-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-                
                 ;; CR-02
                 ;; if there are any residual collateral, convert to token
                 (bal-x-to-y (if (is-eq balance-x u0) 
@@ -555,7 +554,7 @@
                 )
                 (bal-y-key (if (<= (+ balance-y bal-x-to-y) yield-supply) u0 (- (+ balance-y bal-x-to-y) yield-supply)))
                 (shares-to-key (div-down shares key-supply))
-                (bal-y-reduce (mul-down bal-y-key shares-to-key))             
+                (bal-y-reduce (mul-down bal-y-key shares-to-key))   
 
                 (pool-updated (merge pool {
                     key-supply: (if (<= key-supply shares) u0 (- key-supply shares)),
@@ -591,7 +590,7 @@
         ;; swap is supported only if token /= collateral
         (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
         ;; CR-03
-        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)        
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)            
         (let
             (
                 (token-x (contract-of collateral))
@@ -652,7 +651,7 @@
         ;; swap is supported only if token /= collateral
         (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)   
         ;; CR-03
-        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)           
+        (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)              
         (let
             (
                 (token-x (contract-of collateral))

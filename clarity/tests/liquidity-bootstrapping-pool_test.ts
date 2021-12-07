@@ -36,7 +36,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(100000000000000000);         
         
         // Deployer creating a pool, initial tokens injected to the pool
-        let result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
+        let result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
@@ -170,11 +170,11 @@ Clarinet.test({
       let LBPTest = new LBPTestAgent(chain, deployer);    
       
       // non-deployer creating a pool will throw an error
-      let result = LBPTest.createPool(wallet_1, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
+      let result = LBPTest.createPool(wallet_1, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
       result.expectErr().expectUint(1000);
 
       // Deployer creating a pool, initial tokens injected to the pool
-      result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, alexQty, usdaQty);
+      result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
       result.expectOk().expectBool(true);
 
       // all time passed
