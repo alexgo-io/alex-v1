@@ -61,21 +61,44 @@ Clarinet.test({
         result = ALPTest.createPool(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, ACTIVATION_DELAY, ACTIVATION_THRESHOLD).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_UNAUTHORIZED);
 
+        // getRegistrationStart should return REGISTRATION_START value
+        result = ALPTest.getRegistrationStart(TOKEN_TRAIT_ADDRESS).result;
+        result.expectOk().expectUint(REGISTRATION_START);
+
+        // getRegistrationStart should not accept invalid token
+        result = ALPTest.getRegistrationStart(TICKET_TRAIT_ADDRESS).result;
+        result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN);
+
         // we have 1 set as activation delay, so response should be u1
         result = ALPTest.getActivationDelay(TOKEN_TRAIT_ADDRESS).result;
-        result.expectOk().expectUint(1);
+        result.expectOk().expectUint(ACTIVATION_DELAY);
 
         // we have 1 set as activation threshold, so response should be u1
         result = ALPTest.getActivationThreshold(TOKEN_TRAIT_ADDRESS).result;
-        result.expectOk().expectUint(1);
+        result.expectOk().expectUint(ACTIVATION_THRESHOLD);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
+        // Check with un-authorized user
+        result = ALPTest.addToPosition(wallet_1, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_UNAUTHORIZED);
+
+        // Check with 0 tickets. ERR_INVALID_TICKETS should be returned
+        result = ALPTest.addToPosition(deployer, TOKEN_TRAIT_ADDRESS, 0).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_INVALID_TICKET)
+
+        // check with more number of tickets than owned by user
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 100000).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_TRANSFER_FAILED);
+
+        // Check with authorized user, (OK true) should be returned
         result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
         result.expectOk().expectBool(true);
+        
         // check with wrong address, invalid token error will be thrown
         result = ALPTest.addToPosition (deployer, TICKET_TRAIT_ADDRESS, 1).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN);
-
+        
+        // Register with the Token and Ticket with which the pool is created
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
         result.expectOk().expectBool(true);
 
@@ -98,6 +121,7 @@ Clarinet.test({
         result.expectOk().expectUint(1)
     }
 })
+
 
 Clarinet.test({
     name: "ALP: Claim tokens",
@@ -241,6 +265,5 @@ Clarinet.test({
         result['value-high'].expectUint(0)
         result['value-low'].expectUint(0)
         result['wstx-locked-in-fixed'].expectUint(0)
-
     }
 })

@@ -70,6 +70,28 @@ class ALEXLaunchpad {
         return block;
     }
 
+    getRegistrationStart(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "get-registration-start", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
+
+    isListingCompleted(token: string): ReadOnlyFn {
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "get-registration-start", 
+            [
+                types.principal(token)
+            ], 
+            this.deployer.address
+        );
+    }
+
     getActivationBlock(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
