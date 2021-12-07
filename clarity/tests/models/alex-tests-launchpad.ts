@@ -115,6 +115,18 @@ class ALEXLaunchpad {
         )
     }
 
+    getSubscriberAtTokenOrDefault(token: string, userId: number): ReadOnlyFn{
+        return this.chain.callReadOnlyFn(
+            "alex-launchpad",
+            "get-subscriber-at-token-or-default",
+            [
+                types.principal(token),
+                types.uint(userId)
+            ],
+            this.deployer.address
+        )
+    }
+    
     getActivationDelay(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
