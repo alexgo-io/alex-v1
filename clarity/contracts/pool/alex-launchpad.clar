@@ -222,7 +222,7 @@
           wstx-locked-in-fixed: wstx-locked-in-fixed }
       )
       (map-set listing token details-updated)
-      (and (is-eq user-id (try! (get-activation-threshold token))) (map-set listing token (merge details-updated { activation-block: (+ block-height (get activation-delay details)) })))      
+      (and (>= value-high (try! (get-activation-threshold token))) (map-set listing token (merge details-updated { activation-block: (+ block-height (get activation-delay details)) })))      
       (ok true)
     )
   )
