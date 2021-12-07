@@ -436,7 +436,7 @@
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-pool token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user entitled-token))))    
+    (and (> entitled-token u0) (as-contract (try! (contract-call? .token-t-alex mint user entitled-token))))    
     (ok { entitled-token: entitled-token, to-return: to-return })
   )
 )
