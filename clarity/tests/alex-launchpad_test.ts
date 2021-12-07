@@ -10,6 +10,7 @@ import {
 const ONE_8 = 100000000
 const ACTIVATION_DELAY = 1
 const ACTIVATION_THRESHOLD = 1
+const REGISTRATION_START = 1
 const OWNER = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
 const TOKEN_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-t-alex"
 const TICKET_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lottery-t-alex" 
@@ -55,7 +56,7 @@ Clarinet.test({
         result.expectOk();        
 
         // Deployer creating a pool, FEE_TO_ADDRESS will be the one that's getting added in the pool
-        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, ACTIVATION_DELAY, ACTIVATION_THRESHOLD);
+        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, ACTIVATION_DELAY, ACTIVATION_THRESHOLD);
         result.receipts[0].result.expectOk().expectBool(true);
         // AV-7: please also check creating a pool by no contract-owner (i.e. wallet_1) fails.
         

@@ -8,14 +8,16 @@
 (define-constant ERR-USER-ALREADY-REGISTERED (err u10001))
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
 (define-constant ERR-ACTIVATION-THRESHOLD-REACHED (err u10004))
-(define-constant ERR-CONTRACT-NOT-ACTIVATED (err u10005))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-INVALID-TICKET (err u2028))
 (define-constant ERR-TICKET-TRANSFER-FAILED (err u2029))
 (define-constant ERR-NO-VRF-SEED-FOUND (err u2030))
 (define-constant ERR-CLAIM-NOT-AVAILABLE (err u2031))
 (define-constant ERR-TOKEN-UNDER-SUBSCRIBED (err u2032))
-(define-constant ERR-NO-TOKENS-TO-WIN (err u2033))
+(define-constant ERR-LISTING-FINISHED (err u2033))
+(define-constant ERR-REGISTRATION-NOT-STARTED (err u2034))
+(define-constant ERR-REFUND-NOT-AVAILABLE (err u2035))
+(define-constant ERR-LISTING-NOT-ACTIVATED (err u2036))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -41,6 +43,7 @@
     amount-per-ticket: uint,
     wstx-per-ticket-in-fixed: uint,
     total-subscribed: uint,
+    registration-start: uint,
     activation-block: uint,
     activation-delay: uint,
     activation-threshold: uint,
@@ -59,7 +62,9 @@
     ticket-balance: uint,
     value-low: uint,
     value-high: uint,
-    tickets-won: uint
+    tickets-won: uint,
+    tickets-lost: uint,
+    wstx-locked-in-fixed: uint
   }
 )
 
@@ -82,7 +87,7 @@
 
 ;; wstx-per-ticket-in-fixed => 8 decimal
 ;; all others => zero decimal
-(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (activation-delay uint) (activation-threshold uint))
+(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (activation-delay uint) (activation-threshold uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (map-set listing 
@@ -94,6 +99,7 @@
         wstx-per-ticket-in-fixed: wstx-per-ticket-in-fixed, 
         total-subscribed: u0,
         total-tickets: u0, 
+        registration-start: registration-start,
         activation-block: u340282366920938463463374607431768211455,
         activation-delay: activation-delay,
         activation-threshold: activation-threshold,
@@ -135,6 +141,19 @@
 ;; returns activation threshold
 (define-read-only (get-activation-threshold (token principal))
   (ok (get activation-threshold (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
+)
+
+(define-read-only (get-registration-start (token principal))
+  (ok (get registration-start (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
+)
+
+(define-read-only (is-listing-completed (token principal))
+  (let
+    (
+      (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
+    )
+    (ok (is-eq (get tickets-won details) (get total-tickets details)))
+  )
 )
 
 (define-read-only (get-token-details (token principal))
@@ -182,14 +201,26 @@
         (user-id (try! (get-or-create-user-id token tx-sender)))
         (value-low (+ u1 (get total-subscribed details)))
         (value-high (- (+ value-low ticket-amount) u1))
+        (wstx-locked-in-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)))
         (details-updated (merge details { total-subscribed: value-high, users-nonce: user-id }))
       )
       (asserts! (and (is-eq (contract-of ticket-trait) (get ticket details)) (> ticket-amount u0)) ERR-INVALID-TICKET)
+      (asserts! (>= block-height (get registration-start details)) ERR-REGISTRATION-NOT-STARTED)
     
       (unwrap! (contract-call? ticket-trait transfer-fixed (* ticket-amount ONE_8) tx-sender (as-contract tx-sender) none) ERR-TICKET-TRANSFER-FAILED)
-      (unwrap! (contract-call? .token-wstx transfer-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
+      (unwrap! (contract-call? .token-wstx transfer-fixed wstx-locked-in-fixed tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
 
-      (map-set subscriber-at-token { token: token, user-id: user-id} { ticket-balance: ticket-amount, value-low: value-low, value-high: value-high, tickets-won: u0 })
+      (map-set 
+        subscriber-at-token 
+        { token: token, user-id: user-id} 
+        { 
+          ticket-balance: ticket-amount, 
+          value-low: value-low, 
+          value-high: value-high, 
+          tickets-won: u0, 
+          tickets-lost: u0,
+          wstx-locked-in-fixed: wstx-locked-in-fixed }
+      )
       (map-set listing token details-updated)
       (and (is-eq user-id (try! (get-activation-threshold token))) (map-set listing token (merge details-updated { activation-block: (+ block-height (get activation-delay details)) })))      
       (ok true)
@@ -199,13 +230,57 @@
 
 (define-read-only (get-subscriber-at-token-or-default (token principal) (user-id uint))
   (default-to 
-    { ticket-balance: u0, value-low: u0, value-high: u0, tickets-won: u0 } 
+    { ticket-balance: u0, value-low: u0, value-high: u0, tickets-won: u0, tickets-lost: u0, wstx-locked-in-fixed: u0 } 
     (map-get? subscriber-at-token { token: token, user-id: user-id }))
+)
+
+(define-read-only (is-listing-activated (token principal))
+  (ok (>= block-height (try! (get-activation-block token))))
+)
+
+
+(define-read-only (is-listing-undersubscribed (token principal))
+  (let
+    (
+      (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
+    )
+    (ok 
+      (and
+        (try! (is-listing-activated token))
+        (< (get total-subscribed details) (get total-tickets details))
+      )
+    )
+  )
+)
+
+(define-public (refund (token principal))
+  (begin
+    (asserts! 
+      (or 
+        (not (try! (is-listing-activated token))) ;; not activated yet
+        (try! (is-listing-undersubscribed token)) ;; listing is under-subscribed
+      ) 
+      ERR-REFUND-NOT-AVAILABLE
+    )
+    (let
+      (
+        (claimer tx-sender)
+        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
+        (sub-details (get-subscriber-at-token-or-default token (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND)))  
+        (refund-amount (* (get ticket-balance sub-details) (get wstx-per-ticket-in-fixed details)))
+      )
+      (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
+      (ok refund-amount)
+    )    
+  )
 )
 
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
-    (asserts! (>= (get total-subscribed (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN)) (get total-tickets (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-TOKEN-UNDER-SUBSCRIBED)
+    (asserts! (not (try! (is-listing-undersubscribed (contract-of token-trait)))) ERR-TOKEN-UNDER-SUBSCRIBED)
+    (asserts! (not (try! (is-listing-completed (contract-of token-trait)))) ERR-LISTING-FINISHED)
+    (asserts! (try! (is-listing-activated (contract-of token-trait))) ERR-LISTING-NOT-ACTIVATED)
+    (asserts! (is-eq (contract-of ticket-trait) (get ticket (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-INVALID-TICKET)
     (let
       (
         (claimer tx-sender)
@@ -223,6 +298,7 @@
         (this-random (get-next-random last-random))
         (value-low (get value-low sub-details))
         (value-high (get value-high sub-details))
+        (wstx-per-ticket-in-fixed (get wstx-per-ticket-in-fixed details))
         (value-low-adjusted 
           (if (< value-low (/ total-tickets u2)) 
             u0 
@@ -242,25 +318,42 @@
           )
         )                  
       )      
-      (asserts! (> block-height activation-block) ERR-CONTRACT-NOT-ACTIVATED)
-      (asserts! (is-eq (contract-of ticket-trait) (get ticket details)) ERR-INVALID-TICKET)
-      (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)    
-      (asserts! (< tickets-won total-tickets) ERR-NO-TOKENS-TO-WIN)  
+      (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)
       
       (if (and (>= (mod this-random total-subscribed) value-low-adjusted) (<= (mod this-random total-subscribed) value-high-adjusted))
         (begin
-          (as-contract (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) tx-sender claimer none) (err u101))) ;;ERR-TRANSFER-FAILED))
-          (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) tx-sender (get fee-to-address details) none) (err u102))) ;;ERR-TRANSFER-FAILED))
+          (as-contract (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) tx-sender claimer none) ERR-TRANSFER-FAILED))
+          (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed wstx-per-ticket-in-fixed tx-sender (get fee-to-address details) none) ERR-TRANSFER-FAILED))
           (as-contract (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender)))
           (map-set listing token (merge details { last-random: this-random, tickets-won: (+ tickets-won u1) }))          
-          (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- ticket-balance u1), tickets-won: (+ (get tickets-won sub-details) u1) }))      
+          (map-set 
+            subscriber-at-token 
+            { token: token, user-id: user-id} 
+            (merge sub-details 
+              { 
+                ticket-balance: (- ticket-balance u1), 
+                tickets-won: (+ (get tickets-won sub-details) u1), 
+                wstx-locked-in-fixed: (- (get wstx-locked-in-fixed sub-details) wstx-per-ticket-in-fixed) 
+              }
+            )
+          )      
           (ok true)
         )
         (begin
-          (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) tx-sender claimer none) (err u103))) ;;ERR-TRANSFER-FAILED))
+          (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) tx-sender claimer none) ERR-TRANSFER-FAILED))
           (as-contract (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender)))
           (map-set listing token (merge details { last-random: this-random }))
-          (map-set subscriber-at-token { token: token, user-id: user-id} (merge sub-details { ticket-balance: (- ticket-balance u1) }))      
+          (map-set 
+            subscriber-at-token 
+            { token: token, user-id: user-id} 
+            (merge sub-details 
+              { 
+                ticket-balance: (- ticket-balance u1),
+                tickets-lost: (+ (get tickets-lost sub-details) u1),
+                wstx-locked-in-fixed: (- (get wstx-locked-in-fixed sub-details) wstx-per-ticket-in-fixed)
+              }
+            )
+          )      
           (ok false)
         )
       )

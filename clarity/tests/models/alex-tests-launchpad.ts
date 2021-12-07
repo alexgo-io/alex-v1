@@ -15,7 +15,7 @@ class ALEXLaunchpad {
         this.deployer = deployer;
     }
 
-    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, activationDelay: number, activationThreshold: number) {
+    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, activationDelay: number, activationThreshold: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "create-pool", [
                     types.principal(token),
@@ -23,6 +23,7 @@ class ALEXLaunchpad {
                     types.principal(feeToAddress),
                     types.uint(amountPerTicket),
                     types.uint(wstxPerTicketInFixed),
+                    types.uint(registrationStart),
                     types.uint(activationDelay),
                     types.uint(activationThreshold),
                 ],
