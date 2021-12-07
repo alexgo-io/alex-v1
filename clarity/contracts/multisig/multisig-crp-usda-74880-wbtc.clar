@@ -102,7 +102,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <ft-trait>))
-    (or (is-eq (contract-of token) .yield-wbtc-80875) (is-eq (contract-of token) .key-wbtc-80875-usda))
+    (or (is-eq (contract-of token) .yield-usda-74880) (is-eq (contract-of token) .key-usda-74880-wbtc))
 )
 
 
@@ -118,11 +118,11 @@
   )
   (let 
     (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-wbtc-80875 get-balance tx-sender)))
-      (proposer-key-balance (unwrap-panic (contract-call? .key-wbtc-80875-usda get-balance tx-sender)))
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-usda-74880 get-balance tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-usda-74880-wbtc get-balance tx-sender)))
       (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-80875 get-total-supply)))
-      (total-key-supply (unwrap-panic (contract-call? .key-wbtc-80875-usda get-total-supply)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-usda-74880 get-total-supply)))
+      (total-key-supply (unwrap-panic (contract-call? .key-usda-74880-wbtc get-total-supply)))
       (total-supply (+ total-yield-supply total-key-supply))
       (proposal-id (+ u1 (var-get proposal-count)))
     )
@@ -221,8 +221,8 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc-80875 get-total-supply)))
-        (total-key-supply (unwrap-panic (contract-call? .key-wbtc-80875-usda get-total-supply)))
+        (total-yield-supply (unwrap-panic (contract-call? .yield-usda-74880 get-total-supply)))
+        (total-key-supply (unwrap-panic (contract-call? .key-usda-74880-wbtc get-total-supply)))
         (total-supply (* (+ total-yield-supply total-key-supply) ONE_8))
         (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
@@ -269,8 +269,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-wbtc .token-usda u8087500000000 new-fee-rate-x))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-wbtc .token-usda u8087500000000 new-fee-rate-y))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc u7488000000000 new-fee-rate-x))
+    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc u7488000000000 new-fee-rate-y))
     
     (ok true)
   )

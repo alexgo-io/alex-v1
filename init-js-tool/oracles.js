@@ -85,8 +85,33 @@ const getOpenOracle = async (src, symbol) => {
   }
 };
 
+const fetch_price = async (token, against) => {
+  console.log('fetching price from coingecko...', token, against);
+  return (await CoinGeckoClient.coins.fetch(token, {
+    vs_currency: against,
+    from: new Date(Date.now() - 60 * 1000).getTime(),
+    to: Date.now(),
+  })).data.market_data.current_price.usd;
+};
+
+const fetch_btc = async(against) => {
+  return await fetch_price('bitcoin', against);
+}
+
+const fetch_usdc = async(against) => {
+  return await fetch_price('usd-coin', against);
+}
+
+const fetch_in_usd = async(token) => {
+  return await fetch_price(token, 'usd');
+}
+
 exports.default = {
   initCoinPrice,
   setOpenOracle,
-  getOpenOracle
+  getOpenOracle,
+  fetch_price,
+  fetch_btc,
+  fetch_usdc,
+  fetch_in_usd
 }

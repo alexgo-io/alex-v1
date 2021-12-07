@@ -42,7 +42,7 @@
 )
 
 (define-read-only (get-decimals)
-  (ok u0)
+  (ok u8)
 )
 
 (define-read-only (get-balance (account principal))
@@ -101,6 +101,14 @@
   )
 )
 
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
+)
+
 (begin
   (map-set approved-contracts .alex-reserve-pool true)
   (map-set approved-contracts .faucet true)
@@ -108,7 +116,7 @@
 
 ;; Initialize the contract for Testing.
 (begin
-  (try! (ft-mint? alex u1000000000 tx-sender))  
+  (try! (ft-mint? alex u100000000000000000 tx-sender))  
 )
 
 

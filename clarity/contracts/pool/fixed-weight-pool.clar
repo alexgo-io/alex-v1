@@ -349,7 +349,8 @@
                     balance-y: (+ balance-y new-dy)
                 }))
             )
-
+            ;; CR-01
+            (asserts! (>= dy new-dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
 
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
@@ -1133,10 +1134,10 @@
    )
 )
 
-(define-read-only (get-x-y  (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
+(define-read-only (get-x-y  (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
     (ok (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
-                        (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dx))
-                        (try! (get-y-given-x token-y-trait token-x-trait weight-x weight-y dx))
+                        (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy))
+                        (try! (get-y-given-x token-y-trait token-x-trait weight-x weight-y dy))
         )
     )    
 )

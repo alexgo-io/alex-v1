@@ -26,7 +26,7 @@ export class CoreClient extends Client {
   static readonly ACTIVATION_DELAY = 150;
   static readonly ACTIVATION_THRESHOLD = 20;
   static readonly TOKEN_HALVING_CYCLE = 100;
-  static readonly REWARD_CYCLE_LENGTH = 2100;
+  static readonly REWARD_CYCLE_LENGTH = 525;
   static readonly TOKEN_REWARD_MATURITY = 100;
   static readonly BONUS_PERIOD_LENGTH = 10000;
 
@@ -83,18 +83,6 @@ export class CoreClient extends Client {
     return this.callReadOnlyFn("get-user", [types.uint(userId)]);
   }
 
-  setActivationBlock(sender: Account, activation: number, token: string): Tx {
-    return Tx.contractCall(
-      this.contractName,
-      "set-activation-block",
-      [
-        types.principal(token),
-        types.uint(activation)
-      ],
-      sender.address
-    );
-  }
-
   setActivationThreshold(sender: Account, threshold: number): Tx {
     return Tx.contractCall(
       this.contractName,
@@ -106,13 +94,12 @@ export class CoreClient extends Client {
     );
   }
 
-  addToken(sender: Account, token: string, activationBlock: number): Tx {
+  addToken(sender: Account, token: string): Tx {
     return Tx.contractCall(
       this.contractName,
       "add-token",
       [
-        types.principal(token),
-        types.uint(activationBlock)
+        types.principal(token)
       ],
       sender.address
     );

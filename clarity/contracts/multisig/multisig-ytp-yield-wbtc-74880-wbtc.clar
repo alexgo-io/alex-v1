@@ -104,7 +104,7 @@
 
 ;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
 (define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .ytp-yield-usda-80875-usda)
+    (is-eq (contract-of token) .ytp-yield-wbtc-74880-wbtc)
 )
 
 
@@ -119,8 +119,8 @@
     (new-fee-rate-yield-token uint)
   )
   (let (
-    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-usda-80875-usda get-balance tx-sender)) ONE_8))
-    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda-80875-usda get-total-supply)) ONE_8))
+    (proposer-balance (* (unwrap-panic (contract-call? .ytp-yield-wbtc-74880-wbtc get-balance tx-sender)) ONE_8))
+    (total-supply (* (unwrap-panic (contract-call? .ytp-yield-wbtc-74880-wbtc get-total-supply)) ONE_8))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -218,7 +218,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (* (unwrap-panic (contract-call? .ytp-yield-usda-80875-usda get-total-supply)) ONE_8))
+        (total-supply (unwrap-panic (contract-call? .ytp-yield-wbtc-74880-wbtc get-total-supply)))
         (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
@@ -264,8 +264,8 @@
   ) 
   
     ;; Setting for Yield Token Pool
-    (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-usda-80875 new-fee-rate-token))
-    (try! (contract-call? .yield-token-pool set-fee-rate-yield-token .yield-usda-80875 new-fee-rate-yield-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-token .yield-wbtc-74880 new-fee-rate-token))
+    (try! (contract-call? .yield-token-pool set-fee-rate-yield-token .yield-wbtc-74880 new-fee-rate-yield-token))
     
     (ok true)
   )

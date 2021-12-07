@@ -83,7 +83,7 @@
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
 
 ;; how long a reward cycle is
-(define-data-var reward-cycle-length uint u2100)
+(define-data-var reward-cycle-length uint u525)
 
 ;; At a given reward cycle, what is the total amount of tokens staked
 (define-map staking-stats-at-cycle 
@@ -139,12 +139,12 @@
   (is-some (map-get? approved-tokens token))
 )
 
-(define-public (add-token (token principal) (activation-block-before-delay uint))
+(define-public (add-token (token principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (map-set approved-tokens token true)
     (map-set users-nonce token u0)
-    (set-activation-block token activation-block-before-delay)
+    (ok true)
   )
 )
 
@@ -153,16 +153,16 @@
   (default-to u100000000 (map-get? activation-block token))
 )
 
-(define-public (set-activation-block (token principal) (new-activation-block-before-delay uint))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (map-set activation-block token (+ new-activation-block-before-delay (var-get activation-delay))))
-  )
-)
-
 ;; returns activation delay
 (define-read-only (get-activation-delay)
   (var-get activation-delay)
+)
+
+(define-public (set-activation-delay (new-activation-delay uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set activation-delay new-activation-delay))
+  )
 )
 
 ;; returns activation threshold
@@ -240,11 +240,8 @@
     (get-or-create-user-id token tx-sender)
 
     (if (is-eq new-id threshold)
-      (let
-        (
-          (activation-block-val (+ block-height (var-get activation-delay)))
-        )
-        (map-set activation-block token activation-block-val)
+      (begin
+        (map-set activation-block token (+ block-height (var-get activation-delay)))
         (ok true)
       )
       (ok true)
@@ -298,12 +295,7 @@
     )
     (match (get-reward-cycle token stacks-height)
       current-cycle
-      (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
-        ;; this cycle hasn't finished, or staker contributed nothing
-        u0
-        (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))        
-      )
-      ;; before first reward cycle
+      (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
       u0
     )
   )
@@ -428,7 +420,6 @@
       (to-return (get to-return (get-staker-at-cycle-or-default token target-cycle user-id)))
     )
     (asserts! (> current-cycle target-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (or (> to-return u0) (> entitled-token u0)) ERR-NOTHING-TO-REDEEM)
     ;; disable ability to claim again
     (map-set staker-at-cycle
       {
@@ -445,8 +436,8 @@
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-pool token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user entitled-token))))
-    (ok true)
+    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint user entitled-token))))    
+    (ok { entitled-token: entitled-token, to-return: to-return })
   )
 )
 
@@ -559,10 +550,17 @@
   )
 )
 
+(define-public (set-reward-cycle-length (new-reward-cycle-length uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (ok (var-set reward-cycle-length new-reward-cycle-length))
+  )
+)
+
 ;; contract initialisation
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .yield-token-pool true)
-  (map-set approved-contracts .alex-reserve-pool true)  
+  (map-set approved-contracts (as-contract tx-sender) true)  
 )
