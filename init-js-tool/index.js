@@ -169,7 +169,7 @@ async function create_fwp(add_only, deployer=false) {
             pool_token: 'fwp-wbtc-usda-50-50',
             multisig: 'multisig-fwp-wbtc-usda-50-50',
             left_side: Math.round(50000000 * ONE_8 / Number(wbtcPrice)),
-            right_side: 50000000 * ONE_8            
+            right_side: Math.round(50000000 * ONE_8 * 1.1)
         },
     }
 
@@ -579,7 +579,7 @@ async function get_pool_details_ytp(_subset=_deploy) {
         let yied = await ytpGetYield(_subset[key]['yield_token']);
         let price = await ytpGetPrice(_subset[key]['yield_token']);
         let details = await ytpGetPoolDetails(_subset[key]['yield_token']);
-        let balance_aytoken = details.value.data['balance-aytoken'];
+        let balance_aytoken = details.value.data['balance-yield-token'];
         let balance_virtual = details.value.data['balance-virtual'];
         let balance_token = details.value.data['balance-token'];
         let total_supply = details.value.data['total-supply'];
@@ -706,14 +706,14 @@ async function run() {
     // await test_spot_trading();
     // await test_margin_trading();
 
-    // await create_fwp(add_only=true, deployer=true);
+    await create_fwp(add_only=true, deployer=true);
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
     // await arbitrage_fwp(dry_run=true);
     // await arbitrage_crp(dry_run=true, _pools);    
     // await arbitrage_ytp(dry_run=true, _pools); 
-    await get_pool_details_fwp();
+    // await get_pool_details_fwp();
     // await get_pool_details_crp(_pools);
     // await get_pool_details_ytp(_pools);   
 
