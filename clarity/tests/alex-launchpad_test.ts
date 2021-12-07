@@ -179,16 +179,16 @@ Clarinet.test({
         result.expectOk();        
 
         // Deployer creating a pool, FEE_TO_ADDRESS will be the one that's getting added in the pool
-        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, ACTIVATION_DELAY, ACTIVATION_THRESHOLD);
-        result.receipts[0].result.expectOk().expectBool(true);
+        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, ACTIVATION_DELAY, ACTIVATION_THRESHOLD).receipts[0].result;
+        result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1);
-        result.receipts[0].result.expectOk().expectBool(true);
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result.expectOk().expectBool(true);
 
         // Claim at this point should return ERR-LISTING-NOT-ACTIVATED
-        result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS);
-        result.receipts[0].result.expectErr().expectUint(2036);
+        result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_LISTING_NOT_ACTIVATED);
 
         // Register with the Token and Ticket with which the pool is created
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
