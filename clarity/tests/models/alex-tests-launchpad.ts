@@ -15,7 +15,7 @@ class ALEXLaunchpad {
         this.deployer = deployer;
     }
 
-    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, activationDelay: number, activationThreshold: number) {
+    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, registrationEnd: number, activationThreshold: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "create-pool", [
                     types.principal(token),
@@ -24,7 +24,7 @@ class ALEXLaunchpad {
                     types.uint(amountPerTicket),
                     types.uint(wstxPerTicketInFixed),
                     types.uint(registrationStart),
-                    types.uint(activationDelay),
+                    types.uint(registrationEnd),
                     types.uint(activationThreshold),
                 ],
                 sender.address
@@ -69,17 +69,6 @@ class ALEXLaunchpad {
         ]);
         return block;
     }
-
-    getActivationBlock(token: string): ReadOnlyFn {
-        return this.chain.callReadOnlyFn(
-            "alex-launchpad",
-            "get-activation-block", 
-            [
-                types.principal(token)
-            ], 
-            this.deployer.address
-        );
-    }
     
     getOwner():ReadOnlyFn {
         return this.chain.callReadOnlyFn(
@@ -108,17 +97,6 @@ class ALEXLaunchpad {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
             "get-token-details",
-            [
-                types.principal(token)
-            ],
-            this.deployer.address
-        )
-    }
-
-    getActivationDelay(token: string): ReadOnlyFn {
-        return this.chain.callReadOnlyFn(
-            "alex-launchpad",
-            "get-activation-delay",
             [
                 types.principal(token)
             ],

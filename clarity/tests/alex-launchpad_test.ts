@@ -8,9 +8,9 @@ import {
   } from './models/alex-tests-tokens.ts';
 
 const ONE_8 = 100000000
-const ACTIVATION_DELAY = 1
 const ACTIVATION_THRESHOLD = 1
-const REGISTRATION_START = 1
+const REGISTRATION_START = 50
+const REGISTRATION_END = 100
 const OWNER = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
 const TOKEN_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-t-alex"
 const TICKET_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lottery-t-alex" 
@@ -56,22 +56,17 @@ Clarinet.test({
         result.expectOk();        
 
         // Deployer creating a pool, FEE_TO_ADDRESS will be the one that's getting added in the pool
-        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, ACTIVATION_DELAY, ACTIVATION_THRESHOLD);
+        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, REGISTRATION_END, ACTIVATION_THRESHOLD);
         result.receipts[0].result.expectOk().expectBool(true);
         // AV-7: please also check creating a pool by no contract-owner (i.e. wallet_1) fails.
-        
-        // we have 1 set as activation delay, so response should be u1
-        result = ALPTest.getActivationDelay(TOKEN_TRAIT_ADDRESS);
-        assertEquals(result.result, "(ok u1)");
-
-        // we have 1 set as activation threshold, so response should be u1
-        result = ALPTest.getActivationThreshold(TOKEN_TRAIT_ADDRESS);
-        assertEquals(result.result, "(ok u1)");
 
         // AV-7: please also check adding position by non fee-to-address fails.
         result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1);
         result.receipts[0].result.expectOk().expectBool(true);
-        
+
+
+        chain.mineEmptyBlockUntil(REGISTRATION_START);
+
         // AV-7: please also check attempt to register more tickets than owned fails.
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
         result.expectOk().expectBool(true);
@@ -99,8 +94,8 @@ Clarinet.test({
         result.expectErr().expectUint(10001);
         
         // AV-7: please conert this to a test. It should check
-        // activation-block = 9
-        // activation-delay = 1
+        // registration-end = 100
+        // registration-start = 1
         // activation-threshold = 1
         // amount-per-ticket = 100
         // fee-to-address = ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE
@@ -121,7 +116,7 @@ Clarinet.test({
         )).result);
         
         // mine a few blocks to test claim function
-        chain.mineEmptyBlockUntil(9 + 2);
+        chain.mineEmptyBlockUntil(REGISTRATION_END + 1);
 
         // AV-7: please also check if you supply a wrong combiantion of TOKEN_TRAIT and TICKET_TRAIT, it fails
         result = ALPTest.claim(wallet_2, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS)

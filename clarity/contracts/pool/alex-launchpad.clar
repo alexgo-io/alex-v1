@@ -7,17 +7,19 @@
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-USER-ALREADY-REGISTERED (err u10001))
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
-(define-constant ERR-ACTIVATION-THRESHOLD-REACHED (err u10004))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-INVALID-TICKET (err u2028))
 (define-constant ERR-TICKET-TRANSFER-FAILED (err u2029))
 (define-constant ERR-NO-VRF-SEED-FOUND (err u2030))
 (define-constant ERR-CLAIM-NOT-AVAILABLE (err u2031))
-(define-constant ERR-TOKEN-UNDER-SUBSCRIBED (err u2032))
-(define-constant ERR-LISTING-FINISHED (err u2033))
+(define-constant ERR-LISTING-FINISHED (err u2032))
+(define-constant ERR-REGISTRATION-STARTED (err u2033))
 (define-constant ERR-REGISTRATION-NOT-STARTED (err u2034))
-(define-constant ERR-REFUND-NOT-AVAILABLE (err u2035))
+(define-constant ERR-LISTING-ACTIVATED (err u2035))
 (define-constant ERR-LISTING-NOT-ACTIVATED (err u2036))
+(define-constant ERR-INVALID-REGISTRATION-PERIOD (err u2037))
+(define-constant ERR-REGISTRATION-ENDED (err u2038))
+(define-constant ERR-REGISTRATION-NOT-ENDED (err u2039))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -44,8 +46,7 @@
     wstx-per-ticket-in-fixed: uint,
     total-subscribed: uint,
     registration-start: uint,
-    activation-block: uint,
-    activation-delay: uint,
+    registration-end: uint,
     activation-threshold: uint,
     users-nonce: uint,
     last-random: uint,
@@ -87,9 +88,10 @@
 
 ;; wstx-per-ticket-in-fixed => 8 decimal
 ;; all others => zero decimal
-(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (activation-delay uint) (activation-threshold uint))
+(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (registration-end uint) (activation-threshold uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (> registration-end registration-start) ERR-INVALID-REGISTRATION-PERIOD)
     (map-set listing 
       (contract-of token-trait)
       {        
@@ -100,8 +102,7 @@
         total-subscribed: u0,
         total-tickets: u0, 
         registration-start: registration-start,
-        activation-block: u340282366920938463463374607431768211455,
-        activation-delay: activation-delay,
+        registration-end: registration-end,
         activation-threshold: activation-threshold,
         users-nonce: u0,
         last-random: u0,
@@ -118,7 +119,7 @@
       (details (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN)) 
     )
     (asserts! (is-eq (get fee-to-address details) tx-sender) ERR-NOT-AUTHORIZED)
-    (asserts! (is-eq (get activation-block details) u340282366920938463463374607431768211455) ERR-ACTIVATION-THRESHOLD-REACHED)
+    (asserts! (< block-height (get registration-start details)) ERR-REGISTRATION-STARTED)
     (asserts! (> tickets u0) ERR-INVALID-TICKET)
 
     (map-set listing (contract-of token-trait) (merge details { total-tickets: (+ (get total-tickets details) tickets ) }))
@@ -128,16 +129,6 @@
   )
 )
 
-;; returns Stacks block height registration was activated at plus activationDelay
-(define-read-only (get-activation-block (token principal))
-  (ok (get activation-block (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
-)
-
-;; returns activation delay
-(define-read-only (get-activation-delay (token principal))
-  (ok (get activation-delay (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
-)
-
 ;; returns activation threshold
 (define-read-only (get-activation-threshold (token principal))
   (ok (get activation-threshold (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
@@ -145,6 +136,10 @@
 
 (define-read-only (get-registration-start (token principal))
   (ok (get registration-start (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
+)
+
+(define-read-only (get-registration-end (token principal))
+  (ok (get registration-end (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 (define-read-only (is-listing-completed (token principal))
@@ -204,8 +199,9 @@
         (wstx-locked-in-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)))
         (details-updated (merge details { total-subscribed: value-high, users-nonce: user-id }))
       )
-      (asserts! (and (is-eq (contract-of ticket-trait) (get ticket details)) (> ticket-amount u0)) ERR-INVALID-TICKET)
       (asserts! (>= block-height (get registration-start details)) ERR-REGISTRATION-NOT-STARTED)
+      (asserts! (<= block-height (get registration-end details)) ERR-REGISTRATION-ENDED)      
+      (asserts! (and (is-eq (contract-of ticket-trait) (get ticket details)) (> ticket-amount u0)) ERR-INVALID-TICKET)
     
       (unwrap! (contract-call? ticket-trait transfer-fixed (* ticket-amount ONE_8) tx-sender (as-contract tx-sender) none) ERR-TICKET-TRANSFER-FAILED)
       (unwrap! (contract-call? .token-wstx transfer-fixed wstx-locked-in-fixed tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
@@ -222,7 +218,6 @@
           wstx-locked-in-fixed: wstx-locked-in-fixed }
       )
       (map-set listing token details-updated)
-      (and (>= value-high (try! (get-activation-threshold token))) (map-set listing token (merge details-updated { activation-block: (+ block-height (get activation-delay details)) })))      
       (ok true)
     )
   )
@@ -235,49 +230,33 @@
 )
 
 (define-read-only (is-listing-activated (token principal))
-  (ok (>= block-height (try! (get-activation-block token))))
-)
-
-
-(define-read-only (is-listing-undersubscribed (token principal))
   (let
     (
       (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
     )
-    (ok 
-      (and
-        (try! (is-listing-activated token))
-        (< (get total-subscribed details) (get total-tickets details))
-      )
-    )
+    (ok (> (get total-subscribed details) (get activation-threshold details)))
   )
 )
 
 (define-public (refund (token principal))
-  (begin
-    (asserts! 
-      (or 
-        (not (try! (is-listing-activated token))) ;; not activated yet
-        (try! (is-listing-undersubscribed token)) ;; listing is under-subscribed
-      ) 
-      ERR-REFUND-NOT-AVAILABLE
+  (let
+    (
+      (claimer tx-sender)
+      (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
+      (sub-details (get-subscriber-at-token-or-default token (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND)))  
+      (refund-amount (* (get ticket-balance sub-details) (get wstx-per-ticket-in-fixed details)))
     )
-    (let
-      (
-        (claimer tx-sender)
-        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
-        (sub-details (get-subscriber-at-token-or-default token (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND)))  
-        (refund-amount (* (get ticket-balance sub-details) (get wstx-per-ticket-in-fixed details)))
-      )
-      (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
-      (ok refund-amount)
-    )    
+    (asserts! (not (try! (is-listing-activated token))) ERR-LISTING-ACTIVATED)
+    (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
+
+    (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
+    (ok refund-amount)
   )
 )
 
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
-    (asserts! (not (try! (is-listing-undersubscribed (contract-of token-trait)))) ERR-TOKEN-UNDER-SUBSCRIBED)
+    (asserts! (> block-height (get registration-end (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-REGISTRATION-NOT-ENDED)
     (asserts! (not (try! (is-listing-completed (contract-of token-trait)))) ERR-LISTING-FINISHED)
     (asserts! (try! (is-listing-activated (contract-of token-trait))) ERR-LISTING-NOT-ACTIVATED)
     (asserts! (is-eq (contract-of ticket-trait) (get ticket (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-INVALID-TICKET)
@@ -288,12 +267,11 @@
         (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
         (user-id (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND))
         (sub-details (get-subscriber-at-token-or-default token user-id))
-        (activation-block (get activation-block details))
         (total-tickets (get total-tickets details))
         (total-subscribed (get total-subscribed details))
         (tickets-won (get tickets-won details))
         (ticket-balance (get ticket-balance sub-details))
-        (vrf-seed (unwrap! (get-random-uint-at-block activation-block) ERR-NO-VRF-SEED-FOUND))
+        (vrf-seed (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND))
         (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed u13495287074701800000000000000) (get last-random details)))
         (this-random (get-next-random last-random))
         (value-low (get value-low sub-details))
