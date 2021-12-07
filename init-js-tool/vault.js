@@ -47,16 +47,44 @@ const flashloan = async(loan_contract, token, amount, expiry) => {
     }
 }
 
-const mint = async(token, recipient, amount) => {
+const mint_sft = async(token, token_id, amount, recipient) => {
     console.log('[Token] mint...', token, recipient, amount);
     const privateKey = await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
         functionName: 'mint-fixed',
-        functionArgs: [            
-            uintCV(amount),
-            principalCV(recipient),
+        functionArgs: [
+            uintCV(token_id),
+            uintCV(amount),            
+            principalCV(recipient)
+        ],
+        senderKey: privateKey,
+        validateWithAbi: true,
+        network,
+        anchorMode: AnchorMode.Any,
+        postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+        const transaction = await makeContractCall(txOptions);
+        const broadcastResponse = await broadcastTransaction(transaction, network);
+        console.log(broadcastResponse);
+        await wait_until_confirmation(broadcastResponse.txid)
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+const mint_ft = async(token, amount, recipient) => {
+    console.log('[Token] mint...', token, recipient, amount);
+    const privateKey = await getDeployerPK();
+    const txOptions = {
+        contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+        contractName: token,
+        functionName: 'mint-fixed',
+        functionArgs: [
+            uintCV(amount),            
+            principalCV(recipient)
         ],
         senderKey: privateKey,
         validateWithAbi: true,
@@ -192,7 +220,8 @@ const getBalance = async(token) => {
 }
 
 exports.flashloan = flashloan;
-exports.mint = mint;
+exports.mint_ft = mint_ft;
+exports.mint_sft = mint_sft;
 exports.burn = burn;
 exports.balance = balance;
 exports.getBalance = getBalance;

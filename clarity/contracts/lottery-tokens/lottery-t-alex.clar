@@ -1,14 +1,14 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
-(define-fungible-token wstx)
+(define-fungible-token lottery-t-alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var CONTRACT-OWNER principal tx-sender)
+(define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-NOT-TOKEN-OWNER (err u1001))
 
 (define-read-only (get-owner)
   (ok (var-get CONTRACT-OWNER))
@@ -21,20 +21,24 @@
   )
 )
 
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get CONTRACT-OWNER))) ERR-NOT-AUTHORIZED))
+)
+
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply wstx))
+  (ok (ft-get-supply lottery-t-alex))
 )
 
 (define-read-only (get-name)
-  (ok "wstx")
+  (ok "lottery-t-alex")
 )
 
 (define-read-only (get-symbol)
-  (ok "wstx")
+  (ok "lottery-t-alex")
 )
 
 (define-read-only (get-decimals)
@@ -42,7 +46,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance wstx account))
+  (ok (ft-get-balance lottery-t-alex account))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -58,8 +62,8 @@
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
-    ;; (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? wstx amount sender recipient)
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (match (ft-transfer? lottery-t-alex amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -69,21 +73,17 @@
   )
 )
 
-;; This can only be called by recipient since stx-transfer is involved ;; tx-sender -> .alex-vault
-(define-public (mint (amount uint) (recipient principal)) 
+(define-public (mint (amount uint) (recipient principal))
   (begin
-    (asserts! (is-eq tx-sender recipient) ERR-NOT-TOKEN-OWNER)
-    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) recipient .alex-vault))
-    (ft-mint? wstx amount recipient)
+    (try! (check-is-approved contract-caller))
+    (ft-mint? lottery-t-alex amount recipient)
   )
 )
 
-;; This can only be called by sender since ft-burn is involved
 (define-public (burn (amount uint) (sender principal))
   (begin
-    (asserts! (is-eq tx-sender sender) ERR-NOT-TOKEN-OWNER)
-    (as-contract (try! (contract-call? .alex-vault transfer-stx (decimals-to-fixed amount) tx-sender sender)))
-    (ft-burn? wstx amount sender)
+    (try! (check-is-approved contract-caller))
+    (ft-burn? lottery-t-alex amount sender)
   )
 )
 
@@ -102,11 +102,11 @@
 )
 
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply wstx)))
+  (ok (decimals-to-fixed (ft-get-supply lottery-t-alex)))
 )
 
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance wstx account)))
+  (ok (decimals-to-fixed (ft-get-balance lottery-t-alex account)))
 )
 
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
@@ -120,3 +120,9 @@
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
 )
+
+(begin
+  (map-set approved-contracts .alex-launchpad true)
+)
+
+

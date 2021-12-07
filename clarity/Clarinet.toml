@@ -203,6 +203,10 @@ depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 path = "contracts/pool-token/ytp-yield-wbtc.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 
+[contracts.alex-launchpad]
+path = "contracts/pool/alex-launchpad.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-wstx"]
+
 [contracts.staked-alex]
 path = "contracts/staked-token/staked-alex.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible-token"]
@@ -210,3 +214,7 @@ depends_on = ["trait-ownable", "trait-semi-fungible-token"]
 [contracts.flash-loan-user-margin-wbtc-usda]
 path = "contracts/flash-loan-user-margin-wbtc-usda.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user", "token-usda", "yield-wbtc", "key-wbtc-usda"]
+
+[contracts.lottery-t-alex]
+path = "contracts/lottery-tokens/lottery-t-alex.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]

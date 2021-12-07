@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { ClarityType, getNonce } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
-const { flashloan, getBalance, mint, burn, balance, transfer, transferSTX } = require('./vault')
+const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft, transferSTX } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
     fwpCreate,
@@ -823,14 +823,12 @@ async function run() {
     // console.log(result);
     // result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 2);
     // console.log(result);
-    // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 2);
-    // console.log(result);    
-    // await multisigReturnVotes('multisig-fwp-wbtc-usda-50-50', 'fwp-wbtc-usda-50-50', 2);
-    // result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e8, 0.5e8);
-    // printResult(result);
-
-    // await mint('token-t-alex-v2', 'ST13F0C8HFJC9H1FR7S7WFZ9FEMNV1PBEG346P1ZP', 1000e8);    
-
-    // await get_some_token('ST15SC7G0PBTS0WPDC0ZX96X1CXE76Y22EATCWXAE');
+    // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
+    // console.log(result);  
+    
+    // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
+    // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
+    // await mint_sft('yield-usda', 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
+    await get_some_token('ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
 }
 run();
