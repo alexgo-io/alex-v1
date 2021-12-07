@@ -23,7 +23,7 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, tokenX: string, tokenY: string, weightX1: number, weightX2: number, expiry :number, pooltoken: string, multisig: string, dX: number, dY: number) {
+    createPool(user: Account, tokenX: string, tokenY: string, weightX1: number, weightX2: number, expiry :number, pooltoken: string, multisig: string, price_x_min: number, price_x_max: number, dX: number, dY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "create-pool", [
           types.principal(tokenX),
@@ -33,6 +33,8 @@ import {
           types.uint(expiry),
           types.principal(pooltoken),
           types.principal(multisig),
+          types.uint(price_x_min),
+          types.uint(price_x_max),
           types.uint(dX),
           types.uint(dY),
         ], user.address),

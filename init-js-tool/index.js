@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { ClarityType, getNonce } = require('@stacks/transactions');
+const { getDeployerPK, getUserPK, network } = require('./wallet');
+const { ClarityType, getNonce, callReadOnlyFunction, contractPrincipalCV, listCV, uintCV } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
 const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft, transferSTX } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
@@ -733,15 +734,15 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
 
-    // await create_fwp(add_only=true, deployer=true);
+    await create_fwp(add_only=true, deployer=true);
     // await create_crp(add_only=true, _pools);     
     // await create_ytp(add_only=true, _pools);
 
@@ -802,15 +803,15 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    // await reserveAddToken('token-t-alex-v2');
+    // await reserveAddToken('token-t-alex');
     // await reserveSetActivationThreshold(1);
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
-    // await reserveRegisterUser('token-t-alex-v2');
-    // await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
+    // await reserveRegisterUser('token-t-alex');
+    // await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
-    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex-v2', 3, 5);
+    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
     // console.log(result);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);

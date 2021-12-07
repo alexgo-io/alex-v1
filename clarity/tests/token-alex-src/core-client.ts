@@ -26,7 +26,7 @@ export class CoreClient extends Client {
   static readonly ACTIVATION_DELAY = 150;
   static readonly ACTIVATION_THRESHOLD = 20;
   static readonly TOKEN_HALVING_CYCLE = 100;
-  static readonly REWARD_CYCLE_LENGTH = 2100;
+  static readonly REWARD_CYCLE_LENGTH = 525;
   static readonly TOKEN_REWARD_MATURITY = 100;
   static readonly BONUS_PERIOD_LENGTH = 10000;
 

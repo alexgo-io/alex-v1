@@ -74,7 +74,8 @@ function sleep(ms) {
     );
 }
 async function walkDir() {
-    // console.log(paths)
+    // console.log(paths) 
+
     await contract_paths.reduce(async (memo, path) => {
         await memo
         let contract_file = path.split('/').at(-1)
@@ -84,7 +85,7 @@ async function walkDir() {
   };
 
 async function deploy(filePath, contractName){
-    console.log("Deploying:: ", contractName )
+    console.log("deploying:: ", contractName )
     let privatekey = await getDeployerPK();
     const txOptions = {
       contractName: contractName,
