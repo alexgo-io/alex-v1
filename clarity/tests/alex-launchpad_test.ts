@@ -97,7 +97,40 @@ Clarinet.test({
         // check with wrong address, invalid token error will be thrown
         result = ALPTest.addToPosition (deployer, TICKET_TRAIT_ADDRESS, 1).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN);
+    }
+})
+
+Clarinet.test({
+    name: "ALP: User Registration",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
+        let ALPTest = new ALEXLaunchpad(chain, deployer);
+
+        let wstxToken = new WSTXToken(chain, deployer);
+        let lottery = new TestALEXLottery(chain, deployer);
+        let talexToken = new TestALEXToken(chain, deployer);
         
+        let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
+        result.expectOk();
+        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
+        result.expectOk();
+        result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
+        result.expectOk();
+        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
+        result.expectOk();
+        result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
+        result.expectOk();        
+
+        // Deployer creating a pool, FEE_TO_ADDRESS will be the one that's getting added in the pool
+        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, ACTIVATION_DELAY, ACTIVATION_THRESHOLD).receipts[0].result;
+        result.expectOk().expectBool(true);
+
+        // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result.expectOk().expectBool(true);
+
         // Register with the Token and Ticket with which the pool is created
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
         result.expectOk().expectBool(true);
@@ -121,7 +154,6 @@ Clarinet.test({
         result.expectOk().expectUint(1)
     }
 })
-
 
 Clarinet.test({
     name: "ALP: Claim tokens",
@@ -164,6 +196,7 @@ Clarinet.test({
         assertEquals(result.receipts[0].events.length, 5);
 
         result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS);
+        console.log(result)
       //  result.receipts[0].result.expectErr().expect(ErrCode.ERR_LISTING_FINISHED);
     
     
