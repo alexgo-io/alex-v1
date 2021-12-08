@@ -258,7 +258,7 @@
     )
     (asserts! (not (try! (is-listing-activated token))) ERR-LISTING-ACTIVATED)
     (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
-    (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
+    ;; (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
 
     (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
     (ok refund-amount)
