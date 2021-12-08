@@ -16,13 +16,13 @@ const {
 const {wait_until_confirmation} = require('./utils');
 const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
 
-const launchCreate = async (token, ticket, fee_to_address, amount_per_ticket, wstx_per_ticket_in_fixed, registration_start, activation_delay, activation_threshold) => {
+const launchCreate = async (token, ticket, fee_to_address, amount_per_ticket, wstx_per_ticket_in_fixed, registration_start, registration_end, claim_end, activation_threshold) => {
   console.log('--------------------------------------------------------------------------');
-  console.log('[Launch] create-pool...', token, ticket, fee_to_address, amount_per_ticket, wstx_per_ticket_in_fixed, registration_start, activation_delay, activation_threshold);
+  console.log('[Launch] create-pool...', token, ticket, fee_to_address, amount_per_ticket, wstx_per_ticket_in_fixed, registration_start, registration_end, claim_end, activation_threshold);
   const privateKey = await getDeployerPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'alex-launchpad',
+      contractName: 'alex-launchpad-v2',
       functionName: 'create-pool',
       functionArgs: [
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -31,7 +31,8 @@ const launchCreate = async (token, ticket, fee_to_address, amount_per_ticket, ws
           uintCV(amount_per_ticket),
           uintCV(wstx_per_ticket_in_fixed),
           uintCV(registration_start),
-          uintCV(activation_delay),
+          uintCV(registration_end),
+          uintCV(claim_end),
           uintCV(activation_threshold)
       ],
       senderKey: privateKey,
@@ -56,7 +57,7 @@ const launchAddToPosition = async (token, tickets) => {
   const privateKey = await getDeployerPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'alex-launchpad',
+      contractName: 'alex-launchpad-v2',
       functionName: 'add-to-position',
       functionArgs: [
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -84,7 +85,7 @@ const launchRegister = async (token, ticket, ticket_amount, deployer=true) => {
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'alex-launchpad',
+      contractName: 'alex-launchpad-v2',
       functionName: 'register',
       functionArgs: [
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -113,7 +114,7 @@ const launchGetSubscriberAtToken = async (token, user_id) => {
 
   const options = {
     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'alex-launchpad',
+    contractName: 'alex-launchpad-v2',
     functionName: 'get-subscriber-at-token-or-default',
     functionArgs: [
       contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),     
@@ -136,7 +137,7 @@ const launchGetTokenDetails = async (token) => {
 
   const options = {
     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'alex-launchpad',
+    contractName: 'alex-launchpad-v2',
     functionName: 'get-token-details',
     functionArgs: [
       contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token)

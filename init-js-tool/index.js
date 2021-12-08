@@ -832,22 +832,23 @@ async function run() {
     // await mint_sft('yield-usda', 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
     // await get_some_token('ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
 
-    // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);    
-    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);        
-    // result = await launchCreate(
-    //     'token-t-alex', 
-    //     'lottery-t-alex', 
-    //     process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    //     100,
-    //     25e8,
-    //     11000,
-    //     10000,
-    //     100
-    //     );
-    // await launchAddToPosition('token-t-alex', 1000);
-    // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
-    // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
+    await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);    
+    await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);        
+    result = await launchCreate(
+        'token-t-alex', 
+        'lottery-t-alex', 
+        process.env.DEPLOYER_ACCOUNT_ADDRESS,
+        100,
+        25e8,
+        16000,
+        31000,
+        66000,
+        100
+        );
+    await launchAddToPosition('token-t-alex', 1000);
+    await launchRegister('token-t-alex', 'lottery-t-alex', 100);
+    await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
     result = await launchGetTokenDetails('token-t-alex');
     console.log(result.value.data);
     result = await launchGetSubscriberAtToken('token-t-alex', 1);
