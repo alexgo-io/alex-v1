@@ -267,11 +267,17 @@
 
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
-    (asserts! (> block-height (get registration-end (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-REGISTRATION-NOT-ENDED)
-    (asserts! (not (try! (is-listing-completed (contract-of token-trait)))) ERR-LISTING-FINISHED)
-    (asserts! (try! (is-listing-activated (contract-of token-trait))) ERR-LISTING-NOT-ACTIVATED)
-    (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
-    (asserts! (is-eq (contract-of ticket-trait) (get ticket (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-INVALID-TICKET)
+    (let
+      (
+        (token (contract-of token-trait))
+        (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
+      )
+      (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
+      (asserts! (not (try! (is-listing-completed token))) ERR-LISTING-FINISHED)
+      (asserts! (try! (is-listing-activated token)) ERR-LISTING-NOT-ACTIVATED)
+      (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
+      (asserts! (is-eq token (get ticket details)) ERR-INVALID-TICKET)
+    )
     (let
       (
         (claimer tx-sender)
