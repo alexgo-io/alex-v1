@@ -59,6 +59,17 @@ class ALEXLaunchpad {
         return block.receipts[0].result;
     }
 
+    refund (sender: Account, tokenTrait: string) {
+        let block = this.chain.mineBlock([
+            Tx.contractCall( "alex-launchpad", "refund", [
+                types.principal(tokenTrait),
+                ],
+                sender.address
+            ),
+        ]);
+        return block;
+    }
+
     claim(sender: Account, tokenTrait: string, ticketTrait: string) {
         let block = this.chain.mineBlock([
             Tx.contractCall( "alex-launchpad", "claim", [
@@ -200,7 +211,7 @@ enum ErrCode {
     ERR_REGISTRATION_STARTED = 2033,
     ERR_REGISTRATION_NOT_STARTED = 2034,
     ERR_REGISTRATION_ENDED = 2038,
-    ERR_REFUNDS_NOT_AVAILABLE = 2035,
+    ERR_LISTING_ACTIVATED = 2035,
     ERR_LISTING_NOT_ACTIVATED = 2036,
     ERR_REGISTRATION_NOT_ENDED = 2039,
     ERR_INVALID_REGISTRATION_PERIOD = 2037,

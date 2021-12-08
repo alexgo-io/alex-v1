@@ -12,6 +12,7 @@ const ACTIVATION_THRESHOLD = 1
 const REGISTRATION_START = 50
 const REGISTRATION_END = 100
 const CLAIM_END = 150
+const TICKETS_NUM = 1
 const OWNER = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
 const TOKEN_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-t-alex"
 const TICKET_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lottery-t-alex" 
@@ -85,7 +86,7 @@ Clarinet.test({
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
         // Check with un-authorized user
-        result = ALPTest.addToPosition(wallet_1, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition(wallet_1, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_UNAUTHORIZED);
 
         // Check with 0 tickets. ERR_INVALID_TICKETS should be returned
@@ -93,15 +94,15 @@ Clarinet.test({
         result.expectErr().expectUint(ErrCode.ERR_INVALID_TICKET)
 
         // check with more number of tickets than owned by user
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 100000).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM * ONE_8).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_TRANSFER_FAILED);
 
         // Check with authorized user, (OK true) should be returned
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectOk().expectBool(true);
         
         // check with wrong address, invalid token error will be thrown
-        result = ALPTest.addToPosition (deployer, TICKET_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TICKET_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN);
     }
 })
@@ -134,7 +135,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
  
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectOk().expectBool(true);
 
         // Contract should not register any address until REGISTRATION_START block has reached
@@ -202,7 +203,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectOk().expectBool(true);
 
         // Claim at this point should return ERR-REGISTRATION-NOT-ENDED
@@ -264,7 +265,7 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(REGISTRATION_START)
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_REGISTRATION_STARTED);
     }
 })
@@ -297,7 +298,7 @@ Clarinet.test({
         result.receipts[0].result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectOk().expectBool(true);
 
         chain.mineEmptyBlockUntil(REGISTRATION_START);
@@ -310,8 +311,6 @@ Clarinet.test({
         // Try calling claim after CLAIM_END period. It should throw error CLAIM_END
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_CLAIM_ENDED);
-
-
     }
 })
 
@@ -343,7 +342,7 @@ Clarinet.test({
         result.receipts[0].result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectOk().expectBool(true);
 
         chain.mineEmptyBlockUntil(REGISTRATION_START)
@@ -396,7 +395,7 @@ Clarinet.test({
         result.receipts[0].result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 1).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
         result.expectOk().expectBool(true);
 
         chain.mineEmptyBlockUntil(REGISTRATION_START)
@@ -422,5 +421,51 @@ Clarinet.test({
         result['value-high'].expectUint(0)
         result['value-low'].expectUint(0)
         result['wstx-locked-in-fixed'].expectUint(0)
+    }
+})
+
+Clarinet.test({
+    name: "ALP: Test Refund",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
+        let ALPTest = new ALEXLaunchpad(chain, deployer);
+
+        let wstxToken = new WSTXToken(chain, deployer);
+        let lottery = new TestALEXLottery(chain, deployer);
+        let talexToken = new TestALEXToken(chain, deployer);
+        
+        let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
+        result.expectOk();
+        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
+        result.expectOk();
+        result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
+        result.expectOk();
+        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
+        result.expectOk();
+        result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
+        result.expectOk();        
+
+        // Deployer creating a pool, FEE_TO_ADDRESS will be the one that's getting added in the pool
+        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, REGISTRATION_END, CLAIM_END, ACTIVATION_THRESHOLD);
+        result.receipts[0].result.expectOk().expectBool(true);
+
+        // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
+        result.expectOk().expectBool(true);
+
+        chain.mineEmptyBlockUntil(REGISTRATION_START)
+        result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
+        result.expectOk().expectBool(true);
+
+        result = ALPTest.refund(wallet_1, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN)
+
+        result = ALPTest.refund(deployer, TOKEN_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_USER_ID_NOT_FOUND)
+
+        result = ALPTest.refund(wallet_1, TOKEN_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_LISTING_ACTIVATED)
     }
 })
