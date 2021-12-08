@@ -20,6 +20,9 @@
 (define-constant ERR-INVALID-REGISTRATION-PERIOD (err u2037))
 (define-constant ERR-REGISTRATION-ENDED (err u2038))
 (define-constant ERR-REGISTRATION-NOT-ENDED (err u2039))
+(define-constant ERR-CLAIM-ENDED (err u2040))
+(define-constant ERR-CLAIM-NOT-ENDED (err u2041))
+(define-constant ERR-INVALID-CLAIM-PERIOD (err u2042))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -47,6 +50,7 @@
     total-subscribed: uint,
     registration-start: uint,
     registration-end: uint,
+    claim-end: uint,
     activation-threshold: uint,
     users-nonce: uint,
     last-random: uint,
@@ -88,10 +92,11 @@
 
 ;; wstx-per-ticket-in-fixed => 8 decimal
 ;; all others => zero decimal
-(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (registration-end uint) (activation-threshold uint))
+(define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (registration-end uint) (claim-end uint) (activation-threshold uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (asserts! (> registration-end registration-start) ERR-INVALID-REGISTRATION-PERIOD)
+    (asserts! (> claim-end registration-end) ERR-INVALID-CLAIM-PERIOD)
     (map-set listing 
       (contract-of token-trait)
       {        
@@ -103,6 +108,7 @@
         total-tickets: u0, 
         registration-start: registration-start,
         registration-end: registration-end,
+        claim-end: claim-end,
         activation-threshold: activation-threshold,
         users-nonce: u0,
         last-random: u0,
@@ -140,6 +146,10 @@
 
 (define-read-only (get-registration-end (token principal))
   (ok (get registration-end (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
+)
+
+(define-read-only (get-claim-end (token principal))
+  (ok (get claim-end (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 (define-read-only (is-listing-completed (token principal))
@@ -248,6 +258,7 @@
     )
     (asserts! (not (try! (is-listing-activated token))) ERR-LISTING-ACTIVATED)
     (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
+    (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
 
     (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
     (ok refund-amount)
@@ -259,6 +270,7 @@
     (asserts! (> block-height (get registration-end (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-REGISTRATION-NOT-ENDED)
     (asserts! (not (try! (is-listing-completed (contract-of token-trait)))) ERR-LISTING-FINISHED)
     (asserts! (try! (is-listing-activated (contract-of token-trait))) ERR-LISTING-NOT-ACTIVATED)
+    (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
     (asserts! (is-eq (contract-of ticket-trait) (get ticket (unwrap! (map-get? listing (contract-of token-trait)) ERR-INVALID-TOKEN))) ERR-INVALID-TICKET)
     (let
       (
