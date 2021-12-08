@@ -330,7 +330,6 @@ Clarinet.test({
         // subscriber at token should return default values with unavailble user-id
         result = ALPTest.getSubscriberAtTokenOrDefault(TOKEN_TRAIT_ADDRESS, 2).result;
         result = result.expectTuple();
-        console.log(result)
         result['ticket-balance'].expectUint(0)
         result['tickets-lost'].expectUint(0)
         result['tickets-won'].expectUint(0)
