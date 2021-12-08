@@ -270,13 +270,14 @@
     (let
       (
         (token (contract-of token-trait))
+        (ticket (contract-of ticket-trait))
         (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
       )
       (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
       (asserts! (not (try! (is-listing-completed token))) ERR-LISTING-FINISHED)
       (asserts! (try! (is-listing-activated token)) ERR-LISTING-NOT-ACTIVATED)
       (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
-      (asserts! (is-eq token (get ticket details)) ERR-INVALID-TICKET)
+      (asserts! (is-eq ticket (get ticket details)) ERR-INVALID-TICKET)
     )
     (let
       (

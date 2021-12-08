@@ -15,7 +15,7 @@ class ALEXLaunchpad {
         this.deployer = deployer;
     }
 
-    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, registrationEnd: number, activationThreshold: number) {
+    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, registrationEnd: number, claimEnd:number, activationThreshold: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "create-pool", [
                     types.principal(token),
@@ -25,6 +25,7 @@ class ALEXLaunchpad {
                     types.uint(wstxPerTicketInFixed),
                     types.uint(registrationStart),
                     types.uint(registrationEnd),
+                    types.uint(claimEnd),
                     types.uint(activationThreshold),
                 ],
                 sender.address
@@ -203,4 +204,7 @@ enum ErrCode {
     ERR_LISTING_NOT_ACTIVATED = 2036,
     ERR_REGISTRATION_NOT_ENDED = 2039,
     ERR_INVALID_REGISTRATION_PERIOD = 2037,
+    ERR_CLAIM_ENDED = 2040,
+    ERR_CLAIM_NOT_ENDED = 2041,
+    ERR_INVALID_CLAIM_PERIOD = 2042,
 }
