@@ -727,14 +727,7 @@ async function run() {
     // await reduce_position_crp(_pools, ONE_8, 'yield');
     // await reduce_position_crp(_pools, ONE_8, 'key');    
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
-    // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);    
-
-    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
-    
-    // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);
-    // await get_some_token('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
-    // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
-    // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
+    // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);   
 
     // result = await ytpGetYgivenX('yield-wbtc-51840', 1e8);
     // console.log(result);
@@ -759,15 +752,15 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    _staking = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-34560-wbtc', 'ytp-yield-usda-34560-usda']
-    for (let i = 0; i < _staking.length; i++) {
-        await reserveAddToken(_staking[i]);
-        await reserveSetActivationThreshold(1);
-        await reserveSetActivationDelay(1);
-        await reserveSetRewardCycleLength(525);
-        await reserveRegisterUser(_staking[i]);
-        await reserveSetCoinbaseAmount(_staking[i], 866e7, 866e7, 866e7, 866e7, 866e7);
-    }
+    // _staking = ['fwp-wbtc-usda-50-50', 'ytp-yield-wbtc-34560-wbtc', 'ytp-yield-usda-34560-usda']
+    // for (let i = 0; i < _staking.length; i++) {
+    //     await reserveAddToken(_staking[i]);
+    //     await reserveSetActivationThreshold(1);
+    //     await reserveSetActivationDelay(1);
+    //     await reserveSetRewardCycleLength(525);
+    //     await reserveRegisterUser(_staking[i]);
+    //     await reserveSetCoinbaseAmount(_staking[i], 866e7, 866e7, 866e7, 866e7, 866e7);
+    // }
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 22330, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
@@ -799,5 +792,8 @@ async function run() {
     //   };
     //   let result = await callReadOnlyFunction(options);        
     //   result.list.map(e=>{console.log(e.data)});
+
+    // await see_balance(process.env.USER_ACCOUNT_ADDRESS);           
+    await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);    
 }
 run();
