@@ -54,7 +54,8 @@
     activation-threshold: uint,
     users-nonce: uint,
     last-random: uint,
-    tickets-won: uint
+    tickets-won: uint,
+    activated: bool
   }
 )
 
@@ -112,7 +113,8 @@
         activation-threshold: activation-threshold,
         users-nonce: u0,
         last-random: u0,
-        tickets-won: u0
+        tickets-won: u0,
+        activated: false
       }
     )    
     (ok true)
@@ -207,7 +209,8 @@
         (value-low (+ u1 (get total-subscribed details)))
         (value-high (- (+ value-low ticket-amount) u1))
         (wstx-locked-in-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)))
-        (details-updated (merge details { total-subscribed: value-high, users-nonce: user-id }))
+        (activated (>= value-high (get activation-threshold details)))        
+        (details-updated (merge details { total-subscribed: value-high, users-nonce: user-id, activated: activated }))
       )
       (asserts! (>= block-height (get registration-start details)) ERR-REGISTRATION-NOT-STARTED)
       (asserts! (<= block-height (get registration-end details)) ERR-REGISTRATION-ENDED)      
@@ -228,7 +231,7 @@
           wstx-locked-in-fixed: wstx-locked-in-fixed }
       )
       (map-set listing token details-updated)
-      (ok true)
+      (ok user-id)
     )
   )
 )

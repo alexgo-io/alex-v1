@@ -35,27 +35,29 @@ let contract_paths = [
     // "pool/yield-token-pool.clar",
     // "pool/collateral-rebalancing-pool.clar",
     // "faucet.clar",
-    "pool-token/fwp-wstx-usda-50-50.clar",
-    "pool-token/fwp-wstx-wbtc-50-50.clar",
-    "pool-token/lbp-alex-usda-90-10.clar",
-    "multisig/multisig-fwp-wstx-usda-50-50.clar",
-    "multisig/multisig-fwp-wstx-wbtc-50-50.clar",
-    "multisig/multisig-lbp-alex-usda-90-10.clar",
+    // "pool-token/fwp-wstx-usda-50-50.clar",
+    // "pool-token/fwp-wstx-wbtc-50-50.clar",
+    // "pool-token/lbp-alex-usda-90-10.clar",
+    // "multisig/multisig-fwp-wstx-usda-50-50.clar",
+    // "multisig/multisig-fwp-wstx-wbtc-50-50.clar",
+    // "multisig/multisig-lbp-alex-usda-90-10.clar",
 
-    "yield-token/yield-wbtc.clar",
-    "yield-token/yield-usda.clar",    
-    "key-token/key-usda-wbtc.clar",        
-    "key-token/key-wbtc-usda.clar",   
-    "pool-token/ytp-yield-wbtc.clar",   
-    "pool-token/ytp-yield-usda.clar",       
-    "multisig/multisig-crp-wbtc-usda.clar",  
-    "multisig/multisig-crp-usda-wbtc.clar",      
-    "multisig/multisig-ytp-yield-wbtc.clar",  
-    "multisig/multisig-ytp-yield-usda.clar",    
-    "flash-loan-user-margin-usda-wbtc.clar", 
-    "flash-loan-user-margin-wbtc-usda.clar",
+    // "yield-token/yield-wbtc.clar",
+    // "yield-token/yield-usda.clar",    
+    // "key-token/key-usda-wbtc.clar",        
+    // "key-token/key-wbtc-usda.clar",   
+    // "pool-token/ytp-yield-wbtc.clar",   
+    // "pool-token/ytp-yield-usda.clar",       
+    // "multisig/multisig-crp-wbtc-usda.clar",  
+    // "multisig/multisig-crp-usda-wbtc.clar",      
+    // "multisig/multisig-ytp-yield-wbtc.clar",  
+    // "multisig/multisig-ytp-yield-usda.clar",    
+    // "flash-loan-user-margin-usda-wbtc.clar", 
+    // "flash-loan-user-margin-wbtc-usda.clar",
 
-    "helpers/alex-staking-helper.clar"
+    // "helpers/alex-staking-helper.clar"
+    "pool/alex-launchpad.clar",
+    "lottery-tokens/lottery-t-alex.clar"
 ]
 
 async function get_version(){

@@ -49,7 +49,7 @@ const flashloan = async(loan_contract, token, amount, expiry) => {
 
 const mint_sft = async(token, token_id, amount, recipient) => {
     console.log('[Token] mint...', token, recipient, amount);
-    const privateKey = await getUserPK();
+    const privateKey = await getDeployerPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
         contractName: token,
