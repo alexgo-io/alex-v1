@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { ClarityType, getNonce } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
-const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft, transferSTX } = require('./vault')
+const { flashloan, getBalance, mint, burn, balance, transfer, mint_sft, transferSTX, mint_ft } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
 const {
     fwpCreate,
@@ -69,6 +69,30 @@ const {
     multisigReturnVotes,
     multisigGetProposalById
 } = require('./multisigs')
+const { launchCreate, launchAddToPosition, launchRegister, launchGetTokenDetails, launchGetSubscriberAtToken } = require('./pools-launch')
+
+const ONE_8 = 100000000
+
+const _fwp_pools = {
+    1: {
+        token_x: 'token-wstx',
+        token_y: 'token-usda',
+        weight_x: 0.5e+8,
+        weight_y: 0.5e+8,
+        pool_token: 'fwp-wstx-usda-50-50',
+        multisig: 'multisig-fwp-wstx-usda-50-50',
+        left_side: 50000000e8
+    },
+    2: {
+        token_x: 'token-wstx',
+        token_y: 'token-wbtc',
+        weight_x: 0.5e+8,
+        weight_y: 0.5e+8,
+        pool_token: 'fwp-wstx-wbtc-50-50',
+        multisig: 'multisig-fwp-wstx-wbtc-50-50',
+        left_side: 50000000e8        
+    },
+}
 
 const _deploy = {
     0: {token: 'token-wbtc',
@@ -102,8 +126,6 @@ const _deploy = {
         token_to_maturity: 11520e+8
     },    
 }
-
-const ONE_8 = 100000000
 
 const printResult = (result) => {
     if (result.type === ClarityType.ResponseOk) {
@@ -169,44 +191,20 @@ async function see_balance(owner) {
     console.log('wstx balance: ', format_number(Number(wstx_balance.value.value) / ONE_8));    
 }
 
-async function create_fwp(add_only, deployer=false) {
+async function create_fwp(add_only, _subset = _fwp_pools, deployer=false) {
     console.log("------ FWP Creation / Add Liquidity ------");
     // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
     let wbtcPrice = (await fetch_in_usd('bitcoin'));
     let usdaPrice = (await fetch_in_usd('usd-coin'));
     let stxPrice = (await fetch_in_usd('blockstack'));    
 
-    _pools = {
-        1: {
-            token_x: 'token-wstx',
-            token_y: 'token-usda',
-            weight_x: 0.5e+8,
-            weight_y: 0.5e+8,
-            pool_token: 'fwp-wstx-usda-50-50',
-            multisig: 'multisig-fwp-wstx-usda-50-50',
-            left_side: Math.round(50000000 * ONE_8 / Number(stxPrice)),
-            right_side: Math.round(50000000 * ONE_8 * 1.1)            
-        },
-        2: {
-            token_x: 'token-wstx',
-            token_y: 'token-wbtc',
-            weight_x: 0.5e+8,
-            weight_y: 0.5e+8,
-            pool_token: 'fwp-wstx-wbtc-50-50',
-            multisig: 'multisig-fwp-wstx-wbtc-50-50',
-            left_side: Math.round(50000000 * ONE_8 / Number(stxPrice)),
-            right_side: Math.round(50000000 * ONE_8 / Number(wbtcPrice) * 1.1)
-        },
-
-    }
-
-    for (const key in _pools) {
+    for (const key in _subset) {
         if (add_only) {
-            await fwpAddToPosition(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['left_side'], _pools[key]['right_side'], deployer);
+            await fwpAddToPosition(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], _subset[key]['pool_token'], _subset[key]['left_side'], ONE_8 * ONE_8, deployer);
         } else {
-            await fwpCreate(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], _pools[key]['pool_token'], _pools[key]['multisig'], _pools[key]['left_side'], _pools[key]['right_side']);
-            await fwpSetOracleEnbled(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y']);
-            await fwpSetOracleAverage(_pools[key]['token_x'], _pools[key]['token_y'], _pools[key]['weight_x'], _pools[key]['weight_y'], 0.95e8);
+            await fwpCreate(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], _subset[key]['pool_token'], _subset[key]['multisig'], _subset[key]['left_side'], ONE_8 * ONE_8);
+            await fwpSetOracleEnbled(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y']);
+            await fwpSetOracleAverage(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], 0.95e8);
         }
     }
 }
@@ -255,75 +253,76 @@ async function get_some_token(recipient) {
     await see_balance(recipient);
 }
 
-async function arbitrage_fwp(dry_run = true) {
+async function arbitrage_fwp(dry_run = true, _subset=_fwp_pools) {
     console.log("------ FWP Arbitrage ------")
     console.log(timestamp());
 
     const threshold = 0.002;
+    let wbtcPrice = (await fetch_in_usd('bitcoin'));
+    let usdaPrice = (await fetch_in_usd('usd-coin'));
+    let wstxPrice = (await fetch_in_usd('blockstack'));
 
-    // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-    // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
-    let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
-    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
+    for (const key in _subset) {
 
-    let printed = parseFloat(wbtcPrice / usdaPrice);
+        let printed = (_subset[key]['token_y'] == 'token-usda') ? parseFloat(wstxPrice / usdaPrice) : parseFloat(wstxPrice / wbtcPrice);
 
-    let result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
-    let balance_x = result.value.data['balance-x'].value;
-    let balance_y = result.value.data['balance-y'].value;
+        let result = await fwpGetPoolDetails(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y']);
+        let balance_x = result.value.data['balance-x'].value;
+        let balance_y = result.value.data['balance-y'].value;
 
-    let implied = Number(balance_y) / Number(balance_x);
-    console.log("printed: ", format_number(printed, 8), "implied:", format_number(implied, 8));
+        let implied = Number(balance_y) / Number(balance_x);
+        console.log("printed: ", format_number(printed, 8), "implied:", format_number(implied, 8));
 
-    if (!dry_run) {
-        let diff = Math.abs(printed - implied) / implied;
-        if (diff > threshold) {
-            if (printed < implied) {
-                let dx = await fwpGetXGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, Math.round(printed * ONE_8));
+        if (!dry_run) {
+            let diff = Math.abs(printed - implied) / implied;
+            if (diff > threshold) {
+                if (printed < implied) {
+                    let dx = await fwpGetXGivenPrice(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], Math.round(printed * ONE_8));
 
-                if (dx.type === 7 && dx.value.value > 0n) {
-                    let dy = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value);
-                    if (dy.type == 7) {
-                        await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx.value.value, 0);
-                    } else {
-                        console.log('error: ', dy.value.value);
-                        let dx_i = Math.round(Number(dx.value.value) / 4);
-                        for (let i = 0; i < 4; i++) {
-                            let dy_i = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx_i);
-                            if (dy_i.type == 7) {
-                                await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dx_i, 0);
+                    if (dx.type === 7 && dx.value.value > 0n) {
+                        let dy = await fwpGetYgivenX(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dx.value.value);
+                        if (dy.type == 7) {
+                            await fwpSwapXforY(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dx.value.value, 0);
+                        } else {
+                            console.log('error: ', dy.value.value);
+                            let dx_i = Math.round(Number(dx.value.value) / 4);
+                            for (let i = 0; i < 4; i++) {
+                                let dy_i = await fwpGetYgivenX(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dx_i);
+                                if (dy_i.type == 7) {
+                                    await fwpSwapXforY(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dx_i, 0);
+                                }
                             }
                         }
+                    } else {
+                        console.log('error (or zero): ', dx.value.value);
                     }
                 } else {
-                    console.log('error (or zero): ', dx.value.value);
-                }
-            } else {
-                let dy = await fwpGetYGivenPrice('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, Math.round(printed * ONE_8));
+                    let dy = await fwpGetYGivenPrice(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], Math.round(printed * ONE_8));
 
-                if (dy.type === 7 && dy.value.value > 0n) {
-                    let dx = await fwpGetXgivenY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value);
-                    if (dx.type == 7) {
-                        await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy.value.value, 0);
-                    } else {
-                        console.log('error: ', dx.value.value);
-                        let dy_i = Math.round(Number(dy.value.value) / 4);
-                        for (let i = 0; i < 4; i++) {
-                            let dx_i = await fwpGetXgivenY('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy_i);
-                            if (dx_i.type == 7) {
-                                await fwpSwapYforX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, dy_i, 0);
+                    if (dy.type === 7 && dy.value.value > 0n) {
+                        let dx = await fwpGetXgivenY(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dy.value.value);
+                        if (dx.type == 7) {
+                            await fwpSwapYforX(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dy.value.value, 0);
+                        } else {
+                            console.log('error: ', dx.value.value);
+                            let dy_i = Math.round(Number(dy.value.value) / 4);
+                            for (let i = 0; i < 4; i++) {
+                                let dx_i = await fwpGetXgivenY(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dy_i);
+                                if (dx_i.type == 7) {
+                                    await fwpSwapYforX(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y'], dy_i, 0);
+                                }
                             }
                         }
+                    } else {
+                        console.log('error (or zero): ', dy.value.value);
                     }
-                } else {
-                    console.log('error (or zero): ', dy.value.value);
                 }
+                result = await fwpGetPoolDetails(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y']);
+                balance_x = result.value.data['balance-x'].value;
+                balance_y = result.value.data['balance-y'].value;
+                console.log('post arb implied: ', format_number(Number(balance_y / balance_x), 8));
+                console.log(timestamp());
             }
-            result = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
-            balance_x = result.value.data['balance-x'].value;
-            balance_y = result.value.data['balance-y'].value;
-            console.log('post arb implied: ', format_number(Number(balance_y / balance_x), 8));
-            console.log(timestamp());
         }
     }
 }
@@ -600,12 +599,14 @@ async function get_pool_details_crp(_subset=_deploy) {
     }
 }
 
-async function get_pool_details_fwp() {
-    let details = await fwpGetPoolDetails('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8);
-    let balance_x = details.value.data['balance-x'];
-    let balance_y = details.value.data['balance-y'];
+async function get_pool_details_fwp(_subset=_fwp_pools) {
+    for (const key in _subset) {
+        let details = await fwpGetPoolDetails(_subset[key]['token_x'], _subset[key]['token_y'], _subset[key]['weight_x'], _subset[key]['weight_y']);
+        let balance_x = details.value.data['balance-x'];
+        let balance_y = details.value.data['balance-y'];
 
-    console.log('balance-x: ', format_number(Number(balance_x.value) / ONE_8), 'balance-y: ', format_number(Number(balance_y.value) / ONE_8));
+        console.log('balance-x: ', format_number(Number(balance_x.value) / ONE_8), 'balance-y: ', format_number(Number(balance_y.value) / ONE_8));
+    }
 }
 
 async function get_pool_details_ytp(_subset=_deploy) {
@@ -733,10 +734,10 @@ async function run() {
     // await create_ytp(add_only=false, _pools);
     // await create_crp(add_only=false, _pools);    
 
-    await arbitrage_fwp(dry_run = false);
-    await arbitrage_crp(dry_run = false, _pools);
+    // await arbitrage_fwp(dry_run = false);
+    // await arbitrage_crp(dry_run = false, _pools);
     await arbitrage_ytp(dry_run = false, _pools);
-    await arbitrage_fwp(dry_run = false);
+    // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
     // await test_margin_trading();
@@ -828,7 +829,34 @@ async function run() {
     
     // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
     // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
-    // await mint_sft('yield-usda', 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
-    await get_some_token('ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
+    // _list = ['key-usda-wbtc', 'key-wbtc-usda', 'key-wbtc-wbtc', 'yield-wbtc', 'yield-usda', 'ytp-yield-wbtc', 'ytp-yield-usda']
+    // for (let i = 0; i < _list.length; i++) {
+    //     await mint_sft(_list[i], 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
+    // }
+    // await get_some_token('ST1RXPS7ZHZGBTWVS9THY7PVJ49JT3EAAKYSV3JKB');
+
+    // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);    
+    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);        
+    // result = await launchCreate(
+    //     'token-t-alex', 
+    //     'lottery-t-alex', 
+    //     process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    //     100,
+    //     25e8,
+    //     16000,
+    //     31000,
+    //     66000,
+    //     100
+    //     );
+    // await launchAddToPosition('token-t-alex', 1000);
+    // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
+    // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
+    // result = await launchGetTokenDetails('token-t-alex');
+    // console.log(result.value.data);
+    // result = await launchGetSubscriberAtToken('token-t-alex', 1);
+    // console.log(result.data);
+    // result = await launchGetSubscriberAtToken('token-t-alex', 2);
+    // console.log(result.data);    
 }
 run();
