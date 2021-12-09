@@ -239,7 +239,7 @@
             (moving-average (get moving-average pool))
             (now (* block-height ONE_8))
         )
-        (if (or (> (try! (get-ltv token collateral expiry)) (get conversion-ltv pool)) (>= now expiry))
+        (if (or (> (try! (get-ltv token collateral expiry spot)) (get conversion-ltv pool)) (>= now expiry))
             (ok u99900000)   
             (let 
                 (
