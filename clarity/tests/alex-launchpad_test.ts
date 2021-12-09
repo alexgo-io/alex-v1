@@ -147,7 +147,7 @@ Clarinet.test({
 
         // Register with the Token and Ticket with which the pool is created
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectUint(1);
 
         // contract should not register the same address again
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 10);
@@ -213,7 +213,7 @@ Clarinet.test({
         // Register with the Token and Ticket with which the pool is created
         chain.mineEmptyBlockUntil(REGISTRATION_START)
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
-        result.expectOk().expectBool(true);
+        result.expectOk().expectUint(1);
         
         chain.mineEmptyBlockUntil(REGISTRATION_END + 1)
         
@@ -305,7 +305,7 @@ Clarinet.test({
 
         // Register with the Token and Ticket with which the pool is created
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectUint(1);
 
         chain.mineEmptyBlockUntil(CLAIM_END + 1)
         // Try calling claim after CLAIM_END period. It should throw error CLAIM_END
@@ -348,7 +348,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(REGISTRATION_START)
 
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectUint(1);
 
         result = ALPTest.getTokenDetails(TOKEN_TRAIT_ADDRESS).result;
         result = result.expectSome().expectTuple();
@@ -400,7 +400,7 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(REGISTRATION_START)
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
-        result.expectOk().expectBool(true);
+        result.expectOk().expectUint(1);
 
         // subscriber at token - stored values
         result = ALPTest.getSubscriberAtTokenOrDefault(TOKEN_TRAIT_ADDRESS, 1).result;
@@ -457,7 +457,7 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(REGISTRATION_START)
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
-        result.expectOk().expectBool(true);
+        result.expectOk().expectUint(1);
 
         result = ALPTest.refund(wallet_1, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN)
