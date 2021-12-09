@@ -231,7 +231,7 @@
           wstx-locked-in-fixed: wstx-locked-in-fixed }
       )
       (map-set listing token details-updated)
-      (ok true)
+      (ok user-id)
     )
   )
 )
