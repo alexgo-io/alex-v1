@@ -340,7 +340,8 @@
                     balance-y: (+ balance-y new-dy)
                 }))
             )
-
+            ;; CR-01
+            (asserts! (>= dy new-dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
 
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
