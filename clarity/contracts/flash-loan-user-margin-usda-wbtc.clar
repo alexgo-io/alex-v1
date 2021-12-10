@@ -10,7 +10,7 @@
             ;; gross amount * ltv / price = amount
             ;; gross amount = amount * price / ltv
             ;; buff to uint conversion
-            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
+            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))            
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wbtc memo-uint)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
             (gross-amount (mul-up amount (div-down price ltv)))            

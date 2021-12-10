@@ -168,4 +168,5 @@
 
 (begin
   (map-set approved-contracts .collateral-rebalancing-pool true)
+  (map-set approved-contracts .yield-collateral-rebalancing-pool true)
 )
