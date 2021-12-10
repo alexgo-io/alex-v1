@@ -112,16 +112,16 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         let call = await CRPTest.getPoolValueInToken(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(99928994);
+        call.result.expectOk().expectUint(99938415);
 
         // ltv-0 is 80%, but injecting liquidity pushes up LTV
         call = await CRPTest.getLtv(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(80055884);
+        call.result.expectOk().expectUint(80104948);
 
         // Check pool details and print
         call = await CRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(79999040);
+        position['yield-supply'].expectUint(80055616);
         position['key-supply'].expectUint(79999040);
         position['weight-x'].expectUint(66533357);
         position['weight-y'].expectUint(ONE_8 - 66533357);        
@@ -168,7 +168,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(5487379605425);
         
         // let's check what is the weight to wbtc (token)
-        call = await CRPTest.getWeightY(wbtcAddress, yieldusdaAddress, usdaAddress, expiry, 50000 * ONE_8, bs_vol);
+        call = await CRPTest.getWeightY(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
         call.result.expectOk().expectUint(52756780);                     
         
         // simulate to expiry

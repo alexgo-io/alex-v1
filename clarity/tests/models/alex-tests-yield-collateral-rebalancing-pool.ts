@@ -41,14 +41,12 @@ import {
       ], this.deployer.address);
     }    
     
-    getWeightY(token: string, collateral: string, collateral_token: string, expiry: number, strike: number, bs_vol: number) {
+    getWeightY(token: string, collateral: string, collateral_token: string, expiry: number) {
       return this.chain.callReadOnlyFn("yield-collateral-rebalancing-pool", "get-weight-y", [
         types.principal(token),
         types.principal(collateral),
         types.principal(collateral_token),
         types.uint(expiry),
-        types.uint(strike),
-        types.uint(bs_vol)
       ], this.deployer.address);
     }
 

@@ -406,10 +406,11 @@
             (token-x (contract-of collateral))
             (token-y (contract-of token))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (spot (try! (get-spot token collateral)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
-        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token collateral expiry (try! (get-spot token collateral))))) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token collateral expiry spot))) ERR-LTV-GREATER-THAN-ONE)
         (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
         (let
             (
@@ -419,7 +420,7 @@
                 (key-supply (get key-supply pool))
                 (weight-x (get weight-x pool))
 
-                (new-supply (try! (get-token-given-position token collateral expiry dx)))
+                (new-supply (try! (get-token-given-position-with-spot token collateral expiry spot dx)))
                 (yield-new-supply (get yield-token new-supply))
                 (key-new-supply (get key-token new-supply))
 
@@ -442,7 +443,7 @@
 
             (if (is-eq token-x token-y)
                 u0
-                (unwrap! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
+                (unwrap! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 (+ dx balance-x (mul-down balance-y spot))) ERR-POOL-AT-CAPACITY)
             )
 
             (unwrap! (contract-call? collateral transfer-fixed dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
@@ -554,7 +555,7 @@
                 (key-supply (get key-supply pool))            
                 (total-shares (unwrap! (contract-call? the-key-token get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-                (reduce-data (try! (get-position-given-burn-key token collateral expiry shares)))
+                (reduce-data (try! (get-position-given-burn-key-with-spot token collateral expiry (try! (get-spot token collateral)) shares)))
                 (dx-weighted (get dx reduce-data))
                 (dy-weighted (get dy reduce-data))
 
@@ -899,18 +900,22 @@
     )
 )
 
+(define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+    (get-token-given-position-with-spot token collateral expiry (try! (get-spot token collateral)) dx)
+)
+
 ;; @desc units of yield-/key-token to be minted given amount of collateral being added (single sided liquidity)
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param dx; amount of collateral being added
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+(define-private (get-token-given-position-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint) (dx uint))
     (begin
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY)
         (let 
             (
-                (ltv (try! (get-ltv-with-spot token collateral expiry (try! (get-spot token collateral)))))
+                (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
                         (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dx))                    
@@ -924,6 +929,10 @@
     )
 )
 
+(define-read-only (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+    (get-position-given-mint-with-spot token collateral expiry (try! (get-spot token collateral)) shares)
+)
+
 ;; @desc units of token/collateral required to mint given units of yield-/key-token
 ;; @desc returns dx (single liquidity) based on dx-weighted and dy-weighted
 ;; @param token; borrow token
@@ -931,7 +940,7 @@
 ;; @param expiry; borrow expiry
 ;; @param shares; units of yield-/key-token to be minted
 ;; @returns (response (tuple uint uint uint) uint)
-(define-read-only (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-private (get-position-given-mint-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint) (shares uint))
     (begin
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY) ;; mint supported until, but excl., expiry
         (let 
@@ -945,7 +954,7 @@
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))
             
-                (ltv (try! (get-ltv-with-spot token collateral expiry (try! (get-spot token collateral)))))
+                (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
 
                 (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
 
@@ -966,13 +975,17 @@
     )
 )
 
+(define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+    (get-position-given-burn-key-with-spot token collateral expiry (try! (get-spot token collateral)) shares)
+)
+
 ;; @desc units of token/collateral to be returned after burning given units of yield-/key-token
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @param shares; units of yield-/key-token to be burnt
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-private (get-position-given-burn-key-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint) (shares uint))
     (begin         
         (let 
             (
@@ -985,7 +998,7 @@
                 (key-supply (get key-supply pool))
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))
-                (pool-value-unfloored (try! (get-pool-value-in-token-with-spot token collateral expiry (try! (get-spot token collateral)))))
+                (pool-value-unfloored (try! (get-pool-value-in-token-with-spot token collateral expiry spot)))
                 (pool-value-in-y (if (> yield-supply pool-value-unfloored) yield-supply pool-value-unfloored))
                 (key-value-in-y (if (<= pool-value-in-y yield-supply) u0 (- pool-value-in-y yield-supply)))
                 (key-to-pool (div-down key-value-in-y pool-value-in-y))
