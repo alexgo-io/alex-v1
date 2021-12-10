@@ -445,6 +445,7 @@
 (define-public (swap-x-for-y (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        ;;(asserts! (> u2 u5) (err dx))
         (let
             (
                 (yield-token (contract-of the-yield-token))
@@ -472,7 +473,6 @@
                     )
                 )
             )
-
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED))
@@ -651,7 +651,7 @@
         )
         (asserts! (> (get balance-yield-token pool) dy) ERR-DY-BIGGER-THAN-AVAILABLE)
         (ok dy)        
-    )
+    );;)
 )
 
 ;; @desc units of token given units of yield token
