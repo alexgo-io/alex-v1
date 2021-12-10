@@ -23,7 +23,8 @@ import {
       ], this.deployer.address);
     }    
 
-    getPoolValueInToken(token: string, collateral: string, expiry: number) {
+    // getPoolValueInToken(token: string, collateral: string, expiry: number, spot: number) {
+      getPoolValueInToken(token: string, collateral: string, expiry: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-token", [
         types.principal(token),
         types.principal(collateral),
@@ -31,7 +32,8 @@ import {
       ], this.deployer.address);
     }
 
-    getPoolValueInCollateral(token: string, collateral: string, expiry: number) {
+    // getPoolValueInCollateral(token: string, collateral: string, expiry: number, spot: number) {
+      getPoolValueInCollateral(token: string, collateral: string, expiry: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-collateral", [
         types.principal(token),
         types.principal(collateral),
@@ -39,13 +41,12 @@ import {
       ], this.deployer.address);
     }    
     
-    getWeightY(token: string, collateral: string, expiry: number, strike: number, bs_vol: number) {
+    // getWeightY(token: string, collateral: string, expiry: number, strike: number, bs_vol: number, spot: number) {
+    getWeightY(token: string, collateral: string, expiry: number) {
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-y", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry),
-        types.uint(strike),
-        types.uint(bs_vol)
       ], this.deployer.address);
     }
 
@@ -56,7 +57,8 @@ import {
       ], this.deployer.address);
     }    
 
-    getLtv(token: string, collateral: string, expiry: number){
+    // getLtv(token: string, collateral: string, expiry: number, spot: number){
+      getLtv(token: string, collateral: string, expiry: number){
       return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-ltv", [
         types.principal(token),
         types.principal(collateral),
