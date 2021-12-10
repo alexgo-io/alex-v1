@@ -736,7 +736,7 @@ async function run() {
 
     // await arbitrage_fwp(dry_run = false);
     // await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
     // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
@@ -852,8 +852,8 @@ async function run() {
     // await launchAddToPosition('token-t-alex', 1000);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
-    // result = await launchGetTokenDetails('token-t-alex');
-    // console.log(result.value.data);
+    result = await launchGetTokenDetails('token-t-alex');
+    console.log(result.value.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 1);
     // console.log(result.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 2);
