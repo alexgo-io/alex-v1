@@ -833,8 +833,11 @@ async function run() {
     // for (let i = 0; i < _list.length; i++) {
     //     await mint_sft(_list[i], 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
     // }
-    // await get_some_token('ST1RXPS7ZHZGBTWVS9THY7PVJ49JT3EAAKYSV3JKB');
-
+    // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
+    // for (let i = 0; i < _list.length; i++) {
+    //     await get_some_token(_list[i]);
+    // }
+    await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
     // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);    
     // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);        
@@ -852,8 +855,8 @@ async function run() {
     // await launchAddToPosition('token-t-alex', 1000);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
-    result = await launchGetTokenDetails('token-t-alex');
-    console.log(result.value.data);
+    // result = await launchGetTokenDetails('token-t-alex');
+    // console.log(result.value.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 1);
     // console.log(result.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 2);
