@@ -845,16 +845,16 @@ async function run() {
     //     process.env.DEPLOYER_ACCOUNT_ADDRESS,
     //     100,
     //     25e8,
-    //     16000,
-    //     31000,
-    //     66000,
+    //     23000,
+    //     33000,
+    //     43000,
     //     100
     //     );
     // await launchAddToPosition('token-t-alex', 1000);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
-    // result = await launchGetTokenDetails('token-t-alex');
-    // console.log(result.value.data);
+    result = await launchGetTokenDetails('token-t-alex');
+    console.log(result.value.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 1);
     // console.log(result.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 2);
