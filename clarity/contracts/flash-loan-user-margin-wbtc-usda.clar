@@ -11,7 +11,7 @@
             ;; gross amount = amount * price / ltv
             ;; buff to uint conversion
             (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
-            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wbtc .token-usda memo-uint (try! (contract-call? .collateral-rebalancing-pool get-spot .token-wbtc .token-usda)))))
+            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wbtc .token-usda memo-uint)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-wbtc)))
             (gross-amount (mul-up amount (div-down price ltv)))
             (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wbtc .token-usda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))

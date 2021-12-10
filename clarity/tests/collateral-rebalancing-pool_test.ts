@@ -153,7 +153,8 @@ Clarinet.test({
         call.result.expectOk().expectUint(5487379605425);
         
         // let's check what is the weight to wbtc (token)
-        call = await CRPTest.getWeightY(wbtcAddress, usdaAddress, expiry, 50000 * ONE_8, bs_vol);
+        // call = await CRPTest.getWeightY(wbtcAddress, usdaAddress, expiry, 50000 * ONE_8, bs_vol);
+        call = await CRPTest.getWeightY(wbtcAddress, usdaAddress, expiry);
         call.result.expectOk().expectUint(52756780);                     
         
         // simulate to expiry
