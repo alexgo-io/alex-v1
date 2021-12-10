@@ -736,7 +736,7 @@ async function run() {
 
     // await arbitrage_fwp(dry_run = false);
     // await arbitrage_crp(dry_run = false, _pools);
-    await arbitrage_ytp(dry_run = false, _pools);
+    // await arbitrage_ytp(dry_run = false, _pools);
     // await arbitrage_fwp(dry_run = false);
 
     // await test_spot_trading();
@@ -803,15 +803,15 @@ async function run() {
     //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
     // }
 
-    // await reserveAddToken('token-t-alex-v2');
+    // await reserveAddToken('token-t-alex');
     // await reserveSetActivationThreshold(1);
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
-    // await reserveRegisterUser('token-t-alex-v2');
+    // await reserveRegisterUser('token-t-alex');
     // await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
-    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex-v2', 3, 5);
+    // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
     // console.log(result);
 
     // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
@@ -844,19 +844,19 @@ async function run() {
     //     process.env.DEPLOYER_ACCOUNT_ADDRESS,
     //     100,
     //     25e8,
-    //     16000,
-    //     31000,
-    //     66000,
+    //     23000,
+    //     33000,
+    //     43000,
     //     100
     //     );
     // await launchAddToPosition('token-t-alex', 1000);
-    // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
-    // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
-    // result = await launchGetTokenDetails('token-t-alex');
-    // console.log(result.value.data);
-    // result = await launchGetSubscriberAtToken('token-t-alex', 1);
-    // console.log(result.data);
-    // result = await launchGetSubscriberAtToken('token-t-alex', 2);
-    // console.log(result.data);    
+    await launchRegister('token-t-alex', 'lottery-t-alex', 100);
+    await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
+    result = await launchGetTokenDetails('token-t-alex');
+    console.log(result.value.data);
+    result = await launchGetSubscriberAtToken('token-t-alex', 1);
+    console.log(result.data);
+    result = await launchGetSubscriberAtToken('token-t-alex', 2);
+    console.log(result.data);    
 }
 run();
