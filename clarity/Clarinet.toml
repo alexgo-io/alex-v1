@@ -5,7 +5,7 @@ costs_version = 1
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "alex-vault"]
+depends_on = ["trait-ownable", "trait-sip-010", "alex-vault", "token-alex"]
 
 [contracts.futures-pool]
 path = "contracts/pool/futures-pool.clar"
@@ -13,7 +13,11 @@ depends_on = ["trait-ownable", "trait-semi-fungible-token", "trait-multisig-vote
 
 [contracts.alex-staking-helper]
 path = "contracts/helpers/alex-staking-helper.clar"
-depends_on = ["alex-reserve-pool", "token-alex"]
+depends_on = ["alex-reserve-pool","token-t-alex"]
+
+[contracts.staking-helper]
+path = "contracts/helpers/staking-helper.clar"
+depends_on = ["alex-reserve-pool", "trait-sip-010"]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
@@ -21,6 +25,10 @@ depends_on = ["trait-vault", "trait-sip-010", "trait-flash-loan-user", "math-fix
 
 [contracts.collateral-rebalancing-pool]
 path = "contracts/pool/collateral-rebalancing-pool.clar"
+depends_on = ["trait-sip-010", "trait-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "token-alex", "alex-reserve-pool", "yield-token-pool"]
+
+[contracts.yield-collateral-rebalancing-pool]
+path = "contracts/pool/yield-collateral-rebalancing-pool.clar"
 depends_on = ["trait-sip-010", "trait-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "token-alex", "alex-reserve-pool", "yield-token-pool"]
 
 [contracts.faucet]
@@ -218,3 +226,11 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user", "token-wbtc", "yield-usd
 [contracts.lottery-t-alex]
 path = "contracts/lottery-tokens/lottery-t-alex.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.alex-staking-helper-laplace]
+path = "contracts/helpers/alex-staking-helper-laplace.clar"
+depends_on = ["alex-reserve-pool"]
+
+[contracts.test-pool-token]
+path = "contracts/pool-token/test-pool-token.clar"
+depends_on = ["trait-sip-010", "trait-sip-010", "trait-ownable"]

@@ -1,5 +1,3 @@
-
-
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
@@ -143,11 +141,6 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = CRPTest.createPool(deployer, usdaAddress, wstxAddress, nextExpiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectBool(true);        
-
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1);
-        // roll right after expiry succeeds.
-        result = FLTest.rollPosition(wallet_5, usdaAddress, wstxAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
-        result.expectOk();
 
         // key-usda--wbtc should be zero, with non-zero positions in key-usda-51840
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);

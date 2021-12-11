@@ -60,7 +60,7 @@
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
 
 ;; how long a reward cycle is
-(define-data-var reward-cycle-length uint u2100)
+(define-data-var reward-cycle-length uint u525)
 
 ;; At a given reward cycle, what is the total amount of tokens staked
 (define-map staking-stats-at-cycle 
@@ -421,7 +421,7 @@
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? token-trait mint-fixed entitled-token user))))
+    (and (> entitled-token u0) (as-contract (try! (contract-call? .token-alex mint-fixed entitled-token user))))
     (ok { to-return: to-return, entitled-token: entitled-token })
   )
 )

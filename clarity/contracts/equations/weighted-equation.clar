@@ -31,6 +31,8 @@
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    ;; MI-03
+    (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)
     (var-set MAX-IN-RATIO new-max-in-ratio)
     (ok true)
   )
@@ -48,6 +50,8 @@
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    ;; MI-03
+    (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)
     (var-set MAX-OUT-RATIO new-max-out-ratio)
     (ok true)
   )

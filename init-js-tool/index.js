@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { ClarityType, getNonce } = require('@stacks/transactions');
+const { getDeployerPK, getUserPK, network } = require('./wallet');
+const { ClarityType, getNonce, callReadOnlyFunction, contractPrincipalCV, listCV, uintCV } = require('@stacks/transactions');
 const { initCoinPrice, setOpenOracle, getOpenOracle, fetch_price, fetch_btc, fetch_usdc, fetch_in_usd } = require('./oracles').default
 const { flashloan, getBalance, burn, balance, transfer, mint_sft, transferSTX, mint_ft } = require('./vault')
 const { setUsdaAmount, setWbtcAmount, setStxAmount, getSomeTokens, setAlexAmount } = require('./faucet')
@@ -810,7 +811,7 @@ async function run() {
     // await reserveSetActivationDelay(1);
     // await reserveSetRewardCycleLength(525);
     // await reserveRegisterUser('token-t-alex');
-    // await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
+    // await reserveSetCoinbaseAmount('token-t-alex', 866e7, 866e7, 866e7, 866e7, 866e7);
     // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
     // console.log(result);
     // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);

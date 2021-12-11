@@ -14,7 +14,12 @@
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
+(define-constant ERR-INVALID-TOKEN (err u2007))
+(define-constant ERR-NO-FEE (err u2005))
+(define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-INVALID-EXPIRY (err u2009))
+(define-constant ERR-MATH-CALL (err u4003))
+(define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
 (define-constant ERR-DY-BIGGER-THAN-AVAILABLE (err u2016))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
@@ -85,7 +90,9 @@
 ;; @returns (response bool uint)
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
-       (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        ;; MI-05
+        (asserts! (> new-max-expiry (* block-height ONE_8)) ERR-INVALID-EXPIRY)
         (ok (var-set max-expiry new-max-expiry)) 
     )
 )
@@ -445,6 +452,7 @@
 (define-public (swap-x-for-y (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        ;;(asserts! (> u2 u5) (err dx))
         (let
             (
                 (yield-token (contract-of the-yield-token))
@@ -472,7 +480,6 @@
                     )
                 )
             )
-
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED))
@@ -651,7 +658,7 @@
         )
         (asserts! (> (get balance-yield-token pool) dy) ERR-DY-BIGGER-THAN-AVAILABLE)
         (ok dy)        
-    )
+    );;)
 )
 
 ;; @desc units of token given units of yield token
