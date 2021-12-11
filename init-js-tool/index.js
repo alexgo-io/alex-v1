@@ -195,7 +195,7 @@ async function mint_some_tokens(recipient) {
 async function mint_some_usda(recipient) {
   console.log('------ Mint Some USDA ------');
   // await mint('token-usda', recipient, 200000000000000000n);
-  // await mint('token-usda', recipient, 10000000000 * ONE_8);
+  // await mint_ft('token-usda', 10000000000 * ONE_8, recipient);
   await mint_ft('token-usda', 10000000000 * ONE_8, recipient);
   usda_balance = await balance('token-usda', recipient);
   console.log(
@@ -206,7 +206,7 @@ async function mint_some_usda(recipient) {
 
 async function mint_some_wbtc(recipient) {
   console.log('------ Mint Some WBTC ------');
-  // await mint('token-wbtc', recipient, 5000 * ONE_8);
+  // await mint_ft('token-wbtc', 5000 * ONE_8, recipient);
   // await mint('token-wbtc', recipient, Math.round(10000000000 * ONE_8 / 61800));
   await mint_ft('token-wbtc', 900000000 * ONE_8, recipient);
   wbtc_balance = await balance('token-wbtc', recipient);
@@ -218,11 +218,11 @@ async function mint_some_wbtc(recipient) {
 
 async function mint_some_wstx(recipient) {
   console.log('------ Mint Some WSTX ------');
-  amount = 10000000 * ONE_8;
+  amount = 100000000 * ONE_8;
   if (DEPLOYER_ACCOUNT_ADDRESS() !== recipient) {
     await transferSTX(recipient, amount);
   }
-  // await mint('token-wstx', recipient, amount);
+  // await mint_ft('token-wstx', amount, recipient);
   await mint_ft('token-wstx', amount, recipient);
   wstx_balance = await balance('token-wstx', recipient);
   console.log(
@@ -924,10 +924,8 @@ async function arbitrage_ytp(dry_run = true, _subset = _deploy) {
 async function test_spot_trading() {
   console.log('------ Testing Spot Trading ------');
   console.log(timestamp());
-  // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-  // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
-  let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
-  let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
+    let wbtcPrice = (await fetch_in_usd('bitcoin'));
+    let usdaPrice = (await fetch_in_usd('usd-coin'));
 
   let from_amount = ONE_8;
   let to_amount = parseInt(
@@ -946,7 +944,7 @@ async function test_spot_trading() {
     to_amount * 0.99,
   );
 
-  from_amount = Number(wbtcPrice);
+  from_amount = Number(wbtcPrice) * ONE_8;
   to_amount = await fwpGetXgivenY(
     'token-wbtc',
     'token-usda',
@@ -971,15 +969,17 @@ async function test_spot_trading() {
   }
 }
 
+const fromHexString = hexString =>
+  new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+
 async function test_margin_trading() {
   console.log('------ Testing Margin Trading (Long BTC vs USD) ------');
   console.log(timestamp());
-  // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-  // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
-  let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
-  let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
+    let wbtcPrice = await fetch_in_usd('bitcoin');
+    let usdaPrice = await fetch_in_usd('usd-coin');
+    let wstxPrice = await fetch_in_usd('blockstack');
 
-  let expiry_0 = 34560e8;
+    let expiry_0 = 34560e8
   let amount = 1 * ONE_8; //gross exposure of 1 BTC
   let trade_price = Number(
     (await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, amount))
@@ -1008,8 +1008,8 @@ async function test_margin_trading() {
     format_number(trade_price, 2),
   );
 
-  await flashloan(
-    'flash-loan-user-margin-wbtc-usda',
+  // Next reboot: wbtc-usda should flip to usda-wbtcawait flashloan(
+    'flash-loan-user-margin-usda-wbtc',
     'token-wbtc',
     amount - margin,
     expiry_0,
@@ -1045,8 +1045,8 @@ async function test_margin_trading() {
     format_number(trade_price, 2),
   );
 
-  await flashloan(
-    'flash-loan-user-margin-usda-wbtc',
+  // Next reboot: wbtc-usda should flip to usda-wbtcawait flashloan(
+    'flash-loan-user-margin-wbtc-usda',
     'token-usda',
     trade_price - margin,
     expiry_0,
@@ -1122,7 +1122,7 @@ async function get_pool_details_ytp(_subset = _deploy) {
       _subset[key]['expiry'],
       _subset[key]['yield_token'],
     );
-    let balance_aytoken = details.value.data['balance-aytoken'];
+    let balance_aytoken = details.value.data['balance-yield-token'];
     let balance_virtual = details.value.data['balance-virtual'];
     let balance_token = details.value.data['balance-token'];
     let total_supply = details.value.data['total-supply'];
@@ -1304,9 +1304,9 @@ async function run() {
   // await test_spot_trading();
   // await test_margin_trading();
 
-  // await create_fwp((add_only = true), (deployer = true));
-  // await create_crp(add_only=true, _pools);
-  // await create_ytp(add_only=true, _pools);
+    // await create_fwp(add_only=true, _subset=[_fwp_pools[1]], deployer=true);
+    // await create_crp(add_only=true, [_pools[1]]);
+    // await create_ytp(add_only=true, [_pools[1]]);
 
   // await arbitrage_fwp(dry_run=true);
   // await arbitrage_crp(dry_run=true, _pools);
@@ -1403,11 +1403,16 @@ async function run() {
   // for (let i = 0; i < _list.length; i++) {
   //     await mint_sft(_list[i], 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
   // }
-  // await get_some_token('ST1RXPS7ZHZGBTWVS9THY7PVJ49JT3EAAKYSV3JKB');
 
-  // await mint_ft('token-t-alex', 90000e8, DEPLOYER_ACCOUNT_ADDRESS());
-  // await mint_ft('lottery-t-alex', 100e8, DEPLOYER_ACCOUNT_ADDRESS());
-  // await mint_ft('lottery-t-alex', 10000e8, USER_ACCOUNT_ADDRESS());
+    // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
+    // for (let i = 0; i < _list.length; i++) {
+    //     // await get_some_token(_list[i]);
+    //     mint_ft('lottery-t-alex', 100e8, _list[i]);
+    // }
+    // await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
+    // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
   // result = await launchCreate(
   //     'token-t-alex',
   //     'lottery-t-alex',
@@ -1421,7 +1426,7 @@ async function run() {
   //     );
   // await launchAddToPosition('token-t-alex', 1000);
   // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
-  // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
+  // await launchRegister('token-t-alex', 'lottery-t-alex', 90, deployer=false);
   // result = await launchGetTokenDetails("token-t-alex");
   // console.log(result.value.data);
   // result = await launchGetSubscriberAtToken('token-t-alex', 1);
