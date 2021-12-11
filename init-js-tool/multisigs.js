@@ -1,4 +1,4 @@
-const { getDeployerPK, getUserPK, network } = require("./wallet");
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -10,12 +10,12 @@ const {
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 const {
   principalCV,
-} = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
+const { DEPLOYER_ACCOUNT_ADDRESS } = require('./constants');
 
 //   (propose (uint (string-utf8 256) (string-utf8 256) uint uint) (response uint uint))
 const multisigPropose = async (
@@ -24,25 +24,25 @@ const multisigPropose = async (
   title,
   url,
   new_fee_rate_x,
-  new_fee_rate_y
+  new_fee_rate_y,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[multisig] propose...",
+    '[multisig] propose...',
     contract_name,
     start_block_height,
     title,
     url,
     new_fee_rate_x,
-    new_fee_rate_y
+    new_fee_rate_y,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: contract_name,
-    functionName: "propose",
+    functionName: 'propose',
     functionArgs: [
       uintCV(start_block_height),
       stringUtf8CV(title),
@@ -69,20 +69,20 @@ const multisigPropose = async (
 //   (vote-for (<ft-trait> uint uint) (response uint uint))
 const multisigVoteFor = async (contract_name, token, proposal_id, amount) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[multisig] vote-for...",
+    '[multisig] vote-for...',
     contract_name,
     token,
     proposal_id,
-    amount
+    amount,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: contract_name,
-    functionName: "vote-for",
+    functionName: 'vote-for',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(proposal_id),
@@ -109,23 +109,23 @@ const multisigVoteAgainst = async (
   contract_name,
   token,
   proposal_id,
-  amount
+  amount,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[multisig] vote-against...",
+    '[multisig] vote-against...',
     contract_name,
     token,
     proposal_id,
-    amount
+    amount,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: contract_name,
-    functionName: "vote-against",
+    functionName: 'vote-against',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(proposal_id),
@@ -150,14 +150,14 @@ const multisigVoteAgainst = async (
 //   (end-proposal (uint) (response bool uint))
 const multisigEndProposal = async (contract_name, proposal_id) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[multisig] end-proposal...", contract_name, proposal_id);
+  console.log('[multisig] end-proposal...', contract_name, proposal_id);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: contract_name,
-    functionName: "end-proposal",
+    functionName: 'end-proposal',
     functionArgs: [uintCV(proposal_id)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -178,19 +178,19 @@ const multisigEndProposal = async (contract_name, proposal_id) => {
 //   (return-votes-to-member (<ft-trait> uint principal) (response bool uint))
 const multisigReturnVotes = async (contract_name, token, proposal_id) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[multisig] return-votes-to-member...",
+    '[multisig] return-votes-to-member...',
     contract_name,
     token,
-    proposal_id
+    proposal_id,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: contract_name,
-    functionName: "return-votes-to-member",
+    functionName: 'return-votes-to-member',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(proposal_id),
@@ -214,14 +214,14 @@ const multisigReturnVotes = async (contract_name, token, proposal_id) => {
 
 const multisigGetProposalById = async (contract_name, proposal_id) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[multisig] get-proposal-by-id...]", contract_name, proposal_id);
+  console.log('[multisig] get-proposal-by-id...]', contract_name, proposal_id);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: contract_name,
-    functionName: "get-proposal-by-id",
+    functionName: 'get-proposal-by-id',
     functionArgs: [uintCV(proposal_id)],
     network: network,
     senderAddress: DEPLOYER_ACCOUNT_ADDRESS(),

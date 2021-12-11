@@ -924,8 +924,8 @@ async function arbitrage_ytp(dry_run = true, _subset = _deploy) {
 async function test_spot_trading() {
   console.log('------ Testing Spot Trading ------');
   console.log(timestamp());
-    let wbtcPrice = (await fetch_in_usd('bitcoin'));
-    let usdaPrice = (await fetch_in_usd('usd-coin'));
+  let wbtcPrice = await fetch_in_usd('bitcoin');
+  let usdaPrice = await fetch_in_usd('usd-coin');
 
   let from_amount = ONE_8;
   let to_amount = parseInt(
@@ -975,11 +975,11 @@ const fromHexString = hexString =>
 async function test_margin_trading() {
   console.log('------ Testing Margin Trading (Long BTC vs USD) ------');
   console.log(timestamp());
-    let wbtcPrice = await fetch_in_usd('bitcoin');
-    let usdaPrice = await fetch_in_usd('usd-coin');
-    let wstxPrice = await fetch_in_usd('blockstack');
+  let wbtcPrice = await fetch_in_usd('bitcoin');
+  let usdaPrice = await fetch_in_usd('usd-coin');
+  let wstxPrice = await fetch_in_usd('blockstack');
 
-    let expiry_0 = 34560e8
+  let expiry_0 = 34560e8;
   let amount = 1 * ONE_8; //gross exposure of 1 BTC
   let trade_price = Number(
     (await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, amount))
@@ -1009,11 +1009,11 @@ async function test_margin_trading() {
   );
 
   // Next reboot: wbtc-usda should flip to usda-wbtcawait flashloan(
-    'flash-loan-user-margin-usda-wbtc',
-    'token-wbtc',
-    amount - margin,
-    expiry_0,
-  );
+  //   'flash-loan-user-margin-usda-wbtc',
+  //   'token-wbtc',
+  //   amount - margin,
+  //   expiry_0,
+  // );
 
   console.log('------ Testing Margin Trading (Short BTC vs USD) ------');
   console.log(timestamp());
@@ -1046,11 +1046,11 @@ async function test_margin_trading() {
   );
 
   // Next reboot: wbtc-usda should flip to usda-wbtcawait flashloan(
-    'flash-loan-user-margin-wbtc-usda',
-    'token-usda',
-    trade_price - margin,
-    expiry_0,
-  );
+  //   'flash-loan-user-margin-wbtc-usda',
+  //   'token-usda',
+  //   trade_price - margin,
+  //   expiry_0
+  // );
 }
 
 function format_number(number, fixed = 2) {
@@ -1274,7 +1274,7 @@ async function run() {
   await get_some_token(USER_ACCOUNT_ADDRESS());
   await see_balance(USER_ACCOUNT_ADDRESS());
 
-  await mint_some_wbtc(DEPLOYER_ACCOUNT_ADDRESS())
+  await mint_some_wbtc(DEPLOYER_ACCOUNT_ADDRESS());
 
   // const _pools = {    0:_deploy[2],
   //                     1:_deploy[3],
@@ -1304,9 +1304,9 @@ async function run() {
   // await test_spot_trading();
   // await test_margin_trading();
 
-    // await create_fwp(add_only=true, _subset=[_fwp_pools[1]], deployer=true);
-    // await create_crp(add_only=true, [_pools[1]]);
-    // await create_ytp(add_only=true, [_pools[1]]);
+  // await create_fwp(add_only=true, _subset=[_fwp_pools[1]], deployer=true);
+  // await create_crp(add_only=true, [_pools[1]]);
+  // await create_ytp(add_only=true, [_pools[1]]);
 
   // await arbitrage_fwp(dry_run=true);
   // await arbitrage_crp(dry_run=true, _pools);
@@ -1404,15 +1404,15 @@ async function run() {
   //     await mint_sft(_list[i], 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
   // }
 
-    // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
-    // for (let i = 0; i < _list.length; i++) {
-    //     // await get_some_token(_list[i]);
-    //     mint_ft('lottery-t-alex', 100e8, _list[i]);
-    // }
-    // await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
-    // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
+  // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
+  // for (let i = 0; i < _list.length; i++) {
+  //     // await get_some_token(_list[i]);
+  //     mint_ft('lottery-t-alex', 100e8, _list[i]);
+  // }
+  // await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
+  // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+  // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+  // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
   // result = await launchCreate(
   //     'token-t-alex',
   //     'lottery-t-alex',

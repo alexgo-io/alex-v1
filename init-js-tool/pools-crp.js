@@ -1,4 +1,4 @@
-const { getDeployerPK, getUserPK, network } = require("./wallet");
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -9,15 +9,15 @@ const {
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 const {
   principalCV,
-} = require("@stacks/transactions/dist/clarity/types/principalCV");
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
 const {
   DEPLOYER_ACCOUNT_ADDRESS,
   USER_ACCOUNT_ADDRESS,
-} = require("./constants");
+} = require('./constants');
 
 const crpCreate = async (
   token,
@@ -31,13 +31,13 @@ const crpCreate = async (
   bs_vol,
   moving_average,
   token_to_maturity,
-  dx
+  dx,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[CRP] create-pool...",
+    '[CRP] create-pool...',
     token,
     collateral,
     expiry,
@@ -49,13 +49,13 @@ const crpCreate = async (
     bs_vol,
     moving_average,
     token_to_maturity,
-    dx
+    dx,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "create-pool",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'create-pool',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -92,25 +92,25 @@ const crpAddToPostionAndSwitch = async (
   expiry,
   yieldToken,
   keyToken,
-  dx
+  dx,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[CRP] add-to-position-and-switch...",
+    '[CRP] add-to-position-and-switch...',
     token,
     collateral,
     expiry,
     yieldToken,
     keyToken,
-    dx
+    dx,
   );
   const privateKey = await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "add-to-position-and-switch",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'add-to-position-and-switch',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -141,25 +141,25 @@ const crpAddToPostion = async (
   expiry,
   yieldToken,
   keyToken,
-  dx
+  dx,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[CRP] add-to-position..",
+    '[CRP] add-to-position..',
     token,
     collateral,
     expiry,
     yieldToken,
     keyToken,
-    dx
+    dx,
   );
   const privateKey = await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "add-to-position",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'add-to-position',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -190,24 +190,24 @@ const crpReducePostionYield = async (
   expiry,
   yieldToken,
   percent,
-  deployer = false
+  deployer = false,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[CRP] reduce-position-yield..",
+    '[CRP] reduce-position-yield..',
     token,
     collateral,
     expiry,
     yieldToken,
-    percent
+    percent,
   );
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "reduce-position-yield",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'reduce-position-yield',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -237,25 +237,25 @@ const crpReducePostionKey = async (
   expiry,
   keyToken,
   percent,
-  deployer = false
+  deployer = false,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[CRP] reduce-position-key..",
+    '[CRP] reduce-position-key..',
     token,
     collateral,
     expiry,
     keyToken,
-    percent
+    percent,
   );
 
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "reduce-position-key",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'reduce-position-key',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -281,14 +281,14 @@ const crpReducePostionKey = async (
 
 const crpSwapXforY = async (token, collateral, expiry, dx, min_dy) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] swap-x-for-y...", token, collateral, expiry, dx);
+  console.log('[CRP] swap-x-for-y...', token, collateral, expiry, dx);
   const privateKey = await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "swap-x-for-y",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'swap-x-for-y',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -314,14 +314,14 @@ const crpSwapXforY = async (token, collateral, expiry, dx, min_dy) => {
 
 const crpSwapYforX = async (token, collateral, expiry, dy, min_dx) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] swap-y-for-x...", token, collateral, expiry, dy);
+  console.log('[CRP] swap-y-for-x...', token, collateral, expiry, dy);
   const privateKey = await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "swap-y-for-x",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'swap-y-for-x',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -347,14 +347,14 @@ const crpSwapYforX = async (token, collateral, expiry, dy, min_dx) => {
 
 const crpGetLtv = async (token, collateral, expiry) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-ltv...", token, collateral, expiry);
+  console.log('[CRP] get-ltv...', token, collateral, expiry);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-ltv",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-ltv',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -372,14 +372,14 @@ const crpGetLtv = async (token, collateral, expiry) => {
 
 const crpGetXgivenY = async (token, collateral, expiry, dy) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-x-given-y...", token, collateral, expiry, dy);
+  console.log('[CRP] get-x-given-y...', token, collateral, expiry, dy);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-x-given-y",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-x-given-y',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -398,14 +398,14 @@ const crpGetXgivenY = async (token, collateral, expiry, dy) => {
 
 const crpGetYgivenX = async (token, collateral, expiry, dx) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-y-given-x...", token, collateral, expiry, dx);
+  console.log('[CRP] get-y-given-x...', token, collateral, expiry, dx);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-y-given-x",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-y-given-x',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -424,14 +424,14 @@ const crpGetYgivenX = async (token, collateral, expiry, dx) => {
 
 const crpGetYgivenPrice = async (token, collateral, expiry, price) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-y-given-price...", token, collateral, expiry, price);
+  console.log('[CRP] get-y-given-price...', token, collateral, expiry, price);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-y-given-price",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-y-given-price',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -450,14 +450,14 @@ const crpGetYgivenPrice = async (token, collateral, expiry, price) => {
 
 const crpGetXgivenPrice = async (token, collateral, expiry, price) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-y-given-price...", token, collateral, expiry, price);
+  console.log('[CRP] get-y-given-price...', token, collateral, expiry, price);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-x-given-price",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-x-given-price',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -478,23 +478,23 @@ const crpGetPositionGivenBurnKey = async (
   token,
   collateral,
   expiry,
-  shares
+  shares,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[CRP] get-position-given-burn-key...",
+    '[CRP] get-position-given-burn-key...',
     token,
     collateral,
     expiry,
-    shares
+    shares,
   );
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-position-given-burn-key",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-position-given-burn-key',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -513,14 +513,14 @@ const crpGetPositionGivenBurnKey = async (
 
 const crpGetPoolValueInToken = async (token, collateral, expiry) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-pool-value-in-token...", token, collateral, expiry);
+  console.log('[CRP] get-pool-value-in-token...', token, collateral, expiry);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-pool-value-in-token",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-pool-value-in-token',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -538,14 +538,14 @@ const crpGetPoolValueInToken = async (token, collateral, expiry) => {
 
 const crpGetPoolDetails = async (token, collateral, expiry) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-pool-details...", token, collateral, expiry);
+  console.log('[CRP] get-pool-details...', token, collateral, expiry);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-pool-details",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-pool-details',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -563,14 +563,14 @@ const crpGetPoolDetails = async (token, collateral, expiry) => {
 
 const crpGetSpot = async (token, collateral) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[CRP] get-spot...", token, collateral);
+  console.log('[CRP] get-spot...', token, collateral);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-spot",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-spot',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
@@ -587,21 +587,21 @@ const crpGetSpot = async (token, collateral) => {
 
 const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "Getting CRP Weight-Y...",
+    'Getting CRP Weight-Y...',
     token,
     collateral,
     expiry,
     strike,
-    bs_vol
+    bs_vol,
   );
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "collateral-rebalancing-pool",
-    functionName: "get-weight-y",
+    contractName: 'collateral-rebalancing-pool',
+    functionName: 'get-weight-y',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),

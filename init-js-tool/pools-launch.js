@@ -1,4 +1,4 @@
-const { getDeployerPK, getUserPK, network } = require("./wallet");
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -10,15 +10,15 @@ const {
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 const {
   principalCV,
-} = require("@stacks/transactions/dist/clarity/types/principalCV");
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
 const {
   DEPLOYER_ACCOUNT_ADDRESS,
   USER_ACCOUNT_ADDRESS,
-} = require("./constants");
+} = require('./constants');
 
 const launchCreate = async (
   token,
@@ -29,13 +29,13 @@ const launchCreate = async (
   registration_start,
   registration_end,
   claim_end,
-  activation_threshold
+  activation_threshold,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[Launch] create-pool...",
+    '[Launch] create-pool...',
     token,
     ticket,
     fee_to_address,
@@ -44,13 +44,13 @@ const launchCreate = async (
     registration_start,
     registration_end,
     claim_end,
-    activation_threshold
+    activation_threshold,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-launchpad",
-    functionName: "create-pool",
+    contractName: 'alex-launchpad',
+    functionName: 'create-pool',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), ticket),
@@ -80,14 +80,14 @@ const launchCreate = async (
 
 const launchAddToPosition = async (token, tickets) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[Launch] add-to-position...", token, tickets);
+  console.log('[Launch] add-to-position...', token, tickets);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-launchpad",
-    functionName: "add-to-position",
+    contractName: 'alex-launchpad',
+    functionName: 'add-to-position',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(tickets),
@@ -112,17 +112,17 @@ const launchRegister = async (
   token,
   ticket,
   ticket_amount,
-  deployer = true
+  deployer = true,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[Launch] register...", token, ticket, ticket_amount);
+  console.log('[Launch] register...', token, ticket, ticket_amount);
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-launchpad",
-    functionName: "register",
+    contractName: 'alex-launchpad',
+    functionName: 'register',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), ticket),
@@ -146,14 +146,14 @@ const launchRegister = async (
 
 const launchGetSubscriberAtToken = async (token, user_id) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[Launch] get-subscriber-at-token-or-default...", token, user_id);
+  console.log('[Launch] get-subscriber-at-token-or-default...', token, user_id);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-launchpad",
-    functionName: "get-subscriber-at-token-or-default",
+    contractName: 'alex-launchpad',
+    functionName: 'get-subscriber-at-token-or-default',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(user_id),
@@ -168,16 +168,16 @@ const launchGetSubscriberAtToken = async (token, user_id) => {
   }
 };
 
-const launchGetTokenDetails = async (token) => {
+const launchGetTokenDetails = async token => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[Launch] get-token-details...", token);
+  console.log('[Launch] get-token-details...', token);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-launchpad",
-    functionName: "get-token-details",
+    contractName: 'alex-launchpad',
+    functionName: 'get-token-details',
     functionArgs: [contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token)],
     network: network,
     senderAddress: USER_ACCOUNT_ADDRESS(),

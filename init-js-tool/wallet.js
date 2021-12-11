@@ -1,10 +1,10 @@
-const { generateWallet } = require("@stacks/wallet-sdk");
+const { generateWallet } = require('@stacks/wallet-sdk');
 const {
   makeSTXTokenTransfer,
   broadcastTransaction,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
-const BigNum = require("bn.js");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
+const BigNum = require('bn.js');
 const {
   STACKS_API_URL,
   DEPLOYER_ACCOUNT_ADDRESS,
@@ -12,13 +12,13 @@ const {
   DEPLOYER_ACCOUNT_PASSWORD,
   USER_ACCOUNT_SECRET,
   USER_ACCOUNT_PASSWORD,
-} = require("./constants");
+} = require('./constants');
 
 const {
   StacksRegtest,
   StacksMocknet,
   StacksMainnet,
-} = require("@stacks/network");
+} = require('@stacks/network');
 
 const getDeployerPK = async () => {
   const wallet = await generateWallet({
@@ -45,13 +45,13 @@ const network = new StacksMocknet({
 });
 
 const genesis_transfer = async () => {
-  console.log("genesis-transfer...");
+  console.log('genesis-transfer...');
 
   const txOptions = {
     recipient: DEPLOYER_ACCOUNT_ADDRESS(),
     amount: new BigNum(1000000000000000),
     senderKey:
-      "21d43d2ae0da1d9d04cfcaac7d397a33733881081f0b2cd038062cf0ccbb752601",
+      '21d43d2ae0da1d9d04cfcaac7d397a33733881081f0b2cd038062cf0ccbb752601',
     network: network,
   };
 
