@@ -5,7 +5,14 @@ const {
 } = require("@stacks/transactions");
 const { wait_until_confirmation } = require("./utils");
 const BigNum = require("bn.js");
-const { STACKS_API_URL, DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  STACKS_API_URL,
+  DEPLOYER_ACCOUNT_ADDRESS,
+  DEPLOYER_ACCOUNT_SECRET,
+  DEPLOYER_ACCOUNT_PASSWORD,
+  USER_ACCOUNT_SECRET,
+  USER_ACCOUNT_PASSWORD,
+} = require("./constants");
 
 const {
   StacksRegtest,
@@ -15,8 +22,8 @@ const {
 
 const getDeployerPK = async () => {
   const wallet = await generateWallet({
-    secretKey: process.env.DEPLOYER_ACCOUNT_SECRET,
-    password: process.env.ACCOUNT_PWD,
+    secretKey: DEPLOYER_ACCOUNT_SECRET(),
+    password: DEPLOYER_ACCOUNT_PASSWORD(),
   });
   const privateKey = wallet.accounts[0].stxPrivateKey;
   return privateKey;
@@ -24,8 +31,8 @@ const getDeployerPK = async () => {
 
 const getUserPK = async () => {
   const wallet = await generateWallet({
-    secretKey: process.env.USER_ACCOUNT_SECRET,
-    password: process.env.ACCOUNT_PWD,
+    secretKey: USER_ACCOUNT_SECRET(),
+    password: USER_ACCOUNT_PASSWORD(),
   });
   const privateKey = wallet.accounts[0].stxPrivateKey;
   return privateKey;
