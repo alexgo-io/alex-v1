@@ -561,7 +561,8 @@ async function test_margin_trading() {
     console.log("ltv: ", format_number(ltv, 2), "; amount (BTC): ", format_number(amount, 8), "; margin (BTC): ", format_number(margin, 8));
     console.log("leverage: ", format_number(leverage, 2), "; trade_price (USD): ", format_number(trade_price, 2));
 
-    await flashloan('flash-loan-user-margin-wbtc-usda', 'token-wbtc', (amount - margin), expiry_0);
+    // Next reboot: wbtc-usda should flip to usda-wbtc
+    await flashloan('flash-loan-user-margin-usda-wbtc', 'token-wbtc', (amount - margin), expiry_0);
 
     console.log("------ Testing Margin Trading (Short BTC vs USD) ------");
     console.log(timestamp());
@@ -576,7 +577,8 @@ async function test_margin_trading() {
     console.log("ltv: ", format_number(ltv, 2), "; amount (BTC): ", format_number(amount, 8), "; margin (USD): ", format_number(margin, 2));
     console.log("leverage: ", format_number(leverage, 2), "; trade_price (USD): ", format_number(trade_price, 2))
 
-    await flashloan('flash-loan-user-margin-usda-wbtc', 'token-usda', (trade_price - margin), expiry_0);
+    // Next reboot: wbtc-usda should flip to usda-wbtc
+    await flashloan('flash-loan-user-margin-wbtc-usda', 'token-usda', (trade_price - margin), expiry_0);
 }
 
 function format_number(number, fixed = 2) {
@@ -739,7 +741,7 @@ async function run() {
     // await arbitrage_ytp(dry_run = false, _pools);
     // await arbitrage_fwp(dry_run = false);
 
-    await test_spot_trading();
+    // await test_spot_trading();
     // await test_margin_trading();
 
     // await create_fwp(add_only=true, _subset=[_fwp_pools[1]], deployer=true);
