@@ -6,6 +6,8 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "lodash": "^4.17.21",
     "@stacks/connect": "^6.1.0",
     "@stacks/keychain": "^2.0.1",
     "@stacks/network": "^2.0.1",
@@ -23,5 +25,16 @@
   "devDependencies": {
     "@stacks/blockchain-api-client": "^0.69.0",
     "prettier": "^2.5.1"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "tabWidth": 2,
+    "arrowParens": "avoid",
+    "trailingComma": "all",
+    "printWidth": 80
   }
 }
