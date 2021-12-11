@@ -411,13 +411,20 @@
                 (dx-weighted (mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
 
-                (dy-weighted (if (is-eq token-x token-y)
-                                dx-to-dy
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token collateral u50000000 u50000000))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
+                (dy-weighted 
+                    (if (is-eq token-x token-y)
+                        dx-to-dy
+                        (if (is-eq token-x .token-wstx)
+                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token u50000000 dx-to-dy none)))
+                            (if (is-eq token-y .token-wstx)
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral u50000000 dx-to-dy none)))
+                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
                                     (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy none)))
+                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
                                 )
-                             )
+                            )
+                        )
+                    )
                 )
 
                 (pool-updated (merge pool {
@@ -430,7 +437,7 @@
 
             (if (is-eq token-x token-y)
                 u0
-                (unwrap! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
+                (unwrap! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
             )
 
             (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
@@ -478,7 +485,7 @@
                                     balance-x
                                     (begin
                                         (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender)))
-                                        (as-contract (try! (contract-call? .fixed-weight-pool swap token collateral u50000000 u50000000 balance-x none)))
+                                        (as-contract (try! (contract-call? .fixed-weight-pool swap-helper collateral token u50000000 u50000000 balance-x none)))
                                     )                                    
                                 )
                             )
@@ -904,7 +911,7 @@
                 (ltv (try! (get-ltv token collateral expiry)))
                 (dy (if (is-eq (contract-of token) (contract-of collateral))
                         dx
-                        (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dx))                    
+                        (try! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 dx))                    
                     )
                 )
                 (ltv-dy (mul-down ltv dy))
@@ -946,7 +953,7 @@
                 ;; always convert to collateral ccy
                 (dy-to-dx (if (is-eq token-x token-y)
                             dy-weighted
-                            (try! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 dy-weighted))                    
+                            (try! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 dy-weighted))                    
                         )
                 )   
                 (dx (+ dx-weighted dy-to-dx))

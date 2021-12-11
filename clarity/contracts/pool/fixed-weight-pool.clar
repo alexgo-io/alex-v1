@@ -404,7 +404,7 @@
     )
 )
 
-(define-private (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
+(define-public (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
@@ -450,7 +450,7 @@
     )
 )
 
-(define-private (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
+(define-public (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
@@ -1127,18 +1127,32 @@
  )
 )
  
-(define-public (swap (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
-    (ok (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
-                        (get dx (try! (swap-y-for-x token-x-trait token-y-trait weight-x weight-y dx min-dy)))
-                        (get dy (try! (swap-x-for-y token-y-trait token-x-trait weight-x weight-y dx min-dy)))
+(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
+    (ok
+        (if (is-eq (contract-of token-x-trait) .token-wstx)
+            (get dy (try! (swap-wstx-for-y token-y-trait weight-y dx min-dy)))
+            (if (is-eq (contract-of token-y-trait) .token-wstx)
+                (get dx (try! (swap-y-for-wstx token-x-trait weight-x dx min-dy)))
+                (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
+                    (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy)))
+                    (get dx (try! (swap-y-for-x token-y-trait token-x-trait weight-y weight-x dx min-dy)))
+                )
+            )
         )
-   )
+    )
 )
 
-(define-read-only (get-x-y  (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint))
-    (ok (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
-                        (try! (get-x-given-y token-x-trait token-y-trait weight-x weight-y dy))
-                        (try! (get-y-given-x token-y-trait token-x-trait weight-x weight-y dy))
+(define-read-only (get-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint))
+    (ok 
+        (if (is-eq (contract-of token-x-trait) .token-wstx)
+            (try! (get-y-given-wstx token-y-trait weight-y dx))
+            (if (is-eq (contract-of token-y-trait) .token-wstx)
+                (try! (get-wstx-given-y token-x-trait weight-x dx))
+                (if (is-some (get-pool-exists token-x-trait token-y-trait weight-x weight-y))
+                    (try! (get-y-given-x token-x-trait token-y-trait weight-x weight-y dx))
+                    (try! (get-x-given-y token-y-trait token-x-trait weight-y weight-x dx))
+                )
+            )
         )
-    )    
+    )  
 )
