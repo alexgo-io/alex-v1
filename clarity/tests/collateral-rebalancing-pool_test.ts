@@ -377,18 +377,18 @@ Clarinet.test({
         let spot = Number((call.result.replace(/\D/g, "")));
 
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(99929064);
+        call.result.expectOk().expectUint(99929048);
 
         // ltv-0 is 80%, but injecting liquidity pushes up LTV
         call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(80055828);
+        call.result.expectOk().expectUint(80055841);
 
         call = await CRPTest.getXgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
-        call.result.expectOk().expectUint(107360750371);
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 107360750371, 0);
+        call.result.expectOk().expectUint(107361307607);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 107361307607, 0);
         let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(107360750371);
-        position['dy'].expectUint(2047864);
+        position['dx'].expectUint(107361307607);
+        position['dy'].expectUint(2047874);
         
         call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.98/ ONE_8)));
         call.result.expectOk().expectUint(666235);

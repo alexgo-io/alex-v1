@@ -437,7 +437,7 @@
                 )
             )
 
-            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+            (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .token-wstx transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
@@ -483,7 +483,7 @@
                 )
             )
 
-            (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
+            (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (try! (contract-call? .alex-vault transfer-ft .token-wstx dx tx-sender))
             (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
@@ -681,7 +681,7 @@
     )
 )
 
-(define-private (get-y-given-wstx (token-y-trait <ft-trait>) (weight-y uint) (dx uint))
+(define-read-only (get-y-given-wstx (token-y-trait <ft-trait>) (weight-y uint) (dx uint))
     
     (let 
         (
@@ -692,7 +692,7 @@
     )
 )
 
-(define-private (get-wstx-given-y (token-y-trait <ft-trait>) (weight-y uint) (dy uint)) 
+(define-read-only (get-wstx-given-y (token-y-trait <ft-trait>) (weight-y uint) (dy uint)) 
     (let 
         (
             (weight-x (- ONE_8 weight-y))
