@@ -11,6 +11,10 @@ function extract(targetContracts, filePath) {
   const clarinetConfig = toml.parse(fs.readFileSync(filePath));
   const contracts = clarinetConfig.contracts;
 
+  if (targetContracts == null) {
+    return clarinetConfig;
+  }
+
   const dependencies = [];
 
   for (const targetContract of targetContracts) {
@@ -18,7 +22,6 @@ function extract(targetContracts, filePath) {
       dependencies.push(contract);
     });
   }
-
   const buildContracts = new Set();
 
   const addDependencyRecursively = targetContracts => {
@@ -38,17 +41,14 @@ function extract(targetContracts, filePath) {
   return targetConfig; /*?*/
 }
 
+const baseContentPath = path.join(__dirname, 'Clarinet.base.toml');
+
 function load(env) {
   const clarinetConfig = toml.parse(
     fs.readFileSync(path.resolve(__dirname, `Clarinet.${env}.toml`)),
   );
-  if (env === 'dev') {
-    return extract(
-      clarinetConfig.contracts,
-      path.join(__dirname, 'Clarinet.base.toml'),
-      'utf8',
-    );
-  }
+
+  return extract(clarinetConfig.contracts, baseContentPath);
 }
 
 function save(tomlContent, filePath) {
@@ -83,10 +83,7 @@ if (
 console.log(`selecting env: ${selectedEnv}`);
 const targetToml = '../clarity/Clarinet.toml';
 if (selectedEnv === 'base') {
-  fs.cpSync(
-    path.resolve(__dirname, 'Clarinet.base.toml'),
-    path.resolve(__dirname, targetToml),
-  );
+  save(extract(null, baseContentPath), path.resolve(__dirname, targetToml));
 } else {
   save(load(selectedEnv), path.resolve(__dirname, targetToml));
 }
