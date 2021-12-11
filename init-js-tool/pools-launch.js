@@ -15,7 +15,10 @@ const { wait_until_confirmation } = require("./utils");
 const {
   principalCV,
 } = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 const launchCreate = async (
   token,
@@ -156,7 +159,7 @@ const launchGetSubscriberAtToken = async (token, user_id) => {
       uintCV(user_id),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -177,7 +180,7 @@ const launchGetTokenDetails = async (token) => {
     functionName: "get-token-details",
     functionArgs: [contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token)],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);

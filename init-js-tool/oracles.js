@@ -11,7 +11,10 @@ const {
 } = require("@stacks/transactions");
 const { wait_until_confirmation, get_nonce } = require("./utils");
 const { getDeployerPK, getUserPK, network } = require("./wallet");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 //Use CoinGeckoClient to fetch current prices of btc & usdc
 const initCoinPrice = async () => {
@@ -69,7 +72,7 @@ const getOpenOracle = async (src, symbol) => {
     functionName: "get-price",
     functionArgs: [stringAsciiCV(src), stringAsciiCV(symbol)],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);

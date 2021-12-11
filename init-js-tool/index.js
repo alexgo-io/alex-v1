@@ -100,7 +100,11 @@ const {
   launchGetTokenDetails,
   launchGetSubscriberAtToken,
 } = require("./pools-launch");
-const { STACKS_API_URL, DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  STACKS_API_URL,
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 const ONE_8 = 100000000;
 
@@ -1154,7 +1158,7 @@ async function reduce_position_ytp(_reduce, percent, deployer = false) {
   for (const key in _reduce) {
     let total_shares = await balance(
       _reduce[key]["pool_token"],
-      deployer ? DEPLOYER_ACCOUNT_ADDRESS() : process.env.USER_ACCOUNT_ADDRESS
+      deployer ? DEPLOYER_ACCOUNT_ADDRESS() : USER_ACCOUNT_ADDRESS()
     );
     let shares = Math.round(
       (percent * Number(total_shares.value.value)) / ONE_8
@@ -1255,9 +1259,9 @@ async function run() {
   // await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
   // await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
   // await mint_some_usda(DEPLOYER_ACCOUNT_ADDRESS() + '.alex-reserve-pool');
-  // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
-  // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
-  // await see_balance(process.env.USER_ACCOUNT_ADDRESS);
+  // await mint_some_tokens(USER_ACCOUNT_ADDRESS());
+  // await get_some_token(USER_ACCOUNT_ADDRESS());
+  // await see_balance(USER_ACCOUNT_ADDRESS());
 
   // const _pools = {    0:_deploy[2],
   //                     1:_deploy[3],
@@ -1310,7 +1314,7 @@ async function run() {
 
   // await see_balance(DEPLOYER_ACCOUNT_ADDRESS() + '.alex-vault');
 
-  // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);
+  // await mint_some_wbtc(USER_ACCOUNT_ADDRESS());
   // await get_some_token('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
   // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
   // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);
@@ -1327,14 +1331,14 @@ async function run() {
 
   // await arbitrage_fwp(dry_run = false);
   // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
-  // await see_balance(process.env.USER_ACCOUNT_ADDRESS);
+  // await see_balance(USER_ACCOUNT_ADDRESS());
 
   // result = await fwpGetPositionGivenBurn('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 325.48 * 1e3 * 1e8);
   // printResult(result);
   // result = await ytpGetPositionGivenBurn('yield-wbtc-92160', 0.5 * 1e8);
   // printResult(result);
 
-  // result = await balance('key-usda-34560-wbtc', process.env.USER_ACCOUNT_ADDRESS);
+  // result = await balance('key-usda-34560-wbtc', USER_ACCOUNT_ADDRESS());
   // console.log(result);
   // await transfer('key-usda-34560-wbtc', 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', 10668690600000);
 
@@ -1379,7 +1383,7 @@ async function run() {
 
   // await mint_ft('token-t-alex', 90000e8, DEPLOYER_ACCOUNT_ADDRESS());
   // await mint_ft('lottery-t-alex', 100e8, DEPLOYER_ACCOUNT_ADDRESS());
-  // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
+  // await mint_ft('lottery-t-alex', 10000e8, USER_ACCOUNT_ADDRESS());
   // result = await launchCreate(
   //     'token-t-alex',
   //     'lottery-t-alex',

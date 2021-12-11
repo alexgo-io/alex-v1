@@ -15,7 +15,10 @@ const { wait_until_confirmation } = require("./utils");
 const {
   principalCV,
 } = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 const fwpCreate = async (
   tokenX,
@@ -291,7 +294,7 @@ const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
       uintCV(price),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -318,7 +321,7 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
       uintCV(dx),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -412,7 +415,7 @@ const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
       uintCV(dy),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -446,7 +449,7 @@ const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
       uintCV(price),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -486,7 +489,7 @@ const fwpGetPositionGivenBurn = async (
       uintCV(token),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -512,7 +515,7 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
       uintCV(weightY),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);

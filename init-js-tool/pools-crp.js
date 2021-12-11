@@ -14,7 +14,10 @@ const { wait_until_confirmation } = require("./utils");
 const {
   principalCV,
 } = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 const crpCreate = async (
   token,
@@ -358,7 +361,7 @@ const crpGetLtv = async (token, collateral, expiry) => {
       uintCV(expiry),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -384,7 +387,7 @@ const crpGetXgivenY = async (token, collateral, expiry, dy) => {
       uintCV(dy),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -410,7 +413,7 @@ const crpGetYgivenX = async (token, collateral, expiry, dx) => {
       uintCV(dx),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -436,7 +439,7 @@ const crpGetYgivenPrice = async (token, collateral, expiry, price) => {
       uintCV(price),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -462,7 +465,7 @@ const crpGetXgivenPrice = async (token, collateral, expiry, price) => {
       uintCV(price),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -499,7 +502,7 @@ const crpGetPositionGivenBurnKey = async (
       uintCV(shares),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -524,7 +527,7 @@ const crpGetPoolValueInToken = async (token, collateral, expiry) => {
       uintCV(expiry),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -549,7 +552,7 @@ const crpGetPoolDetails = async (token, collateral, expiry) => {
       uintCV(expiry),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -573,7 +576,7 @@ const crpGetSpot = async (token, collateral) => {
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), collateral),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -607,7 +610,7 @@ const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
       uintCV(bs_vol),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);

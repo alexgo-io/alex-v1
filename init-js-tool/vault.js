@@ -16,7 +16,10 @@ const { wait_until_confirmation } = require("./utils");
 const {
   principalCV,
 } = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 const flashloan = async (loan_contract, token, amount, expiry) => {
   console.log("[Vault] flash-loan...", loan_contract, token, amount);
@@ -129,7 +132,7 @@ const transfer = async (token, recipient, amount, deployer = false) => {
     functionArgs: [
       uintCV(amount),
       principalCV(
-        deployer ? DEPLOYER_ACCOUNT_ADDRESS() : process.env.USER_ACCOUNT_ADDRESS
+        deployer ? DEPLOYER_ACCOUNT_ADDRESS() : USER_ACCOUNT_ADDRESS()
       ),
       principalCV(recipient),
       someCV(bufferCVFromString("")),
@@ -179,7 +182,7 @@ const balance = async (token, owner) => {
     functionName: "get-balance-fixed",
     functionArgs: [principalCV(owner)],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -197,7 +200,7 @@ const getBalance = async (token) => {
     functionName: "get-balance-fixed",
     functionArgs: [contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token)],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     const result = await callReadOnlyFunction(options);

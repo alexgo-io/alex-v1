@@ -17,7 +17,10 @@ const { wait_until_confirmation } = require("./utils");
 const {
   principalCV,
 } = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require("./constants");
 
 const reserveAddToken = async (token) => {
   console.log(
@@ -194,7 +197,7 @@ const reserveGetUserId = async (token, user) => {
       principalCV(user),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -228,7 +231,7 @@ const reserveGetStakerAtCycleOrDefault = async (
       uintCV(user_id),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
