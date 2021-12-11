@@ -73,7 +73,7 @@ const getOpenOracle = async (src, symbol) => {
     contractName: 'open-oracle',
     functionName: 'get-price',
     functionArgs: [
-      stringAsciiCV(src),      
+      stringAsciiCV(src),
       stringAsciiCV(symbol)
     ],
     network: network,
