@@ -5,7 +5,7 @@ const PQueue = require('p-queue');
 const toml = require('@iarna/toml');
 const fs = require('fs');
 const path = require('path');
-const { pick, sortBy } = require('lodash');
+const { pick, sortBy, groupBy, reduce } = require('lodash');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const { toPairs } = require('lodash');
@@ -24,6 +24,7 @@ const {
   DEPLOYER_ACCOUNT_ADDRESS,
 } = require('../init-js-tool/constants');
 const { exit } = require('process');
+const chalk = require('chalk');
 
 const contract_records = { Contracts: [] };
 let VERSION;
@@ -36,21 +37,34 @@ async function deployAllContracts() {
     ),
   );
 
+  const weight = {};
+
   const contracts = clarinetConfig.contracts; /*?*/
+
+  const countWeight = (contractName, length) => {
+    if (weight[contractName] == null) {
+      weight[contractName] = 0;
+    }
+    weight[contractName] += length;
+    contracts[contractName].depends_on.forEach(name =>
+      countWeight(name, length + 1),
+    );
+  };
+
+  Object.keys(contracts).forEach(countWeight);
+  const weightPair = sortBy(
+    toPairs(weight),
+    ([name, weight]) => weight,
+  ).reverse(); /*?*/
+
   const inQueue = new Set();
 
-  const queue = new PQueue.default({ concurrency: 3 });
-  const waitingQueue = new PQueue.default({ concurrency: 3 });
+  const queue = new PQueue.default({ concurrency: 1 });
 
   let counter = 0;
-  const addInQueue = contractName => {
-    if (inQueue.has(contractName)) {
-      return;
-    }
-    contracts[contractName].depends_on.forEach(c => {
-      addInQueue(c);
-    });
 
+  weightPair.forEach(p => {
+    const contractName = p[0];
     queue.add(async () => {
       if (inQueue.has(contractName)) {
         return;
@@ -58,57 +72,15 @@ async function deployAllContracts() {
       inQueue.add(contractName);
 
       counter++;
-      console.log(`Deploying - ${counter} - ${contractName} `);
-      const waiter = await deploy(contracts, contractName);
-
-      await waitingTransaction(
-        waiter.transaction,
-        waiter.broadcast_id,
-        contractName,
-      );
-      // await waitingQueue.add(async () => {
-      // });
+      console.log(`Deploying - ${counter} - ${contractName} <> ${p[1]}`);
+      await deploy(contracts, contractName, p[1]);
     });
-  };
-
-  Object.keys(contracts).forEach(c => {
-    addInQueue(c);
   });
 
   await queue.onIdle();
 }
 
-async function waitingTransaction(transaction, broadcast_id, contractName) {
-  console.log(`${STACKS_API_URL()}/extended/v1/tx/0x${broadcast_id.txid}`);
-  let counter = 0;
-  while (true) {
-    await sleep(3000);
-    let truth = await fetch(
-      `${STACKS_API_URL()}/extended/v1/tx/${broadcast_id.txid}`,
-    );
-    let res = await truth.json();
-    console.log(
-      `[${counter++}] Waiting... ${broadcast_id.txid} - ${contractName}`,
-    );
-    if (res['tx_status'] === 'success') {
-      console.log('Contract Deployed Successfully');
-      contract_records['Contracts'].push({
-        name: contractName,
-        version: VERSION,
-        deployer: DEPLOYER_ACCOUNT_ADDRESS(),
-      });
-      break;
-    } else if (res['tx_status'] === 'abort_by_response') {
-      console.log('Transaction aborted: ', res['tx_result']['repr']);
-      break;
-    } else if (res.hasOwnProperty('error')) {
-      console.log('Transaction aborted: ', res['error']);
-      break;
-    }
-  }
-}
-
-async function deploy(contracts, contractName) {
+async function deploy(contracts, contractName, weight) {
   const contract = contracts[contractName];
   if (contract == null) {
     throw new Error(`Contract ${contractName} not found`);
@@ -126,7 +98,45 @@ async function deploy(contracts, contractName) {
   };
   const transaction = await makeContractDeploy(txOptions);
   const broadcast_id = await broadcastTransaction(transaction, network);
-  return { transaction, broadcast_id };
+  console.log(`${STACKS_API_URL()}/extended/v1/tx/0x${broadcast_id.txid}`);
+  let counter = 0;
+  while (true) {
+    await sleep(2000);
+    let truth = await fetch(
+      `${STACKS_API_URL()}/extended/v1/tx/${broadcast_id.txid}`,
+    );
+    let res = await truth.json();
+    console.log(
+      `[${counter++}][${weight}] Waiting... ${
+        broadcast_id.txid
+      } - ${contractName}`,
+    );
+    if (res['tx_status'] === 'success') {
+      console.log(
+        `Contract ${chalk.blue(contractName)} Deployed ${chalk.green(
+          'Successfully',
+        )}`,
+      );
+      contract_records['Contracts'].push({
+        name: contractName,
+        version: VERSION,
+        deployer: DEPLOYER_ACCOUNT_ADDRESS(),
+      });
+      break;
+    } else if (res['tx_status'] === 'abort_by_response') {
+      console.log(
+        `Contract ${chalk.red(contractName)} - Transaction aborted: `,
+        res['tx_result']['repr'],
+      );
+      break;
+    } else if (res.hasOwnProperty('error')) {
+      console.log(
+        `Contract ${chalk.redBright(contractName)} Transaction error: `,
+        res['error'],
+      );
+      break;
+    }
+  }
 }
 
 const argv = yargs(hideBin(process.argv))

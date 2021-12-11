@@ -16,6 +16,7 @@
     "@stacks/transactions": "^2.0.1",
     "@stacks/wallet-sdk": "^2.0.1",
     "bn.js": "^5.2.0",
+    "chalk": "4.1.2",
     "coingecko-api": "^1.0.10",
     "dotenv": "^10.0.0",
     "lodash": "^4.17.21",
