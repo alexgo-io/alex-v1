@@ -5,9 +5,11 @@
   "author": "Tiger WAng",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "select": "node ./features/select.js --env"
+  },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "lodash": "^4.17.21",
     "@stacks/connect": "^6.1.0",
     "@stacks/keychain": "^2.0.1",
     "@stacks/network": "^2.0.1",
@@ -16,8 +18,10 @@
     "bn.js": "^5.2.0",
     "coingecko-api": "^1.0.10",
     "dotenv": "^10.0.0",
+    "lodash": "^4.17.21",
     "readline-promise": "^1.0.5",
-    "replace-in-file": "^6.2.0"
+    "replace-in-file": "^6.2.0",
+    "yargs": "^17.3.0"
   },
   "resolutions": {
     "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
