@@ -21,6 +21,7 @@
     "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
   },
   "devDependencies": {
-    "@stacks/blockchain-api-client": "^0.69.0"
+    "@stacks/blockchain-api-client": "^0.69.0",
+    "prettier": "^2.5.1"
   }
 }

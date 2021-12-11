@@ -22,7 +22,7 @@ const launchCreate = async (token, ticket, fee_to_address, amount_per_ticket, ws
   const privateKey = await getDeployerPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'alex-launchpad-v3',
+      contractName: 'alex-launchpad',
       functionName: 'create-pool',
       functionArgs: [
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -57,7 +57,7 @@ const launchAddToPosition = async (token, tickets) => {
   const privateKey = await getDeployerPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'alex-launchpad-v3',
+      contractName: 'alex-launchpad',
       functionName: 'add-to-position',
       functionArgs: [
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -85,7 +85,7 @@ const launchRegister = async (token, ticket, ticket_amount, deployer=true) => {
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
       contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'alex-launchpad-v3',
+      contractName: 'alex-launchpad',
       functionName: 'register',
       functionArgs: [
           contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
@@ -114,7 +114,7 @@ const launchGetSubscriberAtToken = async (token, user_id) => {
 
   const options = {
     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'alex-launchpad-v3',
+    contractName: 'alex-launchpad',
     functionName: 'get-subscriber-at-token-or-default',
     functionArgs: [
       contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),     
@@ -137,7 +137,7 @@ const launchGetTokenDetails = async (token) => {
 
   const options = {
     contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'alex-launchpad-v3',
+    contractName: 'alex-launchpad',
     functionName: 'get-token-details',
     functionArgs: [
       contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token)

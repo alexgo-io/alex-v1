@@ -1,3 +1,4 @@
+const {STACKS_API_URL} = require("./api");
 const sleep = (ms) => {
         return new Promise(
             resolve => setTimeout(resolve, ms)
@@ -7,7 +8,7 @@ const sleep = (ms) => {
 const wait_until_confirmation = async(txid) => {
     while (true){
         await sleep(3000)
-        let truth = await fetch(`https://regtest-3.alexgo.io/extended/v1/tx/0x${txid}`)
+        let truth = await fetch(`${STACKS_API_URL()}/extended/v1/tx/0x${txid}`)
         let res = await truth.json();
         console.log(`Waiting for confirmation... ${txid}`)
         if (res['tx_status'] === 'success'){
@@ -19,8 +20,8 @@ const wait_until_confirmation = async(txid) => {
         } else if (res.hasOwnProperty('error')){
             console.log('Transaction aborted: ', res['error']);
             return false;
-        }        
-    }    
+        }
+    }
 }
 
 exports.sleep = sleep;

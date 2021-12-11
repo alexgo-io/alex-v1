@@ -70,6 +70,7 @@ const {
     multisigGetProposalById
 } = require('./multisigs')
 const { launchCreate, launchAddToPosition, launchRegister, launchGetTokenDetails, launchGetSubscriberAtToken } = require('./pools-launch')
+const {STACKS_API_URL} = require("./api");
 
 const ONE_8 = 100000000
 
@@ -90,7 +91,7 @@ const _fwp_pools = {
         weight_y: 0.5e+8,
         pool_token: 'fwp-wstx-wbtc-50-50',
         multisig: 'multisig-fwp-wstx-wbtc-50-50',
-        left_side: 50000000e8        
+        left_side: 50000000e8
     },
 }
 
@@ -124,7 +125,7 @@ const _deploy = {
         target_apy: 0.086475,
         expiry: 34560e+8,
         token_to_maturity: 11520e+8
-    },    
+    },
 }
 
 const printResult = (result) => {
@@ -188,7 +189,7 @@ async function see_balance(owner) {
     wbtc_balance = await balance('token-wbtc', owner);
     console.log('wbtc balance: ', format_number(Number(wbtc_balance.value.value) / ONE_8));
     wstx_balance = await balance('token-wstx', owner);
-    console.log('wstx balance: ', format_number(Number(wstx_balance.value.value) / ONE_8));    
+    console.log('wstx balance: ', format_number(Number(wstx_balance.value.value) / ONE_8));
 }
 
 async function create_fwp(add_only, _subset = _fwp_pools, deployer=false) {
@@ -196,7 +197,7 @@ async function create_fwp(add_only, _subset = _fwp_pools, deployer=false) {
     // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
     let wbtcPrice = (await fetch_in_usd('bitcoin'));
     let usdaPrice = (await fetch_in_usd('usd-coin'));
-    let stxPrice = (await fetch_in_usd('blockstack'));    
+    let stxPrice = (await fetch_in_usd('blockstack'));
 
     for (const key in _subset) {
         if (add_only) {
@@ -335,7 +336,7 @@ async function arbitrage_crp(dry_run = true, _subset=_deploy) {
     // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
     // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
     let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
-    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;    
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
 
     for (const key in _subset) {
         // console.log(_subset[key]);
@@ -344,7 +345,7 @@ async function arbitrage_crp(dry_run = true, _subset=_deploy) {
             printed = Number(wbtcPrice) / Number(usdaPrice);
         }
 
-        let node_info = await (await fetch('https://regtest-3.alexgo.io/v2/info')).json();
+        let node_info = await (await fetch(`${STACKS_API_URL()}/v2/info`)).json();
         let time_to_maturity = (Math.round(_subset[key]['expiry'] / ONE_8) - node_info['burn_block_height']) / 2102400;
 
         if (time_to_maturity > 0) {
@@ -432,7 +433,7 @@ async function arbitrage_ytp(dry_run = true, _subset=_deploy) {
         result = await ytpGetYield(_subset[key]['expiry'], _subset[key]['yield_token']);
         implied_yield = Number(result.value.value) / ONE_8;
 
-        let node_info = await (await fetch('https://regtest-3.alexgo.io/v2/info')).json();
+        let node_info = await (await fetch(`${STACKS_API_URL()}/v2/info`)).json();
         let time_to_maturity = (Math.round(_subset[key]['expiry'] / ONE_8) - node_info['burn_block_height']) / 2102400;
 
         if (time_to_maturity > 0) {
@@ -524,7 +525,7 @@ async function test_spot_trading() {
     // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
     // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
     let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
-    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;    
+    let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
 
     let from_amount = ONE_8;
     let to_amount = parseInt((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, from_amount)).value.value);
@@ -551,7 +552,7 @@ async function test_margin_trading() {
 
     let expiry_0 = 34560e+8
     let amount = 1 * ONE_8; //gross exposure of 1 BTC
-    let trade_price = Number((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, amount)).value.value); // in USD    
+    let trade_price = Number((await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e+8, 0.5e+8, amount)).value.value); // in USD
     let trade_amount = amount; // in BTC
     let ltv = Number((await crpGetLtv('token-usda', 'token-wbtc', expiry_0)).value.value);
     ltv /= Number((await ytpGetPrice(expiry_0, "yield-usda")).value.value);
@@ -648,12 +649,12 @@ async function reduce_position_ytp(_reduce, percent, deployer=false) {
         console.log('total shares: ', format_number(Number(total_shares.value.value) / ONE_8), 'shares: ', format_number(shares / ONE_8));
         let pos = await ytpGetPositionGivenBurn(_reduce[key]['expiry'], _reduce[key]['yield_token'], shares);
         if (shares > 0 && pos.type == 7){
-            console.log('reducing yield-token / virtual / token:', 
-            format_number(Number(pos.value.data['dy-act'].value) / ONE_8),        
-            '/',                        
-            format_number(Number(pos.value.data['dy-vir'].value) / ONE_8),                        
-            '/',                        
-            format_number(Number(pos.value.data['dx'].value) / ONE_8));            
+            console.log('reducing yield-token / virtual / token:',
+            format_number(Number(pos.value.data['dy-act'].value) / ONE_8),
+            '/',
+            format_number(Number(pos.value.data['dy-vir'].value) / ONE_8),
+            '/',
+            format_number(Number(pos.value.data['dx'].value) / ONE_8));
             await ytpReducePosition(_reduce[key]['expiry'], _reduce[key]['yield_token'], _reduce[key]['token'], _reduce[key]['pool_token'], percent, deployer);
         } else {
             console.error('error: ', pos);
@@ -711,16 +712,16 @@ async function run() {
     // await set_faucet_amounts();
     // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // await mint_some_tokens(process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');    
+    // await mint_some_usda(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-reserve-pool');
     // await mint_some_tokens(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token(process.env.USER_ACCOUNT_ADDRESS);
     // await see_balance(process.env.USER_ACCOUNT_ADDRESS);
 
-    // const _pools = {    0:_deploy[2], 
-    //                     1:_deploy[3], 
-    //                     2:_deploy[4], 
-    //                     3:_deploy[5], 
-    //                     4:_deploy[6], 
+    // const _pools = {    0:_deploy[2],
+    //                     1:_deploy[3],
+    //                     2:_deploy[4],
+    //                     3:_deploy[5],
+    //                     4:_deploy[6],
     //                     5:_deploy[7],
     //                     6:_deploy[8],
     //                     7:_deploy[9],
@@ -730,9 +731,9 @@ async function run() {
     // const _pools = { 0:_deploy[4], 1:_deploy[5] };
     // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
     const _pools = _deploy;
-    // await create_fwp(add_only=false);
+    await create_fwp(add_only=false);
     // await create_ytp(add_only=false, _pools);
-    // await create_crp(add_only=false, _pools);    
+    // await create_crp(add_only=false, _pools);
 
     // await arbitrage_fwp(dry_run = false);
     // await arbitrage_crp(dry_run = false, _pools);
@@ -742,54 +743,54 @@ async function run() {
     // await test_spot_trading();
     // await test_margin_trading();
 
-    // await create_fwp(add_only=true, deployer=true);
-    // await create_crp(add_only=true, _pools);     
+    await create_fwp(add_only=true, deployer=true);
+    // await create_crp(add_only=true, _pools);
     // await create_ytp(add_only=true, _pools);
 
     // await arbitrage_fwp(dry_run=true);
-    // await arbitrage_crp(dry_run=true, _pools);    
-    // await arbitrage_ytp(dry_run=true, _pools); 
+    // await arbitrage_crp(dry_run=true, _pools);
+    // await arbitrage_ytp(dry_run=true, _pools);
     // await get_pool_details_fwp();
     // await get_pool_details_crp(_pools);
-    // await get_pool_details_ytp(_pools);   
+    // await get_pool_details_ytp(_pools);
 
     // await reduce_position_fwp(0.5 * ONE_8, deployer=true);
 
     // const _reduce = { 0: _deploy[14] , 1: _deploy[15] };
     // await reduce_position_ytp(_reduce, 0.9*ONE_8, deployer=true);
-    // await get_pool_details_ytp(_subset=_reduce);   
+    // await get_pool_details_ytp(_subset=_reduce);
 
     // await reduce_position_ytp(_pools, 0.1*ONE_8, deployer=true);
     // await reduce_position_crp(_pools, ONE_8, 'yield');
-    // await reduce_position_crp(_pools, ONE_8, 'key');    
+    // await reduce_position_crp(_pools, ONE_8, 'key');
     // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
-    // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);    
+    // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);
 
-    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');           
-    
+    // await see_balance(process.env.DEPLOYER_ACCOUNT_ADDRESS + '.alex-vault');
+
     // await mint_some_wbtc(process.env.USER_ACCOUNT_ADDRESS);
     // await get_some_token('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
     // await burn('token-wbtc', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 9995719169074);
-    // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);    
+    // await burn('token-usda', 'STZP1114C4EA044RE54M6G5ZC2NYK9SAHB5QVE1', 399709145833000000);
 
     // result = await ytpGetYgivenX('yield-wbtc-51840', 1e8);
     // console.log(result);
 
     // result = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 0.01e8);
     // console.log(result);
-    
+
     // await fwpSwapXforY('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 0.01e8, 56319120000);
     // result = await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 1000000);
     // console.log(result);
 
-    
+
     // await arbitrage_fwp(dry_run = false);
-    // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');    
-    // await see_balance(process.env.USER_ACCOUNT_ADDRESS);   
-    
+    // await mint_some_wbtc('ST32AK70FP7VNAD68KVDQF3K8XSFG99WKVEHVAPFA');
+    // await see_balance(process.env.USER_ACCOUNT_ADDRESS);
+
     // result = await fwpGetPositionGivenBurn('token-wbtc', 'token-usda', 0.5e8, 0.5e8, 325.48 * 1e3 * 1e8);
     // printResult(result);
-    // result = await ytpGetPositionGivenBurn('yield-wbtc-92160', 0.5 * 1e8);      
+    // result = await ytpGetPositionGivenBurn('yield-wbtc-92160', 0.5 * 1e8);
     // printResult(result);
 
     // result = await balance('key-usda-34560-wbtc', process.env.USER_ACCOUNT_ADDRESS);
@@ -818,32 +819,29 @@ async function run() {
     // result = await balance('fwp-wbtc-usda-50-50', process.env.DEPLOYER_ACCOUNT_ADDRESS);
     // result = await multisigVoteFor('multisig-fwp-wbtc-usda-50-50', 'fwp-wbtc-usda-50-50', 2, 19502551000000);
     // result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 1);
-    // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 2); 
+    // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 2);
     // console.log(result);
     // result = await multisigVoteFor('multisig-fwp-wbtc-usda-50-50', 'fwp-wbtc-usda-50-50', 1, 19502551000000);
     // console.log(result);
     // result = await multisigEndProposal('multisig-fwp-wbtc-usda-50-50', 2);
     // console.log(result);
     // result = await multisigGetProposalById('multisig-fwp-wbtc-usda-50-50', 1);
-    // console.log(result);  
-    
+    // console.log(result);
+
     // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
     // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
     // _list = ['key-usda-wbtc', 'key-wbtc-usda', 'key-wbtc-wbtc', 'yield-wbtc', 'yield-usda', 'ytp-yield-wbtc', 'ytp-yield-usda']
     // for (let i = 0; i < _list.length; i++) {
     //     await mint_sft(_list[i], 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
     // }
-    // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
-    // for (let i = 0; i < _list.length; i++) {
-    //     await get_some_token(_list[i]);
-    // }
-    await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
+    // await get_some_token('ST1RXPS7ZHZGBTWVS9THY7PVJ49JT3EAAKYSV3JKB');
+
     // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
-    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);    
-    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);        
+    // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
+    // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
     // result = await launchCreate(
-    //     'token-t-alex', 
-    //     'lottery-t-alex', 
+    //     'token-t-alex',
+    //     'lottery-t-alex',
     //     process.env.DEPLOYER_ACCOUNT_ADDRESS,
     //     100,
     //     25e8,
@@ -855,11 +853,11 @@ async function run() {
     // await launchAddToPosition('token-t-alex', 1000);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
     // await launchRegister('token-t-alex', 'lottery-t-alex', 10000, deployer=false);
-    // result = await launchGetTokenDetails('token-t-alex');
-    // console.log(result.value.data);
+    result = await launchGetTokenDetails('token-t-alex');
+    console.log(result.value.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 1);
     // console.log(result.data);
     // result = await launchGetSubscriberAtToken('token-t-alex', 2);
-    // console.log(result.data);    
+    // console.log(result.data);
 }
 run();
