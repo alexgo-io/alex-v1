@@ -67,12 +67,11 @@ depends_on = [
 
 [contracts.flash-loan-user-margin-usda-wbtc]
 path = "contracts/flash-loan-user-margin-usda-wbtc.clar"
-depends_on = ["trait-sip-010", "trait-flash-loan-user", "yield-wbtc", "key-wbtc-usda"]
 depends_on = [
   "trait-sip-010",
   "trait-flash-loan-user",
-  "yield-usda",
-  "key-usda-wbtc",
+  "yield-wbtc",
+  "key-wbtc-usda",
   "collateral-rebalancing-pool",
   "yield-token-pool",
   "fixed-weight-pool"
@@ -80,9 +79,6 @@ depends_on = [
 
 [contracts.flash-loan-user-margin-wstx-usda]
 path = "contracts/flash-loan-user-margin-wstx-usda.clar"
-depends_on = ["trait-sip-010", "trait-flash-loan-user", "token-wstx", "yield-usda", "key-usda-wstx"]
-[contracts.flash-loan-user-margin-usda-wstx]
-path = "contracts/flash-loan-user-margin-usda-wstx.clar"
 depends_on = [
   "trait-sip-010",
   "trait-flash-loan-user",
@@ -325,13 +321,12 @@ depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
 
 [contracts.flash-loan-user-margin-wbtc-usda]
 path = "contracts/flash-loan-user-margin-wbtc-usda.clar"
-depends_on = ["trait-sip-010", "trait-flash-loan-user", "token-wbtc", "yield-usda", "key-usda-wbtc"]
 depends_on = [
   "trait-sip-010",
   "trait-flash-loan-user",
-  "token-usda",
-  "yield-wbtc",
-  "key-wbtc-usda",
+  "token-wbtc",
+  "yield-usda",
+  "key-usda-wbtc",
   "collateral-rebalancing-pool",
   "yield-token-pool",
   "fixed-weight-pool",
