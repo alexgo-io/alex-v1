@@ -70,11 +70,23 @@ const argv = yargs(hideBin(process.argv))
   .parse();
 
 // check if env file exists
-if (!fs.existsSync(path.resolve(__dirname, `Clarinet.${argv.env}.toml`))) {
+const selectedEnv = argv.env;
+if (
+  selectedEnv !== 'base' &&
+  !fs.existsSync(path.resolve(__dirname, `Clarinet.${selectedEnv}.toml`))
+) {
   console.error(
-    `features/Clarinet.${argv.env}.toml does not exist. Please setup this file first.`,
+    `features/Clarinet.${selectedEnv}.toml does not exist. Please setup this file first.`,
   );
   process.exit(1);
 }
-console.log(`selecting env: ${argv.env}`);
-save(load(argv.env), path.resolve(__dirname, '../clarity/Clarinet.toml'));
+console.log(`selecting env: ${selectedEnv}`);
+const targetToml = '../clarity/Clarinet.toml';
+if (selectedEnv === 'base') {
+  fs.cpSync(
+    path.resolve(__dirname, 'Clarinet.base.toml'),
+    path.resolve(__dirname, targetToml),
+  );
+} else {
+  save(load(selectedEnv), path.resolve(__dirname, targetToml));
+}
