@@ -12,6 +12,7 @@ const {
     broadcastTransaction,
     ClarityType,
     bufferCVFromString,
+    bufferCV,
     makeSTXTokenTransfer
 } = require('@stacks/transactions');
 const { wait_until_confirmation } = require('./utils');
@@ -19,7 +20,7 @@ const { principalCV } = require('@stacks/transactions/dist/clarity/types/princip
 
 
 const flashloan = async(loan_contract, token, amount, expiry) => {
-    console.log('[Vault] flash-loan...', loan_contract, token, amount);
+    console.log('[Vault] flash-loan...', loan_contract, token, amount, expiry);
     const privateKey = await getUserPK();
     const txOptions = {
         contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
@@ -29,7 +30,7 @@ const flashloan = async(loan_contract, token, amount, expiry) => {
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, loan_contract),
             contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, token),
             uintCV(amount),
-            someCV(uintCV(expiry))
+            someCV(bufferCV(Buffer.from('0' + expiry.toString(16), 'hex')))
         ],
         senderKey: privateKey,
         validateWithAbi: true,
