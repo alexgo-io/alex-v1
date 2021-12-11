@@ -42,7 +42,8 @@ depends_on = [
   "token-usda",
   "token-alex",
   "alex-reserve-pool",
-  "yield-token-pool"
+  "yield-token-pool",
+  "alex-vault"
 ]
 
 [contracts.faucet]
@@ -70,7 +71,10 @@ depends_on = [
   "trait-sip-010",
   "trait-flash-loan-user",
   "yield-usda",
-  "key-usda-wbtc"
+  "key-usda-wbtc",
+  "collateral-rebalancing-pool",
+  "yield-token-pool",
+  "fixed-weight-pool"
 ]
 
 [contracts.flash-loan-user-margin-usda-wstx]
@@ -80,7 +84,10 @@ depends_on = [
   "trait-flash-loan-user",
   "token-wstx",
   "yield-usda",
-  "key-usda-wstx"
+  "key-usda-wstx",
+  "collateral-rebalancing-pool",
+  "yield-token-pool",
+  "fixed-weight-pool"
 ]
 
 [contracts.fwp-wstx-usda-50-50]
@@ -110,12 +117,19 @@ depends_on = [
   "alex-reserve-pool",
   "token-usda",
   "fixed-weight-pool",
-  "trait-multisig-vote"
+  "trait-multisig-vote",
+  "alex-vault"
 ]
 
 [contracts.margin-helper]
 path = "contracts/helpers/margin-helper.clar"
-depends_on = [ "trait-sip-010", "trait-flash-loan-user" ]
+depends_on = [
+  "trait-sip-010",
+  "trait-flash-loan-user",
+  "collateral-rebalancing-pool",
+  "fixed-weight-pool",
+  "alex-vault"
+]
 
 [contracts.math-fixed-point]
 path = "contracts/lib/math-fixed-point.clar"
@@ -127,7 +141,7 @@ depends_on = [ ]
 
 [contracts.math-new-fixed-point]
 path = "contracts/new-lib/math-new-fixed-point.clar"
-depends_on = [ "math-new-log-exp" ]
+depends_on = [ "math-new-log-exp", "math-log-exp" ]
 
 [contracts.math-new-log-exp]
 path = "contracts/new-lib/math-new-log-exp.clar"
@@ -135,19 +149,29 @@ depends_on = [ ]
 
 [contracts.multisig-crp-usda-wstx]
 path = "contracts/multisig/multisig-crp-usda-wstx.clar"
-depends_on = [ "yield-usda", "key-usda-wstx" ]
+depends_on = [ "yield-usda", "key-usda-wstx", "collateral-rebalancing-pool" ]
 
 [contracts.multisig-fwp-wstx-usda-50-50]
 path = "contracts/multisig/multisig-fwp-wstx-usda-50-50.clar"
-depends_on = [ ]
+depends_on = [
+  "fwp-wstx-wbtc-50-50",
+  "fwp-wstx-usda-50-50",
+  "math-fixed-point",
+  "fixed-weight-pool"
+]
 
 [contracts.multisig-fwp-wstx-wbtc-50-50]
 path = "contracts/multisig/multisig-fwp-wstx-wbtc-50-50.clar"
-depends_on = [ ]
+depends_on = [
+  "fwp-wstx-wbtc-50-50",
+  "fwp-wstx-usda-50-50",
+  "math-fixed-point",
+  "fixed-weight-pool"
+]
 
 [contracts.multisig-ytp-yield-wbtc]
 path = "contracts/multisig/multisig-ytp-yield-wbtc.clar"
-depends_on = [ "ytp-yield-wbtc", "yield-wbtc" ]
+depends_on = [ "ytp-yield-wbtc", "yield-wbtc", "yield-token-pool" ]
 
 [contracts.token-alex]
 path = "contracts/token/token-alex.clar"
@@ -208,6 +232,7 @@ depends_on = [ "math-fixed-point" ]
 [contracts.yield-token-pool]
 path = "contracts/pool/yield-token-pool.clar"
 depends_on = [
+  "alex-vault",
   "trait-sip-010",
   "trait-vault",
   "trait-flash-loan-user",
@@ -227,23 +252,40 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.multisig-lbp-alex-usda-90-10]
 path = "contracts/multisig/multisig-lbp-alex-usda-90-10.clar"
-depends_on = [ ]
+depends_on = [ "lbp-alex-usda-90-10" ]
 
 [contracts.multisig-crp-usda-wbtc]
 path = "contracts/multisig/multisig-crp-usda-wbtc.clar"
-depends_on = [ "yield-usda", "key-usda-wbtc" ]
+depends_on = [
+  "yield-usda",
+  "key-usda-wbtc",
+  "collateral-rebalancing-pool",
+  "trait-semi-fungible-token",
+  "trait-multisig-vote"
+]
 
 [contracts.multisig-crp-wbtc-wbtc]
 path = "contracts/multisig/multisig-crp-wbtc-wbtc.clar"
-depends_on = [ "yield-wbtc", "key-wbtc-wbtc" ]
+depends_on = [
+  "yield-wbtc",
+  "key-wbtc-wbtc",
+  "collateral-rebalancing-pool",
+  "trait-semi-fungible-token",
+  "trait-multisig-vote"
+]
 
 [contracts.multisig-crp-wbtc-usda]
 path = "contracts/multisig/multisig-crp-wbtc-usda.clar"
-depends_on = [ "yield-wbtc", "key-wbtc-usda" ]
+depends_on = [
+  "yield-wbtc",
+  "key-wbtc-usda",
+  "collateral-rebalancing-pool",
+  "trait-multisig-vote"
+]
 
 [contracts.multisig-ytp-yield-usda]
 path = "contracts/multisig/multisig-ytp-yield-usda.clar"
-depends_on = [ "ytp-yield-usda", "yield-usda" ]
+depends_on = [ "ytp-yield-usda", "yield-usda", "yield-token-pool" ]
 
 [contracts.key-wbtc-usda]
 path = "contracts/key-token/key-wbtc-usda.clar"
@@ -284,7 +326,12 @@ depends_on = [
   "trait-flash-loan-user",
   "token-usda",
   "yield-wbtc",
-  "key-wbtc-usda"
+  "key-wbtc-usda",
+  "collateral-rebalancing-pool",
+  "yield-token-pool",
+  "fixed-weight-pool",
+  "multisig-ytp-yield-wbtc",
+  "multisig-ytp-yield-usda"
 ]
 
 [contracts.lottery-t-alex]

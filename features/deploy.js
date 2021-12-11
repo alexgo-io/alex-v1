@@ -29,6 +29,19 @@ const chalk = require('chalk');
 const contract_records = { Contracts: [] };
 let VERSION;
 
+const getAllMatches = (source, regex) => {
+  const matches = [];
+  source.replace(regex, function () {
+    matches.push({
+      match: arguments[0],
+      offset: arguments[arguments.length - 2],
+      groups: Array.prototype.slice.call(arguments, 1, -2),
+    });
+    return arguments[0];
+  });
+  return matches;
+};
+
 async function deployAllContracts() {
   const clarinetConfig = toml.parse(
     fs.readFileSync(
@@ -39,31 +52,63 @@ async function deployAllContracts() {
 
   const weight = {};
 
-  const contracts = clarinetConfig.contracts; /*?*/
+  const contracts = clarinetConfig.contracts;
+
+  function checkDependencies(contractName) {
+    const content = fs.readFileSync(
+      path.resolve(__dirname, '../clarity/' + contracts[contractName].path),
+      'utf8',
+    );
+
+    const regex = /contract-call\? \.([\w|-]*) /gm;
+
+    const match = getAllMatches(content, regex);
+    const contractCalls = Array.from(new Set(match.map(m => m.groups[0])));
+
+    contractCalls.forEach(calledContract => {
+      if (!contracts[contractName].depends_on.includes(calledContract)) {
+        console.log(
+          `contract: ${chalk.blue(contractName)} called: [${chalk.red(
+            calledContract,
+          )}] but not in dependencies. fixed in: ${
+            contracts[contractName].path
+          }`,
+        );
+      }
+    });
+  }
+
+  // checkDependencies from clarity code report unresolved dependencies
+  Object.keys(contracts).forEach(checkDependencies);
+
+  const rootCounted = new Set();
 
   const countWeight = (contractName, length) => {
     if (weight[contractName] == null) {
       weight[contractName] = 0;
     }
     weight[contractName] += length;
-    contracts[contractName].depends_on.forEach(name =>
-      countWeight(name, length + 1),
-    );
+    contracts[contractName].depends_on.forEach(name => {
+      countWeight(name, length + 1);
+    });
   };
 
-  Object.keys(contracts).forEach(countWeight);
+  const keys = Object.keys(contracts);
+  keys.forEach(countWeight);
+  keys.reverse().forEach(countWeight);
+
+  weight; /*?*/
+
   const weightPair = sortBy(
     toPairs(weight),
     ([name, weight]) => weight,
-  ).reverse(); /*?*/
+  ).reverse();
 
   const inQueue = new Set();
 
   const queue = new PQueue.default({ concurrency: 1 });
 
-  let counter = 0;
-
-  weightPair.forEach(p => {
+  weightPair.forEach((p, index) => {
     const contractName = p[0];
     queue.add(async () => {
       if (inQueue.has(contractName)) {
@@ -71,8 +116,11 @@ async function deployAllContracts() {
       }
       inQueue.add(contractName);
 
-      counter++;
-      console.log(`Deploying - ${counter} - ${contractName} <> ${p[1]}`);
+      console.log(
+        `Deploying - ${chalk.yellow(
+          `${index + 1}/${weightPair.length}`,
+        )} - ${contractName} <> ${p[1]}`,
+      );
       await deploy(contracts, contractName, p[1]);
     });
   });
