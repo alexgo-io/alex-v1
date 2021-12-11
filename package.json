@@ -19,6 +19,7 @@
     "coingecko-api": "^1.0.10",
     "dotenv": "^10.0.0",
     "lodash": "^4.17.21",
+    "p-queue": "6.6.2",
     "readline-promise": "^1.0.5",
     "replace-in-file": "^6.2.0",
     "yargs": "^17.3.0"

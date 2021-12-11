@@ -1,4 +1,4 @@
-const { getDeployerPK, getUserPK, network } = require("./wallet");
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -10,16 +10,17 @@ const {
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 const {
   principalCV,
-} = require("@stacks/transactions/dist/clarity/types/principalCV");
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
 const {
   DEPLOYER_ACCOUNT_ADDRESS,
   USER_ACCOUNT_ADDRESS,
-} = require("./constants");
+} = require('./constants');
 
+const contractName = 'fixed-weight-pool';
 const fwpCreate = async (
   tokenX,
   tokenY,
@@ -28,13 +29,13 @@ const fwpCreate = async (
   poolToken,
   multiSig,
   dx,
-  dy
+  dy,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] create-pool...",
+    '[FWP] create-pool...',
     tokenX,
     tokenY,
     weightX,
@@ -42,13 +43,13 @@ const fwpCreate = async (
     poolToken,
     multiSig,
     dx,
-    dy
+    dy,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "create-pool",
+    contractName: contractName,
+    functionName: 'create-pool',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -77,14 +78,14 @@ const fwpCreate = async (
 
 const fwpSetOracleEnbled = async (tokenX, tokenY, weightX, weightY) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[FWP] set-oracle-enabled...", tokenX, tokenY, weightX, weightY);
+  console.log('[FWP] set-oracle-enabled...', tokenX, tokenY, weightX, weightY);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "set-oracle-enabled",
+    contractName: contractName,
+    functionName: 'set-oracle-enabled',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -112,24 +113,24 @@ const fwpSetOracleAverage = async (
   tokenY,
   weightX,
   weightY,
-  average
+  average,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] set-oracle-average...",
+    '[FWP] set-oracle-average...',
     tokenX,
     tokenY,
     weightX,
     weightY,
-    average
+    average,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "set-oracle-average",
+    contractName: contractName,
+    functionName: 'set-oracle-average',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -161,26 +162,26 @@ const fwpAddToPosition = async (
   poolToken,
   dx,
   dy,
-  deployer = false
+  deployer = false,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] add-to-position...",
+    '[FWP] add-to-position...',
     tokenX,
     tokenY,
     weightX,
     weightY,
     poolToken,
     dx,
-    dy
+    dy,
   );
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "add-to-position",
+    contractName: contractName,
+    functionName: 'add-to-position',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -213,25 +214,25 @@ const fwpReducePosition = async (
   weightY,
   poolToken,
   percent,
-  deployer = false
+  deployer = false,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] reduce-position...",
+    '[FWP] reduce-position...',
     tokenX,
     tokenY,
     weightX,
     weightY,
     poolToken,
-    percent
+    percent,
   );
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "reduce-position",
+    contractName: contractName,
+    functionName: 'reduce-position',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -256,14 +257,14 @@ const fwpReducePosition = async (
   }
 };
 
-const printResult = (result) => {
+const printResult = result => {
   if (result.type === ClarityType.ResponseOk) {
     if (result.value.type == ClarityType.UInt) {
       console.log(result.value);
     } else if (result.value.type == ClarityType.Tuple) {
-      console.log("|");
+      console.log('|');
       for (const key in result.value.data) {
-        console.log("---", key, ":", result.value.data[key]);
+        console.log('---', key, ':', result.value.data[key]);
       }
     }
   }
@@ -271,21 +272,21 @@ const printResult = (result) => {
 
 const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] get-x-given-price...",
+    '[FWP] get-x-given-price...',
     tokenX,
     tokenY,
     weightX,
     weightY,
-    price
+    price,
   );
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "get-x-given-price",
+    contractName: contractName,
+    functionName: 'get-x-given-price',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -305,14 +306,14 @@ const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
 
 const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[FWP] get-y-given-x...", tokenX, tokenY, weightX, weightY, dx);
+  console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dx);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "get-y-given-x",
+    contractName: contractName,
+    functionName: 'get-y-given-x',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -332,14 +333,14 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
 
 const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx, min_dy) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[FWP] swap-x-for-y...", tokenX, tokenY, weightX, weightY, dx);
+  console.log('[FWP] swap-x-for-y...', tokenX, tokenY, weightX, weightY, dx);
   const privateKey = await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "swap-x-for-y",
+    contractName: contractName,
+    functionName: 'swap-x-for-y',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -366,14 +367,14 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx, min_dy) => {
 
 const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy, min_dx) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[FWP] swap-y-for-x...", tokenX, tokenY, weightX, weightY, dy);
+  console.log('[FWP] swap-y-for-x...', tokenX, tokenY, weightX, weightY, dy);
   const privateKey = await getUserPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "swap-y-for-x",
+    contractName: contractName,
+    functionName: 'swap-y-for-x',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -400,13 +401,13 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy, min_dx) => {
 
 const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[FWP] get-x-given-y...", tokenX, tokenY, weightX, weightY, dy);
+  console.log('[FWP] get-x-given-y...', tokenX, tokenY, weightX, weightY, dy);
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "get-x-given-y",
+    contractName: contractName,
+    functionName: 'get-x-given-y',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -426,21 +427,21 @@ const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
 
 const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] get-y-given-price...",
+    '[FWP] get-y-given-price...',
     tokenX,
     tokenY,
     weightX,
     weightY,
-    price
+    price,
   );
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "get-y-given-price",
+    contractName: contractName,
+    functionName: 'get-y-given-price',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -463,24 +464,24 @@ const fwpGetPositionGivenBurn = async (
   tokenY,
   weightX,
   weightY,
-  token
+  token,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[FWP] get-position-given-burn...",
+    '[FWP] get-position-given-burn...',
     tokenX,
     tokenY,
     weightX,
     weightY,
-    token
+    token,
   );
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "get-position-given-burn",
+    contractName: contractName,
+    functionName: 'get-position-given-burn',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -500,14 +501,14 @@ const fwpGetPositionGivenBurn = async (
 
 const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[FWP] get-pool-details...]", tokenX, tokenY, weightX, weightY);
+  console.log('[FWP] get-pool-details...]', tokenX, tokenY, weightX, weightY);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "fixed-weight-pool",
-    functionName: "get-pool-details",
+    contractName: contractName,
+    functionName: 'get-pool-details',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
@@ -529,24 +530,24 @@ const multisigProposeWBTCUSDA = async (
   title,
   url,
   new_fee_rate_x,
-  new_fee_rate_y
+  new_fee_rate_y,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[multisig] propose...",
+    '[multisig] propose...',
     start_block_height,
     title,
     url,
     new_fee_rate_x,
-    new_fee_rate_y
+    new_fee_rate_y,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "multisig-fwp-wbtc-usda-50-50",
-    functionName: "propose",
+    contractName: 'multisig-fwp-wbtc-usda-50-50',
+    functionName: 'propose',
     functionArgs: [
       uintCV(start_block_height),
       stringAsciiCV(title),
