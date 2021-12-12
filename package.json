@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@stacks/blockchain-api-client": "^0.69.0",
+    "@types/coingecko-api": "^1.0.5",
     "@types/yargs": "^17.0.7",
     "prettier": "^2.5.1"
   },

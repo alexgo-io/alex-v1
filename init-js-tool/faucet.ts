@@ -1,21 +1,17 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
+  broadcastTransaction,
+  makeContractCall,
   PostConditionMode,
   uintCV,
-  contractPrincipalCV,
-  broadcastTransaction,
-  ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const { DEPLOYER_ACCOUNT_ADDRESS } = require('./constants');
+} from '@stacks/transactions';
+import { principalCV } from '@stacks/transactions/dist/clarity/types/principalCV';
 
-const setUsdaAmount = async amount => {
+import { getDeployerPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS } from './constants';
+
+export const setUsdaAmount = async (amount: number) => {
   console.log('[Faucet] set-usda-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -39,7 +35,7 @@ const setUsdaAmount = async amount => {
   }
 };
 
-const setWbtcAmount = async amount => {
+export const setWbtcAmount = async (amount: number) => {
   console.log('[Faucet] set-wbtc-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -63,7 +59,7 @@ const setWbtcAmount = async amount => {
   }
 };
 
-const setStxAmount = async amount => {
+export const setStxAmount = async (amount: number) => {
   console.log('[Faucet] set-stx-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -87,7 +83,7 @@ const setStxAmount = async amount => {
   }
 };
 
-const setAlexAmount = async amount => {
+export const setAlexAmount = async (amount: number) => {
   console.log('[Faucet] set-alex-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -111,7 +107,7 @@ const setAlexAmount = async amount => {
   }
 };
 
-const getSomeTokens = async recipient => {
+export const getSomeTokens = async (recipient: string) => {
   console.log('[Faucet] get some tokens...');
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -134,9 +130,3 @@ const getSomeTokens = async recipient => {
     console.log(error);
   }
 };
-
-exports.setUsdaAmount = setUsdaAmount;
-exports.setWbtcAmount = setWbtcAmount;
-exports.setStxAmount = setStxAmount;
-exports.getSomeTokens = getSomeTokens;
-exports.setAlexAmount = setAlexAmount;

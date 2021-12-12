@@ -1,37 +1,31 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
-  PostConditionMode,
-  uintCV,
-  someCV,
-  contractPrincipalCV,
   broadcastTransaction,
-  ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const {
-  DEPLOYER_ACCOUNT_ADDRESS,
-  USER_ACCOUNT_ADDRESS,
-} = require('./constants');
+  callReadOnlyFunction,
+  contractPrincipalCV,
+  makeContractCall,
+  PostConditionMode,
+  someCV,
+  uintCV,
+} from '@stacks/transactions';
 
-const crpCreate = async (
-  token,
-  collateral,
-  expiry,
-  yieldToken,
-  keyToken,
-  multiSig,
-  ltv_0,
-  conversion_ltv,
-  bs_vol,
-  moving_average,
-  token_to_maturity,
-  dx,
+import { getDeployerPK, getUserPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
+
+export const crpCreate = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  yieldToken: string,
+  keyToken: string,
+  multiSig: string,
+  ltv_0: number,
+  conversion_ltv: number,
+  bs_vol: number,
+  moving_average: number,
+  token_to_maturity: number,
+  dx: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -86,13 +80,13 @@ const crpCreate = async (
   }
 };
 
-const crpAddToPostionAndSwitch = async (
-  token,
-  collateral,
-  expiry,
-  yieldToken,
-  keyToken,
-  dx,
+export const crpAddToPostionAndSwitch = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  yieldToken: string,
+  keyToken: string,
+  dx: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -135,13 +129,13 @@ const crpAddToPostionAndSwitch = async (
   }
 };
 
-const crpAddToPostion = async (
-  token,
-  collateral,
-  expiry,
-  yieldToken,
-  keyToken,
-  dx,
+export const crpAddToPostion = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  yieldToken: string,
+  keyToken: string,
+  dx: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -184,12 +178,12 @@ const crpAddToPostion = async (
   }
 };
 
-const crpReducePostionYield = async (
-  token,
-  collateral,
-  expiry,
-  yieldToken,
-  percent,
+export const crpReducePostionYield = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  yieldToken: string,
+  percent: number,
   deployer = false,
 ) => {
   console.log(
@@ -231,12 +225,12 @@ const crpReducePostionYield = async (
   }
 };
 
-const crpReducePostionKey = async (
-  token,
-  collateral,
-  expiry,
-  keyToken,
-  percent,
+export const crpReducePostionKey = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  keyToken: string,
+  percent: number,
   deployer = false,
 ) => {
   console.log(
@@ -279,7 +273,13 @@ const crpReducePostionKey = async (
   }
 };
 
-const crpSwapXforY = async (token, collateral, expiry, dx, min_dy) => {
+export const crpSwapXforY = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  dx: number,
+  min_dy: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -312,7 +312,13 @@ const crpSwapXforY = async (token, collateral, expiry, dx, min_dy) => {
   }
 };
 
-const crpSwapYforX = async (token, collateral, expiry, dy, min_dx) => {
+export const crpSwapYforX = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  dy: number,
+  min_dx: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -345,7 +351,11 @@ const crpSwapYforX = async (token, collateral, expiry, dy, min_dx) => {
   }
 };
 
-const crpGetLtv = async (token, collateral, expiry) => {
+export const crpGetLtv = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -370,7 +380,12 @@ const crpGetLtv = async (token, collateral, expiry) => {
   }
 };
 
-const crpGetXgivenY = async (token, collateral, expiry, dy) => {
+export const crpGetXgivenY = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  dy: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -396,7 +411,12 @@ const crpGetXgivenY = async (token, collateral, expiry, dy) => {
   }
 };
 
-const crpGetYgivenX = async (token, collateral, expiry, dx) => {
+export const crpGetYgivenX = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  dx: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -422,7 +442,12 @@ const crpGetYgivenX = async (token, collateral, expiry, dx) => {
   }
 };
 
-const crpGetYgivenPrice = async (token, collateral, expiry, price) => {
+export const crpGetYgivenPrice = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  price: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -448,7 +473,12 @@ const crpGetYgivenPrice = async (token, collateral, expiry, price) => {
   }
 };
 
-const crpGetXgivenPrice = async (token, collateral, expiry, price) => {
+export const crpGetXgivenPrice = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  price: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -474,11 +504,11 @@ const crpGetXgivenPrice = async (token, collateral, expiry, price) => {
   }
 };
 
-const crpGetPositionGivenBurnKey = async (
-  token,
-  collateral,
-  expiry,
-  shares,
+export const crpGetPositionGivenBurnKey = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  shares: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -511,7 +541,11 @@ const crpGetPositionGivenBurnKey = async (
   }
 };
 
-const crpGetPoolValueInToken = async (token, collateral, expiry) => {
+export const crpGetPoolValueInToken = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -536,7 +570,11 @@ const crpGetPoolValueInToken = async (token, collateral, expiry) => {
   }
 };
 
-const crpGetPoolDetails = async (token, collateral, expiry) => {
+export const crpGetPoolDetails = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -561,7 +599,7 @@ const crpGetPoolDetails = async (token, collateral, expiry) => {
   }
 };
 
-const crpGetSpot = async (token, collateral) => {
+export const crpGetSpot = async (token: string, collateral: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -585,7 +623,13 @@ const crpGetSpot = async (token, collateral) => {
   }
 };
 
-const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
+export const crpGetWeightY = async (
+  token: string,
+  collateral: string,
+  expiry: number,
+  strike: number,
+  bs_vol: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -618,21 +662,3 @@ const crpGetWeightY = async (token, collateral, expiry, strike, bs_vol) => {
     console.log(error);
   }
 };
-
-exports.crpCreate = crpCreate;
-exports.crpAddToPostion = crpAddToPostion;
-exports.crpAddToPostionAndSwitch = crpAddToPostionAndSwitch;
-exports.crpReducePostionKey = crpReducePostionKey;
-exports.crpReducePostionYield = crpReducePostionYield;
-exports.crpGetLtv = crpGetLtv;
-exports.crpGetYgivenX = crpGetYgivenX;
-exports.crpGetXgivenY = crpGetXgivenY;
-exports.crpGetPoolDetails = crpGetPoolDetails;
-exports.crpGetPoolValueInToken = crpGetPoolValueInToken;
-exports.crpGetWeightY = crpGetWeightY;
-exports.crpGetYgivenPrice = crpGetYgivenPrice;
-exports.crpGetXgivenPrice = crpGetXgivenPrice;
-exports.crpSwapXforY = crpSwapXforY;
-exports.crpSwapYforX = crpSwapYforX;
-exports.crpGetSpot = crpGetSpot;
-exports.crpGetPositionGivenBurnKey = crpGetPositionGivenBurnKey;

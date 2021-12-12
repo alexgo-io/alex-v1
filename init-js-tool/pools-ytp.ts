@@ -1,32 +1,27 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
-  PostConditionMode,
-  uintCV,
-  someCV,
-  contractPrincipalCV,
   broadcastTransaction,
+  callReadOnlyFunction,
   ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const {
-  DEPLOYER_ACCOUNT_ADDRESS,
-  USER_ACCOUNT_ADDRESS,
-} = require('./constants');
+  contractPrincipalCV,
+  makeContractCall,
+  PostConditionMode,
+  someCV,
+  uintCV,
+} from '@stacks/transactions';
 
-const ytpCreate = async (
-  expiry,
-  yiedToken,
-  token,
-  poolToken,
-  multiSig,
-  dx,
-  dy,
+import { getDeployerPK, getUserPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
+
+export const ytpCreate = async (
+  expiry: number,
+  yiedToken: string,
+  token: string,
+  poolToken: string,
+  multiSig: string,
+  dx: number,
+  dy: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -71,12 +66,12 @@ const ytpCreate = async (
   }
 };
 
-const ytpAddToPosition = async (
-  expiry,
-  yiedToken,
-  token,
-  poolToken,
-  dx,
+export const ytpAddToPosition = async (
+  expiry: number,
+  yiedToken: string,
+  token: string,
+  poolToken: string,
+  dx: number,
   deployer = false,
 ) => {
   console.log(
@@ -111,12 +106,12 @@ const ytpAddToPosition = async (
   }
 };
 
-const ytpReducePosition = async (
-  expiry,
-  yiedToken,
-  token,
-  poolToken,
-  percent,
+export const ytpReducePosition = async (
+  expiry: number,
+  yiedToken: string,
+  token: string,
+  poolToken: string,
+  percent: number,
   deployer = false,
 ) => {
   console.log(
@@ -151,7 +146,7 @@ const ytpReducePosition = async (
   }
 };
 
-const ytpGetPrice = async (expiry, yieldToken) => {
+export const ytpGetPrice = async (expiry: number, yieldToken: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -175,7 +170,7 @@ const ytpGetPrice = async (expiry, yieldToken) => {
   }
 };
 
-const ytpGetYield = async (expiry, yieldToken) => {
+export const ytpGetYield = async (expiry: number, yieldToken: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -199,7 +194,13 @@ const ytpGetYield = async (expiry, yieldToken) => {
   }
 };
 
-const ytpSwapXforY = async (expiry, yiedToken, token, dx, min_dy) => {
+export const ytpSwapXforY = async (
+  expiry: number,
+  yiedToken: string,
+  token: string,
+  dx: number,
+  min_dy: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -232,7 +233,13 @@ const ytpSwapXforY = async (expiry, yiedToken, token, dx, min_dy) => {
   }
 };
 
-const ytpSwapYforX = async (expiry, yiedToken, token, dy, min_dx) => {
+export const ytpSwapYforX = async (
+  expiry: number,
+  yiedToken: string,
+  token: string,
+  dy: number,
+  min_dx: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -265,7 +272,11 @@ const ytpSwapYforX = async (expiry, yiedToken, token, dy, min_dx) => {
   }
 };
 
-const ytpGetXgivenY = async (expiry, yieldToken, dy) => {
+export const ytpGetXgivenY = async (
+  expiry: number,
+  yieldToken: string,
+  dy: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -290,7 +301,11 @@ const ytpGetXgivenY = async (expiry, yieldToken, dy) => {
   }
 };
 
-const ytpGetYgivenX = async (expiry, yieldToken, dx) => {
+export const ytpGetYgivenX = async (
+  expiry: number,
+  yieldToken: string,
+  dx: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -315,7 +330,11 @@ const ytpGetYgivenX = async (expiry, yieldToken, dx) => {
   }
 };
 
-const ytpGetXgivenYield = async (expiry, yieldToken, yied) => {
+export const ytpGetXgivenYield = async (
+  expiry: number,
+  yieldToken: string,
+  yied: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -340,7 +359,11 @@ const ytpGetXgivenYield = async (expiry, yieldToken, yied) => {
   }
 };
 
-const ytpGetYgivenYield = async (expiry, yieldToken, yied) => {
+export const ytpGetYgivenYield = async (
+  expiry: number,
+  yieldToken: string,
+  yied: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -365,7 +388,11 @@ const ytpGetYgivenYield = async (expiry, yieldToken, yied) => {
   }
 };
 
-const ytpGetPositionGivenBurn = async (expiry, yieldToken, shares) => {
+export const ytpGetPositionGivenBurn = async (
+  expiry: number,
+  yieldToken: string,
+  shares: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -390,7 +417,7 @@ const ytpGetPositionGivenBurn = async (expiry, yieldToken, shares) => {
   }
 };
 
-const ytpGetPoolDetails = async (expiry, yieldToken) => {
+export const ytpGetPoolDetails = async (expiry: number, yieldToken: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -414,7 +441,10 @@ const ytpGetPoolDetails = async (expiry, yieldToken) => {
   }
 };
 
-const printResult = result => {
+export const printResult = (result: {
+  type: ClarityType;
+  value: any;
+}) => {
   if (result.type === ClarityType.ResponseOk) {
     if (result.value.type == ClarityType.UInt) {
       console.log(result.value);
@@ -426,17 +456,3 @@ const printResult = result => {
     }
   }
 };
-
-exports.ytpCreate = ytpCreate;
-exports.ytpGetPrice = ytpGetPrice;
-exports.ytpGetYield = ytpGetYield;
-exports.ytpSwapXforY = ytpSwapXforY;
-exports.ytpSwapYforX = ytpSwapYforX;
-exports.ytpGetYgivenX = ytpGetYgivenX;
-exports.ytpGetXgivenY = ytpGetXgivenY;
-exports.ytpGetPoolDetails = ytpGetPoolDetails;
-exports.ytpAddToPosition = ytpAddToPosition;
-exports.ytpReducePosition = ytpReducePosition;
-exports.ytpGetXgivenYield = ytpGetXgivenYield;
-exports.ytpGetYgivenYield = ytpGetYgivenYield;
-exports.ytpGetPositionGivenBurn = ytpGetPositionGivenBurn;

@@ -383,6 +383,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/coingecko-api@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@types/coingecko-api/-/coingecko-api-1.0.5.tgz#7c919e99db76f77578c33f26b747d02729b171fb"
+  integrity sha512-HJC4JrdjkUUVRvE/9kZgYAM+sCowEOpsjOfuOKw1wtuqAokMAycE+OQ+mF8BL3xxYBB1brbjnSgPlwlBCrfqFw==
+
 "@types/elliptic@^6.4.12", "@types/elliptic@^6.4.9":
   version "6.4.14"
   resolved "https://registry.yarnpkg.com/@types/elliptic/-/elliptic-6.4.14.tgz#7bbaad60567a588c1f08b10893453e6b9b4de48e"

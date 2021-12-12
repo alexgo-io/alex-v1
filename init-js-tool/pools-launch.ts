@@ -1,35 +1,28 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
+  broadcastTransaction,
+  callReadOnlyFunction,
+  contractPrincipalCV,
+  makeContractCall,
   PostConditionMode,
   uintCV,
-  someCV,
-  stringAsciiCV,
-  contractPrincipalCV,
-  broadcastTransaction,
-  ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const {
-  DEPLOYER_ACCOUNT_ADDRESS,
-  USER_ACCOUNT_ADDRESS,
-} = require('./constants');
+} from '@stacks/transactions';
+import { principalCV } from '@stacks/transactions/dist/clarity/types/principalCV';
 
-const launchCreate = async (
-  token,
-  ticket,
-  fee_to_address,
-  amount_per_ticket,
-  wstx_per_ticket_in_fixed,
-  registration_start,
-  registration_end,
-  claim_end,
-  activation_threshold,
+import { getDeployerPK, getUserPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
+
+export const launchCreate = async (
+  token: string,
+  ticket: string,
+  fee_to_address: string,
+  amount_per_ticket: number,
+  wstx_per_ticket_in_fixed: number,
+  registration_start: number,
+  registration_end: number,
+  claim_end: number,
+  activation_threshold: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -78,7 +71,7 @@ const launchCreate = async (
   }
 };
 
-const launchAddToPosition = async (token, tickets) => {
+export const launchAddToPosition = async (token: string, tickets: number) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -108,10 +101,10 @@ const launchAddToPosition = async (token, tickets) => {
   }
 };
 
-const launchRegister = async (
-  token,
-  ticket,
-  ticket_amount,
+export const launchRegister = async (
+  token: string,
+  ticket: string,
+  ticket_amount: number,
   deployer = true,
 ) => {
   console.log(
@@ -143,8 +136,10 @@ const launchRegister = async (
     console.log(error);
   }
 };
-
-const launchGetSubscriberAtToken = async (token, user_id) => {
+export const launchGetSubscriberAtToken = async (
+  token: string,
+  user_id: string,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -168,7 +163,7 @@ const launchGetSubscriberAtToken = async (token, user_id) => {
   }
 };
 
-const launchGetTokenDetails = async token => {
+export const launchGetTokenDetails = async (token: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -188,9 +183,3 @@ const launchGetTokenDetails = async token => {
     console.log(error);
   }
 };
-
-exports.launchCreate = launchCreate;
-exports.launchAddToPosition = launchAddToPosition;
-exports.launchRegister = launchRegister;
-exports.launchGetSubscriberAtToken = launchGetSubscriberAtToken;
-exports.launchGetTokenDetails = launchGetTokenDetails;
