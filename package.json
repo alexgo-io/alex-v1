@@ -5,22 +5,42 @@
   "author": "Tiger WAng",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "select": "node ./features/select.js --env"
+  },
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "@stacks/connect": "^6.1.0",
     "@stacks/keychain": "^2.0.1",
     "@stacks/network": "^2.0.1",
     "@stacks/transactions": "^2.0.1",
     "@stacks/wallet-sdk": "^2.0.1",
     "bn.js": "^5.2.0",
+    "chalk": "4.1.2",
     "coingecko-api": "^1.0.10",
     "dotenv": "^10.0.0",
+    "lodash": "^4.17.21",
+    "p-queue": "6.6.2",
     "readline-promise": "^1.0.5",
-    "replace-in-file": "^6.2.0"
+    "replace-in-file": "^6.2.0",
+    "yargs": "^17.3.0"
   },
   "resolutions": {
     "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
   },
   "devDependencies": {
-    "@stacks/blockchain-api-client": "^0.69.0"
+    "@stacks/blockchain-api-client": "^0.69.0",
+    "prettier": "^2.5.1"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "tabWidth": 2,
+    "arrowParens": "avoid",
+    "trailingComma": "all",
+    "printWidth": 80
   }
 }
