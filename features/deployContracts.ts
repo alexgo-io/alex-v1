@@ -1,57 +1,50 @@
-#!/usr/bin/env node
+import PQueue from 'p-queue';
+import toml from '@iarna/toml';
+import path from 'path';
+import fs from 'fs';
+import { uniq } from 'lodash';
+import yargs from 'yargs/yargs';
+import { hideBin } from 'yargs/helpers';
+import { broadcastTransaction, makeContractDeploy } from '@stacks/transactions';
+import { exit } from 'process';
+import chalk from 'chalk';
+import { Contracts } from './types';
 
 require('dotenv').config();
-const PQueue = require('p-queue');
-const toml = require('@iarna/toml');
-const fs = require('fs');
-const path = require('path');
-const { pick, sortBy, groupBy, reduce, uniq } = require('lodash');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
-const { toPairs } = require('lodash');
+
 const { sleep } = require('../init-js-tool/utils');
 const {
   getDeployerPK,
   network,
   genesis_transfer,
 } = require('../init-js-tool/wallet');
-const {
-  makeContractDeploy,
-  broadcastTransaction,
-} = require('@stacks/transactions');
+
 const {
   STACKS_API_URL,
   DEPLOYER_ACCOUNT_ADDRESS,
 } = require('../init-js-tool/constants');
-const { exit } = require('process');
-const chalk = require('chalk');
 
-const contract_records = { Contracts: [] };
-let VERSION;
+const contract_records: {
+  Contracts: {
+    name: string;
+    deployer: string;
+    version: number;
+  }[];
+} = { Contracts: [] };
 
-const getAllMatches = (source, regex) => {
-  const matches = [];
-  source.replace(regex, function () {
-    matches.push({
-      match: arguments[0],
-      offset: arguments[arguments.length - 2],
-      groups: Array.prototype.slice.call(arguments, 1, -2),
-    });
-    return arguments[0];
-  });
-  return matches;
-};
+let VERSION = 0;
 
-function checkDependencies(contractName, contracts) {
+function checkDependencies(contractName: string, contracts: Contracts) {
   const content = fs.readFileSync(
     path.resolve(__dirname, '../clarity/' + contracts[contractName].path),
     'utf8',
   );
 
   const regex = /contract-call\? \.([\w|-]*) /gm;
-
-  const match = getAllMatches(content, regex);
-  const contractCalls = Array.from(new Set(match.map(m => m.groups[0])));
+  /*? contractName*/
+  const contractCalls = uniq(
+    Array.from(content.matchAll(regex)).map(m => m[1]),
+  ); /*?*/
 
   contractCalls.forEach(calledContract => {
     if (!contracts[contractName].depends_on.includes(calledContract)) {
@@ -64,7 +57,7 @@ function checkDependencies(contractName, contracts) {
   });
 }
 
-function checkAllDependencies(contracts) {
+function checkAllDependencies(contracts: Contracts) {
   Object.keys(contracts).forEach(contractName => {
     checkDependencies(contractName, contracts);
   });
@@ -78,12 +71,12 @@ async function deployAllContracts() {
     ),
   );
 
-  const contracts = clarinetConfig.contracts;
+  const contracts = clarinetConfig.contracts as Contracts;
 
   checkAllDependencies(contracts);
   const contractsKeys = Object.keys(contracts);
 
-  function findDeps(name) {
+  function findDeps(name: string): string[] {
     const contract = contracts[name].depends_on;
     return [...contract.flatMap(findDeps), name];
   }
@@ -91,7 +84,7 @@ async function deployAllContracts() {
   const sortedContractNames = uniq(contractsKeys.flatMap(findDeps));
   const inQueue = new Set();
 
-  const queue = new PQueue.default({ concurrency: 1 });
+  const queue = new PQueue({ concurrency: 1 });
 
   sortedContractNames.forEach((contractName, index) => {
     queue.add(async () => {
@@ -105,14 +98,14 @@ async function deployAllContracts() {
           `${index + 1}/${sortedContractNames.length}`,
         )} - ${contractName}`,
       );
-      await deploy(contracts, contractName);
+      await deployContracts(contracts, contractName);
     });
   });
 
   await queue.onIdle();
 }
 
-async function deploy(contracts, contractName) {
+async function deployContracts(contracts: Contracts, contractName: string) {
   const contract = contracts[contractName];
   if (contract == null) {
     throw new Error(`Contract ${contractName} not found`);
@@ -120,15 +113,15 @@ async function deploy(contracts, contractName) {
   const contractPath = contract.path;
 
   let privatekey = await getDeployerPK();
-  const txOptions = {
+  const transaction = await makeContractDeploy({
     contractName: contractName,
     codeBody: fs
       .readFileSync(path.resolve(__dirname, `../clarity/`, contractPath))
       .toString(),
     senderKey: privatekey,
     network,
-  };
-  const transaction = await makeContractDeploy(txOptions);
+    anchorMode: undefined as any, //TODO: makeContractDeploy does support anchorMode is undefined
+  });
   const broadcast_id = await broadcastTransaction(transaction, network);
   console.log(`${STACKS_API_URL()}/extended/v1/tx/0x${broadcast_id.txid}`);
   let counter = 0;
@@ -184,7 +177,9 @@ const argv = yargs(hideBin(process.argv))
   .parse();
 
 const run = async () => {
-  if (argv.init) {
+  const userInput = await argv;
+
+  if (userInput.init) {
     await genesis_transfer();
   }
 
