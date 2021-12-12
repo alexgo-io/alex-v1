@@ -5,7 +5,7 @@ const PQueue = require('p-queue');
 const toml = require('@iarna/toml');
 const fs = require('fs');
 const path = require('path');
-const { pick, sortBy, groupBy, reduce } = require('lodash');
+const { pick, sortBy, groupBy, reduce, uniq } = require('lodash');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 const { toPairs } = require('lodash');
@@ -42,6 +42,34 @@ const getAllMatches = (source, regex) => {
   return matches;
 };
 
+function checkDependencies(contractName, contracts) {
+  const content = fs.readFileSync(
+    path.resolve(__dirname, '../clarity/' + contracts[contractName].path),
+    'utf8',
+  );
+
+  const regex = /contract-call\? \.([\w|-]*) /gm;
+
+  const match = getAllMatches(content, regex);
+  const contractCalls = Array.from(new Set(match.map(m => m.groups[0])));
+
+  contractCalls.forEach(calledContract => {
+    if (!contracts[contractName].depends_on.includes(calledContract)) {
+      console.log(
+        `contract: ${chalk.blue(contractName)} called: [${chalk.red(
+          calledContract,
+        )}] but not in dependencies. fixed in: ${contracts[contractName].path}`,
+      );
+    }
+  });
+}
+
+function checkAllDependencies(contracts) {
+  Object.keys(contracts).forEach(contractName => {
+    checkDependencies(contractName, contracts);
+  });
+}
+
 async function deployAllContracts() {
   const clarinetConfig = toml.parse(
     fs.readFileSync(
@@ -50,66 +78,22 @@ async function deployAllContracts() {
     ),
   );
 
-  const weight = {};
-
   const contracts = clarinetConfig.contracts;
 
-  function checkDependencies(contractName) {
-    const content = fs.readFileSync(
-      path.resolve(__dirname, '../clarity/' + contracts[contractName].path),
-      'utf8',
-    );
+  checkAllDependencies(contracts);
+  const contractsKeys = Object.keys(contracts);
 
-    const regex = /contract-call\? \.([\w|-]*) /gm;
-
-    const match = getAllMatches(content, regex);
-    const contractCalls = Array.from(new Set(match.map(m => m.groups[0])));
-
-    contractCalls.forEach(calledContract => {
-      if (!contracts[contractName].depends_on.includes(calledContract)) {
-        console.log(
-          `contract: ${chalk.blue(contractName)} called: [${chalk.red(
-            calledContract,
-          )}] but not in dependencies. fixed in: ${
-            contracts[contractName].path
-          }`,
-        );
-      }
-    });
+  function findDeps(name) {
+    const contract = contracts[name].depends_on;
+    return [...contract.flatMap(findDeps), name];
   }
 
-  // checkDependencies from clarity code report unresolved dependencies
-  Object.keys(contracts).forEach(checkDependencies);
-
-  const rootCounted = new Set();
-
-  const countWeight = (contractName, length) => {
-    if (weight[contractName] == null) {
-      weight[contractName] = 0;
-    }
-    weight[contractName] += length;
-    contracts[contractName].depends_on.forEach(name => {
-      countWeight(name, length + 1);
-    });
-  };
-
-  const keys = Object.keys(contracts);
-  keys.forEach(countWeight);
-  keys.reverse().forEach(countWeight);
-
-  weight; /*?*/
-
-  const weightPair = sortBy(
-    toPairs(weight),
-    ([name, weight]) => weight,
-  ).reverse();
-
+  const sortedContractNames = uniq(contractsKeys.flatMap(findDeps));
   const inQueue = new Set();
 
   const queue = new PQueue.default({ concurrency: 1 });
 
-  weightPair.forEach((p, index) => {
-    const contractName = p[0];
+  sortedContractNames.forEach((contractName, index) => {
     queue.add(async () => {
       if (inQueue.has(contractName)) {
         return;
@@ -118,17 +102,17 @@ async function deployAllContracts() {
 
       console.log(
         `Deploying - ${chalk.yellow(
-          `${index + 1}/${weightPair.length}`,
-        )} - ${contractName} <> ${p[1]}`,
+          `${index + 1}/${sortedContractNames.length}`,
+        )} - ${contractName}`,
       );
-      await deploy(contracts, contractName, p[1]);
+      await deploy(contracts, contractName);
     });
   });
 
   await queue.onIdle();
 }
 
-async function deploy(contracts, contractName, weight) {
+async function deploy(contracts, contractName) {
   const contract = contracts[contractName];
   if (contract == null) {
     throw new Error(`Contract ${contractName} not found`);
@@ -155,9 +139,7 @@ async function deploy(contracts, contractName, weight) {
     );
     let res = await truth.json();
     console.log(
-      `[${counter++}][${weight}] Waiting... ${
-        broadcast_id.txid
-      } - ${contractName}`,
+      `[${counter++}] Waiting... ${broadcast_id.txid} - ${contractName}`,
     );
     if (res['tx_status'] === 'success') {
       console.log(
