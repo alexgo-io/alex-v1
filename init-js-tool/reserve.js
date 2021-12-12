@@ -1,3 +1,4 @@
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
     getDeployerPK, getUserPK, network
   } = require('./wallet');
@@ -44,6 +45,7 @@ const {
         console.log(error);
     }
   }
+};
 
   const reserveSetActivationThreshold = async (activation_threshold) => {
     console.log('--------------------------------------------------------------------------');
@@ -98,6 +100,15 @@ const {
         console.log(error);
     }
   };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   const reserveRegisterUser = async (token) => {
     console.log('--------------------------------------------------------------------------');
@@ -233,12 +244,11 @@ const {
     }
   };  
 
-  exports.reserveAddToken = reserveAddToken;
-  exports.reserveSetActivationDelay = reserveSetActivationDelay;
-  exports.reserveSetActivationThreshold = reserveSetActivationThreshold;
-  exports.reserveRegisterUser = reserveRegisterUser;
-  exports.reserveSetCoinbaseAmount = reserveSetCoinbaseAmount;
-  exports.reserveGetUserId = reserveGetUserId;
-  exports.reserveGetStakerAtCycleOrDefault = reserveGetStakerAtCycleOrDefault;
-  exports.reserveSetRewardCycleLength = reserveSetRewardCycleLength;
-  
+exports.reserveAddToken = reserveAddToken;
+exports.reserveSetActivationDelay = reserveSetActivationDelay;
+exports.reserveSetActivationThreshold = reserveSetActivationThreshold;
+exports.reserveRegisterUser = reserveRegisterUser;
+exports.reserveSetCoinbaseAmount = reserveSetCoinbaseAmount;
+exports.reserveGetUserId = reserveGetUserId;
+exports.reserveGetStakerAtCycleOrDefault = reserveGetStakerAtCycleOrDefault;
+exports.reserveSetRewardCycleLength = reserveSetRewardCycleLength;

@@ -1,6 +1,4 @@
-const {
-  getDeployerPK, getUserPK, network
-} = require('./wallet');
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -11,394 +9,514 @@ const {
   stringAsciiCV,
   contractPrincipalCV,
   broadcastTransaction,
-  ClarityType
+  ClarityType,
 } = require('@stacks/transactions');
-const {wait_until_confirmation} = require('./utils');
-const { principalCV } = require('@stacks/transactions/dist/clarity/types/principalCV');
+const { wait_until_confirmation } = require('./utils');
+const {
+  principalCV,
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
+const {
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require('./constants');
 
-const fwpCreate = async (tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] create-pool...', tokenX, tokenY, weightX, weightY, poolToken, multiSig, dx, dy);
+const contractName = 'fixed-weight-pool';
+const fwpCreate = async (
+  tokenX,
+  tokenY,
+  weightX,
+  weightY,
+  poolToken,
+  multiSig,
+  dx,
+  dy,
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] create-pool...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    poolToken,
+    multiSig,
+    dx,
+    dy,
+  );
   const privateKey = await getDeployerPK();
   const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'create-pool',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, multiSig),
-          uintCV(dx),
-          uintCV(dy),
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'create-pool',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), poolToken),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), multiSig),
+      uintCV(dx),
+      uintCV(dy),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
   };
   try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
-      console.log(error);
+    console.log(error);
   }
-}
+};
 
 const fwpSetOracleEnbled = async (tokenX, tokenY, weightX, weightY) => {
-  console.log('--------------------------------------------------------------------------');
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
   console.log('[FWP] set-oracle-enabled...', tokenX, tokenY, weightX, weightY);
   const privateKey = await getDeployerPK();
   const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'set-oracle-enabled',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY)
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
-  };
-  try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
-  } catch (error) {
-      console.log(error);
-  }
-}
-
-const fwpSetOracleAverage = async (tokenX, tokenY, weightX, weightY, average) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] set-oracle-average...', tokenX, tokenY, weightX, weightY, average);
-  const privateKey = await getDeployerPK();
-  const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'set-oracle-average',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY),
-          uintCV(average)
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
-  };
-  try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
-  } catch (error) {
-      console.log(error);
-  }
-}
-
-const fwpAddToPosition = async (tokenX, tokenY, weightX, weightY, poolToken, dx, dy, deployer=false) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] add-to-position...', tokenX, tokenY, weightX, weightY, poolToken, dx, dy);
-  const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
-  const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'add-to-position',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
-          uintCV(dx),
-          uintCV(dy),
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
-  };
-  try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
-  } catch (error) {
-      console.log(error);
-  }
-}
-
-const fwpReducePosition = async (tokenX, tokenY, weightX, weightY, poolToken, percent, deployer=false) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] reduce-position...', tokenX, tokenY, weightX, weightY, poolToken, percent);
-  const privateKey = (deployer) ? await getDeployerPK() : await getUserPK();
-  const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'reduce-position',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, poolToken),
-          uintCV(percent),
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
-  };
-  try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
-  } catch (error) {
-      console.log(error);
-  }
-}
-
-const printResult = (result)=>{
-  if(result.type === ClarityType.ResponseOk){
-      if(result.value.type == ClarityType.UInt){
-          console.log(result.value);
-      }else if(result.value.type == ClarityType.Tuple){
-          console.log('|');
-          for (const key in result.value.data) {
-              console.log('---',key,':',result.value.data[key]);
-          }
-      }
-  }
-}
-
-const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] get-x-given-price...', tokenX, tokenY, weightX, weightY, price);
-
-  const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'fixed-weight-pool',
-    functionName: 'get-x-given-price',
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'set-oracle-enabled',
     functionArgs: [
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
       uintCV(weightX),
       uintCV(weightY),
-      uintCV(price)
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const fwpSetOracleAverage = async (
+  tokenX,
+  tokenY,
+  weightX,
+  weightY,
+  average,
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] set-oracle-average...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    average,
+  );
+  const privateKey = await getDeployerPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'set-oracle-average',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      uintCV(average),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const fwpAddToPosition = async (
+  tokenX,
+  tokenY,
+  weightX,
+  weightY,
+  poolToken,
+  dx,
+  dy,
+  deployer = false,
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] add-to-position...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    poolToken,
+    dx,
+    dy,
+  );
+  const privateKey = deployer ? await getDeployerPK() : await getUserPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'add-to-position',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), poolToken),
+      uintCV(dx),
+      uintCV(dy),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const fwpReducePosition = async (
+  tokenX,
+  tokenY,
+  weightX,
+  weightY,
+  poolToken,
+  percent,
+  deployer = false,
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] reduce-position...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    poolToken,
+    percent,
+  );
+  const privateKey = deployer ? await getDeployerPK() : await getUserPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'reduce-position',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), poolToken),
+      uintCV(percent),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const printResult = result => {
+  if (result.type === ClarityType.ResponseOk) {
+    if (result.value.type == ClarityType.UInt) {
+      console.log(result.value);
+    } else if (result.value.type == ClarityType.Tuple) {
+      console.log('|');
+      for (const key in result.value.data) {
+        console.log('---', key, ':', result.value.data[key]);
+      }
+    }
+  }
+};
+
+const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] get-x-given-price...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    price,
+  );
+
+  const options = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'get-x-given-price',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      uintCV(price),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
-    
   } catch (error) {
     console.log(error);
   }
 };
 
 const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
-  console.log('--------------------------------------------------------------------------');
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
   console.log('[FWP] get-y-given-x...', tokenX, tokenY, weightX, weightY, dx);
 
   const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'fixed-weight-pool',
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
     functionName: 'get-y-given-x',
     functionArgs: [
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
       uintCV(weightX),
       uintCV(weightY),
-      uintCV(dx)
+      uintCV(dx),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
-    
   } catch (error) {
     console.log(error);
   }
 };
 
 const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx, min_dy) => {
-  console.log('--------------------------------------------------------------------------');
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
   console.log('[FWP] swap-x-for-y...', tokenX, tokenY, weightX, weightY, dx);
   const privateKey = await getUserPK();
   const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'swap-x-for-y',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY),          
-          uintCV(dx),
-          someCV(uintCV(min_dy))
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'swap-x-for-y',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      uintCV(dx),
+      someCV(uintCV(min_dy)),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
   };
   try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
-
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
-      console.log(error);
+    console.log(error);
   }
-}
+};
 
 const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy, min_dx) => {
-  console.log('--------------------------------------------------------------------------');
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
   console.log('[FWP] swap-y-for-x...', tokenX, tokenY, weightX, weightY, dy);
   const privateKey = await getUserPK();
   const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'fixed-weight-pool',
-      functionName: 'swap-y-for-x',
-      functionArgs: [
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),
-          contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
-          uintCV(weightX),
-          uintCV(weightY),          
-          uintCV(dy),
-          someCV(uintCV(min_dx))
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
-  };
-  try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
-  } catch (error) {
-      console.log(error);
-  }
-}
-
-const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] get-x-given-y...', tokenX, tokenY, weightX, weightY, dy);
-  const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'fixed-weight-pool',
-    functionName: 'get-x-given-y',
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'swap-y-for-x',
     functionArgs: [
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
       uintCV(weightX),
       uintCV(weightY),
-      uintCV(dy)
+      uintCV(dy),
+      someCV(uintCV(min_dx)),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log('[FWP] get-x-given-y...', tokenX, tokenY, weightX, weightY, dy);
+  const options = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
+    functionName: 'get-x-given-y',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      uintCV(dy),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
-    
   } catch (error) {
     console.log(error);
   }
 };
 
 const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] get-y-given-price...', tokenX, tokenY, weightX, weightY, price);
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] get-y-given-price...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    price,
+  );
 
   const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'fixed-weight-pool',
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
     functionName: 'get-y-given-price',
     functionArgs: [
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
       uintCV(weightX),
       uintCV(weightY),
-      uintCV(price)
+      uintCV(price),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
-    
   } catch (error) {
     console.log(error);
   }
 };
 
-const fwpGetPositionGivenBurn = async (tokenX, tokenY, weightX, weightY, token) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[FWP] get-position-given-burn...', tokenX, tokenY, weightX, weightY, token);
+const fwpGetPositionGivenBurn = async (
+  tokenX,
+  tokenY,
+  weightX,
+  weightY,
+  token,
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[FWP] get-position-given-burn...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    token,
+  );
 
   const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'fixed-weight-pool',
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
     functionName: 'get-position-given-burn',
     functionArgs: [
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
       uintCV(weightX),
       uintCV(weightY),
-      uintCV(token)
+      uintCV(token),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
-    
   } catch (error) {
     console.log(error);
   }
 };
 
 const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
-  console.log('--------------------------------------------------------------------------');
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
   console.log('[FWP] get-pool-details...]', tokenX, tokenY, weightX, weightY);
 
   const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-    contractName: 'fixed-weight-pool',
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: contractName,
     functionName: 'get-pool-details',
     functionArgs: [
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenX),     
-      contractPrincipalCV(process.env.DEPLOYER_ACCOUNT_ADDRESS, tokenY),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
       uintCV(weightX),
-      uintCV(weightY)
+      uintCV(weightY),
     ],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -407,36 +525,51 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
   }
 };
 
-const multisigProposeWBTCUSDA = async (start_block_height, title, url, new_fee_rate_x, new_fee_rate_y) => {
-  console.log('--------------------------------------------------------------------------');
-  console.log('[multisig] propose...', start_block_height, title, url, new_fee_rate_x, new_fee_rate_y);
+const multisigProposeWBTCUSDA = async (
+  start_block_height,
+  title,
+  url,
+  new_fee_rate_x,
+  new_fee_rate_y,
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[multisig] propose...',
+    start_block_height,
+    title,
+    url,
+    new_fee_rate_x,
+    new_fee_rate_y,
+  );
   const privateKey = await getDeployerPK();
   const txOptions = {
-      contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
-      contractName: 'multisig-fwp-wbtc-usda-50-50',
-      functionName: 'propose',
-      functionArgs: [
-          uintCV(start_block_height),
-          stringAsciiCV(title),
-          stringAsciiCV(url),
-          uintCV(new_fee_rate_x),
-          uintCV(new_fee_rate_y)
-      ],
-      senderKey: privateKey,
-      validateWithAbi: true,
-      network,
-      anchorMode: AnchorMode.Any,
-      postConditionMode: PostConditionMode.Allow,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: 'multisig-fwp-wbtc-usda-50-50',
+    functionName: 'propose',
+    functionArgs: [
+      uintCV(start_block_height),
+      stringAsciiCV(title),
+      stringAsciiCV(url),
+      uintCV(new_fee_rate_x),
+      uintCV(new_fee_rate_y),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
   };
   try {
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResponse = await broadcastTransaction(transaction, network);
-      console.log(broadcastResponse);
-      return await wait_until_confirmation(broadcastResponse.txid);
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
-      console.log(error);
+    console.log(error);
   }
-}
+};
 
 exports.fwpCreate = fwpCreate;
 exports.fwpAddToPosition = fwpAddToPosition;

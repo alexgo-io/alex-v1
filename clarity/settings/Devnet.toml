@@ -14,6 +14,15 @@ balance = 100_000_000_000_000
 # secret_key: 7287ba251d44a4d3fd9276c88ce34c5c52a038955511cccaf77e61068649c17801
 # stx_address: ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK
 # btc_address: mr1iPkD9N3RJZZxXRk7xF9d36gffa6exNC
+# [
+#   {
+#     "privateKey": "33ef2367ca0e02ba65531af2a21cf5926600bc4f950f7b34fc55ea0f893418c301",
+#     "address": "ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK",
+#     "btcAddress": "mpfCFEnbtYn3QnpFmppGDiaHBqU75uYeat",
+#     "wif": "KxxfU82x9WMvciCehCjWxyTziGWgDPwLZiE68LNVXe2NJcf2r38z",
+#     "index": 0
+#   }
+# ]
 
 [accounts.wallet_2]
 mnemonic = "arrange scale orient half ugly kid bike twin magnet joke hurt fiber ethics super receive version wreck media fluid much abstract reward street alter"
@@ -21,6 +30,15 @@ balance = 100_000_000_000_000
 # secret_key: 530d9f61984c888536871c6573073bdfc0058896dc1adfe9a6a10dfacadc209101
 # stx_address: ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG
 # btc_address: muYdXKmX9bByAueDe6KFfHd5Ff1gdN9ErG
+# [
+#   {
+#     "privateKey": "a8d75b0fab120c53ab0f6700378c52391863c8e197b3ff220de156ea46cdd58601",
+#     "address": "ST20ATRN26N9P05V2F1RHFRV24X8C8M3W54E427B2",
+#     "btcAddress": "msFLVdTCpq4ym3tbvY7M83Ui1WpSHvjYSs",
+#     "wif": "L2sv6GV6p6RevgoKXYexDaiYJYHn1nQmAfRsFyMrYnHppiUrH8ip",
+#     "index": 0
+#   }
+# ]
 
 [accounts.wallet_3]
 mnemonic = "glide clown kitchen picnic basket hidden asset beyond kid plug carbon talent drama wet pet rhythm hero nest purity baby bicycle ghost sponsor dragon"
@@ -72,7 +90,7 @@ balance = 100_000_000_000_000
 # btc_address: mjSrB3wS4xab3kYqFktwBzfTdPg367ZJ2d
 
 [devnet]
-disable_bitcoin_explorer = true
+disable_bitcoin_explorer = false
 # disable_stacks_explorer = true
 # disable_stacks_api = true
 # working_dir = "tmp/devnet"

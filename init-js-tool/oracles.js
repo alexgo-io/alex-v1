@@ -9,10 +9,12 @@ const {
   broadcastTransaction,
   bufferCVFromString,
 } = require('@stacks/transactions');
-const {wait_until_confirmation, get_nonce } = require('./utils')
+const { wait_until_confirmation, get_nonce } = require('./utils');
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
-  getDeployerPK, getUserPK, network
-} = require('./wallet');
+  DEPLOYER_ACCOUNT_ADDRESS,
+  USER_ACCOUNT_ADDRESS,
+} = require('./constants');
 
 //Use CoinGeckoClient to fetch current prices of btc & usdc
 const initCoinPrice = async () => {
@@ -31,7 +33,7 @@ const initCoinPrice = async () => {
   const btcPrice = btc.data.market_data.current_price.usd * 1e8;
   return {
     usdc: usdcPrice,
-    btc: btcPrice
+    btc: btcPrice,
   };
 };
 
@@ -41,14 +43,10 @@ const setOpenOracle = async (symbol, src, price) => {
   const privateKey = await getDeployerPK();
 
   const txOptions = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: 'open-oracle',
     functionName: 'update-price',
-    functionArgs: [
-      stringAsciiCV(symbol),
-      stringAsciiCV(src),
-      uintCV(price),
-    ],
+    functionArgs: [stringAsciiCV(symbol), stringAsciiCV(src), uintCV(price)],
     senderKey: privateKey,
     validateWithAbi: true,
     network,
@@ -69,15 +67,12 @@ const getOpenOracle = async (src, symbol) => {
   console.log('Getting oracle...', src, symbol);
 
   const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: 'open-oracle',
     functionName: 'get-price',
-    functionArgs: [
-      stringAsciiCV(src),      
-      stringAsciiCV(symbol)
-    ],
+    functionArgs: [stringAsciiCV(src), stringAsciiCV(symbol)],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -88,24 +83,26 @@ const getOpenOracle = async (src, symbol) => {
 
 const fetch_price = async (token, against) => {
   console.log('fetching price from coingecko...', token, against);
-  return (await CoinGeckoClient.coins.fetch(token, {
-    vs_currency: against,
-    from: new Date(Date.now() - 60 * 1000).getTime(),
-    to: Date.now(),
-  })).data.market_data.current_price.usd;
+  return (
+    await CoinGeckoClient.coins.fetch(token, {
+      vs_currency: against,
+      from: new Date(Date.now() - 60 * 1000).getTime(),
+      to: Date.now(),
+    })
+  ).data.market_data.current_price.usd;
 };
 
-const fetch_btc = async(against) => {
+const fetch_btc = async against => {
   return await fetch_price('bitcoin', against);
-}
+};
 
-const fetch_usdc = async(against) => {
+const fetch_usdc = async against => {
   return await fetch_price('usd-coin', against);
-}
+};
 
-const fetch_in_usd = async(token) => {
+const fetch_in_usd = async token => {
   return await fetch_price(token, 'usd');
-}
+};
 
 exports.default = {
   initCoinPrice,
@@ -114,5 +111,5 @@ exports.default = {
   fetch_price,
   fetch_btc,
   fetch_usdc,
-  fetch_in_usd
-}
+  fetch_in_usd,
+};
