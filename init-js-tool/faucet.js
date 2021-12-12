@@ -1,4 +1,4 @@
-const { getDeployerPK, getUserPK, network } = require("./wallet");
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -8,20 +8,20 @@ const {
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 const {
   principalCV,
-} = require("@stacks/transactions/dist/clarity/types/principalCV");
-const { DEPLOYER_ACCOUNT_ADDRESS } = require("./constants");
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
+const { DEPLOYER_ACCOUNT_ADDRESS } = require('./constants');
 
-const setUsdaAmount = async (amount) => {
-  console.log("[Faucet] set-usda-amount...", amount);
+const setUsdaAmount = async amount => {
+  console.log('[Faucet] set-usda-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "faucet",
-    functionName: "set-usda-amount",
+    contractName: 'faucet',
+    functionName: 'set-usda-amount',
     functionArgs: [uintCV(amount)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -39,13 +39,13 @@ const setUsdaAmount = async (amount) => {
   }
 };
 
-const setWbtcAmount = async (amount) => {
-  console.log("[Faucet] set-wbtc-amount...", amount);
+const setWbtcAmount = async amount => {
+  console.log('[Faucet] set-wbtc-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "faucet",
-    functionName: "set-wbtc-amount",
+    contractName: 'faucet',
+    functionName: 'set-wbtc-amount',
     functionArgs: [uintCV(amount)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -63,13 +63,13 @@ const setWbtcAmount = async (amount) => {
   }
 };
 
-const setStxAmount = async (amount) => {
-  console.log("[Faucet] set-stx-amount...", amount);
+const setStxAmount = async amount => {
+  console.log('[Faucet] set-stx-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "faucet",
-    functionName: "set-stx-amount",
+    contractName: 'faucet',
+    functionName: 'set-stx-amount',
     functionArgs: [uintCV(amount)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -87,13 +87,13 @@ const setStxAmount = async (amount) => {
   }
 };
 
-const setAlexAmount = async (amount) => {
-  console.log("[Faucet] set-alex-amount...", amount);
+const setAlexAmount = async amount => {
+  console.log('[Faucet] set-alex-amount...', amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "faucet",
-    functionName: "set-alex-amount",
+    contractName: 'faucet',
+    functionName: 'set-alex-amount',
     functionArgs: [uintCV(amount)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -111,13 +111,13 @@ const setAlexAmount = async (amount) => {
   }
 };
 
-const getSomeTokens = async (recipient) => {
-  console.log("[Faucet] get some tokens...");
+const getSomeTokens = async recipient => {
+  console.log('[Faucet] get some tokens...');
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "faucet",
-    functionName: "get-some-tokens",
+    contractName: 'faucet',
+    functionName: 'get-some-tokens',
     functionArgs: [principalCV(recipient)],
     senderKey: privateKey,
     validateWithAbi: true,

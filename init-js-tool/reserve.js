@@ -1,4 +1,4 @@
-const { getDeployerPK, getUserPK, network } = require("./wallet");
+const { getDeployerPK, getUserPK, network } = require('./wallet');
 const {
   makeContractCall,
   callReadOnlyFunction,
@@ -12,26 +12,26 @@ const {
   contractPrincipalCV,
   broadcastTransaction,
   ClarityType,
-} = require("@stacks/transactions");
-const { wait_until_confirmation } = require("./utils");
+} = require('@stacks/transactions');
+const { wait_until_confirmation } = require('./utils');
 const {
   principalCV,
-} = require("@stacks/transactions/dist/clarity/types/principalCV");
+} = require('@stacks/transactions/dist/clarity/types/principalCV');
 const {
   DEPLOYER_ACCOUNT_ADDRESS,
   USER_ACCOUNT_ADDRESS,
-} = require("./constants");
+} = require('./constants');
 
-const reserveAddToken = async (token) => {
+const reserveAddToken = async token => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[reserve] add-token...", token);
+  console.log('[reserve] add-token...', token);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "add-token",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'add-token',
     functionArgs: [contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -49,16 +49,16 @@ const reserveAddToken = async (token) => {
   }
 };
 
-const reserveSetActivationThreshold = async (activation_threshold) => {
+const reserveSetActivationThreshold = async activation_threshold => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[reserve] set-activation-threshold...", activation_threshold);
+  console.log('[reserve] set-activation-threshold...', activation_threshold);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "set-activation-threshold",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'set-activation-threshold',
     functionArgs: [uintCV(activation_threshold)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -76,16 +76,16 @@ const reserveSetActivationThreshold = async (activation_threshold) => {
   }
 };
 
-const reserveSetActivationDelay = async (activation_delay) => {
+const reserveSetActivationDelay = async activation_delay => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[reserve] set-activation-delay...", activation_delay);
+  console.log('[reserve] set-activation-delay...', activation_delay);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "set-activation-delay",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'set-activation-delay',
     functionArgs: [uintCV(activation_delay)],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -103,19 +103,19 @@ const reserveSetActivationDelay = async (activation_delay) => {
   }
 };
 
-const reserveRegisterUser = async (token) => {
+const reserveRegisterUser = async token => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[reserve] register-user...", token);
+  console.log('[reserve] register-user...', token);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "register-user",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'register-user',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
-      someCV(stringUtf8CV("")),
+      someCV(stringUtf8CV('')),
     ],
     senderKey: privateKey,
     validateWithAbi: true,
@@ -139,25 +139,25 @@ const reserveSetCoinbaseAmount = async (
   coinbase2,
   coinbase3,
   coinbase4,
-  coinbase5
+  coinbase5,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[reserve] set-coinbase-amount...",
+    '[reserve] set-coinbase-amount...',
     token,
     coinbase1,
     coinbase2,
     coinbase3,
     coinbase4,
-    coinbase5
+    coinbase5,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "set-coinbase-amount",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'set-coinbase-amount',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(coinbase1),
@@ -184,14 +184,14 @@ const reserveSetCoinbaseAmount = async (
 
 const reserveGetUserId = async (token, user) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[reserve] get-user-id...", token, user);
+  console.log('[reserve] get-user-id...', token, user);
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "get-user-id",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'get-user-id',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       principalCV(user),
@@ -209,22 +209,22 @@ const reserveGetUserId = async (token, user) => {
 const reserveGetStakerAtCycleOrDefault = async (
   token,
   reward_cycle,
-  user_id
+  user_id,
 ) => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
   console.log(
-    "[reserve] get-staker-at-cycle-or-default...",
+    '[reserve] get-staker-at-cycle-or-default...',
     token,
     reward_cycle,
-    user_id
+    user_id,
   );
 
   const options = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "get-staker-at-cycle-or-default",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'get-staker-at-cycle-or-default',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(reward_cycle),
@@ -240,16 +240,16 @@ const reserveGetStakerAtCycleOrDefault = async (
   }
 };
 
-const reserveSetRewardCycleLength = async (length) => {
+const reserveSetRewardCycleLength = async length => {
   console.log(
-    "--------------------------------------------------------------------------"
+    '--------------------------------------------------------------------------',
   );
-  console.log("[reserve] set-reward-cycle-length...", length);
+  console.log('[reserve] set-reward-cycle-length...', length);
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: "alex-reserve-pool-v10",
-    functionName: "set-reward-cycle-length",
+    contractName: 'alex-reserve-pool-v10',
+    functionName: 'set-reward-cycle-length',
     functionArgs: [uintCV(length)],
     senderKey: privateKey,
     validateWithAbi: true,
