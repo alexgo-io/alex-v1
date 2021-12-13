@@ -308,7 +308,7 @@ Clarinet.test({
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
-        result.expectErr().expectUint(3001);
+        result.expectErr().expectUint(3000);
 
         // Tx-sender tries to add zero balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress,0, 0);

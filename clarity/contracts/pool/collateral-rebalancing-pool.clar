@@ -12,8 +12,7 @@
 
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-TRANSFER-X-FAILED (err u3001))
-(define-constant ERR-TRANSFER-Y-FAILED (err u3002))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
@@ -433,8 +432,8 @@
                 (unwrap! (contract-call? .fixed-weight-pool get-x-y token collateral u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
             )
 
-            (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? collateral transfer dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token transfer dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
@@ -500,7 +499,7 @@
             (and 
                 (> bal-x-to-y u0) 
                 (not (is-eq token-x token-y)) 
-                (as-contract (unwrap! (contract-call? token transfer bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+                (as-contract (unwrap! (contract-call? token transfer bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
             )
 
             ;; if shares > dy, then transfer the shortfall from reserve.
@@ -614,7 +613,7 @@
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? collateral transfer dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token dy tx-sender))
             (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))
 
@@ -674,7 +673,7 @@
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (try! (contract-call? .alex-vault transfer-ft collateral dx tx-sender))
-            (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
 
             ;; post setting

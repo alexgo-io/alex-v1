@@ -8,11 +8,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-BALANCE (err u1001))
-
 (define-constant ERR-TRANSFER-FAILED (err u3000))
-(define-constant ERR-STX-TRANSFER-FAILED (err u9003))
-(define-constant ERR-LOAN-TRANSFER-FAILED (err u3006))
-(define-constant ERR-POST-LOAN-TRANSFER-FAILED (err u3007))
 (define-constant ERR-INVALID-FLASH-LOAN (err u3008))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
@@ -65,7 +61,7 @@
 (define-public (transfer-stx (amount uint) (sender principal) (recipient principal))
   (begin
     (try! (check-is-approved sender))
-    (as-contract (unwrap! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
+    (as-contract (unwrap! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) tx-sender recipient) ERR-TRANSFER-FAILED))
     (ok true)
   )
 )
@@ -92,13 +88,13 @@
     (asserts! (> pre-bal amount) ERR-INVALID-BALANCE)
 
     ;; transfer loan to flash-loan-user
-    (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))
+    (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-TRANSFER-FAILED))
 
     ;; flash-loan-user executes with loan received
     (try! (contract-call? flash-loan-user execute token amount memo))
 
     ;; return the loan + fee
-    (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED)
+    (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
     (ok amount-with-fee)
   )
 )

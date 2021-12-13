@@ -9,8 +9,7 @@
 
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-TRANSFER-X-FAILED (err u3001))
-(define-constant ERR-TRANSFER-Y-FAILED (err u3002))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
@@ -356,9 +355,9 @@
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
             ;; send x to vault
-            (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             ;; send y to vault
-            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
+            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act tx-sender .alex-vault) ERR-TRANSFER-FAILED))
         
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
@@ -475,7 +474,7 @@
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED))
+            (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy tx-sender)))
             (try! (contract-call? .alex-reserve-pool add-to-balance (contract-of the-token) (- fee fee-rebate)))
 
@@ -526,7 +525,7 @@
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
-            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault) ERR-TRANSFER-Y-FAILED))
+            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault) ERR-TRANSFER-FAILED))
             (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate)))
 
             ;; post setting

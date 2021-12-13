@@ -616,7 +616,7 @@ Clarinet.test({
 
         //Attempt to add extra liquidity but not enough balance
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000000*ONE_8);
-        position = result.expectErr().expectUint(3001)
+        position = result.expectErr().expectUint(3000)
 
         // Attempts for trivial reducing
         result = YTPTest.reducePosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 0);
