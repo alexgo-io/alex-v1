@@ -1,28 +1,33 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
-  PostConditionMode,
-  uintCV,
-  someCV,
-  contractPrincipalCV,
   broadcastTransaction,
-  ClarityType,
-  bufferCVFromString,
   bufferCV,
+  bufferCVFromString,
+  callReadOnlyFunction,
+  contractPrincipalCV,
+  IntCV,
+  makeContractCall,
   makeSTXTokenTransfer,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const {
-  DEPLOYER_ACCOUNT_ADDRESS,
-  USER_ACCOUNT_ADDRESS,
-} = require('./constants');
+  PostConditionMode,
+  someCV,
+  uintCV,
+} from '@stacks/transactions';
+import { principalCV } from '@stacks/transactions/dist/clarity/types/principalCV';
+import {
+  ClarityType,
+  ResponseOkCV,
+} from '@stacks/transactions/dist/clarity';
 
-const flashloan = async (loan_contract, token, amount, expiry) => {
+import { getDeployerPK, getUserPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
+
+export const flashloan = async (
+  loan_contract: string,
+  token: string,
+  amount: number,
+  expiry: number,
+) => {
   console.log('[Vault] flash-loan...', loan_contract, token, amount, expiry);
   const privateKey = await getUserPK();
   const txOptions = {
@@ -51,7 +56,12 @@ const flashloan = async (loan_contract, token, amount, expiry) => {
   }
 };
 
-const mint_sft = async (token, token_id, amount, recipient) => {
+export const mint_sft = async (
+  token: string,
+  token_id: number,
+  amount: number,
+  recipient: string,
+) => {
   console.log('[Token] mint...', token, recipient, amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -75,7 +85,11 @@ const mint_sft = async (token, token_id, amount, recipient) => {
   }
 };
 
-const mint_ft = async (token, amount, recipient) => {
+export const mint_ft = async (
+  token: string,
+  amount: number,
+  recipient: string,
+) => {
   console.log('[Token] mint...', token, recipient, amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -99,7 +113,11 @@ const mint_ft = async (token, amount, recipient) => {
   }
 };
 
-const burn = async (token, recipient, amount) => {
+export const burn = async (
+  token: string,
+  recipient: string,
+  amount: number,
+) => {
   console.log('[Token] burn...', token, recipient, amount);
   const privateKey = await getDeployerPK();
   const txOptions = {
@@ -123,7 +141,12 @@ const burn = async (token, recipient, amount) => {
   }
 };
 
-const transfer = async (token, recipient, amount, deployer = false) => {
+export const transfer = async (
+  token: string,
+  recipient: string,
+  amount: number,
+  deployer: boolean = false,
+) => {
   console.log('[Token] transfer...', token, recipient, amount);
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
   const txOptions = {
@@ -154,7 +177,7 @@ const transfer = async (token, recipient, amount, deployer = false) => {
   }
 };
 
-const transferSTX = async (recipient, amount) => {
+export const transferSTX = async (recipient: string, amount: number) => {
   console.log('transferSTX...', recipient, amount);
 
   const txOptions = {
@@ -162,7 +185,8 @@ const transferSTX = async (recipient, amount) => {
     amount: amount,
     senderKey: await getDeployerPK(),
     network: network,
-  };
+  } as any;
+  // FIXME: typescript migrate;
 
   try {
     const transaction = await makeSTXTokenTransfer(txOptions);
@@ -174,7 +198,10 @@ const transferSTX = async (recipient, amount) => {
   }
 };
 
-const balance = async (token, owner) => {
+export const balance = async (
+  token: string,
+  owner: string,
+): Promise<ResponseOkCV<IntCV>> => {
   console.log('[Token] get-balance...', token, owner);
 
   const options = {
@@ -186,13 +213,21 @@ const balance = async (token, owner) => {
     senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
-    return callReadOnlyFunction(options);
+    const value = (await callReadOnlyFunction(options))!;
+    return value as ResponseOkCV<IntCV>;
   } catch (error) {
     console.log(error);
+    return {
+      type: ClarityType.ResponseOk,
+      value: {
+        type: ClarityType.Int,
+        value: BigInt(0),
+      },
+    };
   }
 };
 
-const getBalance = async token => {
+export const getBalance = async (token: string) => {
   console.log('[VAULT] get-balance...', token);
 
   const options = {
@@ -210,12 +245,3 @@ const getBalance = async token => {
     console.log(error);
   }
 };
-
-exports.flashloan = flashloan;
-exports.mint_ft = mint_ft;
-exports.mint_sft = mint_sft;
-exports.burn = burn;
-exports.balance = balance;
-exports.getBalance = getBalance;
-exports.transfer = transfer;
-exports.transferSTX = transferSTX;

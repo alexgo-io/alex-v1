@@ -1,7 +1,7 @@
 # Clarity History
 clarity/history.txt
 
-deploy-keychain.json
+deployContracts-keychain.json
 **/contract-records/
 **/hex-files/
 **/staged-contracts/
@@ -10,3 +10,5 @@ init-js-tool/.env
 
 .env
 node_modules
+/contract-records.json
+yarn-error.log

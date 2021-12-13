@@ -1,35 +1,31 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
+  broadcastTransaction,
+  callReadOnlyFunction,
+  ClarityType,
+  contractPrincipalCV,
+  makeContractCall,
   PostConditionMode,
-  uintCV,
   someCV,
   stringAsciiCV,
-  contractPrincipalCV,
-  broadcastTransaction,
-  ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const {
-  DEPLOYER_ACCOUNT_ADDRESS,
-  USER_ACCOUNT_ADDRESS,
-} = require('./constants');
+  uintCV,
+} from '@stacks/transactions';
+
+import { getDeployerPK, getUserPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
 
 const contractName = 'fixed-weight-pool';
-const fwpCreate = async (
-  tokenX,
-  tokenY,
-  weightX,
-  weightY,
-  poolToken,
-  multiSig,
-  dx,
-  dy,
+
+export const fwpCreate = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  poolToken: string,
+  multiSig: string,
+  dx: number,
+  dy: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -76,7 +72,12 @@ const fwpCreate = async (
   }
 };
 
-const fwpSetOracleEnbled = async (tokenX, tokenY, weightX, weightY) => {
+export const fwpSetOracleEnbled = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -108,12 +109,12 @@ const fwpSetOracleEnbled = async (tokenX, tokenY, weightX, weightY) => {
   }
 };
 
-const fwpSetOracleAverage = async (
-  tokenX,
-  tokenY,
-  weightX,
-  weightY,
-  average,
+export const fwpSetOracleAverage = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  average: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -154,14 +155,14 @@ const fwpSetOracleAverage = async (
   }
 };
 
-const fwpAddToPosition = async (
-  tokenX,
-  tokenY,
-  weightX,
-  weightY,
-  poolToken,
-  dx,
-  dy,
+export const fwpAddToPosition = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  poolToken: string,
+  dx: number,
+  dy: number,
   deployer = false,
 ) => {
   console.log(
@@ -207,13 +208,13 @@ const fwpAddToPosition = async (
   }
 };
 
-const fwpReducePosition = async (
-  tokenX,
-  tokenY,
-  weightX,
-  weightY,
-  poolToken,
-  percent,
+export const fwpReducePosition = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  poolToken: string,
+  percent: number,
   deployer = false,
 ) => {
   console.log(
@@ -257,7 +258,7 @@ const fwpReducePosition = async (
   }
 };
 
-const printResult = result => {
+const printResult = (result: any) => {
   if (result.type === ClarityType.ResponseOk) {
     if (result.value.type == ClarityType.UInt) {
       console.log(result.value);
@@ -270,7 +271,13 @@ const printResult = result => {
   }
 };
 
-const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+export const fwpGetXGivenPrice = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  price: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -304,7 +311,13 @@ const fwpGetXGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
   }
 };
 
-const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
+export const fwpGetYgivenX = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  dx: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -331,7 +344,14 @@ const fwpGetYgivenX = async (tokenX, tokenY, weightX, weightY, dx) => {
   }
 };
 
-const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx, min_dy) => {
+export const fwpSwapXforY = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  dx: number,
+  min_dy: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -365,7 +385,14 @@ const fwpSwapXforY = async (tokenX, tokenY, weightX, weightY, dx, min_dy) => {
   }
 };
 
-const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy, min_dx) => {
+export const fwpSwapYforX = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  dy: number,
+  min_dx: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -399,7 +426,13 @@ const fwpSwapYforX = async (tokenX, tokenY, weightX, weightY, dy, min_dx) => {
   }
 };
 
-const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
+export const fwpGetXgivenY = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  dy: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -425,7 +458,13 @@ const fwpGetXgivenY = async (tokenX, tokenY, weightX, weightY, dy) => {
   }
 };
 
-const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
+export const fwpGetYGivenPrice = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  price: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -459,12 +498,12 @@ const fwpGetYGivenPrice = async (tokenX, tokenY, weightX, weightY, price) => {
   }
 };
 
-const fwpGetPositionGivenBurn = async (
-  tokenX,
-  tokenY,
-  weightX,
-  weightY,
-  token,
+export const fwpGetPositionGivenBurn = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  token: string,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -499,7 +538,12 @@ const fwpGetPositionGivenBurn = async (
   }
 };
 
-const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
+export const fwpGetPoolDetails = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -525,12 +569,12 @@ const fwpGetPoolDetails = async (tokenX, tokenY, weightX, weightY) => {
   }
 };
 
-const multisigProposeWBTCUSDA = async (
-  start_block_height,
-  title,
-  url,
-  new_fee_rate_x,
-  new_fee_rate_y,
+export const multisigProposeWBTCUSDA = async (
+  start_block_height: number,
+  title: string,
+  url: string,
+  new_fee_rate_x: number,
+  new_fee_rate_y: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -570,17 +614,3 @@ const multisigProposeWBTCUSDA = async (
     console.log(error);
   }
 };
-
-exports.fwpCreate = fwpCreate;
-exports.fwpAddToPosition = fwpAddToPosition;
-exports.fwpReducePosition = fwpReducePosition;
-exports.fwpGetXGivenPrice = fwpGetXGivenPrice;
-exports.fwpGetYGivenPrice = fwpGetYGivenPrice;
-exports.fwpGetPoolDetails = fwpGetPoolDetails;
-exports.fwpGetYgivenX = fwpGetYgivenX;
-exports.fwpGetXgivenY = fwpGetXgivenY;
-exports.fwpSwapXforY = fwpSwapXforY;
-exports.fwpSwapYforX = fwpSwapYforX;
-exports.fwpSetOracleEnbled = fwpSetOracleEnbled;
-exports.fwpSetOracleAverage = fwpSetOracleAverage;
-exports.fwpGetPositionGivenBurn = fwpGetPositionGivenBurn;
