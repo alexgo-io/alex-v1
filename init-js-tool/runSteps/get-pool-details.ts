@@ -4,7 +4,7 @@ import { format_number } from '../utils';
 import { fwpGetPoolDetails } from '../pools-fwp';
 import { ytpGetPoolDetails, ytpGetPrice, ytpGetYield } from '../pools-ytp';
 
-async function get_pool_details_crp(_subset = _deploy) {
+export async function get_pool_details_crp(_subset = _deploy) {
   for (const _key in _subset) {
     const key = _key as '0' | '1';
     let ltv = await crpGetLtv(
@@ -36,7 +36,7 @@ async function get_pool_details_crp(_subset = _deploy) {
   }
 }
 
-async function get_pool_details_fwp(_subset = _fwp_pools) {
+export async function get_pool_details_fwp(_subset = _fwp_pools) {
   for (const _key in _subset) {
     const key = _key as '1' | '2';
     let details = await fwpGetPoolDetails(
@@ -57,7 +57,7 @@ async function get_pool_details_fwp(_subset = _fwp_pools) {
   }
 }
 
-async function get_pool_details_ytp(_subset = _deploy) {
+export async function get_pool_details_ytp(_subset = _deploy) {
   for (const _key in _subset) {
     const key = _key as '0' | '1';
     let yied = await ytpGetYield(

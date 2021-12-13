@@ -5,7 +5,7 @@ import { ytpGetPositionGivenBurn, ytpReducePosition } from '../pools-ytp';
 import { fwpReducePosition } from '../pools-fwp';
 import { crpReducePostionKey, crpReducePostionYield } from '../pools-crp';
 
-async function reduce_position_fwp(percent: number, deployer = false) {
+export async function reduce_position_fwp(percent: number, deployer = false) {
   console.log('------ Reducing FWP Positions ------');
   console.log(timestamp());
   await fwpReducePosition(
@@ -19,7 +19,7 @@ async function reduce_position_fwp(percent: number, deployer = false) {
   );
 }
 
-async function reduce_position_ytp(
+export async function reduce_position_ytp(
   _reduce: any,
   percent: number,
   deployer = false,
@@ -70,7 +70,7 @@ async function reduce_position_ytp(
   }
 }
 
-async function reduce_position_crp(
+export async function reduce_position_crp(
   _reduce: any,
   percent: number,
   _type: 'yield' | 'key',

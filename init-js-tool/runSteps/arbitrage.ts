@@ -32,7 +32,7 @@ import {
   ytpSwapXforY,
 } from '../pools-ytp';
 
-async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
+export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
   console.log('------ FWP Arbitrage ------');
   console.log(timestamp());
 
@@ -191,7 +191,7 @@ async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
   }
 }
 
-async function arbitrage_crp(dry_run = true, _subset = _deploy) {
+export async function arbitrage_crp(dry_run = true, _subset = _deploy) {
   console.log('------ CRP Arbitrage ------');
   console.log(timestamp());
 
@@ -363,7 +363,7 @@ async function arbitrage_crp(dry_run = true, _subset = _deploy) {
   }
 }
 
-async function arbitrage_ytp(dry_run = true, _subset = _deploy) {
+export async function arbitrage_ytp(dry_run = true, _subset = _deploy) {
   console.log('------ YTP Arbitrage ------');
   console.log(timestamp());
   const threshold = 0.05;

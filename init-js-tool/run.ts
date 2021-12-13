@@ -12,45 +12,34 @@ import {
   set_faucet_amounts,
 } from './runSteps/mint-get-token';
 
+import {
+  arbitrage_fwp,
+  arbitrage_crp,
+  arbitrage_ytp
+} from './runSteps/arbitrage';
+
 async function run_mint_initial_tokens() {
   await set_faucet_amounts();
-  await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
   await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
   await mint_some_usda(DEPLOYER_ACCOUNT_ADDRESS() + '.alex-reserve-pool');
   await mint_some_tokens(USER_ACCOUNT_ADDRESS());
   await get_some_token(USER_ACCOUNT_ADDRESS());
-  await see_balance(USER_ACCOUNT_ADDRESS());
-
-  await mint_some_wbtc(DEPLOYER_ACCOUNT_ADDRESS());
 }
 
 async function run() {
   await run_mint_initial_tokens();
 
-  // const _pools = {    0:_deploy[2],
-  //                     1:_deploy[3],
-  //                     2:_deploy[4],
-  //                     3:_deploy[5],
-  //                     4:_deploy[6],
-  //                     5:_deploy[7],
-  //                     6:_deploy[8],
-  //                     7:_deploy[9],
-  //                     8:_deploy[10],
-  //                     9:_deploy[11]
-  //                 };
   // const _pools = { 0:_deploy[4], 1:_deploy[5] };
-  // const _pools = { 0:_deploy[0], 1:_deploy[1], 2:_deploy[2], 3:_deploy[3]};
   const _pools = _deploy;
-  // await create_fwp((add_only = false));
+  
+  // await create_fwp(false);
+  // await create_ytp(false, _pools);
+  // await create_crp(false, _pools);
 
-  // await getSomeTokens('ST1RXPS7ZHZGBTWVS9THY7PVJ49JT3EAAKYSV3JKB');
-  // await create_ytp(add_only=false, _pools);
-  // await create_crp(add_only=false, _pools);
-
-  // await arbitrage_fwp(dry_run = false);
-  // await arbitrage_crp(dry_run = false, _pools);
-  // await arbitrage_ytp(dry_run = false, _pools);
-  // await arbitrage_fwp(dry_run = false);
+  await arbitrage_fwp(false);
+  await arbitrage_crp(false, _pools);
+  await arbitrage_ytp(false, _pools);
+  await arbitrage_fwp(false);
 
   // await test_spot_trading();
   // await test_margin_trading();

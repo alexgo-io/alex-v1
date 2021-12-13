@@ -3,7 +3,7 @@ import { crpAddToPostion, crpCreate } from '../pools-crp';
 import { fwpAddToPosition, fwpCreate, fwpSetOracleAverage, fwpSetOracleEnbled } from '../pools-fwp';
 import { ytpAddToPosition, ytpCreate } from '../pools-ytp';
 
-async function create_fwp(
+export async function create_fwp(
   add_only: boolean,
   _subset = _fwp_pools,
   deployer = false,
@@ -55,7 +55,7 @@ async function create_fwp(
   }
 }
 
-async function create_ytp(add_only: boolean, _subset = _deploy) {
+export async function create_ytp(add_only: boolean, _subset = _deploy) {
   console.log('------ YTP Creation / Add Liquidity ------');
 
   for (const _key in _subset) {
@@ -86,7 +86,7 @@ async function create_ytp(add_only: boolean, _subset = _deploy) {
   }
 }
 
-async function create_crp(add_only: boolean, _subset = _deploy) {
+export async function create_crp(add_only: boolean, _subset = _deploy) {
   console.log('------ CRP Creation / Add Liquidity ------');
 
   const conversion_ltv = 0.95 * ONE_8;

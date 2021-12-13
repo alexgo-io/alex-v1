@@ -29,56 +29,56 @@ async function update_price_oracle() {
 async function test_spot_trading() {
   console.log('------ Testing Spot Trading ------');
   console.log(timestamp());
-  // let wbtcPrice = await fetch_in_usd('bitcoin');
-  // let usdaPrice = await fetch_in_usd('usd-coin');
-  //
-  // let from_amount = ONE_8;
-  // let to_amount = parseInt(
-  //   (
-  //     (await fwpGetYgivenX(
-  //       'token-wbtc',
-  //       'token-usda',
-  //       0.5e8,
-  //       0.5e8,
-  //       from_amount,
-  //     )) as any
-  //   ).value.value,
-  // );
-  // let exchange_rate = parseInt(
-  //   await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, ONE_8),
-  // );
-  // await fwpSwapXforY(
-  //   'token-wbtc',
-  //   'token-usda',
-  //   0.5e8,
-  //   0.5e8,
-  //   from_amount,
-  //   to_amount * 0.99,
-  // );
-  //
-  // from_amount = Number(wbtcPrice) * ONE_8;
-  // to_amount = await fwpGetXgivenY(
-  //   'token-wbtc',
-  //   'token-usda',
-  //   0.5e8,
-  //   0.5e8,
-  //   from_amount,
-  // );
-  // exchange_rate = parseInt(
-  //   await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, ONE_8),
-  // );
-  // if (to_amount.type === 7) {
-  //   await fwpSwapYforX(
-  //     'token-wbtc',
-  //     'token-usda',
-  //     0.5e8,
-  //     0.5e8,
-  //     from_amount,
-  //     to_amount * 0.99,
-  //   );
-  // } else {
-  //   console.log('error: ', to_amount.value.value);
-  // }
+  let wbtcPrice = await fetch_in_usd('bitcoin');
+  let usdaPrice = await fetch_in_usd('usd-coin');
+  
+  let from_amount = ONE_8;
+  let to_amount = parseInt(
+    (
+      (await fwpGetYgivenX(
+        'token-wbtc',
+        'token-usda',
+        0.5e8,
+        0.5e8,
+        from_amount,
+      )) as any
+    ).value.value,
+  );
+  let exchange_rate = parseInt(
+    await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, ONE_8),
+  );
+  await fwpSwapXforY(
+    'token-wbtc',
+    'token-usda',
+    0.5e8,
+    0.5e8,
+    from_amount,
+    to_amount * 0.99,
+  );
+  
+  from_amount = Number(wbtcPrice) * ONE_8;
+  to_amount = await fwpGetXgivenY(
+    'token-wbtc',
+    'token-usda',
+    0.5e8,
+    0.5e8,
+    from_amount,
+  );
+  exchange_rate = parseInt(
+    await fwpGetYgivenX('token-wbtc', 'token-usda', 0.5e8, 0.5e8, ONE_8),
+  );
+  if (to_amount.type === 7) {
+    await fwpSwapYforX(
+      'token-wbtc',
+      'token-usda',
+      0.5e8,
+      0.5e8,
+      from_amount,
+      to_amount * 0.99,
+    );
+  } else {
+    console.log('error: ', to_amount.value.value);
+  }
 }
 
 async function test_margin_trading() {
