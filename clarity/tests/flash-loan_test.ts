@@ -60,7 +60,7 @@ Clarinet.test({
         let FLTest = new FLTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);   
-        let wstxToken = new WSTXToken(chain, deployer);
+        // let wstxToken = new WSTXToken(chain, deployer);
         
         // Deployer minting initial tokens
         let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
@@ -71,14 +71,15 @@ Clarinet.test({
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, wallet_1.address, 100000 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
-        result.expectOk(); 
+        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        // result.expectOk();
+        // result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
+        // result.expectOk(); 
         result = wbtcToken.mintFixed(deployer, wallet_5.address, 100000 * ONE_8);
         result.expectOk(); 
-        result = wstxToken.mintFixed(wallet_5, wallet_5.address, 200000 * ONE_8);
-        result.expectOk();
+        // result = wstxToken.mintFixed(wallet_5, wallet_5.address, 200000 * ONE_8);
+        // result.expectOk();
+        chain.mineEmptyBlock(3);
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -119,7 +120,7 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(wstxAddress, wallet_5.address);
-        position = call.result.expectOk().expectUint(19975389849913);  
+        position = call.result.expectOk().expectUint(9999975389850000);  
         call = await FLTest.getBalance(usdaAddress, wallet_5.address);
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token

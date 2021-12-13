@@ -1,5 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible-token.semi-fungible-token-trait)
+(impl-trait .trait-semi-fungible.semi-fungible-trait)
+
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))

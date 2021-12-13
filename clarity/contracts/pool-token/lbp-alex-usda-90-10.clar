@@ -1,6 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
+
 (define-fungible-token lbp-alex-usda-90-10)
 
 (define-data-var token-uri (string-utf8 256) u"")

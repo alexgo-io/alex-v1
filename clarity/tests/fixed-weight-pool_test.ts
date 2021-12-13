@@ -41,7 +41,7 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let wstxToken = new WSTXToken(chain, deployer);
+        // let wstxToken = new WSTXToken(chain, deployer);
 
         // Deployer minting initial tokens
         let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
@@ -52,10 +52,10 @@ Clarinet.test({
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, wallet_1.address, 100000 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
-        result.expectOk();      
+        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        // result.expectOk();
+        // result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
+        // result.expectOk();      
         
         // Deployer creating a pool, initial tokens injected to the pool
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
@@ -130,7 +130,7 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let wstxToken = new WSTXToken(chain, deployer);
+        // let wstxToken = new WSTXToken(chain, deployer);
 
         // Deployer minting initial tokens        
         let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
@@ -141,10 +141,10 @@ Clarinet.test({
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, wallet_1.address, 100000 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
-        result.expectOk();
+        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        // result.expectOk();
+        // result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
+        // result.expectOk();
         
         // non-deployer attempting to create a pool will throw an error
         result = FWPTest.createPool(wallet_1, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
@@ -182,7 +182,7 @@ Clarinet.test({
         let contractOwner = deployer;
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let wstxToken = new WSTXToken(chain, deployer);
+        // let wstxToken = new WSTXToken(chain, deployer);
         let FWPTest = new FWPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_FWP_WSTX_USDA_5050(chain, deployer);
         let fwpPoolToken = new FWP_WSTX_USDA_5050(chain, deployer);
@@ -192,8 +192,8 @@ Clarinet.test({
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();  
+        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        // result.expectOk();  
 
 
         const feeRateX = 0.1*ONE_8; // 10%
@@ -288,15 +288,15 @@ Clarinet.test({
         const feeRateY = 5000000;
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let wstxToken = new WSTXToken(chain, deployer);
+        // let wstxToken = new WSTXToken(chain, deployer);
 
         // Deployer minting initial tokens        
         let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();        
+        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        // result.expectOk();        
 
         // Deployer creating a pool, initial tokens injected to the pool
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
@@ -394,15 +394,15 @@ Clarinet.test({
         let FWPTest = new FWPTestAgent1(chain, deployer);     
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
-        let wstxToken = new WSTXToken(chain, deployer);
+        // let wstxToken = new WSTXToken(chain, deployer);
 
         // Deployer minting initial tokens        
         let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
+        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        // result.expectOk();                 
 
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
         result.expectOk().expectBool(true);

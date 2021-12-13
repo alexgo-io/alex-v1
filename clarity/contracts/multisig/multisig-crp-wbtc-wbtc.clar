@@ -1,5 +1,6 @@
 (impl-trait .trait-multisig-vote.multisig-vote-sft-trait)
-(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
+
 
 
 ;; Alex voting for MultiSig DAO

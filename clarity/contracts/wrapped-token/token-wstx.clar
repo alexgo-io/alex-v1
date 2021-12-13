@@ -27,7 +27,7 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply wstx))
+  (ok u0)
 )
 
 (define-read-only (get-name)
@@ -43,7 +43,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance wstx account))
+  (ok (/ (* (stx-get-balance account) ONE_8) (pow u10 u6)))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -60,7 +60,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (stx-transfer? (/ (* amount (pow u10 u6) ONE_8)) sender recipient)
+    (match (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -68,15 +68,6 @@
       error (err error)
     )
   )
-)
-
-(define-public (mint (amount uint) (recipient principal))
-  ERR-MINT-FAILED
-)
-
-;; This can only be called by sender since ft-burn is involved
-(define-public (burn (amount uint) (sender principal))
-  ERR-BURN-FAILED
 )
 
 (define-constant ONE_8 (pow u10 u8))
@@ -94,15 +85,23 @@
 )
 
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply wstx)))
+  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
 )
 
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance wstx account)))
+  (ok (decimals-to-fixed (unwrap-panic (get-balance account))))
 )
 
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (transfer (fixed-to-decimals amount) sender recipient memo)
+)
+
+(define-public (mint (amount uint) (recipient principal))
+  ERR-MINT-FAILED
+)
+
+(define-public (burn (amount uint) (sender principal))
+  ERR-BURN-FAILED
 )
 
 (define-public (mint-fixed (amount uint) (recipient principal))

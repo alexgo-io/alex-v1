@@ -1,4 +1,4 @@
-(define-trait semi-fungible-token-trait
+(define-trait semi-fungible-trait
 	(
 		;; (get-token-owned (principal) (list))
 
@@ -26,10 +26,6 @@
 		;; Transfer from one principal to another with a memo.
 		(transfer-memo (uint uint principal principal (buff 34)) (response bool uint))
 
-		;; Other functions
-    	(mint (uint uint principal) (response bool uint))    
-    	(burn (uint uint principal) (response bool uint))
-
 		;; helper functions for 8-digit fixed notation
 		(transfer-fixed (uint uint principal principal) (response bool uint))
 		(transfer-memo-fixed (uint uint principal principal (buff 34)) (response bool uint))
@@ -38,7 +34,10 @@
 		(get-total-supply-fixed (uint) (response uint uint))
 		(get-overall-balance-fixed (principal) (response uint uint))		
 		(get-overall-supply-fixed () (response uint uint))	
-		(mint-fixed (uint uint principal) (response bool uint))
-		(burn-fixed (uint uint principal) (response bool uint))    		
+
+        (mint (uint uint principal) (response bool uint))
+        (burn (uint uint principal) (response bool uint))  
+        (mint-fixed (uint uint principal) (response bool uint))
+		(burn-fixed (uint uint principal) (response bool uint))  					
 	)
 )

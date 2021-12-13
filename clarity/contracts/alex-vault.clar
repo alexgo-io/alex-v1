@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-vault.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -61,14 +61,6 @@
   )
 )
 
-;; (define-public (transfer-stx (amount uint) (sender principal) (recipient principal))
-;;   (begin
-;;     (try! (check-is-approved sender))
-;;     (as-contract (unwrap! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
-;;     (ok true)
-;;   )
-;; )
-
 (define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
     (try! (check-is-approved contract-caller))
@@ -86,7 +78,7 @@
       (amount-with-fee (mul-up amount fee-with-principal))
       (recipient tx-sender)
     )
-
+    
     ;; make sure current balance > loan amount
     (asserts! (> pre-bal amount) ERR-INSUFFICIENT-FLASH-LOAN-BALANCE)
 
@@ -97,7 +89,7 @@
     (try! (contract-call? flash-loan-user execute token amount memo))
 
     ;; return the loan + fee
-    (unwrap! (contract-call? token transfer amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED)
+    (unwrap! (contract-call? token transfer-fixed amount-with-fee tx-sender (as-contract tx-sender) none) ERR-POST-LOAN-TRANSFER-FAILED)
     (ok amount-with-fee)
   )
 )
@@ -132,6 +124,5 @@
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)  
   (map-set approved-contracts .liquidity-bootstrapping-pool true)  
-  (map-set approved-contracts .yield-token-pool true)  
-  ;; (map-set approved-contracts .token-wstx true)
+  (map-set approved-contracts .yield-token-pool true)
 )
