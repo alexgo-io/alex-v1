@@ -250,21 +250,21 @@ Clarinet.test({
         
         // supplying a wrong pool-token throws an error
         result = CRPTest.addToPositionAndSwitch(wallet_1, wbtcAddress, usdaAddress, expiry, wrongPooltokenAddress, keywbtcAddress, 5000 * ONE_8);
-        result.expectErr().expectUint(8002);   
+        result.expectErr().expectUint(2026);   
         
         // same for key-token
         result = CRPTest.addToPositionAndSwitch(wallet_1, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, wrongPooltokenAddress, 5000 * ONE_8);
-        result.expectErr().expectUint(8002);        
+        result.expectErr().expectUint(2026);        
 
         // simulate to expiry + 1
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)
 
         // supplying a wrong pool-token throws an error
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, wrongPooltokenAddress, ONE_8);        
-        result.expectErr().expectUint(8002);
+        result.expectErr().expectUint(2026);
         // same for key-token
         result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, expiry, wrongPooltokenAddress, ONE_8);        
-        result.expectErr().expectUint(8002);
+        result.expectErr().expectUint(2026);
                 
         // remove all liquidity
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        

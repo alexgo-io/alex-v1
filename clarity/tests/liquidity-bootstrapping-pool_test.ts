@@ -192,7 +192,7 @@ Clarinet.test({
 
       // supplying a wrong pool token throws an error
       result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, wrongPoolTokenAddress, ONE_8);
-      result.expectErr().expectUint(8002);
+      result.expectErr().expectUint(2026);
       
       // withdraw all remaining liquidity
       result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, ONE_8);

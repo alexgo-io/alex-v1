@@ -17,7 +17,7 @@
 (define-constant ERR-DY-BIGGER-THAN-AVAILABLE (err u2016))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
-(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
 (define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
@@ -350,7 +350,7 @@
                 }))
             )
 
-            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN) 
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN) 
 
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
@@ -401,7 +401,7 @@
                 )
             )
 
-            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
             (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy-act tx-sender)))

@@ -23,7 +23,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
-(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-POOL-AT-CAPACITY (err u2027))
 
 (define-constant a1 u27839300)
@@ -394,7 +394,7 @@
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
         (asserts! (>= (get conversion-ltv pool) (try! (get-ltv token collateral expiry))) ERR-LTV-GREATER-THAN-ONE)
-        (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
+        (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-TOKEN)
         (let
             (
                 (balance-x (get balance-x pool))
@@ -493,7 +493,7 @@
                 )
             )
 
-            (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-POOL-TOKEN)
+            (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
 
             ;; if any conversion happened at contract level, transfer back to vault
             (and 
@@ -553,7 +553,7 @@
                 )            
             )
 
-            (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-POOL-TOKEN)        
+            (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)        
             
             (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-ft collateral dx-weighted tx-sender)))
             (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted tx-sender)))

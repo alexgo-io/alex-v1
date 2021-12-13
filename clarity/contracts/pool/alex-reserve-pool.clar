@@ -12,7 +12,6 @@
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-CANNOT-STAKE (err u10016))
 (define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
-(define-constant ERR-NOTHING-TO-REDEEM (err u10018))
 (define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 

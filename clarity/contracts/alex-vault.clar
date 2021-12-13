@@ -9,7 +9,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-BALANCE (err u1001))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
-(define-constant ERR-INVALID-FLASH-LOAN (err u3008))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
@@ -78,7 +78,7 @@
 (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
   (let 
     (
-      (pre-bal (unwrap! (get-balance token) ERR-INVALID-FLASH-LOAN))
+      (pre-bal (unwrap! (get-balance token) ERR-INVALID-TOKEN))
       (fee-with-principal (+ ONE_8 (var-get flash-loan-fee-rate)))
       (amount-with-fee (mul-up amount fee-with-principal))
       (recipient tx-sender)

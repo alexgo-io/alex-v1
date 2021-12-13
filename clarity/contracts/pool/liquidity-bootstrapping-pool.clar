@@ -19,7 +19,7 @@
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-PRICE-LOWER-THAN-MIN (err u2021))
 (define-constant ERR-PRICE-GREATER-THAN-MAX (err u2022))
-(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
@@ -94,7 +94,7 @@
                 }))
             )
             
-            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
             (asserts! (> new-dy u0) ERR-INVALID-LIQUIDITY)
             (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -301,7 +301,7 @@
                 )
             )
             
-            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)    
+            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)    
 
             (try! (contract-call? .alex-vault ft-transfer-multi token-x-trait dx token-y-trait dy tx-sender))
             
