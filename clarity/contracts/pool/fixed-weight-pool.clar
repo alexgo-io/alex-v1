@@ -20,7 +20,7 @@
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
 (define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
-(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
+(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 

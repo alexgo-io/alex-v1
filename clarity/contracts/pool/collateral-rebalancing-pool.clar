@@ -24,7 +24,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
-(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
+(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
 (define-constant ERR-POOL-AT-CAPACITY (err u2027))
 
 (define-constant a1 u27839300)

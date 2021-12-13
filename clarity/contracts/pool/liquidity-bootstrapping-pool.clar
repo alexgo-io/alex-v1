@@ -20,7 +20,7 @@
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-PRICE-LOWER-THAN-MIN (err u2021))
 (define-constant ERR-PRICE-GREATER-THAN-MAX (err u2022))
-(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
+(define-constant ERR-INVALID-POOL-TOKEN (err u8002))
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
