@@ -547,5 +547,6 @@
   (map-set approved-contracts .collateral-rebalancing-pool true)  
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .yield-token-pool true)
-  (map-set approved-contracts (as-contract tx-sender) true)  
+  (map-set approved-contracts (as-contract tx-sender) true)
+  (map-set approved-contracts .yield-collateral-rebalancing-pool true)  
 )
