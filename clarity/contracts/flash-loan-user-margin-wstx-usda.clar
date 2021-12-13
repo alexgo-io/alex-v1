@@ -9,7 +9,7 @@
         (   
             ;; gross amount * ltv / price = amount
             ;; gross amount = amount * price / ltv
-            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
+            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))        
             (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wstx memo-uint)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
             (gross-amount (mul-up amount (div-down price ltv)))
@@ -17,8 +17,8 @@
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
         )
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool swap .token-wstx .token-usda u50000000 u50000000 swapped-token none))        
-        (print { object: "flash-loan-user-margin-usda-wstx-23040", action: "execute", data: gross-amount })
+        (try! (contract-call? .fixed-weight-pool swap-helper .token-usda .token-wstx u50000000 u50000000 swapped-token none))        
+        (print { object: "flash-loan-user-margin-wstx-usda", action: "execute", data: gross-amount })
         (ok true)
     )
 )

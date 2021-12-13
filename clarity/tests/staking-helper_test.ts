@@ -146,7 +146,11 @@ Clarinet.test({
 
 
         chain.mineBlock([
+<<<<<<< HEAD
           Tx.contractCall(stakeContract, "mint", [
+=======
+          Tx.contractCall(stakeContract, "mint-fixed", [
+>>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
             types.uint(100000e8),
             types.principal(wallet_6.address)
           ], deployer.address),

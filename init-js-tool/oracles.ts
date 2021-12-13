@@ -1,54 +1,55 @@
-const CoinGecko = require('coingecko-api');
-const CoinGeckoClient = new CoinGecko();
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import CoinGecko from 'coingecko-api';
+import {
   AnchorMode,
+  broadcastTransaction,
+  callReadOnlyFunction,
+  makeContractCall,
   stringAsciiCV,
   uintCV,
-  broadcastTransaction,
-  bufferCVFromString,
-} = require('@stacks/transactions');
-const {wait_until_confirmation, get_nonce } = require('./utils')
-const {
-  getDeployerPK, getUserPK, network
-} = require('./wallet');
+} from '@stacks/transactions';
+import { wait_until_confirmation } from './utils';
+import { getDeployerPK, network } from './wallet';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
+
+const CoinGeckoClient = new CoinGecko();
 
 //Use CoinGeckoClient to fetch current prices of btc & usdc
-const initCoinPrice = async () => {
+export const initCoinPrice = async () => {
   console.log('Updating coin market price...');
+  // FIXME: typescript migrate;
   const btc = await CoinGeckoClient.coins.fetch('bitcoin', {
     vs_currency: 'usd',
     from: new Date(Date.now() - 60 * 1000).getTime(),
     to: Date.now(),
-  });
+  } as any);
+  // FIXME: typescript migrate;
   const usdc = await CoinGeckoClient.coins.fetch('usd-coin', {
     vs_currency: 'usd',
     from: new Date(Date.now() - 60 * 1000).getTime(),
     to: Date.now(),
-  });
+  } as any);
   const usdcPrice = usdc.data.market_data.current_price.usd * 1e8;
   const btcPrice = btc.data.market_data.current_price.usd * 1e8;
   return {
     usdc: usdcPrice,
-    btc: btcPrice
+    btc: btcPrice,
   };
 };
 
 //Call open-oracle to set price
-const setOpenOracle = async (symbol, src, price) => {
+export const setOpenOracle = async (
+  symbol: string,
+  src: string,
+  price: number,
+) => {
   console.log('Setting oracle...', symbol, src, price);
   const privateKey = await getDeployerPK();
 
   const txOptions = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: 'open-oracle',
     functionName: 'update-price',
-    functionArgs: [
-      stringAsciiCV(symbol),
-      stringAsciiCV(src),
-      uintCV(price),
-    ],
+    functionArgs: [stringAsciiCV(symbol), stringAsciiCV(src), uintCV(price)],
     senderKey: privateKey,
     validateWithAbi: true,
     network,
@@ -65,19 +66,16 @@ const setOpenOracle = async (symbol, src, price) => {
 };
 
 //Call open-oracle to get price
-const getOpenOracle = async (src, symbol) => {
+export const getOpenOracle = async (src: string, symbol: string) => {
   console.log('Getting oracle...', src, symbol);
 
   const options = {
-    contractAddress: process.env.DEPLOYER_ACCOUNT_ADDRESS,
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
     contractName: 'open-oracle',
     functionName: 'get-price',
-    functionArgs: [
-      stringAsciiCV(src),      
-      stringAsciiCV(symbol)
-    ],
+    functionArgs: [stringAsciiCV(src), stringAsciiCV(symbol)],
     network: network,
-    senderAddress: process.env.USER_ACCOUNT_ADDRESS,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
   };
   try {
     return callReadOnlyFunction(options);
@@ -86,33 +84,26 @@ const getOpenOracle = async (src, symbol) => {
   }
 };
 
-const fetch_price = async (token, against) => {
+export const fetch_price = async (token: string, against: string): Promise<number> => {
   console.log('fetching price from coingecko...', token, against);
-  return (await CoinGeckoClient.coins.fetch(token, {
-    vs_currency: against,
-    from: new Date(Date.now() - 60 * 1000).getTime(),
-    to: Date.now(),
-  })).data.market_data.current_price.usd;
+  // FIXME: typescript migrate;
+  return (
+    await CoinGeckoClient.coins.fetch(token, {
+      vs_currency: against,
+      from: new Date(Date.now() - 60 * 1000).getTime(),
+      to: Date.now(),
+    } as any)
+  ).data.market_data.current_price.usd;
 };
 
-const fetch_btc = async(against) => {
+export const fetch_btc = async (against: string) => {
   return await fetch_price('bitcoin', against);
-}
+};
 
-const fetch_usdc = async(against) => {
+export const fetch_usdc = async (against: string) => {
   return await fetch_price('usd-coin', against);
-}
+};
 
-const fetch_in_usd = async(token) => {
+export const fetch_in_usd = async (token: string) => {
   return await fetch_price(token, 'usd');
-}
-
-exports.default = {
-  initCoinPrice,
-  setOpenOracle,
-  getOpenOracle,
-  fetch_price,
-  fetch_btc,
-  fetch_usdc,
-  fetch_in_usd
-}
+};

@@ -1,0 +1,51 @@
+{
+  "name": "init-js-tool",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Tiger WAng",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "select": "ts-node features/select.ts",
+    "deployContracts": "ts-node features/deployContracts.ts"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@stacks/connect": "^6.1.0",
+    "@stacks/keychain": "^2.0.1",
+    "@stacks/network": "^2.0.1",
+    "@stacks/transactions": "^2.0.1",
+    "@stacks/wallet-sdk": "^2.0.1",
+    "bn.js": "^5.2.0",
+    "chalk": "4.1.2",
+    "coingecko-api": "^1.0.10",
+    "dotenv": "^10.0.0",
+    "lodash": "^4.17.21",
+    "p-queue": "6.6.2",
+    "readline-promise": "^1.0.5",
+    "replace-in-file": "^6.2.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.3",
+    "yargs": "^17.3.0"
+  },
+  "resolutions": {
+    "smart-buffer": "npm:@syvita/smart-buffer@4.2.0"
+  },
+  "devDependencies": {
+    "@stacks/blockchain-api-client": "^0.69.0",
+    "@types/coingecko-api": "^1.0.5",
+    "@types/yargs": "^17.0.7",
+    "prettier": "^2.5.1"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "tabWidth": 2,
+    "arrowParens": "avoid",
+    "trailingComma": "all",
+    "printWidth": 80
+  }
+}

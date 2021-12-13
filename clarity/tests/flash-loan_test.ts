@@ -1,5 +1,3 @@
-
-
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
@@ -22,10 +20,10 @@ const keyusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-wstx"
 const ytpyieldusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda"
 const multisigncrpusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-wstx"
 const multisigytpyieldusda = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-usda"
-const loanuserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-usda-wstx"
+const loanuserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wstx-usda"
 const keyusdawbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-wbtc"
 const multisigncrpusdawbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-wbtc"
-const loanuserwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-usda-wbtc"
+const loanuserwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda"
 
 const ONE_8 = 100000000
 const expiry = 23040e+8 //0x0218711A0000 => 2304000000000
@@ -100,33 +98,41 @@ Clarinet.test({
         
         result = CRPTest.createPool(deployer, usdaAddress, wstxAddress, expiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 100*ONE_8);
         result.expectOk().expectBool(true);
-        // result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, expiry, yieldusdaAddress, keyusdawbtcAddress, multisigncrpusdawbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
-        // result.expectOk().expectBool(true);        
+        result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, expiry, yieldusdaAddress, keyusdawbtcAddress, multisigncrpusdawbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
+        result.expectOk().expectBool(true);        
       
         let call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         let position:any = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
       
-        // let call = await FLTest.getBalanceSFT(keyusdawbtcAddress, expiry, wallet_5.address);
-        // let position:any = call.result.expectOk().expectUint(0);
-        // call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
-        // position = call.result.expectOk().expectUint(0);        
+        call = await FLTest.getBalanceSFT(keyusdawbtcAddress, expiry, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);
+        call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
+        position = call.result.expectOk().expectUint(0);        
 
         // Let's borrow 100 WSTX to lever up
         result = FLTest.flashLoan(wallet_5, loanuserAddress, wstxAddress, 1000*ONE_8, expiryBuff);
         result.expectOk();
-        // result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, ONE_8, expiry);
-        // result.expectOk();        
+        result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, ONE_8, expiryBuff);
+        result.expectOk();        
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(wstxAddress, wallet_5.address);
+<<<<<<< HEAD
         position = call.result.expectOk().expectUint(19975102381069);  
+=======
+        position = call.result.expectOk().expectUint(19975389849913);  
+>>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
         call = await FLTest.getBalance(usdaAddress, wallet_5.address);
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
+<<<<<<< HEAD
         position = call.result.expectOk().expectUint(99731790033);
+=======
+        position = call.result.expectOk().expectUint(92007510705);
+>>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
         // but nothing with yield token
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);         
@@ -137,24 +143,28 @@ Clarinet.test({
         // trying to roll before maturity throws error
         result = FLTest.rollPosition(wallet_5, usdaAddress, wstxAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
         result.expectErr().expectUint(2017);
-
         // but let's set up new pools
         result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
         result.expectOk().expectBool(true);
         result = CRPTest.createPool(deployer, usdaAddress, wstxAddress, nextExpiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
-        result.expectOk().expectBool(true);        
-
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1);
-        // roll right after expiry succeeds.
+        result.expectOk().expectBool(true);    
+        
+        // and now we just expired
+        chain.mineEmptyBlockUntil(expiry / ONE_8 + 1);
         result = FLTest.rollPosition(wallet_5, usdaAddress, wstxAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
-        result.expectOk();
+        result.expectOk().expectUint(29751732527);
 
-        // key-usda--wbtc should be zero, with non-zero positions in key-usda-51840
+        // key-usda-wstx should be zero, with non-zero positions in key-usda
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(keyusdaAddress, nextExpiry, wallet_5.address);
+<<<<<<< HEAD
         position = call.result.expectOk().expectUint(25240085911);
         // but nothing with yield-usda-51840
+=======
+        position = call.result.expectOk().expectUint(30577751250);
+        // but nothing with yield-usda
+>>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
     },    
