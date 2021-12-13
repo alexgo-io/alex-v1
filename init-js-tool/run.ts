@@ -34,6 +34,11 @@ import {
   reserveSetRewardCycleLength,
   reserveGetStakerAtCycleOrDefault
 } from './reserve';
+import {
+  test_spot_trading,
+  test_margin_trading
+} from './runSteps/archived-code';
+
 
 async function run_mint_initial_tokens() {
   await set_faucet_amounts();
@@ -57,7 +62,7 @@ async function run() {
   // await arbitrage_ytp(false, _pools);
   // await arbitrage_fwp(false);
 
-  // await test_spot_trading();
+  await test_spot_trading();
   // await test_margin_trading();
 
   // await create_fwp(true, _fwp_pools, true);
@@ -159,11 +164,11 @@ async function run() {
   // }
 
   // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
-  let _list = [ 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4' ];
-  for (let i = 0; i < _list.length; i++) {
-      await get_some_token(_list[i]);
-      // mint_ft('lottery-t-alex', 100e8, _list[i]);
-  }
+  // let _list = [ 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4' ];
+  // for (let i = 0; i < _list.length; i++) {
+  //     await get_some_token(_list[i]);
+  //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
+  // }
   // await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
   // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
   // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
