@@ -7,7 +7,8 @@
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-INSUFFICIENT-FLASH-LOAN-BALANCE (err u3003))
+(define-constant ERR-INVALID-BALANCE (err u1001))
+
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-STX-TRANSFER-FAILED (err u9003))
 (define-constant ERR-LOAN-TRANSFER-FAILED (err u3006))
@@ -88,7 +89,7 @@
     )
 
     ;; make sure current balance > loan amount
-    (asserts! (> pre-bal amount) ERR-INSUFFICIENT-FLASH-LOAN-BALANCE)
+    (asserts! (> pre-bal amount) ERR-INVALID-BALANCE)
 
     ;; transfer loan to flash-loan-user
     (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-LOAN-TRANSFER-FAILED))

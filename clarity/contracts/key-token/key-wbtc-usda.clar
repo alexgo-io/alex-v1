@@ -3,7 +3,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
-(define-constant ERR-INVALID-BALANCE (err u2008))
+(define-constant ERR-INVALID-BALANCE (err u1001))
 
 (define-fungible-token key-wbtc-usda)
 (define-map token-balances {token-id: uint, owner: principal} uint)

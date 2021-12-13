@@ -13,7 +13,7 @@
 ;; 
 
 ;; Errors
-(define-constant ERR-NOT-ENOUGH-BALANCE (err u8000))
+(define-constant ERR-INVALID-BALANCE (err u1001))
 (define-constant ERR-INVALID-POOL-TOKEN (err u8002))
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -121,7 +121,7 @@
   )
 
     ;; Requires 10% of the supply 
-    (asserts! (>= (* proposer-balance u10) total-supply) ERR-NOT-ENOUGH-BALANCE)
+    (asserts! (>= (* proposer-balance u10) total-supply) ERR-INVALID-BALANCE)
     ;; Mutate
     (map-set proposals
       { id: proposal-id }

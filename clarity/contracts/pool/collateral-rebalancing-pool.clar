@@ -10,7 +10,7 @@
 ;;
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
-(define-constant ERR-INVALID-POOL-ERR (err u2001))
+(define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-TRANSFER-X-FAILED (err u3001))
 (define-constant ERR-TRANSFER-Y-FAILED (err u3002))
@@ -127,7 +127,7 @@
 ;; @param pool-id; pool-id
 ;; @returns (response (tuple) uint)
 (define-read-only (get-pool-contracts (pool-id uint))
-    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL-ERR))
+    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL))
 )
 
 ;; @desc get-pools
@@ -142,7 +142,7 @@
 ;; @param expiry; expiry block-height
 ;; @returns (response (tuple) uint)
 (define-read-only (get-pool-details (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (ok (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
+    (ok (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))
 )
 
 ;; @desc get-spot
@@ -178,7 +178,7 @@
 (define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))            
             (balance-y (get balance-y pool))
             (balance-x-in-y (div-down (get balance-x pool) (try! (get-spot token collateral))))
         )
@@ -195,7 +195,7 @@
 (define-read-only (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))   
             (balance-x (get balance-x pool))
             (balance-y-in-x (mul-down (get balance-y pool) (try! (get-spot token collateral))))
         )
@@ -212,7 +212,7 @@
 (define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))            
             (yield-supply (get yield-supply pool)) ;; in token
             (pool-value (try! (get-pool-value-in-token token collateral expiry))) ;; also in token
         )
@@ -235,7 +235,7 @@
 (define-read-only (get-weight-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (strike uint) (bs-vol uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))
             (moving-average (get moving-average pool))
             (now (* block-height ONE_8))
         )
@@ -388,7 +388,7 @@
         (   
             (token-x (contract-of collateral))
             (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
             (conversion-ltv (get conversion-ltv pool))
             (ltv (try! (get-ltv token collateral expiry)))
         )
@@ -463,7 +463,7 @@
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (yield-supply (get yield-supply pool))
@@ -536,7 +536,7 @@
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))            
                 (key-supply (get key-supply pool))            
@@ -579,12 +579,12 @@
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL)
         (let
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (strike (get strike pool))
                 (bs-vol (get bs-vol pool)) 
                 (balance-x (get balance-x pool))
@@ -638,12 +638,12 @@
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL-ERR)   
+        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL)   
         (let
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (strike (get strike pool))
                 (bs-vol (get bs-vol pool))
                 (balance-x (get balance-x pool))
@@ -794,7 +794,7 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))                
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
         )
         (ok (get fee-to-address pool))
     )
@@ -811,7 +811,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map
 			    { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry })
-			    ERR-INVALID-POOL-ERR)
+			    ERR-INVALID-POOL)
             )
         )
         (contract-call? .weighted-equation get-y-given-x
@@ -835,7 +835,7 @@
 		(
 			(pool (unwrap! (map-get? pools-data-map
 				{ token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry })
-				ERR-INVALID-POOL-ERR)
+				ERR-INVALID-POOL)
 			)
 		)
 		(contract-call? .weighted-equation get-x-given-y 
@@ -859,7 +859,7 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (weight-x (get weight-x pool))
@@ -880,7 +880,7 @@
         (
             (token-x (contract-of collateral))
             (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (weight-x (get weight-x pool))
@@ -929,7 +929,7 @@
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
@@ -968,7 +968,7 @@
             (
                 (token-x (contract-of collateral))
                 (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
+                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))  
                 (yield-supply (get yield-supply pool))                  
