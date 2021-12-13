@@ -15,7 +15,6 @@
 
 (define-data-var usda-amount uint u0)
 (define-data-var wbtc-amount uint u0)
-(define-data-var wstx-amount uint u0)
 (define-data-var stx-amount uint u0)
 (define-data-var alex-amount uint u0)
 
@@ -60,10 +59,6 @@
     (ok (var-get wbtc-amount))
 )
 
-(define-read-only (get-wstx-amount)
-    (ok (var-get wstx-amount))
-)
-
 (define-read-only (get-stx-amount)
     (ok (var-get stx-amount))
 )
@@ -83,13 +78,6 @@
     (begin
         (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
         (ok (var-set wbtc-amount amount))
-    )
-)
-
-(define-public (set-wstx-amount (amount uint))
-    (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-        (ok (var-set wstx-amount amount))
     )
 )
 
@@ -124,10 +112,6 @@
         (and (> (var-get stx-amount) u0) (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
         (ok true)
     )
-)
-
-(define-public (get-some-wstx-tokens)
-    (contract-call? .token-wstx mint (var-get wstx-amount) tx-sender)
 )
 
 ;; SEND-MANY

@@ -46,15 +46,6 @@ class Faucet {
           ], sender.address),
         ]);
         return block.receipts[0].result;
-    }  
-
-    setWstxAmount(sender: Account, amount: number) {
-      let block = this.chain.mineBlock([
-          Tx.contractCall("faucet", "set-wstx-amount", [
-            types.uint(amount),
-          ], sender.address),
-        ]);
-        return block.receipts[0].result;
     }
 
     setAlexAmount(sender: Account, amount: number) {
@@ -88,11 +79,6 @@ class Faucet {
     getStxAmount() {
         return this.chain.callReadOnlyFn("faucet", "get-stx-amount", [
         ], this.deployer.address);
-    }   
-    
-    getWstxAmount() {
-      return this.chain.callReadOnlyFn("faucet", "get-wstx-amount", [
-      ], this.deployer.address);
     }
     
     getAlexAmount() {
@@ -118,11 +104,6 @@ class Faucet {
             ], sender.address),
           ]);
           return block.receipts[0].result;
-    }
-
-    getSomeWstxTokens(sender: Account) {
-      let block = this.chain.mineBlock([Tx.contractCall("faucet", "get-some-wstx-tokens", [], sender.address)]);
-      return block.receipts[0].result;
     }
 
     sendMany(sender: Account, recipients: string[]) {
@@ -180,8 +161,6 @@ Clarinet.test({
         result.expectErr().expectUint(1000);
         result = await FaucetTest.setWbtcAmount(wallet_6, 10);
         result.expectErr().expectUint(1000)
-        result = await FaucetTest.setWstxAmount(wallet_6, 10);
-        result.expectErr().expectUint(1000);
         result = await FaucetTest.setAlexAmount(wallet_6, 10);
         result.expectErr().expectUint(1000)            
         
@@ -195,8 +174,6 @@ Clarinet.test({
         await FaucetTest.setWbtcAmount(deployer, 100 * ONE_8);
         result = await FaucetTest.getWbtcAmount(); 
         result.result.expectOk().expectUint(100 * ONE_8); 
-        await FaucetTest.setWstxAmount(deployer, 100 * ONE_8);
-        result = await FaucetTest.getWstxAmount();
         result.result.expectOk().expectUint(100 * ONE_8);
         await FaucetTest.setAlexAmount(deployer, 100 * ONE_8);
         result = await FaucetTest.getAlexAmount(); 
@@ -223,13 +200,7 @@ Clarinet.test({
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8);          
         result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
-        result.result.expectOk().expectUint(100 * ONE_8);  
-        
-        // getSomeWstxTokens called by the user mints token-wstx
-        result = await FaucetTest.getSomeWstxTokens(wallet_7);
-        result.expectOk();
-        result = await FaucetTest.getBalance('token-wstx', wallet_7.address);
-        result.result.expectOk().expectUint(100 * ONE_8);
+        result.result.expectOk().expectUint(100 * ONE_8); 
         
         // non contract-owner attempting to call get-some-tokens throws an error.
         result = await FaucetTest.getSomeTokens(wallet_6, wallet_7.address);

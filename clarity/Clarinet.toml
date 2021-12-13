@@ -198,7 +198,7 @@ path = "contracts/token/token-wbtc.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-wstx]
-path = "contracts/token/token-wstx.clar"
+path = "contracts/wrapped-token/token-wstx.clar"
 depends_on = [ "trait-ownable", "alex-vault", "trait-sip-010" ]
 
 [contracts.trait-flash-loan-user]

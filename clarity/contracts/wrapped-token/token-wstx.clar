@@ -8,7 +8,8 @@
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-NOT-TOKEN-OWNER (err u1001))
+(define-constant ERR-MINT-FAILED (err u6002))
+(define-constant ERR-BURN-FAILED (err u6003))
 
 (define-read-only (get-owner)
   (ok (var-get CONTRACT-OWNER))
@@ -58,8 +59,8 @@
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
-    ;; (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? wstx amount sender recipient)
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (match (stx-transfer? (/ (* amount (pow u10 u6) ONE_8)) sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -69,22 +70,13 @@
   )
 )
 
-;; This can only be called by recipient since stx-transfer is involved ;; tx-sender -> .alex-vault
-(define-public (mint (amount uint) (recipient principal)) 
-  (begin
-    (asserts! (is-eq tx-sender recipient) ERR-NOT-TOKEN-OWNER)
-    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) recipient .alex-vault))
-    (ft-mint? wstx amount recipient)
-  )
+(define-public (mint (amount uint) (recipient principal))
+  ERR-MINT-FAILED
 )
 
 ;; This can only be called by sender since ft-burn is involved
 (define-public (burn (amount uint) (sender principal))
-  (begin
-    (asserts! (is-eq tx-sender sender) ERR-NOT-TOKEN-OWNER)
-    (as-contract (try! (contract-call? .alex-vault transfer-stx (decimals-to-fixed amount) tx-sender sender)))
-    (ft-burn? wstx amount sender)
-  )
+  ERR-BURN-FAILED
 )
 
 (define-constant ONE_8 (pow u10 u8))

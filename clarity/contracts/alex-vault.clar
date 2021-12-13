@@ -61,13 +61,13 @@
   )
 )
 
-(define-public (transfer-stx (amount uint) (sender principal) (recipient principal))
-  (begin
-    (try! (check-is-approved sender))
-    (as-contract (unwrap! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
-    (ok true)
-  )
-)
+;; (define-public (transfer-stx (amount uint) (sender principal) (recipient principal))
+;;   (begin
+;;     (try! (check-is-approved sender))
+;;     (as-contract (unwrap! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
+;;     (ok true)
+;;   )
+;; )
 
 (define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
@@ -133,5 +133,5 @@
   (map-set approved-contracts .fixed-weight-pool true)  
   (map-set approved-contracts .liquidity-bootstrapping-pool true)  
   (map-set approved-contracts .yield-token-pool true)  
-  (map-set approved-contracts .token-wstx true)
+  ;; (map-set approved-contracts .token-wstx true)
 )
