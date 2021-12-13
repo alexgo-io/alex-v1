@@ -119,20 +119,12 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(wstxAddress, wallet_5.address);
-<<<<<<< HEAD
-        position = call.result.expectOk().expectUint(19975102381069);  
-=======
         position = call.result.expectOk().expectUint(19975389849913);  
->>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
         call = await FLTest.getBalance(usdaAddress, wallet_5.address);
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
-<<<<<<< HEAD
-        position = call.result.expectOk().expectUint(99731790033);
-=======
         position = call.result.expectOk().expectUint(92007510705);
->>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
         // but nothing with yield token
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);         
@@ -158,13 +150,8 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(keyusdaAddress, nextExpiry, wallet_5.address);
-<<<<<<< HEAD
-        position = call.result.expectOk().expectUint(25240085911);
-        // but nothing with yield-usda-51840
-=======
         position = call.result.expectOk().expectUint(30577751250);
         // but nothing with yield-usda
->>>>>>> aea73114cf5253d85fdc0218e478e325fcf38d7f
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
     },    

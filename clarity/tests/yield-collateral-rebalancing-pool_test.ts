@@ -122,12 +122,12 @@ Clarinet.test({
         call = await CRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
         position['yield-supply'].expectUint(80055616);
-        position['key-supply'].expectUint(79999040);
-        position['weight-x'].expectUint(66533357);
-        position['weight-y'].expectUint(ONE_8 - 66533357);        
-        position['balance-x'].expectUint(3326667850000);
-        position['balance-y'].expectUint(33465200);
-        position['strike'].expectUint(50000 * ONE_8);
+        position['key-supply'].expectUint(80055616);
+        position['weight-x'].expectUint(66532239);
+        position['weight-y'].expectUint(ONE_8 - 66532239);        
+        position['balance-x'].expectUint(3326611950000);
+        position['balance-y'].expectUint(33474160);
+        position['strike'].expectUint(4999999700000);
         position['ltv-0'].expectUint(ltv_0);
         position['bs-vol'].expectUint(bs_vol);
         position['conversion-ltv'].expectUint(conversion_ltv);
@@ -137,39 +137,39 @@ Clarinet.test({
         result = CRPTest.swapXForY(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
-        position['dy'].expectUint(199093); 
+        position['dy'].expectUint(199140); 
 
         // arbtrageur selling 0.002 wbtc for usda
         result = CRPTest.swapYForX(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, 0.002 * ONE_8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(22306358644);
+        position['dx'].expectUint(22257971094);
         position['dy'].expectUint(0.002 * ONE_8);        
 
         // borrow $5,000 more and convert to wbtc
         // remember, the first sell creates profit to LP
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 5000 * ONE_8);
         position = result.expectOk().expectTuple();
-        position['dy'].expectUint(7890994);        
-        position['dx'].expectUint(7891170);
+        position['dy'].expectUint(7892293);        
+        position['dx'].expectUint(7892451);
 
         // supply increased
         call = await CRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(3551898086356);
-        position['balance-y'].expectUint(38626987);                
-        position['yield-supply'].expectUint(87890034);
-        position['key-supply'].expectUint(87890034);      
+        position['balance-x'].expectUint(3552125003906);
+        position['balance-y'].expectUint(38628565);                
+        position['yield-supply'].expectUint(87947909);
+        position['key-supply'].expectUint(87947909);      
         
         // pool value increases after adding positions
         call = await CRPTest.getPoolValueInToken(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(109513285);    
+        call.result.expectOk().expectUint(109522942);    
         
         call = await CRPTest.getPoolValueInCollateral(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(5487379605425);
+        call.result.expectOk().expectUint(5487588678084);
         
         // let's check what is the weight to wbtc (token)
         call = await CRPTest.getWeightY(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(52756780);                     
+        call.result.expectOk().expectUint(52704413);                     
         
         // simulate to expiry
         chain.mineEmptyBlockUntil((expiry / ONE_8)) 
@@ -182,34 +182,34 @@ Clarinet.test({
         chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)  
         
         call = await CRPTest.getPoolValueInToken(wbtcAddress, yieldusdaAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(109513285); 
+        call.result.expectOk().expectUint(109520992); 
 
         // deployer holds less than total supply because he sold some yield-wbtc for wbtc
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(79999040);
+        position['dy'].expectUint(80055616);
 
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(9724040);                
-        position['yield-supply'].expectUint(7890994);
-        position['key-supply'].expectUint(87890034);
+        position['balance-y'].expectUint(9719752);                
+        position['yield-supply'].expectUint(7892293);
+        position['key-supply'].expectUint(87947909);
              
         // also remove all key tokens
         result = CRPTest.reducePositionKey(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, keywbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(1833045);     
+        position['dy'].expectUint(1827458);     
         
         call = await CRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(7890994);
+        position['yield-supply'].expectUint(7892293);
         position['key-supply'].expectUint(0);        
         position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(7890995);                
+        position['balance-y'].expectUint(7892294);                
     },    
 });
 
