@@ -4,7 +4,6 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { 
     TestALEXLottery,
     TestALEXToken,
-    WSTXToken
   } from './models/alex-tests-tokens.ts';
 
 const ONE_8 = 100000000
@@ -40,17 +39,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -115,17 +109,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -183,17 +172,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -244,17 +228,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -278,17 +257,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -322,17 +296,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -375,17 +344,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        
@@ -432,17 +396,12 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let wstxToken = new WSTXToken(chain, deployer);
         let lottery = new TestALEXLottery(chain, deployer);
         let talexToken = new TestALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
-        result = wstxToken.mintFixed(wallet_1, wallet_1.address, 10000 * ONE_8);
-        result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
-        result.expectOk();
-        result = wstxToken.mintFixed(wallet_2, wallet_2.address, 1000 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_2.address, 10 * ONE_8);
         result.expectOk();        

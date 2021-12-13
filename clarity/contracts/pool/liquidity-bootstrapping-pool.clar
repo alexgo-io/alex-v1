@@ -1,5 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
+
 (use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
 
 ;; liquidity-bootstrapping-pool
@@ -99,12 +100,12 @@
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-POOL-TOKEN)
 
             (asserts! (> new-dy u0) ERR-INVALID-LIQUIDITY)
-            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
-            (unwrap! (contract-call? token-y-trait transfer new-dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? token-x-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? token-y-trait transfer-fixed new-dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
         
             ;; mint pool token-x and send to tx-sender
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-pool-token mint new-supply tx-sender))
+            (try! (contract-call? the-pool-token mint-fixed new-supply tx-sender))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok true)
         )
@@ -308,7 +309,7 @@
             (try! (contract-call? .alex-vault ft-transfer-multi token-x-trait dx token-y-trait dy tx-sender))
             
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-pool-token burn shares tx-sender))
+            (try! (contract-call? the-pool-token burn-fixed shares tx-sender))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
         )
@@ -349,7 +350,7 @@
             (asserts! (<= (get price-x-min pool) (div-down dy dx)) ERR-PRICE-LOWER-THAN-MIN)
             (asserts! (>= (get price-x-max pool) (div-down dy dx)) ERR-PRICE-GREATER-THAN-MAX)
 
-            (unwrap! (contract-call? token-x-trait transfer dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? token-x-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -394,7 +395,7 @@
             (asserts! (>= (get price-x-max pool) (div-down dy dx)) ERR-PRICE-GREATER-THAN-MAX)
 
             (try! (contract-call? .alex-vault transfer-ft token-x-trait dx tx-sender))
-            (unwrap! (contract-call? token-y-trait transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? token-y-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (print { object: "pool", action: "swap-y-for-x", data: pool-updated })

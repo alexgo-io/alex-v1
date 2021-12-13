@@ -1,6 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
+
 (use-trait multisig-trait .trait-multisig-vote.multisig-vote-sft-trait)
 
 ;; collateral-rebalancing-pool - yield
@@ -463,8 +464,8 @@
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
-            (try! (contract-call? the-yield-token mint expiry yield-new-supply tx-sender))
-            (try! (contract-call? the-key-token mint expiry key-new-supply tx-sender))
+            (try! (contract-call? the-yield-token mint-fixed expiry yield-new-supply tx-sender))
+            (try! (contract-call? the-key-token mint-fixed expiry key-new-supply tx-sender))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
@@ -539,7 +540,7 @@
             ;; if any conversion happened at contract level, transfer back to vault
             (and 
                 (> bal-x-to-y u0)
-                (as-contract (unwrap! (contract-call? token transfer bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+                (as-contract (unwrap! (contract-call? token transfer-fixed bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
             )
 
             ;; if shares > dy, then transfer the shortfall from reserve.
@@ -550,7 +551,7 @@
             (try! (contract-call? .alex-vault transfer-ft token shares tx-sender))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-yield-token burn expiry shares tx-sender))
+            (try! (contract-call? the-yield-token burn-fixed expiry shares tx-sender))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
@@ -599,7 +600,7 @@
             (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted tx-sender)))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-key-token burn expiry shares tx-sender))
+            (try! (contract-call? the-key-token burn-fixed expiry shares tx-sender))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx-weighted, dy: dy-weighted})
         )        
@@ -651,7 +652,7 @@
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (unwrap! (contract-call? collateral transfer expiry dx tx-sender .alex-vault) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? collateral transfer-fixed expiry dx tx-sender .alex-vault) ERR-TRANSFER-X-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token dy tx-sender))
             (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))
 
@@ -709,7 +710,7 @@
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (try! (contract-call? .alex-vault transfer-sft collateral expiry dx tx-sender))
-            (unwrap! (contract-call? token transfer dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? token transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
             (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
 
             ;; post setting

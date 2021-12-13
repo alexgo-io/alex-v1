@@ -4,7 +4,7 @@ import { broadcastTransaction, makeContractDeploy } from '@stacks/transactions';
 import fs from 'fs';
 import path from 'path';
 
-import { getDeployerPK, network } from './wallet';
+import { getDeployerPK, network, genesis_transfer } from './wallet';
 
 require('dotenv').config();
 
@@ -16,7 +16,7 @@ let contract_paths = [
   'lib/math-log-exp.clar',
   'lib/math-fixed-point.clar',
   'traits/trait-sip-010.clar',
-  'traits/trait-semi-fungible-token.clar',
+  'traits/trait-semi-fungible.clar',
   'traits/trait-flash-loan-user.clar',
   'traits/trait-oracle.clar',
   'traits/trait-ownable.clar',
@@ -29,7 +29,7 @@ let contract_paths = [
   'token/token-wbtc.clar',
   'token/token-t-alex.clar',
   'alex-vault.clar',
-  'token/token-wstx.clar',
+  'wrapped-token/token-wstx.clar',
   'open-oracle.clar',
   'pool/alex-reserve-pool.clar',
   'pool/fixed-weight-pool.clar',
@@ -58,9 +58,10 @@ let contract_paths = [
   'flash-loan-user-margin-usda-wbtc.clar',
   'flash-loan-user-margin-wbtc-usda.clar',
 
-  'helpers/alex-staking-helper.clar',
   'pool/alex-launchpad.clar',
   'lottery-tokens/lottery-t-alex.clar',
+  'helpers/staking-helper.clar',
+  'helpers/margin-helper.clar',
 ];
 
 function sleep(ms: number) {
@@ -131,7 +132,7 @@ async function deploy(filePath: string, contractName: string) {
 
 async function run() {
   // VERSION = await get_version()
-  // await genesis_transfer();
+  await genesis_transfer();
   //walk the batches directory and deploy
   await walkDir();
   //write to file

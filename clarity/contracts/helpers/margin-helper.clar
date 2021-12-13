@@ -1,5 +1,5 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible-token.semi-fungible-token-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 (pow u10 u8))

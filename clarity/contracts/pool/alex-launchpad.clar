@@ -1,6 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
+
 ;; alex-launchpad
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))

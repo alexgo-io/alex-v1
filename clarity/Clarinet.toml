@@ -11,7 +11,7 @@ depends_on = ["trait-ownable", "trait-sip-010", "alex-vault", "token-alex"]
 path = "contracts/pool/futures-pool.clar"
 depends_on = [
   "trait-ownable",
-  "trait-semi-fungible-token",
+  "trait-semi-fungible",
   "trait-multisig-vote",
   "alex-reserve-pool"
 ]
@@ -32,7 +32,7 @@ depends_on = [
   "trait-flash-loan-user",
   "math-fixed-point",
   "trait-ownable",
-  "trait-semi-fungible-token"
+  "trait-semi-fungible"
 ]
 
 [contracts.collateral-rebalancing-pool]
@@ -108,11 +108,11 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.key-usda-wbtc]
 path = "contracts/key-token/key-usda-wbtc.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.key-usda-wstx]
 path = "contracts/key-token/key-usda-wstx.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.liquidity-bootstrapping-pool]
 path = "contracts/pool/liquidity-bootstrapping-pool.clar"
@@ -145,14 +145,6 @@ depends_on = [ "math-log-exp" ]
 
 [contracts.math-log-exp]
 path = "contracts/lib/math-log-exp.clar"
-depends_on = [ ]
-
-[contracts.math-new-fixed-point]
-path = "contracts/new-lib/math-new-fixed-point.clar"
-depends_on = [ "math-new-log-exp", "math-log-exp" ]
-
-[contracts.math-new-log-exp]
-path = "contracts/new-lib/math-new-log-exp.clar"
 depends_on = [ ]
 
 [contracts.multisig-crp-usda-wstx]
@@ -198,7 +190,7 @@ path = "contracts/token/token-wbtc.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-wstx]
-path = "contracts/token/token-wstx.clar"
+path = "contracts/wrapped-token/token-wstx.clar"
 depends_on = [ "trait-ownable", "alex-vault", "trait-sip-010" ]
 
 [contracts.trait-flash-loan-user]
@@ -217,8 +209,8 @@ depends_on = [ ]
 path = "contracts/traits/trait-ownable.clar"
 depends_on = [ ]
 
-[contracts.trait-semi-fungible-token]
-path = "contracts/traits/trait-semi-fungible-token.clar"
+[contracts.trait-semi-fungible]
+path = "contracts/traits/trait-semi-fungible.clar"
 depends_on = [ ]
 
 [contracts.trait-sip-010]
@@ -246,7 +238,7 @@ depends_on = [
   "trait-flash-loan-user",
   "math-fixed-point",
   "yield-token-equation",
-  "trait-semi-fungible-token",
+  "trait-semi-fungible",
   "token-alex",
   "token-usda",
   "fixed-weight-pool",
@@ -268,7 +260,7 @@ depends_on = [
   "yield-usda",
   "key-usda-wbtc",
   "collateral-rebalancing-pool",
-  "trait-semi-fungible-token",
+  "trait-semi-fungible",
   "trait-multisig-vote"
 ]
 
@@ -278,7 +270,7 @@ depends_on = [
   "yield-wbtc",
   "key-wbtc-wbtc",
   "collateral-rebalancing-pool",
-  "trait-semi-fungible-token",
+  "trait-semi-fungible",
   "trait-multisig-vote"
 ]
 
@@ -297,27 +289,27 @@ depends_on = [ "ytp-yield-usda", "yield-usda", "yield-token-pool" ]
 
 [contracts.key-wbtc-usda]
 path = "contracts/key-token/key-wbtc-usda.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.key-wbtc-wbtc]
 path = "contracts/key-token/key-wbtc-wbtc.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.yield-usda]
 path = "contracts/yield-token/yield-usda.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.yield-wbtc]
 path = "contracts/yield-token/yield-wbtc.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.ytp-yield-usda]
 path = "contracts/pool-token/ytp-yield-usda.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.ytp-yield-wbtc]
 path = "contracts/pool-token/ytp-yield-wbtc.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.alex-launchpad]
 path = "contracts/pool/alex-launchpad.clar"
@@ -325,7 +317,7 @@ depends_on = [ "trait-ownable", "trait-sip-010", "token-wstx" ]
 
 [contracts.staked-alex]
 path = "contracts/staked-token/staked-alex.clar"
-depends_on = [ "trait-ownable", "trait-semi-fungible-token" ]
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.flash-loan-user-margin-wbtc-usda]
 path = "contracts/flash-loan-user-margin-wbtc-usda.clar"
