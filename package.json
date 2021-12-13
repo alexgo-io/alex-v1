@@ -6,7 +6,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "select": "node ./features/select.js --env"
+    "select": "ts-node features/select.ts",
+    "deployContracts": "ts-node features/deployContracts.ts"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
@@ -23,6 +24,8 @@
     "p-queue": "6.6.2",
     "readline-promise": "^1.0.5",
     "replace-in-file": "^6.2.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.3",
     "yargs": "^17.3.0"
   },
   "resolutions": {
@@ -30,6 +33,8 @@
   },
   "devDependencies": {
     "@stacks/blockchain-api-client": "^0.69.0",
+    "@types/coingecko-api": "^1.0.5",
+    "@types/yargs": "^17.0.7",
     "prettier": "^2.5.1"
   },
   "engines": {

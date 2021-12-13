@@ -1,28 +1,21 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
-  PostConditionMode,
-  uintCV,
-  someCV,
-  bufferCVFromString,
-  stringAsciiCV,
-  stringUtf8CV,
-  contractPrincipalCV,
   broadcastTransaction,
-  ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const {
-  DEPLOYER_ACCOUNT_ADDRESS,
-  USER_ACCOUNT_ADDRESS,
-} = require('./constants');
+  callReadOnlyFunction,
+  contractPrincipalCV,
+  makeContractCall,
+  PostConditionMode,
+  someCV,
+  stringUtf8CV,
+  uintCV,
+} from '@stacks/transactions';
+import { principalCV } from '@stacks/transactions/dist/clarity/types/principalCV';
 
-const reserveAddToken = async token => {
+import { getDeployerPK, network } from './wallet';
+import { wait_until_confirmation } from './utils';
+import { DEPLOYER_ACCOUNT_ADDRESS, USER_ACCOUNT_ADDRESS } from './constants';
+
+export const reserveAddToken = async (token: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -49,7 +42,9 @@ const reserveAddToken = async token => {
   }
 };
 
-const reserveSetActivationThreshold = async activation_threshold => {
+export const reserveSetActivationThreshold = async (
+  activation_threshold: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -76,7 +71,7 @@ const reserveSetActivationThreshold = async activation_threshold => {
   }
 };
 
-const reserveSetActivationDelay = async activation_delay => {
+export const reserveSetActivationDelay = async (activation_delay: number) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -103,7 +98,7 @@ const reserveSetActivationDelay = async activation_delay => {
   }
 };
 
-const reserveRegisterUser = async token => {
+export const reserveRegisterUser = async (token: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -133,13 +128,13 @@ const reserveRegisterUser = async token => {
   }
 };
 
-const reserveSetCoinbaseAmount = async (
-  token,
-  coinbase1,
-  coinbase2,
-  coinbase3,
-  coinbase4,
-  coinbase5,
+export const reserveSetCoinbaseAmount = async (
+  token: string,
+  coinbase1: number,
+  coinbase2: number,
+  coinbase3: number,
+  coinbase4: number,
+  coinbase5: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -182,7 +177,7 @@ const reserveSetCoinbaseAmount = async (
   }
 };
 
-const reserveGetUserId = async (token, user) => {
+export const reserveGetUserId = async (token: string, user: string) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -206,10 +201,10 @@ const reserveGetUserId = async (token, user) => {
   }
 };
 
-const reserveGetStakerAtCycleOrDefault = async (
-  token,
-  reward_cycle,
-  user_id,
+export const reserveGetStakerAtCycleOrDefault = async (
+  token: string,
+  reward_cycle: number,
+  user_id: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -240,7 +235,7 @@ const reserveGetStakerAtCycleOrDefault = async (
   }
 };
 
-const reserveSetRewardCycleLength = async length => {
+export const reserveSetRewardCycleLength = async (length: number) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -266,12 +261,3 @@ const reserveSetRewardCycleLength = async length => {
     console.log(error);
   }
 };
-
-exports.reserveAddToken = reserveAddToken;
-exports.reserveSetActivationDelay = reserveSetActivationDelay;
-exports.reserveSetActivationThreshold = reserveSetActivationThreshold;
-exports.reserveRegisterUser = reserveRegisterUser;
-exports.reserveSetCoinbaseAmount = reserveSetCoinbaseAmount;
-exports.reserveGetUserId = reserveGetUserId;
-exports.reserveGetStakerAtCycleOrDefault = reserveGetStakerAtCycleOrDefault;
-exports.reserveSetRewardCycleLength = reserveSetRewardCycleLength;

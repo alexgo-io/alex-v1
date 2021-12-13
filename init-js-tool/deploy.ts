@@ -1,23 +1,17 @@
-require('dotenv').config();
-const {
-  makeContractDeploy,
-  broadcastTransaction,
-  AnchorMode,
-} = require('@stacks/transactions');
-const fs = require('fs');
-const path = require('path');
-const {
-  getDeployerPK,
-  getUserPK,
-  network,
-  genesis_transfer,
-} = require('./wallet');
-const readline = require('readline-promise').default;
-const { exit } = require('process');
-const { STACKS_API_URL, DEPLOYER_ACCOUNT_ADDRESS } = require('./constants');
+import { exit } from 'process';
+import { DEPLOYER_ACCOUNT_ADDRESS, STACKS_API_URL } from './constants';
+import { broadcastTransaction, makeContractDeploy } from '@stacks/transactions';
+import fs from 'fs';
+import path from 'path';
 
-let contract_records = { Contracts: [] };
-let VERSION;
+import { getDeployerPK, network } from './wallet';
+
+require('dotenv').config();
+
+let contract_records: {
+  Contracts: { name: string; deployer: string; version: string }[];
+} = { Contracts: [] };
+let VERSION = '0';
 let contract_paths = [
   'lib/math-log-exp.clar',
   'lib/math-fixed-point.clar',
@@ -69,17 +63,7 @@ let contract_paths = [
   'lottery-tokens/lottery-t-alex.clar',
 ];
 
-async function get_version() {
-  const rlp = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: true,
-  });
-  let answer = await rlp.questionAsync('What is the version number? ');
-  return answer;
-}
-
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 async function walkDir() {
@@ -107,7 +91,7 @@ async function walkDir() {
   // }, undefined);
 }
 
-async function deploy(filePath, contractName) {
+async function deploy(filePath: string, contractName: string) {
   console.log('Deploying:: ', contractName);
   let privatekey = await getDeployerPK();
   const txOptions = {
@@ -116,7 +100,7 @@ async function deploy(filePath, contractName) {
     senderKey: privatekey,
     network,
   };
-  const transaction = await makeContractDeploy(txOptions);
+  const transaction = await makeContractDeploy(txOptions as any);
   const broadcast_id = await broadcastTransaction(transaction, network);
   // console.log(broadcast_id)
   console.log(`${STACKS_API_URL()}/extended/v1/tx/0x${broadcast_id.txid}`);
@@ -129,11 +113,11 @@ async function deploy(filePath, contractName) {
     console.log(`Waiting... ${broadcast_id.txid}`);
     if (res['tx_status'] === 'success') {
       console.log('Contract Deployed Successfully');
-      let contract_record = {};
-      contract_record['name'] = contractName;
-      contract_record['version'] = VERSION;
-      contract_record['deployer'] = DEPLOYER_ACCOUNT_ADDRESS();
-      contract_records['Contracts'].push(contract_record);
+      contract_records['Contracts'].push({
+        name: contractName,
+        version: VERSION,
+        deployer: DEPLOYER_ACCOUNT_ADDRESS(),
+      });
       break;
     } else if (res['tx_status'] === 'abort_by_response') {
       console.log('Transaction aborted: ', res['tx_result']['repr']);

@@ -1,30 +1,27 @@
-const { getDeployerPK, getUserPK, network } = require('./wallet');
-const {
-  makeContractCall,
-  callReadOnlyFunction,
+import {
   AnchorMode,
-  PostConditionMode,
-  uintCV,
-  someCV,
-  stringUtf8CV,
-  contractPrincipalCV,
   broadcastTransaction,
-  ClarityType,
-} = require('@stacks/transactions');
-const { wait_until_confirmation } = require('./utils');
-const {
-  principalCV,
-} = require('@stacks/transactions/dist/clarity/types/principalCV');
-const { DEPLOYER_ACCOUNT_ADDRESS } = require('./constants');
+  callReadOnlyFunction,
+  contractPrincipalCV,
+  makeContractCall,
+  PostConditionMode,
+  stringUtf8CV,
+  uintCV,
+} from '@stacks/transactions';
+import { principalCV } from '@stacks/transactions/dist/clarity/types/principalCV';
+
+import { DEPLOYER_ACCOUNT_ADDRESS } from './constants';
+import { wait_until_confirmation } from './utils';
+import { getDeployerPK, network } from './wallet';
 
 //   (propose (uint (string-utf8 256) (string-utf8 256) uint uint) (response uint uint))
-const multisigPropose = async (
-  contract_name,
-  start_block_height,
-  title,
-  url,
-  new_fee_rate_x,
-  new_fee_rate_y,
+export const multisigPropose = async (
+  contract_name: string,
+  start_block_height: number,
+  title: string,
+  url: string,
+  new_fee_rate_x: number,
+  new_fee_rate_y: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -67,7 +64,12 @@ const multisigPropose = async (
 };
 
 //   (vote-for (<ft-trait> uint uint) (response uint uint))
-const multisigVoteFor = async (contract_name, token, proposal_id, amount) => {
+export const multisigVoteFor = async (
+  contract_name: string,
+  token: string,
+  proposal_id: number,
+  amount: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -105,11 +107,11 @@ const multisigVoteFor = async (contract_name, token, proposal_id, amount) => {
 };
 
 //   (vote-against (<ft-trait> uint uint) (response uint uint))
-const multisigVoteAgainst = async (
-  contract_name,
-  token,
-  proposal_id,
-  amount,
+export const multisigVoteAgainst = async (
+  contract_name: string,
+  token: string,
+  proposal_id: number,
+  amount: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -148,7 +150,10 @@ const multisigVoteAgainst = async (
 };
 
 //   (end-proposal (uint) (response bool uint))
-const multisigEndProposal = async (contract_name, proposal_id) => {
+export const multisigEndProposal = async (
+  contract_name: string,
+  proposal_id: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -176,7 +181,11 @@ const multisigEndProposal = async (contract_name, proposal_id) => {
 };
 
 //   (return-votes-to-member (<ft-trait> uint principal) (response bool uint))
-const multisigReturnVotes = async (contract_name, token, proposal_id) => {
+export const multisigReturnVotes = async (
+  contract_name: string,
+  token: string,
+  proposal_id: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -212,7 +221,10 @@ const multisigReturnVotes = async (contract_name, token, proposal_id) => {
   }
 };
 
-const multisigGetProposalById = async (contract_name, proposal_id) => {
+export const multisigGetProposalById = async (
+  contract_name: string,
+  proposal_id: number,
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -232,10 +244,3 @@ const multisigGetProposalById = async (contract_name, proposal_id) => {
     console.log(error);
   }
 };
-
-exports.multisigPropose = multisigPropose;
-exports.multisigVoteFor = multisigVoteFor;
-exports.multisigVoteAgainst = multisigVoteAgainst;
-exports.multisigEndProposal = multisigEndProposal;
-exports.multisigReturnVotes = multisigReturnVotes;
-exports.multisigGetProposalById = multisigGetProposalById;
