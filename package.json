@@ -7,7 +7,8 @@
   "private": true,
   "scripts": {
     "select": "ts-node features/select.ts",
-    "deployContracts": "ts-node features/deployContracts.ts"
+    "deployContracts": "ts-node features/deployContracts.ts",
+    "gen:errorCode": "ts-node features/errorCode.ts"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",

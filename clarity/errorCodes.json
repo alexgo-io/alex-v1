@@ -1,0 +1,330 @@
+{
+  "1000": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "Unauthorised access"
+  },
+  "2000": {
+    "code": "ERR-POOL-ALREADY-EXISTS",
+    "comment": "Pool Already Existing"
+  },
+  "2001": {
+    "code": "ERR-INVALID-POOL-ERR",
+    "comment": "Accesing invalid Pool"
+  },
+  "2002": {
+    "code": "ERR-NO-LIQUIDITY",
+    "comment": "Liquidity insufficient"
+  },
+  "2003": {
+    "code": "ERR-INVALID-LIQUIDITY",
+    "comment": "Accesing Invalid Liquidity feature"
+  },
+  "2004": {
+    "code": "ERR-TOO-MANY-POOLS",
+    "comment": "Exceeded maximum number of pool"
+  },
+  "2005": {
+    "code": "ERR-NO-FEE",
+    "comment": "ERR-NO-FEE"
+  },
+  "2006": {
+    "code": "ERR-NO-FEE-Y",
+    "comment": "Insufficient fee for Token-Y"
+  },
+  "2007": {
+    "code": "ERR-INVALID-TOKEN",
+    "comment": "Accesing invalid Token"
+  },
+  "2008": {
+    "code": "ERR-INVALID-BALANCE",
+    "comment": "Accesing invalid balance"
+  },
+  "2009": {
+    "code": "ERR-WEIGHTED-EQUATION-CALL",
+    "comment": "ERR-WEIGHTED-EQUATION-CALL"
+  },
+  "2010": {
+    "code": "ERR-MATH-CALL",
+    "comment": "Math library call error"
+  },
+  "2011": {
+    "code": "ERR-ALREADY-EXPIRED",
+    "comment": "current block-height > expiry"
+  },
+  "2012": {
+    "code": "ERR-GET-WEIGHT-FAIL",
+    "comment": "get-weight fail on pool logic"
+  },
+  "2013": {
+    "code": "ERR-GET-EXPIRY-FAIL-ERR",
+    "comment": "get-expiry fail on pool logic"
+  },
+  "2016": {
+    "code": "ERR-DY-BIGGER-THAN-AVAILABLE",
+    "comment": "thrown if dy > balance-aytoken"
+  },
+  "2017": {
+    "code": "ERR-EXPIRY",
+    "comment": "yield token expiry error"
+  },
+  "2018": {
+    "code": "ERR-STAKING-IN-PROGRESS",
+    "comment": "ERR-STAKING-IN-PROGRESS"
+  },
+  "2019": {
+    "code": "ERR-LTV-GREATER-THAN-ONE",
+    "comment": "LTV > 100%, i.e. default"
+  },
+  "2020": {
+    "code": "ERR-EXCEEDS-MAX-SLIPPAGE",
+    "comment": "Output exceeds maximum slippage target"
+  },
+  "2021": {
+    "code": "ERR-PRICE-LOWER-THAN-MIN",
+    "comment": "Swap price is lower than specified min"
+  },
+  "2022": {
+    "code": "ERR-PRICE-GREATER-THAN-MAX",
+    "comment": "Swap price is greater than specified max"
+  },
+  "2023": {
+    "code": "ERR-INVALID-POOL-TOKEN",
+    "comment": "Provided pool token trait is incorrect"
+  },
+  "2024": {
+    "code": "ERR-AMOUNT-EXCEED-RESERVE",
+    "comment": "Transfer amount exceeds reserve"
+  },
+  "2026": {
+    "code": "ERR-INVALID-TOKEN",
+    "comment": "Accesing invalid Token"
+  },
+  "2027": {
+    "code": "ERR-EXPIRY-IS-NONE",
+    "comment": "ERR-EXPIRY-IS-NONE"
+  },
+  "2028": {
+    "code": "ERR-INVALID-TICKET",
+    "comment": "ERR-INVALID-TICKET"
+  },
+  "2029": {
+    "code": "ERR-TICKET-TRANSFER-FAILED",
+    "comment": "ERR-TICKET-TRANSFER-FAILED"
+  },
+  "2030": {
+    "code": "ERR-NO-VRF-SEED-FOUND",
+    "comment": "ERR-NO-VRF-SEED-FOUND"
+  },
+  "2031": {
+    "code": "ERR-CLAIM-NOT-AVAILABLE",
+    "comment": "ERR-CLAIM-NOT-AVAILABLE"
+  },
+  "2032": {
+    "code": "ERR-LISTING-FINISHED",
+    "comment": "ERR-LISTING-FINISHED"
+  },
+  "2033": {
+    "code": "ERR-REGISTRATION-STARTED",
+    "comment": "ERR-REGISTRATION-STARTED"
+  },
+  "2034": {
+    "code": "ERR-REGISTRATION-NOT-STARTED",
+    "comment": "ERR-REGISTRATION-NOT-STARTED"
+  },
+  "2035": {
+    "code": "ERR-LISTING-ACTIVATED",
+    "comment": "ERR-LISTING-ACTIVATED"
+  },
+  "2036": {
+    "code": "ERR-LISTING-NOT-ACTIVATED",
+    "comment": "ERR-LISTING-NOT-ACTIVATED"
+  },
+  "2037": {
+    "code": "ERR-INVALID-REGISTRATION-PERIOD",
+    "comment": "ERR-INVALID-REGISTRATION-PERIOD"
+  },
+  "2038": {
+    "code": "ERR-REGISTRATION-ENDED",
+    "comment": "ERR-REGISTRATION-ENDED"
+  },
+  "2039": {
+    "code": "ERR-REGISTRATION-NOT-ENDED",
+    "comment": "ERR-REGISTRATION-NOT-ENDED"
+  },
+  "2040": {
+    "code": "ERR-CLAIM-ENDED",
+    "comment": "ERR-CLAIM-ENDED"
+  },
+  "2041": {
+    "code": "ERR-CLAIM-NOT-ENDED",
+    "comment": "ERR-CLAIM-NOT-ENDED"
+  },
+  "2042": {
+    "code": "ERR-INVALID-CLAIM-PERIOD",
+    "comment": "ERR-INVALID-CLAIM-PERIOD"
+  },
+  "3000": {
+    "code": "ERR-TRANSFER-FAILED",
+    "comment": "General transfer failed"
+  },
+  "3001": {
+    "code": "ERR-TRANSFER-X-FAILED",
+    "comment": "Transfer of Token-X failed"
+  },
+  "3002": {
+    "code": "ERR-TRANSFER-Y-FAILED",
+    "comment": "Transfer of Token-Y failed"
+  },
+  "3003": {
+    "code": "ERR-INSUFFICIENT-FLASH-LOAN-BALANCE",
+    "comment": "Insufficient Flash Loan balance"
+  },
+  "3006": {
+    "code": "ERR-LOAN-TRANSFER-FAILED",
+    "comment": "Error on Transfer flash loan"
+  },
+  "3007": {
+    "code": "ERR-POST-LOAN-TRANSFER-FAILED",
+    "comment": "Error on Transfer flash loan"
+  },
+  "3008": {
+    "code": "ERR-INVALID-FLASH-LOAN",
+    "comment": "Error on retrieving balance from flashloan token"
+  },
+  "4000": {
+    "code": "ERR-WEIGHT-SUM",
+    "comment": "Sum of weight should be always 1"
+  },
+  "4001": {
+    "code": "ERR-MAX-IN-RATIO",
+    "comment": "In ratio Error"
+  },
+  "4002": {
+    "code": "ERR-MAX-OUT-RATIO",
+    "comment": "Out ratio Error"
+  },
+  "4003": {
+    "code": "ERR-MATH-CALL",
+    "comment": "Math library call error"
+  },
+  "4004": {
+    "code": "ERR-INSUFFICIENT-BALANCE",
+    "comment": "input value is larger than current balance on equation"
+  },
+  "5000": {
+    "code": "ERR-PERCENT_GREATER_THAN_ONE",
+    "comment": "ERR-PERCENT_GREATER_THAN_ONE"
+  },
+  "5009": {
+    "code": "ERR-X-OUT-OF-BOUNDS",
+    "comment": "ERR-X-OUT-OF-BOUNDS"
+  },
+  "5010": {
+    "code": "ERR-Y-OUT-OF-BOUNDS",
+    "comment": "ERR-Y-OUT-OF-BOUNDS"
+  },
+  "5011": {
+    "code": "ERR-PRODUCT-OUT-OF-BOUNDS",
+    "comment": "ERR-PRODUCT-OUT-OF-BOUNDS"
+  },
+  "5012": {
+    "code": "ERR-INVALID-EXPONENT",
+    "comment": "ERR-INVALID-EXPONENT"
+  },
+  "5013": {
+    "code": "ERR-OUT-OF-BOUNDS",
+    "comment": "ERR-OUT-OF-BOUNDS"
+  },
+  "6001": {
+    "code": "ERR-GET-BALANCE-FIXED-FAIL",
+    "comment": "get-balance failed"
+  },
+  "6002": {
+    "code": "ERR-MINT-FAILED",
+    "comment": "mint failed"
+  },
+  "6003": {
+    "code": "ERR-BURN-FAILED",
+    "comment": "burn failed"
+  },
+  "7002": {
+    "code": "ERR-ORACLE-NOT-ENABLED",
+    "comment": "ERR-ORACLE-NOT-ENABLED"
+  },
+  "7003": {
+    "code": "ERR-ORACLE-ALREADY-ENABLED",
+    "comment": "ERR-ORACLE-ALREADY-ENABLED"
+  },
+  "7004": {
+    "code": "ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE",
+    "comment": "ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE"
+  },
+  "8000": {
+    "code": "ERR-NOT-ENOUGH-BALANCE",
+    "comment": "Proposer does not have enough balance to meet the condition of proposing"
+  },
+  "8001": {
+    "code": "ERR-NO-FEE-CHANGE",
+    "comment": "Proposer attempts with unchanged value of fee"
+  },
+  "8002": {
+    "code": "ERR-INVALID-POOL-TOKEN",
+    "comment": "Provided pool token trait is incorrect"
+  },
+  "8003": {
+    "code": "ERR-BLOCK-HEIGHT-NOT-REACHED",
+    "comment": "Current block height is not reached for starting / ending the proposal"
+  },
+  "9000": {
+    "code": "ERR-EXCEEDS-MAX-USE",
+    "comment": "User attempted more than max use allowed"
+  },
+  "9001": {
+    "code": "ERR-USDA-TRANSFER-FAILED",
+    "comment": "USDA transfer failed"
+  },
+  "9002": {
+    "code": "ERR-WBTC-TRANSFER-FAILED",
+    "comment": "WBTC transfer failed"
+  },
+  "9003": {
+    "code": "ERR-STX-TRANSFER-FAILED",
+    "comment": "STX transfer failed"
+  },
+  "9004": {
+    "code": "ERR-ALEX-TRANSFER-FAILED",
+    "comment": "ALEX transfer failed"
+  },
+  "10001": {
+    "code": "ERR-USER-ALREADY-REGISTERED",
+    "comment": "ERR-USER-ALREADY-REGISTERED"
+  },
+  "10003": {
+    "code": "ERR-USER-ID-NOT-FOUND",
+    "comment": "ERR-USER-ID-NOT-FOUND"
+  },
+  "10004": {
+    "code": "ERR-ACTIVATION-THRESHOLD-REACHED",
+    "comment": "ERR-ACTIVATION-THRESHOLD-REACHED"
+  },
+  "10005": {
+    "code": "ERR-CONTRACT-NOT-ACTIVATED",
+    "comment": "ERR-CONTRACT-NOT-ACTIVATED"
+  },
+  "10015": {
+    "code": "ERR-STAKING-NOT-AVAILABLE",
+    "comment": "ERR-STAKING-NOT-AVAILABLE"
+  },
+  "10016": {
+    "code": "ERR-CANNOT-STAKE",
+    "comment": "ERR-CANNOT-STAKE"
+  },
+  "10017": {
+    "code": "ERR-REWARD-CYCLE-NOT-COMPLETED",
+    "comment": "ERR-REWARD-CYCLE-NOT-COMPLETED"
+  },
+  "10018": {
+    "code": "ERR-NOTHING-TO-REDEEM",
+    "comment": "ERR-NOTHING-TO-REDEEM"
+  }
+}
