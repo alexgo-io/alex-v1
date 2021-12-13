@@ -7,7 +7,6 @@ export async function mint_some_tokens(recipient: string) {
   console.log('------ Mint Some Tokens ------');
   await mint_some_usda(recipient);
   await mint_some_wbtc(recipient);
-  await mint_some_wstx(recipient);
 }
 
 export async function mint_some_usda(recipient: string) {
@@ -34,21 +33,6 @@ export async function mint_some_wbtc(recipient: string) {
   );
 }
 
-async function mint_some_wstx(recipient: string) {
-  console.log('------ Mint Some WSTX ------');
-  const amount = 100000000 * ONE_8;
-  if (DEPLOYER_ACCOUNT_ADDRESS() !== recipient) {
-    await transferSTX(recipient, amount);
-  }
-  // await mint_ft('token-wstx', amount, recipient);
-  await mint_ft('token-wstx', amount, recipient);
-  const wstx_balance = await balance('token-wstx', recipient);
-  console.log(
-    'wstx balance: ',
-    format_number(Number(wstx_balance.value.value) / ONE_8),
-  );
-}
-
 export async function see_balance(owner: string) {
   console.log('------ See Balance ------');
   const usda_balance = await balance('token-usda', owner);
@@ -60,11 +44,6 @@ export async function see_balance(owner: string) {
   console.log(
     'wbtc balance: ',
     format_number(Number(wbtc_balance.value.value) / ONE_8),
-  );
-  const wstx_balance = await balance('token-wstx', owner);
-  console.log(
-    'wstx balance: ',
-    format_number(Number(wstx_balance.value.value) / ONE_8),
   );
 }
 

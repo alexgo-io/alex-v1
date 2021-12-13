@@ -1,33 +1,49 @@
 import {
   _deploy,
+  _fwp_pools,
   DEPLOYER_ACCOUNT_ADDRESS,
   USER_ACCOUNT_ADDRESS,
 } from './constants';
 import {
   get_some_token,
   mint_some_tokens,
-  mint_some_usda,
-  mint_some_wbtc,
-  see_balance,
   set_faucet_amounts,
 } from './runSteps/mint-get-token';
-
+import {
+  create_crp,
+  create_fwp,
+  create_ytp
+} from './runSteps/create-pools'
 import {
   arbitrage_fwp,
   arbitrage_crp,
   arbitrage_ytp
 } from './runSteps/arbitrage';
+import {
+  get_pool_details_crp,
+  get_pool_details_fwp,
+  get_pool_details_ytp
+} from './runSteps/get-pool-details';
+import {
+  reserveAddToken,
+  reserveGetUserId,
+  reserveSetActivationDelay,
+  reserveSetCoinbaseAmount,
+  reserveRegisterUser,
+  reserveSetActivationThreshold,
+  reserveSetRewardCycleLength,
+  reserveGetStakerAtCycleOrDefault
+} from './reserve';
 
 async function run_mint_initial_tokens() {
   await set_faucet_amounts();
   await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
-  await mint_some_usda(DEPLOYER_ACCOUNT_ADDRESS() + '.alex-reserve-pool');
   await mint_some_tokens(USER_ACCOUNT_ADDRESS());
   await get_some_token(USER_ACCOUNT_ADDRESS());
 }
 
 async function run() {
-  await run_mint_initial_tokens();
+  // await run_mint_initial_tokens();
 
   // const _pools = { 0:_deploy[4], 1:_deploy[5] };
   const _pools = _deploy;
@@ -36,17 +52,17 @@ async function run() {
   // await create_ytp(false, _pools);
   // await create_crp(false, _pools);
 
-  await arbitrage_fwp(false);
-  await arbitrage_crp(false, _pools);
-  await arbitrage_ytp(false, _pools);
-  await arbitrage_fwp(false);
+  // await arbitrage_fwp(false);
+  // await arbitrage_crp(false, _pools);
+  // await arbitrage_ytp(false, _pools);
+  // await arbitrage_fwp(false);
 
   // await test_spot_trading();
   // await test_margin_trading();
 
-  // await create_fwp(add_only=true, _subset=[_fwp_pools[1]], deployer=true);
-  // await create_crp(add_only=true, [_pools[1]]);
-  // await create_ytp(add_only=true, [_pools[1]]);
+  // await create_fwp(true, _fwp_pools, true);
+  // await create_crp(true, _pools);
+  // await create_ytp(true, _pools);
 
   // await arbitrage_fwp(dry_run=true);
   // await arbitrage_crp(dry_run=true, _pools);
@@ -112,17 +128,15 @@ async function run() {
   //     // console.log(result);
   //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
   // }
-
-  // await reserveAddToken('token-t-alex');
-  // await reserveSetActivationThreshold(1);
-  // await reserveSetActivationDelay(1);
-  // await reserveSetRewardCycleLength(525);
-  // await reserveRegisterUser('token-t-alex');
-  // await reserveSetCoinbaseAmount('token-t-alex', 500e8, 250e8, 125e8, 62e8, 37e8);
-  // result = await reserveGetUserId('token-t-alex', 'ST3N7Y3K01Y24G9JC1XXA13RQXXCY721WATVHV81Y');
-  // console.log(result);
-  // result = await reserveGetStakerAtCycleOrDefault('token-t-alex', 3, 5);
-  // console.log(result);
+  // let _list = ['fwp-wbtc-usda-50-50']; //, 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda'];
+  // for(let i = 0; i < _list.length; i++) {
+  //   await reserveAddToken(_list[i]);
+  //   await reserveSetActivationThreshold(1);
+  //   await reserveSetActivationDelay(1);
+  //   await reserveSetRewardCycleLength(525);
+  //   await reserveRegisterUser(_list[i]);
+  //   await reserveSetCoinbaseAmount(_list[i], 500e8, 250e8, 125e8, 62e8, 37e8);
+  // }
 
   // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
   // result = await balance('fwp-wbtc-usda-50-50', DEPLOYER_ACCOUNT_ADDRESS());
@@ -145,10 +159,11 @@ async function run() {
   // }
 
   // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
-  // for (let i = 0; i < _list.length; i++) {
-  //     // await get_some_token(_list[i]);
-  //     mint_ft('lottery-t-alex', 100e8, _list[i]);
-  // }
+  let _list = [ 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4' ];
+  for (let i = 0; i < _list.length; i++) {
+      await get_some_token(_list[i]);
+      // mint_ft('lottery-t-alex', 100e8, _list[i]);
+  }
   // await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
   // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
   // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);

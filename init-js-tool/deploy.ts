@@ -30,7 +30,6 @@ let contract_paths = [
   'token/token-t-alex.clar',
   'alex-vault.clar',
   'wrapped-token/token-wstx.clar',
-  'open-oracle.clar',
   'pool/alex-reserve-pool.clar',
   'pool/fixed-weight-pool.clar',
   'pool/liquidity-bootstrapping-pool.clar',

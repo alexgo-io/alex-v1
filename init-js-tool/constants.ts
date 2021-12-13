@@ -68,7 +68,8 @@ export const _fwp_pools = {
     weight_y: 0.5e8,
     pool_token: 'fwp-wstx-usda-50-50',
     multisig: 'multisig-fwp-wstx-usda-50-50',
-    left_side: 5000000e8,
+    left_side: 10000000e8,
+    right_side: 10000000e8 / 2
   },
   2: {
     token_x: 'token-wstx',
@@ -77,7 +78,8 @@ export const _fwp_pools = {
     weight_y: 0.5e8,
     pool_token: 'fwp-wstx-wbtc-50-50',
     multisig: 'multisig-fwp-wstx-wbtc-50-50',
-    left_side: 5000000e8,
+    left_side: 10000000e8,
+    right_side: 10000000e8 / 2 / 50000
   },
 } as const;
 export const _deploy = {
@@ -89,8 +91,8 @@ export const _deploy = {
     pool_token: 'ytp-yield-wbtc',
     multisig_ytp: 'multisig-ytp-yield-wbtc',
     multisig_crp: 'multisig-crp-wbtc-usda',
-    liquidity_ytp: 100e8,
-    collateral_crp: 1500000e8,
+    liquidity_ytp: 200e8,
+    collateral_crp: 150000e8,
     ltv_0: 0.7e8,
     bs_vol: 0.8e8,
     target_apy: 0.06354,
@@ -105,8 +107,8 @@ export const _deploy = {
     pool_token: 'ytp-yield-usda',
     multisig_ytp: 'multisig-ytp-yield-usda',
     multisig_crp: 'multisig-crp-usda-wbtc',
-    liquidity_ytp: 6000000e8,
-    collateral_crp: 25e8,
+    liquidity_ytp: 10000000e8,
+    collateral_crp: 2e8,
     ltv_0: 0.7e8,
     bs_vol: 0.8e8,
     target_apy: 0.086475,

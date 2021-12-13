@@ -9,10 +9,6 @@ export async function create_fwp(
   deployer = false,
 ) {
   console.log('------ FWP Creation / Add Liquidity ------');
-  // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-  // let wbtcPrice = await fetch_in_usd("bitcoin");
-  // let usdaPrice = await fetch_in_usd("usd-coin");
-  // let stxPrice = await fetch_in_usd("blockstack");
 
   for (const _key in _subset) {
     const key = _key as '1' | '2';
@@ -36,7 +32,7 @@ export async function create_fwp(
         _subset[key]['pool_token'],
         _subset[key]['multisig'],
         _subset[key]['left_side'],
-        ONE_8 * ONE_8,
+        _subset[key]['right_side']
       );
       await fwpSetOracleEnbled(
         _subset[key]['token_x'],
