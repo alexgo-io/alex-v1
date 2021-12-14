@@ -155,27 +155,6 @@ describe("STAKING :", () => {
           .expectErr()
           .expectUint(CoreClient.ErrCode.ERR_USER_ALREADY_REGISTERED);
       });
-
-      it("throws ERR_ACTIVATION_THRESHOLD_REACHED error when user wants to register after reaching activation threshold", (chain, accounts, clients) => {
-        // arrange
-        const user1 = accounts.get("wallet_4")!;
-        const user2 = accounts.get("wallet_5")!;
-        const deployer = accounts.get("deployer")!;
-        chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.registerUser(user1, token),
-        ]);
-
-        // act
-        const receipt = chain.mineBlock([clients.core.registerUser(user2, token)])
-          .receipts[0];
-
-        // assert
-        receipt.result
-          .expectErr()
-          .expectUint(CoreClient.ErrCode.ERR_ACTIVATION_THRESHOLD_REACHED);
-      });
     });
   });
 
@@ -341,7 +320,6 @@ describe("STAKING :", () => {
 
         // assert
         receipt.result.expectOk().expectBool(true);
-                
         assertEquals(receipt.events.length, 2);
         receipt.events.expectFungibleTokenTransferEvent(
           amountTokens,
@@ -732,9 +710,9 @@ describe("STAKING :", () => {
         ]).receipts;
 
         // assert
-        let output:any = receipts[1].result.expectOk().expectTuple();
-        output['entitled-token'].expectUint(100000000);
-        output['to-return'].expectUint(20000000000);
+        let result:any = receipts[1].result.expectOk().expectTuple();
+        result['entitled-token'].expectUint(ONE_8);
+        result['to-return'].expectUint(amountTokens);
 
         assertEquals(receipts[1].events.length, 3);
 
@@ -837,10 +815,13 @@ describe("STAKING :", () => {
             output['to-return'].expectUint(0);
           } else if (toReturn === 0) {
             // only mints entitled tokens
-            receipt.result.expectOk().expectTuple();
+            let result:any = receipt.result.expectOk().expectTuple();
+            result['entitled-token'].expectUint(ONE_8);
+            result['to-return'].expectUint(0);
             assertEquals(receipt.events.length, 1);
           } else {        
-            receipt.result.expectOk().expectTuple();
+            let result:any = receipt.result.expectOk().expectTuple();
+            result['entitled-token'].expectUint(ONE_8);
             assertEquals(receipt.events.length, 3);
 
             receipt.events.expectFungibleTokenTransferEvent(

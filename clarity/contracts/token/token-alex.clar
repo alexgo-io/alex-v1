@@ -1,5 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-pool-token.pool-token-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
+
 
 (define-fungible-token alex)
 
@@ -30,7 +31,7 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (decimals-to-fixed (ft-get-supply alex)))
+  (ok (ft-get-supply alex))
 )
 
 (define-read-only (get-name)
@@ -46,7 +47,7 @@
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (decimals-to-fixed (ft-get-balance alex account)))
+  (ok (ft-get-balance alex account))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -58,6 +59,33 @@
 
 (define-read-only (get-token-uri)
   (ok (some (var-get token-uri)))
+)
+
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (begin
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (match (ft-transfer? alex amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
+    )
+  )
+)
+
+(define-public (mint (amount uint) (recipient principal))
+  (begin
+    (try! (check-is-approved contract-caller))
+    (ft-mint? alex amount recipient)
+  )
+)
+
+(define-public (burn (amount uint) (sender principal))
+  (begin
+    (try! (check-is-approved contract-caller))
+    (ft-burn? alex amount sender)
+  )
 )
 
 (define-constant ONE_8 (pow u10 u8))
@@ -74,49 +102,29 @@
   (/ (* amount ONE_8) (pow-decimals))
 )
 
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? alex (fixed-to-decimals amount) sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )
-  )
+(define-read-only (get-total-supply-fixed)
+  (ok (decimals-to-fixed (ft-get-supply alex)))
 )
 
-(define-public (mint (recipient principal) (amount uint))
-  (begin
-    (try! (check-is-approved contract-caller))
-    (ft-mint? alex (fixed-to-decimals amount) recipient)
-  )
+(define-read-only (get-balance-fixed (account principal))
+  (ok (decimals-to-fixed (ft-get-balance alex account)))
 )
 
-(define-public (burn (sender principal) (amount uint))
-  (begin
-    (try! (check-is-approved contract-caller))
-    (ft-burn? alex (fixed-to-decimals amount) sender)
-  )
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (transfer (fixed-to-decimals amount) sender recipient memo)
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
-  )
+(define-public (mint-fixed (amount uint) (recipient principal))
+  (mint (fixed-to-decimals amount) recipient)
+)
+
+(define-public (burn-fixed (amount uint) (sender principal))
+  (burn (fixed-to-decimals amount) sender)
 )
 
 (begin
   (map-set approved-contracts .alex-reserve-pool true)
   (map-set approved-contracts .faucet true)
-)
-
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? alex u100000000000000000 tx-sender))  
 )
 
 

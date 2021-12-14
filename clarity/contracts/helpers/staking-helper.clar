@@ -1,5 +1,5 @@
 
-(use-trait pool-token-trait .trait-pool-token.pool-token-trait)
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; helper functions:
 
@@ -11,7 +11,7 @@
   (contract-call? .alex-reserve-pool get-staking-reward token (default-to u0 (contract-call? .alex-reserve-pool get-user-id token tx-sender)) target-cycle)
 )
 
-(define-public (claim-staking-reward-by-tx-sender (token <pool-token-trait>) (reward-cycle uint))
+(define-public (claim-staking-reward-by-tx-sender (token <ft-trait>) (reward-cycle uint))
   (contract-call? .alex-reserve-pool claim-staking-reward token reward-cycle)
 )
 
@@ -4047,7 +4047,7 @@ reward-cycles
   )
 )
 
-(define-public (claim-staking-reward (token <pool-token-trait>) (reward-cycles (list 2000 uint)))
+(define-public (claim-staking-reward (token <ft-trait>) (reward-cycles (list 2000 uint)))
   (ok 
     (map 
       claim-staking-reward-by-tx-sender 

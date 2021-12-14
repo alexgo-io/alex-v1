@@ -1,7 +1,6 @@
 
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 const tokenContract = "token-t-alex";
 const reserveContract = "alex-reserve-pool";
@@ -149,9 +148,9 @@ Clarinet.test({
         let StakingTest = new AlexStakingHelper(chain, deployer);
 
         chain.mineBlock([
-          Tx.contractCall(tokenContract, "mint", [
-            types.principal(wallet_6.address),
-            types.uint(100000e8)
+          Tx.contractCall(tokenContract, "mint-fixed", [
+            types.uint(100000e8),            
+            types.principal(wallet_6.address)
           ], deployer.address),
         ]);
 

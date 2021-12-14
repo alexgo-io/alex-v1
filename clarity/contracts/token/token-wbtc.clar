@@ -1,5 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-pool-token.pool-token-trait)
+(impl-trait .trait-sip-010.sip-010-trait)
+
 
 (define-fungible-token wbtc)
 
@@ -30,23 +31,23 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok (decimals-to-fixed (ft-get-supply wbtc)))
+  (ok (ft-get-supply wbtc))
 )
 
 (define-read-only (get-name)
-  (ok "WBTC")
+  (ok "wbtc")
 )
 
 (define-read-only (get-symbol)
-  (ok "WBTC")
+  (ok "wbtc")
 )
 
 (define-read-only (get-decimals)
-  (ok u8)
+   	(ok u8)
 )
 
 (define-read-only (get-balance (account principal))
-  (ok (decimals-to-fixed (ft-get-balance wbtc account)))
+  (ok (ft-get-balance wbtc account))
 )
 
 (define-public (set-token-uri (value (string-utf8 256)))
@@ -58,6 +59,33 @@
 
 (define-read-only (get-token-uri)
   (ok (some (var-get token-uri)))
+)
+
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (begin
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (match (ft-transfer? wbtc amount sender recipient)
+      response (begin
+        (print memo)
+        (ok response)
+      )
+      error (err error)
+    )
+  )
+)
+
+(define-public (mint (amount uint) (recipient principal))
+  (begin
+    (try! (check-is-approved contract-caller))
+    (ft-mint? wbtc amount recipient)
+  )
+)
+
+(define-public (burn (amount uint) (sender principal))
+  (begin
+    (try! (check-is-approved contract-caller))
+    (ft-burn? wbtc amount sender)
+  )
 )
 
 (define-constant ONE_8 (pow u10 u8))
@@ -74,39 +102,26 @@
   (/ (* amount ONE_8) (pow-decimals))
 )
 
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? wbtc (fixed-to-decimals amount) sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )
-  )
+(define-read-only (get-total-supply-fixed)
+  (ok (decimals-to-fixed (ft-get-supply wbtc)))
 )
 
-(define-public (mint (recipient principal) (amount uint))
-  (begin
-    (try! (check-is-approved contract-caller))
-    (ft-mint? wbtc (fixed-to-decimals amount) recipient)
-  )
+(define-read-only (get-balance-fixed (account principal))
+  (ok (decimals-to-fixed (ft-get-balance wbtc account)))
 )
 
-(define-public (burn (sender principal) (amount uint))
-  (begin
-    (try! (check-is-approved contract-caller))
-    (ft-burn? wbtc (fixed-to-decimals amount) sender)
-  )
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (transfer (fixed-to-decimals amount) sender recipient memo)
+)
+
+(define-public (mint-fixed (amount uint) (recipient principal))
+  (mint (fixed-to-decimals amount) recipient)
+)
+
+(define-public (burn-fixed (amount uint) (sender principal))
+  (burn (fixed-to-decimals amount) sender)
 )
 
 (begin
   (map-set approved-contracts .faucet true)
-)
-
-;; Initialize the contract for Testing.
-(begin
-  (try! (ft-mint? wbtc u2000000000000 tx-sender))
-  (try! (ft-mint? wbtc u2000000000000 'ST1J4G6RR643BCG8G8SR6M2D9Z9KXT2NJDRK3FBTK)) ;;wallet_1
 )

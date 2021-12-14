@@ -24,7 +24,7 @@ export class TokenClient extends Client {
 
     return Tx.contractCall(
       this.contractName,
-      "transfer",
+      "transfer-fixed",
       [
         types.uint(amount),
         types.principal(from.address),
@@ -38,7 +38,7 @@ export class TokenClient extends Client {
   burn(amount: number, sender: Account): Tx {
     return Tx.contractCall(
       this.contractName,
-      "burn",
+      "burn-fixed",
       [types.uint(amount), types.principal(sender.address)],
       sender.address
     );
@@ -92,8 +92,8 @@ export class TokenClient extends Client {
   mint(amount: number, recipient: Account, sender: Account): Tx {
     return Tx.contractCall(
       this.contractName,
-      "mint",
-      [types.principal(recipient.address), types.uint(amount)],
+      "mint-fixed",
+      [types.uint(amount), types.principal(recipient.address)],
       sender.address
     );
   }
