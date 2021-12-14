@@ -27,20 +27,20 @@
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 (define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 6235149080811616882910000000, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+{x_pre: 640000000000000000, a_pre: 6235149080811616882910000000, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
 ))
 ;; 8 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 3200000000, a_pre: 7896296018268069516100, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
-{x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
-{x_pre: 800000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
-{x_pre: 400000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
-{x_pre: 200000000, a_pre: 738905610, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
-{x_pre: 100000000, a_pre: 271828183, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
-{x_pre: 50000000, a_pre: 164872127, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
-{x_pre: 25000000, a_pre: 128402542, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
-{x_pre: 12500000, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
-{x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^(x11)
+{x_pre: 320000000000000000, a_pre: 7896296018268069516100, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 160000000000000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
+{x_pre: 80000000000000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
+{x_pre: 40000000000000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
+{x_pre: 20000000000000000, a_pre: 738905610, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
+{x_pre: 10000000000000000, a_pre: 271828183, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
+{x_pre: 5000000000000000, a_pre: 164872127, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
+{x_pre: 2500000000000000, a_pre: 128402542, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
+{x_pre: 1250000000000000, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
+{x_pre: 625000000000000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^(x11)
 ))
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
