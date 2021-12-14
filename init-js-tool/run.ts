@@ -62,7 +62,7 @@ async function run() {
   // await arbitrage_ytp(false, _pools);
   // await arbitrage_fwp(false);
 
-  await test_spot_trading();
+  // await test_spot_trading();
   // await test_margin_trading();
 
   // await create_fwp(true, _fwp_pools, true);
@@ -169,7 +169,7 @@ async function run() {
   //     await get_some_token(_list[i]);
   //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
   // }
-  // await get_some_token('ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G');
+  await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
   // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
   // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
   // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
