@@ -25,5 +25,5 @@ jobs:
         uses: docker://hirosystems/clarinet:latest
         with:
           entrypoint: "bash"
-          args: -e CODECOV_ENV -e CODECOV_TOKEN -e CODECOV_URL -e CODECOV_SLUG -e VCS_COMMIT_ID -e VCS_BRANCH_NAME -e VCS_PULL_REQUEST -e VCS_SLUG -e VCS_TAG -e CI_BUILD_URL -e CI_BUILD_ID -e CI_JOB_ID % -e CI=true -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
+          args: $`bash <(curl -s https://codecov.io/env)` -e CI=true -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
           
