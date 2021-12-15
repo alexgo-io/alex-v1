@@ -34,20 +34,21 @@
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 (define-constant x_a_list_no_deci (list 
-{x_pre: 320000000000000000, a_pre: 7896296018268069516100, use_deci: false} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 640000000000000000, a_pre: 62351490808116168829100000, use_deci: false} ;; x2 = 2^5, a2 = e^(x2)
 ))
 ;; 8 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 160000000000000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
-{x_pre: 80000000000000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
-{x_pre: 40000000000000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
-{x_pre: 20000000000000000, a_pre: 738905610, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
-{x_pre: 10000000000000000, a_pre: 271828183, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
-{x_pre: 5000000000000000, a_pre: 164872127, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
-{x_pre: 2500000000000000, a_pre: 128402542, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
-{x_pre: 1250000000000000, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
-{x_pre: 625000000000000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
-{x_pre: 312500000000000, a_pre: 103174341, use_deci: true} ;; x12 = 2^-5, a11 = e^x(12)
+{x_pre: 320000000000000000, a_pre: 789629601826806951610000000000, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 160000000000000000, a_pre: 88861105205078726367600, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
+{x_pre: 80000000000000000, a_pre: 29809579870417282747, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
+{x_pre: 40000000000000000, a_pre: 545981500331442391, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
+{x_pre: 20000000000000000, a_pre: 73890560989306502, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
+{x_pre: 10000000000000000, a_pre: 27182818284590452, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
+{x_pre: 5000000000000000, a_pre: 16487212707001281, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
+{x_pre: 2500000000000000, a_pre: 12840254166877415, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
+{x_pre: 1250000000000000, a_pre: 11331484530668263, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
+{x_pre: 625000000000000, a_pre: 10644944589178594, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
+{x_pre: 312500000000000, a_pre: 10317434075000000, use_deci: true} ;; x12 = 2^-5, a11 = e^x(12)
 ))
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
@@ -75,6 +76,7 @@
       (r (+ out_sum (* seriesSum 2)))
    )
     (ok r)
+    ;; (ok 0)
  )
 )
 
@@ -88,7 +90,7 @@
       (rolling_sum (get sum rolling_a_sum))
    )
     (if (>= rolling_a (if use_deci a_pre (* a_pre ONE_16)))
-      {a: (/ (* rolling_a (if use_deci ONE_16 1)) a_pre), sum: (+ rolling_sum x_pre)}
+       {a: (/ (* rolling_a (if use_deci ONE_16 1)) a_pre), sum: (+ rolling_sum x_pre)}
       {a: rolling_a, sum: rolling_sum}
    )
  )
