@@ -27,7 +27,7 @@ jobs:
         uses: docker://hirosystems/clarinet:latest
         with:
           entrypoint: "bash"
-          args: -v "./shared:/shared" -c "cd clarity && clarinet test --coverage && mv ./coverage.lcov /shared"
+          args: -v "$PWD/shared:/shared" -c "cd clarity && clarinet test --coverage && mv ./coverage.lcov /shared"
       - name: "Upload codecov"
         uses: codecov/codecov-action@v2
         with:
