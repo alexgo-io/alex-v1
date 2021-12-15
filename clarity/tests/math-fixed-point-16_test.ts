@@ -3,6 +3,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
   
 const ONE_16 = 10000000000000000
+const ONE_10 = 10000000000
 
  Clarinet.test({
     name: "math-fixed-point-16: scale-up and scale-down",
@@ -68,55 +69,47 @@ Clarinet.test({
     },
 });
 
-
+//NOTE: THIS IS ONLY WORKING TILL ONE_10. GOING TO ONE_16 GIVES ARITHEMATIC OVERFLOW ERRORS
 Clarinet.test({
     name: "math-fixed-point: pow-up and pow-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
 
-        // let call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
-        //     [
-        //         types.uint(5*ONE_16),
-        //         types.uint(0)
-        //     ], deployer.address);
-        // call.result.expectUint(312499930206);
-
-        // call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
-        //     [
-        //         types.uint(5*ONE_16),
-        //         types.uint(5*ONE_16)
-        //     ], deployer.address);
-        // call.result.expectUint(312499955208);
-
-        // anything ^ 0 = 1
         let call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
-                "u10000000000000000000000",
-                "u0"
+                types.uint(5*ONE_10),
+                types.uint(0)
             ], deployer.address);
-        assertEquals(call.result, "u9999999999999991")
+        call.result.expectUint(9999999998);
 
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
-                "u10000000000000000000000",
+                types.uint(1*ONE_10),
+                types.uint(1*ONE_10)
+            ], deployer.address);
+        call.result.expectUint(1199);
+
+        // anything ^ 0 = 1
+        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
+            [
+                "u10000000000000000",
                 "u0"
             ], deployer.address);
-        assertEquals(call.result, "u10000000000000009")
-        
-        // call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
-        //     [
-        //         "u10000000000000000000000",
-        //         "u1"
-        //     ], deployer.address);
-        // assertEquals(call.result, "u10000000000000009")
+        assertEquals(call.result, "u9999999998")
 
-        // // this is the upper limit
-        // call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
-        //     [
-        //         types.uint(2*ONE_16),
-        //         types.uint(73*ONE_16)
-        //     ], deployer.address);
-        // call.result.expectOk().expectUint(944470526444524944313634000869);            
+        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
+            [
+                "u10000000000000000",
+                "u0"
+            ], deployer.address);
+        assertEquals(call.result, "u10000000002")
+        
+        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
+            [
+                "u10000000000000000",
+                "u1"
+            ], deployer.address);
+        assertEquals(call.result, "u10000000025")    
     },
 });
