@@ -21,18 +21,13 @@ jobs:
         with:
           entrypoint: "bash"
           args: -c "cd clarity && clarinet check"
+      - name: "Set CI env"
+        run: |
+          echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
       - name: "Execute test suite"
         uses: docker://hirosystems/clarinet:latest
         with:
           entrypoint: "bash"
+          #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
           args: -c "cd clarity && clarinet test --coverage"
-      - name: "Export code coverage"
-        uses: codecov/codecov-action@v2
-        with:
-          files: ./coverage.lcov
-          verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
           
