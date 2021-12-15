@@ -21,11 +21,18 @@ jobs:
         with:
           entrypoint: "bash"
           args: -c "cd clarity && clarinet check"
+      - name: "Create a shared folder"
+        run: mkdir shared
       - name: "Execute test suite"
-        env: 
-          CI_ENV: $(bash <(curl -s https://codecov.io/env))
         uses: docker://hirosystems/clarinet:latest
         with:
           entrypoint: "bash"
-          args: -e ${{ env.CI_ENV }} -e CI=true -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
+          args: -v "./shared:/shared" -c "cd clarity && clarinet test --coverage && mv ./coverage.lcov /shared"
+      - name: "Upload codecov"
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./shared/coverage.lcov
+          fail_ci_if_error: true
+          verbose: true
           
