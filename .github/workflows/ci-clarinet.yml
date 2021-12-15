@@ -21,9 +21,12 @@ jobs:
         with:
           entrypoint: "bash"
           args: -c "cd clarity && clarinet check"
+      - name: "Set CI env"
+        run: |
+          ci_env=`bash <(curl -s https://codecov.io/env)` >> $GITHUB_ENV
       - name: "Execute test suite"
         uses: docker://hirosystems/clarinet:latest
         with:
           entrypoint: "bash"
-          args: -c "cd clarity && clarinet test --coverage"
+          args: ${{ env.ci_env }} -e CI=true -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
           
