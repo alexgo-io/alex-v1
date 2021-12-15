@@ -73,6 +73,7 @@ async function run() {
   // await arbitrage_crp(dry_run=true, _pools);
   // await arbitrage_ytp(dry_run=true, _pools);
   // await get_pool_details_fwp();
+  
   // await get_pool_details_crp(_pools);
   // await get_pool_details_ytp(_pools);
 
