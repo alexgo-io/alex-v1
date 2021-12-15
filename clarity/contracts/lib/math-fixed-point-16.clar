@@ -8,9 +8,9 @@
 (define-constant ONE_16 (pow u10 u16)) ;; 16 decimal places
 
 ;; With 16 fixed digits you would have a maximum error of 0.5 * 10^-16 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-16 = 4 * 10^-16 relative error 
+;; which could aggregate to about 16 x 0.5 * 10^-16 = 8 * 10^-16 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
-(define-constant MAX_POW_RELATIVE_ERROR u5) 
+(define-constant MAX_POW_RELATIVE_ERROR u8) 
 ;; public functions
 ;;
 

@@ -34,7 +34,7 @@
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 (define-constant x_a_list_no_deci (list 
-{x_pre: 640000000000000000, a_pre: 62351490808116168829100000, use_deci: false} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 640000000000000000, a_pre: 62351490808116168829100000, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
 ))
 ;; 8 decimal constants
 (define-constant x_a_list (list 
