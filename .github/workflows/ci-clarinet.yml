@@ -25,14 +25,5 @@ jobs:
         uses: docker://hirosystems/clarinet:latest
         with:
           entrypoint: "bash"
-          args: -c "cd clarity && clarinet test --coverage"
-      - name: "Export code coverage"
-        uses: codecov/codecov-action@v2
-        with:
-          files: ./clarity/coverage.lcov
-          verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: true
+          args: $(`bash <(curl -s https://codecov.io/env)`) -e CI=true -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
           
