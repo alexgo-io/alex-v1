@@ -58,16 +58,16 @@
   )
 )
 
-;; @desc get-owner
+;; @desc get-contract-owner
 ;; @returns principal
-(define-read-only (get-owner)
+(define-read-only (get-contract-owner)
   (ok (var-get CONTRACT-OWNER))
 )
 
-;; @desc set-owner
+;; @desc set-contract-owner
 ;; @param new-contract-owner; new CONTRACT-OWNER
 ;; @returns (response bool uint)
-(define-public (set-owner (new-contract-owner principal))
+(define-public (set-contract-owner (new-contract-owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (var-set CONTRACT-OWNER new-contract-owner)
