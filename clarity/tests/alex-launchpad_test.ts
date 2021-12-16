@@ -2,8 +2,8 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { ALEXLaunchpad, ErrCode } from './models/alex-tests-launchpad.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { 
-    TestALEXLottery,
-    TestALEXToken,
+    ALEXLottery,
+    ALEXToken,
   } from './models/alex-tests-tokens.ts';
 
 const ONE_8 = 100000000
@@ -39,8 +39,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -109,8 +109,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -172,8 +172,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -228,8 +228,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -257,8 +257,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -296,8 +296,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -344,8 +344,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
@@ -396,8 +396,8 @@ Clarinet.test({
         let wallet_2 = accounts.get("wallet_2")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
 
-        let lottery = new TestALEXLottery(chain, deployer);
-        let talexToken = new TestALEXToken(chain, deployer);
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
         
         let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
         result.expectOk();
