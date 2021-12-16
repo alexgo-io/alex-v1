@@ -275,12 +275,7 @@
     )
     (match (get-reward-cycle token stacks-height)
       current-cycle
-      (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
-        ;; this cycle hasn't finished, or staker contributed nothing
-        u0
-        (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
-      )
-      ;; before first reward cycle
+      (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
       u0
     )
   )
