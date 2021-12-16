@@ -32,7 +32,10 @@ import {
   reserveRegisterUser,
   reserveSetActivationThreshold,
   reserveSetRewardCycleLength,
-  reserveGetStakerAtCycleOrDefault
+  reserveGetStakerAtCycleOrDefault,
+  reserveGetStaked,
+  reserveGetStakingStatsCoinbaseAsList,
+  reserveGetStakingRewards
 } from './reserve';
 import {
   test_spot_trading,
@@ -50,7 +53,6 @@ async function run_mint_initial_tokens() {
 
 async function run() {
   // await run_mint_initial_tokens();
-  await set_faucet_amounts();
 
   // const _pools = { 0:_deploy[4], 1:_deploy[5] };
   const _pools = _deploy;
@@ -136,15 +138,23 @@ async function run() {
   //     // console.log(result);
   //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
   // }
-  // let _list = ['fwp-wbtc-usda-50-50']; //, 'ytp-yield-wbtc-92160-wbtc', 'ytp-yield-usda-92160-usda'];
+  // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50', 'ytp-yield-wbtc', 'ytp-yield-usda'];
   // for(let i = 0; i < _list.length; i++) {
   //   await reserveAddToken(_list[i]);
   //   await reserveSetActivationThreshold(1);
   //   await reserveSetActivationDelay(1);
   //   await reserveSetRewardCycleLength(525);
   //   await reserveRegisterUser(_list[i]);
-  //   await reserveSetCoinbaseAmount(_list[i], 500e8, 250e8, 125e8, 62e8, 37e8);
+  //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
   // }
+
+  // let result:any = await reserveGetStaked('token-t-alex', [0,1,2,3,4,5,6,7,8,9,10]);
+  // let result:any = await reserveGetStakingStatsCoinbaseAsList('token-t-alex', [2,3,4,5,6,7,8,9,10]);
+  let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
+  for (const item in result.list ){
+    console.log(result.list[item]);
+  }
+  
 
   // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
   // result = await balance('fwp-wbtc-usda-50-50', DEPLOYER_ACCOUNT_ADDRESS());
@@ -169,8 +179,14 @@ async function run() {
   //     await mint_sft(_list[i], 34560, 1000e8, 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4');
   // }
 
-  // _list = ['ST3MZM9WJ34Y4311XBJDBKQ41SXX5DY68406J26WJ', 'ST3QR9G3XJ2J0HH1EEER1V648HDJQN2W46KHSXTW8', 'ST3DNHSRVVT9BJEG2A7VTD06F8PJNAS9YAVWT8N1G'];
-  // let _list = [ 'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4' ];
+  // let _list = [
+  //     'ST20F5HAX0W3AEG8M5C9J2880132CQTP6TZFAT3YF', 
+  //     'ST34CGPP646BN5RBEC0GK1BSWWY9G1HW1HHC7H4DP', 
+  //     'STHB7WGM8DRFVGTVKHNVZXEVSPKKPCPEGGN27RWM',
+  //     'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
+  //     'ST1D0QCNK85ZZDNHEV5DTDCD9G2Q043CK967ZST9K',
+  //     'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ'
+  //   ];  
   // for (let i = 0; i < _list.length; i++) {
   //     await get_some_token(_list[i]);
   //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
