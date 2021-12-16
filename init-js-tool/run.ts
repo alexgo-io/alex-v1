@@ -38,6 +38,7 @@ import {
   test_spot_trading,
   test_margin_trading
 } from './runSteps/archived-code';
+import { transferSTX } from './vault';
 
 
 async function run_mint_initial_tokens() {
@@ -49,6 +50,7 @@ async function run_mint_initial_tokens() {
 
 async function run() {
   // await run_mint_initial_tokens();
+  await set_faucet_amounts();
 
   // const _pools = { 0:_deploy[4], 1:_deploy[5] };
   const _pools = _deploy;
@@ -57,10 +59,10 @@ async function run() {
   // await create_ytp(false, _pools);
   // await create_crp(false, _pools);
 
-  await arbitrage_fwp(false);
-  await arbitrage_crp(false, _pools);
-  await arbitrage_ytp(false, _pools);
-  await arbitrage_fwp(false);
+  // await arbitrage_fwp(false);
+  // await arbitrage_crp(false, _pools);
+  // await arbitrage_ytp(false, _pools);
+  // await arbitrage_fwp(false);
 
   // await test_spot_trading();
   // await test_margin_trading();
@@ -174,7 +176,8 @@ async function run() {
   //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
   // }
   
-  // await get_some_token('ST1D0QCNK85ZZDNHEV5DTDCD9G2Q043CK967ZST9K');
+  // await get_some_token('STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ');
+  // await transferSTX('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 250000e8);
 
   // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
   // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
