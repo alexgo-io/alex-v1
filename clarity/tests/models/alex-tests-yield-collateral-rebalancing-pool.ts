@@ -6,7 +6,7 @@ import {
     types,
   } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
   
-  class CRPTestAgent1 {
+  class YCRPTestAgent1 {
     chain: Chain;
     deployer: Account;
   
@@ -330,4 +330,4 @@ import {
     
   }
   
-  export { CRPTestAgent1 };
+  export { YCRPTestAgent1 };
