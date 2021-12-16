@@ -69,7 +69,7 @@ export const _fwp_pools = {
     pool_token: 'fwp-wstx-usda-50-50',
     multisig: 'multisig-fwp-wstx-usda-50-50',
     left_side: 10000000e8,
-    right_side: 10000000e8 / 2
+    right_side: 10000000e8 * 2
   },
   2: {
     token_x: 'token-wstx',
@@ -79,7 +79,7 @@ export const _fwp_pools = {
     pool_token: 'fwp-wstx-wbtc-50-50',
     multisig: 'multisig-fwp-wstx-wbtc-50-50',
     left_side: 10000000e8,
-    right_side: 10000000e8 / 2 / 50000
+    right_side: 10000000e8 * 2 / 50000
   },
 } as const;
 export const _deploy = {

@@ -58,6 +58,8 @@ async function run() {
   const _pools = _deploy;
   
   // await create_fwp(false);
+  // await create_fwp(true, _fwp_pools, true);
+
   // await create_ytp(false, _pools);
   // await create_crp(false, _pools);
 
@@ -69,7 +71,6 @@ async function run() {
   // await test_spot_trading();
   // await test_margin_trading();
 
-  // await create_fwp(true, _fwp_pools, true);
   // await create_crp(true, _pools);
   // await create_ytp(true, _pools);
 
@@ -150,10 +151,10 @@ async function run() {
 
   // let result:any = await reserveGetStaked('token-t-alex', [0,1,2,3,4,5,6,7,8,9,10]);
   // let result:any = await reserveGetStakingStatsCoinbaseAsList('token-t-alex', [2,3,4,5,6,7,8,9,10]);
-  let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
-  for (const item in result.list ){
-    console.log(result.list[item]);
-  }
+  // let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
+  // for (const item in result.list ){
+  //   console.log(result.list[item]);
+  // }
   
 
   // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
