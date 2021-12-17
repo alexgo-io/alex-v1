@@ -42,6 +42,17 @@ import {
   test_margin_trading
 } from './runSteps/archived-code';
 import { transferSTX } from './vault';
+import {
+  mint_ft,
+  mint_sft,
+} from './vault';
+import {
+  launchCreate,
+  launchAddToPosition,
+  launchGetSubscriberAtToken,
+  launchGetTokenDetails,
+  launchRegister
+} from './pools-launch';
 
 
 async function run_mint_initial_tokens() {
@@ -62,6 +73,16 @@ async function run() {
 
   // await create_ytp(false, _pools);
   // await create_crp(false, _pools);
+
+  // let _list = ['token-t-alex'];//, 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50', 'ytp-yield-wbtc', 'ytp-yield-usda'];
+  // for(let i = 0; i < _list.length; i++) {
+  //   await reserveAddToken(_list[i]);
+  //   await reserveSetActivationThreshold(1);
+  //   await reserveSetActivationDelay(1);
+  //   await reserveSetRewardCycleLength(525);
+  //   await reserveRegisterUser(_list[i]);
+  //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
+  // }
 
   // await arbitrage_fwp(false);
   // await arbitrage_crp(false, _pools);
@@ -139,22 +160,13 @@ async function run() {
   //     // console.log(result);
   //     await transfer(_list[i], 'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ', ONE_8, deployer=true);
   // }
-  // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50', 'ytp-yield-wbtc', 'ytp-yield-usda'];
-  // for(let i = 0; i < _list.length; i++) {
-  //   await reserveAddToken(_list[i]);
-  //   await reserveSetActivationThreshold(1);
-  //   await reserveSetActivationDelay(1);
-  //   await reserveSetRewardCycleLength(525);
-  //   await reserveRegisterUser(_list[i]);
-  //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
-  // }
 
   // let result:any = await reserveGetStaked('token-t-alex', [0,1,2,3,4,5,6,7,8,9,10]);
-  // let result:any = await reserveGetStakingStatsCoinbaseAsList('token-t-alex', [2,3,4,5,6,7,8,9,10]);
-  // let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
-  // for (const item in result.list ){
-  //   console.log(result.list[item]);
-  // }
+  let result:any = await reserveGetStakingStatsCoinbaseAsList('token-t-alex', [2,3,4,5,6,7,8,9,10]);
+  // // let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
+  for (const item in result.list ){
+    console.log(result.list[item]);
+  }
   
 
   // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
@@ -192,27 +204,32 @@ async function run() {
   //     await get_some_token(_list[i]);
   //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
   // }
-  
-  // await get_some_token('STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ');
+  // await set_faucet_amounts();
+  // await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await get_some_token('STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9');
+  // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
   // await transferSTX('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 250000e8);
 
-  // await mint_ft('token-t-alex', 90000e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
-  // await mint_ft('lottery-t-alex', 100e8, process.env.DEPLOYER_ACCOUNT_ADDRESS);
-  // await mint_ft('lottery-t-alex', 10000e8, process.env.USER_ACCOUNT_ADDRESS);
-  // result = await launchCreate(
+  // await mint_ft('token-t-alex', 90000e8, DEPLOYER_ACCOUNT_ADDRESS());
+  // await mint_ft('lottery-t-alex', 100e8, DEPLOYER_ACCOUNT_ADDRESS());
+  // await mint_ft('lottery-t-alex', 10000e8, USER_ACCOUNT_ADDRESS());
+  // await mint_ft('lottery-t-alex', 100e8, 'ST34CGPP646BN5RBEC0GK1BSWWY9G1HW1HHC7H4DP')
+  // await mint_ft('lottery-t-alex', 100e8, 'STHB7WGM8DRFVGTVKHNVZXEVSPKKPCPEGGN27RWM')
+  // let result:any = await launchCreate(
   //     'token-t-alex',
   //     'lottery-t-alex',
   //     DEPLOYER_ACCOUNT_ADDRESS(),
   //     100,
   //     25e8,
-  //     23000,
-  //     33000,
-  //     43000,
+  //     3600,
+  //     4200,
+  //     4600,
   //     100
   //     );
   // await launchAddToPosition('token-t-alex', 1000);
   // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
-  // await launchRegister('token-t-alex', 'lottery-t-alex', 90, deployer=false);
+  // await launchRegister('token-t-alex', 'lottery-t-alex', 90, false);
   // result = await launchGetTokenDetails("token-t-alex");
   // console.log(result.value.data);
   // result = await launchGetSubscriberAtToken('token-t-alex', 1);
