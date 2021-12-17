@@ -49,7 +49,14 @@ Clarinet.test({
                 types.uint(1000000*ONE_8),
                 types.uint(1)
             ], deployer.address);
-        call.result.expectUint(100000007);                         
+        call.result.expectUint(100000007);  
+        
+        call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
+            [
+                types.uint(1000000*ONE_8),
+                types.uint(1)
+            ], deployer.address);
+        call.result.expectUint(100000019);                         
 
         // // this is the upper limit
         // call = chain.callReadOnlyFn("math-fixed-point", "pow-up",

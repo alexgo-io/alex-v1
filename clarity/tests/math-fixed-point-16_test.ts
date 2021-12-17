@@ -81,35 +81,49 @@ Clarinet.test({
                 types.uint(5*ONE_10),
                 types.uint(0)
             ], deployer.address);
-        call.result.expectUint(9999999998);
+        assertEquals(call.result, "u9999999999999991")
 
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
-                types.uint(1*ONE_10),
-                types.uint(1*ONE_10)
+                types.uint(5*ONE_10),
+                types.uint(5*ONE_10)
             ], deployer.address);
-        call.result.expectUint(1199);
+        assertEquals(call.result, "u9999812186695722")
+
+        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
+            [
+                types.uint(5*ONE_10),
+                types.uint(5*ONE_10)
+            ], deployer.address);
+        assertEquals(call.result, "u9999812186695704")
 
         // anything ^ 0 = 1
+        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
+            [
+                "u10000000000000000",
+                "u0"
+            ], deployer.address);
+        assertEquals(call.result, "u10000000000000009")
+        
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
                 "u10000000000000000",
                 "u0"
             ], deployer.address);
-        assertEquals(call.result, "u9999999998")
-
+        assertEquals(call.result, "u9999999999999991")
+        
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
                 "u10000000000000000",
-                "u0"
+                "u1"
             ], deployer.address);
-        assertEquals(call.result, "u10000000002")
-        
+        assertEquals(call.result, "u10000000000000009")   
+
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
                 "u10000000000000000",
                 "u1"
             ], deployer.address);
-        assertEquals(call.result, "u10000000025")    
+        assertEquals(call.result, "u9999999999999991")    
     },
 });
