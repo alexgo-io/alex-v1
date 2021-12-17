@@ -1,6 +1,6 @@
 (define-trait ownable-trait
 	(
-		(get-owner () (response principal uint))
-		(set-owner (principal) (response bool uint))
+		(get-contract-owner () (response principal uint))
+		(set-contract-owner (principal) (response bool uint))
 	)
 )
