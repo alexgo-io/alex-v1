@@ -48,7 +48,7 @@ const wbtcQ = 100*ONE_8
  */
 
 Clarinet.test({
-    name: "CRP : pool creation, adding values and reducing values",
+    name: "YCRP : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -206,7 +206,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : trait check",
+    name: "YCRP : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -293,7 +293,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : multiple CRP pools created",
+    name: "YCRP : multiple CRP pools created",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -362,7 +362,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : testing get-x-given-price and get-y-given-price",
+    name: "YCRP : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -443,7 +443,7 @@ Clarinet.test({
 });  
 
 Clarinet.test({
-    name: "CRP : testing pegged CRP (= yield-token collateralised by token)",
+    name: "YCRP : testing pegged CRP (= yield-token collateralised by token)",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -526,7 +526,7 @@ Clarinet.test({
 });              
 
 Clarinet.test({
-    name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool throws error",
+    name: "YCRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool throws error",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -590,7 +590,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : error testing",
+    name: "YCRP : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -678,7 +678,7 @@ Clarinet.test({
 });        
 
 Clarinet.test({
-    name: 'CRP : testing get-x-given-y and get-y-given-x',
+    name: 'YCRP : testing get-x-given-y and get-y-given-x',
     async fn (chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -755,7 +755,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "CRP : fee setting using multisig",
+    name: "YCRP : fee setting using multisig",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
