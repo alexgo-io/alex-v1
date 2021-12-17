@@ -74,7 +74,7 @@ async function run() {
   // await create_ytp(false, _pools);
   // await create_crp(false, _pools);
 
-  // let _list = ['token-t-alex'];//, 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50', 'ytp-yield-wbtc', 'ytp-yield-usda'];
+  // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50', 'ytp-yield-wbtc', 'ytp-yield-usda'];
   // for(let i = 0; i < _list.length; i++) {
   //   await reserveAddToken(_list[i]);
   //   await reserveSetActivationThreshold(1);
@@ -162,11 +162,11 @@ async function run() {
   // }
 
   // let result:any = await reserveGetStaked('token-t-alex', [0,1,2,3,4,5,6,7,8,9,10]);
-  let result:any = await reserveGetStakingStatsCoinbaseAsList('token-t-alex', [2,3,4,5,6,7,8,9,10]);
-  // // let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
-  for (const item in result.list ){
-    console.log(result.list[item]);
-  }
+  // let result:any = await reserveGetStakingStatsCoinbaseAsList('token-t-alex', [2,3,4,5,6,7,8,9,10]);
+  // let result:any = await reserveGetStakingRewards('token-t-alex', [2,3,4,5,6,7,8,9,10])
+  // for (const item in result.list ){
+  //   console.log(result.list[item]);
+  // }
   
 
   // await multisigPropose('multisig-fwp-wbtc-usda-50-50', 42610, 'update fee', '', 0.003 * ONE_8, 0.003 * ONE_8);
@@ -208,7 +208,7 @@ async function run() {
   // await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
   // await get_some_token('STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9');
   // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
-  // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await mint_ft('lottery-t-alex', 100e8, 'STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9');
   // await transferSTX('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 250000e8);
 
   // await mint_ft('token-t-alex', 90000e8, DEPLOYER_ACCOUNT_ADDRESS());
@@ -227,10 +227,10 @@ async function run() {
   //     4600,
   //     100
   //     );
-  // await launchAddToPosition('token-t-alex', 1000);
+  // await launchAddToPosition('token-t-alex', 10);
   // await launchRegister('token-t-alex', 'lottery-t-alex', 100);
   // await launchRegister('token-t-alex', 'lottery-t-alex', 90, false);
-  // result = await launchGetTokenDetails("token-t-alex");
+  // let result:any = await launchGetTokenDetails("token-t-alex");
   // console.log(result.value.data);
   // result = await launchGetSubscriberAtToken('token-t-alex', 1);
   // console.log(result.data);
