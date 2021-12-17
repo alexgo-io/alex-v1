@@ -51,7 +51,7 @@ depends_on = [
 
 [contracts.yield-collateral-rebalancing-pool]
 path = "contracts/pool/yield-collateral-rebalancing-pool.clar"
-depends_on = ["trait-sip-010", "trait-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "alex-reserve-pool", "yield-token-pool"]
+depends_on = ["trait-sip-010", "trait-vault", "alex-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "alex-reserve-pool", "yield-token-pool"]
 
 [contracts.faucet]
 path = "contracts/faucet.clar"

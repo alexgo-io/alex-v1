@@ -61,7 +61,8 @@ let contract_paths = [
   // 'lottery-tokens/lottery-t-alex.clar',
   // 'helpers/staking-helper.clar',
   // 'helpers/margin-helper.clar',
-  'pool/alex-reserve-pool-v1.clar',
+  // 'pool/alex-reserve-pool-v1.clar',
+  "lottery-tokens/lottery-t-alex-alpha-2.clar"
 ];
 
 function sleep(ms: number) {

@@ -15,6 +15,11 @@ const argv = yargs(hideBin(process.argv))
     type: 'boolean',
     description: 'Run with verbose logging',
   })
+  .option('only',  {
+    alias: 'o',
+    type: 'string',
+    description: 'Deploy only some contracts',
+  })
   .parse();
 
 const run = async () => {
@@ -22,7 +27,8 @@ const run = async () => {
   if (userInput.init) {
     await genesis_transfer();
   }
-  await deployAllContracts();
+  
+  await deployAllContracts(userInput.only ?? undefined);
 };
 
 run().then();
