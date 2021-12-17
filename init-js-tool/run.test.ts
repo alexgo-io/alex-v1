@@ -10,9 +10,16 @@ import {
   USER_ACCOUNT_ADDRESS,
 } from './constants';
 import { mint_ft } from './vault';
-import { launchAddToPosition, launchCreate } from './pools-launch';
+import {
+  addApprovedContract,
+  launchAddToPosition,
+  launchCreate,
+} from './pools-launch';
 import { genesis_transfer, getDeployerPK, network } from './wallet';
-import { deployAllContracts, deployContract } from '../features/deployContractsUtils';
+import {
+  deployAllContracts,
+  deployContract,
+} from '../features/deployContractsUtils';
 import { broadcastTransaction, makeContractDeploy } from '@stacks/transactions';
 import fs from 'fs';
 import path from 'path';
@@ -48,23 +55,26 @@ describe('run scripts', () => {
       DEPLOYER_ACCOUNT_ADDRESS(),
       100,
       25e8,
-      currentBlock + 60,
+      currentBlock + 20,
       currentBlock + 200,
       43000,
       100,
     );
-    await launchAddToPosition('token-t-alex', 1000);
+    await launchAddToPosition('token-t-alex', 20);
   });
 
   test('set secondary wallet', async () => {
-    const adx = 'ST10YE5DNRXVNY7SB5Z8B8X3Q1WC2Q7X5P7C8BBQ4';
-    await mint_some_tokens(adx);
+    await setStxAmount(100000e8);
+    const adx = 'ST2XCKTG8E2D32K08E0W3MRHW1SAMZZNPHMAJATG9';
+    // await mint_some_tokens(adx);
     await get_some_token(adx);
     await mint_ft('lottery-t-alex', 10000e8, adx);
+    await setStxAmount(250e8);
   });
 
   test('deploy variant', async () => {
-    const contractName = 'alex-launchpad-v2';
+    const contractName = 'alex-launchpad-alpha-7';
+    await mint_ft('token-t-alex', 100000e8, DEPLOYER_ACCOUNT_ADDRESS());
     await deployContract(contractName, 'contracts/pool/alex-launchpad.clar');
     const currentBlock = await getCurrentBlock();
     await launchCreate(
@@ -73,12 +83,13 @@ describe('run scripts', () => {
       DEPLOYER_ACCOUNT_ADDRESS(),
       100,
       25e8,
-      currentBlock + 20,
-      currentBlock + 100,
-      43000,
+      currentBlock + 3,
+      currentBlock + 40,
+      currentBlock + 140,
       100,
       contractName,
     );
     await launchAddToPosition('token-t-alex', 100, contractName);
+    await addApprovedContract(contractName);
   });
 });

@@ -72,6 +72,34 @@ export const launchCreate = async (
   }
 };
 
+export const addApprovedContract = async (
+  launchpadContractName = 'alex-launchpad',
+  lotteryContractName = 'lottery-t-alex',
+) => {
+  const privateKey = await getDeployerPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: lotteryContractName,
+    functionName: 'add-approved-contract',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), launchpadContractName),
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const launchAddToPosition = async (
   token: string,
   tickets: number,
