@@ -11,11 +11,8 @@
 ;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 8 decimal fixed point numbers.
-;; (define-constant ONE_16 (pow 10 8))
+;; (define-constant ONE_8 (pow 10 8))
 (define-constant ONE_16 (pow 10 16))
-(define-constant ONE_15 (pow 10 15))
-(define-constant ONE_20 (pow 10 20))
-(define-constant ONE_36 (pow 10 36))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^8, 
@@ -25,20 +22,17 @@
 (define-constant MAX_NATURAL_EXPONENT (* 51 ONE_16))
 (define-constant MIN_NATURAL_EXPONENT (* -36 ONE_16))
 
-(define-constant LN_32_LOWER_BOUND (- ONE_16 ONE_15))
-(define-constant LN_32_UPPER_BOUND (+ ONE_16 ONE_15))
-
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
 
 ;; Because largest exponent is 69, we start from 64
-;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
+;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 (define-constant x_a_list_no_deci (list 
-{x_pre: 640000000000000000, a_pre: 62351490808116168829100000, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 640000000000000000, a_pre: 6235149080811616882910000000, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+{x_pre: 320000000000000000, a_pre: 789629601826806951610000000000, use_deci: false} ;; x2 = 2^5, a2 = e^(x2)
 ))
 ;; 8 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 320000000000000000, a_pre: 789629601826806951610000000000, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
 {x_pre: 160000000000000000, a_pre: 88861105205078726367600, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
 {x_pre: 80000000000000000, a_pre: 29809579870417282747, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
 {x_pre: 40000000000000000, a_pre: 545981500331442391, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
@@ -75,8 +69,7 @@
       (seriesSum (get seriesSum num_sum_zsq))
       (r (+ out_sum (* seriesSum 2)))
    )
-    (ok r)
-    ;; (ok 0)
+   (ok r)
  )
 )
 
