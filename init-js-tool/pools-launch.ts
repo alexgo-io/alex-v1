@@ -23,6 +23,7 @@ export const launchCreate = async (
   registration_end: number,
   claim_end: number,
   activation_threshold: number,
+  contractName = 'alex-launchpad',
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -42,7 +43,7 @@ export const launchCreate = async (
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: 'alex-launchpad',
+    contractName: contractName,
     functionName: 'create-pool',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
@@ -71,7 +72,11 @@ export const launchCreate = async (
   }
 };
 
-export const launchAddToPosition = async (token: string, tickets: number) => {
+export const launchAddToPosition = async (
+  token: string,
+  tickets: number,
+  contractName = 'alex-launchpad',
+) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
@@ -79,7 +84,7 @@ export const launchAddToPosition = async (token: string, tickets: number) => {
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: 'alex-launchpad',
+    contractName,
     functionName: 'add-to-position',
     functionArgs: [
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),

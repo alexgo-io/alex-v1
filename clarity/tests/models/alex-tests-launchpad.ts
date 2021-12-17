@@ -4,7 +4,7 @@ import {
     Tx,
     ReadOnlyFn,
     types,
-  } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+} from "https://deno.land/x/clarinet@v0.14.0/index.ts";
 
 class ALEXLaunchpad {
     chain: Chain;
@@ -15,55 +15,55 @@ class ALEXLaunchpad {
         this.deployer = deployer;
     }
 
-    createPool(sender:Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, registrationEnd: number, claimEnd:number, activationThreshold: number) {
+    createPool(sender: Account, token: string, ticket: string, feeToAddress: string, amountPerTicket: number, wstxPerTicketInFixed: number, registrationStart: number, registrationEnd: number, claimEnd: number, activationThreshold: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "create-pool", [
-                    types.principal(token),
-                    types.principal(ticket),
-                    types.principal(feeToAddress),
-                    types.uint(amountPerTicket),
-                    types.uint(wstxPerTicketInFixed),
-                    types.uint(registrationStart),
-                    types.uint(registrationEnd),
-                    types.uint(claimEnd),
-                    types.uint(activationThreshold),
-                ],
+                types.principal(token),
+                types.principal(ticket),
+                types.principal(feeToAddress),
+                types.uint(amountPerTicket),
+                types.uint(wstxPerTicketInFixed),
+                types.uint(registrationStart),
+                types.uint(registrationEnd),
+                types.uint(claimEnd),
+                types.uint(activationThreshold),
+            ],
                 sender.address
             ),
         ]);
         return block;
     }
-    
-    addToPosition(sender:Account, token: string, tickets: number ) {
+
+    addToPosition(sender: Account, token: string, tickets: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "add-to-position", [
                 types.principal(token),
                 types.uint(tickets),
             ],
-            sender.address
-        ),
+                sender.address
+            ),
         ]);
         return block;
     }
 
-    register(sender:Account, token: string, ticketTrait: string, ticketAmount: number) {
+    register(sender: Account, token: string, ticketTrait: string, ticketAmount: number) {
         let block = this.chain.mineBlock([
             Tx.contractCall("alex-launchpad", "register", [
                 types.principal(token),
                 types.principal(ticketTrait),
                 types.uint(ticketAmount),
-                ],
+            ],
                 sender.address
             ),
         ]);
         return block.receipts[0].result;
     }
 
-    refund (sender: Account, tokenTrait: string) {
+    refund(sender: Account, tokenTrait: string) {
         let block = this.chain.mineBlock([
-            Tx.contractCall( "alex-launchpad", "refund", [
+            Tx.contractCall("alex-launchpad", "refund", [
                 types.principal(tokenTrait),
-                ],
+            ],
                 sender.address
             ),
         ]);
@@ -72,10 +72,10 @@ class ALEXLaunchpad {
 
     claim(sender: Account, tokenTrait: string, ticketTrait: string) {
         let block = this.chain.mineBlock([
-            Tx.contractCall( "alex-launchpad", "claim", [
+            Tx.contractCall("alex-launchpad", "claim", [
                 types.principal(tokenTrait),
                 types.principal(ticketTrait),
-                ],
+            ],
                 sender.address
             ),
         ]);
@@ -85,10 +85,10 @@ class ALEXLaunchpad {
     getRegistrationStart(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
-            "get-registration-start", 
+            "get-registration-start",
             [
                 types.principal(token)
-            ], 
+            ],
             this.deployer.address
         );
     }
@@ -96,10 +96,10 @@ class ALEXLaunchpad {
     isListingCompleted(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
-            "is-listing-completed", 
+            "is-listing-completed",
             [
                 types.principal(token)
-            ], 
+            ],
             this.deployer.address
         );
     }
@@ -107,10 +107,10 @@ class ALEXLaunchpad {
     isListingActivated(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
-            "is-listing-activated", 
+            "is-listing-activated",
             [
                 types.principal(token)
-            ], 
+            ],
             this.deployer.address
         );
     }
@@ -118,19 +118,19 @@ class ALEXLaunchpad {
     getActivationBlock(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
-            "get-activation-block", 
+            "get-activation-block",
             [
                 types.principal(token)
-            ], 
+            ],
             this.deployer.address
         );
     }
-    
-    getOwner():ReadOnlyFn {
+
+    getOwner(): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
-            "alex-launchpad", 
-            "get-owner", 
-            [], 
+            "alex-launchpad",
+            "get-contract-owner",
+            [],
             this.deployer.address
         );
     }
@@ -139,7 +139,7 @@ class ALEXLaunchpad {
         let block = this.chain.mineBlock([
             Tx.contractCall(
                 "alex-launchpad",
-                "set-owner",
+                "set-contract-owner",
                 [
                     types.principal(owner)
                 ],
@@ -149,7 +149,7 @@ class ALEXLaunchpad {
         return block.receipts[0].result;
     }
 
-    getTokenDetails(token: string): ReadOnlyFn{
+    getTokenDetails(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
             "get-token-details",
@@ -160,7 +160,7 @@ class ALEXLaunchpad {
         )
     }
 
-    getSubscriberAtTokenOrDefault(token: string, userId: number): ReadOnlyFn{
+    getSubscriberAtTokenOrDefault(token: string, userId: number): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
             "get-subscriber-at-token-or-default",
@@ -172,7 +172,7 @@ class ALEXLaunchpad {
         )
     }
 
-    getActivationThreshold(token: string): ReadOnlyFn{
+    getActivationThreshold(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
             "get-activation-threshold",
@@ -182,8 +182,8 @@ class ALEXLaunchpad {
             this.deployer.address
         )
     }
-    
-    getRegisteredUsersNonce(token: string): ReadOnlyFn{
+
+    getRegisteredUsersNonce(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
             "get-registered-users-nonce",

@@ -36,11 +36,11 @@
 
 (define-data-var CONTRACT-OWNER principal tx-sender)
 
-(define-read-only (get-owner)
+(define-read-only (get-contract-owner)
   (ok (var-get CONTRACT-OWNER))
 )
 
-(define-public (set-owner (owner principal))
+(define-public (set-contract-owner (owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set CONTRACT-OWNER owner))

@@ -11,11 +11,11 @@
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-read-only (get-owner)
+(define-read-only (get-contract-owner)
   (ok (var-get CONTRACT-OWNER))
 )
 
-(define-public (set-owner (owner principal))
+(define-public (set-contract-owner (owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set CONTRACT-OWNER owner))
