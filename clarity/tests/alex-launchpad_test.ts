@@ -18,7 +18,7 @@ const TICKET_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lottery-
 const FEE_TO_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
 
 Clarinet.test({
-    name: "ALP: Testing helper functions",
+    name: "ALP : Testing helper functions",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
@@ -32,7 +32,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: pool creation, adding values and reducing values",
+    name: "ALP : pool creation, adding values and reducing values",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -102,7 +102,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: User Registration",
+    name: "ALP : User Registration",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -165,7 +165,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: Claim tokens",
+    name: "ALP : Claim tokens",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -221,7 +221,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "ALP: Registration Started before Add to Position",
+    name: "ALP : Registration Started before Add to Position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -250,7 +250,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: Claim Ended Error",
+    name: "ALP : Claim Ended Error",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -289,7 +289,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: Test Token Details",
+    name: "ALP : Test Token Details",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -337,7 +337,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: Test Subscriber at Token Details",
+    name: "ALP : Test Subscriber at Token Details",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -389,7 +389,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP: Test Refund",
+    name: "ALP : Test Refund",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;

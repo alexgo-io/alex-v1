@@ -122,6 +122,14 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
+)
+
 (begin
   (map-set approved-contracts .fixed-weight-pool true)
   (map-set approved-contracts .alex-launchpad true)
