@@ -38,7 +38,7 @@ function _it(
     deployer = accounts.get("deployer")!;
     clients = {
       core: new CoreClient("alex-reserve-pool", chain, deployer),
-      token: new TokenClient("token-alex", chain, deployer)
+      token: new TokenClient("token-t-alex", chain, deployer)
     };
 
     await fn(chain, accounts, clients);

@@ -51,7 +51,7 @@ export async function set_faucet_amounts() {
   console.log('------ Set Faucet Amounts ------');
   await setUsdaAmount(500000e8);
   await setWbtcAmount(5e8);
-  await setStxAmount(250e8);
+  await setStxAmount(25000e8);
   await setAlexAmount(10e8);
 }
 

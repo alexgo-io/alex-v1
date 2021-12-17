@@ -21,11 +21,11 @@
 (define-data-var CONTRACT-OWNER principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-read-only (get-owner)
+(define-read-only (get-contract-owner)
   (ok (var-get CONTRACT-OWNER))
 )
 
-(define-public (set-owner (owner principal))
+(define-public (set-contract-owner (owner principal))
   (begin
     (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
     (ok (var-set CONTRACT-OWNER owner))
@@ -275,12 +275,7 @@
     )
     (match (get-reward-cycle token stacks-height)
       current-cycle
-      (if (or (<= current-cycle target-cycle) (is-eq u0 user-staked-this-cycle))
-        ;; this cycle hasn't finished, or staker contributed nothing
-        u0
-        (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
-      )
-      ;; before first reward cycle
+      (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
       u0
     )
   )
@@ -421,7 +416,7 @@
     (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
     (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? .token-alex mint-fixed entitled-token user))))
+    (and (> entitled-token u0) (as-contract (try! (contract-call? .token-t-alex mint-fixed entitled-token user))))
     (ok { to-return: to-return, entitled-token: entitled-token })
   )
 )

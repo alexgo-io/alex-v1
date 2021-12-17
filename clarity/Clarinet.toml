@@ -5,7 +5,7 @@ costs_version = 1
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "alex-vault", "token-alex"]
+depends_on = ["trait-ownable", "trait-sip-010", "alex-vault", "token-t-alex"]
 
 [contracts.futures-pool]
 path = "contracts/pool/futures-pool.clar"
@@ -44,7 +44,6 @@ depends_on = [
   "weighted-equation",
   "fixed-weight-pool",
   "token-usda",
-  "token-alex",
   "alex-reserve-pool",
   "yield-token-pool",
   "alex-vault"
@@ -52,7 +51,7 @@ depends_on = [
 
 [contracts.yield-collateral-rebalancing-pool]
 path = "contracts/pool/yield-collateral-rebalancing-pool.clar"
-depends_on = ["trait-sip-010", "trait-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "token-alex", "alex-reserve-pool", "yield-token-pool"]
+depends_on = ["trait-sip-010", "trait-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "alex-reserve-pool", "yield-token-pool"]
 
 [contracts.faucet]
 path = "contracts/faucet.clar"
@@ -66,7 +65,6 @@ depends_on = [
   "trait-vault",
   "math-fixed-point",
   "weighted-equation",
-  "token-alex",
   "alex-reserve-pool",
   "token-usda",
   "trait-multisig-vote",
@@ -121,7 +119,6 @@ depends_on = [
   "trait-vault",
   "math-fixed-point",
   "weighted-equation",
-  "token-alex",
   "alex-reserve-pool",
   "token-usda",
   "fixed-weight-pool",
@@ -172,10 +169,6 @@ depends_on = [
 [contracts.multisig-ytp-yield-wbtc]
 path = "contracts/multisig/multisig-ytp-yield-wbtc.clar"
 depends_on = [ "ytp-yield-wbtc", "yield-wbtc", "yield-token-pool" ]
-
-[contracts.token-alex]
-path = "contracts/token/token-alex.clar"
-depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-t-alex]
 path = "contracts/token/token-t-alex.clar"
@@ -239,7 +232,6 @@ depends_on = [
   "math-fixed-point",
   "yield-token-equation",
   "trait-semi-fungible",
-  "token-alex",
   "token-usda",
   "fixed-weight-pool",
   "alex-reserve-pool",

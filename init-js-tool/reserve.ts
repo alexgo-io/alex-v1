@@ -3,6 +3,7 @@ import {
   broadcastTransaction,
   callReadOnlyFunction,
   contractPrincipalCV,
+  listCV,
   makeContractCall,
   PostConditionMode,
   someCV,
@@ -224,6 +225,99 @@ export const reserveGetStakerAtCycleOrDefault = async (
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       uintCV(reward_cycle),
       uintCV(user_id),
+    ],
+    network: network,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
+  };
+  try {
+    return callReadOnlyFunction(options);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const reserveGetStaked = async (
+  token: string,
+  reward_cycles: Array<number>
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[reserve] staking-helper::get-staked...',
+    token,
+    reward_cycles,
+  );
+
+  const options = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: 'staking-helper',
+    functionName: 'get-staked',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
+      listCV(reward_cycles.map(e=>{return uintCV(e)}))
+    ],
+    network: network,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
+  };
+  try {
+    return callReadOnlyFunction(options);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const reserveGetStakingStatsCoinbaseAsList = async (
+  token: string,
+  reward_cycles: Array<number>
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[reserve] staking-helper::get-staking-stats-coinbase-as-list...',
+    token,
+    reward_cycles,
+  );
+
+  const options = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: 'staking-helper',
+    functionName: 'get-staking-stats-coinbase-as-list',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
+      listCV(reward_cycles.map(e=>{return uintCV(e)}))
+    ],
+    network: network,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
+  };
+  try {
+    return callReadOnlyFunction(options);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const reserveGetStakingRewards = async (
+  token: string,
+  reward_cycles: Array<number>
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[reserve] staking-helper::get-staking-rewards...',
+    token,
+    reward_cycles,
+  );
+
+  const options = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: 'staking-helper',
+    functionName: 'get-staking-rewards',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
+      listCV(reward_cycles.map(e=>{return uintCV(e)}))
     ],
     network: network,
     senderAddress: USER_ACCOUNT_ADDRESS(),
