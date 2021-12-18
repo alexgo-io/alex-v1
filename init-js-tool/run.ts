@@ -61,6 +61,7 @@ import {
   multisigVoteAgainst,
   multisigVoteFor
 } from './multisigs';
+import { fwpGetPoolDetails, fwpSetFeeRebate } from './pools-fwp';
 
 
 
@@ -179,19 +180,20 @@ async function run() {
   // }
   
 
-  // await multisigPropose('multisig-fwp-wstx-usda-50-50', 4300, 'update fee', '', 0.003e8, 0.003e8);
-  // let result:any = await balance('fwp-wstx-usda-50-50', DEPLOYER_ACCOUNT_ADDRESS());
+  // await multisigPropose('multisig-fwp-wstx-wbtc-50-50', 6030, 'update fee', '', 0.003e8, 0.003e8);
+  // let result:any = await balance('fwp-wstx-wbtc-50-50', DEPLOYER_ACCOUNT_ADDRESS());
   // console.log(result)
-  let result:any = await multisigVoteFor('multisig-fwp-wstx-usda-50-50', 'fwp-wstx-usda-50-50', 1, 17907343375660777);
-  // result = await multisigEndProposal('multisig-fwp-wstx-usda-50-50', 1);
-  // result = await multisigGetProposalById('multisig-fwp-wstx-usda-50-50', 2);
+  // let result:any = await multisigVoteFor('multisig-fwp-wstx-wbtc-50-50', 'fwp-wstx-wbtc-50-50', 1, 82763104897300);
+  // let result:any = await multisigEndProposal('multisig-fwp-wstx-wbtc-50-50', 1);
   // console.log(result);
-  // result = await multisigVoteFor('multisig-fwp-wstx-usda-50-50', 'fwp-wstx-usda-50-50', 1, 19502551000000);
+  // let result = await multisigGetProposalById('multisig-fwp-wstx-wbtc-50-50', 1);
   // console.log(result);
-  // result = await multisigEndProposal('multisig-fwp-wstx-usda-50-50', 2);
-  // console.log(result);
-  result = await multisigGetProposalById('multisig-fwp-wstx-usda-50-50', 1);
-  console.log(result);
+  
+  // await multisigReturnVotes('multisig-fwp-wstx-usda-50-50', 'fwp-wstx-usda-50-50', 1);
+  // await fwpSetFeeRebate('token-wstx', 'token-usda', 0.5e8, 0.5e8, 0.5e8);
+  // let result:any = await fwpGetPoolDetails('token-wstx', 'token-usda', 0.5e8, 0.5e8);
+  // console.log(result.value.data);
+
 
   // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ

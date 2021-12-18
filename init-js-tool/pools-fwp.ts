@@ -569,35 +569,35 @@ export const fwpGetPoolDetails = async (
   }
 };
 
-export const multisigProposeWBTCUSDA = async (
-  start_block_height: number,
-  title: string,
-  url: string,
-  new_fee_rate_x: number,
-  new_fee_rate_y: number,
+export const fwpSetFeeRebate = async (
+  tokenX: string,
+  tokenY: string,
+  weightX: number,
+  weightY: number,
+  rebate: number,
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
   );
   console.log(
-    '[multisig] propose...',
-    start_block_height,
-    title,
-    url,
-    new_fee_rate_x,
-    new_fee_rate_y,
+    '[FWP] set-fee-rebate...',
+    tokenX,
+    tokenY,
+    weightX,
+    weightY,
+    rebate,
   );
   const privateKey = await getDeployerPK();
   const txOptions = {
     contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
-    contractName: 'multisig-fwp-wbtc-usda-50-50',
-    functionName: 'propose',
+    contractName: contractName,
+    functionName: 'set-fee-rebate',
     functionArgs: [
-      uintCV(start_block_height),
-      stringAsciiCV(title),
-      stringAsciiCV(url),
-      uintCV(new_fee_rate_x),
-      uintCV(new_fee_rate_y),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenX),
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), tokenY),
+      uintCV(weightX),
+      uintCV(weightY),
+      uintCV(rebate),
     ],
     senderKey: privateKey,
     validateWithAbi: true,
