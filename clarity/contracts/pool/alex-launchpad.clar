@@ -248,7 +248,7 @@
     (
       (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
     )
-    (ok (> (get total-subscribed details) (get activation-threshold details)))
+    (ok (>= (get total-subscribed details) (get activation-threshold details)))
   )
 )
 

@@ -62,6 +62,7 @@ import {
   multisigVoteAgainst,
   multisigVoteFor
 } from './multisigs';
+import { fwpGetPoolDetails } from './pools-fwp';
 
 
 
@@ -173,10 +174,10 @@ async function run() {
   // console.log(result)
   // let result:any = await reserveStakeTokens('fwp-wstx-wbtc-50-50', 100e8, 32);
   // console.log(result);
-  let result:any = await reserveGetStakingRewards('fwp-wstx-wbtc-50-50', [10,20,30,40,50])
-  for (const item in result.list ){
-    console.log(result.list[item]);
-  }  
+  // let result:any = await reserveGetStakingRewards('fwp-wstx-wbtc-50-50', [10,20,30,40,50])
+  // for (const item in result.list ){
+  //   console.log(result.list[item]);
+  // }  
 
   // await multisigPropose('multisig-fwp-wstx-usda-50-50', 4300, 'update fee', '', 0.003e8, 0.003e8);
   // let result:any = await balance('fwp-wstx-usda-50-50', DEPLOYER_ACCOUNT_ADDRESS());
@@ -187,10 +188,13 @@ async function run() {
   // console.log(result);
   // result = await multisigVoteFor('multisig-fwp-wstx-usda-50-50', 'fwp-wstx-usda-50-50', 1, 19502551000000);
   // console.log(result);
-  // let result:any = await multisigEndProposal('multisig-fwp-wstx-usda-50-50', 1);
+  // let result:any = await multisigEndProposal('multisig-fwp-wstx-wbtc-50-50', 1);
   // console.log(result);
-  // result = await multisigGetProposalById('multisig-fwp-wstx-usda-50-50', 1);
+  // let result:any = await multisigGetProposalById('multisig-fwp-wstx-wbtc-50-50', 1);
   // console.log(result);
+
+  let result:any = await fwpGetPoolDetails('token-wstx', 'token-wbtc', 0.5e8, 0.5e8);
+  console.log(result.value.data);
 
   // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
@@ -215,9 +219,9 @@ async function run() {
   //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
   // }
   // await set_faucet_amounts();
-  // await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await get_some_token('ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT');
   // await get_some_token('STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9');
-  // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await mint_ft('lottery-t-alex', 100e8, 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT');
   // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
   // await transferSTX('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 250000e8);
 
