@@ -18,16 +18,16 @@
 (define-constant ERR-STAKING-IN-PROGRESS (err u2018))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
@@ -37,7 +37,6 @@
   { pool-id: uint }
   {
     staked-token: principal, ;; token to be staked
-    reward-token: principal, ;; reward token
     start-cycle: uint
   }
 )
@@ -45,7 +44,6 @@
 (define-map pools-data-map
   {
     staked-token: principal,
-    reward-token: principal,
     start-cycle: uint
   }
   {
@@ -102,20 +100,24 @@
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
-(define-read-only (get-pool-details (staked-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint))
-    (ok (unwrap! (map-get? pools-data-map { staked-token: (contract-of staked-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL))
+;; immunefi-4384
+(define-read-only (get-pools-by-ids (pool-ids (list 26 uint)))
+  (ok (map get-pool-contracts pool-ids))
 )
 
-(define-read-only (get-balance (staked-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint))
-    (ok (get total-supply (unwrap! (map-get? pools-data-map { staked-token: (contract-of staked-token-trait), reward-token: (contract-of reward-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL)))
+(define-read-only (get-pool-details (staked-token-trait <ft-trait>) (start-cycle uint))
+    (ok (unwrap! (map-get? pools-data-map { staked-token: (contract-of staked-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL))
 )
 
-(define-public (create-pool (staked-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <sft-trait>)) 
+(define-read-only (get-balance (staked-token-trait <ft-trait>) (start-cycle uint))
+    (ok (get total-supply (unwrap! (map-get? pools-data-map { staked-token: (contract-of staked-token-trait), start-cycle: start-cycle }) ERR-INVALID-POOL)))
+)
+
+(define-public (create-pool (staked-token-trait <ft-trait>) (reward-cycles (list 32 uint)) (yield-token <sft-trait>)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
             (staked-token (contract-of staked-token-trait))
-            (reward-token (contract-of reward-token-trait))
             (pool-data {
                 total-supply: u0,
                 pool-token: (contract-of yield-token),
@@ -123,15 +125,15 @@
             })
             (start-cycle (default-to u0 (element-at reward-cycles u0)))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
 
         ;; register if not registered
         (try! (register-user (contract-of staked-token-trait)))
 
-        (asserts! (is-none (map-get? pools-data-map { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle })) ERR-POOL-ALREADY-EXISTS)
+        (asserts! (is-none (map-get? pools-data-map { staked-token: staked-token, start-cycle: start-cycle })) ERR-POOL-ALREADY-EXISTS)
 
-        (map-set pools-map { pool-id: pool-id } { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle })
-        (map-set pools-data-map { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle } pool-data)
+        (map-set pools-map { pool-id: pool-id } { staked-token: staked-token, start-cycle: start-cycle })
+        (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-data)
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
@@ -140,12 +142,11 @@
    )
 )   
 
-(define-public (add-to-position (staked-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (dx uint))
+(define-public (add-to-position (staked-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (dx uint))
     (let
         (
             (staked-token (contract-of staked-token-trait))
-            (reward-token (contract-of reward-token-trait))
-            (pool (unwrap! (map-get? pools-data-map { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
+            (pool (unwrap! (map-get? pools-data-map { staked-token: staked-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
             (total-supply (get total-supply pool))
             (pool-updated (merge pool {
                 total-supply: (+ dx total-supply)
@@ -160,7 +161,7 @@
         (try! (stake-tokens staked-token-trait dx u32))
         
         ;; mint pool token and send to tx-sender
-        (map-set pools-data-map { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
+        (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
         (try! (contract-call? yield-token mint-fixed start-cycle dx tx-sender))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
@@ -171,12 +172,11 @@
   {token: token, reward-cycle: reward-cycle}
 )
 
-(define-public (reduce-position (staked-token-trait <ft-trait>) (reward-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (percent uint))
+(define-public (reduce-position (staked-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (percent uint))
     (let
         (
             (staked-token (contract-of staked-token-trait))
-            (reward-token (contract-of reward-token-trait))
-            (pool (unwrap! (map-get? pools-data-map { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
+            (pool (unwrap! (map-get? pools-data-map { staked-token: staked-token, start-cycle: start-cycle }) ERR-INVALID-POOL))
             (shares (mul-down (unwrap-panic (contract-call? yield-token get-balance-fixed start-cycle tx-sender)) percent))
             (total-supply (get total-supply pool))
             (pool-updated (merge pool { total-supply: (- total-supply shares) }))
@@ -194,9 +194,9 @@
         (try! (fold check-err (map claim-staking-reward reward-cycles trait-lists) (ok { entitled-token: u0, to-return: u0 })))
 
         (and (> shares u0) (as-contract (try! (contract-call? staked-token-trait transfer-fixed shares tx-sender recipient none))))
-        (and (> portioned-rewards u0) (as-contract (try! (contract-call? reward-token-trait transfer-fixed portioned-rewards tx-sender recipient none))))
+        (and (> portioned-rewards u0) (as-contract (try! (contract-call? .token-t-alex transfer-fixed portioned-rewards tx-sender recipient none))))
 
-        (map-set pools-data-map { staked-token: staked-token, reward-token: reward-token, start-cycle: start-cycle } pool-updated)
+        (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
         (try! (contract-call? yield-token burn-fixed start-cycle shares recipient))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {staked-token: shares, reward-token: portioned-rewards})

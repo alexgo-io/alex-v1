@@ -14,7 +14,7 @@
 (define-constant ERR-INSUFFICIENT-BALANCE (err u4004))
 (define-constant ERR-INVALID-BALANCE (err u2008))
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 ;; max in/out as % of liquidity
 (define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
@@ -31,7 +31,7 @@
 ;; @returns (response bool uint)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     ;; MI-03
     (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)    
     (var-set MAX-IN-RATIO new-max-in-ratio)
@@ -50,7 +50,7 @@
 ;; @returns (response bool uint)
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     ;; MI-03
     (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)    
     (var-set MAX-OUT-RATIO new-max-out-ratio)
@@ -61,16 +61,16 @@
 ;; @desc get-contract-owner
 ;; @returns principal
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 ;; @desc set-contract-owner
-;; @param new-contract-owner; new CONTRACT-OWNER
+;; @param new-contract-owner; new contract-owner
 ;; @returns (response bool uint)
 (define-public (set-contract-owner (new-contract-owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (var-set CONTRACT-OWNER new-contract-owner)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (var-set contract-owner new-contract-owner)
     (ok true)
   )
 )

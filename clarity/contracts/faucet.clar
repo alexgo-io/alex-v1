@@ -10,7 +10,7 @@
 (define-constant ERR-ALEX-TRANSFER-FAILED (err u9004))
 (define-constant ERR-EXCEEDS-MAX-USE (err u9000))
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 (define-constant ONE_8 (pow u10 u8))
 
 (define-data-var usda-amount uint u0)
@@ -25,13 +25,13 @@
 (define-data-var max-use uint u1)
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
@@ -41,7 +41,7 @@
 
 (define-public (set-max-use (amount uint))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (ok (var-set max-use amount))
     )
 )
@@ -69,35 +69,35 @@
 
 (define-public (set-usda-amount (amount uint))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (ok (var-set usda-amount amount))
     )
 )
 
 (define-public (set-wbtc-amount (amount uint))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (ok (var-set wbtc-amount amount))
     )
 )
 
 (define-public (set-stx-amount (amount uint))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (ok (var-set stx-amount amount))
     )
 )
 
 (define-public (set-alex-amount (amount uint))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (ok (var-set alex-amount amount))
     )
 )
 
 (define-public (get-some-tokens (recipient principal))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (match (map-get? users recipient)
             old-use
             (begin
@@ -118,7 +118,7 @@
 
 (define-public (send-many (recipients (list 200 principal)))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (fold check-err (map get-some-tokens recipients) (ok true))    
     )
 )
@@ -136,7 +136,7 @@
 
 (define-public (mint-alex-many (recipients (list 200 { to: principal, amount: uint })))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (fold check-err (map mint-alex recipients) (ok true))
     )
 )

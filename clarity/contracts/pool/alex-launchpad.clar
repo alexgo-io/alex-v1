@@ -24,19 +24,20 @@
 (define-constant ERR-CLAIM-ENDED (err u2040))
 (define-constant ERR-CLAIM-NOT-ENDED (err u2041))
 (define-constant ERR-INVALID-CLAIM-PERIOD (err u2042))
+(define-constant ERR-REFUND-NOT-AVAILABLE (err u2043))
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
@@ -96,7 +97,7 @@
 ;; all others => zero decimal
 (define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (registration-end uint) (claim-end uint) (activation-threshold uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (asserts! (> registration-end registration-start) ERR-INVALID-REGISTRATION-PERIOD)
     (asserts! (> claim-end registration-end) ERR-INVALID-CLAIM-PERIOD)
     (map-set listing 
@@ -262,7 +263,17 @@
     )
     (asserts! (not (try! (is-listing-activated token))) ERR-LISTING-ACTIVATED)
     (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
-    ;; (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
+    (asserts! (> refund-amount u0) ERR-REFUND-NOT-AVAILABLE)
+    (map-set
+      subscriber-at-token
+      { token: token, user-id: user-id} 
+      (merge sub-details 
+        { 
+          ticket-balance: u0,
+          wstx-locked-in-fixed: u0
+        }
+      )
+    )  
 
     (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
     (ok refund-amount)
