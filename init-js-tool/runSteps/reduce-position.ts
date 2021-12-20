@@ -1,22 +1,29 @@
 import { balance } from '../vault';
-import { DEPLOYER_ACCOUNT_ADDRESS, ONE_8, USER_ACCOUNT_ADDRESS } from '../constants';
+import { DEPLOYER_ACCOUNT_ADDRESS, ONE_8, USER_ACCOUNT_ADDRESS, _fwp_pools } from '../constants';
 import { format_number, timestamp } from '../utils';
 import { ytpGetPositionGivenBurn, ytpReducePosition } from '../pools-ytp';
 import { fwpReducePosition } from '../pools-fwp';
 import { crpReducePostionKey, crpReducePostionYield } from '../pools-crp';
 
-export async function reduce_position_fwp(percent: number, deployer = false) {
+export async function reduce_position_fwp(
+  _reduce = _fwp_pools,
+  percent: number, 
+  deployer = false
+) {
   console.log('------ Reducing FWP Positions ------');
-  console.log(timestamp());
-  await fwpReducePosition(
-    'token-wbtc',
-    'token-usda',
-    0.5e8,
-    0.5e8,
-    'fwp-wbtc-usda-50-50',
-    percent,
-    deployer,
-  );
+  console.log(timestamp());  
+  for( const _key in _reduce) {
+    const key = _key as '0' | '1';
+    await fwpReducePosition(
+      _reduce[key]['token_x'],
+      _reduce[key]['token_y'],
+      _reduce[key]['weight_x'],
+      _reduce[key]['weight_y'],
+      _reduce[key]['pool_token'],
+      percent,
+      deployer,
+    );
+  }
 }
 
 export async function reduce_position_ytp(

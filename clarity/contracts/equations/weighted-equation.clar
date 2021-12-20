@@ -365,7 +365,6 @@
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 8 decimal fixed point numbers.
 (define-constant iONE_8 (pow 10 8))
-(define-constant ONE_10 (pow 10 10))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^8, 

@@ -178,6 +178,47 @@ export const reserveSetCoinbaseAmount = async (
   }
 };
 
+//stake-tokens (token-trait <ft-trait>) (amount-token uint) (lock-period uint)
+export const reserveStakeTokens = async (
+  token: string,
+  amount_token: number,
+  lock_period: number
+) => {
+  console.log(
+    '--------------------------------------------------------------------------',
+  );
+  console.log(
+    '[reserve] stake-tokens...',
+    token,
+    amount_token,
+    lock_period
+  );
+  const privateKey = await getDeployerPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: 'alex-reserve-pool',
+    functionName: 'stake-tokens',
+    functionArgs: [
+      contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
+      uintCV(amount_token),
+      uintCV(lock_period)
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    return await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const reserveGetUserId = async (token: string, user: string) => {
   console.log(
     '--------------------------------------------------------------------------',

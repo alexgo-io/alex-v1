@@ -61,25 +61,25 @@ export const USER_ACCOUNT_PASSWORD = () => {
 };
 export const ONE_8 = 100000000;
 export const _fwp_pools = {
-  1: {
+  0: {
     token_x: 'token-wstx',
     token_y: 'token-usda',
     weight_x: 0.5e8,
     weight_y: 0.5e8,
     pool_token: 'fwp-wstx-usda-50-50',
     multisig: 'multisig-fwp-wstx-usda-50-50',
-    left_side: 10000000e8,
-    right_side: 10000000e8 * 2
+    left_side: 50000000e8,
+    right_side: 50000000e8 * 2
   },
-  2: {
+  1: {
     token_x: 'token-wstx',
     token_y: 'token-wbtc',
     weight_x: 0.5e8,
     weight_y: 0.5e8,
     pool_token: 'fwp-wstx-wbtc-50-50',
     multisig: 'multisig-fwp-wstx-wbtc-50-50',
-    left_side: 10000000e8,
-    right_side: 10000000e8 * 2 / 50000
+    left_side: 5000000e8,
+    right_side: 50000000e8 * 2 / 50000
   },
 } as const;
 export const _deploy = {
