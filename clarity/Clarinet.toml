@@ -94,12 +94,20 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user", "collateral-rebalancing-
 path = "contracts/lib/math-fixed-point.clar"
 depends_on = ["math-log-exp"]
 
+[contracts.math-fixed-point-10]
+path = "contracts/lib/math-fixed-point-10.clar"
+depends_on = ["math-log-exp-10"]
+
 [contracts.math-fixed-point-16]
 path = "contracts/lib/math-fixed-point-16.clar"
 depends_on = ["math-log-exp-16"]
 
 [contracts.math-log-exp]
 path = "contracts/lib/math-log-exp.clar"
+depends_on = []
+
+[contracts.math-log-exp-10]
+path = "contracts/lib/math-log-exp-10.clar"
 depends_on = []
 
 [contracts.math-log-exp-16]

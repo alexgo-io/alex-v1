@@ -9,6 +9,39 @@ const ONE_8 = 100000000
  * we are primarily concerned with pow-up and pow-down
  */
 
+ Clarinet.test({
+    name: "math-fixed-point: accumulate_division",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+        let call = chain.callReadOnlyFn("math-log-exp", "accumulate_division",
+            [
+                "{x_pre: 6400000000, a_pre: 6235149080811616882910000000, use_deci: false}",
+                "{a: 500000000, sum: 0}"
+            ], deployer.address);
+        assertEquals(call.result, "{a: 500000000, sum: 0}")
+
+        call = chain.callReadOnlyFn("math-log-exp", "accumulate_division",
+            [
+                "{x_pre: 3200000000, a_pre: 7896296018268069516100, use_deci: true}",
+                "{a: 500000000, sum: 500000000}"
+            ], deployer.address);
+        assertEquals(call.result, "{a: 500000000, sum: 500000000}")
+
+        call = chain.callReadOnlyFn("math-log-exp", "ln-priv",
+            [
+                "500000000"
+            ], deployer.address);
+        assertEquals(call.result, "(ok 160943788)")
+
+        call = chain.callReadOnlyFn("math-log-exp", "ln-priv",
+            [
+                "100000000000000"
+            ], deployer.address);
+        assertEquals(call.result, "(ok 1381551054)")
+    }
+})
+
 Clarinet.test({
     name: "math-fixed-point: pow-up and pow-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {

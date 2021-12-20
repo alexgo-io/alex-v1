@@ -54,7 +54,7 @@
 ;;
 
 ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-(define-private (ln-priv (a int))
+(define-public (ln-priv (a int))
   (let
     (
       (a_sum_no_deci (fold accumulate_division x_a_list_no_deci {a: a, sum: 0}))
@@ -72,7 +72,7 @@
  )
 )
 
-(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
+(define-read-only (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
       (a_pre (get a_pre x_a_pre))

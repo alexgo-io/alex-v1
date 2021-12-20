@@ -69,6 +69,39 @@ Clarinet.test({
     },
 });
 
+Clarinet.test({
+    name: "math-fixed-point: accumulate_division",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+        let call = chain.callReadOnlyFn("math-log-exp-16", "accumulate_division",
+            [
+                "{x_pre: 320000000000000000, a_pre: 7896296018268069516100, use_deci: false}",
+                "{a: 50000000000000000, sum: 0}"
+            ], deployer.address);
+        assertEquals(call.result, "{a: 50000000000000000, sum: 0}")
+
+        call = chain.callReadOnlyFn("math-log-exp-16", "accumulate_division",
+            [
+                "{x_pre: 160000000000000000, a_pre: 8886110520507872636760, use_deci: true}",
+                "{a: 50000000000000000, sum: 50000000000000000}"
+            ], deployer.address);
+        assertEquals(call.result, "{a: 50000000000000000, sum: 50000000000000000}")
+
+        call = chain.callReadOnlyFn("math-log-exp-16", "ln-priv",
+            [
+                "50000000000000000"
+            ], deployer.address);
+        assertEquals(call.result, "(ok 16083665879129352)")
+
+        call = chain.callReadOnlyFn("math-log-exp", "ln-priv",
+            [
+                "10000000000000000000000"
+            ], deployer.address);
+        assertEquals(call.result, "(ok 3223619126)")
+    }
+})
+
 //NOTE: THIS IS ONLY WORKING TILL ONE_10. GOING TO ONE_16 GIVES ARITHEMATIC OVERFLOW ERRORS
 Clarinet.test({
     name: "math-fixed-point: pow-up and pow-down",
@@ -93,30 +126,30 @@ Clarinet.test({
         // anything ^ 0 = 1
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
-                "u10000000000000000",
+                "u10000000000000000000000",
                 "u0"
             ], deployer.address);
         assertEquals(call.result, "u10000000000000009")
 
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
-                "u10000000000000000",
+                "u10000000000000000000000",
                 "u0"
             ], deployer.address);
         assertEquals(call.result, "u9999999999999991")
         
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
-                "u10000000000000000",
+                "u10000000000000000000000",
                 "u1"
             ], deployer.address);
-        assertEquals(call.result, "u10000000000000009")   
+        assertEquals(call.result, "u10000000000000026")   
 
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
-                "u10000000000000000",
+                "u10000000000000000000000",
                 "u1"
             ], deployer.address);
-        assertEquals(call.result, "u9999999999999991")    
+        assertEquals(call.result, "u10000000000000006")    
     },
 });
