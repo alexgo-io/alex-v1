@@ -3,7 +3,6 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
   
 const ONE_16 = 10000000000000000
-const ONE_10 = 10000000000
 
  Clarinet.test({
     name: "math-fixed-point-16: scale-up and scale-down",
@@ -74,31 +73,17 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-log-exp-16", "accumulate_division",
-            [
-                "{x_pre: 320000000000000000, a_pre: 7896296018268069516100, use_deci: false}",
-                "{a: 50000000000000000, sum: 0}"
-            ], deployer.address);
-        assertEquals(call.result, "{a: 50000000000000000, sum: 0}")
-
-        call = chain.callReadOnlyFn("math-log-exp-16", "accumulate_division",
-            [
-                "{x_pre: 160000000000000000, a_pre: 8886110520507872636760, use_deci: true}",
-                "{a: 50000000000000000, sum: 50000000000000000}"
-            ], deployer.address);
-        assertEquals(call.result, "{a: 50000000000000000, sum: 50000000000000000}")
-
-        call = chain.callReadOnlyFn("math-log-exp-16", "ln-priv",
+        let call = chain.callReadOnlyFn("math-log-exp-16", "ln-priv",
             [
                 "50000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "(ok 16083665879129352)")
+        assertEquals(call.result, "(ok 16081437978100062)")
 
         call = chain.callReadOnlyFn("math-log-exp", "ln-priv",
             [
                 "10000000000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "(ok 3223619126)")
+        assertEquals(call.result, "(ok 3573755954)")
     }
 })
 
@@ -114,42 +99,42 @@ Clarinet.test({
                 "u50000000000000000",
                 "u50000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "u3108305307861105862416")
+        assertEquals(call.result, "u310484473737102606151")
 
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
                 "u50000000000000000",
                 "u50000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "u3108305307861100889124")
+        assertEquals(call.result, "u310484473737102109373")
 
         // anything ^ 0 = 1
+        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
+        [
+            "u10000000000000000000000",
+            "u0"
+        ], deployer.address);
+        assertEquals(call.result, "u9999999999999991")
+
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
                 "u10000000000000000000000",
                 "u0"
             ], deployer.address);
         assertEquals(call.result, "u10000000000000009")
-
+        
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
-            [
-                "u10000000000000000000000",
-                "u0"
-            ], deployer.address);
-        assertEquals(call.result, "u9999999999999991")
+        [
+            "u10000000000000000000000",
+            "u1"
+        ], deployer.address);
+        assertEquals(call.result, "u10000000000000038")    
         
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
                 "u10000000000000000000000",
                 "u1"
             ], deployer.address);
-        assertEquals(call.result, "u10000000000000026")   
-
-        call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
-            [
-                "u10000000000000000000000",
-                "u1"
-            ], deployer.address);
-        assertEquals(call.result, "u10000000000000006")    
+        assertEquals(call.result, "u10000000000000058")   
     },
 });

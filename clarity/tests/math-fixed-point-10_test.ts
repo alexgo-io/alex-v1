@@ -14,31 +14,17 @@ const ONE_10 = 10000000000
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-log-exp-10", "accumulate_division",
-            [
-                "{x_pre: 6400000000, a_pre: 6235149080811616882910000000, use_deci: false}",
-                "{a: 50000000000, sum: 0}"
-            ], deployer.address);
-        assertEquals(call.result, "{a: 50000000000, sum: 0}")
-
-        call = chain.callReadOnlyFn("math-log-exp-10", "accumulate_division",
-            [
-                "{x_pre: 3200000000, a_pre: 7896296018268069516100, use_deci: true}",
-                "{a: 50000000000, sum: 50000000000}"
-            ], deployer.address);
-        assertEquals(call.result, "{a: 50000000000, sum: 50000000000}")
-
-        call = chain.callReadOnlyFn("math-log-exp-10", "ln-priv",
+        let call = chain.callReadOnlyFn("math-log-exp-10", "ln-priv",
             [
                 "50000000000"
             ], deployer.address);
-        assertEquals(call.result, "(ok 16094379122)")
+        assertEquals(call.result, "(ok 16081437970)")
 
         call = chain.callReadOnlyFn("math-log-exp-10", "ln-priv",
             [
                 "10000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "(ok 138155105576)")
+        assertEquals(call.result, "(ok 37563973562)")
     }
 })
 
@@ -53,14 +39,14 @@ Clarinet.test({
                 types.uint(5*ONE_10),
                 types.uint(5*ONE_10)
             ], deployer.address);
-        call.result.expectUint(31249999945903); //
+        assertEquals(call.result, "u3104844722930095968")
 
         call = chain.callReadOnlyFn("math-fixed-point-10", "pow-up",
             [
                 types.uint(5*ONE_10),
                 types.uint(5*ONE_10)
             ], deployer.address);
-        call.result.expectUint(31249999970905);
+        assertEquals(call.result, "u3104844725413971750")
 
         // anything ^ 0 = 1
         call = chain.callReadOnlyFn("math-fixed-point-10", "pow-down",
@@ -82,13 +68,13 @@ Clarinet.test({
                 types.uint(1000000*ONE_10),
                 types.uint(1)
             ], deployer.address);
-        call.result.expectUint(10000000007);  
+        call.result.expectUint(9999999997);  
         
         call = chain.callReadOnlyFn("math-fixed-point-10", "pow-up",
             [
                 types.uint(1000000*ONE_10),
                 types.uint(1)
             ], deployer.address);
-        call.result.expectUint(10000000019);
+        call.result.expectUint(10000000009);
     },
 });
