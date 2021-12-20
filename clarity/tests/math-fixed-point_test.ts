@@ -76,14 +76,6 @@ Clarinet.test({
                 types.uint(1000000*ONE_8),
                 types.uint(1)
             ], deployer.address);
-        call.result.expectUint(100000009);                         
-
-        // // this is the upper limit
-        // call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
-        //     [
-        //         types.uint(2*ONE_8),
-        //         types.uint(73*ONE_8)
-        //     ], deployer.address);
-        // call.result.expectOk().expectUint(944470526444524944313634000869);            
+        call.result.expectUint(100000009); 
     },
 });
