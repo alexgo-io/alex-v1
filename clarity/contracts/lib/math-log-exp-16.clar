@@ -29,7 +29,7 @@
 ;; Instead we store them as plain integers, with 0 decimals.
 
 (define-constant x_a_list_no_deci (list 
-{x_pre: 320000000000000000, a_pre: 7896296018268069516, use_deci: false} ;; x0 = 2^5, a0 = e^(x0)
+{x_pre: 320000000000000000, a_pre: 789629601826806952, use_deci: false} ;; x0 = 2^5, a0 = e^(x0)
 ))
 
 ;; 8 decimal constants

@@ -80,14 +80,14 @@ Clarinet.test({
                 "u50000000000000000",
                 "u50000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "u3124999999999995011528482954912070412")
+        assertEquals(call.result, "u312499999999999501311150364854883986")
 
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
             [
                 "u50000000000000000",
                 "u50000000000000000"
             ], deployer.address);
-        assertEquals(call.result, "u3124999999999990011528482954924051964")
+        assertEquals(call.result, "u312499999999999001311150364856081886")
 
         // anything ^ 0 = 1
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-down",
