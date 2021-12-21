@@ -68,25 +68,6 @@ Clarinet.test({
     },
 });
 
-Clarinet.test({
-    name: "math-fixed-point: accumulate_division",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        
-        let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-log-exp-16", "ln-priv",
-            [
-                "50000000000000000"
-            ], deployer.address);
-        assertEquals(call.result, "(ok 16081437978100062)")
-
-        call = chain.callReadOnlyFn("math-log-exp", "ln-priv",
-            [
-                "10000000000000000000000"
-            ], deployer.address);
-        assertEquals(call.result, "(ok 3573755954)")
-    }
-})
-
 //NOTE: THIS IS ONLY WORKING TILL ONE_10. GOING TO ONE_16 GIVES ARITHEMATIC OVERFLOW ERRORS
 Clarinet.test({
     name: "math-fixed-point: pow-up and pow-down",
@@ -128,13 +109,13 @@ Clarinet.test({
             "u10000000000000000000000",
             "u1"
         ], deployer.address);
-        assertEquals(call.result, "u10000000000000038")    
+        assertEquals(call.result, "u10000000000000015")    
         
         call = chain.callReadOnlyFn("math-fixed-point-16", "pow-up",
             [
                 "u10000000000000000000000",
                 "u1"
             ], deployer.address);
-        assertEquals(call.result, "u10000000000000058")   
+        assertEquals(call.result, "u10000000000000035")   
     },
 });

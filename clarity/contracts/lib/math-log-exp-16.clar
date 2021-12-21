@@ -29,12 +29,11 @@
 ;; Instead we store them as plain integers, with 0 decimals.
 
 (define-constant x_a_list_no_deci (list 
-{x_pre: 640000000000000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+{x_pre: 320000000000000000, a_pre: 7896296018268069516, use_deci: false} ;; x0 = 2^5, a0 = e^(x0)
 ))
 
 ;; 8 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 320000000000000000, a_pre: 7896296018268069516, use_deci: true} ;; x0 = 2^5, a0 = e^(x0)
 {x_pre: 160000000000000000, a_pre: 8886110520507872636, use_deci: true} ;; x1 = 2^4, a1 = e^(x1)
 {x_pre: 80000000000000000, a_pre: 2980957987041728274, use_deci: true} ;; x2 = 2^3, a2 = e^(x2)
 {x_pre: 40000000000000000, a_pre: 5459815003314423907, use_deci: true} ;; x3 = 2^2, a3 = e^(x3)
@@ -45,6 +44,7 @@
 {x_pre: 1250000000000000, a_pre: 1133148453066826316, use_deci: true} ;; x8 = 2^-3, a8 = e^(x8)
 {x_pre: 625000000000000, a_pre: 1064494458917859429, use_deci: true} ;; x9 = 2^-4, a9 = e^(x9)
 {x_pre: 312500000000000, a_pre: 1031743407499102670, use_deci: true} ;; x10 = 2^-5, a10 = e^(x10)
+{x_pre: 156250000000000, a_pre: 1015747708586685748, use_deci: true} ;; x11 = 2^-6, a11 = e^(x11)
 ))
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))

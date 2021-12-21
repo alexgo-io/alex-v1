@@ -26,22 +26,39 @@
 ;; Because largest exponent is 60, we start from 32
 ;; The first several a_n are too large if stored as 10 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
+;; (define-constant x_a_list_no_deci (list 
+;; {x_pre: 640000000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+;; ))
+
+;; ;; 8 decimal constants
+;; (define-constant x_a_list (list 
+;; {x_pre: 320000000000, a_pre: 7896296018268069516, use_deci: true} ;; x0 = 2^5, a0 = e^(x0)
+;; {x_pre: 160000000000, a_pre: 8886110520507872636, use_deci: true} ;; x1 = 2^4, a1 = e^(x1)
+;; {x_pre: 80000000000, a_pre: 2980957987041728274, use_deci: true} ;; x2 = 2^3, a2 = e^(x2)
+;; {x_pre: 40000000000, a_pre: 5459815003314423907, use_deci: true} ;; x3 = 2^2, a3 = e^(x3)
+;; {x_pre: 20000000000, a_pre: 7389056098930650227, use_deci: true} ;; x4 = 2^1, a4 = e^(x4)
+;; {x_pre: 10000000000, a_pre: 2718281828459045235, use_deci: true} ;; x5 = 2^0, a5 = e^(x5)
+;; {x_pre: 5000000000, a_pre: 1648721270700128146, use_deci: true} ;; x6 = 2^-1, a6 = e^(x6)
+;; {x_pre: 2500000000, a_pre: 1284025416687741484, use_deci: true} ;; x7 = 2^-2, a7 = e^(x7)
+;; {x_pre: 1250000000, a_pre: 1133148453066826316, use_deci: true} ;; x8 = 2^-3, a8 = e^(x8)
+;; {x_pre: 625000000, a_pre: 1064494458917859429, use_deci: true} ;; x9 = 2^-4, a9 = e^(x9)
+;; ))
+
 (define-constant x_a_list_no_deci (list 
 {x_pre: 640000000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
 ))
-
-;; 8 decimal constants
+;; 12 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 320000000000, a_pre: 7896296018268069516, use_deci: true} ;; x0 = 2^5, a0 = e^(x0)
-{x_pre: 160000000000, a_pre: 8886110520507872636, use_deci: true} ;; x1 = 2^4, a1 = e^(x1)
-{x_pre: 80000000000, a_pre: 2980957987041728274, use_deci: true} ;; x2 = 2^3, a2 = e^(x2)
-{x_pre: 40000000000, a_pre: 5459815003314423907, use_deci: true} ;; x3 = 2^2, a3 = e^(x3)
-{x_pre: 20000000000, a_pre: 7389056098930650227, use_deci: true} ;; x4 = 2^1, a4 = e^(x4)
-{x_pre: 10000000000, a_pre: 2718281828459045235, use_deci: true} ;; x5 = 2^0, a5 = e^(x5)
-{x_pre: 5000000000, a_pre: 1648721270700128146, use_deci: true} ;; x6 = 2^-1, a6 = e^(x6)
-{x_pre: 2500000000, a_pre: 1284025416687741484, use_deci: true} ;; x7 = 2^-2, a7 = e^(x7)
-{x_pre: 1250000000, a_pre: 1133148453066826316, use_deci: true} ;; x8 = 2^-3, a8 = e^(x8)
-{x_pre: 625000000, a_pre: 1064494458917859429, use_deci: true} ;; x9 = 2^-4, a9 = e^(x9)
+{x_pre: 320000000000, a_pre: 78962960182680695161, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 160000000000, a_pre: 88861105205078726, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
+{x_pre: 80000000000, a_pre: 29809579870417, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
+{x_pre: 40000000000, a_pre: 545981500331, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
+{x_pre: 20000000000, a_pre: 73890560989, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
+{x_pre: 10000000000, a_pre: 27182818284, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
+{x_pre: 5000000000, a_pre: 16487212707, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
+{x_pre: 2500000000, a_pre: 12840254167, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
+{x_pre: 1250000000, a_pre: 11331484531, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
+{x_pre: 625000000, a_pre: 10644944589, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
 
