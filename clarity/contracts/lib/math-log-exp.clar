@@ -27,23 +27,6 @@
 ;; Because largest exponent is 69, we start from 64
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
-;; (define-constant x_a_list_no_deci (list 
-;; {x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
-;; ))
-
-;; ;; 8 decimal constants
-;; (define-constant x_a_list (list 
-;; {x_pre: 3200000000, a_pre: 7896296018268069516, use_deci: true} ;; x0 = 2^5, a0 = e^(x0)
-;; {x_pre: 1600000000, a_pre: 8886110520507872636, use_deci: true} ;; x1 = 2^4, a1 = e^(x1)
-;; {x_pre: 800000000, a_pre: 2980957987041728274, use_deci: true} ;; x2 = 2^3, a2 = e^(x2)
-;; {x_pre: 400000000, a_pre: 5459815003314423907, use_deci: true} ;; x3 = 2^2, a3 = e^(x3)
-;; {x_pre: 200000000, a_pre: 7389056098930650227, use_deci: true} ;; x4 = 2^1, a4 = e^(x4)
-;; {x_pre: 100000000, a_pre: 2718281828459045235, use_deci: true} ;; x5 = 2^0, a5 = e^(x5)
-;; {x_pre: 50000000, a_pre: 1648721270700128146, use_deci: true} ;; x6 = 2^-1, a6 = e^(x6)
-;; {x_pre: 25000000, a_pre: 1284025416687741484, use_deci: true} ;; x7 = 2^-2, a7 = e^(x7)
-;; {x_pre: 12500000, a_pre: 1133148453066826316, use_deci: true} ;; x8 = 2^-3, a8 = e^(x8)
-;; {x_pre: 6250000, a_pre: 1064494458917859429, use_deci: true} ;; x9 = 2^-4, a9 = e^(x9)
-;; ))
 
 (define-constant x_a_list_no_deci (list 
 {x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
