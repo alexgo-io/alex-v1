@@ -18,17 +18,29 @@
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
+  )
+)
+
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
   )
 )
 
@@ -40,14 +52,14 @@
 
 (define-public (add-to-balance (token principal) (amount uint))
   (begin
-    (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved contract-caller))
     (ok (map-set reserve token (+ amount (get-balance token))))
   )
 )
 
 (define-public (remove-from-balance (token principal) (amount uint))
   (begin
-    (asserts! (default-to false (map-get? approved-contracts contract-caller)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved contract-caller))
     (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
     (ok (map-set reserve token (- (get-balance token) amount)))
   )
@@ -122,7 +134,7 @@
 
 (define-public (add-token (token principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (map-set approved-tokens token true)
     (map-set users-nonce token u0)
     (ok true)
@@ -141,7 +153,7 @@
 
 (define-public (set-activation-delay (new-activation-delay uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set activation-delay new-activation-delay))
   )
 )
@@ -153,7 +165,7 @@
 
 (define-public (set-activation-threshold (new-activation-threshold uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set activation-threshold new-activation-threshold))
   )
 )
@@ -431,7 +443,7 @@
 
 (define-public (set-token-halving-cycle (new-token-halving-cycle uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (var-set token-halving-cycle new-token-halving-cycle)
     (set-coinbase-thresholds)
     (ok true)
@@ -480,7 +492,7 @@
 
 (define-public (set-coinbase-amount (token principal) (coinbase-1 uint) (coinbase-2 uint) (coinbase-3 uint) (coinbase-4 uint) (coinbase-5 uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (map-set coinbase-amounts token 
       {
         coinbase-amount-1: coinbase-1,
@@ -532,16 +544,14 @@
 
 (define-public (set-reward-cycle-length (new-reward-cycle-length uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set reward-cycle-length new-reward-cycle-length))
   )
 )
 
 ;; contract initialisation
-(begin
-  (map-set approved-contracts .collateral-rebalancing-pool true)  
-  (map-set approved-contracts .fixed-weight-pool true)
-  (map-set approved-contracts .yield-token-pool true)
-  (map-set approved-contracts (as-contract tx-sender) true)
-  (map-set approved-contracts .yield-collateral-rebalancing-pool true)  
-)
+(map-set approved-contracts .collateral-rebalancing-pool true)  
+(map-set approved-contracts .fixed-weight-pool true)
+(map-set approved-contracts .yield-token-pool true)
+(map-set approved-contracts (as-contract tx-sender) true)
+(map-set approved-contracts .yield-collateral-rebalancing-pool true)

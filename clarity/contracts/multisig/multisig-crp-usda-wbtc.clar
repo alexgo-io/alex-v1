@@ -1,4 +1,5 @@
 (impl-trait .trait-multisig-vote.multisig-vote-sft-trait)
+(impl-trait .trait-ownable.ownable-trait)
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 
@@ -20,8 +21,19 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant ONE_8 u100000000)
-;; Constants
-(define-constant DEFAULT_OWNER tx-sender)
+
+(define-data-var contract-owner principal tx-sender)
+
+(define-read-only (get-contract-owner)
+  (ok (var-get contract-owner))
+)
+
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
+  )
+)
 
 ;; Proposal variables
 ;; With Vote, we can set :
@@ -47,7 +59,29 @@
 
 (define-data-var proposal-count uint u0)
 (define-data-var proposal-ids (list 100 uint) (list u0))
-(define-data-var threshold uint u75000000)    ;; 75%
+
+(define-data-var threshold uint u75000000) ;; 75%
+(define-data-var proposal-threshold uint u10) ;; 10%
+(define-data-var voting-period uint u1440) ;; approx. 10 days
+
+(define-public (set-voting-period (new-voting-period uint))
+  (begin 
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set voting-period new-voting-period))
+  )
+)
+(define-public (set-threshold (new-threshold uint))
+  (begin 
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set threshold new-threshold))
+  )
+)
+(define-public (set-proposal-threshold (new-proposal-threshold uint))
+  (begin 
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set proposal-threshold new-proposal-threshold))
+  )
+)
 
 (define-data-var total-supply-of-token uint u0)
 (define-data-var threshold-percentage uint u0)
@@ -85,7 +119,7 @@
   (default-to
     {
       id: u0,
-      proposer: DEFAULT_OWNER,
+      proposer: (var-get contract-owner),
       expiry: u0,
       title: u"",
       url: u"",
@@ -94,8 +128,8 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      new-fee-rate-x: u0,    ;; Default token feerate
-      new-fee-rate-y: u0  ;; default yield-token feerate
+      new-fee-rate-x: u0,
+      new-fee-rate-y: u0 
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -105,7 +139,6 @@
 (define-read-only (is-token-accepted (token <sft-trait>))
     (or (is-eq (contract-of token) .yield-usda) (is-eq (contract-of token) .key-usda-wbtc))
 )
-
 
 ;; Start a proposal
 ;; Requires 10% of the supply in your wallet
@@ -130,7 +163,7 @@
     )
 
     ;; Requires 10% of the supply 
-    (asserts! (>= (* proposer-balance u10) total-supply) ERR-NOT-ENOUGH-BALANCE)
+    (asserts! (>= (* proposer-balance (var-get proposal-threshold)) total-supply) ERR-NOT-ENOUGH-BALANCE)
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
@@ -142,7 +175,7 @@
         url: url,
         is-open: true,
         start-block-height: start-block-height,
-        end-block-height: (+ start-block-height u1440),
+        end-block-height: (+ start-block-height (var-get voting-period)),
         yes-votes: u0,
         no-votes: u0,
         new-fee-rate-x: new-fee-rate-x,

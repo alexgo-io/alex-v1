@@ -23,16 +23,16 @@
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 (define-constant ERR-INVALID-POOL-TOKEN (err u2023))
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
@@ -91,6 +91,11 @@
     (ok (map get-pool-contracts (var-get pools-list)))
 )
 
+;; immunefi-4384
+(define-read-only (get-pools-by-ids (pool-ids (list 26 uint)))
+  (ok (map get-pool-contracts pool-ids))
+)
+
 ;; @desc get-pool-details
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
@@ -142,7 +147,7 @@
 
 ;; @desc set-oracle-enabled
 ;; @desc oracle can only be enabled
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param weight-x; weight of token-x
@@ -154,7 +159,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
             (pool-updated (merge pool {oracle-enabled: true}))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
         (ok true)
@@ -175,7 +180,7 @@
 )
 
 ;; @desc set-oracle-average
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param weight-x; weight of token-x
@@ -190,7 +195,7 @@
                 oracle-resilient: (try! (get-oracle-instant token-x-trait token-y-trait weight-x weight-y))
                 }))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y } pool-updated)
@@ -257,7 +262,7 @@
 )
 
 ;; @desc create-pool
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param weight-x; weight of token-x
@@ -288,7 +293,7 @@
             })
         )
 
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)        
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)        
 
         (asserts!
             (and
@@ -558,7 +563,7 @@
 )
 
 ;; @desc set-fee-rebate
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param weight-x; weight of token-x
@@ -572,7 +577,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL-ERR))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 

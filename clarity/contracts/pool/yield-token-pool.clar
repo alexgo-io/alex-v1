@@ -29,16 +29,16 @@
 (define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
@@ -86,12 +86,12 @@
 )
 
 ;; @desc set-max-expiry
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param new-max-expiry; new max-expiry
 ;; @returns (response bool uint)
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         ;; MI-05
         (asserts! (> new-max-expiry (* block-height ONE_8)) ERR-INVALID-EXPIRY)
         (ok (var-set max-expiry new-max-expiry)) 
@@ -135,6 +135,11 @@
 ;; @returns map of get-pool-contracts
 (define-read-only (get-pools)
     (ok (map get-pool-contracts (var-get pools-list)))
+)
+
+;; immunefi-4384
+(define-read-only (get-pools-by-ids (pool-ids (list 26 uint)))
+  (ok (map get-pool-contracts pool-ids))
 )
 
 ;; @desc get-pool-details
@@ -188,7 +193,7 @@
 
 ;; @desc set-oracle-enabled
 ;; @desc oracle can only be enabled
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param the-yield-token; yield-token
 ;; @returns (response bool uint)
 (define-public (set-oracle-enabled (expiry uint) (the-yield-token <sft-trait>))
@@ -197,7 +202,7 @@
             (pool (unwrap! (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry }) ERR-INVALID-POOL-ERR))
             (pool-updated (merge pool {oracle-enabled: true}))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
         (map-set pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry } pool-updated)
         (ok true)
@@ -213,7 +218,7 @@
 )
 
 ;; @desc set-oracle-average
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param the-yield-token; yield-token
 ;; @returns (response bool uint)
 (define-public (set-oracle-average (expiry uint) (the-yield-token <sft-trait>) (new-oracle-average uint))
@@ -225,7 +230,7 @@
                 oracle-resilient: (try! (get-oracle-instant expiry the-yield-token))
                 }))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
         (map-set pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry } pool-updated)
@@ -257,7 +262,7 @@
 )
 
 ;; @desc create-pool
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param the-yield-token; yield token
 ;; @param the-token; token
 ;; @param pool-token; pool token representing ownership of the pool
@@ -267,7 +272,7 @@
 ;; @returns (response bool uint)
 (define-public (create-pool (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (the-pool-token <sft-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (begin
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)         
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)         
         ;; ;; create pool only if the correct pair
         ;; (asserts! (is-eq (try! (contract-call? the-yield-token get-token)) (contract-of the-token)) ERR-INVALID-POOL-ERR)
         (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
@@ -553,7 +558,7 @@
 )
 
 ;; @desc set-fee-rebate
-;; @restricted CONTRACT-OWNER
+;; @restricted contract-owner
 ;; @param the-yield-token; yield token
 ;; @param fee-rebate; new fee-rebate
 ;; @returns (response bool uint)
@@ -563,7 +568,7 @@
             (yield-token (contract-of the-yield-token))
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
-        (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rebate: fee-rebate }))
         (ok true)

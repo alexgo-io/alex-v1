@@ -24,6 +24,8 @@ const loanuserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-us
 const keyusdawbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-wbtc"
 const multisigncrpusdawbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-usda-wbtc"
 const loanuserwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-margin-wbtc-usda"
+const unauthorisedTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-unauthorised"
+const unauthorisedFlashLoanUserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-unauthorised"
 
 const ONE_8 = 100000000
 const expiry = 23040e+8 //0x0218711A0000 => 2304000000000
@@ -156,4 +158,20 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
     },    
+});
+
+Clarinet.test({
+    name: "Flash Loan: authorisation tests",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let FLTest = new FLTestAgent1(chain, deployer);
+
+        // trying to call flash-loan with un-approved flash-loan-user throws an error.
+        let result = FLTest.flashLoan(deployer, unauthorisedFlashLoanUserAddress, usdaAddress, 1000*ONE_8, expiryBuff);
+        result.expectErr().expectUint(1000);
+
+        result = FLTest.flashLoan(deployer, loanuserAddress, unauthorisedTokenAddress, 1000*ONE_8, expiryBuff);
+        result.expectErr().expectUint(1000);        
+    }
 });
