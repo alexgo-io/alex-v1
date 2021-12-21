@@ -34,7 +34,7 @@ Clarinet.test({
         var notContractOwner = accounts.get("wallet_1")!;
         var futuresPool = new FuturesPool(chain)
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(notContractOwner, alexTokenAddress, alexTokenAddress, [], stakedAlexAddress),
+            futuresPool.createPool(notContractOwner, alexTokenAddress, [], stakedAlexAddress),
         ])
         futuresPoolBlock.receipts[0].result.expectErr().expectUint(1000);
     }
@@ -49,7 +49,7 @@ Clarinet.test({
         const rewardCycles: Array<string> = ["u1", "u2", "u3", "u4", "u5", "u6", "u7", "u8", "u9", "u10", "u11", "u12", "u13", "u14", "u15", "u16", "u17", "u18", "u19", "u20", "u21", "u22", "u23", "u24", "u25", "u26", "u27", "u28", "u29", "u30", "u31", "u32"]
 
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress),
+            futuresPool.createPool(deployer, alexTokenAddress, rewardCycles, stakedAlexAddress),
         ])
         futuresPoolBlock.receipts[0].result.expectErr().expectUint(2026); //ERR-INVALID-TOKEN
     }
@@ -75,8 +75,8 @@ Clarinet.test({
         );
 
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress),
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress)
+            futuresPool.createPool(deployer, alexTokenAddress, rewardCycles, stakedAlexAddress),
+            futuresPool.createPool(deployer, alexTokenAddress, rewardCycles, stakedAlexAddress)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
         futuresPoolBlock.receipts[1].result.expectErr().expectUint(10001); //ERR-USER-ALREADY-REGISTERED
@@ -105,8 +105,8 @@ Clarinet.test({
 
         // creating a new pool
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress),
-            futuresPool.addToPosition(deployer, alexTokenAddress, alexTokenAddress, startCycle, stakedAlexAddress, dx)
+            futuresPool.createPool(deployer, alexTokenAddress, rewardCycles, stakedAlexAddress),
+            futuresPool.addToPosition(deployer, alexTokenAddress, startCycle, stakedAlexAddress, dx)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
         futuresPoolBlock.receipts[1].result.expectErr().expectUint(2027); //ERR-STACKING-NOT-AVAILABLE
@@ -133,8 +133,8 @@ Clarinet.test({
 
         // creating a new pool
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, ["u0"], stakedAlexAddress),
-            futuresPool.addToPosition(deployer, alexTokenAddress, alexTokenAddress, 0, stakedAlexAddress, dx)
+            futuresPool.createPool(deployer, alexTokenAddress, ["u0"], stakedAlexAddress),
+            futuresPool.addToPosition(deployer, alexTokenAddress, 0, stakedAlexAddress, dx)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
         futuresPoolBlock.receipts[1].result.expectErr().expectUint(2018); //ERR-STACKING-IN-PROGRESS
@@ -166,8 +166,8 @@ Clarinet.test({
 
         // creating a new pool
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress),
-            futuresPool.addToPosition(wallet_2, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, dx)
+            futuresPool.createPool(deployer, alexTokenAddress, rewardCycles, stakedAlexAddress),
+            futuresPool.addToPosition(wallet_2, alexTokenAddress, 1, stakedAlexAddress, dx)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
         futuresPoolBlock.receipts[1].result.expectOk().expectBool(true);
@@ -199,9 +199,9 @@ Clarinet.test({
 
         // creating a new pool
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, ["u1"], stakedAlexAddress),
-            futuresPool.addToPosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, 200 * ONE_8),
-            futuresPool.reducePosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, 10)
+            futuresPool.createPool(deployer, alexTokenAddress, ["u1"], stakedAlexAddress),
+            futuresPool.addToPosition(wallet_1, alexTokenAddress, 1, stakedAlexAddress, 200 * ONE_8),
+            futuresPool.reducePosition(wallet_1, alexTokenAddress, 1, stakedAlexAddress, 10)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
         futuresPoolBlock.receipts[1].result.expectOk().expectBool(true);
@@ -237,8 +237,8 @@ Clarinet.test({
 
         // creating a new pool
         const futuresPoolBlock = chain.mineBlock([
-            futuresPool.createPool(deployer, alexTokenAddress, alexTokenAddress, rewardCycles, stakedAlexAddress),
-            futuresPool.addToPosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, 200 * ONE_8),
+            futuresPool.createPool(deployer, alexTokenAddress, rewardCycles, stakedAlexAddress),
+            futuresPool.addToPosition(wallet_1, alexTokenAddress, 1, stakedAlexAddress, 200 * ONE_8),
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
         futuresPoolBlock.receipts[1].result.expectOk().expectBool(true);
@@ -254,7 +254,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(71553 + 1);
 
         const reducePosBlock = chain.mineBlock([
-            futuresPool.reducePosition(wallet_1, alexTokenAddress, alexTokenAddress, 1, stakedAlexAddress, ONE_8)
+            futuresPool.reducePosition(wallet_1, alexTokenAddress, 1, stakedAlexAddress, ONE_8)
         ]);
 
         let tuple: any = reducePosBlock.receipts[0].result.expectOk().expectTuple();

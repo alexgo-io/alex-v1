@@ -4,7 +4,7 @@
 (define-fungible-token wstx)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -12,13 +12,13 @@
 (define-constant ERR-BURN-FAILED (err u6003))
 
 (define-read-only (get-contract-owner)
-  (ok (var-get CONTRACT-OWNER))
+  (ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
@@ -48,7 +48,7 @@
 
 (define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
   )
 )

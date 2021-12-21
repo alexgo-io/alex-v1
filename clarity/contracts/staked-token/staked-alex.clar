@@ -9,7 +9,7 @@
 (define-fungible-token staked-alex)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
-(define-map token-owned principal (list 2000 uint))
+(define-map token-owned principal (list 200 uint))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
@@ -20,13 +20,21 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
   )
 )
 
 (define-private (check-is-approved (sender principal))
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
 )
 
 (define-read-only (get-token-owned (owner principal))
@@ -36,7 +44,7 @@
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
     (begin
 	    (map-set token-balances {token-id: token-id, owner: owner} balance)
-        (map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u2000) ERR-TOO-MANY-POOLS))
+        (map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u200) ERR-TOO-MANY-POOLS))
         (ok true)
     )
 )
@@ -167,6 +175,4 @@
   	(burn token-id (fixed-to-decimals amount) sender)
 )
 
-(begin
-  (map-set approved-contracts .futures-pool true)
-)
+(map-set approved-contracts .futures-pool true)

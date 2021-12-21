@@ -9,13 +9,12 @@ class FuturesPool{
     }
 
     //(contract-call? .futures-pool create-pool 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex (list u1) 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex)
-    createPool(sender: Account, poxlTokenTrait: string, rewardTokenTrait: string, rewardCycles: Array<string>, yieldToken: string){
+    createPool(sender: Account, poxlTokenTrait: string, rewardCycles: Array<string>, yieldToken: string){
         return Tx.contractCall(
             "futures-pool",
             "create-pool",
             [
                 types.principal(poxlTokenTrait),
-                types.principal(rewardTokenTrait),
                 types.list(rewardCycles),
                 types.principal(yieldToken),
             ],
@@ -63,13 +62,12 @@ class FuturesPool{
     }
 
     //(contract-call? .futures-pool add-to-position 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex u1000000000)
-    addToPosition(sender: Account, token: string, reward: string, startCycle: number, yieldToken: string, dx: number): Tx {
+    addToPosition(sender: Account, token: string, startCycle: number, yieldToken: string, dx: number): Tx {
         return Tx.contractCall(
             "futures-pool",
             "add-to-position",
             [
                 types.principal(token),
-                types.principal(reward),
                 types.uint(startCycle),
                 types.principal(yieldToken),
                 types.uint(dx),
@@ -79,13 +77,12 @@ class FuturesPool{
     }
 
     //(contract-call? .futures-pool reduce-position 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-alex u1 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex u10)
-    reducePosition(sender: Account, token: string, reward: string, startCycle: number, yieldToken: string, percent: number): Tx {
+    reducePosition(sender: Account, token: string, startCycle: number, yieldToken: string, percent: number): Tx {
         return Tx.contractCall(
             "futures-pool",
             "reduce-position",
             [
                 types.principal(token),
-                types.principal(reward),
                 types.uint(startCycle),
                 types.principal(yieldToken),
                 types.uint(percent),

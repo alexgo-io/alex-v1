@@ -16,10 +16,6 @@ depends_on = [
   "alex-reserve-pool"
 ]
 
-[contracts.alex-staking-helper]
-path = "contracts/helpers/alex-staking-helper.clar"
-depends_on = ["alex-reserve-pool","token-t-alex"]
-
 [contracts.staking-helper]
 path = "contracts/helpers/staking-helper.clar"
 depends_on = ["alex-reserve-pool", "trait-sip-010"]
@@ -330,10 +326,10 @@ depends_on = [
 path = "contracts/lottery-tokens/lottery-t-alex.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
 
-[contracts.alex-staking-helper-laplace]
-path = "contracts/helpers/alex-staking-helper-laplace.clar"
-depends_on = ["alex-reserve-pool"]
+[contracts.token-unauthorised]
+path = "contracts/tests/token-unauthorised.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
 
-[contracts.test-pool-token]
-path = "contracts/pool-token/test-pool-token.clar"
-depends_on = ["trait-sip-010", "trait-sip-010", "trait-ownable"]
+[contracts.flash-loan-user-unauthorised]
+path = "contracts/tests/flash-loan-user-unauthorised.clar"
+depends_on = [ "trait-flash-loan-user" ]
