@@ -88,7 +88,7 @@ async function run() {
   const _pools = _deploy;
   
   // await create_fwp(false);
-  await create_fwp(true, {0:_fwp_pools[1]}, true);
+  // await create_fwp(true, {0:_fwp_pools[0]}, true);
 
   // await create_ytp(false, _pools);
   // await create_crp(false, _pools);
@@ -104,7 +104,7 @@ async function run() {
   // }
 
   // await arbitrage_fwp(false);
-  // await arbitrage_crp(false, _pools);
+  // await arbitrage_crp(false, {0:_pools[1]});
   // await arbitrage_ytp(false, _pools);
   // await arbitrage_fwp(false);
 
@@ -134,7 +134,7 @@ async function run() {
   // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
   // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);
 
-  // await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
+  await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
   // await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
   //
   // await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
@@ -189,10 +189,15 @@ async function run() {
   // await multisigPropose('multisig-fwp-wstx-wbtc-50-50', 6030, 'update fee', '', 0.003e8, 0.003e8);
   // let result:any = await balance('fwp-wstx-wbtc-50-50', DEPLOYER_ACCOUNT_ADDRESS());
   // console.log(result)
-  // let result:any = await multisigVoteFor('multisig-fwp-wstx-wbtc-50-50', 'fwp-wstx-wbtc-50-50', 1, 82763104897300);
+  // let result:any = await multisigVoteFor('multisig-fwp-wstx-usda-50-50', 'fwp-wstx-usda-50-50', 1, 17907343375660777);
+  // result = await multisigEndProposal('multisig-fwp-wstx-usda-50-50', 1);
+  // result = await multisigGetProposalById('multisig-fwp-wstx-usda-50-50', 2);
+  // console.log(result);
+  // result = await multisigVoteFor('multisig-fwp-wstx-usda-50-50', 'fwp-wstx-usda-50-50', 1, 19502551000000);
+  // console.log(result);
   // let result:any = await multisigEndProposal('multisig-fwp-wstx-wbtc-50-50', 1);
   // console.log(result);
-  // let result = await multisigGetProposalById('multisig-fwp-wstx-wbtc-50-50', 1);
+  // let result:any = await multisigGetProposalById('multisig-fwp-wstx-wbtc-50-50', 1);
   // console.log(result);
   
   // await multisigReturnVotes('multisig-fwp-wstx-wbtc-50-50', 'fwp-wstx-wbtc-50-50', 1);
@@ -200,6 +205,8 @@ async function run() {
   // let result:any = await fwpGetPoolDetails('token-wstx', 'token-wbtc', 0.5e8, 0.5e8);
   // console.log(result.value.data);
 
+  // let result:any = await fwpGetPoolDetails('token-wstx', 'token-wbtc', 0.5e8, 0.5e8);
+  // console.log(result.value.data);
 
   // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
@@ -224,9 +231,9 @@ async function run() {
   //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
   // }
   // await set_faucet_amounts();
-  // await get_some_token('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await get_some_token('ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT');
   // await get_some_token('STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9');
-  // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
+  // await mint_ft('lottery-t-alex', 100e8, 'ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT');
   // await mint_ft('lottery-t-alex', 100e8, 'ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8');
   // await transferSTX('ST11KFHZRN7ANRRPDK0HJXG243EJBFBAFRB27NPK8', 250000e8);
 
