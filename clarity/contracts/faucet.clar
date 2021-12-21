@@ -97,7 +97,7 @@
 
 (define-public (get-some-tokens (recipient principal))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender recipient) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
         (match (map-get? users recipient)
             old-use
             (begin

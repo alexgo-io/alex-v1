@@ -258,7 +258,8 @@
     (
       (claimer tx-sender)
       (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
-      (sub-details (get-subscriber-at-token-or-default token (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND)))  
+      (user-id (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND))
+      (sub-details (get-subscriber-at-token-or-default token user-id))  
       (refund-amount (* (get ticket-balance sub-details) (get wstx-per-ticket-in-fixed details)))
     )
     (asserts! (not (try! (is-listing-activated token))) ERR-LISTING-ACTIVATED)
