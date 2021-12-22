@@ -262,9 +262,16 @@
       (sub-details (get-subscriber-at-token-or-default token user-id))  
       (refund-amount (* (get ticket-balance sub-details) (get wstx-per-ticket-in-fixed details)))
     )
-    (asserts! (not (try! (is-listing-activated token))) ERR-LISTING-ACTIVATED)
     (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
-    (asserts! (> refund-amount u0) ERR-REFUND-NOT-AVAILABLE)
+    (asserts! (> refund-amount u0) ERR-REFUND-NOT-AVAILABLE)    
+    (asserts! 
+      (or 
+        (not (try! (is-listing-activated token))) ;; listing is not activated
+        (try! (is-listing-completed token)) ;; listing is completed
+        (> block-height (get claim-end details)) ;; passed claim-end
+      )
+      ERR-REFUND-NOT-AVAILABLE
+    )
     (map-set
       subscriber-at-token
       { token: token, user-id: user-id} 
