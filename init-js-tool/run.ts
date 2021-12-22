@@ -42,7 +42,7 @@ import {
   test_spot_trading,
   test_margin_trading
 } from './runSteps/archived-code';
-import { transferSTX, balance } from './vault';
+import { transferSTX, balance, transfer } from './vault';
 import {
   mint_ft,
   mint_sft,
@@ -104,7 +104,7 @@ async function run() {
   // }
 
   // await arbitrage_fwp(false);
-  await arbitrage_crp(false, {0:_pools[1]});
+  // await arbitrage_crp(false, {0:_pools[1]});
   // await arbitrage_ytp(false, _pools);
   // await arbitrage_fwp(false);
 
@@ -207,6 +207,7 @@ async function run() {
 
   // let result:any = await fwpGetPoolDetails('token-wstx', 'token-wbtc', 0.5e8, 0.5e8);
   // console.log(result.value.data);
+  await transferSTX("ST1J2JTYXGRMZYNKE40GM87ZCACSPSSEEQVSNB7DC.faucet", 100000000e6);
 
   // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
