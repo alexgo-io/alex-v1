@@ -333,3 +333,11 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 [contracts.flash-loan-user-unauthorised]
 path = "contracts/tests/flash-loan-user-unauthorised.clar"
 depends_on = [ "trait-flash-loan-user" ]
+
+[contracts.math-fixed-point-16]
+path = "contracts/lib/math-fixed-point-16.clar"
+depends_on = ["math-log-exp-16"]
+
+[contracts.math-log-exp-16]
+path = "contracts/lib/math-log-exp-16.clar"
+depends_on = []
