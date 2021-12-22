@@ -160,11 +160,11 @@ Clarinet.test({
         
         // supplying a wrong pool token will throw an error
         result = FWPTest.addToPosition(wallet_1, wstxAddress, usdaAddress, weightX, weightY, wrongPooltokenAddress, wbtcQ / 4, wbtcQ*wbtcPrice / 4);
-        result.expectErr().expectUint(2023);
+        result.expectErr().expectUint(2026);
 
         // supplying a wrong pool token will throw and error
         result = FWPTest.reducePosition(deployer, wstxAddress, usdaAddress, weightX, weightY, wrongPooltokenAddress, ONE_8);
-        result.expectErr().expectUint(2023);
+        result.expectErr().expectUint(2026);
 
         // Reduce all liquidlity
         result = FWPTest.reducePosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, ONE_8);
@@ -308,7 +308,7 @@ Clarinet.test({
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
-        result.expectErr().expectUint(3001);
+        result.expectErr().expectUint(3000);
 
         // Tx-sender tries to add zero balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress,0, 0);
