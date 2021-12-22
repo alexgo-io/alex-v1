@@ -24,7 +24,7 @@
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
 
-;; Because largest exponent is 51, we start from 32
+;; Because largest exponent is 51, we start from 32 and we end at -64 because of the lowest exponent
 ;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 
@@ -32,7 +32,7 @@
 {x_pre: 320000000000000000, a_pre: 789629601826806952, use_deci: false} ;; x0 = 2^5, a0 = e^(x0)
 ))
 
-;; 8 decimal constants
+;; 16 decimal constants
 (define-constant x_a_list (list 
 {x_pre: 160000000000000000, a_pre: 88861105205078726, use_deci: true} ;; x1 = 2^4, a1 = e^(x1)
 {x_pre: 80000000000000000, a_pre: 29809579870417283, use_deci: true} ;; x2 = 2^3, a2 = e^(x2)
@@ -57,7 +57,7 @@
 ;;
 
 ;; Internal natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
-(define-public (ln-priv (a int))
+(define-private (ln-priv (a int))
   (let
     (
       (a_sum_no_deci (fold accumulate_division x_a_list_no_deci {a: a, sum: 0}))
@@ -75,7 +75,7 @@
  )
 )
 
-(define-read-only (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
+(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
       (a_pre (get a_pre x_a_pre))

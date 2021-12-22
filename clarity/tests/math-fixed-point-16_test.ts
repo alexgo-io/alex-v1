@@ -68,7 +68,6 @@ Clarinet.test({
     },
 });
 
-//NOTE: THIS IS ONLY WORKING TILL ONE_10. GOING TO ONE_16 GIVES ARITHEMATIC OVERFLOW ERRORS
 Clarinet.test({
     name: "math-fixed-point: pow-up and pow-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
