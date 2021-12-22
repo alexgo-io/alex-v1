@@ -212,8 +212,8 @@
     "comment": "input value is larger than current balance on equation"
   },
   "5000": {
-    "code": "ERR-PERCENT_GREATER_THAN_ONE",
-    "comment": "ERR-PERCENT_GREATER_THAN_ONE"
+    "code": "ERR-PERCENT-GREATER-THAN-ONE",
+    "comment": "ERR-PERCENT-GREATER-THAN-ONE"
   },
   "5009": {
     "code": "ERR-X-OUT-OF-BOUNDS",

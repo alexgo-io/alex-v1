@@ -14,11 +14,11 @@
 
 (define-constant ERR-INVALID-POOL-ERR (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-TRANSFER-X-FAILED (err u3001))
-(define-constant ERR-TRANSFER-Y-FAILED (err u3002))
+(define-constant ERR-TRANSFER-FAILED (err u3001))
+
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
-(define-constant ERR-PERCENT_GREATER_THAN_ONE (err u5000))
+(define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
 (define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-GET-WEIGHT-FAIL (err u2012))
 (define-constant ERR-EXPIRY (err u2017))
@@ -26,7 +26,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
-(define-constant ERR-INVALID-POOL-TOKEN (err u2023))
+(define-constant ERR-INVALID-TOKEN (err u2023))
 (define-constant ERR-POOL-AT-CAPACITY (err u2027))
 
 (define-constant a1 u27839300)
@@ -416,7 +416,7 @@
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < 1
         (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token collateral collateral-token expiry spot))) ERR-LTV-GREATER-THAN-ONE)
-        (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-POOL-TOKEN)
+        (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-TOKEN)
         (let
             (
                 (balance-x (get balance-x pool))
@@ -459,8 +459,8 @@
                     balance-y: (+ balance-y dy-weighted)
                 }))
             )     
-            (unwrap! (contract-call? collateral transfer-fixed expiry dx-weighted tx-sender .alex-vault) ERR-TRANSFER-X-FAILED)
-            (unwrap! (contract-call? token transfer-fixed dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? collateral transfer-fixed expiry dx-weighted tx-sender .alex-vault) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token transfer-fixed dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
@@ -481,7 +481,7 @@
 ;; @returns (response (tuple uint uint) uint)
 (define-public (reduce-position-yield (token <ft-trait>) (collateral <sft-trait>) (collateral-token <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
+        (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)
         
@@ -535,12 +535,12 @@
                 )
             )
 
-            (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-POOL-TOKEN)
+            (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
 
             ;; if any conversion happened at contract level, transfer back to vault
             (and 
                 (> bal-x-to-y u0)
-                (as-contract (unwrap! (contract-call? token transfer-fixed bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED))
+                (as-contract (unwrap! (contract-call? token transfer-fixed bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
             )
 
             ;; if shares > dy, then transfer the shortfall from reserve.
@@ -569,7 +569,7 @@
 ;; @returns (response (tuple uint uint) uint)
 (define-public (reduce-position-key (token <ft-trait>) (collateral <sft-trait>) (collateral-token <ft-trait>) (expiry uint) (the-key-token <sft-trait>) (percent uint))
     (begin
-        (asserts! (<= percent ONE_8) ERR-PERCENT_GREATER_THAN_ONE)
+        (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)        
         (let
@@ -594,7 +594,7 @@
                 )            
             )
 
-            (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-POOL-TOKEN)        
+            (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)        
             
             (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-sft collateral expiry dx-weighted tx-sender)))
             (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted tx-sender)))
@@ -652,7 +652,7 @@
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (unwrap! (contract-call? collateral transfer-fixed expiry dx tx-sender .alex-vault) ERR-TRANSFER-X-FAILED)
+            (unwrap! (contract-call? collateral transfer-fixed expiry dx tx-sender .alex-vault) ERR-TRANSFER-FAILED)
             (try! (contract-call? .alex-vault transfer-ft token dy tx-sender))
             (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))
 
@@ -710,7 +710,7 @@
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (try! (contract-call? .alex-vault transfer-sft collateral expiry dx tx-sender))
-            (unwrap! (contract-call? token transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-Y-FAILED)
+            (unwrap! (contract-call? token transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
 
             ;; post setting

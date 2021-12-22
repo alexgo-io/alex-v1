@@ -4,10 +4,7 @@
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-USDA-TRANSFER-FAILED (err u9001))
-(define-constant ERR-WBTC-TRANSFER-FAILED (err u9002))
-(define-constant ERR-STX-TRANSFER-FAILED (err u9003))
-(define-constant ERR-ALEX-TRANSFER-FAILED (err u9004))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-EXCEEDS-MAX-USE (err u9000))
 
 (define-data-var contract-owner principal tx-sender)
@@ -106,10 +103,10 @@
             )
             (map-set users recipient u1)
         )
-        (and (> (var-get wbtc-amount) u0) (unwrap! (contract-call? .token-wbtc mint-fixed (var-get wbtc-amount) recipient) ERR-WBTC-TRANSFER-FAILED))
-        (and (> (var-get usda-amount) u0) (unwrap! (contract-call? .token-usda mint-fixed (var-get usda-amount) recipient) ERR-USDA-TRANSFER-FAILED))
-        (and (> (var-get alex-amount) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (var-get alex-amount) recipient) ERR-ALEX-TRANSFER-FAILED))
-        (and (> (var-get stx-amount) u0) (as-contract (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED)))
+        (and (> (var-get wbtc-amount) u0) (unwrap! (contract-call? .token-wbtc mint-fixed (var-get wbtc-amount) recipient) ERR-TRANSFER-FAILED))
+        (and (> (var-get usda-amount) u0) (unwrap! (contract-call? .token-usda mint-fixed (var-get usda-amount) recipient) ERR-TRANSFER-FAILED))
+        (and (> (var-get alex-amount) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (var-get alex-amount) recipient) ERR-TRANSFER-FAILED))
+        (and (> (var-get stx-amount) u0) (as-contract (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-TRANSFER-FAILED)))
         (ok true)
     )
 )
@@ -131,7 +128,7 @@
 )
 
 (define-private (mint-alex (recipient { to: principal, amount: uint }))
-    (ok (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (get amount recipient) (get to recipient)) ERR-ALEX-TRANSFER-FAILED)))
+    (ok (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED)))
 )
 
 (define-public (mint-alex-many (recipients (list 200 { to: principal, amount: uint })))
