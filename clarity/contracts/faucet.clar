@@ -109,7 +109,7 @@
         (and (> (var-get wbtc-amount) u0) (unwrap! (contract-call? .token-wbtc mint-fixed (var-get wbtc-amount) recipient) ERR-WBTC-TRANSFER-FAILED))
         (and (> (var-get usda-amount) u0) (unwrap! (contract-call? .token-usda mint-fixed (var-get usda-amount) recipient) ERR-USDA-TRANSFER-FAILED))
         (and (> (var-get alex-amount) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (var-get alex-amount) recipient) ERR-ALEX-TRANSFER-FAILED))
-        (and (> (var-get stx-amount) u0) (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED))
+        (and (> (var-get stx-amount) u0) (as-contract (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-STX-TRANSFER-FAILED)))
         (ok true)
     )
 )

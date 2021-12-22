@@ -104,7 +104,7 @@ async function run() {
   // }
 
   // await arbitrage_fwp(false);
-  // await arbitrage_crp(false, {0:_pools[1]});
+  await arbitrage_crp(false, {0:_pools[1]});
   // await arbitrage_ytp(false, _pools);
   // await arbitrage_fwp(false);
 
@@ -134,7 +134,7 @@ async function run() {
   // await reduce_position_crp(_pools, 0.8*ONE_8, 'yield', deployer=true);
   // await reduce_position_crp(_pools, 0.8*ONE_8, 'key', deployer=true);
 
-  await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
+  // await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
   // await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
   //
   // await see_balance(DEPLOYER_ACCOUNT_ADDRESS());
