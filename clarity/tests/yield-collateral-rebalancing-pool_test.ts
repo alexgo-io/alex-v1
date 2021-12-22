@@ -585,7 +585,7 @@ Clarinet.test({
 
         // attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool throws error
         result = YCRPTest.addToPosition(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0.11 * Math.round(wbtcPrice * wbtcQ / ONE_8));
-        result.expectErr().expectUint(4004);
+        result.expectErr().expectUint(1001);
     },    
 });
 
@@ -650,7 +650,7 @@ Clarinet.test({
         result.expectErr().expectUint(2003)
 
         result = YCRPTest.addToPositionAndSwitch(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, ONE_8 * ONE_8);//5000*ONE_8
-        result.expectErr().expectUint(4004)
+        result.expectErr().expectUint(1001)
 
         // arbtrageur attepmts to swap zero value
         result = YCRPTest.swapXForY(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, 0, 0);

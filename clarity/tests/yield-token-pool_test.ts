@@ -345,7 +345,7 @@ Clarinet.test({
 
         //if wrong pool token is supplied, then throw an error
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, wrongPooltokenAddress, 10*ONE_8);
-        result.expectErr().expectUint(2023);
+        result.expectErr().expectUint(2026);
 
         // non-deployer can add liquidity
         result = YTPTest.addToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
@@ -353,7 +353,7 @@ Clarinet.test({
         
         //if wrong pool token is supplied, throw an error
         result = YTPTest.reducePosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, wrongPooltokenAddress, ONE_8);
-        result.expectErr().expectUint(2023);        
+        result.expectErr().expectUint(2026);        
         
     }
 })
@@ -616,7 +616,7 @@ Clarinet.test({
 
         //Attempt to add extra liquidity but not enough balance
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000000*ONE_8);
-        position = result.expectErr().expectUint(3001)
+        position = result.expectErr().expectUint(3000)
 
         // Attempts for trivial reducing
         result = YTPTest.reducePosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 0);
