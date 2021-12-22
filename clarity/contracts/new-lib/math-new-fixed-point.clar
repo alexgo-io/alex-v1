@@ -5,10 +5,10 @@
 
 ;; constants
 ;;
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_10 (pow u10 u10)) ;; 10 decimal places
 
-;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
+;; With 10 fixed digits you would have a maximum error of 0.5 * 10^-10 in each entry, 
+;; which could aggregate to about 10 x 0.5 * 10^-10 = 4 * 10^-10 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
 (define-constant TOLERANCE_CONSTANT u10000)
@@ -16,35 +16,35 @@
 ;;
 
 ;; @desc get_one
-;; @returns (response uint)
+;; @returns uint
 (define-read-only (get_one)
-    (ok ONE_8)
+    (ok ONE_10)
 )
 
 ;; @desc scale-up
-;; @params a 
+;; @params a
 ;; @returns uint
 (define-read-only (scale-up (a uint))
-    (* a ONE_8)
+    (* a ONE_10)
 )
 
 ;; @desc scale-down
-;; @params a 
+;; @params a
 ;; @returns uint
 (define-read-only (scale-down (a uint))
-    (/ a ONE_8)
+    (/ a ONE_10)
 )
 
 ;; @desc mul-down
-;; @params a 
+;; @params a
 ;; @params b
 ;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
+    (/ (* a b) ONE_10)
 )
 
 ;; @desc mul-up
-;; @params a 
+;; @params a
 ;; @params b
 ;; @returns uint
 (define-read-only (mul-up (a uint) (b uint))
@@ -54,35 +54,35 @@
        )
         (if (is-eq product u0)
             u0
-            (+ u1 (/ (- product u1) ONE_8))
+            (+ u1 (/ (- product u1) ONE_10))
        )
    )
 )
 
 ;; @desc div-down
-;; @params a 
+;; @params a
 ;; @params b
 ;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
-        (/ (* a ONE_8) b)
-   )
+        (/ (* a ONE_10) b)
+    )
 )
 
 ;; @desc div-up
-;; @params a 
+;; @params a
 ;; @params b
 ;; @returns uint
 (define-read-only (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
-        (+ u1 (/ (- (* a ONE_8) u1) b))
+        (+ u1 (/ (- (* a ONE_10) u1) b))
     )
 )
 
 ;; @desc pow-down
-;; @params a 
+;; @params a
 ;; @params b
 ;; @returns uint
 (define-read-only (pow-down (a uint) (b uint))    
@@ -91,7 +91,7 @@
             (raw (unwrap-panic (contract-call? .math-log-exp pow-fixed a b)))
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
-        ;;(if (>= a ONE_8) (round-for-up raw TOLERANCE_CONSTANT)
+        ;;(if (>= a ONE_10) (round-for-up raw TOLERANCE_CONSTANT)
             (if (< raw max-error)
                 u0
                 (- raw max-error)
@@ -101,7 +101,7 @@
 )
 
 ;; @desc pow-up
-;; @params a 
+;; @params a
 ;; @params b
 ;; @returns uint
 (define-read-only (pow-up (a uint) (b uint))
@@ -111,13 +111,13 @@
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
-        ;;(if (>= a ONE_8)  (round-for-up raw TOLERANCE_CONSTANT) (+ raw max-error))
+        ;;(if (>= a ONE_10)  (round-for-up raw TOLERANCE_CONSTANT) (+ raw max-error))
     )
 )
 
 ;; TODO : Precision for 6 Decimals should be introduced later on. 
 ;; @desc round-for-up
-;; @params a 
+;; @params a
 ;; @params tolerance
 ;; @returns (response uint)
 (define-read-only (round-for-up (a uint) (tolerance uint))
