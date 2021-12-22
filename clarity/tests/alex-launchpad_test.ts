@@ -425,6 +425,6 @@ Clarinet.test({
         result.expectErr().expectUint(ErrCode.ERR_USER_ID_NOT_FOUND)
 
         result = ALPTest.refund(wallet_1, TOKEN_TRAIT_ADDRESS).receipts[0].result;
-        result.expectErr().expectUint(ErrCode.ERR_LISTING_ACTIVATED)
+        result.expectErr().expectUint(ErrCode.ERR_REGISTRATION_NOT_ENDED)
     }
 })
