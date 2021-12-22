@@ -4,6 +4,11 @@
 (define-constant ONE_8 (pow u10 u8))
 (define-constant ERR-EXPIRY-IS-NONE (err u2027))
 
+;; @desc execute
+;; @params collateral
+;; @params amount
+;; @params memo ; expiry
+;; @returns (response boolean)
 (define-public (execute (collateral <ft-trait>) (amount uint) (memo (optional (buff 16))))
     (let
         (   
@@ -24,6 +29,10 @@
     )
 )
 
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-private (mul-up (a uint) (b uint))
     (let
         (
@@ -36,6 +45,10 @@
    )
 )
 
+;; @desc div-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -43,6 +56,9 @@
    )
 )
 
+;; @desc buff-to-uint
+;; @params bytes
+;; @returns uint
 (define-private (buff-to-uint (bytes (buff 16)))
     (let
         (
@@ -89,14 +105,24 @@
     0xf0 0xf1 0xf2 0xf3 0xf4 0xf5 0xf6 0xf7 0xf8 0xf9 0xfa 0xfb 0xfc 0xfd 0xfe 0xff
 ))
 
+;; @desc byte-to-uint
+;; @params byte
+;; @returns uint
 (define-read-only (byte-to-uint (byte (buff 1)))
     (unwrap-panic (index-of BUFF-TO-BYTE byte))
 )
 
+;; @desc concat-buff
+;; @params a
+;; @params b
+;; @returns buff
 (define-private (concat-buff (a (buff 16)) (b (buff 16)))
     (unwrap-panic (as-max-len? (concat a b) u16))
 )
 
+;; @desc reverse-buff
+;; @params a
+;; @returns buff
 (define-read-only (reverse-buff (a (buff 16)))
     (fold concat-buff a 0x)
 )
