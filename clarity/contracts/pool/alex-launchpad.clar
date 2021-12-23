@@ -322,24 +322,26 @@
         (value-low (get value-low sub-details))
         (value-high (get value-high sub-details))
         (wstx-per-ticket-in-fixed (get wstx-per-ticket-in-fixed details))
-        (value-low-adjusted 
-          (if (< value-low (/ total-tickets u2)) 
-            u0 
-            (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
-              (- (- total-subscribed total-tickets) (- value-high value-low))
-              (- value-low (/ total-tickets u2))
-            )
-          )
-        )
-        (value-high-adjusted 
-          (if (< value-low (/ total-tickets u2)) 
-            (+ value-high (- total-tickets value-low)) 
-            (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
-              total-subscribed
-              (+ value-high (/ total-tickets u2))
-            )
-          )
-        )                  
+        ;; (value-low-adjusted 
+        ;;   (if (< value-low (/ total-tickets u2)) 
+        ;;     u0 
+        ;;     (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
+        ;;       (- (- total-subscribed total-tickets) (- value-high value-low))
+        ;;       (- value-low (/ total-tickets u2))
+        ;;     )
+        ;;   )
+        ;; )
+        ;; (value-high-adjusted 
+        ;;   (if (< value-low (/ total-tickets u2)) 
+        ;;     (+ value-high (- total-tickets value-low)) 
+        ;;     (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
+        ;;       total-subscribed
+        ;;       (+ value-high (/ total-tickets u2))
+        ;;     )
+        ;;   )
+        ;; )     
+        (value-low-adjusted value-low)
+        (value-high-adjusted value-high)             
       )      
       (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)
       
