@@ -164,7 +164,7 @@
 )
 
 (define-public (transfer-memo-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)))
-  	(transfer token-id (fixed-to-decimals amount) sender recipient memo)
+  	(transfer-memo token-id (fixed-to-decimals amount) sender recipient memo)
 )
 
 (define-public (mint-fixed (token-id uint) (amount uint) (recipient principal))
