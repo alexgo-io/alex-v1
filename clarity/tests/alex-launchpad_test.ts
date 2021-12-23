@@ -418,13 +418,13 @@ Clarinet.test({
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
         result.expectOk().expectUint(1);
 
-        result = ALPTest.refund(wallet_1, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result = ALPTest.refund(wallet_1, TICKET_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_INVALID_TOKEN)
 
-        result = ALPTest.refund(deployer, TOKEN_TRAIT_ADDRESS).receipts[0].result;
+        result = ALPTest.refund(deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_USER_ID_NOT_FOUND)
 
-        result = ALPTest.refund(wallet_1, TOKEN_TRAIT_ADDRESS).receipts[0].result;
+        result = ALPTest.refund(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_REGISTRATION_NOT_ENDED)
     }
 })
