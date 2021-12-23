@@ -319,33 +319,11 @@
         (vrf-seed (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND))
         (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed u13495287074701800000000000000) (get last-random details)))
         (this-random (get-next-random last-random))
-        (value-low (get value-low sub-details))
-        (value-high (get value-high sub-details))
-        (wstx-per-ticket-in-fixed (get wstx-per-ticket-in-fixed details))
-        ;; (value-low-adjusted 
-        ;;   (if (< value-low (/ total-tickets u2)) 
-        ;;     u0 
-        ;;     (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
-        ;;       (- (- total-subscribed total-tickets) (- value-high value-low))
-        ;;       (- value-low (/ total-tickets u2))
-        ;;     )
-        ;;   )
-        ;; )
-        ;; (value-high-adjusted 
-        ;;   (if (< value-low (/ total-tickets u2)) 
-        ;;     (+ value-high (- total-tickets value-low)) 
-        ;;     (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
-        ;;       total-subscribed
-        ;;       (+ value-high (/ total-tickets u2))
-        ;;     )
-        ;;   )
-        ;; )     
-        (value-low-adjusted value-low)
-        (value-high-adjusted value-high)             
+        (wstx-per-ticket-in-fixed (get wstx-per-ticket-in-fixed details))          
       )      
       (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)
       
-      (if (and (>= (mod this-random total-subscribed) value-low-adjusted) (<= (mod this-random total-subscribed) value-high-adjusted))
+      (if (and (>= (mod this-random (+ total-subscribed u1)) (get value-low sub-details)) (<= (mod this-random (+ total-subscribed u1)) (get value-high sub-details)))
         (begin
           (as-contract (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) tx-sender claimer none) ERR-TRANSFER-FAILED))
           (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed wstx-per-ticket-in-fixed tx-sender (get fee-to-address details) none) ERR-TRANSFER-FAILED))
