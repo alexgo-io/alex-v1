@@ -253,15 +253,17 @@
   )
 )
 
-(define-public (refund (token principal))
+(define-public (refund (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (let
     (
+      (token (contract-of token-trait))     
       (claimer tx-sender)
       (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
       (user-id (unwrap! (get-user-id token tx-sender) ERR-USER-ID-NOT-FOUND))
       (sub-details (get-subscriber-at-token-or-default token user-id))  
       (refund-amount (* (get ticket-balance sub-details) (get wstx-per-ticket-in-fixed details)))
     )
+    (asserts! (is-eq (contract-of ticket-trait) (get ticket details)) ERR-INVALID-TICKET)
     (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
     (asserts! (> refund-amount u0) ERR-REFUND-NOT-AVAILABLE)    
     (asserts! 
@@ -284,6 +286,7 @@
     )  
 
     (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender claimer none) ERR-TRANSFER-FAILED))
+    (as-contract (try! (contract-call? ticket-trait burn-fixed (* (get ticket-balance sub-details) ONE_8) tx-sender)))
     (ok refund-amount)
   )
 )
