@@ -177,13 +177,13 @@ export const transfer = async (
   }
 };
 
-export const transferSTX = async (recipient: string, amount: number) => {
+export const transferSTX = async (recipient: string, amount: number, deployer=true) => {
   console.log('transferSTX...', recipient, amount);
 
   const txOptions = {
     recipient: recipient,
     amount: amount,
-    senderKey: await getDeployerPK(),
+    senderKey: deployer ? await getDeployerPK() : await getUserPK(),
     network: network,
   } as any;
   // FIXME: typescript migrate;
