@@ -193,6 +193,7 @@ class ALEXLaunchpad {
             this.deployer.address
         )
     }
+    
 }
 export { ALEXLaunchpad, ErrCode }
 

@@ -74,34 +74,33 @@ import {
 
 async function run_mint_initial_tokens() {
   await set_faucet_amounts();
+  await transferSTX("ST1J2JTYXGRMZYNKE40GM87ZCACSPSSEEQVSNB7DC.faucet", 300000000e6);
   await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
   await mint_some_tokens(USER_ACCOUNT_ADDRESS());
   await get_some_token(USER_ACCOUNT_ADDRESS());
 }
 
 async function run() {
-  // await run_mint_initial_tokens();
-  // await mint_some_tokens(USER_ACCOUNT_ADDRESS());
-  // await transferSTX(USER_ACCOUNT_ADDRESS(), 100000000e6)
+  await run_mint_initial_tokens();
 
   // const _pools = { 0:_deploy[4], 1:_deploy[5] };
   const _pools = _deploy;
   
-  // await create_fwp(false);
-  // await create_fwp(true, {0:_fwp_pools[0]}, true);
+  await create_fwp(false);
+  await create_fwp(true, _fwp_pools, true);
 
-  // await create_ytp(false, _pools);
-  // await create_crp(false, _pools);
+  await create_ytp(false, _pools);
+  await create_crp(false, _pools);
 
-  // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50', 'ytp-yield-wbtc', 'ytp-yield-usda'];
-  // for(let i = 0; i < _list.length; i++) {
-  //   await reserveAddToken(_list[i]);
-  //   await reserveSetActivationThreshold(1);
-  //   await reserveSetActivationDelay(1);
-  //   await reserveSetRewardCycleLength(525);
-  //   await reserveRegisterUser(_list[i]);
-  //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
-  // }
+  let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50'];//, 'ytp-yield-wbtc', 'ytp-yield-usda'];
+  for(let i = 0; i < _list.length; i++) {
+    await reserveAddToken(_list[i]);
+    await reserveSetActivationThreshold(1);
+    await reserveSetActivationDelay(1);
+    await reserveSetRewardCycleLength(525);
+    await reserveRegisterUser(_list[i]);
+    await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
+  }
 
   // await arbitrage_fwp(false);
   // await arbitrage_crp(false, {0:_pools[1]});
@@ -207,7 +206,7 @@ async function run() {
 
   // let result:any = await fwpGetPoolDetails('token-wstx', 'token-wbtc', 0.5e8, 0.5e8);
   // console.log(result.value.data);
-  await transferSTX("ST1J2JTYXGRMZYNKE40GM87ZCACSPSSEEQVSNB7DC.faucet", 100000000e6);
+  // await transferSTX("ST1J2JTYXGRMZYNKE40GM87ZCACSPSSEEQVSNB7DC.faucet", 100000000e6);
 
   // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
