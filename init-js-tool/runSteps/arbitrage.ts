@@ -96,7 +96,7 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
               );
             } else {
               console.log('error: ', dy.value.value);
-              let dx_i = Math.round(Number(dx.value.value) / 4);
+              let dx_i = Math.round(Number(dx.value.value) / 10);
               for (let i = 0; i < 4; i++) {
                 let dy_i = (await fwpGetYgivenX(
                   _subset[key]['token_x'],
@@ -148,7 +148,7 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
               );
             } else {
               console.log('error: ', dx.value.value);
-              let dy_i = Math.round(Number(dy.value.value) / 4) as any;
+              let dy_i = Math.round(Number(dy.value.value) / 10) as any;
               for (let i = 0; i < 4; i++) {
                 let dx_i = (await fwpGetXgivenY(
                   _subset[key]['token_x'],

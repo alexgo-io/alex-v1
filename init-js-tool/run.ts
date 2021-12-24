@@ -76,36 +76,39 @@ async function run_mint_initial_tokens() {
   await set_faucet_amounts();
   await transferSTX("ST1J2JTYXGRMZYNKE40GM87ZCACSPSSEEQVSNB7DC.faucet", 300000000e6);
   await mint_some_tokens(DEPLOYER_ACCOUNT_ADDRESS());
-  await mint_some_tokens(USER_ACCOUNT_ADDRESS());
+  await mint_some_tokens(USER_ACCOUNT_ADDRESS());  
   await get_some_token(USER_ACCOUNT_ADDRESS());
+  await transferSTX(USER_ACCOUNT_ADDRESS(), 1000000000e6);  
 }
 
 async function run() {
-  await run_mint_initial_tokens();
+  // await run_mint_initial_tokens();
+  // await mint_some_tokens(USER_ACCOUNT_ADDRESS());
+  // await transferSTX(USER_ACCOUNT_ADDRESS(), 300000000e6);  
 
   // const _pools = { 0:_deploy[4], 1:_deploy[5] };
   const _pools = _deploy;
   
-  await create_fwp(false);
-  await create_fwp(true, _fwp_pools, true);
+  // await create_fwp(false);
+  // await create_fwp(true, _fwp_pools, true);
 
-  await create_ytp(false, _pools);
-  await create_crp(false, _pools);
+  // await create_ytp(false, _pools);
+  // await create_crp(false, _pools);
 
-  let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50'];//, 'ytp-yield-wbtc', 'ytp-yield-usda'];
-  for(let i = 0; i < _list.length; i++) {
-    await reserveAddToken(_list[i]);
-    await reserveSetActivationThreshold(1);
-    await reserveSetActivationDelay(1);
-    await reserveSetRewardCycleLength(525);
-    await reserveRegisterUser(_list[i]);
-    await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
-  }
+  // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50'];//, 'ytp-yield-wbtc', 'ytp-yield-usda'];
+  // for(let i = 0; i < _list.length; i++) {
+  //   await reserveAddToken(_list[i]);
+  //   await reserveSetActivationThreshold(1);
+  //   await reserveSetActivationDelay(1);
+  //   await reserveSetRewardCycleLength(525);
+  //   await reserveRegisterUser(_list[i]);
+  //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
+  // }
 
-  // await arbitrage_fwp(false);
-  // await arbitrage_crp(false, {0:_pools[1]});
-  // await arbitrage_ytp(false, _pools);
-  // await arbitrage_fwp(false);
+  await arbitrage_fwp(false);
+  await arbitrage_crp(false, _pools);
+  await arbitrage_ytp(false, _pools);
+  await arbitrage_fwp(false);
 
   // await test_spot_trading();
   // await test_margin_trading();
