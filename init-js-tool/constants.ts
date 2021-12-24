@@ -96,7 +96,7 @@ export const _deploy = {
     ltv_0: 0.7e8,
     bs_vol: 0.8e8,
     target_apy: 0.06354,
-    expiry: 34560e8,
+    expiry: 34561e8,
     token_to_maturity: 11520e8,
   },
   1: {
@@ -112,7 +112,7 @@ export const _deploy = {
     ltv_0: 0.7e8,
     bs_vol: 0.8e8,
     target_apy: 0.086475,
-    expiry: 34560e8,
+    expiry: 34561e8,
     token_to_maturity: 11520e8,
   },
 } as const;

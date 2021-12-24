@@ -130,3 +130,27 @@ export const getSomeTokens = async (recipient: string) => {
     console.log(error);
   }
 };
+
+  export const faucetAddApprovedContract = async (contract: string) => {
+    console.log('[Faucet] add-approved-contract...');
+    const privateKey = await getDeployerPK();
+    const txOptions = {
+      contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+      contractName: 'faucet',
+      functionName: 'add-approved-contract',
+      functionArgs: [principalCV(contract)],
+      senderKey: privateKey,
+      validateWithAbi: true,
+      network,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+    };
+    try {
+      const transaction = await makeContractCall(txOptions);
+      const broadcastResponse = await broadcastTransaction(transaction, network);
+      console.log(broadcastResponse);
+      await wait_until_confirmation(broadcastResponse.txid);
+    } catch (error) {
+      console.log(error);
+    }  
+};

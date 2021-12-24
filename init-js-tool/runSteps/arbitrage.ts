@@ -266,7 +266,7 @@ export async function arbitrage_crp(dry_run = true, _subset = _deploy) {
                 );
               } else {
                 console.log('error: ', dy.value.value);
-                let dx_i = Math.round(Number(dx.value.value) / 15);
+                let dx_i = Math.round(Number(dx.value.value) / 4);
                 for (let i = 0; i < 4; i++) {
                   let dy_i = (await crpGetYgivenX(
                     _subset[key]['token'],
@@ -316,7 +316,7 @@ export async function arbitrage_crp(dry_run = true, _subset = _deploy) {
                 );
               } else {
                 console.log('error: ', dx.value.value);
-                let dy_i = Math.round(Number(dy.value.value) / 15);
+                let dy_i = Math.round(Number(dy.value.value) / 4);
                 for (let i = 0; i < 4; i++) {
                   let dx_i = (await crpGetXgivenY(
                     _subset[key]['token'],
