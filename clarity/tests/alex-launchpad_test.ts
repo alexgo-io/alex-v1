@@ -211,7 +211,7 @@ Clarinet.test({
 
         // Test with accurate combination of ticket token trait should pass
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectOk().expectBool(true);
+        result.expectOk();
 
         // Again claiming against same token-ticket combination should now throw LISTING_FINISHED error
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
