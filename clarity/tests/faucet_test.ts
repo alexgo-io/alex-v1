@@ -132,7 +132,16 @@ class Faucet {
         return this.chain.callReadOnlyFn(token, "get-balance", [
           types.principal(owner)
         ], this.deployer.address);
-    }    
+    }
+    
+    sendManyMap(sender: Account, recipients: string[]) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("faucet-helper", "send-many-map", [
+            types.list(recipients.map(types.principal)),
+          ], sender.address),
+        ]);
+        return block.receipts[0].result;
+    }     
 
 }
 export class MintAlexManyRecord {
@@ -270,6 +279,15 @@ Clarinet.test({
         result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
 
+        // this will return ok, but list of ok or err
+        result = await FaucetTest.sendManyMap(deployer, [wallet_6.address, wallet_7.address]);
+        let list:any = result.expectOk().expectList();
+        // wallet_6 would be ok
+        list[0].expectOk().expectBool(true);
+        // wallet_7 would err.
+        list[1].expectErr().expectUint(9000);
+
+
         // testing mint-alex-many
         const recipients: Array<Account> = [ accounts.get("wallet_6")!, accounts.get("wallet_7")! ];
         const amounts: Array<number> = [100 * ONE_8, 200 * ONE_8];
@@ -291,7 +309,7 @@ Clarinet.test({
         result = await FaucetTest.mintAlexMany(deployer, mintAlexManyRecords);
         result.expectOk().expectBool(true);
         result = await FaucetTest.getBalance('token-t-alex', wallet_6.address);
-        result.result.expectOk().expectUint(200 * ONE_8);
+        result.result.expectOk().expectUint(300 * ONE_8);
         result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
         result.result.expectOk().expectUint(500 * ONE_8);        
     },    
