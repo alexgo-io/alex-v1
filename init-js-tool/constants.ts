@@ -78,7 +78,7 @@ export const _fwp_pools = {
     weight_y: 0.5e8,
     pool_token: 'fwp-wstx-wbtc-50-50',
     multisig: 'multisig-fwp-wstx-wbtc-50-50',
-    left_side: 5000000e8,
+    left_side: 50000000e8,
     right_side: 50000000e8 * 2 / 50000
   },
 } as const;
