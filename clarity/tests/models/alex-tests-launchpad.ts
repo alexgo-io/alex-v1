@@ -83,9 +83,9 @@ class ALEXLaunchpad {
         return block;
     }
 
-    claimTwo(sender: Account, tokenTrait: string, ticketTrait: string) {
+    claimNine(sender: Account, tokenTrait: string, ticketTrait: string) {
         let block = this.chain.mineBlock([
-            Tx.contractCall("alex-launchpad", "claim-two", [
+            Tx.contractCall("alex-launchpad", "claim-nine", [
                 types.principal(tokenTrait),
                 types.principal(ticketTrait),
             ],
