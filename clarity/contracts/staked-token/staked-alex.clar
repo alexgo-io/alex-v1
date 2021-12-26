@@ -44,7 +44,7 @@
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
     (begin
 		(and 
-			(is-none (map-get? token-balances {token-id: token-id, owner: owner}))
+			(is-none (index-of (get-token-owned owner) token-id))
 			(map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u200) ERR-TOO-MANY-POOLS))
 		)	
 	    (map-set token-balances {token-id: token-id, owner: owner} balance)
