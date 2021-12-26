@@ -36,7 +36,8 @@ import {
   reserveGetStaked,
   reserveGetStakingStatsCoinbaseAsList,
   reserveGetStakingRewards,
-  reserveStakeTokens
+  reserveStakeTokens,
+  reserveGetUser
 } from './reserve';
 import {
   test_spot_trading,
@@ -73,7 +74,9 @@ import {
 } from './faucet'
 import { crpGetSpot } from './pools-crp';
 import { genesis_transfer } from './wallet';
-
+import {
+  decryptContent
+} from '@stacks/encryption';
 
 
 
@@ -124,7 +127,7 @@ async function run() {
   // await arbitrage_fwp(false);
 
   // await test_spot_trading();
-  await test_margin_trading();
+  // await test_margin_trading();
 
   // await create_crp(true, _deploy);
   // await create_ytp(true, _deploy);
@@ -223,6 +226,8 @@ async function run() {
   // let result:any = await fwpGetPoolDetails('token-wstx', 'token-wbtc', 0.5e8, 0.5e8);
   // console.log(result.value.data);
 
+  let result:any = await reserveGetUser('token-t-alex', 3);
+  console.log(decryptContent(result.value.address.hash160));
   // tiger ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
   // lynn ST2PMTQVZVCVSMH5XHYYES3EV9JW22G0VT2C56AY4
@@ -279,6 +284,6 @@ async function run() {
   // console.log(result.data);
 
   // await transfer_sft('yield-usda', 'ST1J2JTYXGRMZYNKE40GM87ZCACSPSSEEQVSNB7DC.alex-vault', 34561e8, 1e8, false);
-  console.log(await get_token_owned('yield-usda', false));
+  // console.log(await get_token_owned('yield-usda', false));
 }
 run();
