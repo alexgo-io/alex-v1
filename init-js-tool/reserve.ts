@@ -243,6 +243,30 @@ export const reserveGetUserId = async (token: string, user: string) => {
     }
   };    
 
+  export const reserveGetUser = async (token: string, user_id: number) => {
+    console.log(
+      '--------------------------------------------------------------------------',
+    );
+    console.log('[reserve] get-user...', token, user_id);
+    const options = {
+        contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+        contractName: 'alex-reserve-pool',
+        functionName: 'get-user',
+        functionArgs: [
+          contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
+          uintCV(user_id)
+        ],
+        network: network,
+        senderAddress: USER_ACCOUNT_ADDRESS(),
+      };
+      try {
+        return callReadOnlyFunction(options);
+        
+      } catch (error) {
+        console.log(error);
+      }
+    };  
+
 export const reserveGetStakerAtCycleOrDefault = async (
   token: string,
   reward_cycle: number,

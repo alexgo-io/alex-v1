@@ -345,3 +345,7 @@ depends_on = []
 [contracts.faucet-helper]
 path = "contracts/helpers/faucet-helper.clar"
 depends_on = [ "faucet" ]
+
+[contracts.exchange]
+path = "contracts/exchange.clar"
+depends_on = [ "trait-ownable", "token-t-alex" ]

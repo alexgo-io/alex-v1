@@ -209,5 +209,6 @@
 
 (map-set approved-contracts .alex-reserve-pool true)
 (map-set approved-contracts .faucet true)
+(map-set approved-contracts .exchange true)
 
 
