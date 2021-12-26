@@ -180,7 +180,11 @@
 ;; @params recipient; tuple
 ;; returns (response bool uint)
 (define-private (mint-alex (recipient { to: principal, amount: uint }))
-    (ok (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED)))
+    (begin
+        (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED))
+        (and (> (var-get stx-amount) u0) (as-contract (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender (get to recipient)) ERR-TRANSFER-FAILED)))
+        (ok true)
+    )
 )
 
 ;; @desc mint-alex-many
