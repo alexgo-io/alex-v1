@@ -291,6 +291,96 @@
   )
 )
 
+(define-public (claim-two (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait)
+      (list ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-three (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-four (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-five (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-six (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-seven (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-eight (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-nine (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-ten (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
     (let

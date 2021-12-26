@@ -83,6 +83,18 @@ class ALEXLaunchpad {
         return block;
     }
 
+    claimNine(sender: Account, tokenTrait: string, ticketTrait: string) {
+        let block = this.chain.mineBlock([
+            Tx.contractCall("alex-launchpad", "claim-nine", [
+                types.principal(tokenTrait),
+                types.principal(ticketTrait),
+            ],
+                sender.address
+            ),
+        ]);
+        return block;
+    }    
+
     getRegistrationStart(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
