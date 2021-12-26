@@ -291,6 +291,26 @@
   )
 )
 
+(define-public (claim-two (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait)
+      (list ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-three (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
     (let

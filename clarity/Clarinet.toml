@@ -343,5 +343,5 @@ path = "contracts/lib/math-log-exp-16.clar"
 depends_on = []
 
 [contracts.faucet-helper]
-path = "contracts/faucet-helper.clar"
+path = "contracts/helpers/faucet-helper.clar"
 depends_on = [ "faucet" ]

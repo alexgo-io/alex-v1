@@ -175,7 +175,7 @@ Clarinet.test({
         let lottery = new ALEXLottery(chain, deployer);
         let talexToken = new ALEXToken(chain, deployer);
         
-        let result:any = talexToken.mintFixed(deployer, deployer.address, 100 * ONE_8);
+        let result:any = talexToken.mintFixed(deployer, deployer.address, 300 * ONE_8);
         result.expectOk();
         result = lottery.mintFixed(deployer, wallet_1.address, 100 * ONE_8);
         result.expectOk();
@@ -187,7 +187,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
-        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, TICKETS_NUM).receipts[0].result;
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 3).receipts[0].result;
         result.expectOk().expectBool(true);
 
         // Claim at this point should return ERR-REGISTRATION-NOT-ENDED
@@ -196,7 +196,7 @@ Clarinet.test({
 
         // Register with the Token and Ticket with which the pool is created
         chain.mineEmptyBlockUntil(REGISTRATION_START)
-        result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100)
+        result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 3)
         result.expectOk().expectUint(1);
         
         chain.mineEmptyBlockUntil(REGISTRATION_END + 1)
@@ -213,9 +213,15 @@ Clarinet.test({
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectOk().expectBool(true);
 
+        // wallet_1 registerd 3 lottery tickets, so this should work too.
+        result = ALPTest.claimTwo(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        let list:any = result.expectOk().expectList();
+        list[0].expectOk().expectBool(true);
+        list[1].expectOk().expectBool(false);
+
         // Again claiming against same token-ticket combination should now throw LISTING_FINISHED error
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectErr().expectUint(ErrCode.ERR_LISTING_FINISHED);
+        result.expectErr().expectUint(ErrCode.ERR_CLAIM_NOT_AVAILABLE);
     }
 })
 
