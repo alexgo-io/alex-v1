@@ -88,7 +88,7 @@ export async function test_margin_trading() {
   let usdaPrice = await fetch_in_usd('usd-coin');
   let wstxPrice = await fetch_in_usd('blockstack');
 
-  let expiry_0 = 34560e8;
+  let expiry_0 = 34561e8;
   let amount = 1 * ONE_8; //gross exposure of 1 BTC
   let trade_price = Number(
     (
