@@ -8,6 +8,8 @@
 (define-constant ERR-EXCEEDS-MAX-USE (err u9000))
 
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
+
 (define-constant ONE_8 (pow u10 u8))
 
 (define-data-var usda-amount uint u0)
@@ -31,7 +33,7 @@
 ;; @returns (response boolean)
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-approved tx-sender))
     (ok (var-set contract-owner owner))
   )
 )
@@ -48,7 +50,7 @@
 ;; @returns (response boolean)
 (define-public (set-max-use (amount uint))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (ok (var-set max-use amount))
     )
 )
@@ -90,7 +92,7 @@
 ;; @returns (response uint)
 (define-public (set-usda-amount (amount uint))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (ok (var-set usda-amount amount))
     )
 )
@@ -101,7 +103,7 @@
 ;; @returns (response uint)
 (define-public (set-wbtc-amount (amount uint))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (ok (var-set wbtc-amount amount))
     )
 )
@@ -112,7 +114,7 @@
 ;; @returns (response uint)
 (define-public (set-stx-amount (amount uint))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (ok (var-set stx-amount amount))
     )
 )
@@ -123,7 +125,7 @@
 ;; @returns (response uint)
 (define-public (set-alex-amount (amount uint))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (ok (var-set alex-amount amount))
     )
 )
@@ -134,7 +136,7 @@
 ;; @returns (response boolean)
 (define-public (get-some-tokens (recipient principal))
     (begin
-        (asserts! (or (is-eq tx-sender recipient) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender recipient) (is-ok (check-is-approved tx-sender))) ERR-NOT-AUTHORIZED)
         (match (map-get? users recipient)
             old-use
             (begin
@@ -158,7 +160,7 @@
 ;; @returns (response bool)
 (define-public (send-many (recipients (list 200 principal)))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (fold check-err (map get-some-tokens recipients) (ok true))    
     )
 )
@@ -178,7 +180,11 @@
 ;; @params recipient; tuple
 ;; returns (response bool uint)
 (define-private (mint-alex (recipient { to: principal, amount: uint }))
-    (ok (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED)))
+    (begin
+        (and (> (get amount recipient) u0) (unwrap! (contract-call? .token-t-alex mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED))
+        (and (> (var-get stx-amount) u0) (as-contract (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender (get to recipient)) ERR-TRANSFER-FAILED)))
+        (ok true)
+    )
 )
 
 ;; @desc mint-alex-many
@@ -186,8 +192,20 @@
 ;; returns (bool uint)
 (define-public (mint-alex-many (recipients (list 200 { to: principal, amount: uint })))
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-approved tx-sender))
         (fold check-err (map mint-alex recipients) (ok true))
     )
+)
+
+(define-private (check-is-approved (sender principal))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (try! (check-is-approved tx-sender))
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
 )
 

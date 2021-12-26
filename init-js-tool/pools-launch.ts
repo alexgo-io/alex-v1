@@ -72,7 +72,7 @@ export const launchCreate = async (
   }
 };
 
-export const addApprovedContract = async (
+export const launchAddApprovedContract = async (
   launchpadContractName = 'alex-launchpad',
   lotteryContractName = 'lottery-t-alex',
 ) => {

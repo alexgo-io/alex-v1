@@ -1,5 +1,5 @@
 import { _deploy, _fwp_pools, ONE_8 } from '../constants';
-import { crpAddToPostion, crpCreate } from '../pools-crp';
+import { crpAddToPostion, crpAddToPostionAndSwitch, crpCreate } from '../pools-crp';
 import { fwpAddToPosition, fwpCreate, fwpSetOracleAverage, fwpSetOracleEnbled } from '../pools-fwp';
 import { ytpAddToPosition, ytpCreate } from '../pools-ytp';
 

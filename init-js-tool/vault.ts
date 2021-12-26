@@ -141,7 +141,7 @@ export const burn = async (
   }
 };
 
-export const transfer = async (
+export const transfer_ft = async (
   token: string,
   recipient: string,
   amount: number,
@@ -177,13 +177,50 @@ export const transfer = async (
   }
 };
 
-export const transferSTX = async (recipient: string, amount: number) => {
+export const transfer_sft = async (
+  token: string,
+  recipient: string,
+  token_id: number,
+  amount: number,
+  deployer: boolean = false,
+) => {
+  console.log('[Token] transfer_sft...', token, recipient, token_id, amount);
+  const privateKey = deployer ? await getDeployerPK() : await getUserPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: token,
+    functionName: 'transfer-fixed',
+    functionArgs: [
+      uintCV(token_id),
+      uintCV(amount),
+      principalCV(
+        deployer ? DEPLOYER_ACCOUNT_ADDRESS() : USER_ACCOUNT_ADDRESS(),
+      ),
+      principalCV(recipient)
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const transferSTX = async (recipient: string, amount: number, deployer=true) => {
   console.log('transferSTX...', recipient, amount);
 
   const txOptions = {
     recipient: recipient,
     amount: amount,
-    senderKey: await getDeployerPK(),
+    senderKey: deployer ? await getDeployerPK() : await getUserPK(),
     network: network,
   } as any;
   // FIXME: typescript migrate;
@@ -235,6 +272,25 @@ export const getBalance = async (token: string) => {
     contractName: 'alex-vault',
     functionName: 'get-balance-fixed',
     functionArgs: [contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token)],
+    network: network,
+    senderAddress: USER_ACCOUNT_ADDRESS(),
+  };
+  try {
+    const result = await callReadOnlyFunction(options);
+    console.log(result);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const get_token_owned = async (token: string, deployer=false) => {
+  console.log('[Token] get-token-owned...', token);
+
+  const options = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: token,
+    functionName: 'get-token-owned',
+    functionArgs: [principalCV(deployer ? DEPLOYER_ACCOUNT_ADDRESS() : USER_ACCOUNT_ADDRESS())],
     network: network,
     senderAddress: USER_ACCOUNT_ADDRESS(),
   };

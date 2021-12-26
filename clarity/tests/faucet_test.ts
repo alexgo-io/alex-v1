@@ -143,6 +143,15 @@ class Faucet {
         return block.receipts[0].result;
     }     
 
+    addApprovedContract(sender: Account, contract: string) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("faucet", "add-approved-contract", [
+            types.principal(contract)
+          ], sender.address),
+        ]);
+        return block.receipts[0].result;
+    }         
+
 }
 export class MintAlexManyRecord {
   constructor(
@@ -163,6 +172,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_6 = accounts.get("wallet_6")!;
         let wallet_7 = accounts.get("wallet_7")!;
+        let wallet_8 = accounts.get("wallet_8")!;
         let FaucetTest = new Faucet(chain, deployer);
 
         let result:any = await FaucetTest.transferSTX(deployer, 1000e6, faucetAddress);
@@ -218,14 +228,20 @@ Clarinet.test({
         
         // non contract-owner attempting to call get-some-tokens for another wallet throws an error.
         result = await FaucetTest.getSomeTokens(wallet_6, wallet_7.address);
-        result.expectErr().expectUint(1000);        
+        result.expectErr().expectUint(1000);     
+        
+        // once non contract-owner is added to approved contract, it can now send tokens to another wallet address.
+        result = await FaucetTest.addApprovedContract(deployer, wallet_6.address);
+        result.expectOk();
+        await FaucetTest.getSomeTokens(wallet_6, wallet_8.address);
+        result.expectOk();
 
         // using more than max-use throws an error
         result = await FaucetTest.getSomeTokens(wallet_7, wallet_7.address);
         result.expectErr().expectUint(9000);
 
         // non contract-owner attempting to set max-use throws an error
-        result = await FaucetTest.setMaxUse(wallet_6, 2);
+        result = await FaucetTest.setMaxUse(wallet_8, 2);
         result.expectErr().expectUint(1000);
         result = await FaucetTest.setMaxUse(deployer, 2);
         result.expectOk().expectBool(true);
@@ -249,7 +265,7 @@ Clarinet.test({
         result.expectErr().expectUint(9000);       
         
         // non contract-owner calling send-many will throw an error
-        result = await FaucetTest.sendMany(wallet_6, [wallet_6.address, wallet_7.address]);
+        result = await FaucetTest.sendMany(wallet_8, [wallet_6.address, wallet_7.address]);
         result.expectErr().expectUint(1000);
 
         // contract-owner calling send-many works, but wallet_7 exceeded max use, so throwing error
@@ -303,7 +319,7 @@ Clarinet.test({
         });
         
         // non contract-owner calling mint-alex-many throws an error.
-        result = await FaucetTest.mintAlexMany(wallet_6, mintAlexManyRecords);
+        result = await FaucetTest.mintAlexMany(wallet_8, mintAlexManyRecords);
         result.expectErr().expectUint(1000);
 
         result = await FaucetTest.mintAlexMany(deployer, mintAlexManyRecords);

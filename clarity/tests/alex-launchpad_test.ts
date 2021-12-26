@@ -211,7 +211,7 @@ Clarinet.test({
 
         // Test with accurate combination of ticket token trait should pass
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectOk().expectBool(true);
+        result.expectOk();
 
         // wallet_1 registerd 3 lottery tickets, so this should work too.
         result = ALPTest.claimTwo(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
