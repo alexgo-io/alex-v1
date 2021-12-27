@@ -58,20 +58,21 @@ import {
       return block.receipts[0].result;
     }
   
-    addToPosition(user: Account, expiry: number, aytoken: string, token: string, pooltoken: string, dX: number) {
+    addToPosition(user: Account, expiry: number, aytoken: string, token: string, pooltoken: string, dX: number, dY: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("yield-token-pool", "add-to-position", [
             types.uint(expiry),
-          types.principal(aytoken),
+            types.principal(aytoken),
             types.principal(token),
             types.principal(pooltoken),
             types.uint(dX),
+            types.some(types.uint(dY))
           ], user.address),
         ]);
         return block.receipts[0].result;
       }
 
-      buyAndAddToPosition(user: Account, expiry: number, aytoken: string, token: string, pooltoken: string, dX: number) {
+      buyAndAddToPosition(user: Account, expiry: number, aytoken: string, token: string, pooltoken: string, dX: number, dY: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("yield-token-pool", "buy-and-add-to-position", [
             types.uint(expiry),
@@ -79,6 +80,7 @@ import {
             types.principal(token),
             types.principal(pooltoken),
             types.uint(dX),
+            types.some(types.uint(dY))
           ], user.address),
         ]);
         return block.receipts[0].result;

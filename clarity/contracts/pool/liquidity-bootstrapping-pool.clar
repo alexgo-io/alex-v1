@@ -82,7 +82,7 @@
 ;; @params dx
 ;; @params dy
 ;; @returns (response bool)
-(define-private (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <ft-trait>) (dx uint) (dy uint))
+(define-private (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (the-pool-token <ft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)        
         (let
@@ -93,22 +93,22 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-supply (get total-supply pool))
-                (add-data (try! (get-token-given-position token-x-trait token-y-trait expiry dx dy)))
+                (add-data (try! (get-token-given-position token-x-trait token-y-trait expiry dx max-dy)))
                 (new-supply (get token add-data))
-                (new-dy (get dy add-data))
+                (dy (get dy add-data))
                 (pool-updated (merge pool {
                     total-supply: (+ new-supply total-supply),
                     balance-x: (+ balance-x dx),
-                    balance-y: (+ balance-y new-dy)
+                    balance-y: (+ balance-y dy)
                 }))
             )
             ;; CR-01
-            (asserts! (>= dy new-dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+            (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
-            (asserts! (> new-dy u0) ERR-INVALID-LIQUIDITY)
+            (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
             (unwrap! (contract-call? token-x-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (unwrap! (contract-call? token-y-trait transfer-fixed new-dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token-y-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
         
             ;; mint pool token-x and send to tx-sender
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -278,7 +278,7 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
-        (try! (add-to-position token-x-trait token-y-trait expiry the-pool-token dx dy))
+        (try! (add-to-position token-x-trait token-y-trait expiry the-pool-token dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
     )
@@ -517,7 +517,7 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint) (dy uint))
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (dx uint) (max-dy (optional uint)))
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL))
@@ -525,9 +525,9 @@
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
             (weight-x (get weight-x-t pool))
-            (weight-y (- ONE_8 weight-x))          
+            (weight-y (- ONE_8 weight-x))       
         )
-        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)
+        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 

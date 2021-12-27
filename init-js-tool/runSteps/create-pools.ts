@@ -20,7 +20,7 @@ export async function create_fwp(
         _subset[key]['weight_y'],
         _subset[key]['pool_token'],
         _subset[key]['left_side'],
-        ONE_8 * ONE_8 * ONE_8,
+        Number.MAX_SAFE_INTEGER,
         deployer,
       );
     } else {
