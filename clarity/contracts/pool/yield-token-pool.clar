@@ -303,7 +303,7 @@
 
             ;; ;; if yield-token added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
             ;; (var-set max-expiry (if (< (var-get max-expiry) expiry) (+ expiry ONE_8) (var-get max-expiry)))
-            (try! (add-to-position expiry the-yield-token the-token the-pool-token dx))
+            (try! (add-to-position expiry the-yield-token the-token the-pool-token dx (some dy)))
 
             (print { object: "pool", action: "created", data: pool-data })
             (ok true)
@@ -319,7 +319,7 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param dx; amount of token added (part of which will be used to buy yield-token)
 ;; @returns (response (tuple uint uint uint uint) uint)
-(define-public (buy-and-add-to-position (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (the-pool-token <sft-trait>) (dx uint))
+(define-public (buy-and-add-to-position (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (the-pool-token <sft-trait>) (dx uint) (max-dy (optional uint)))
     (let
         (
             (dy-act (get dy-act (try! (get-token-given-position expiry the-yield-token dx))))
@@ -327,7 +327,7 @@
             (dx-to-buy-dy-adjusted (- dx dx-adjusted))
         )
         (and (> dy-act u0) (is-ok (swap-x-for-y expiry the-yield-token the-token dx-to-buy-dy-adjusted none)))
-        (add-to-position expiry the-yield-token the-token the-pool-token dx-adjusted)
+        (add-to-position expiry the-yield-token the-token the-pool-token dx-adjusted max-dy)
     )
 )
 
@@ -338,7 +338,7 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param dx; amount of token added
 ;; @returns (response (tuple uint uint uint uint) uint)
-(define-public (add-to-position (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (the-pool-token <sft-trait>) (dx uint))
+(define-public (add-to-position (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (the-pool-token <sft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
         ;; dx must be greater than zero
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -366,6 +366,8 @@
 
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
+            (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) new-dy-act) ERR-EXCEEDS-MAX-SLIPPAGE)
+
             ;; send x to vault
             (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             ;; send y to vault
@@ -443,7 +445,7 @@
             (reduce-data (unwrap! (reduce-position expiry the-yield-token the-token the-pool-token percent) (err u11111)))
             (dy-to-dx (get dx (unwrap! (swap-y-for-x expiry the-yield-token the-token (get dy reduce-data) none) (err u22222))))
         )
-        (buy-and-add-to-position expiry-to-roll the-yield-token the-token the-pool-token (+ (get dx reduce-data) dy-to-dx))
+        (buy-and-add-to-position expiry-to-roll the-yield-token the-token the-pool-token (+ (get dx reduce-data) dy-to-dx) none)
     )
 )
 

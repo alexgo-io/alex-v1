@@ -59,7 +59,7 @@ Clarinet.test({
         let listed = 100000000;
 
         //Add extra liquidity
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
@@ -89,7 +89,7 @@ Clarinet.test({
         position['balance-virtual'].expectUint(0);          
 
         // Add back some liquidity
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(1000*ONE_8);
         position['balance-token'].expectUint(1000*ONE_8);
@@ -238,7 +238,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(998502878167);        
 
         // Add back some liquidity
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(103094788000);
         position['balance-token'].expectUint(1000*ONE_8);
@@ -344,11 +344,11 @@ Clarinet.test({
         result.expectOk().expectBool(true);        
 
         //if wrong pool token is supplied, then throw an error
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, wrongPooltokenAddress, 10*ONE_8);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, wrongPooltokenAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
         result.expectErr().expectUint(2026);
 
         // non-deployer can add liquidity
-        result = YTPTest.addToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
+        result = YTPTest.addToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
         result.expectOk();
         
         //if wrong pool token is supplied, throw an error
@@ -468,7 +468,7 @@ Clarinet.test({
         position['balance-yield-token'].expectUint(0);
         position['balance-virtual'].expectUint(1000*ONE_8);
 
-        result = YTPTest.addToPosition(wallet_2, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
+        result = YTPTest.addToPosition(wallet_2, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
@@ -611,11 +611,11 @@ Clarinet.test({
         position['balance-virtual'].expectUint(1000*ONE_8);
         
         // Attempts to inject zero liquidity
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 0);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 0, Number.MAX_SAFE_INTEGER);
         position = result.expectErr().expectUint(2003)
 
         //Attempt to add extra liquidity but not enough balance
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000000*ONE_8);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000000*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectErr().expectUint(3000)
 
         // Attempts for trivial reducing
@@ -631,7 +631,7 @@ Clarinet.test({
         position =result.expectErr().expectUint(1)
 
         // Deployer adds liquidity
-        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8);
+        result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(1000*ONE_8);
         position['balance-token'].expectUint(1000*ONE_8);
@@ -639,7 +639,7 @@ Clarinet.test({
         position['balance-virtual'].expectUint(1000*ONE_8);     
 
         // Another User adds liquidity
-        result = YTPTest.addToPosition(wallet_2, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
+        result = YTPTest.addToPosition(wallet_2, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(10*ONE_8);
         position['balance-token'].expectUint(10*ONE_8);
@@ -737,7 +737,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(0);            
         
         //Add extra liquidity with secondary buying of yield-token
-        result = YTPTest.buyAndAddToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
+        result = YTPTest.buyAndAddToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
         position['supply'].expectUint(909188000);
         position['balance-token'].expectUint(900996827);

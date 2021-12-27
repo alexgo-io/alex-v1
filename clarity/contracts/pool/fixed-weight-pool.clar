@@ -308,7 +308,7 @@
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
         ;; Deployer should inject the initial coins to the pool
-        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx dy))
+        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
     )
@@ -324,9 +324,9 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response (tuple uint uint uint) uint)
-(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (dx uint) (dy uint))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
-        (asserts! (and (> dx u0) (> dy u0)) ERR-INVALID-LIQUIDITY)
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
 
         (let
             (
@@ -336,28 +336,29 @@
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-supply (get total-supply pool))
-                (add-data (try! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx dy)))
+                (add-data (try! (get-token-given-position token-x-trait token-y-trait weight-x weight-y dx max-dy)))
                 (new-supply (get token add-data))
-                (new-dy (get dy add-data))
+                (dy (get dy add-data))
                 (pool-updated (merge pool {
                     total-supply: (+ new-supply total-supply),
                     balance-x: (+ balance-x dx),
-                    balance-y: (+ balance-y new-dy)
+                    balance-y: (+ balance-y dy)
                 }))
             )
+            (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
             ;; CR-01
-            (asserts! (>= dy new-dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+            (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
             (unwrap! (contract-call? token-x-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (unwrap! (contract-call? token-y-trait transfer-fixed new-dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token-y-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
             (try! (contract-call? the-pool-token mint-fixed new-supply tx-sender))
             
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
-            (ok {supply: new-supply, dx: dx, dy: new-dy})
+            (ok {supply: new-supply, dx: dx, dy: dy})
         )
     )
 )    
@@ -803,7 +804,7 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (dy uint))
+(define-read-only (get-token-given-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (max-dy (optional uint)))
     (let 
         (
         (token-x (contract-of token-x-trait))
@@ -813,7 +814,7 @@
         (balance-y (get balance-y pool))
         (total-supply (get total-supply pool))
         )
-        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx dy)
+        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 
 )
