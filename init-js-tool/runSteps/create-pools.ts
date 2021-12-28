@@ -66,6 +66,7 @@ export async function create_ytp(add_only: boolean, _subset = _deploy) {
           _subset[key]['token'],
           _subset[key]['pool_token'],
           _subset[key]['liquidity_ytp'],
+          Number.MAX_SAFE_INTEGER
         );
       } else {
         await ytpCreate(

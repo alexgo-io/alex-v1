@@ -72,6 +72,7 @@ export const ytpAddToPosition = async (
   token: string,
   poolToken: string,
   dx: number,
+  dy: number,
   deployer = false,
 ) => {
   console.log(
@@ -89,6 +90,7 @@ export const ytpAddToPosition = async (
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), token),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), poolToken),
       uintCV(dx),
+      someCV(uintCV(dy))
     ],
     senderKey: privateKey,
     validateWithAbi: true,

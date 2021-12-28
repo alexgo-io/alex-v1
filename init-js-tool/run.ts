@@ -105,30 +105,30 @@ async function run_mint_initial_tokens() {
 async function run() {
   // await run_mint_initial_tokens();
   // await mint_ft('token-t-alex', 1000000000e8, DEPLOYER_ACCOUNT_ADDRESS());
-  // await create_fwp(false, {0:_fwp_deploy[2]}, true);
-  // await create_fwp(true, _fwp_deploy, true);
+  // await create_fwp(false, _fwp_deploy, true);
+  await create_fwp(true, _fwp_deploy, true);
 
-  // await create_ytp(false, _deploy);
-  // await create_crp(false, _deploy);
+  await create_ytp(false, _deploy);
+  await create_crp(false, _deploy);
 
   // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50'];//, 
-  let _list = ['ytp-yield-wbtc', 'ytp-yield-usda'];
-  for(let i = 0; i < _list.length; i++) {
-    await reserveAddToken(_list[i]);
-    await reserveSetActivationThreshold(1);
-    await reserveSetActivationDelay(1);
-    await reserveSetRewardCycleLength(525);
-    await reserveRegisterUser(_list[i]);
-    await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
-  }
+  // let _list = ['ytp-yield-wbtc', 'ytp-yield-usda'];
+  // for(let i = 0; i < _list.length; i++) {
+  //   await reserveAddToken(_list[i]);
+  //   await reserveSetActivationThreshold(1);
+  //   await reserveSetActivationDelay(1);
+  //   await reserveSetRewardCycleLength(525);
+  //   await reserveRegisterUser(_list[i]);
+  //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
+  // }
 
-  // await arbitrage_fwp(false);
-  // await arbitrage_crp(false, _deploy);
-  // await arbitrage_ytp(false, _deploy);
+  await arbitrage_fwp(false);
+  await arbitrage_crp(false, _deploy);
+  await arbitrage_ytp(false, _deploy);
   // await arbitrage_fwp(false);
 
   // await test_spot_trading();
-  // await test_margin_trading();
+  await test_margin_trading();
 
   // await create_crp(true, _deploy);
   // await create_ytp(true, _deploy);

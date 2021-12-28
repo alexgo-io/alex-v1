@@ -190,7 +190,7 @@ export const fwpAddToPosition = async (
       uintCV(weightY),
       contractPrincipalCV(DEPLOYER_ACCOUNT_ADDRESS(), poolToken),
       uintCV(dx),
-      uintCV(dy),
+      someCV(uintCV(dy)),
     ],
     senderKey: privateKey,
     validateWithAbi: true,
