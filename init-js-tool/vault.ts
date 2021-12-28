@@ -301,3 +301,32 @@ export const get_token_owned = async (token: string, deployer=false) => {
     console.log(error);
   }
 };
+
+export const add_approved_contract = async (
+  token: string,
+  recipient: string,
+) => {
+  console.log('[Token] add-approved-contract...', token, recipient);
+  const privateKey = await getDeployerPK();
+  const txOptions = {
+    contractAddress: DEPLOYER_ACCOUNT_ADDRESS(),
+    contractName: token,
+    functionName: 'add-approved-contract',
+    functionArgs: [
+      principalCV(recipient)
+    ],
+    senderKey: privateKey,
+    validateWithAbi: true,
+    network,
+    anchorMode: AnchorMode.Any,
+    postConditionMode: PostConditionMode.Allow,
+  };
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResponse = await broadcastTransaction(transaction, network);
+    console.log(broadcastResponse);
+    await wait_until_confirmation(broadcastResponse.txid);
+  } catch (error) {
+    console.log(error);
+  }
+};

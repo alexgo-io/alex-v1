@@ -60,7 +60,7 @@ export const USER_ACCOUNT_PASSWORD = () => {
   throw new Error(`USER_ACCOUNT_PASSWORD or ACCOUNT_PWD is not defined`);
 };
 export const ONE_8 = 100000000;
-export const _fwp_pools = {
+export const _fwp_deploy = {
   0: {
     token_x: 'token-wstx',
     token_y: 'token-usda',
@@ -81,6 +81,16 @@ export const _fwp_pools = {
     left_side: 50000000e8,
     right_side: 50000000e8 * 2 / 50000
   },
+  2: {
+    token_x: 'token-wstx',
+    token_y: 'token-t-alex',
+    weight_x: 0.5e8,
+    weight_y: 0.5e8,
+    pool_token: 'fwp-wstx-talex-50-50',
+    multisig: 'multisig-fwp-wstx-talex-50-50',
+    left_side: 50000000e8,
+    right_side: 50000000e8 * 2 / 0.5
+  },  
 } as const;
 export const _deploy = {
   0: {

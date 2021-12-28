@@ -40,13 +40,18 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
   let wbtcPrice = await fetch_in_usd('bitcoin');
   let usdaPrice = await fetch_in_usd('usd-coin');
   let wstxPrice = await fetch_in_usd('blockstack');
+  let alexPrice = 0.5;
 
   for (const _key in _subset) {
-    const key = _key as '1' | '2';
-    let printed =
-      _subset[key]['token_y'] == 'token-usda'
-        ? parseFloat(`${wstxPrice / usdaPrice}`)
-        : parseFloat(`${wstxPrice / wbtcPrice}`);
+    const key = _key as '0' | '1' | '2';
+    let printed = 0;
+    if (_subset[key]['token_y'] == 'token-usda') {
+      printed = parseFloat(`${wstxPrice / usdaPrice}`);
+    } else if (_subset[key]['token_y'] == 'token-wbtc') {
+      printed = parseFloat(`${wstxPrice / wbtcPrice}`);
+    } else {
+      printed = parseFloat(`${wstxPrice / alexPrice}`);
+    }
 
     let result = await fwpGetPoolDetails(
       _subset[key]['token_x'],
@@ -202,7 +207,7 @@ export async function arbitrage_crp(dry_run = true, _subset = _deploy) {
   let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
 
   for (const _key in _subset) {
-    const key = _key as '0' | '1';
+    const key = _key as '0' | '1' | '2';
     // console.log(_subset[key]);
     let printed = Number(usdaPrice) / Number(wbtcPrice);
     if (_subset[key]['token'] === 'token-usda') {
