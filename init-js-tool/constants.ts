@@ -60,6 +60,35 @@ export const USER_ACCOUNT_PASSWORD = () => {
   throw new Error(`USER_ACCOUNT_PASSWORD or ACCOUNT_PWD is not defined`);
 };
 export const ONE_8 = 100000000;
+
+export interface FWP_Details {
+  token_x: string,
+  token_y: string,
+  weight_x: number,
+  weight_y: number,
+  pool_token: string,
+  multisig: string,
+  left_side: number,
+  right_side: number
+}
+
+export interface Pool_Details {
+  token: string,
+  collateral: string,
+  yield_token: string,
+  key_token: string,
+  pool_token: string,
+  multisig_ytp: string,
+  multisig_crp: string,
+  liquidity_ytp: number,
+  collateral_crp: number,
+  ltv_0: number,
+  bs_vol: number,
+  target_apy: number,
+  expiry: number,
+  token_to_maturity: number,
+}  
+
 export const _fwp_deploy = {
   0: {
     token_x: 'token-wstx',
@@ -81,16 +110,16 @@ export const _fwp_deploy = {
     left_side: 50000000e8,
     right_side: 50000000e8 * 2 / 50000
   },
-  2: {
-    token_x: 'token-wstx',
-    token_y: 'token-t-alex',
-    weight_x: 0.5e8,
-    weight_y: 0.5e8,
-    pool_token: 'fwp-wstx-talex-50-50',
-    multisig: 'multisig-fwp-wstx-talex-50-50',
-    left_side: 50000000e8,
-    right_side: 50000000e8 * 2 / 0.5
-  },  
+  // 2: {
+  //   token_x: 'token-wstx',
+  //   token_y: 'token-t-alex',
+  //   weight_x: 0.5e8,
+  //   weight_y: 0.5e8,
+  //   pool_token: 'fwp-wstx-talex-50-50',
+  //   multisig: 'multisig-fwp-wstx-talex-50-50',
+  //   left_side: 50000000e8,
+  //   right_side: 50000000e8 * 2 / 0.5
+  // },  
 } as const;
 export const _deploy = {
   0: {
@@ -125,20 +154,20 @@ export const _deploy = {
     expiry: 34561e8,
     token_to_maturity: 11520e8,
   },
-  2: {
-    token: 'token-usda',
-    collateral: 'token-wstx',
-    yield_token: 'yield-usda',
-    key_token: 'key-usda-wstx',
-    pool_token: 'ytp-yield-usda',
-    multisig_ytp: 'multisig-ytp-yield-usda',
-    multisig_crp: 'multisig-crp-usda-wstx',
-    liquidity_ytp: 10000000e8,
-    collateral_crp: 80000e8,
-    ltv_0: 0.7e8,
-    bs_vol: 0.8e8,
-    target_apy: 0.086475,
-    expiry: 34561e8,
-    token_to_maturity: 11520e8,
-  },  
+  // 2: {
+  //   token: 'token-usda',
+  //   collateral: 'token-wstx',
+  //   yield_token: 'yield-usda',
+  //   key_token: 'key-usda-wstx',
+  //   pool_token: 'ytp-yield-usda',
+  //   multisig_ytp: 'multisig-ytp-yield-usda',
+  //   multisig_crp: 'multisig-crp-usda-wstx',
+  //   liquidity_ytp: 10000000e8,
+  //   collateral_crp: 80000e8,
+  //   ltv_0: 0.7e8,
+  //   bs_vol: 0.8e8,
+  //   target_apy: 0.086475,
+  //   expiry: 34561e8,
+  //   token_to_maturity: 11520e8,
+  // },  
 } as const;

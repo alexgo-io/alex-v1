@@ -66,7 +66,7 @@ export const fwpCreate = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -103,7 +103,7 @@ export const fwpSetOracleEnbled = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -149,7 +149,7 @@ export const fwpSetOracleAverage = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -202,7 +202,7 @@ export const fwpAddToPosition = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -252,7 +252,7 @@ export const fwpReducePosition = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -351,6 +351,7 @@ export const fwpSwapXforY = async (
   weightY: number,
   dx: number,
   min_dy: number,
+  nonce: number
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -374,12 +375,13 @@ export const fwpSwapXforY = async (
     network,
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Allow,
+    nonce: nonce
   };
   try {
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -392,6 +394,7 @@ export const fwpSwapYforX = async (
   weightY: number,
   dy: number,
   min_dx: number,
+  nonce: number
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -415,12 +418,13 @@ export const fwpSwapYforX = async (
     network,
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Allow,
+    nonce: nonce
   };
   try {
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -609,7 +613,7 @@ export const fwpSetFeeRebate = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }

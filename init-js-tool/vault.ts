@@ -89,6 +89,7 @@ export const mint_ft = async (
   token: string,
   amount: number,
   recipient: string,
+  nonce: number,
 ) => {
   console.log('[Token] mint...', token, recipient, amount);
   const privateKey = await getDeployerPK();
@@ -102,6 +103,7 @@ export const mint_ft = async (
     network,
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Allow,
+    nonce: nonce
   };
   try {
     const transaction = await makeContractCall(txOptions);
@@ -145,7 +147,8 @@ export const transfer_ft = async (
   token: string,
   recipient: string,
   amount: number,
-  deployer: boolean = false,
+  nonce: number,
+  deployer: boolean = false,  
 ) => {
   console.log('[Token] transfer...', token, recipient, amount);
   const privateKey = deployer ? await getDeployerPK() : await getUserPK();
@@ -166,6 +169,7 @@ export const transfer_ft = async (
     network,
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Allow,
+    nonce: nonce
   };
   try {
     const transaction = await makeContractCall(txOptions);
@@ -319,7 +323,7 @@ export const add_approved_contract = async (
     validateWithAbi: true,
     network,
     anchorMode: AnchorMode.Any,
-    postConditionMode: PostConditionMode.Allow,
+    postConditionMode: PostConditionMode.Allow,    
   };
   try {
     const transaction = await makeContractCall(txOptions);

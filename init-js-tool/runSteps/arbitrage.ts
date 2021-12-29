@@ -1,4 +1,4 @@
-import { _deploy, _fwp_pools, ONE_8, STACKS_API_URL } from '../constants';
+import { _deploy, _fwp_pools, ONE_8, STACKS_API_URL, FWP_Details, Pool_Details } from '../constants';
 import { fetch_in_usd } from '../oracles';
 import {
   crpAddToPostionAndSwitch,
@@ -32,7 +32,7 @@ import {
   ytpSwapXforY,
 } from '../pools-ytp';
 
-export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
+export async function arbitrage_fwp(pool_details: FWP_Details, nonce: number, dry_run = false) {
   console.log('------ FWP Arbitrage ------');
   console.log(timestamp());
 
@@ -42,27 +42,200 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
   let wstxPrice = await fetch_in_usd('blockstack');
   let alexPrice = 0.5;
 
-  for (const _key in _subset) {
-    const key = _key as '0' | '1' | '2';
-    let printed = 0;
-    if (_subset[key]['token_y'] == 'token-usda') {
-      printed = parseFloat(`${wstxPrice / usdaPrice}`);
-    } else if (_subset[key]['token_y'] == 'token-wbtc') {
-      printed = parseFloat(`${wstxPrice / wbtcPrice}`);
-    } else {
-      printed = parseFloat(`${wstxPrice / alexPrice}`);
+  let printed = 0;
+  if (pool_details['token_y'] == 'token-usda') {
+    printed = parseFloat(`${wstxPrice / usdaPrice}`);
+  } else if (pool_details['token_y'] == 'token-wbtc') {
+    printed = parseFloat(`${wstxPrice / wbtcPrice}`);
+  } else {
+    printed = parseFloat(`${wstxPrice / alexPrice}`);
+  }
+
+  let result = await fwpGetPoolDetails(
+    pool_details['token_x'],
+    pool_details['token_y'],
+    pool_details['weight_x'],
+    pool_details['weight_y'],
+  );
+  let balance_x = (result as any).value.data['balance-x'].value;
+  let balance_y = (result as any).value.data['balance-y'].value;
+
+  let implied = Number(balance_y) / Number(balance_x);
+  console.log(
+    'printed: ',
+    format_number(printed, 8),
+    'implied:',
+    format_number(implied, 8),
+  );
+
+  if (!dry_run) {
+    let diff = Math.abs(printed - implied) / implied;
+    if (diff > threshold) {
+      if (printed < implied) {
+        let dx = (await fwpGetXGivenPrice(
+          pool_details['token_x'],
+          pool_details['token_y'],
+          pool_details['weight_x'],
+          pool_details['weight_y'],
+          Math.round(printed * ONE_8),
+        )) as any;
+
+        if (dx.type === 7 && dx.value.value > 0n) {
+          let dy = (await fwpGetYgivenX(
+            pool_details['token_x'],
+            pool_details['token_y'],
+            pool_details['weight_x'],
+            pool_details['weight_y'],
+            dx.value.value,
+          )) as any;
+          if (dy.type == 7) {
+            await fwpSwapXforY(
+              pool_details['token_x'],
+              pool_details['token_y'],
+              pool_details['weight_x'],
+              pool_details['weight_y'],
+              dx.value.value,
+              0,
+              nonce
+            );
+          } else {
+            console.log('error: ', dy.value.value);
+            let dx_i = Math.round(Number(dx.value.value) / 10);
+            for (let i = 0; i < 4; i++) {
+              let dy_i = (await fwpGetYgivenX(
+                pool_details['token_x'],
+                pool_details['token_y'],
+                pool_details['weight_x'],
+                pool_details['weight_y'],
+                dx_i,
+              )) as any;
+              if (dy_i.type == 7) {
+                await fwpSwapXforY(
+                  pool_details['token_x'],
+                  pool_details['token_y'],
+                  pool_details['weight_x'],
+                  pool_details['weight_y'],
+                  dx_i,
+                  0,
+                  nonce
+                );
+              }
+            }
+          }
+        } else {
+          console.log('error (or zero): ', dx.value.value);
+        }
+      } else {
+        let dy = (await fwpGetYGivenPrice(
+          pool_details['token_x'],
+          pool_details['token_y'],
+          pool_details['weight_x'],
+          pool_details['weight_y'],
+          Math.round(printed * ONE_8),
+        )) as any;
+
+        if (dy.type === 7 && dy.value.value > 0n) {
+          let dx = (await fwpGetXgivenY(
+            pool_details['token_x'],
+            pool_details['token_y'],
+            pool_details['weight_x'],
+            pool_details['weight_y'],
+            dy.value.value,
+          )) as any;
+          if (dx.type == 7) {
+            await fwpSwapYforX(
+              pool_details['token_x'],
+              pool_details['token_y'],
+              pool_details['weight_x'],
+              pool_details['weight_y'],
+              dy.value.value,
+              0,
+              nonce
+            );
+          } else {
+            console.log('error: ', dx.value.value);
+            let dy_i = Math.round(Number(dy.value.value) / 10) as any;
+            for (let i = 0; i < 4; i++) {
+              let dx_i = (await fwpGetXgivenY(
+                pool_details['token_x'],
+                pool_details['token_y'],
+                pool_details['weight_x'],
+                pool_details['weight_y'],
+                dy_i,
+              )) as any;
+              if (dx_i.type == 7) {
+                await fwpSwapYforX(
+                  pool_details['token_x'],
+                  pool_details['token_y'],
+                  pool_details['weight_x'],
+                  pool_details['weight_y'],
+                  dy_i,
+                  0,
+                  nonce
+                );
+              }
+            }
+          }
+        } else {
+          console.log('error (or zero): ', dy.value.value);
+        }
+      }
+      result = await fwpGetPoolDetails(
+        pool_details['token_x'],
+        pool_details['token_y'],
+        pool_details['weight_x'],
+        pool_details['weight_y'],
+      );
+      balance_x = (result as any).value.data['balance-x'].value;
+      balance_y = (result as any).value.data['balance-y'].value;
+      console.log(
+        'post arb implied: ',
+        format_number(Number(balance_y / balance_x), 8),
+      );
+      console.log(timestamp());
     }
+  }
+}
 
-    let result = await fwpGetPoolDetails(
-      _subset[key]['token_x'],
-      _subset[key]['token_y'],
-      _subset[key]['weight_x'],
-      _subset[key]['weight_y'],
+export async function arbitrage_crp(
+  pool_details: Pool_Details,
+  nonce: number,
+  dry_run = false,
+) {
+  console.log('------ CRP Arbitrage ------');
+  console.log(timestamp());
+
+  const threshold = 0.002;
+  let wbtcPrice = await fetch_in_usd('bitcoin');
+  let usdaPrice = await fetch_in_usd('usd-coin');
+
+  let printed = Number(usdaPrice) / Number(wbtcPrice);
+  if (pool_details['token'] === 'token-usda') {
+    printed = Number(wbtcPrice) / Number(usdaPrice);
+  }
+
+  let node_info = await (await fetch(`${STACKS_API_URL()}/v2/info`)).json();
+  let time_to_maturity =
+    (Math.round(pool_details['expiry'] / ONE_8) -
+      node_info['burn_block_height']) /
+    2102400;
+
+  if (time_to_maturity > 0) {
+    let result = await crpGetPoolDetails(
+      pool_details['token'],
+      pool_details['collateral'],
+      pool_details['expiry'],
     );
-    let balance_x = (result as any).value.data['balance-x'].value;
-    let balance_y = (result as any).value.data['balance-y'].value;
 
-    let implied = Number(balance_y) / Number(balance_x);
+    const balance_x = (result as any).value.data['balance-x'].value;
+    const balance_y = (result as any).value.data['balance-y'].value;
+    const weight_x = (result as any).value.data['weight-x'].value;
+    const weight_y = (result as any).value.data['weight-y'].value;
+
+    let implied =
+      (Number(balance_y) * Number(weight_x)) /
+      Number(balance_x) /
+      Number(weight_y);
     console.log(
       'printed: ',
       format_number(printed, 8),
@@ -71,54 +244,54 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
     );
 
     if (!dry_run) {
-      let diff = Math.abs(printed - implied) / implied;
+      let diff = Math.abs(implied - printed) / implied;
       if (diff > threshold) {
         if (printed < implied) {
-          let dx = (await fwpGetXGivenPrice(
-            _subset[key]['token_x'],
-            _subset[key]['token_y'],
-            _subset[key]['weight_x'],
-            _subset[key]['weight_y'],
+          let dx = (await crpGetXgivenPrice(
+            pool_details['token'],
+            pool_details['collateral'],
+            pool_details['expiry'],
             Math.round(printed * ONE_8),
           )) as any;
 
           if (dx.type === 7 && dx.value.value > 0n) {
-            let dy = (await fwpGetYgivenX(
-              _subset[key]['token_x'],
-              _subset[key]['token_y'],
-              _subset[key]['weight_x'],
-              _subset[key]['weight_y'],
+            let dy = (await crpGetYgivenX(
+              pool_details['token'],
+              pool_details['collateral'],
+              pool_details['expiry'],
               dx.value.value,
             )) as any;
             if (dy.type == 7) {
-              await fwpSwapXforY(
-                _subset[key]['token_x'],
-                _subset[key]['token_y'],
-                _subset[key]['weight_x'],
-                _subset[key]['weight_y'],
+              await crpSwapXforY(
+                pool_details['token'],
+                pool_details['collateral'],
+                pool_details['expiry'],
                 dx.value.value,
                 0,
+                nonce
               );
             } else {
               console.log('error: ', dy.value.value);
-              let dx_i = Math.round(Number(dx.value.value) / 10);
+              let dx_i = Math.round(Number(dx.value.value) / 4);
               for (let i = 0; i < 4; i++) {
-                let dy_i = (await fwpGetYgivenX(
-                  _subset[key]['token_x'],
-                  _subset[key]['token_y'],
-                  _subset[key]['weight_x'],
-                  _subset[key]['weight_y'],
+                let dy_i = (await crpGetYgivenX(
+                  pool_details['token'],
+                  pool_details['collateral'],
+                  pool_details['expiry'],
                   dx_i,
                 )) as any;
                 if (dy_i.type == 7) {
-                  await fwpSwapXforY(
-                    _subset[key]['token_x'],
-                    _subset[key]['token_y'],
-                    _subset[key]['weight_x'],
-                    _subset[key]['weight_y'],
+                  await crpSwapXforY(
+                    pool_details['token'],
+                    pool_details['collateral'],
+                    pool_details['expiry'],
                     dx_i,
                     0,
+                    nonce
                   );
+                } else {
+                  console.log('error: ', dy_i.value.value);
+                  break;
                 }
               }
             }
@@ -126,51 +299,51 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
             console.log('error (or zero): ', dx.value.value);
           }
         } else {
-          let dy = (await fwpGetYGivenPrice(
-            _subset[key]['token_x'],
-            _subset[key]['token_y'],
-            _subset[key]['weight_x'],
-            _subset[key]['weight_y'],
+          let dy = (await crpGetYgivenPrice(
+            pool_details['token'],
+            pool_details['collateral'],
+            pool_details['expiry'],
             Math.round(printed * ONE_8),
           )) as any;
 
           if (dy.type === 7 && dy.value.value > 0n) {
-            let dx = (await fwpGetXgivenY(
-              _subset[key]['token_x'],
-              _subset[key]['token_y'],
-              _subset[key]['weight_x'],
-              _subset[key]['weight_y'],
+            let dx = (await crpGetXgivenY(
+              pool_details['token'],
+              pool_details['collateral'],
+              pool_details['expiry'],
               dy.value.value,
             )) as any;
             if (dx.type == 7) {
-              await fwpSwapYforX(
-                _subset[key]['token_x'],
-                _subset[key]['token_y'],
-                _subset[key]['weight_x'],
-                _subset[key]['weight_y'],
+              await crpSwapYforX(
+                pool_details['token'],
+                pool_details['collateral'],
+                pool_details['expiry'],
                 dy.value.value,
                 0,
+                nonce
               );
             } else {
               console.log('error: ', dx.value.value);
-              let dy_i = Math.round(Number(dy.value.value) / 10) as any;
+              let dy_i = Math.round(Number(dy.value.value) / 4);
               for (let i = 0; i < 4; i++) {
-                let dx_i = (await fwpGetXgivenY(
-                  _subset[key]['token_x'],
-                  _subset[key]['token_y'],
-                  _subset[key]['weight_x'],
-                  _subset[key]['weight_y'],
+                let dx_i = (await crpGetXgivenY(
+                  pool_details['token'],
+                  pool_details['collateral'],
+                  pool_details['expiry'],
                   dy_i,
                 )) as any;
                 if (dx_i.type == 7) {
-                  await fwpSwapYforX(
-                    _subset[key]['token_x'],
-                    _subset[key]['token_y'],
-                    _subset[key]['weight_x'],
-                    _subset[key]['weight_y'],
+                  await crpSwapYforX(
+                    pool_details['token'],
+                    pool_details['collateral'],
+                    pool_details['expiry'],
                     dy_i,
                     0,
+                    nonce
                   );
+                } else {
+                  console.log('error: ', dx_i.value.value);
+                  break;
                 }
               }
             }
@@ -178,191 +351,21 @@ export async function arbitrage_fwp(dry_run = true, _subset = _fwp_pools) {
             console.log('error (or zero): ', dy.value.value);
           }
         }
-        result = await fwpGetPoolDetails(
-          _subset[key]['token_x'],
-          _subset[key]['token_y'],
-          _subset[key]['weight_x'],
-          _subset[key]['weight_y'],
+        result = await crpGetPoolDetails(
+          pool_details['token'],
+          pool_details['collateral'],
+          pool_details['expiry'],
         );
-        balance_x = (result as any).value.data['balance-x'].value;
-        balance_y = (result as any).value.data['balance-y'].value;
-        console.log(
-          'post arb implied: ',
-          format_number(Number(balance_y / balance_x), 8),
-        );
+        const balance_x = (result as any).value.data['balance-x'].value;
+        const balance_y = (result as any).value.data['balance-y'].value;
+        const weight_x = (result as any).value.data['weight-x'].value;
+        const weight_y = (result as any).value.data['weight-y'].value;
+        implied =
+          (Number(balance_y) * Number(weight_x)) /
+          Number(balance_x) /
+          Number(weight_y);
+        console.log('post arb implied: ', format_number(implied, 8));
         console.log(timestamp());
-      }
-    }
-  }
-}
-
-export async function arbitrage_crp(dry_run = true, _subset = _deploy) {
-  console.log('------ CRP Arbitrage ------');
-  console.log(timestamp());
-
-  const threshold = 0.002;
-  // let wbtcPrice = (await getOpenOracle('coingecko', 'WBTC')).value.value;
-  // let usdaPrice = (await getOpenOracle('coingecko', 'USDA')).value.value;
-  let wbtcPrice = (await fetch_in_usd('bitcoin')) * 1e8;
-  let usdaPrice = (await fetch_in_usd('usd-coin')) * 1e8;
-
-  for (const _key in _subset) {
-    const key = _key as '0' | '1' | '2';
-    // console.log(_subset[key]);
-    let printed = Number(usdaPrice) / Number(wbtcPrice);
-    if (_subset[key]['token'] === 'token-usda') {
-      printed = Number(wbtcPrice) / Number(usdaPrice);
-    }
-
-    let node_info = await (await fetch(`${STACKS_API_URL()}/v2/info`)).json();
-    let time_to_maturity =
-      (Math.round(_subset[key]['expiry'] / ONE_8) -
-        node_info['burn_block_height']) /
-      2102400;
-
-    if (time_to_maturity > 0) {
-      let result = await crpGetPoolDetails(
-        _subset[key]['token'],
-        _subset[key]['collateral'],
-        _subset[key]['expiry'],
-      );
-
-      const balance_x = (result as any).value.data['balance-x'].value;
-      const balance_y = (result as any).value.data['balance-y'].value;
-      const weight_x = (result as any).value.data['weight-x'].value;
-      const weight_y = (result as any).value.data['weight-y'].value;
-
-      let implied =
-        (Number(balance_y) * Number(weight_x)) /
-        Number(balance_x) /
-        Number(weight_y);
-      console.log(
-        'printed: ',
-        format_number(printed, 8),
-        'implied:',
-        format_number(implied, 8),
-      );
-
-      if (!dry_run) {
-        let diff = Math.abs(implied - printed) / implied;
-        if (diff > threshold) {
-          if (printed < implied) {
-            let dx = (await crpGetXgivenPrice(
-              _subset[key]['token'],
-              _subset[key]['collateral'],
-              _subset[key]['expiry'],
-              Math.round(printed * ONE_8),
-            )) as any;
-
-            if (dx.type === 7 && dx.value.value > 0n) {
-              let dy = (await crpGetYgivenX(
-                _subset[key]['token'],
-                _subset[key]['collateral'],
-                _subset[key]['expiry'],
-                dx.value.value,
-              )) as any;
-              if (dy.type == 7) {
-                await crpSwapXforY(
-                  _subset[key]['token'],
-                  _subset[key]['collateral'],
-                  _subset[key]['expiry'],
-                  dx.value.value,
-                  0,
-                );
-              } else {
-                console.log('error: ', dy.value.value);
-                let dx_i = Math.round(Number(dx.value.value) / 4);
-                for (let i = 0; i < 4; i++) {
-                  let dy_i = (await crpGetYgivenX(
-                    _subset[key]['token'],
-                    _subset[key]['collateral'],
-                    _subset[key]['expiry'],
-                    dx_i,
-                  )) as any;
-                  if (dy_i.type == 7) {
-                    await crpSwapXforY(
-                      _subset[key]['token'],
-                      _subset[key]['collateral'],
-                      _subset[key]['expiry'],
-                      dx_i,
-                      0,
-                    );
-                  } else {
-                    console.log('error: ', dy_i.value.value);
-                    break;
-                  }
-                }
-              }
-            } else {
-              console.log('error (or zero): ', dx.value.value);
-            }
-          } else {
-            let dy = (await crpGetYgivenPrice(
-              _subset[key]['token'],
-              _subset[key]['collateral'],
-              _subset[key]['expiry'],
-              Math.round(printed * ONE_8),
-            )) as any;
-
-            if (dy.type === 7 && dy.value.value > 0n) {
-              let dx = (await crpGetXgivenY(
-                _subset[key]['token'],
-                _subset[key]['collateral'],
-                _subset[key]['expiry'],
-                dy.value.value,
-              )) as any;
-              if (dx.type == 7) {
-                await crpSwapYforX(
-                  _subset[key]['token'],
-                  _subset[key]['collateral'],
-                  _subset[key]['expiry'],
-                  dy.value.value,
-                  0,
-                );
-              } else {
-                console.log('error: ', dx.value.value);
-                let dy_i = Math.round(Number(dy.value.value) / 4);
-                for (let i = 0; i < 4; i++) {
-                  let dx_i = (await crpGetXgivenY(
-                    _subset[key]['token'],
-                    _subset[key]['collateral'],
-                    _subset[key]['expiry'],
-                    dy_i,
-                  )) as any;
-                  if (dx_i.type == 7) {
-                    await crpSwapYforX(
-                      _subset[key]['token'],
-                      _subset[key]['collateral'],
-                      _subset[key]['expiry'],
-                      dy_i,
-                      0,
-                    );
-                  } else {
-                    console.log('error: ', dx_i.value.value);
-                    break;
-                  }
-                }
-              }
-            } else {
-              console.log('error (or zero): ', dy.value.value);
-            }
-          }
-          result = await crpGetPoolDetails(
-            _subset[key]['token'],
-            _subset[key]['collateral'],
-            _subset[key]['expiry'],
-          );
-          const balance_x = (result as any).value.data['balance-x'].value;
-          const balance_y = (result as any).value.data['balance-y'].value;
-          const weight_x = (result as any).value.data['weight-x'].value;
-          const weight_y = (result as any).value.data['weight-y'].value;
-          implied =
-            (Number(balance_y) * Number(weight_x)) /
-            Number(balance_x) /
-            Number(weight_y);
-          console.log('post arb implied: ', format_number(implied, 8));
-          console.log(timestamp());
-        }
       }
     }
   }

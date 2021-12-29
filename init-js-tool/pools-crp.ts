@@ -74,7 +74,7 @@ export const crpCreate = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -123,7 +123,7 @@ export const crpAddToPostionAndSwitch = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -172,7 +172,7 @@ export const crpAddToPostion = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -219,7 +219,7 @@ export const crpReducePostionYield = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -267,7 +267,7 @@ export const crpReducePostionKey = async (
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -279,6 +279,7 @@ export const crpSwapXforY = async (
   expiry: number,
   dx: number,
   min_dy: number,
+  nonce: number
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -301,12 +302,13 @@ export const crpSwapXforY = async (
     network,
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Allow,
+    nonce: nonce
   };
   try {
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }
@@ -318,6 +320,7 @@ export const crpSwapYforX = async (
   expiry: number,
   dy: number,
   min_dx: number,
+  nonce: number
 ) => {
   console.log(
     '--------------------------------------------------------------------------',
@@ -340,12 +343,13 @@ export const crpSwapYforX = async (
     network,
     anchorMode: AnchorMode.Any,
     postConditionMode: PostConditionMode.Allow,
+    nonce: nonce
   };
   try {
     const transaction = await makeContractCall(txOptions);
     const broadcastResponse = await broadcastTransaction(transaction, network);
     console.log(broadcastResponse);
-    return await wait_until_confirmation(broadcastResponse.txid);
+    await wait_until_confirmation(broadcastResponse.txid);
   } catch (error) {
     console.log(error);
   }

@@ -73,10 +73,10 @@ import {
   faucetAddApprovedContract
 } from './faucet'
 import { crpGetSpot } from './pools-crp';
-import { genesis_transfer } from './wallet';
+import { genesis_transfer, network } from './wallet';
 import {
-  decryptContent
-} from '@stacks/encryption';
+  getNonce
+} from '@stacks/transactions';
 
 
 
@@ -103,32 +103,47 @@ async function run_mint_initial_tokens() {
 }
 
 async function run() {
+
+  let deployer_nonce = Number(await getNonce(DEPLOYER_ACCOUNT_ADDRESS(), network));
+  let user_nonce = Number(await getNonce(USER_ACCOUNT_ADDRESS(), network));
+
   // await run_mint_initial_tokens();
   // await mint_ft('token-t-alex', 1000000000e8, DEPLOYER_ACCOUNT_ADDRESS());
   // await create_fwp(false, _fwp_deploy, true);
-  await create_fwp(true, _fwp_deploy, true);
+  // await create_fwp(true, _fwp_deploy, true);
 
-  await create_ytp(false, _deploy);
-  await create_crp(false, _deploy);
+  // await create_ytp(false, _deploy);
+  // await create_crp(false, _deploy);
 
-  // let _list = ['token-t-alex', 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50'];//, 
+  // let _list = ['token-t-alex'];//, 'fwp-wstx-usda-50-50', 'fwp-wstx-wbtc-50-50']; 
   // let _list = ['ytp-yield-wbtc', 'ytp-yield-usda'];
   // for(let i = 0; i < _list.length; i++) {
   //   await reserveAddToken(_list[i]);
   //   await reserveSetActivationThreshold(1);
   //   await reserveSetActivationDelay(1);
-  //   await reserveSetRewardCycleLength(525);
+    // await reserveSetRewardCycleLength(525);
   //   await reserveRegisterUser(_list[i]);
   //   await reserveSetCoinbaseAmount(_list[i], 1000e8, 1000e8, 1000e8, 1000e8, 1000e8);
   // }
 
-  await arbitrage_fwp(false);
-  await arbitrage_crp(false, _deploy);
-  await arbitrage_ytp(false, _deploy);
+
+
+  for (const _key in _fwp_deploy) {
+    const key = _key as '0' | '1' | '2';
+    arbitrage_fwp(_fwp_deploy[key], user_nonce, false);
+    user_nonce += 1;
+  }
+  for (const _key in _deploy) {
+    const key = _key as '0' | '1' | '2';
+    arbitrage_crp(_deploy[key], user_nonce, false);
+    user_nonce += 1;
+  }
+
+  // await arbitrage_ytp(false, _deploy);
   // await arbitrage_fwp(false);
 
   // await test_spot_trading();
-  await test_margin_trading();
+  // await test_margin_trading();
 
   // await create_crp(true, _deploy);
   // await create_ytp(true, _deploy);
@@ -231,6 +246,7 @@ async function run() {
   // james STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ
   // lynn ST2PMTQVZVCVSMH5XHYYES3EV9JW22G0VT2C56AY4
   // ali ST1D0QCNK85ZZDNHEV5DTDCD9G2Q043CK967ZST9K
+  // rachel STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9
 
   // _list = ['key-usda-wbtc', 'key-wbtc-usda', 'key-wbtc-wbtc', 'yield-wbtc', 'yield-usda', 'ytp-yield-wbtc', 'ytp-yield-usda']
   // for (let i = 0; i < _list.length; i++) {
@@ -243,11 +259,13 @@ async function run() {
   //     'STHB7WGM8DRFVGTVKHNVZXEVSPKKPCPEGGN27RWM',
   //     'ST17MVDJT37DGB5QRRS1H4HQ4MKVFKA3KAA4YGFH4',
   //     'ST1D0QCNK85ZZDNHEV5DTDCD9G2Q043CK967ZST9K',
-  //     'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ'
+  //     'STCTK0C1JAFK3JVM95TFV6EB16579WRCEYN10CTQ',
+  //     'STHFAXDZVFHMY8YR3P9J7ZCV6N89SBET23T2DWG9'
   //   ];  
   // for (let i = 0; i < _list.length; i++) {
-  //     await get_some_token(_list[i]);
-  //     // mint_ft('lottery-t-alex', 100e8, _list[i]);
+  //     // await get_some_token(_list[i]);
+  //     mint_ft('token-t-alex', 100e8, _list[i], deployer_nonce);
+  //     deployer_nonce += 1;
   // }
   // await set_faucet_amounts();
   // await get_some_token('ST1XARV3J1N3SJJBDJCE3WE84KDHZQGMGBAZR2JXT');

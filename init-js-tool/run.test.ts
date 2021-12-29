@@ -11,7 +11,6 @@ import {
 } from './constants';
 import { mint_ft } from './vault';
 import {
-  addApprovedContract,
   launchAddToPosition,
   launchCreate,
 } from './pools-launch';
