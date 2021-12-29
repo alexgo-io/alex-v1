@@ -7,14 +7,14 @@ import { broadcastTransaction, makeContractDeploy } from '@stacks/transactions';
 import chalk from 'chalk';
 import { Contracts } from './types';
 
-import { sleep } from '../init-js-tool/utils';
+import { sleep } from './utils';
 
-import { getDeployerPK, network } from '../init-js-tool/wallet';
+import { getDeployerPK, network } from './wallet';
 
 import {
   DEPLOYER_ACCOUNT_ADDRESS,
   STACKS_API_URL,
-} from '../init-js-tool/constants';
+} from './constants';
 
 const contract_records: {
   Contracts: {
