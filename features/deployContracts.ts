@@ -1,6 +1,6 @@
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
-import { genesis_transfer } from '../init-js-tool/wallet';
+import { genesis_transfer } from './wallet';
 import { deployAllContracts } from './deployContractsUtils';
 
 const argv = yargs(hideBin(process.argv))
