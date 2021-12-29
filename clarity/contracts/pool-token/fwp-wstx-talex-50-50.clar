@@ -2,7 +2,7 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token t-alex)
+(define-fungible-token fwp-wstx-talex-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -25,15 +25,11 @@
 ;; @desc check-is-approved
 ;; @restricted Approved-Contracts/Contract-Owner
 ;; @params sender
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-private (check-is-approved (sender principal))
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
-;; @desc add-approved-contract
-;; @restricted Contract-Owner
-;; @params new-approved-contract
-;; @returns (response bool)
 (define-public (add-approved-contract (new-approved-contract principal))
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
@@ -47,22 +43,21 @@
 ;; ---------------------------------------------------------
 
 ;; @desc get-total-supply
-;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply t-alex))
+  (ok (ft-get-supply fwp-wstx-talex-50-50))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "t-alex")
+  (ok "fwp-wstx-talex-50-50")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "t-alex")
+  (ok "fwp-wstx-talex-50-50")
 )
 
 ;; @desc get-decimals
@@ -75,7 +70,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance t-alex account))
+  (ok (ft-get-balance fwp-wstx-talex-50-50 account))
 )
 
 ;; @desc set-token-uri
@@ -89,24 +84,23 @@
   )
 )
 
-;; @desc get-token-uri 
-;; @params token-id
-;; @returns (response none)
+;; @desc get-token-uri
+;; @returns (response some string-utf-8)
 (define-read-only (get-token-uri)
   (ok (some (var-get token-uri)))
 )
 
 ;; @desc transfer
-;; @restricted sender
-;; @params token-id 
+;; @restricted sender; tx-sender should be sender
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @returns (response bool)
+;; @params memo; expiry
+;; @returns (response bool uint)/ error
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? t-alex amount sender recipient)
+    (match (ft-transfer? fwp-wstx-talex-50-50 amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -117,28 +111,26 @@
 )
 
 ;; @desc mint
-;; @restricted ContractOwner/Approved Contract
-;; @params token-id
+;; @restricted recipient; tx-sender should be recipient
 ;; @params amount
 ;; @params recipient
-;; @returns (response bool)
+;; @returns (response bool uint)
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved contract-caller))
-    (ft-mint? t-alex amount recipient)
+    (ft-mint? fwp-wstx-talex-50-50 amount recipient)
   )
 )
 
 ;; @desc burn
-;; @restricted ContractOwner/Approved Contract
-;; @params token-id
+;; @restricted sender; tx-sender should be sender
 ;; @params amount
 ;; @params sender
-;; @returns (response bool)
+;; @returns (response bool uint)
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved contract-caller))
-    (ft-burn? t-alex amount sender)
+    (ft-burn? fwp-wstx-talex-50-50 amount sender)
   )
 )
 
@@ -168,7 +160,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply t-alex)))
+  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-talex-50-50)))
 )
 
 ;; @desc get-balance-fixed
@@ -176,7 +168,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance t-alex account)))
+  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-talex-50-50 account)))
 )
 
 ;; @desc transfer-fixed
@@ -207,8 +199,4 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .alex-reserve-pool true)
-(map-set approved-contracts .faucet true)
-(map-set approved-contracts .exchange true)
-
-
+(map-set approved-contracts .fixed-weight-pool true)

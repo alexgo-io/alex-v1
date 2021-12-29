@@ -25,12 +25,12 @@ const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-r
 
 const ONE_8 = 100000000
 
-const weightX = 0.5e8;
-const weightY = 0.5e8;
+const weightX = 0.5 * ONE_8;
+const weightY = 0.5 * ONE_8;
 
-const wbtcPrice = 50000
+const wbtcPrice = 50000;
 
-const wbtcQ = 10*ONE_8
+const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
     name: "FWP : pool creation, adding values and reducing values",

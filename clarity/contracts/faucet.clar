@@ -33,7 +33,7 @@
 ;; @returns (response boolean)
 (define-public (set-contract-owner (owner principal))
   (begin
-    (try! (check-is-approved tx-sender))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
   )
 )

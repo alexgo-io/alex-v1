@@ -92,7 +92,7 @@ import {
           types.uint(weightY),
           types.principal(pooltoken),
           types.uint(dX),
-          types.uint(dY),
+          types.some(types.uint(dY)),
         ], user.address),
       ]);
       return block.receipts[0].result;
