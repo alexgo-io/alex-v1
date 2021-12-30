@@ -27,7 +27,7 @@ jobs:
           cache: 'yarn'
       - run: yarn install
       - name: select feature
-        run: yarn use ${{{ github.event.inputs.feature }}}
+        run: yarn use ${{ github.event.inputs.feature }}}
       - name: "Check contract"
         uses: docker://hirosystems/clarinet:0.20.0
         with:
