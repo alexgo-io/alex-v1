@@ -56,7 +56,9 @@ function load(env: string) {
 }
 
 function save(tomlContent: any, filePath: string) {
+  fs.chmodSync(filePath, 0o600);
   fs.writeFileSync(filePath, toml.stringify(tomlContent));
+  fs.chmodSync(filePath, 0o400);
 }
 
 async function run() {
