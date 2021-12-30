@@ -1,5 +1,7 @@
 # Clarity History
 clarity/history.txt
+clarity/.vscode
+clarity/coverage.lcov
 
 deployContracts-keychain.json
 **/contract-records/
@@ -12,3 +14,4 @@ init-js-tool/.env
 node_modules
 /contract-records.json
 yarn-error.log
+tsconfig.tsbuildinfo
