@@ -2,7 +2,6 @@
 clarity/history.txt
 clarity/.vscode
 clarity/coverage.lcov
-.clarinet_alex
 
 deployContracts-keychain.json
 **/contract-records/
