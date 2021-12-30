@@ -18,6 +18,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
+    name: build ${{ github.event.inputs.feature }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -27,7 +28,7 @@ jobs:
           cache: 'yarn'
       - run: yarn install
       - name: select feature
-        run: yarn use ${{ github.event.inputs.feature }}}
+        run: yarn select ${{ github.event.inputs.feature }}}
       - name: "Check contract"
         uses: docker://hirosystems/clarinet:0.20.0
         with:
