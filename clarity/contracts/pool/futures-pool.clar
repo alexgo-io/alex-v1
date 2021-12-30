@@ -17,6 +17,7 @@
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-STAKING-IN-PROGRESS (err u2018))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -153,8 +154,9 @@
             }))
             (current-cycle (unwrap! (get-reward-cycle staked-token block-height) ERR-STAKING-NOT-AVAILABLE))
         )
+        (asserts! (is-eq (get pool-token pool) (contract-of yield-token)) ERR-INVALID-TOKEN)
         ;; check if staking already started
-        (asserts! (> start-cycle current-cycle) ERR-STAKING-IN-PROGRESS)
+        (asserts! (> start-cycle current-cycle) ERR-STAKING-IN-PROGRESS)        
 
         ;; transfer dx to contract and send to stake
         (try! (contract-call? staked-token-trait transfer-fixed dx tx-sender (as-contract tx-sender) none))
@@ -187,7 +189,7 @@
             (trait-lists (list staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait staked-token-trait))
             (recipient tx-sender)
         )
-
+        (asserts! (is-eq (get pool-token pool) (contract-of yield-token)) ERR-INVALID-TOKEN)
         (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle staked-token (+ start-cycle u32)) (contract-call? .alex-reserve-pool get-reward-cycle-length))) ERR-STAKING-IN-PROGRESS)
         
         ;; the first call claims rewards

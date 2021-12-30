@@ -223,12 +223,12 @@
     )
 )
 
-;; @desc get-balance-fixeds ({balance-x, balance-y})
+;; @desc get-balances ({balance-x, balance-y})
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param expiry; expiry
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-balance-fixeds (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
+(define-read-only (get-balances (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL))
@@ -413,30 +413,6 @@
             (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
             (ok {dx: dx, dy: dy})
         )
-    )
-)
-
-;; @desc get-pool-multisig
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
-;; @param expiry; expiry
-;; @returns (response principal uint)
-(define-read-only (get-pool-multisig (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint))
-    (ok (get pool-multisig (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL)))
-)
-
-;; testing only
-(define-public (set-pool-multisig (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (expiry uint) (new-multisig principal))
-    (let
-        (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry }) ERR-INVALID-POOL))
-            (pool-updated (merge pool {
-                pool-multisig: new-multisig
-                }))            
-        )
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-        (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry } pool-updated)
-        (ok true)
     )
 )
 
