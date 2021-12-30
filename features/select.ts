@@ -1,5 +1,5 @@
 import toml from '@iarna/toml';
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import { pick } from 'lodash';
 import yargs from 'yargs/yargs';
@@ -40,7 +40,7 @@ function extract(targetContracts: string[] | null, filePath: string) {
   return targetConfig; /*?*/
 }
 
-const baseContentPath = path.join(__dirname, 'Clarinet.base.toml');
+const baseContentPath = path.join(__dirname, '../clarity/Clarinet.toml');
 
 function load(env: string) {
   const clarinetConfig = toml.parse(
@@ -63,13 +63,21 @@ function save(tomlContent: any, filePath: string) {
   fs.chmodSync(filePath, 0o400);
 }
 
+function cpContracts(env: string) {
+  const envFolder = path.resolve(__dirname, `../.clarinet_alex/${env}`);
+  if (fs.existsSync(envFolder)) {
+    fs.removeSync(envFolder);
+  }
+  fs.copySync(path.resolve(__dirname, `../clarity`), envFolder);
+}
+
 async function run() {
   const argv = yargs(hideBin(process.argv))
     .option('env', {
       alias: 'e',
       describe: 'clarity env',
       type: 'string',
-      default: 'dev',
+      default: 'base',
     })
     .option('verbose', {
       alias: 'v',
@@ -82,6 +90,7 @@ async function run() {
 
   // check if env file exists
   const selectedEnv = inputs.env;
+  console.log(`selecting ${selectedEnv}`);
   if (
     selectedEnv !== 'base' &&
     !fs.existsSync(path.resolve(__dirname, `Clarinet.${selectedEnv}.toml`))
@@ -91,12 +100,13 @@ async function run() {
     );
     process.exit(1);
   }
-  const targetToml = '../clarity/Clarinet.toml';
+
+  cpContracts(selectedEnv);
+  const targetToml = `../.clarinet_alex/${selectedEnv}/Clarinet.toml`;
   if (selectedEnv === 'base') {
-    console.log(`selecting env: base`);
-    save(extract(null, baseContentPath), path.resolve(__dirname, targetToml));
+    // base means all contracts, do nothing
+    // save(extract(null, baseContentPath), path.resolve(__dirname, targetToml));
   } else {
-    console.log(`selecting env: ${selectedEnv}`);
     save(load(selectedEnv), path.resolve(__dirname, targetToml));
   }
 }
