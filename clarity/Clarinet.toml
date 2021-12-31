@@ -5,7 +5,12 @@ costs_version = 1
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "alex-vault", "token-t-alex"]
+depends_on = [
+  "trait-ownable",
+  "trait-sip-010",
+  "alex-vault",
+  "token-t-alex"
+]
 
 [contracts.futures-pool]
 path = "contracts/pool/futures-pool.clar"
@@ -18,7 +23,7 @@ depends_on = [
 
 [contracts.staking-helper]
 path = "contracts/helpers/staking-helper.clar"
-depends_on = ["alex-reserve-pool", "trait-sip-010"]
+depends_on = [ "alex-reserve-pool", "trait-sip-010" ]
 
 [contracts.alex-vault]
 path = "contracts/alex-vault.clar"
@@ -36,18 +41,27 @@ path = "contracts/pool/collateral-rebalancing-pool.clar"
 depends_on = [
   "trait-sip-010",
   "trait-vault",
+  "alex-vault",
   "math-fixed-point",
   "weighted-equation",
   "fixed-weight-pool",
   "token-usda",
   "alex-reserve-pool",
-  "yield-token-pool",
-  "alex-vault"
+  "yield-token-pool"
 ]
 
 [contracts.yield-collateral-rebalancing-pool]
 path = "contracts/pool/yield-collateral-rebalancing-pool.clar"
-depends_on = ["trait-sip-010", "trait-vault", "alex-vault", "math-fixed-point", "weighted-equation", "fixed-weight-pool", "token-usda", "alex-reserve-pool", "yield-token-pool"]
+depends_on = [
+  "trait-sip-010",
+  "trait-vault",
+  "math-fixed-point",
+  "weighted-equation",
+  "fixed-weight-pool",
+  "token-usda",
+  "alex-reserve-pool",
+  "yield-token-pool"
+]
 
 [contracts.faucet]
 path = "contracts/faucet.clar"
@@ -156,18 +170,18 @@ depends_on = [
   "fixed-weight-pool"
 ]
 
-[contracts.multisig-fwp-wstx-wbtc-50-50]
-path = "contracts/multisig/multisig-fwp-wstx-wbtc-50-50.clar"
-depends_on = [
-  "fwp-wstx-wbtc-50-50",
-  "math-fixed-point",
-  "fixed-weight-pool"
-]
-
 [contracts.multisig-fwp-wstx-talex-50-50]
 path = "contracts/multisig/multisig-fwp-wstx-talex-50-50.clar"
 depends_on = [
   "fwp-wstx-talex-50-50",
+  "math-fixed-point",
+  "fixed-weight-pool"
+]
+
+[contracts.multisig-fwp-wstx-wbtc-50-50]
+path = "contracts/multisig/multisig-fwp-wstx-wbtc-50-50.clar"
+depends_on = [
+  "fwp-wstx-wbtc-50-50",
   "math-fixed-point",
   "fixed-weight-pool"
 ]
@@ -334,7 +348,7 @@ depends_on = [
 
 [contracts.lottery-t-alex]
 path = "contracts/lottery-tokens/lottery-t-alex.clar"
-depends_on = ["trait-ownable", "trait-sip-010"]
+depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-unauthorised]
 path = "contracts/tests/token-unauthorised.clar"
@@ -346,11 +360,11 @@ depends_on = [ "trait-flash-loan-user" ]
 
 [contracts.math-fixed-point-16]
 path = "contracts/lib/math-fixed-point-16.clar"
-depends_on = ["math-log-exp-16"]
+depends_on = [ "math-log-exp-16" ]
 
 [contracts.math-log-exp-16]
 path = "contracts/lib/math-log-exp-16.clar"
-depends_on = []
+depends_on = [ ]
 
 [contracts.faucet-helper]
 path = "contracts/helpers/faucet-helper.clar"
