@@ -211,7 +211,7 @@ Clarinet.test({
 
         // Test with accurate combination of ticket token trait should pass
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectOk();
+        result.expectOk().expectBool(true);
 
         // wallet_1 registerd 3 lottery tickets, so this should work too.
         result = ALPTest.claimNine(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
@@ -226,9 +226,9 @@ Clarinet.test({
         list[7].expectOk().expectBool(true);
         list[8].expectOk().expectBool(true);
 
-        // Again claiming against same token-ticket combination should now throw LISTING_FINISHED error
+        // Again claiming against same token-ticket combination should now throw ERR_CLAIM_NOT_AVAILABLE
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectErr().expectUint(ErrCode.ERR_LISTING_FINISHED);
+        result.expectErr().expectUint(ErrCode.ERR_CLAIM_NOT_AVAILABLE);
     }
 })
 

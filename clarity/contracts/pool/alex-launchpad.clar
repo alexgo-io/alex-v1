@@ -390,7 +390,7 @@
         (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
       )
       (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
-      (asserts! (not (try! (is-listing-completed token))) ERR-LISTING-FINISHED)
+      ;; (asserts! (not (try! (is-listing-completed token))) ERR-LISTING-FINISHED)
       (asserts! (try! (is-listing-activated token)) ERR-LISTING-NOT-ACTIVATED)
       (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
       (asserts! (is-eq ticket (get ticket details)) ERR-INVALID-TICKET)
@@ -406,8 +406,13 @@
         (total-subscribed (get total-subscribed details))
         (tickets-won (get tickets-won details))
         (ticket-balance (get ticket-balance sub-details))
-        (vrf-seed (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND))
-        (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed u13495287074701800000000000000) (get last-random details)))
+        (last-random 
+          (if 
+            (is-eq (get last-random details) u0) 
+            (mod (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND) u13495287074701800000000000000) 
+            (get last-random details)
+          )
+        )
         (this-random (get-next-random last-random))
         (value-low (get value-low sub-details))
         (value-high (get value-high sub-details))
@@ -429,11 +434,16 @@
               (+ value-high (/ total-tickets u2))
             )
           )
-        )               
+        )           
       )      
       (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)
       
-      (if (and (>= (mod this-random total-subscribed) value-low-adjusted) (<= (mod this-random total-subscribed) value-high-adjusted))
+      (if 
+        (and 
+          (>= (mod this-random total-subscribed) value-low-adjusted) 
+          (<= (mod this-random total-subscribed) value-high-adjusted)
+          (not (try! (is-listing-completed token)))
+        )
         (begin
           (as-contract (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) tx-sender claimer none) ERR-TRANSFER-FAILED))
           (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed wstx-per-ticket-in-fixed tx-sender (get fee-to-address details) none) ERR-TRANSFER-FAILED))
