@@ -409,6 +409,8 @@
             (spot (try! (get-spot token collateral)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
+        (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)
         ;; mint is possible only if ltv < 1
         (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token collateral expiry spot))) ERR-LTV-GREATER-THAN-ONE)
         (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-TOKEN)
