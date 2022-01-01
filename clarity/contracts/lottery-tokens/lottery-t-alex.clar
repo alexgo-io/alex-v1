@@ -10,6 +10,7 @@
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -128,6 +129,45 @@
 
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
+)
+
+;; @desc check-err
+;; @params result 
+;; @params prior
+;; @returns (response bool uint)
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
+    )
+)
+
+;; @desc mint-from-tuple
+;; @params recipient; tuple
+;; returns (response bool uint)
+(define-private (mint-from-tuple (recipient { to: principal, amount: uint }))
+  (ok (unwrap! (mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED))
+)
+
+(define-private (transfer-from-tuple (recipient { to: principal, amount: uint }))
+  (ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
+)
+
+;; @desc mint-many
+;; @params recipient; list of tuple
+;; returns (bool uint)
+(define-public (mint-many (recipients (list 200 { to: principal, amount: uint })))
+  (begin
+    (try! (check-is-approved tx-sender))
+    (fold check-err (map mint-from-tuple recipients) (ok true))
+  )
+)
+
+(define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
+  (begin
+    (try! (check-is-approved tx-sender))
+    (fold check-err (map transfer-from-tuple recipients) (ok true))
+  )
 )
 
 (map-set approved-contracts .alex-launchpad true)

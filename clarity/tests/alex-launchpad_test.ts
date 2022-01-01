@@ -4,6 +4,7 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { 
     ALEXLottery,
     ALEXToken,
+    ManyRecord
   } from './models/alex-tests-tokens.ts';
 
 const ONE_8 = 100000000
@@ -144,7 +145,7 @@ Clarinet.test({
 
         // Attempt to register with more tickets than owned, throws ERR-TICKET-TRANSFER-FAILED
         result = ALPTest.register(wallet_2, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 111);
-        result.expectErr().expectUint(ErrCode.ERR_TICKET_TRANSFER_FAILED);
+        result.expectErr().expectUint(ErrCode.ERR_TRANSFER_FAILED);
 
         // Try registering with wrong ticket-token combination
         result = ALPTest.register(wallet_2, TICKET_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 10);
@@ -211,7 +212,7 @@ Clarinet.test({
 
         // Test with accurate combination of ticket token trait should pass
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectOk().expectBool(true);
+        result.expectOk().expectBool(true);         
 
         // wallet_1 registerd 3 lottery tickets, so this should work too.
         result = ALPTest.claimNine(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
@@ -385,8 +386,8 @@ Clarinet.test({
         result['ticket-balance'].expectUint(100)
         result['tickets-lost'].expectUint(0)
         result['tickets-won'].expectUint(0)
-        result['value-high'].expectUint(100)
         result['value-low'].expectUint(1)
+        result['value-high'].expectUint(100)
         result['wstx-locked-in-fixed'].expectUint(3000000000)
 
         // subscriber at token should return default values with unavailble user-id
@@ -395,8 +396,8 @@ Clarinet.test({
         result['ticket-balance'].expectUint(0)
         result['tickets-lost'].expectUint(0)
         result['tickets-won'].expectUint(0)
-        result['value-high'].expectUint(0)
         result['value-low'].expectUint(0)
+        result['value-high'].expectUint(0)
         result['wstx-locked-in-fixed'].expectUint(0)
     }
 })
@@ -439,5 +440,78 @@ Clarinet.test({
 
         result = ALPTest.refund(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectErr().expectUint(ErrCode.ERR_REGISTRATION_NOT_ENDED)
+    }
+})
+
+Clarinet.test({
+    name: "ALP : Claim tokens by many participants",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let wallet_2 = accounts.get("wallet_2")!;
+        let wallet_3 = accounts.get("wallet_3")!;
+        let wallet_4 = accounts.get("wallet_4")!;
+        let wallet_5 = accounts.get("wallet_5")!;
+        let wallet_6 = accounts.get("wallet_6")!;
+        let wallet_7 = accounts.get("wallet_7")!;
+        let wallet_8 = accounts.get("wallet_8")!;
+        let wallet_9 = accounts.get("wallet_9")!;
+        let ALPTest = new ALEXLaunchpad(chain, deployer);
+
+        let lottery = new ALEXLottery(chain, deployer);
+        let talexToken = new ALEXToken(chain, deployer);
+        
+        let result:any = talexToken.mintFixed(deployer, deployer.address, 1000 * ONE_8);
+        result.expectOk();
+
+        // testing mint-many
+        let recipients: Array<Account> = [ wallet_1, wallet_2, wallet_3, wallet_4, wallet_5, wallet_6, wallet_7 , wallet_8, wallet_9 ];
+        let amounts: Array<number> = [10 * ONE_8, 10 * ONE_8, 10 * ONE_8, 10 * ONE_8, 10 * ONE_8, 10 * ONE_8, 10 * ONE_8, 10 * ONE_8, 10 * ONE_8];
+
+        let manyRecords: ManyRecord[] = [];
+
+        recipients.forEach((recipient, recipientIdx) => {
+          let record = new ManyRecord(
+            recipient,
+            amounts[recipientIdx]
+          );
+          manyRecords.push(record);
+        });        
+        result = lottery.mintMany(deployer, manyRecords);
+        result.expectOk();    
+
+        // Deployer creating a pool, FEE_TO_ADDRESS will be the one that's getting added in the pool
+        result = ALPTest.createPool(deployer, TOKEN_TRAIT_ADDRESS , TICKET_TRAIT_ADDRESS, FEE_TO_ADDRESS, 100, 3e7, REGISTRATION_START, REGISTRATION_END,  CLAIM_END, ACTIVATION_THRESHOLD).receipts[0].result;
+        result.expectOk().expectBool(true);
+
+        // Add to position expects the same TOKEN_TRAIT_ADDRESSN that pool was created with
+        result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 10).receipts[0].result;
+        result.expectOk().expectBool(true);
+
+        // Register with the Token and Ticket with which the pool is created
+        chain.mineEmptyBlockUntil(REGISTRATION_START)
+        for(let i = 0; i < recipients.length; i++){
+            result = ALPTest.register(recipients[i], TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, amounts[i] / ONE_8)
+            result.expectOk().expectUint(i + 1);
+        }
+        
+        chain.mineEmptyBlockUntil(REGISTRATION_END + 1)
+      
+        let won: Array<number> = [];
+        let won_total = 0;
+        for(let i = 0; i < recipients.length; i++){
+            result = ALPTest.claimTen(recipients[i], TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+            let list:any = result.expectOk().expectList();
+            won[i] = 0;
+            for(let j = 0; j < 10; j++){
+                if(list[j].expectOk() == 'true'){
+                    won[i] += 1;
+                }
+            }
+            console.log(won[i]);
+            won_total += won[i];
+        }
+        assertEquals(won_total, 10);
+
     }
 })
