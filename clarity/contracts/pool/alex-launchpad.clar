@@ -10,10 +10,8 @@
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-INVALID-TICKET (err u2028))
-(define-constant ERR-TICKET-TRANSFER-FAILED (err u2029))
 (define-constant ERR-NO-VRF-SEED-FOUND (err u2030))
 (define-constant ERR-CLAIM-NOT-AVAILABLE (err u2031))
-(define-constant ERR-LISTING-FINISHED (err u2032))
 (define-constant ERR-REGISTRATION-STARTED (err u2033))
 (define-constant ERR-REGISTRATION-NOT-STARTED (err u2034))
 (define-constant ERR-LISTING-ACTIVATED (err u2035))
@@ -57,7 +55,7 @@
     users-nonce: uint,
     last-random: uint,
     tickets-won: uint,
-    activated: bool
+    activated: bool    
   }
 )
 
@@ -116,7 +114,7 @@
         users-nonce: u0,
         last-random: u0,
         tickets-won: u0,
-        activated: false
+        activated: false        
       }
     )    
     (ok true)
@@ -211,14 +209,13 @@
         (value-low (+ u1 (get total-subscribed details)))
         (value-high (- (+ value-low ticket-amount) u1))
         (wstx-locked-in-fixed (* ticket-amount (get wstx-per-ticket-in-fixed details)))
-        (activated (>= value-high (get activation-threshold details)))        
-        (details-updated (merge details { total-subscribed: value-high, users-nonce: user-id, activated: activated }))
+        (activated (>= value-high (get activation-threshold details)))
       )
       (asserts! (>= block-height (get registration-start details)) ERR-REGISTRATION-NOT-STARTED)
       (asserts! (<= block-height (get registration-end details)) ERR-REGISTRATION-ENDED)      
       (asserts! (and (is-eq (contract-of ticket-trait) (get ticket details)) (> ticket-amount u0)) ERR-INVALID-TICKET)
     
-      (unwrap! (contract-call? ticket-trait transfer-fixed (* ticket-amount ONE_8) tx-sender (as-contract tx-sender) none) ERR-TICKET-TRANSFER-FAILED)
+      (unwrap! (contract-call? ticket-trait transfer-fixed (* ticket-amount ONE_8) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
       (unwrap! (contract-call? .token-wstx transfer-fixed wstx-locked-in-fixed tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
 
       (map-set 
@@ -232,7 +229,17 @@
           tickets-lost: u0,
           wstx-locked-in-fixed: wstx-locked-in-fixed }
       )
-      (map-set listing token details-updated)
+      (map-set 
+        listing token 
+        (merge 
+          details 
+          { 
+            total-subscribed: value-high, 
+            users-nonce: user-id, 
+            activated: activated
+          }
+        )
+      )
       (ok user-id)
     )
   )
@@ -291,96 +298,6 @@
   )
 )
 
-(define-public (claim-two (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait)
-      (list ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-three (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-four (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-five (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-six (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-seven (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-eight (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-nine (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
-(define-public (claim-ten (token-trait <ft-trait>) (ticket-trait <ft-trait>))
-  (ok 
-    (map 
-      claim
-      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
-      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
-    )
-  )
-)
-
 (define-public (claim (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (begin
     (let
@@ -390,7 +307,6 @@
         (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
       )
       (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
-      (asserts! (not (try! (is-listing-completed token))) ERR-LISTING-FINISHED)
       (asserts! (try! (is-listing-activated token)) ERR-LISTING-NOT-ACTIVATED)
       (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
       (asserts! (is-eq ticket (get ticket details)) ERR-INVALID-TICKET)
@@ -406,8 +322,13 @@
         (total-subscribed (get total-subscribed details))
         (tickets-won (get tickets-won details))
         (ticket-balance (get ticket-balance sub-details))
-        (vrf-seed (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND))
-        (last-random (if (is-eq (get last-random details) u0) (mod vrf-seed u13495287074701800000000000000) (get last-random details)))
+        (last-random 
+          (if 
+            (is-eq (get last-random details) u0) 
+            (mod (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND) u13495287074701800000000000000) 
+            (get last-random details)
+          )
+        )
         (this-random (get-next-random last-random))
         (value-low (get value-low sub-details))
         (value-high (get value-high sub-details))
@@ -429,24 +350,36 @@
               (+ value-high (/ total-tickets u2))
             )
           )
-        )               
+        )
       )      
       (asserts! (> ticket-balance u0) ERR-CLAIM-NOT-AVAILABLE)
       
-      (if (and (>= (mod this-random total-subscribed) value-low-adjusted) (<= (mod this-random total-subscribed) value-high-adjusted))
+      (if 
+        (and 
+          (>= (mod this-random total-subscribed) value-low-adjusted) 
+          (<= (mod this-random total-subscribed) value-high-adjusted)
+          (not (try! (is-listing-completed token)))
+        )
         (begin
           (as-contract (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) ONE_8) tx-sender claimer none) ERR-TRANSFER-FAILED))
           (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed wstx-per-ticket-in-fixed tx-sender (get fee-to-address details) none) ERR-TRANSFER-FAILED))
           (as-contract (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender)))
-          (map-set listing token (merge details { last-random: this-random, tickets-won: (+ tickets-won u1) }))          
-          (map-set 
-            subscriber-at-token 
-            { token: token, user-id: user-id} 
+          (map-set listing 
+            token 
+            (merge details 
+              { 
+                last-random: this-random, 
+                tickets-won: (+ tickets-won u1)
+              }
+            )
+          )          
+          (map-set subscriber-at-token 
+            { token: token, user-id: user-id } 
             (merge sub-details 
               { 
                 ticket-balance: (- ticket-balance u1), 
                 tickets-won: (+ (get tickets-won sub-details) u1), 
-                wstx-locked-in-fixed: (- (get wstx-locked-in-fixed sub-details) wstx-per-ticket-in-fixed) 
+                wstx-locked-in-fixed: (- (get wstx-locked-in-fixed sub-details) wstx-per-ticket-in-fixed)
               }
             )
           )      
@@ -455,10 +388,16 @@
         (begin
           (as-contract (unwrap! (contract-call? .token-wstx transfer-fixed (get wstx-per-ticket-in-fixed details) tx-sender claimer none) ERR-TRANSFER-FAILED))
           (as-contract (try! (contract-call? ticket-trait burn-fixed ONE_8 tx-sender)))
-          (map-set listing token (merge details { last-random: this-random }))
-          (map-set 
-            subscriber-at-token 
-            { token: token, user-id: user-id} 
+          (map-set listing 
+            token 
+            (merge details 
+              { 
+                last-random: this-random
+              }
+            )
+          )
+          (map-set subscriber-at-token 
+            { token: token, user-id: user-id } 
             (merge sub-details 
               { 
                 ticket-balance: (- ticket-balance u1),
@@ -558,4 +497,94 @@
     acc: (unwrap-panic (as-max-len? (concat acc byte) u16)),
     data: data
   })
+)
+
+(define-public (claim-two (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait)
+      (list ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-three (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-four (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-five (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-six (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-seven (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-eight (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-nine (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
+)
+
+(define-public (claim-ten (token-trait <ft-trait>) (ticket-trait <ft-trait>))
+  (ok 
+    (map 
+      claim
+      (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+      (list ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait ticket-trait)
+    )
+  )
 )

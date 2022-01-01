@@ -373,3 +373,7 @@ depends_on = [ "faucet" ]
 [contracts.exchange]
 path = "contracts/exchange.clar"
 depends_on = [ "trait-ownable", "token-t-alex" ]
+
+[contracts.lottery-ido-alex]
+path = "contracts/lottery-tokens/lottery-ido-alex.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]

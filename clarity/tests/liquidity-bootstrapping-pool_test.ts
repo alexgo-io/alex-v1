@@ -39,7 +39,7 @@ Clarinet.test({
         result.expectOk();        
         
         // Deployer creating a pool, initial tokens injected to the pool
-        result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
+        result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, priceMin, priceMax, alexQty, usdaQty);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
@@ -50,11 +50,7 @@ Clarinet.test({
         position['balance-y'].expectUint(usdaQty);
         position['weight-x-t'].expectUint(90000000);     
 
-        result = LBPTest.setPoolMultisig(deployer, alexAddress, usdaAddress, expiry, deployer.address);
-        result.expectOk();
-
-        result = LBPTest.setPriceRange(deployer, alexAddress, usdaAddress, expiry, priceMin, priceMax);
-        result.expectOk();
+        chain.mineEmptyBlock(2);
 
         call = await LBPTest.getPriceRange(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();

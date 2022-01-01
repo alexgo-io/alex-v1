@@ -67,7 +67,8 @@
     listed: uint,
     oracle-enabled: bool,
     oracle-average: uint,
-    oracle-resilient: uint    
+    oracle-resilient: uint,
+    the-token: principal
   }
 )
 
@@ -270,9 +271,7 @@
 ;; @returns (response bool uint)
 (define-public (create-pool (expiry uint) (the-yield-token <sft-trait>) (the-token <ft-trait>) (the-pool-token <sft-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
     (begin
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)         
-        ;; ;; create pool only if the correct pair
-        ;; (asserts! (is-eq (try! (contract-call? the-yield-token get-token)) (contract-of the-token)) ERR-INVALID-POOL)
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of the-yield-token), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
         (let
             (
@@ -291,7 +290,8 @@
                     listed: (* block-height ONE_8),
                     oracle-enabled: false,
                     oracle-average: u0,
-                    oracle-resilient: u0
+                    oracle-resilient: u0,
+                    the-token: (contract-of the-token)
                 })
             )
         
@@ -361,7 +361,7 @@
                     balance-virtual: (+ balance-virtual new-dy-vir)   
                 }))
             )
-
+            (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN) 
 
             ;; at least one of dy must be greater than zero            
@@ -414,7 +414,7 @@
                     })
                 )
             )
-
+            (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
@@ -486,6 +486,7 @@
                     )
                 )
             )
+            (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
@@ -536,6 +537,7 @@
                     )
                 )
             )
+            (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
