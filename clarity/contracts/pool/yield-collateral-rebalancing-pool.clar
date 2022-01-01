@@ -72,6 +72,7 @@
     fee-to-address: principal,
     yield-token: principal,
     key-token: principal,
+    collateral-token: principal,
     strike: uint,
     bs-vol: uint,
     ltv-0: uint,
@@ -82,7 +83,7 @@
     weight-y: uint,
     moving-average: uint,
     conversion-ltv: uint,
-    token-to-maturity: uint
+    token-to-maturity: uint    
   }
 )
 
@@ -418,7 +419,7 @@
         ;; mint is possible only if ltv < 1
         (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token collateral collateral-token expiry spot))) ERR-LTV-GREATER-THAN-ONE)
         (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-TOKEN)
-        (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID_TOKEN)
+        (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
         (let
             (
                 (balance-x (get balance-x pool))
@@ -535,7 +536,7 @@
                     })
                 )
             )
-            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID_TOKEN)
+            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
 
             ;; if any conversion happened at contract level, transfer back to vault
@@ -594,7 +595,7 @@
                     })
                 )            
             )
-            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID_TOKEN)
+            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)        
             
             (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-sft collateral expiry dx-weighted tx-sender)))
@@ -650,7 +651,7 @@
                     )
                 )
             )
-            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID_TOKEN)
+            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (unwrap! (contract-call? collateral transfer-fixed expiry dx tx-sender .alex-vault) ERR-TRANSFER-FAILED)
@@ -707,7 +708,7 @@
                     )
                 )
             )
-            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID_TOKEN)
+            (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (try! (contract-call? .alex-vault transfer-sft collateral expiry dx tx-sender))
