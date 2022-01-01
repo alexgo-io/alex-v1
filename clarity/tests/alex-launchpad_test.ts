@@ -214,7 +214,9 @@ Clarinet.test({
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectOk().expectBool(true);         
 
-        // wallet_1 registerd 3 lottery tickets, so this should work too.
+        // console.log((await ALPTest.getTokenDetails(TOKEN_TRAIT_ADDRESS)).result);
+        // console.log((await ALPTest.getSubscriberAtTokenOrDefault(TOKEN_TRAIT_ADDRESS, 1)).result);
+
         result = ALPTest.claimNine(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         let list:any = result.expectOk().expectList();
         list[0].expectOk().expectBool(true);

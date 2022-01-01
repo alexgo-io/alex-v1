@@ -12,7 +12,6 @@
 (define-constant ERR-INVALID-TICKET (err u2028))
 (define-constant ERR-NO-VRF-SEED-FOUND (err u2030))
 (define-constant ERR-CLAIM-NOT-AVAILABLE (err u2031))
-(define-constant ERR-LISTING-FINISHED (err u2032))
 (define-constant ERR-REGISTRATION-STARTED (err u2033))
 (define-constant ERR-REGISTRATION-NOT-STARTED (err u2034))
 (define-constant ERR-LISTING-ACTIVATED (err u2035))
@@ -49,7 +48,6 @@
     amount-per-ticket: uint,
     wstx-per-ticket-in-fixed: uint,
     total-subscribed: uint,
-    total-not-claimed: uint,
     registration-start: uint,
     registration-end: uint,
     claim-end: uint,
@@ -108,7 +106,6 @@
         amount-per-ticket: amount-per-ticket,
         wstx-per-ticket-in-fixed: wstx-per-ticket-in-fixed, 
         total-subscribed: u0,
-        total-not-claimed: u0,
         total-tickets: u0, 
         registration-start: registration-start,
         registration-end: registration-end,
@@ -337,20 +334,20 @@
         (value-high (get value-high sub-details))
         (wstx-per-ticket-in-fixed (get wstx-per-ticket-in-fixed details))
         (value-low-adjusted 
-          (if (< value-low (/ total-tickets u4)) 
+          (if (< value-low (/ total-tickets u2)) 
             u0 
-            (if (> (+ value-high (/ total-tickets u4)) total-subscribed)
+            (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
               (- (- total-subscribed total-tickets) (- value-high value-low))
-              (- value-low (/ total-tickets u4))
+              (- value-low (/ total-tickets u2))
             )
           )
         )
         (value-high-adjusted 
-          (if (< value-low (/ total-tickets u4)) 
+          (if (< value-low (/ total-tickets u2)) 
             (+ value-high (- total-tickets value-low)) 
-            (if (> (+ value-high (/ total-tickets u4)) total-subscribed)
+            (if (> (+ value-high (/ total-tickets u2)) total-subscribed)
               total-subscribed
-              (+ value-high (/ total-tickets u4))
+              (+ value-high (/ total-tickets u2))
             )
           )
         )
