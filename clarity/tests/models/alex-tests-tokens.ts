@@ -418,6 +418,13 @@ class YIELD_WBTC {
   }
 }
 export { YIELD_WBTC };
+
+class ManyRecord {
+  constructor(
+    readonly to: Account,
+    readonly amount: number
+  ) {}
+}
 class ALEXLottery {
 
   chain: Chain;
@@ -476,8 +483,19 @@ class ALEXLottery {
   totalSupply() {
     return this.chain.callReadOnlyFn("lottery-t-alex", "get-total-supply-fixed", [], this.deployer.address);
   }
+
+  mintMany(sender: Account, recipients: Array<ManyRecord>) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("lottery-t-alex", "mint-many", [
+          types.list(recipients.map((record) => { 
+            return types.tuple({ to: types.principal(record.to.address), amount: types.uint(record.amount) });
+          }))
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;
+  }    
 }
-export { ALEXLottery };
+export { ALEXLottery, ManyRecord };
 class YIELD_USDA {
   chain: Chain;
   deployer: Account;
