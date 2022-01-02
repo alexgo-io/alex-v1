@@ -436,13 +436,13 @@ class ALEXLottery {
   }
   
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("lottery-t-alex", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("lottery-ido-alex", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("lottery-t-alex", "get-balance", [
+    return this.chain.callReadOnlyFn("lottery-ido-alex", "get-balance", [
       types.principal(account),
     ], this.deployer.address);
   }
@@ -450,7 +450,7 @@ class ALEXLottery {
   // Always need to called by deployer
   mint(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("lottery-t-alex", "mint", [
+      Tx.contractCall("lottery-ido-alex", "mint", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -460,7 +460,7 @@ class ALEXLottery {
 
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("lottery-t-alex", "mint-fixed", [
+      Tx.contractCall("lottery-ido-alex", "mint-fixed", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -470,7 +470,7 @@ class ALEXLottery {
 
   transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("lottery-t-alex", "transfer-fixed", [
+        Tx.contractCall("lottery-ido-alex", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender.address),
           types.principal(receiver),
@@ -481,12 +481,12 @@ class ALEXLottery {
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("lottery-t-alex", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("lottery-ido-alex", "get-total-supply-fixed", [], this.deployer.address);
   }
 
   mintMany(sender: Account, recipients: Array<ManyRecord>) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("lottery-t-alex", "mint-many", [
+        Tx.contractCall("lottery-ido-alex", "mint-many", [
           types.list(recipients.map((record) => { 
             return types.tuple({ to: types.principal(record.to.address), amount: types.uint(record.amount) });
           }))
