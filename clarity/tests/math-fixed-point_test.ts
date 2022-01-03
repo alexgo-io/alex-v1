@@ -9,6 +9,38 @@ const ONE_8 = 100000000
  * we are primarily concerned with pow-up and pow-down
  */
 
+
+ Clarinet.test({
+    name: "math-fixed-point: mul-up mul-down",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+
+        let call = chain.callReadOnlyFn("math-fixed-point", "mul-down",
+            [
+                types.uint(500000*ONE_8),
+                types.uint(5*ONE_8),
+            ], deployer.address);
+        call.result.expectUint(2500000*ONE_8)
+            
+        call = chain.callReadOnlyFn("math-fixed-point", "mul-up",
+            [
+                types.uint(500000*ONE_8),
+                types.uint(5*ONE_8),
+            ], deployer.address);
+        call.result.expectUint(2500000*ONE_8)
+
+        call = chain.callReadOnlyFn("math-fixed-point", "mul-up",
+        [
+            types.uint(5*ONE_8),
+            types.uint(0.5*ONE_8),
+        ], deployer.address);
+        call.result.expectUint(2.5*ONE_8)
+        },
+
+        
+    });
+    
 Clarinet.test({
     name: "math-fixed-point: pow-up and pow-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -28,6 +60,13 @@ Clarinet.test({
                 types.uint(5*ONE_8)
             ], deployer.address);
         assertEquals(call.result, "u312499955208"); //
+
+        call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
+            [
+                types.uint(5000*ONE_8),
+                types.uint(0.5*ONE_8)
+            ], deployer.address);
+        assertEquals(call.result, "u7071067955"); //
 
         // anything ^ 0 = 1
         call = chain.callReadOnlyFn("math-fixed-point", "pow-down",

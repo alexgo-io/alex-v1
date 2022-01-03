@@ -90,6 +90,10 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 path = "contracts/helpers/margin-helper.clar"
 depends_on = ["trait-sip-010", "trait-flash-loan-user", "collateral-rebalancing-pool", "fixed-weight-pool", "alex-vault"]
 
+[contracts.math-big-uint]
+path = "contracts/lib/math-big-uint.clar"
+depends_on = []
+
 [contracts.math-fixed-point]
 path = "contracts/lib/math-fixed-point.clar"
 depends_on = ["math-log-exp"]
@@ -97,6 +101,10 @@ depends_on = ["math-log-exp"]
 [contracts.math-fixed-point-10]
 path = "contracts/lib/math-fixed-point-10.clar"
 depends_on = ["math-log-exp-10"]
+
+[contracts.math-fixed-point-12]
+path = "contracts/lib/math-fixed-point-12.clar"
+depends_on = ["math-log-exp-12"]
 
 [contracts.math-fixed-point-16]
 path = "contracts/lib/math-fixed-point-16.clar"
@@ -108,6 +116,10 @@ depends_on = []
 
 [contracts.math-log-exp-10]
 path = "contracts/lib/math-log-exp-10.clar"
+depends_on = []
+
+[contracts.math-log-exp-12]
+path = "contracts/lib/math-log-exp-12.clar"
 depends_on = []
 
 [contracts.math-log-exp-16]
