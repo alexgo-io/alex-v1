@@ -174,10 +174,10 @@ class ALEXLaunchpad {
         return block.receipts[0].result;
     }
 
-    getTokenDetails(token: string): ReadOnlyFn {
+    getListingDetails(token: string): ReadOnlyFn {
         return this.chain.callReadOnlyFn(
             "alex-launchpad",
-            "get-token-details",
+            "get-listing-details",
             [
                 types.principal(token)
             ],
