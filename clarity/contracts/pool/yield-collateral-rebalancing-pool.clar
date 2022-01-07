@@ -373,6 +373,13 @@
 
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
+
+            (try! (contract-call? .alex-vault add-approved-token token-x))
+            (try! (contract-call? .alex-vault add-approved-token token-y))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of collateral-token)))            
+            (try! (contract-call? .alex-vault add-approved-token (contract-of the-yield-token)))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of the-key-token)))
+
             (try! (add-to-position token collateral collateral-token expiry the-yield-token the-key-token dx))
             (print { object: "pool", action: "created", data: pool-data })
             (ok true)
@@ -461,14 +468,15 @@
                     balance-x: (+ balance-x dx-weighted),
                     balance-y: (+ balance-y dy-weighted)
                 }))
+                (sender tx-sender)
             )     
             (unwrap! (contract-call? collateral transfer-fixed expiry dx-weighted tx-sender .alex-vault) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token transfer-fixed dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
-            (try! (contract-call? the-yield-token mint-fixed expiry yield-new-supply tx-sender))
-            (try! (contract-call? the-key-token mint-fixed expiry key-new-supply tx-sender))
+            (as-contract (try! (contract-call? the-yield-token mint-fixed expiry yield-new-supply sender)))
+            (as-contract (try! (contract-call? the-key-token mint-fixed expiry key-new-supply sender)))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
@@ -504,8 +512,6 @@
                                 u0 
                                 (begin
                                     (as-contract (try! (contract-call? .alex-vault transfer-sft collateral expiry balance-x tx-sender)))
-                                    ;; (as-contract (try! (contract-call? .fixed-weight-pool swap-helper collateral-token token u50000000 u50000000 
-                                    ;;     (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry collateral collateral-token balance-x none))) none)))
                                     (as-contract                                    
                                         (let
                                             (
@@ -535,6 +541,7 @@
                     balance-y: (if (<= new-bal-y dy) u0 (- new-bal-y dy))
                     })
                 )
+                (sender tx-sender)
             )
             (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
@@ -547,13 +554,13 @@
 
             ;; if shares > dy, then transfer the shortfall from reserve.
             ;; TODO: what if token is exhausted but reserve have others?
-            (and (< dy shares) (try! (contract-call? .alex-reserve-pool remove-from-balance token-y (- shares dy))))            
+            (and (< dy shares) (as-contract (try! (contract-call? .alex-reserve-pool remove-from-balance token-y (- shares dy)))))
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (try! (contract-call? .alex-vault transfer-ft token shares tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token shares sender)))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-yield-token burn-fixed expiry shares tx-sender))
+            (as-contract (try! (contract-call? the-yield-token burn-fixed expiry shares sender)))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
@@ -593,16 +600,17 @@
                     balance-x: (if (<= balance-x dx-weighted) u0 (- balance-x dx-weighted)),
                     balance-y: (if (<= balance-y dy-weighted) u0 (- balance-y dy-weighted))
                     })
-                )            
+                )   
+                (sender tx-sender)         
             )
             (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)        
             
-            (and (> dx-weighted u0) (try! (contract-call? .alex-vault transfer-sft collateral expiry dx-weighted tx-sender)))
-            (and (> dy-weighted u0) (try! (contract-call? .alex-vault transfer-ft token dy-weighted tx-sender)))
+            (and (> dx-weighted u0) (as-contract (try! (contract-call? .alex-vault transfer-sft collateral expiry dx-weighted sender))))
+            (and (> dy-weighted u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token dy-weighted sender))))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-key-token burn-fixed expiry shares tx-sender))
+            (as-contract (try! (contract-call? the-key-token burn-fixed expiry shares sender)))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx-weighted, dy: dy-weighted})
         )        
@@ -650,13 +658,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
             (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (unwrap! (contract-call? collateral transfer-fixed expiry dx tx-sender .alex-vault) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token dy tx-sender))
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token dy sender)))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -707,13 +716,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
             (asserts! (is-eq (get collateral-token pool) (contract-of collateral-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (try! (contract-call? .alex-vault transfer-sft collateral expiry dx tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-sft collateral expiry dx sender)))
             (unwrap! (contract-call? token transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -1075,7 +1085,7 @@
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
-(define-constant MAX_POW_RELATIVE_ERROR u4) 
+(define-constant MAX_POW_RELATIVE_ERROR u4)
 
 ;; public functions
 ;;

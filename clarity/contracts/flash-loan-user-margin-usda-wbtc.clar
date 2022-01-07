@@ -3,6 +3,7 @@
 
 (define-constant ONE_8 (pow u10 u8))
 (define-constant ERR-EXPIRY-IS-NONE (err u2027))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
 ;; @desc execute
 ;; @params collateral
@@ -22,6 +23,7 @@
             (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wbtc .token-usda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-wbtc .token-wbtc minted-yield-token none))))
         )
+        (asserts! (is-eq .token-usda (contract-of collateral)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
         (try! (contract-call? .fixed-weight-pool swap-helper .token-wbtc .token-usda u50000000 u50000000 swapped-token none))
         (print { object: "flash-loan-user-margin-usda-wbtc", action: "execute", data: gross-amount })

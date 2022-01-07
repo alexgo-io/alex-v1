@@ -118,7 +118,7 @@
 ;; @returns (response bool uint)
 (define-public (mint (amount uint) (recipient principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-mint? lbp-alex-usda-90-10 amount recipient)
   )
 )
@@ -130,7 +130,7 @@
 ;; @returns (response bool uint)
 (define-public (burn (amount uint) (sender principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-burn? lbp-alex-usda-90-10 amount sender)
   )
 )

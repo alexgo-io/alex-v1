@@ -138,6 +138,10 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
+
+        (try! (contract-call? .alex-vault add-approved-token staked-token))
+        (try! (contract-call? .alex-vault add-approved-token (contract-of yield-token)))
+
         (print { object: "pool", action: "created", pool-data: pool-data })
         (ok true)
    )
@@ -153,6 +157,7 @@
                 total-supply: (+ dx total-supply)
             }))
             (current-cycle (unwrap! (get-reward-cycle staked-token block-height) ERR-STAKING-NOT-AVAILABLE))
+            (sender tx-sender)
         )
         (asserts! (is-eq (get pool-token pool) (contract-of yield-token)) ERR-INVALID-TOKEN)
         ;; check if staking already started
@@ -164,7 +169,7 @@
         
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token mint-fixed start-cycle dx tx-sender))
+        (as-contract (try! (contract-call? yield-token mint-fixed start-cycle dx sender)))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -199,7 +204,7 @@
         (and (> portioned-rewards u0) (as-contract (try! (contract-call? .token-t-alex transfer-fixed portioned-rewards tx-sender recipient none))))
 
         (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token burn-fixed start-cycle shares recipient))
+        (as-contract (try! (contract-call? yield-token burn-fixed start-cycle shares recipient)))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {staked-token: shares, reward-token: portioned-rewards})
     )
