@@ -18,6 +18,7 @@
 (define-constant ERR-STAKING-IN-PROGRESS (err u2018))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
 (define-constant ERR-INVALID-TOKEN (err u2026))
+(define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -180,6 +181,8 @@
 )
 
 (define-public (reduce-position (staked-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (percent uint))
+  (begin
+    (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
     (let
         (
             (staked-token (contract-of staked-token-trait))
@@ -208,6 +211,7 @@
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {staked-token: shares, reward-token: portioned-rewards})
     )
+  )
 )
 
 (define-private (check-err (result (response (tuple (entitled-token uint) (to-return uint)) uint)) (prior (response (tuple (entitled-token uint) (to-return uint)) uint)))
