@@ -327,7 +327,7 @@
         (last-random 
           (if 
             (is-eq (get last-random details) u0) 
-            (mod (unwrap! (get-random-uint-at-block (get registration-start details)) ERR-NO-VRF-SEED-FOUND) u13495287074701800000000000000) 
+            (mod (unwrap! (get-random-uint-at-block (get registration-end details)) ERR-NO-VRF-SEED-FOUND) u13495287074701800000000000000) 
             (get last-random details)
           )
         )
