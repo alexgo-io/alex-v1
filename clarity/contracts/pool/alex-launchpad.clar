@@ -131,9 +131,10 @@
     (asserts! (> tickets u0) ERR-INVALID-TICKET)
 
     (map-set listing (contract-of token-trait) (merge details { total-tickets: (+ (get total-tickets details) tickets ) }))
-
-    (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) tickets ONE_8) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
-    (ok true)
+    
+    (ok
+      (unwrap! (contract-call? token-trait transfer-fixed (* (get amount-per-ticket details) tickets ONE_8) tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
+    )
   )
 )
 
@@ -163,7 +164,17 @@
   )
 )
 
-(define-read-only (get-token-details (token principal))
+(define-read-only (is-listing-activated (token principal))
+  (let
+    (
+      (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
+    )
+    (ok (>= (get total-subscribed details) (get activation-threshold details)))
+  )
+)
+
+;; returns (some listing) or none
+(define-read-only (get-listing-details (token principal))
   (map-get? listing token)
 )
 
@@ -251,15 +262,6 @@
     (map-get? subscriber-at-token { token: token, user-id: user-id }))
 )
 
-(define-read-only (is-listing-activated (token principal))
-  (let
-    (
-      (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
-    )
-    (ok (>= (get total-subscribed details) (get activation-threshold details)))
-  )
-)
-
 (define-public (refund (token-trait <ft-trait>) (ticket-trait <ft-trait>))
   (let
     (
@@ -333,7 +335,8 @@
         (value-low (get value-low sub-details))
         (value-high (get value-high sub-details))
         (wstx-per-ticket-in-fixed (get wstx-per-ticket-in-fixed details))
-        (value-low-adjusted 
+        ;; adjusts value-low and value-high to account for sampling with replacement
+        (value-low-adjusted
           (if (< value-low (/ total-tickets u2)) 
             u0 
             (if (> (+ value-high (/ total-tickets u2)) total-subscribed)

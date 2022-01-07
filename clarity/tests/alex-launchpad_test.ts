@@ -214,7 +214,7 @@ Clarinet.test({
         result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
         result.expectOk().expectBool(true);         
 
-        // console.log((await ALPTest.getTokenDetails(TOKEN_TRAIT_ADDRESS)).result);
+        // console.log((await ALPTest.getListingDetails(TOKEN_TRAIT_ADDRESS)).result);
         // console.log((await ALPTest.getSubscriberAtTokenOrDefault(TOKEN_TRAIT_ADDRESS, 1)).result);
 
         result = ALPTest.claimNine(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
@@ -335,7 +335,7 @@ Clarinet.test({
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 100);
         result.expectOk().expectUint(1);
 
-        result = ALPTest.getTokenDetails(TOKEN_TRAIT_ADDRESS).result;
+        result = ALPTest.getListingDetails(TOKEN_TRAIT_ADDRESS).result;
         result = result.expectSome().expectTuple();
         result['activation-threshold'].expectUint(1)
         result['amount-per-ticket'].expectUint(100)
