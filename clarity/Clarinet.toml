@@ -31,7 +31,6 @@ depends_on = [
   "trait-vault",
   "trait-sip-010",
   "trait-flash-loan-user",
-  "math-fixed-point",
   "trait-ownable",
   "trait-semi-fungible"
 ]
@@ -73,10 +72,8 @@ depends_on = [
   "alex-vault",
   "trait-sip-010",
   "trait-vault",
-  "math-fixed-point",
   "weighted-equation",
   "alex-reserve-pool",
-  "token-usda",
   "trait-multisig-vote",
   "token-wstx"
 ]
@@ -204,7 +201,7 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-wstx]
 path = "contracts/wrapped-token/token-wstx.clar"
-depends_on = [ "trait-ownable", "alex-vault", "trait-sip-010" ]
+depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.trait-flash-loan-user]
 path = "contracts/traits/trait-flash-loan-user.clar"
@@ -236,11 +233,11 @@ depends_on = [ "trait-sip-010", "trait-flash-loan-user" ]
 
 [contracts.weighted-equation]
 path = "contracts/equations/weighted-equation.clar"
-depends_on = [ "math-fixed-point" ]
+depends_on = [ ]
 
 [contracts.yield-token-equation]
 path = "contracts/equations/yield-token-equation.clar"
-depends_on = [ "math-fixed-point" ]
+depends_on = [ ]
 
 [contracts.yield-token-pool]
 path = "contracts/pool/yield-token-pool.clar"
