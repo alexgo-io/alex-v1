@@ -552,7 +552,7 @@
     (and (> to-return u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait to-return user))))
     (and (> to-return u0) (as-contract (try! (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? .token-t-alex mint-fixed entitled-token user))))
+    (and (> entitled-token u0) (as-contract (try! (contract-call? .age000-governance-token mint-fixed entitled-token user))))
     (ok { to-return: to-return, entitled-token: entitled-token })
   )
 )

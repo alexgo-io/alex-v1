@@ -222,4 +222,4 @@
 (map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wstx-usda true)
 
-(map-set approved-tokens .token-t-alex true)
+(map-set approved-tokens .age000-governance-token true)

@@ -3,7 +3,7 @@ import { CoreClient } from "./token-alex-src/core-client.ts";
 import { it } from "./token-alex-src/testutil.ts";
 
 const ONE_8 = 1e8;
-const token = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-t-alex';
+const token = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token';
 
 describe("STAKING :", () => {
 

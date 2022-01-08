@@ -223,7 +223,7 @@ Clarinet.test({
         result.result.expectOk().expectUint(100 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8);          
-        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8); 
         
         // non contract-owner attempting to call get-some-tokens for another wallet throws an error.
@@ -257,7 +257,7 @@ Clarinet.test({
         result.result.expectOk().expectUint(200 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);   
-        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);        
 
         // using more than max-use throws an error
@@ -286,13 +286,13 @@ Clarinet.test({
         result.result.expectOk().expectUint(100 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);   
-        result = await FaucetTest.getBalance('token-t-alex', wallet_6.address);
+        result = await FaucetTest.getBalance('age000-governance-token', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);    
         result = await FaucetTest.getBalance('token-usda', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
         result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);   
-        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
 
         // this will return ok, but list of ok or err
@@ -324,9 +324,9 @@ Clarinet.test({
 
         result = await FaucetTest.mintAlexMany(deployer, mintAlexManyRecords);
         result.expectOk().expectBool(true);
-        result = await FaucetTest.getBalance('token-t-alex', wallet_6.address);
+        result = await FaucetTest.getBalance('age000-governance-token', wallet_6.address);
         result.result.expectOk().expectUint(300 * ONE_8);
-        result = await FaucetTest.getBalance('token-t-alex', wallet_7.address);
+        result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(500 * ONE_8);        
     },    
 });

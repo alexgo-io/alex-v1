@@ -5,7 +5,7 @@ import { ALEXToken } from "./models/alex-tests-tokens.ts";
 
 const ONE_8 = 100000000
 
-const alexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-t-alex";
+const alexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token";
 const stakedAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.staked-alex";
 const ACTIVATION_DELAY = 150
 

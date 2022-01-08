@@ -17,13 +17,13 @@ class ALEXToken {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-t-alex", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("age000-governance-token", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-t-alex", "get-balance", [
+    return this.chain.callReadOnlyFn("age000-governance-token", "get-balance", [
       types.principal(account),
     ], this.deployer.address);
   }
@@ -31,7 +31,7 @@ class ALEXToken {
   // Always need to called by deployer
   mint(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-t-alex", "mint", [
+      Tx.contractCall("age000-governance-token", "mint", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -41,7 +41,7 @@ class ALEXToken {
 
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-t-alex", "mint-fixed", [
+      Tx.contractCall("age000-governance-token", "mint-fixed", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -51,7 +51,7 @@ class ALEXToken {
   
   transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("token-t-alex", "transfer-fixed", [
+        Tx.contractCall("age000-governance-token", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender.address),
           types.principal(receiver),
@@ -62,7 +62,7 @@ class ALEXToken {
   }
 
   totalSupply() {
-    return this.chain.callReadOnlyFn("token-t-alex", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("age000-governance-token", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { ALEXToken };
