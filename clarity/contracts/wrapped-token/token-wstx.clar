@@ -10,6 +10,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-MINT-FAILED (err u6002))
 (define-constant ERR-BURN-FAILED (err u6003))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -160,4 +161,23 @@
 ;; @returns (response bool)
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
+)
+
+;; @desc check-err
+;; @params result 
+;; @params prior
+;; @returns (response bool uint)
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
+    )
+)
+
+(define-private (transfer-from-tuple (recipient { to: principal, amount: uint }))
+  (ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
+)
+
+(define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
+  (fold check-err (map transfer-from-tuple recipients) (ok true))
 )
