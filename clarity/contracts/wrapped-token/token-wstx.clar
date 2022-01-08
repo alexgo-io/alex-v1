@@ -85,13 +85,9 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )
+    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) sender recipient))
+    (match memo to-print (print to-print) 0x)
+    (ok true)
   )
 )
 
