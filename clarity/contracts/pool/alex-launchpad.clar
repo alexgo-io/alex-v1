@@ -597,5 +597,5 @@
   )
 )
 
-;; ;; initialisation
-;; (set-contract-owner .executor-dao)
+;; initialisation
+(set-contract-owner .executor-dao)
