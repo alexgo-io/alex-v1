@@ -423,7 +423,7 @@
 
 ;; computes a random number by converting into uint the lower 16 bytes of hash of the sum of ticket position and last random
 (define-private (get-next-random (last-random uint) (ticket-position uint))    
-    (buff-to-uint-le (lower-16-le (sha256 (+ ticket-position last-random))))
+    (buff-to-uint-le (lower-16-le (sha256 (concat (sha256 ticket-position) (sha256 last-random)))))
 )
 
 ;; VRF
