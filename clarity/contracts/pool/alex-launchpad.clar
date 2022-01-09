@@ -96,7 +96,7 @@
 (define-public (create-pool (token-trait <ft-trait>) (ticket-trait <ft-trait>) (fee-to-address principal) (amount-per-ticket uint) (wstx-per-ticket-in-fixed uint) (registration-start uint) (registration-end uint) (claim-end uint) (activation-threshold uint))
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (asserts! (> registration-end registration-start) ERR-INVALID-REGISTRATION-PERIOD)
+    (asserts! (and (> registration-start block-height) (> registration-end registration-start)) ERR-INVALID-REGISTRATION-PERIOD)
     (asserts! (> claim-end registration-end) ERR-INVALID-CLAIM-PERIOD)
     (map-set listing 
       (contract-of token-trait)
@@ -165,12 +165,7 @@
 )
 
 (define-read-only (is-listing-activated (token principal))
-  (let
-    (
-      (details (unwrap! (map-get? listing token) ERR-INVALID-TOKEN))
-    )
-    (ok (>= (get total-subscribed details) (get activation-threshold details)))
-  )
+  (ok (get activated (unwrap! (map-get? listing token) ERR-INVALID-TOKEN)))
 )
 
 ;; returns (some listing) or none
@@ -277,8 +272,8 @@
     (asserts! (> refund-amount u0) ERR-REFUND-NOT-AVAILABLE)    
     (asserts! 
       (or 
-        (not (try! (is-listing-activated token))) ;; listing is not activated
-        (try! (is-listing-completed token)) ;; listing is completed
+        (not (is-ok (is-listing-activated token))) ;; listing is not activated
+        (is-ok (is-listing-completed token)) ;; listing is completed
         (> block-height (get claim-end details)) ;; passed claim-end
       )
       ERR-REFUND-NOT-AVAILABLE
@@ -409,7 +404,7 @@
         (this-random (get-next-random last-random (+ (get value-low sub-details) (get ticket-balance sub-details))))   
       )   
       (asserts! (> block-height (get registration-end details)) ERR-REGISTRATION-NOT-ENDED)
-      (asserts! (try! (is-listing-activated (contract-of token-trait))) ERR-LISTING-NOT-ACTIVATED)
+      (asserts! (is-ok (is-listing-activated (contract-of token-trait))) ERR-LISTING-NOT-ACTIVATED)
       (asserts! (<= block-height (get claim-end details)) ERR-CLAIM-ENDED)
       (asserts! (is-eq (contract-of ticket-trait) (get ticket details)) ERR-INVALID-TICKET)         
       (asserts! (> (get ticket-balance sub-details) u0) ERR-CLAIM-NOT-AVAILABLE)
@@ -426,11 +421,8 @@
   )
 )
 
-(define-private (get-next-random (last-random uint) (ticket-position uint))
-    ;; implementation of Linear congruential generator following POSIX rand48
-    ;; (mod (+ (* u25214903917 last-random) u11) (pow u2 u48))
-    
-    ;; computes a random number by converting into uint the lower 16 bytes of hash of the sum of ticket position and last random
+;; computes a random number by converting into uint the lower 16 bytes of hash of the sum of ticket position and last random
+(define-private (get-next-random (last-random uint) (ticket-position uint))    
     (buff-to-uint-le (lower-16-le (sha256 (+ ticket-position last-random))))
 )
 

@@ -376,7 +376,7 @@
     )
     (match (get-reward-cycle token stacks-height)
       current-cycle
-      (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
+      (div-down (mul-down (get-coinbase-amount-or-default token target-cycle) user-staked-this-cycle) total-staked-this-cycle)      
       u0
     )
   )
