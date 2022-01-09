@@ -204,7 +204,7 @@
         (try! (fold check-err (map claim-staking-reward reward-cycles trait-lists) (ok { entitled-token: u0, to-return: u0 })))
 
         (and (> shares u0) (as-contract (try! (contract-call? staked-token-trait transfer-fixed shares tx-sender recipient none))))
-        (and (> portioned-rewards u0) (as-contract (try! (contract-call? .token-t-alex transfer-fixed portioned-rewards tx-sender recipient none))))
+        (and (> portioned-rewards u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed portioned-rewards tx-sender recipient none))))
 
         (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
         (as-contract (try! (contract-call? yield-token burn-fixed start-cycle shares recipient)))

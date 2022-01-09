@@ -596,3 +596,6 @@
     )
   )
 )
+
+;; ;; initialisation
+;; (set-contract-owner .executor-dao)
