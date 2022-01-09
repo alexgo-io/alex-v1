@@ -320,7 +320,7 @@ describe("STAKING :", () => {
 
         // assert
         receipt.result.expectOk().expectBool(true);
-        assertEquals(receipt.events.length, 2);
+        assertEquals(receipt.events.length, 1);
         receipt.events.expectFungibleTokenTransferEvent(
           amountTokens,
           staker.address,
@@ -362,7 +362,7 @@ describe("STAKING :", () => {
         // assert
         receipts.forEach((receipt: TxReceipt) => {
           receipt.result.expectOk().expectBool(true);
-          assertEquals(receipt.events.length, 2);
+          assertEquals(receipt.events.length, 1);
 
           receipt.events.expectFungibleTokenTransferEvent(
             amountTokens,
@@ -714,7 +714,7 @@ describe("STAKING :", () => {
         result['entitled-token'].expectUint(ONE_8);
         result['to-return'].expectUint(amountTokens);
 
-        assertEquals(receipts[1].events.length, 3);
+        assertEquals(receipts[1].events.length, 2);
 
         receipts[1].events.expectFungibleTokenTransferEvent(
           amountTokens,
@@ -822,7 +822,7 @@ describe("STAKING :", () => {
           } else {        
             let result:any = receipt.result.expectOk().expectTuple();
             result['entitled-token'].expectUint(ONE_8);
-            assertEquals(receipt.events.length, 3);
+            assertEquals(receipt.events.length, 2);
 
             receipt.events.expectFungibleTokenTransferEvent(
               toReturn,
