@@ -18,6 +18,7 @@
 (define-constant ERR-STAKING-IN-PROGRESS (err u2018))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
 (define-constant ERR-INVALID-TOKEN (err u2026))
+(define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -138,6 +139,10 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
+
+        (try! (contract-call? .alex-vault add-approved-token staked-token))
+        (try! (contract-call? .alex-vault add-approved-token (contract-of yield-token)))
+
         (print { object: "pool", action: "created", pool-data: pool-data })
         (ok true)
    )
@@ -153,6 +158,7 @@
                 total-supply: (+ dx total-supply)
             }))
             (current-cycle (unwrap! (get-reward-cycle staked-token block-height) ERR-STAKING-NOT-AVAILABLE))
+            (sender tx-sender)
         )
         (asserts! (is-eq (get pool-token pool) (contract-of yield-token)) ERR-INVALID-TOKEN)
         ;; check if staking already started
@@ -164,7 +170,7 @@
         
         ;; mint pool token and send to tx-sender
         (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token mint-fixed start-cycle dx tx-sender))
+        (as-contract (try! (contract-call? yield-token mint-fixed start-cycle dx sender)))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok true)
    )
@@ -175,6 +181,8 @@
 )
 
 (define-public (reduce-position (staked-token-trait <ft-trait>) (start-cycle uint) (yield-token <sft-trait>) (percent uint))
+  (begin
+    (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
     (let
         (
             (staked-token (contract-of staked-token-trait))
@@ -196,13 +204,14 @@
         (try! (fold check-err (map claim-staking-reward reward-cycles trait-lists) (ok { entitled-token: u0, to-return: u0 })))
 
         (and (> shares u0) (as-contract (try! (contract-call? staked-token-trait transfer-fixed shares tx-sender recipient none))))
-        (and (> portioned-rewards u0) (as-contract (try! (contract-call? .token-t-alex transfer-fixed portioned-rewards tx-sender recipient none))))
+        (and (> portioned-rewards u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed portioned-rewards tx-sender recipient none))))
 
         (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-updated)
-        (try! (contract-call? yield-token burn-fixed start-cycle shares recipient))
+        (as-contract (try! (contract-call? yield-token burn-fixed start-cycle shares recipient)))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {staked-token: shares, reward-token: portioned-rewards})
     )
+  )
 )
 
 (define-private (check-err (result (response (tuple (entitled-token uint) (to-return uint)) uint)) (prior (response (tuple (entitled-token uint) (to-return uint)) uint)))

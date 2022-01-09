@@ -58,7 +58,7 @@
 ;; @returns (response bool)
 (define-public (add-to-balance (token principal) (amount uint))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ok (map-set reserve token (+ amount (get-balance token))))
   )
 )
@@ -69,7 +69,7 @@
 ;; @returns (response bool)
 (define-public (remove-from-balance (token principal) (amount uint))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
     (ok (map-set reserve token (- (get-balance token) amount)))
   )
@@ -376,7 +376,7 @@
     )
     (match (get-reward-cycle token stacks-height)
       current-cycle
-      (mul-down (get-coinbase-amount-or-default token target-cycle) (div-down user-staked-this-cycle total-staked-this-cycle))
+      (div-down (mul-down (get-coinbase-amount-or-default token target-cycle) user-staked-this-cycle) total-staked-this-cycle)      
       u0
     )
   )
@@ -417,7 +417,8 @@
         first: target-cycle,
         last: (+ target-cycle lock-period)
       })
-    )    
+    )   
+    (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN) 
     (asserts! (>= block-height (get-activation-block-or-default token)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
@@ -533,6 +534,7 @@
       (entitled-token (get-entitled-staking-reward token user-id target-cycle stacks-height))
       (to-return (get to-return (get-staker-at-cycle-or-default token target-cycle user-id)))
     )
+    (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN)
     (asserts! (> current-cycle target-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     ;; disable ability to claim again
     (map-set staker-at-cycle
@@ -547,10 +549,10 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (try! (contract-call? .alex-vault transfer-ft token-trait to-return user)))
-    (and (> to-return u0) (try! (as-contract (remove-from-balance (contract-of token-trait) to-return))))
+    (and (> to-return u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait to-return user))))
+    (and (> to-return u0) (as-contract (try! (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
-    (and (> entitled-token u0) (as-contract (try! (contract-call? .token-t-alex mint-fixed entitled-token user))))
+    (and (> entitled-token u0) (as-contract (try! (contract-call? .age000-governance-token mint-fixed entitled-token user))))
     (ok { to-return: to-return, entitled-token: entitled-token })
   )
 )

@@ -1,0 +1,3 @@
+[submodule "executor-dao"]
+	path = executor-dao
+	url = https://github.com/alexgo-io/executor-dao.git

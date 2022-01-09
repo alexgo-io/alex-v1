@@ -278,6 +278,10 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
+
+        (try! (contract-call? .alex-vault add-approved-token token-x))
+        (try! (contract-call? .alex-vault add-approved-token token-y))
+        (try! (contract-call? .alex-vault add-approved-token (contract-of the-pool-token)))    
         (try! (add-to-position token-x-trait token-y-trait expiry the-pool-token dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
@@ -314,11 +318,12 @@
                     balance-y: (if (<= balance-y dy) u0 (- balance-y dy))
                     })
                 )
+                (sender tx-sender)
             )
             
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)    
 
-            (try! (contract-call? .alex-vault ft-transfer-multi token-x-trait dx token-y-trait dy tx-sender))
+            (as-contract (try! (contract-call? .alex-vault ft-transfer-multi token-x-trait dx token-y-trait dy sender)))
             
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-pool-token burn-fixed shares tx-sender))
@@ -356,6 +361,7 @@
                     balance-x: (+ balance-x dx),
                     balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
                     weight-x-t: weight-x }))
+                (sender tx-sender)
             )
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
@@ -363,7 +369,7 @@
             (asserts! (>= (get price-x-max pool) (div-down dy dx)) ERR-PRICE-GREATER-THAN-MAX)
 
             (unwrap! (contract-call? token-x-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
@@ -400,13 +406,14 @@
                     balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
                     balance-y: (+ balance-y dy),
                     weight-x-t: weight-x}))
+                (sender tx-sender)
             )
 
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (asserts! (<= (get price-x-min pool) (div-down dy dx)) ERR-PRICE-LOWER-THAN-MIN)
             (asserts! (>= (get price-x-max pool) (div-down dy dx)) ERR-PRICE-GREATER-THAN-MAX)
 
-            (try! (contract-call? .alex-vault transfer-ft token-x-trait dx tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender)))
             (unwrap! (contract-call? token-y-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)

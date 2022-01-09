@@ -85,14 +85,14 @@
 
 (define-public (mint (amount uint) (recipient principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-mint? lottery-t-alex amount recipient)
   )
 )
 
 (define-public (burn (amount uint) (sender principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-burn? lottery-t-alex amount sender)
   )
 )

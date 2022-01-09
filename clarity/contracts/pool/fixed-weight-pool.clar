@@ -307,7 +307,11 @@
         
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
-        ;; Deployer should inject the initial coins to the pool
+        
+        (try! (contract-call? .alex-vault add-approved-token token-x))
+        (try! (contract-call? .alex-vault add-approved-token token-y))
+        (try! (contract-call? .alex-vault add-approved-token (contract-of the-pool-token)))        
+
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
@@ -344,18 +348,19 @@
                     balance-x: (+ balance-x dx),
                     balance-y: (+ balance-y dy)
                 }))
+                (sender tx-sender)
             )
             (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
             ;; CR-01
             (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
-            (unwrap! (contract-call? token-x-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (unwrap! (contract-call? token-y-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-            (try! (contract-call? the-pool-token mint-fixed new-supply tx-sender))
+            (as-contract (try! (contract-call? the-pool-token mint-fixed new-supply sender)))
             
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {supply: new-supply, dx: dx, dy: dy})
@@ -394,16 +399,17 @@
                     balance-y: (if (<= balance-y dy) u0 (- balance-y dy))
                     })
                 )
+                (sender tx-sender)
             )
 
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)            
 
-            (try! (contract-call? .alex-vault transfer-ft token-x-trait dx tx-sender))
-            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
-            (try! (contract-call? the-pool-token burn-fixed shares tx-sender))
+            (as-contract (try! (contract-call? the-pool-token burn-fixed shares sender)))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
@@ -447,13 +453,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
 
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-            (unwrap! (contract-call? .token-wstx transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token-y-trait dy tx-sender))
-            (try! (contract-call? .alex-reserve-pool add-to-balance .token-wstx (- fee fee-rebate)))            
+            (unwrap! (contract-call? .token-wstx transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance .token-wstx (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
@@ -499,13 +506,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
 
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-            (try! (contract-call? .alex-vault transfer-ft .token-wstx dx tx-sender))
-            (unwrap! (contract-call? token-y-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft .token-wstx dx sender)))
+            (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)

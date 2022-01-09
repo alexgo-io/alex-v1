@@ -117,7 +117,7 @@
 ;; @returns (response bool uint)
 (define-public (mint (amount uint) (recipient principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-mint? fwp-wstx-wbtc-50-50 amount recipient)
   )
 )
@@ -129,7 +129,7 @@
 ;; @returns (response bool uint)
 (define-public (burn (amount uint) (sender principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-burn? fwp-wstx-wbtc-50-50 amount sender)
   )
 )

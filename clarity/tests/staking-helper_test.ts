@@ -3,7 +3,7 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
-const stakeContract = "fwp-wstx-usda-50-50"
+const stakeContract = "age000-governance-token"
 const reserveContract = "alex-reserve-pool";
 const helperContract = "staking-helper";
 const reward_cycle_length = 525;

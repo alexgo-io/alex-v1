@@ -48,9 +48,9 @@
         (
             (sender tx-sender)
             (new-id (+ u1 (var-get user-nonce)))
-            (balance-in-fixed (unwrap-panic (contract-call? .token-t-alex get-balance-fixed sender)))
+            (balance-in-fixed (unwrap-panic (contract-call? .age000-governance-token get-balance-fixed sender)))
         )
-        (as-contract (try! (contract-call? .token-t-alex burn-fixed balance-in-fixed sender)))
+        (as-contract (try! (contract-call? .age000-governance-token burn-fixed balance-in-fixed sender)))
         (map-insert 
             mapping
             new-id

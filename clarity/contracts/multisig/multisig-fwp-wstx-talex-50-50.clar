@@ -341,8 +341,8 @@
   ) 
   
     ;; Setting for Yield Token Pool
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .token-t-alex u50000000 u50000000 new-fee-rate-x))
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .token-t-alex u50000000 u50000000 new-fee-rate-y))
+    (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .age000-governance-token u50000000 u50000000 new-fee-rate-x))
+    (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .age000-governance-token u50000000 u50000000 new-fee-rate-y))
     
     (ok true)
   )

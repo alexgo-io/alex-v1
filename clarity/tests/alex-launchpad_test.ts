@@ -14,7 +14,7 @@ const REGISTRATION_END = 100
 const CLAIM_END = 150
 const TICKETS_NUM = 1
 const OWNER = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
-const TOKEN_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-t-alex"
+const TOKEN_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token"
 const TICKET_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lottery-ido-alex" 
 const FEE_TO_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
 
@@ -191,14 +191,14 @@ Clarinet.test({
         result = ALPTest.addToPosition (deployer, TOKEN_TRAIT_ADDRESS, 10).receipts[0].result;
         result.expectOk().expectBool(true);
 
-        // Claim at this point should return ERR-REGISTRATION-NOT-ENDED
-        result = ALPTest.claim (deployer, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
-        result.expectErr().expectUint(ErrCode.ERR_REGISTRATION_NOT_ENDED);
-
         // Register with the Token and Ticket with which the pool is created
         chain.mineEmptyBlockUntil(REGISTRATION_START)
         result = ALPTest.register(wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS, 10)
         result.expectOk().expectUint(1);
+
+        // Claim at this point should return ERR-REGISTRATION-NOT-ENDED
+        result = ALPTest.claim (wallet_1, TOKEN_TRAIT_ADDRESS, TICKET_TRAIT_ADDRESS).receipts[0].result;
+        result.expectErr().expectUint(ErrCode.ERR_NO_VRF_SEED_FOUND);        
         
         chain.mineEmptyBlockUntil(REGISTRATION_END + 1)
         

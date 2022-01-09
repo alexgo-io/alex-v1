@@ -366,6 +366,12 @@
         
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
+
+            (try! (contract-call? .alex-vault add-approved-token token-x))
+            (try! (contract-call? .alex-vault add-approved-token token-y))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of the-yield-token)))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of the-key-token)))
+
             (try! (add-to-position token collateral expiry the-yield-token the-key-token dx))
             (print { object: "pool", action: "created", data: pool-data })
             (ok true)
@@ -451,6 +457,7 @@
                     balance-x: (+ balance-x dx-weighted),
                     balance-y: (+ balance-y dy-weighted)
                 }))
+                (sender tx-sender)
             ) 
 
             (if (is-eq token-x token-y)
@@ -458,13 +465,13 @@
                 (unwrap! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
             )
 
-            (unwrap! (contract-call? collateral transfer-fixed dx-weighted tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (unwrap! (contract-call? token transfer-fixed dy-weighted tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? collateral transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
-            (try! (contract-call? the-yield-token mint-fixed expiry yield-new-supply tx-sender))
-            (try! (contract-call? the-key-token mint-fixed expiry key-new-supply tx-sender))
+            (as-contract (try! (contract-call? the-yield-token mint-fixed expiry yield-new-supply sender)))
+            (as-contract (try! (contract-call? the-key-token mint-fixed expiry key-new-supply sender)))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
@@ -493,7 +500,8 @@
                 (balance-y (get balance-y pool))
                 (yield-supply (get yield-supply pool))
                 (total-shares (unwrap! (contract-call? the-yield-token get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
-                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))   
+                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
+                (sender tx-sender)
 
                 ;; if there are any residual collateral, convert to token
                 (bal-x-to-y (if (is-eq balance-x u0) 
@@ -501,8 +509,7 @@
                                 (if (is-eq token-x token-y)
                                     balance-x
                                     (begin
-                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender)))
-                                        ;; (as-contract (try! (contract-call? .fixed-weight-pool swap-helper collateral token u50000000 u50000000 balance-x none)))
+                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender)))                                        
                                         (as-contract 
                                             (if (is-eq token-x .token-wstx)
                                                 (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token u50000000 balance-x none)))
@@ -545,10 +552,10 @@
             (and (> bal-y-short u0) (try! (contract-call? .alex-reserve-pool remove-from-balance token-y bal-y-short)))            
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (try! (contract-call? .alex-vault transfer-ft token shares tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token shares sender)))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-yield-token burn-fixed expiry shares tx-sender))
+            (as-contract (try! (contract-call? the-yield-token burn-fixed expiry shares sender)))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
@@ -580,6 +587,7 @@
                 (yield-supply (get yield-supply pool))        
                 (total-shares (unwrap! (contract-call? the-key-token get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
+                (sender tx-sender)
                 ;; CR-02
                 ;; if there are any residual collateral, convert to token
                 (bal-x-to-y (if (is-eq balance-x u0) 
@@ -619,10 +627,10 @@
 
             (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)        
             
-            (and (> bal-y-reduce u0) (try! (contract-call? .alex-vault transfer-ft token bal-y-reduce tx-sender)))
+            (and (> bal-y-reduce u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token bal-y-reduce sender))))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (try! (contract-call? the-key-token burn-fixed expiry shares tx-sender))
+            (as-contract (try! (contract-call? the-key-token burn-fixed expiry shares sender)))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: bal-y-reduce})
         )        
@@ -674,13 +682,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (unwrap! (contract-call? collateral transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-vault transfer-ft token dy tx-sender))
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token dy sender)))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -735,13 +744,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
 
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (try! (contract-call? .alex-vault transfer-ft collateral dx tx-sender))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft collateral dx sender)))
             (unwrap! (contract-call? token transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate)))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)

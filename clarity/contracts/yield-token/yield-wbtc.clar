@@ -170,7 +170,7 @@
 ;; @returns (response bool)
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(try! (check-is-approved contract-caller))
+		(try! (check-is-approved tx-sender))
 		(try! (ft-mint? yield-wbtc amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
@@ -187,7 +187,7 @@
 ;; @returns (response bool)
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(try! (check-is-approved contract-caller))
+		(try! (check-is-approved tx-sender))
 		(try! (ft-burn? yield-wbtc amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))

@@ -301,10 +301,11 @@
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
-            ;; ;; if yield-token added has a longer expiry than current max-expiry, update max-expiry (to expiry + one block).
-            ;; (var-set max-expiry (if (< (var-get max-expiry) expiry) (+ expiry ONE_8) (var-get max-expiry)))
-            (try! (add-to-position expiry the-yield-token the-token the-pool-token dx (some dy)))
+            (try! (contract-call? .alex-vault add-approved-token yield-token))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of the-token)))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of the-pool-token)))
 
+            (try! (add-to-position expiry the-yield-token the-token the-pool-token dx (some dy)))            
             (print { object: "pool", action: "created", data: pool-data })
             (ok true)
         )
@@ -360,6 +361,7 @@
                     balance-yield-token: (+ balance-yield-token new-dy-act),
                     balance-virtual: (+ balance-virtual new-dy-vir)   
                 }))
+                (sender tx-sender)
             )
             (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN) 
@@ -369,13 +371,13 @@
             (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) new-dy-act) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             ;; send x to vault
-            (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? the-token transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
             ;; send y to vault
-            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act tx-sender .alex-vault) ERR-TRANSFER-FAILED))
+            (and (> new-dy-act u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry new-dy-act sender .alex-vault) ERR-TRANSFER-FAILED))
         
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
-            (try! (contract-call? the-pool-token mint-fixed expiry new-supply tx-sender))
+            (as-contract (try! (contract-call? the-pool-token mint-fixed expiry new-supply sender)))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {supply: new-supply, balance-token: dx, balance-yield-token: new-dy-act, balance-virtual: new-dy-vir})
         )
@@ -413,15 +415,16 @@
                     balance-virtual: (if (<= balance-virtual dy-vir) u0 (- balance-virtual dy-vir))
                     })
                 )
+                (sender tx-sender)
             )
             (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
-            (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
-            (and (> dy-act u0) (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy-act tx-sender)))
+            (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft the-token dx sender))))
+            (and (> dy-act u0) (as-contract (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy-act sender))))
 
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
-            (try! (contract-call? the-pool-token burn-fixed expiry shares tx-sender))
+            (as-contract (try! (contract-call? the-pool-token burn-fixed expiry shares sender)))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
         )    
@@ -485,13 +488,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
             (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
-            (and (> dy u0) (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy tx-sender)))
-            (try! (contract-call? .alex-reserve-pool add-to-balance (contract-of the-token) (- fee fee-rebate)))
+            (and (> dx u0) (unwrap! (contract-call? the-token transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
+            (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft the-yield-token expiry dy sender))))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance (contract-of the-token) (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
@@ -536,13 +540,14 @@
                         }
                     )
                 )
+                (sender tx-sender)
             )
             (asserts! (is-eq (get the-token pool) (contract-of the-token)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (and (> dx u0) (try! (contract-call? .alex-vault transfer-ft the-token dx tx-sender)))
-            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy tx-sender .alex-vault) ERR-TRANSFER-FAILED))
-            (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate)))
+            (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft the-token dx sender))))
+            (and (> dy u0) (unwrap! (contract-call? the-yield-token transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
+            (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate))))
 
             ;; post setting
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
