@@ -73,7 +73,7 @@
 )
 
 (define-data-var pool-count uint u0)
-(define-data-var pools-list (list 2000 uint) (list))
+(define-data-var pools-list (list 500 uint) (list))
 
 ;; 4 years based on 2102400 blocks per year (i.e. 15 secs per block)
 (define-data-var max-expiry uint (scale-up u8409600))
@@ -298,7 +298,7 @@
             (map-set pools-map { pool-id: pool-id } { yield-token: yield-token, expiry: expiry })
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-data)
         
-            (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
+            (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
             (try! (contract-call? .alex-vault add-approved-token yield-token))

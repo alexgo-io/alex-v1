@@ -1,7 +1,7 @@
 [project]
 name = "alex-v1"
 requirements = [ ]
-costs_version = 1
+costs_version = 2
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
@@ -318,7 +318,7 @@ depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.alex-launchpad]
 path = "contracts/pool/alex-launchpad.clar"
-depends_on = [ "trait-ownable", "trait-sip-010", "token-wstx" ]
+depends_on = [ "trait-ownable", "trait-sip-010", "token-wstx", "executor-dao" ]
 
 [contracts.staked-alex]
 path = "contracts/staked-token/staked-alex.clar"
@@ -420,6 +420,6 @@ depends_on = []
 path = "../executor-dao/contracts/traits/sip010-ft-trait.clar"
 depends_on = []
 
-[contracts.agp002-launchpad-alex]
-path = "../executor-dao/contracts/proposals/agp002-launchpad-alex.clar"
+[contracts.agp004-launchpad-alex]
+path = "../executor-dao/contracts/proposals/agp004-launchpad-alex.clar"
 depends_on = ["proposal-trait", "alex-launchpad", "lottery-ido-alex", "age000-governance-token"]

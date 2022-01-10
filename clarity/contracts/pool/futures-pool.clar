@@ -56,7 +56,7 @@
 )
 
 (define-data-var pool-count uint u0)
-(define-data-var pools-list (list 2000 uint) (list))
+(define-data-var pools-list (list 500 uint) (list))
 
 ;; private functions
 ;;
@@ -137,7 +137,7 @@
         (map-set pools-map { pool-id: pool-id } { staked-token: staked-token, start-cycle: start-cycle })
         (map-set pools-data-map { staked-token: staked-token, start-cycle: start-cycle } pool-data)
         
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
+        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
 
         (try! (contract-call? .alex-vault add-approved-token staked-token))
