@@ -420,6 +420,6 @@ depends_on = []
 path = "../executor-dao/contracts/traits/sip010-ft-trait.clar"
 depends_on = []
 
-[contracts.agp003-launchpad-alex]
-path = "../executor-dao/contracts/proposals/agp003-launchpad-alex.clar"
+[contracts.agp004-launchpad-alex]
+path = "../executor-dao/contracts/proposals/agp004-launchpad-alex.clar"
 depends_on = ["proposal-trait", "alex-launchpad", "lottery-ido-alex", "age000-governance-token"]
