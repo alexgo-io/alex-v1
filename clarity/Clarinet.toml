@@ -1,7 +1,7 @@
 [project]
 name = "alex-v1"
 requirements = [ ]
-costs_version = 1
+costs_version = 2
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
