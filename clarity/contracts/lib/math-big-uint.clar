@@ -49,13 +49,18 @@
     )
 )
 
+;; 2.5 / 4 = 0.625
+;; (25*10^-1) / (4*10^0)
+;; (25/4) * (10^(-1-0))
+;; (6*10^-1)
+;; The decimal part is ignored because system doesn't have floating points so integer division is happenning
 (define-read-only (div-with-scientific-notation (a uint) (a-exp int) (b uint) (b-exp int))
     (let
         (
-            (division (/ a b)) ;; 25*4=100
-            (exponent (- a-exp b-exp)) ;;10^-1 + 10^0 = 10^(-1+0) = 10^-1
+            (division (/ a b))
+            (exponent (- a-exp b-exp))
         )
-        {result: division, exponent: exponent} ;;100*10^-1
+        {result: division, exponent: exponent}
     )
 )
 
