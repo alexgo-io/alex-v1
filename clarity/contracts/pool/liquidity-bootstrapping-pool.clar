@@ -323,8 +323,8 @@
             
             (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
 
-            (as-contract (try! (contract-call? .alex-vault ft-transfer token-x-trait dx sender)))
-            (as-contract (try! (contract-call? .alex-vault ft-transfer token-y-trait dy sender)))            
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))            
             
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             (try! (contract-call? the-pool-token burn-fixed shares tx-sender))
