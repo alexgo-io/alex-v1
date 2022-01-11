@@ -139,13 +139,13 @@ class WBTCToken {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("token-xbtc", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-balance", [
+    return this.chain.callReadOnlyFn("token-xbtc", "get-balance", [
       types.principal(account),
     ], this.deployer.address);
   }
@@ -153,7 +153,7 @@ class WBTCToken {
   // Always need to called by deployer
   mint(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-wbtc", "mint", [
+      Tx.contractCall("token-xbtc", "mint", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -163,7 +163,7 @@ class WBTCToken {
 
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-wbtc", "mint-fixed", [
+      Tx.contractCall("token-xbtc", "mint-fixed", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -173,7 +173,7 @@ class WBTCToken {
   
   transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("token-wbtc", "transfer-fixed", [
+        Tx.contractCall("token-xbtc", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender.address),
           types.principal(receiver),
@@ -184,7 +184,7 @@ class WBTCToken {
   }
 
   totalSupply() {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("token-xbtc", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { WBTCToken };

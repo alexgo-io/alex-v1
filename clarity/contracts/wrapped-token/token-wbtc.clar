@@ -1,15 +1,16 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
-
 (define-fungible-token wbtc)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
-(define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-MINT-FAILED (err u6002))
+(define-constant ERR-BURN-FAILED (err u6003))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -22,22 +23,6 @@
   )
 )
 
-;; @desc check-is-approved
-;; @restricted Contract-Owner
-;; @params sender
-;; @returns (response bool)
-(define-private (check-is-approved (sender principal))
-  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
-)
-
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
-  )
-)
-
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
 ;; ---------------------------------------------------------
@@ -45,7 +30,7 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply wbtc))
+  (ok u0)
 )
 
 ;; @desc get-name
@@ -63,15 +48,15 @@
 ;; @desc get-decimals
 ;; @returns (response uint)
 (define-read-only (get-decimals)
-   	(ok u8)
+  (ok u8)
 )
 
 ;; @desc get-balance
-;; @params token-id
-;; @params who
+;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance wbtc account))
+  (ok (/ (* (unwrap-panic (contract-call? .token-xbtc get-balance account)) ONE_8) (pow u10 u8)))
+  ;; (ok (/ (* (try! (contract-call? SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) ONE_8) (pow u10 u8)))
 )
 
 ;; @desc set-token-uri
@@ -85,56 +70,24 @@
   )
 )
 
-;; @desc get-token-uri 
-;; @params token-id
-;; @returns (response none)
+;; @desc get-token-uri
+;; @returns (response some string-utf-8)
 (define-read-only (get-token-uri)
   (ok (some (var-get token-uri)))
 )
 
 ;; @desc transfer
-;; @restricted sender
-;; @params token-id 
+;; @restricted sender; tx-sender should be sender
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @returns (response boolean)
+;; @params memo; expiry
+;; @returns (response bool uint)/ error
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? wbtc amount sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )
-  )
-)
-
-;; @desc mint
-;; @restricted ContractOwner/Approved Contract
-;; @params token-id
-;; @params amount
-;; @params recipient
-;; @returns (response boolean)
-(define-public (mint (amount uint) (recipient principal))
-  (begin
-    (try! (check-is-approved tx-sender))
-    (ft-mint? wbtc amount recipient)
-  )
-)
-
-;; @desc burn
-;; @restricted ContractOwner/Approved Contract
-;; @params token-id
-;; @params amount
-;; @params sender
-;; @returns (response boolean)
-(define-public (burn (amount uint) (sender principal))
-  (begin
-    (try! (check-is-approved tx-sender))
-    (ft-burn? wbtc amount sender)
+    (try! (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) ONE_8) sender recipient memo))
+    (ok true)
   )
 )
 
@@ -164,7 +117,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply wbtc)))
+  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
 )
 
 ;; @desc get-balance-fixed
@@ -172,7 +125,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance wbtc account)))
+  (ok (decimals-to-fixed (unwrap-panic (get-balance account))))
 )
 
 ;; @desc transfer-fixed
@@ -180,16 +133,19 @@
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @returns (response boolean)
+;; @returns (response bool)
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (transfer (fixed-to-decimals amount) sender recipient memo)
 )
 
-;; @desc mint-fixed
-;; @params token-id
-;; @params amount
-;; @params recipient
-;; @returns (response boolean)
+(define-public (mint (amount uint) (recipient principal))
+  ERR-MINT-FAILED
+)
+
+(define-public (burn (amount uint) (sender principal))
+  ERR-BURN-FAILED
+)
+
 (define-public (mint-fixed (amount uint) (recipient principal))
   (mint (fixed-to-decimals amount) recipient)
 )
@@ -198,9 +154,26 @@
 ;; @params token-id
 ;; @params amount
 ;; @params sender
-;; @returns (response boolean)
+;; @returns (response bool)
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .faucet true)
+;; @desc check-err
+;; @params result 
+;; @params prior
+;; @returns (response bool uint)
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
+    )
+)
+
+(define-private (transfer-from-tuple (recipient { to: principal, amount: uint }))
+  (ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
+)
+
+(define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
+  (fold check-err (map transfer-from-tuple recipients) (ok true))
+)

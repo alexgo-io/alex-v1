@@ -7,7 +7,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_8 u100000000) ;; 8 decimal places
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))
@@ -217,7 +217,7 @@
                 price-x-max: max-price
                 }))            
         )
-        (asserts! (is-eq contract-caller (get pool-multisig pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get pool-multisig pool)) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), expiry: expiry } pool-updated)
         (ok true)
     )

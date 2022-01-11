@@ -19,7 +19,7 @@
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant ONE_8 u100000000)
+(define-constant ONE_8 (pow u10 u8))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -332,7 +332,7 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member)))
+    (as-contract (try! (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member)))
     (ok true)
   )
 )
@@ -350,8 +350,8 @@
   ) 
   
     ;; Setting for Yield Token Pool
-    (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-usda new-fee-rate-token))
-    (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-usda new-fee-rate-yield-token))
+    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-usda new-fee-rate-token)))
+    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-usda new-fee-rate-yield-token)))
     
     (ok true)
   )

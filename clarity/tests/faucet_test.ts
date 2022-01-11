@@ -32,9 +32,9 @@ class Faucet {
         return block.receipts[0].result;
     }
 
-    setWbtcAmount(sender: Account, amount: number) {
+    setxbtcAmount(sender: Account, amount: number) {
         let block = this.chain.mineBlock([
-            Tx.contractCall("faucet", "set-wbtc-amount", [
+            Tx.contractCall("faucet", "set-xbtc-amount", [
               types.uint(amount),
             ], sender.address),
           ]);
@@ -73,8 +73,8 @@ class Faucet {
         ], this.deployer.address);
     }
 
-    getWbtcAmount() {
-        return this.chain.callReadOnlyFn("faucet", "get-wbtc-amount", [
+    getxbtcAmount() {
+        return this.chain.callReadOnlyFn("faucet", "get-xbtc-amount", [
         ], this.deployer.address);
     }
     
@@ -183,7 +183,7 @@ Clarinet.test({
         result.expectErr().expectUint(1000);
         result = await FaucetTest.setUsdaAmount(wallet_6, 10);
         result.expectErr().expectUint(1000);
-        result = await FaucetTest.setWbtcAmount(wallet_6, 10);
+        result = await FaucetTest.setxbtcAmount(wallet_6, 10);
         result.expectErr().expectUint(1000)
         result = await FaucetTest.setAlexAmount(wallet_6, 10);
         result.expectErr().expectUint(1000)            
@@ -195,8 +195,8 @@ Clarinet.test({
         await FaucetTest.setUsdaAmount(deployer, 100 * ONE_8);
         result = await FaucetTest.getUsdaAmount(); 
         result.result.expectOk().expectUint(100 * ONE_8);
-        await FaucetTest.setWbtcAmount(deployer, 100 * ONE_8);
-        result = await FaucetTest.getWbtcAmount(); 
+        await FaucetTest.setxbtcAmount(deployer, 100 * ONE_8);
+        result = await FaucetTest.getxbtcAmount(); 
         result.result.expectOk().expectUint(100 * ONE_8); 
         result.result.expectOk().expectUint(100 * ONE_8);
         await FaucetTest.setAlexAmount(deployer, 100 * ONE_8);
@@ -213,7 +213,7 @@ Clarinet.test({
 
         result = await FaucetTest.getBalance('token-usda', wallet_7.address);
         result.result.expectOk().expectUint(0);
-        result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
+        result = await FaucetTest.getBalance('token-xbtc', wallet_7.address);
         result.result.expectOk().expectUint(0);  
         
         // first-time user using faucet works
@@ -221,7 +221,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = await FaucetTest.getBalance('token-usda', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8);
-        result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
+        result = await FaucetTest.getBalance('token-xbtc', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8);          
         result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(100 * ONE_8); 
@@ -255,7 +255,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = await FaucetTest.getBalance('token-usda', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);
-        result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
+        result = await FaucetTest.getBalance('token-xbtc', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);   
         result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(200 * ONE_8);        
@@ -284,13 +284,13 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = await FaucetTest.getBalance('token-usda', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);
-        result = await FaucetTest.getBalance('token-wbtc', wallet_6.address);
+        result = await FaucetTest.getBalance('token-xbtc', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);   
         result = await FaucetTest.getBalance('age000-governance-token', wallet_6.address);
         result.result.expectOk().expectUint(100 * ONE_8);    
         result = await FaucetTest.getBalance('token-usda', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);
-        result = await FaucetTest.getBalance('token-wbtc', wallet_7.address);
+        result = await FaucetTest.getBalance('token-xbtc', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);   
         result = await FaucetTest.getBalance('age000-governance-token', wallet_7.address);
         result.result.expectOk().expectUint(300 * ONE_8);

@@ -10,7 +10,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_8 u100000000) ;; 8 decimal places
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant ERR-INVALID-POOL-ERR (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
@@ -796,7 +796,7 @@
         (
             (pool (try! (get-pool-details token collateral expiry)))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -820,7 +820,7 @@
         (         
             (pool (try! (get-pool-details token collateral expiry)))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -845,6 +845,23 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL-ERR))
         )
         (ok (get fee-to-address pool))
+    )
+)
+
+(define-public (set-fee-to-address (token <ft-trait>) (collateral <sft-trait>) (expiry uint) (fee-to-address principal))
+    (let 
+        (
+            (pool (try! (get-pool-details token collateral expiry)))
+        )
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+
+        (map-set pools-data-map 
+            { 
+                token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry 
+            }
+            (merge pool { fee-to-address: fee-to-address })
+        )
+        (ok true)     
     )
 )
 
