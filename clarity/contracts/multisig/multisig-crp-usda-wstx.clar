@@ -154,8 +154,8 @@
 ;; @desc is-token-accepted
 ;; @params token; sft-trait
 ;; @returns bool
-(define-read-only (is-token-accepted (token <sft-trait>))
-    (or (is-eq (contract-of token) .yield-usda) (is-eq (contract-of token) .key-usda-wstx))
+(define-read-only (is-token-accepted (token principal))
+    (or (is-eq token .yield-usda) (is-eq token .key-usda-wstx))
 )
 
 
@@ -230,7 +230,7 @@
   )
 
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -267,7 +267,7 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token expiry)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -334,7 +334,7 @@
       (token-count (get amount (get-tokens-by-member-by-id proposal-id member token expiry)))
     )
 
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     (asserts! (not (get is-open proposal)) ERR-NOT-AUTHORIZED)
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
