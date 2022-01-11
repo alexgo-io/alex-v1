@@ -1,8 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(use-trait multisig-trait .trait-multisig-vote.multisig-vote-trait)
-
 ;; fixed-weight-pool
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;;
@@ -96,8 +94,8 @@
 )
 
 ;; @desc get-pool-details
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response (tuple) uint)
@@ -106,8 +104,8 @@
 )
 
 ;; @desc get-pool-exists
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (optional (tuple))
@@ -116,8 +114,8 @@
 )
 
 ;; @desc get-balances ({balance-x, balance-y})
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response (tuple uint uint) uint)
@@ -131,8 +129,8 @@
 )
 
 ;; @desc get-oracle-enabled
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response bool uint)
@@ -148,8 +146,8 @@
 ;; @desc set-oracle-enabled
 ;; @desc oracle can only be enabled
 ;; @restricted contract-owner
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response bool uint)
@@ -171,8 +169,8 @@
 
 ;; @desc get-oracle-average
 ;; @desc returns the moving average used to determine oracle price
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
@@ -187,8 +185,8 @@
 
 ;; @desc set-oracle-average
 ;; @restricted contract-owner
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response bool uint)
@@ -216,8 +214,8 @@
 
 ;; @desc get-oracle-resilient
 ;; @desc price-oracle that is less up to date but more resilient to manipulation
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
@@ -246,8 +244,8 @@
 
 ;; @desc get-oracle-instant
 ;; @desc price-oracle that is more up to date but less resilient to manipulation
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
@@ -283,7 +281,7 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response bool uint)
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (multisig-vote <multisig-trait>) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-trait <ft-trait>) (multisig-vote principal) (dx uint) (dy uint)) 
     (let
         (
             (token-x (contract-of token-x-trait))
@@ -293,8 +291,8 @@
                 total-supply: u0,
                 balance-x: u0,
                 balance-y: u0,
-                fee-to-address: (contract-of multisig-vote),
-                pool-token: (contract-of the-pool-token),
+                fee-to-address: multisig-vote,
+                pool-token: (contract-of pool-token-trait),
                 fee-rate-x: u0,
                 fee-rate-y: u0,
                 fee-rebate: u0,
@@ -322,9 +320,9 @@
         
         (try! (contract-call? .alex-vault add-approved-token token-x))
         (try! (contract-call? .alex-vault add-approved-token token-y))
-        (try! (contract-call? .alex-vault add-approved-token (contract-of the-pool-token)))        
+        (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))        
 
-        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y the-pool-token dx (some dy)))
+        (try! (add-to-position token-x-trait token-y-trait weight-x weight-y pool-token-trait dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
         (ok true)
     )
@@ -340,7 +338,7 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response (tuple uint uint uint) uint)
-(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (dx uint) (max-dy (optional uint)))
+(define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
 
@@ -365,14 +363,14 @@
             (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
             ;; CR-01
             (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
-            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)
+            (asserts! (is-eq (get pool-token pool) (contract-of pool-token-trait)) ERR-INVALID-TOKEN)
 
             (unwrap! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
-            (as-contract (try! (contract-call? the-pool-token mint-fixed new-supply sender)))
+            (as-contract (try! (contract-call? pool-token-trait mint-fixed new-supply sender)))
             
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {supply: new-supply, dx: dx, dy: dy})
@@ -389,7 +387,7 @@
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param percent; percentage of pool token held to reduce
 ;; @returns (response (tuple uint uint) uint)
-(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (the-pool-token <ft-trait>) (percent uint))
+(define-public (reduce-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-trait <ft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         (let
@@ -399,7 +397,7 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
-                (total-shares (unwrap-panic (contract-call? the-pool-token get-balance-fixed tx-sender)))
+                (total-shares (unwrap-panic (contract-call? pool-token-trait get-balance-fixed tx-sender)))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (total-supply (get total-supply pool))
                 (reduce-data (try! (get-position-given-burn token-x token-y weight-x weight-y shares)))
@@ -414,14 +412,14 @@
                 (sender tx-sender)
             )
 
-            (asserts! (is-eq (get pool-token pool) (contract-of the-pool-token)) ERR-INVALID-TOKEN)            
+            (asserts! (is-eq (get pool-token pool) (contract-of pool-token-trait)) ERR-INVALID-TOKEN)            
 
             (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender)))
             (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
-            (as-contract (try! (contract-call? the-pool-token burn-fixed shares sender)))
+            (as-contract (try! (contract-call? pool-token-trait burn-fixed shares sender)))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: dx, dy: dy})
@@ -585,8 +583,8 @@
 )
 
 ;; @desc get-fee-rebate
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
@@ -596,8 +594,8 @@
 
 ;; @desc set-fee-rebate
 ;; @restricted contract-owner
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param fee-rebate; new fee-rebate
@@ -620,8 +618,8 @@
 )
 
 ;; @desc get-fee-rate-x
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
@@ -630,8 +628,8 @@
 )
 
 ;; @desc get-fee-rate-y
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
@@ -641,8 +639,8 @@
 
 ;; @desc set-fee-rate-x
 ;; @restricted fee-to-address
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param fee-rate-x; new fee-rate-x
@@ -666,8 +664,8 @@
 
 ;; @desc set-fee-rate-y
 ;; @restricted fee-to-address
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param fee-rate-y; new fee-rate-y
@@ -690,8 +688,8 @@
 )
 
 ;; @desc get-fee-to-address
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @returns (response principal uint)
@@ -747,8 +745,8 @@
 )
 
 ;; @desc units of token-y given units of token-x
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param dx; amount of token-x being added
@@ -764,8 +762,8 @@
 )
 
 ;; @desc units of token-x given units of token-y
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param dy; amount of token-y being added
@@ -781,8 +779,8 @@
 )
 
 ;; @desc units of token-x required for a target price
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param price; target price
@@ -797,8 +795,8 @@
 )
 
 ;; @desc units of token-y required for a target price
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param price; target price
@@ -813,8 +811,8 @@
 )
 
 ;; @desc units of pool token to be minted given amount of token-x and token-y being added
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param dx; amount of token-x added
@@ -830,8 +828,8 @@
 )
 
 ;; @desc units of token-x/token-y required to mint given units of pool-token
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param token; units of pool token to be minted
@@ -846,8 +844,8 @@
 )
 
 ;; @desc units of token-x/token-y to be returned after burning given units of pool-token
-;; @param token-x-trait; token-x
-;; @param token-y-trait; token-y
+;; @param token-x; token-x principal
+;; @param token-y; token-y principal
 ;; @param weight-x; weight of token-x
 ;; @param weight-y; weight of token-y
 ;; @param token; units of pool token to be burnt
