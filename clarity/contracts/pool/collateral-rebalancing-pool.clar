@@ -141,8 +141,8 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response (tuple) uint)
-(define-read-only (get-pool-details (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (ok (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))
+(define-read-only (get-pool-details (token principal) (collateral principal) (expiry uint))
+    (ok (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
 )
 
 ;; @desc get-spot
@@ -151,10 +151,10 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>))
+(define-read-only (get-spot (token principal) (collateral principal))
     (if (is-eq token collateral)
         (ok ONE_8)
-        (if (is-eq (contract-of token) .token-wstx)
+        (if (is-eq token .token-wstx)
             (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx (contract-of collateral) u50000000 u50000000)
             (if (is-eq (contract-of collateral) .token-wstx)
                 (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx (contract-of token) u50000000 u50000000))))
