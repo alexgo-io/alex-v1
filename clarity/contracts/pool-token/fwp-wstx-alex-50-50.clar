@@ -2,7 +2,7 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token fwp-wstx-talex-50-50)
+(define-fungible-token fwp-wstx-alex-50-50)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -45,19 +45,19 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply fwp-wstx-talex-50-50))
+  (ok (ft-get-supply fwp-wstx-alex-50-50))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "fwp-wstx-talex-50-50")
+  (ok "fwp-wstx-alex-50-50")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "fwp-wstx-talex-50-50")
+  (ok "fwp-wstx-alex-50-50")
 )
 
 ;; @desc get-decimals
@@ -70,7 +70,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance fwp-wstx-talex-50-50 account))
+  (ok (ft-get-balance fwp-wstx-alex-50-50 account))
 )
 
 ;; @desc set-token-uri
@@ -100,7 +100,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (ft-transfer? fwp-wstx-talex-50-50 amount sender recipient))
+    (try! (ft-transfer? fwp-wstx-alex-50-50 amount sender recipient))
     (match memo to-print (print to-print) 0x)
     (ok true)
   )
@@ -114,7 +114,7 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-mint? fwp-wstx-talex-50-50 amount recipient)
+    (ft-mint? fwp-wstx-alex-50-50 amount recipient)
   )
 )
 
@@ -126,7 +126,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-burn? fwp-wstx-talex-50-50 amount sender)
+    (ft-burn? fwp-wstx-alex-50-50 amount sender)
   )
 )
 
@@ -156,7 +156,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-talex-50-50)))
+  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-alex-50-50)))
 )
 
 ;; @desc get-balance-fixed
@@ -164,7 +164,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-talex-50-50 account)))
+  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-alex-50-50 account)))
 )
 
 ;; @desc transfer-fixed
