@@ -171,21 +171,6 @@
   )
 )
 
-;; @desc ft-transfer-multi
-;; @params token-x; ft-trait
-;; @params amount-x; uint
-;; @params token-y; ft-trait
-;; @params amount-y;
-;; @params recipient
-;; @returns (response boolean)
-(define-public (ft-transfer-multi (token-x <ft-trait>) (amount-x uint) (token-y <ft-trait>) (amount-y uint) (recipient principal))
-  (begin 
-    (try! (transfer-ft token-x amount-x recipient)) 
-    (try! (transfer-ft token-y amount-y recipient))
-    (ok true)
-  )
-)
-
 ;; @desc mul-down
 ;; @params a
 ;; @params b

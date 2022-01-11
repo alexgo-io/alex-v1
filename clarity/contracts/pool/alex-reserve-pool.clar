@@ -20,6 +20,24 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
+;; STAKING CONFIGURATION
+(define-data-var reward-cycle-length uint u525) ;; number of block-heights per cycle
+(define-data-var token-halving-cycle uint u100) ;; number of cycles it takes for token emission to transition to the next
+(define-data-var activation-delay uint u150) ;; number of block-height before staking starts upon activation
+(define-data-var activation-threshold uint u20) ;; minimum number of addresses to register before staking commences
+
+;; token <> coinbase-amounts
+(define-map coinbase-amounts 
+  principal
+  {
+    coinbase-amount-1: uint,
+    coinbase-amount-2: uint,
+    coinbase-amount-3: uint,
+    coinbase-amount-4: uint,
+    coinbase-amount-5: uint
+  }
+)
+
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
 )
@@ -75,14 +93,10 @@
   )
 )
 
-;; STAKING CONFIGURATION
 (define-map approved-tokens principal bool)
 
 (define-constant MAX-REWARD-CYCLES u32)
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
-
-;; how long a reward cycle is
-(define-data-var reward-cycle-length uint u525)
 
 ;; At a given reward cycle, what is the total amount of tokens staked
 (define-map staking-stats-at-cycle 
@@ -107,9 +121,6 @@
     to-return: uint
   }
 )
-
-(define-data-var activation-delay uint u150)
-(define-data-var activation-threshold uint u20)
 
 ;; activation-block for each stake-able token
 (define-map activation-block principal uint)
@@ -557,10 +568,6 @@
   )
 )
 
-;; TOKEN CONFIGURATION
-
-(define-data-var token-halving-cycle uint u100)
-
 ;; @desc get-token-halving-cycle
 ;; @returns uint
 (define-read-only (get-token-halving-cycle)
@@ -609,18 +616,6 @@
       coinbase-threshold-4: (var-get coinbase-threshold-4),
       coinbase-threshold-5: (var-get coinbase-threshold-5)
   })
-)
-
-;; token <> coinbase-amounts
-(define-map coinbase-amounts 
-  principal
-  {
-    coinbase-amount-1: uint,
-    coinbase-amount-2: uint,
-    coinbase-amount-3: uint,
-    coinbase-amount-4: uint,
-    coinbase-amount-5: uint
-  }
 )
 
 ;; @desc set-coinbase-amount
