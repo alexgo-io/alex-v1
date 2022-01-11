@@ -651,7 +651,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -678,7 +678,7 @@
             (token-y (contract-of token-y-trait))            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -699,11 +699,26 @@
 (define-read-only (get-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint))
     (let 
         (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))                
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
+            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
         (ok (get fee-to-address pool))
+    )
+)
+
+(define-public (set-fee-to-address (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (fee-to-address principal))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x-trait token-y-trait weight-x weight-y)))
+        )
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+
+        (map-set pools-data-map 
+            { 
+                token-x: (contract-of token-x-trait), token-y: (contract-of token-y-trait), weight-x: weight-x, weight-y: weight-y 
+            }
+            (merge pool { fee-to-address: fee-to-address })
+        )
+        (ok true)     
     )
 )
 

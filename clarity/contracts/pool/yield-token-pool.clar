@@ -619,7 +619,7 @@
             (yield-token (contract-of the-yield-token))
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-yield-token: fee-rate-yield-token }))
         (ok true)
@@ -638,7 +638,7 @@
             (yield-token (contract-of the-yield-token))
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
@@ -655,6 +655,23 @@
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
         (ok (get fee-to-address pool))
+    )
+)
+
+(define-public (set-fee-to-address (expiry uint) (the-yield-token <sft-trait>) (fee-to-address principal))
+    (let 
+        (
+            (pool (try! (get-pool-details expiry the-yield-token)))
+        )
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+
+        (map-set pools-data-map 
+            { 
+                yield-token: (contract-of the-yield-token), expiry: expiry
+            }
+            (merge pool { fee-to-address: fee-to-address })
+        )
+        (ok true)     
     )
 )
 

@@ -19,7 +19,7 @@
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant ONE_8 u100000000)
+(define-constant ONE_8 (pow u10 u8))
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -339,7 +339,7 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member)))
+    (as-contract (try! (contract-call? token transfer-fixed expiry token-count (as-contract tx-sender) member)))
     (ok true)
   )
 )
@@ -357,8 +357,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc expiry new-fee-rate-x))
-    (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc expiry new-fee-rate-y))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc expiry new-fee-rate-x)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc expiry new-fee-rate-y)))
     
     (ok true)
   )

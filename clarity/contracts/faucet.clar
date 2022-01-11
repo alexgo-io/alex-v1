@@ -13,7 +13,7 @@
 (define-constant ONE_8 (pow u10 u8))
 
 (define-data-var usda-amount uint u0)
-(define-data-var wbtc-amount uint u0)
+(define-data-var xbtc-amount uint u0)
 (define-data-var stx-amount uint u0)
 (define-data-var alex-amount uint u0)
 
@@ -68,10 +68,10 @@
     (ok (var-get usda-amount))
 )
 
-;; @desc get-wbtc-amount
+;; @desc get-xbtc-amount
 ;; @returns (response uint)
-(define-read-only (get-wbtc-amount)
-    (ok (var-get wbtc-amount))
+(define-read-only (get-xbtc-amount)
+    (ok (var-get xbtc-amount))
 )
 
 ;; @desc get-stx-amount
@@ -97,14 +97,14 @@
     )
 )
 
-;; @desc set-wbtc-amount
+;; @desc set-xbtc-amount
 ;; @restricted Contract-Owner
 ;; @params amount
 ;; @returns (response uint)
-(define-public (set-wbtc-amount (amount uint))
+(define-public (set-xbtc-amount (amount uint))
     (begin
         (try! (check-is-approved tx-sender))
-        (ok (var-set wbtc-amount amount))
+        (ok (var-set xbtc-amount amount))
     )
 )
 
@@ -145,7 +145,7 @@
             )
             (map-set users recipient u1)
         )
-        (and (> (var-get wbtc-amount) u0) (as-contract (unwrap! (contract-call? .token-wbtc mint-fixed (var-get wbtc-amount) recipient) ERR-TRANSFER-FAILED)))
+        (and (> (var-get xbtc-amount) u0) (as-contract (unwrap! (contract-call? .token-xbtc mint-fixed (var-get xbtc-amount) recipient) ERR-TRANSFER-FAILED)))
         (and (> (var-get usda-amount) u0) (as-contract (unwrap! (contract-call? .token-usda mint-fixed (var-get usda-amount) recipient) ERR-TRANSFER-FAILED)))
         (and (> (var-get alex-amount) u0) (as-contract (unwrap! (contract-call? .age000-governance-token mint-fixed (var-get alex-amount) recipient) ERR-TRANSFER-FAILED)))
         (and (> (var-get stx-amount) u0) (as-contract (unwrap! (stx-transfer? (/ (* (var-get stx-amount) (pow u10 u6)) ONE_8) tx-sender recipient) ERR-TRANSFER-FAILED)))
