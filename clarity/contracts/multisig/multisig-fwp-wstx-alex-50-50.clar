@@ -152,7 +152,7 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (is-eq token .fwp-wstx-talex-50-50)
+    (is-eq token .fwp-wstx-alex-50-50)
 )
 
 
@@ -175,8 +175,8 @@
     (new-fee-rate-y uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .fwp-wstx-talex-50-50 get-balance tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .fwp-wstx-talex-50-50 get-total-supply)))
+    (proposer-balance (unwrap-panic (contract-call? .fwp-wstx-alex-50-50 get-balance tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .fwp-wstx-alex-50-50 get-total-supply)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -285,7 +285,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .fwp-wstx-talex-50-50 get-total-supply)))
+        (total-supply (unwrap-panic (contract-call? .fwp-wstx-alex-50-50 get-total-supply)))
         (threshold-count (mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
