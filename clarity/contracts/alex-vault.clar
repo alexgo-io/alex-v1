@@ -196,6 +196,8 @@
 )
 
 ;; contract initialisation
+(set-contract-owner .executor-dao)
+
 (map-set approved-contracts .alex-reserve-pool true)
 (map-set approved-contracts .collateral-rebalancing-pool true)  
 (map-set approved-contracts .fixed-weight-pool true)  

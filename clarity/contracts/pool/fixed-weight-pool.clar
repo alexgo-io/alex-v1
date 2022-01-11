@@ -320,7 +320,7 @@
         
         (try! (contract-call? .alex-vault add-approved-token token-x))
         (try! (contract-call? .alex-vault add-approved-token token-y))
-        (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))        
+        (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
 
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y pool-token-trait dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
@@ -650,7 +650,7 @@
         (        
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -675,7 +675,7 @@
         (    
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -1256,3 +1256,5 @@
         )
     )  
 )
+
+(set-contract-owner .executor-dao)
