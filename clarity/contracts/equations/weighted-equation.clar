@@ -236,10 +236,8 @@
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-                        (new-dy (mul-down balance-y 
-                                (div-down dx balance-x)))
-                        (token (mul-down total-supply  
-                                (div-down dx balance-x)))
+                        (new-dy (div-down (mul-down balance-y dx) balance-x))
+                        (token (div-down (mul-down total-supply dx) balance-x))
                     )
                     {token: token, dy: new-dy}
                 )   
