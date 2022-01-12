@@ -27,10 +27,10 @@ Clarinet.test({
 
         let call = chain.callReadOnlyFn("math-big-uint", "mul",
             [
-                "u5000000000000000000000",
-                "u5000000000000000000000"
+                types.uint(5),
+                types.uint(5),
             ], deployer.address);
-        assertEquals(call.result, "u2500000000000000000000000000")
+        call.result.expectUint(25*ONE_16)
     },
 });
 
@@ -43,10 +43,17 @@ Clarinet.test({
 
         let call = chain.callReadOnlyFn("math-big-uint", "div",
             [
-                "u5000000000000000000000",
-                "u5000000000000000000000"
+                types.uint(5),
+                types.uint(5)
             ], deployer.address);
-        assertEquals(call.result, "u1")
+        call.result.expectUint(1*ONE_16)
+
+        call = chain.callReadOnlyFn("math-big-uint", "div",
+            [
+                types.uint(25123124213),
+                types.uint(4125312513461)
+            ], deployer.address);
+        call.result.expectUint(60899929716894)
     },
 });
 
@@ -167,7 +174,7 @@ Clarinet.test({
                 // this number becomes 4*10^0=4
             ], deployer.address);
         let position: any = call.result.expectTuple()
-        position['result'].expectUint(6)
+        position['result'].expectUint(6.25*ONE_16)
         position['exponent'].expectInt(-1)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -178,7 +185,7 @@ Clarinet.test({
             types.int(0),
         ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1)
+        position['result'].expectUint(1*ONE_16)
         position['exponent'].expectInt(0)
         
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -189,7 +196,7 @@ Clarinet.test({
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1)
+        position['result'].expectUint(1*ONE_16)
         position['exponent'].expectInt(16)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -200,7 +207,7 @@ Clarinet.test({
                 types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1)
+        position['result'].expectUint(1*ONE_16)
         position['exponent'].expectInt(-16)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -211,7 +218,7 @@ Clarinet.test({
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1)
+        position['result'].expectUint(1*ONE_16)
         position['exponent'].expectInt(0)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -222,7 +229,7 @@ Clarinet.test({
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1)
+        position['result'].expectUint(1*ONE_16)
         position['exponent'].expectInt(32)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -233,7 +240,7 @@ Clarinet.test({
                 types.int(-1),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(100000)
+        assertEquals(position['result'], "u1000000000000000000000") // 1,000,000 * ONE_16
         position['exponent'].expectInt(1)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
@@ -244,12 +251,43 @@ Clarinet.test({
                 types.int(-2),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(89552)
+        assertEquals(position['result'], "u895522388059701492537") //8,955,223.88059701492537
         position['exponent'].expectInt(2)
+
+        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+            [
+                types.uint(8877665544332211), 
+                types.int(0),
+                types.uint(1122334),
+                types.int(0),
+            ], deployer.address);
+        position = call.result.expectTuple()
+        assertEquals(position['result'], "u79100032114613038542893648") //7,910,003,211.38542893648
+        position['exponent'].expectInt(0)
 
     },
 });
 
+// Clarinet.test({
+//     name: "math-big-uint: power and log 10",
+//     async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+//         let deployer = accounts.get("deployer")!;
+
+//         let call = chain.callReadOnlyFn("math-big-uint", "power",
+//             [
+//                 types.uint(5), 
+//                 types.uint(5)
+//             ], deployer.address);
+//         call.result.expectUint(3125)
+
+//         call = chain.callReadOnlyFn("math-big-uint", "log-10",
+//             [
+//                 types.uint(5),
+//             ], deployer.address);
+//         call.result.expectUint(16)
+//     }
+// })
 
 // Clarinet.test({
 //     name: "math-big-uint: mul-16",
