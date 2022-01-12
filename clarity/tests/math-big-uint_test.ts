@@ -175,7 +175,7 @@ Clarinet.test({
             ], deployer.address);
         let position: any = call.result.expectTuple()
         position['result'].expectUint(6.25*ONE_16)
-        position['exponent'].expectInt(-1)
+        position['exponent'].expectInt(-17)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
         [
@@ -186,7 +186,7 @@ Clarinet.test({
         ], deployer.address);
         position = call.result.expectTuple()
         position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(0)
+        position['exponent'].expectInt(-16)
         
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -197,7 +197,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(16)
+        position['exponent'].expectInt(0)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -208,7 +208,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(-16)
+        position['exponent'].expectInt(-32)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -219,7 +219,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(0)
+        position['exponent'].expectInt(-16)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -230,7 +230,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(32)
+        position['exponent'].expectInt(16)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -241,7 +241,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['result'], "u1000000000000000000000") // 1,000,000 * ONE_16
-        position['exponent'].expectInt(1)
+        position['exponent'].expectInt(-15)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -252,7 +252,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['result'], "u895522388059701492537") //8,955,223.88059701492537
-        position['exponent'].expectInt(2)
+        position['exponent'].expectInt(-14)
 
         call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
             [
@@ -263,7 +263,7 @@ Clarinet.test({
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['result'], "u79100032114613038542893648") //7,910,003,211.38542893648
-        position['exponent'].expectInt(0)
+        position['exponent'].expectInt(-16)
 
     },
 });

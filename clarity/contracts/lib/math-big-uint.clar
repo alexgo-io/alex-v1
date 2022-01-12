@@ -46,18 +46,16 @@
 ;; 2.5 / 4 = 0.625
 ;; (25*10^-1) / (4*10^0)
 ;; (25/4) * (10^(-1-0))
-;; (625*10^14) * (10^-1)
-;; 625*(10^14-1)/10^16
-;; 625*10^13/10^16
-;; 625*10^-3 = 0.625
+;; (625*10^14) * (10^-1 * 10^-16)
+;; (62500000000000000) * (10^-17)
+;; (0.625)
 
 ;; The decimal part is ignored because system doesn't have floating points so integer division is happenning
-;; The answer from division will be in scaled up form
 (define-read-only (div-with-scientific-notation (a uint) (a-exp int) (b uint) (b-exp int))
     (let
         (
             (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
-            (exponent (- a-exp b-exp))
+            (exponent (+ (- a-exp b-exp) -16)) ;; scale down from the exponent part
         )
         {result: division, exponent: exponent}
     )
