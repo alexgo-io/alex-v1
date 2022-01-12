@@ -124,6 +124,7 @@
 
 ;; activation-block for each stake-able token
 (define-map activation-block principal uint)
+(define-map apower-multiplier-in-fixed principal uint)
 
 ;; users-nonce for each stake-able token
 (define-map users-nonce principal uint)
@@ -169,6 +170,19 @@
     (ok true)
   )
 )
+
+(define-read-only (get-apower-multiplier-in-fixed-or-default (token principal))
+  (default-to u0 (map-get? apower-multiplier-in-fixed token))
+)
+
+(define-public (set-apower-multiplier-in-fixed (token principal) (new-apower-multiplier-in-fixed uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (map-set apower-multiplier-in-fixed token new-apower-multiplier-in-fixed)
+    (ok true)
+  )
+)
+
 
 ;; @desc get-activation-block-or-default 
 ;; @params token
@@ -564,6 +578,11 @@
     (and (> to-return u0) (as-contract (try! (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
     (and (> entitled-token u0) (as-contract (try! (contract-call? .age000-governance-token mint-fixed entitled-token user))))
+    (and 
+      (> entitled-token u0) 
+      (> (get-apower-multiplier-in-fixed-or-default token) u0) 
+      (as-contract (try! (contract-call? .token-apower mint-fixed (mul-down entitled-token (get-apower-multiplier-in-fixed-or-default token)) user)))
+    )
     (ok { to-return: to-return, entitled-token: entitled-token })
   )
 )
