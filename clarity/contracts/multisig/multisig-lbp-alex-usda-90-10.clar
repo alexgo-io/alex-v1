@@ -151,7 +151,7 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (is-eq token .lbp-alex-usda-90-10)
+    (is-eq token .lbp-alex-wstx-80-20)
 )
 
 
@@ -174,8 +174,8 @@
     (new-fee-rate-y uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-balance-fixed tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply-fixed)))
+    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-balance-fixed tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-total-supply-fixed)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -283,7 +283,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply-fixed)))
+        (total-supply (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-total-supply-fixed)))
         (threshold-count (mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )

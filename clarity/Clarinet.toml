@@ -261,6 +261,14 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/multisig/multisig-lbp-alex-usda-90-10.clar"
 depends_on = [ "lbp-alex-usda-90-10" ]
 
+[contracts.lbp-alex-wstx-80-20]
+path = "contracts/pool-token/lbp-alex-wstx-80-20.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-lbp-alex-wstx-80-20]
+path = "contracts/multisig/multisig-lbp-alex-wstx-80-20.clar"
+depends_on = [ "lbp-alex-wstx-80-20" ]
+
 [contracts.multisig-crp-usda-wbtc]
 path = "contracts/multisig/multisig-crp-usda-wbtc.clar"
 depends_on = [
