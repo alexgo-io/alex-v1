@@ -3,7 +3,7 @@ import { CoreClient } from "./token-alex-src/core-client.ts";
 import { it } from "./token-alex-src/testutil.ts";
 
 const ONE_8 = 1e8;
-const APOWER_MULTIPLIER = 0
+const APOWER_MULTIPLIER = 3;
 const token = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token';
 const apower = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-apower';
 
@@ -737,7 +737,7 @@ describe("STAKING :", () => {
         result['entitled-token'].expectUint(ONE_8);
         result['to-return'].expectUint(amountTokens);
 
-        assertEquals(receipts[1].events.length, (APOWER_MULTIPLIER == 0) ? 2 : 3);
+        assertEquals(receipts[1].events.length, (APOWER_MULTIPLIER > 0) ? 3 : 2);
 
         receipts[1].events.expectFungibleTokenTransferEvent(
           amountTokens,
@@ -848,12 +848,12 @@ describe("STAKING :", () => {
             let result:any = receipt.result.expectOk().expectTuple();
             result['entitled-token'].expectUint(ONE_8);
             result['to-return'].expectUint(0);
-            assertEquals(receipt.events.length, (APOWER_MULTIPLIER == 0) ? 1 : 2);
+            assertEquals(receipt.events.length, (APOWER_MULTIPLIER > 0) ? 2 : 1);
             assertEquals(Number(clients.apower.getBalance(staker).result.expectOk().substring(1)) - apower, ONE_8 * APOWER_MULTIPLIER);
           } else {
             let result:any = receipt.result.expectOk().expectTuple();
             result['entitled-token'].expectUint(ONE_8);
-            assertEquals(receipt.events.length, (APOWER_MULTIPLIER == 0) ? 2: 3);
+            assertEquals(receipt.events.length, (APOWER_MULTIPLIER > 0) ? 3 : 2);
 
             receipt.events.expectFungibleTokenTransferEvent(
               toReturn,
