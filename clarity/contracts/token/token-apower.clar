@@ -208,9 +208,8 @@
 	)
 )
 
-;; for testing only
 (map-set approved-contracts .alex-reserve-pool true)
-(map-set approved-contracts tx-sender true)
+(map-set approved-contracts .exchange true)
 
 
 
