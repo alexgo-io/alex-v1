@@ -9,7 +9,7 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "APOWER Token")
+(define-data-var token-name (string-ascii 32) "APower Token")
 (define-data-var token-symbol (string-ascii 10) "apower")
 (define-data-var token-decimals uint u8)
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-apower.json"))
