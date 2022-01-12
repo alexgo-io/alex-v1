@@ -433,3 +433,38 @@ depends_on = []
 [contracts.agp004-launchpad-alex]
 path = "../alex-dao/contracts/proposals/agp004-launchpad-alex.clar"
 depends_on = ["proposal-trait", "alex-launchpad", "lottery-ido-alex", "age000-governance-token"]
+
+[contracts.flash-loan-user-margin-wbtc-wstx]
+path = "contracts/flash-loan-user-margin-wbtc-wstx.clar"
+depends_on = [
+  "trait-sip-010",
+  "trait-flash-loan-user",
+  "token-wbtc",
+  "yield-wstx",
+  "key-wstx-wbtc",
+  "collateral-rebalancing-pool",
+  "yield-token-pool",
+  "fixed-weight-pool",
+  "multisig-ytp-yield-wbtc",
+  "multisig-ytp-yield-wstx"
+]
+
+[contracts.yield-wstx]
+path = "contracts/yield-token/yield-wstx.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.multisig-ytp-yield-wstx]
+path = "contracts/multisig/multisig-ytp-yield-wstx.clar"
+depends_on = [ "ytp-yield-wstx", "yield-wstx", "yield-token-pool" ]
+
+[contracts.ytp-yield-wstx]
+path = "contracts/pool-token/ytp-yield-wstx.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.multisig-crp-wstx-wbtc]
+path = "contracts/multisig/multisig-crp-wstx-wbtc.clar"
+depends_on = [ "yield-wstx", "key-wstx-wbtc", "collateral-rebalancing-pool" ]
+
+[contracts.key-wstx-wbtc]
+path = "contracts/key-token/key-wstx-wbtc.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
