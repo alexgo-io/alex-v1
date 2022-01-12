@@ -7,6 +7,7 @@ class Accounts extends Map<string, Account> {}
 interface Clients {
   core: CoreClient;
   token: TokenClient;
+  apower: TokenClient;
 }
 
 function _it(
@@ -38,7 +39,8 @@ function _it(
     deployer = accounts.get("deployer")!;
     clients = {
       core: new CoreClient("alex-reserve-pool", chain, deployer),
-      token: new TokenClient("age000-governance-token", chain, deployer)
+      token: new TokenClient("age000-governance-token", chain, deployer),
+      apower: new TokenClient("token-apower", chain, deployer)
     };
 
     await fn(chain, accounts, clients);

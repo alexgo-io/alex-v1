@@ -9,7 +9,8 @@ depends_on = [
   "trait-ownable",
   "trait-sip-010",
   "alex-vault",
-  "age000-governance-token"
+  "age000-governance-token",
+  "token-apower"
 ]
 
 [contracts.futures-pool]
@@ -196,6 +197,10 @@ depends_on = [ "trait-ownable", "trait-sip-010", "token-xbtc" ]
 
 [contracts.token-wstx]
 path = "contracts/wrapped-token/token-wstx.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-apower]
+path = "contracts/token/token-apower.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.trait-flash-loan-user]
