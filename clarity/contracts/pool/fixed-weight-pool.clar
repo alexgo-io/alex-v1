@@ -662,7 +662,7 @@
         (        
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -687,7 +687,7 @@
         (    
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -1268,3 +1268,5 @@
         )
     )  
 )
+
+(set-contract-owner .executor-dao)
