@@ -1269,4 +1269,4 @@
     )  
 )
 
-(set-contract-owner .executor-dao)
+;; (set-contract-owner .executor-dao)
