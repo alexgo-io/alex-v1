@@ -585,7 +585,7 @@ Clarinet.test({
         
         // arbtrageur attepmts to retreive back with zero value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0);        
-        result.expectErr().expectUint(3000) 
+        result.expectErr().expectUint(3) 
 
         // arbitrageur attempts to retreuve back with small value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0.001 * ONE_8);        

@@ -115,8 +115,7 @@
   (begin     
     (try! (check-is-approved tx-sender))
     (try! (check-is-approved-token (contract-of token)))
-    (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-TRANSFER-FAILED))
-    (ok true)
+    (as-contract (contract-call? token transfer-fixed amount tx-sender recipient none))
   )
 )
 
@@ -131,8 +130,7 @@
   (begin     
     (try! (check-is-approved tx-sender))
     (try! (check-is-approved-token (contract-of token)))
-    (as-contract (unwrap! (contract-call? token transfer-fixed token-id amount tx-sender recipient) ERR-TRANSFER-FAILED))
-    (ok true)
+    (as-contract (contract-call? token transfer-fixed token-id amount tx-sender recipient))
   )
 )
 
@@ -159,15 +157,22 @@
       (asserts! (> pre-bal amount) ERR-INVALID-BALANCE)
 
       ;; transfer loan to flash-loan-user
-      (as-contract (unwrap! (contract-call? token transfer-fixed amount tx-sender recipient none) ERR-TRANSFER-FAILED))
+      (as-contract (try! (contract-call? token transfer-fixed amount tx-sender recipient none)))
 
       ;; flash-loan-user executes with loan received
       (try! (contract-call? flash-loan-user execute token amount memo))
 
       ;; return the loan + fee
-      (unwrap! (contract-call? token transfer-fixed amount-with-fee tx-sender (as-contract tx-sender) none) ERR-TRANSFER-FAILED)
+      (try! (contract-call? token transfer-fixed amount-with-fee tx-sender (as-contract tx-sender) none))
       (ok amount-with-fee)
     )
+  )
+)
+
+(define-public (transfer-ft-two (token-x-trait <ft-trait>) (dx uint) (token-y-trait <ft-trait>) (dy uint) (recipient principal))
+  (begin 
+    (try! (transfer-ft token-x-trait dx recipient))
+    (transfer-ft token-y-trait dy recipient)
   )
 )
 

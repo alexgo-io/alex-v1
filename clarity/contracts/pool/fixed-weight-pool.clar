@@ -270,6 +270,21 @@
     )
 )
 
+(define-private (add-approved-token-to-vault (token principal))
+    (contract-call? .alex-vault add-approved-token token)
+)
+
+;; @desc check-err
+;; @params result 
+;; @params prior
+;; @returns (response bool uint)
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
+    )
+)
+
 ;; @desc create-pool
 ;; @restricted contract-owner
 ;; @param token-x-trait; token-x
@@ -318,9 +333,7 @@
         (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
         (var-set pool-count pool-id)
         
-        (try! (contract-call? .alex-vault add-approved-token token-x))
-        (try! (contract-call? .alex-vault add-approved-token token-y))
-        (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
+        (try! (fold check-err (map add-approved-token-to-vault (list token-x token-y (contract-of pool-token-trait))) (ok true)))
 
         (try! (add-to-position token-x-trait token-y-trait weight-x weight-y pool-token-trait dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
@@ -376,7 +389,7 @@
             (ok {supply: new-supply, dx: dx, dy: dy})
         )
     )
-)    
+)
 
 ;; @desc reduce-position
 ;; @desc returns dx and dy due to the position
@@ -414,8 +427,7 @@
 
             (asserts! (is-eq (get pool-token pool) (contract-of pool-token-trait)) ERR-INVALID-TOKEN)            
 
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender)))
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft-two token-x-trait dx token-y-trait dy sender)))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } pool-updated)
 
