@@ -468,3 +468,7 @@ depends_on = [ "yield-wstx", "key-wstx-wbtc", "collateral-rebalancing-pool" ]
 [contracts.key-wstx-wbtc]
 path = "contracts/key-token/key-wstx-wbtc.clar"
 depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.token-t-alex]
+path = "contracts/token/token-t-alex.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
