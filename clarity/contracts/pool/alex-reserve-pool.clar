@@ -44,18 +44,26 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (ok (var-set contract-owner owner))
   )
 )
 
-(define-private (check-is-approved (sender principal))
-  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+(define-private (check-is-contract-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved)
+  (ok (asserts! (or (default-to false (map-get? approved-contracts tx-sender)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved-token (token principal))
+  (ok (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN))
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (map-set approved-contracts new-approved-contract true)
     (ok true)
   )
@@ -76,7 +84,7 @@
 ;; @returns (response bool)
 (define-public (add-to-balance (token principal) (amount uint))
   (begin
-    (try! (check-is-approved tx-sender))
+    (try! (check-is-approved))
     (ok (map-set reserve token (+ amount (get-balance token))))
   )
 )
@@ -87,7 +95,7 @@
 ;; @returns (response bool)
 (define-public (remove-from-balance (token principal) (amount uint))
   (begin
-    (try! (check-is-approved tx-sender))
+    (try! (check-is-approved))
     (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
     (ok (map-set reserve token (- (get-balance token) amount)))
   )
@@ -164,7 +172,7 @@
 ;; @returns (response bool)
 (define-public (add-token (token principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (map-set approved-tokens token true)
     (map-set users-nonce token u0)
     (ok true)
@@ -177,7 +185,7 @@
 
 (define-public (set-apower-multiplier-in-fixed (token principal) (new-apower-multiplier-in-fixed uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (map-set apower-multiplier-in-fixed token new-apower-multiplier-in-fixed)
     (ok true)
   )
@@ -202,7 +210,7 @@
 ;; @returns (response bool)
 (define-public (set-activation-delay (new-activation-delay uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (ok (var-set activation-delay new-activation-delay))
   )
 )
@@ -219,7 +227,7 @@
 ;; @returns (response bool)
 (define-public (set-activation-threshold (new-activation-threshold uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (ok (var-set activation-threshold new-activation-threshold))
   )
 )
@@ -416,7 +424,7 @@
 ;; @response (ok response)
 (define-public (stake-tokens (token-trait <ft-trait>) (amount-token uint) (lock-period uint))
   (begin
-    (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
+    (try! (check-is-approved-token (contract-of token-trait)))
     (stake-tokens-at-cycle token-trait tx-sender (get-or-create-user-id (contract-of token-trait) tx-sender) amount-token block-height lock-period)
   )
 )
@@ -443,16 +451,14 @@
         last: (+ target-cycle lock-period)
       })
     )   
-    (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN) 
+    (try! (check-is-approved-token (contract-of token-trait))) 
     (asserts! (>= block-height (get-activation-block-or-default token)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
     (unwrap! (contract-call? token-trait transfer-fixed amount-token tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
     (try! (as-contract (add-to-balance token amount-token)))
-    (match (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment))
-      ok-value (ok true)
-      err-value (err err-value)
-    )
+    (try! (fold stake-tokens-closure REWARD-CYCLE-INDEXES (ok commitment)))
+    (ok true)
   )
 )
 
@@ -539,7 +545,7 @@
 ;; @returns (response tuple)
 (define-public (claim-staking-reward (token-trait <ft-trait>) (target-cycle uint))
   (begin
-    (asserts! (default-to false (map-get? approved-tokens (contract-of token-trait))) ERR-INVALID-TOKEN)
+    (try! (check-is-approved-token (contract-of token-trait)))
     (claim-staking-reward-at-cycle token-trait tx-sender block-height target-cycle)
   )
 )
@@ -574,8 +580,7 @@
       }
     )
     ;; send back tokens if user was eligible
-    (and (> to-return u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait to-return user))))
-    (and (> to-return u0) (as-contract (try! (remove-from-balance (contract-of token-trait) to-return))))
+    (and (> to-return u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait to-return user))) (as-contract (try! (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
     (and (> entitled-token u0) (as-contract (try! (contract-call? .age000-governance-token mint-fixed entitled-token user))))
     (and 
@@ -598,7 +603,7 @@
 ;; @returns (response bool)
 (define-public (set-token-halving-cycle (new-token-halving-cycle uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (var-set token-halving-cycle new-token-halving-cycle)
     (set-coinbase-thresholds)
     (ok true)
@@ -648,7 +653,7 @@
 ;; @returns (response bool)
 (define-public (set-coinbase-amount (token principal) (coinbase-1 uint) (coinbase-2 uint) (coinbase-3 uint) (coinbase-4 uint) (coinbase-5 uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (map-set coinbase-amounts token 
       {
         coinbase-amount-1: coinbase-1,
@@ -670,14 +675,16 @@
 (define-read-only (get-coinbase-amount-or-default (token principal) (reward-cycle uint))
   (let
     (
-      (coinbase (default-to {
-                              coinbase-amount-1: u0,
-                              coinbase-amount-2: u0,
-                              coinbase-amount-3: u0,
-                              coinbase-amount-4: u0,
-                              coinbase-amount-5: u0
-                            } 
-                            (map-get? coinbase-amounts token))
+      (coinbase 
+        (default-to 
+          {
+            coinbase-amount-1: u0,
+            coinbase-amount-2: u0,
+            coinbase-amount-3: u0,
+            coinbase-amount-4: u0,
+            coinbase-amount-5: u0
+          } 
+          (map-get? coinbase-amounts token))
       )
     )
     ;; computations based on each halving threshold
@@ -716,7 +723,7 @@
 ;; @returns (response bool)
 (define-public (set-reward-cycle-length (new-reward-cycle-length uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-contract-owner))
     (ok (var-set reward-cycle-length new-reward-cycle-length))
   )
 )
@@ -725,5 +732,4 @@
 (map-set approved-contracts .collateral-rebalancing-pool true)  
 (map-set approved-contracts .fixed-weight-pool true)
 (map-set approved-contracts .yield-token-pool true)
-(map-set approved-contracts (as-contract tx-sender) true)
 (map-set approved-contracts .yield-collateral-rebalancing-pool true)
