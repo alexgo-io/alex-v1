@@ -54,7 +54,16 @@
 )
 
 (define-private (check-is-approved)
-  (ok (asserts! (or (default-to false (map-get? approved-contracts tx-sender)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+  (ok 
+    (asserts! 
+      (or 
+        (default-to false (map-get? approved-contracts tx-sender)) 
+        (is-eq tx-sender (var-get contract-owner))
+        (is-eq tx-sender (as-contract tx-sender))
+      ) 
+      ERR-NOT-AUTHORIZED
+    )
+  )
 )
 
 (define-private (check-is-approved-token (token principal))
@@ -84,7 +93,7 @@
 ;; @returns (response bool)
 (define-public (add-to-balance (token principal) (amount uint))
   (begin
-    (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender (as-contract tx-sender))) ERR-NOT-AUTHORIZED) 
+    (try! (check-is-approved)) 
     (ok (map-set reserve token (+ amount (get-balance token))))
   )
 )
@@ -95,7 +104,7 @@
 ;; @returns (response bool)
 (define-public (remove-from-balance (token principal) (amount uint))
   (begin
-    (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender (as-contract tx-sender))) ERR-NOT-AUTHORIZED) 
+    (try! (check-is-approved)) 
     (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
     (ok (map-set reserve token (- (get-balance token) amount)))
   )

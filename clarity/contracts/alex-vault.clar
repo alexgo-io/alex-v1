@@ -115,8 +115,7 @@
   (begin     
     (try! (check-is-approved tx-sender))
     (try! (check-is-approved-token (contract-of token)))
-    (as-contract (try! (contract-call? token transfer-fixed amount tx-sender recipient none)))
-    (ok true)
+    (as-contract (contract-call? token transfer-fixed amount tx-sender recipient none))
   )
 )
 
@@ -131,8 +130,7 @@
   (begin     
     (try! (check-is-approved tx-sender))
     (try! (check-is-approved-token (contract-of token)))
-    (as-contract (try! (contract-call? token transfer-fixed token-id amount tx-sender recipient)))
-    (ok true)
+    (as-contract (contract-call? token transfer-fixed token-id amount tx-sender recipient))
   )
 )
 
