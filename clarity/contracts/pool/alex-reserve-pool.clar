@@ -17,8 +17,14 @@
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
+(define-constant MAX-REWARD-CYCLES u32)
+(define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
+
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
+(define-map approved-tokens principal bool)
+
+(define-map reserve principal uint)
 
 ;; STAKING CONFIGURATION
 (define-data-var reward-cycle-length uint u525) ;; number of block-heights per cycle
@@ -37,83 +43,6 @@
     coinbase-amount-5: uint
   }
 )
-
-(define-read-only (get-contract-owner)
-  (ok (var-get contract-owner))
-)
-
-(define-public (set-contract-owner (owner principal))
-  (begin
-    (try! (check-is-contract-owner))
-    (ok (var-set contract-owner owner))
-  )
-)
-
-(define-private (check-is-contract-owner)
-  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
-)
-
-(define-private (check-is-approved)
-  (ok 
-    (asserts! 
-      (or 
-        (default-to false (map-get? approved-contracts tx-sender)) 
-        (is-eq tx-sender (var-get contract-owner))
-        (is-eq tx-sender (as-contract tx-sender))
-      ) 
-      ERR-NOT-AUTHORIZED
-    )
-  )
-)
-
-(define-private (check-is-approved-token (token principal))
-  (ok (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN))
-)
-
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (try! (check-is-contract-owner))
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
-  )
-)
-
-(define-map reserve principal uint)
-
-;; @des get-balance 
-;; @params token
-;; @returns uint
-(define-read-only (get-balance (token principal))
-  (default-to u0 (map-get? reserve token))
-)
-
-;; @desc add-to-balance 
-;; @params token 
-;; @params amount 
-;; @returns (response bool)
-(define-public (add-to-balance (token principal) (amount uint))
-  (begin
-    (try! (check-is-approved)) 
-    (ok (map-set reserve token (+ amount (get-balance token))))
-  )
-)
-
-;; @desc remove-from-balance 
-;; @params token 
-;; @params amount
-;; @returns (response bool)
-(define-public (remove-from-balance (token principal) (amount uint))
-  (begin
-    (try! (check-is-approved)) 
-    (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
-    (ok (map-set reserve token (- (get-balance token) amount)))
-  )
-)
-
-(define-map approved-tokens principal bool)
-
-(define-constant MAX-REWARD-CYCLES u32)
-(define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
 
 ;; At a given reward cycle, what is the total amount of tokens staked
 (define-map staking-stats-at-cycle 
@@ -141,6 +70,8 @@
 
 ;; activation-block for each stake-able token
 (define-map activation-block principal uint)
+
+;; multipler applicable to apower relative to the associated token
 (define-map apower-multiplier-in-fixed principal uint)
 
 ;; users-nonce for each stake-able token
@@ -163,10 +94,85 @@
   uint
 )
 
+(define-read-only (get-contract-owner)
+  (ok (var-get contract-owner))
+)
+
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set contract-owner owner))
+  )
+)
+
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-self)
+  (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved-token (token principal))
+  (ok (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN))
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (try! (check-is-owner))
+    (ok (map-set approved-contracts new-approved-contract true))
+  )
+)
+
+;; @des get-balance 
+;; @params token
+;; @returns uint
+(define-read-only (get-balance (token principal))
+  (default-to u0 (map-get? reserve token))
+)
+
+;; @desc add-to-balance 
+;; @params token 
+;; @params amount 
+;; @returns (response bool)
+(define-public (add-to-balance (token principal) (amount uint))
+  (begin
+    (asserts! (or (is-ok (check-is-self)) (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED) 
+    (ok (map-set reserve token (+ amount (get-balance token))))
+  )
+)
+
+;; @desc remove-from-balance 
+;; @params token 
+;; @params amount
+;; @returns (response bool)
+(define-public (remove-from-balance (token principal) (amount uint))
+  (begin
+    (asserts! (or (is-ok (check-is-self)) (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+    (asserts! (<= amount (get-balance token)) ERR-AMOUNT-EXCEED-RESERVE)
+    (ok (map-set reserve token (- (get-balance token) amount)))
+  )
+)
+
 ;; @desc get-reward-cycle-length
 ;; @returns uint
 (define-read-only (get-reward-cycle-length)
   (var-get reward-cycle-length)
+)
+
+;; @desc set-reward-cycle-length
+;; @restricted Contract-Owner
+;; @params new-reward-cycle-length
+;; @returns (response bool)
+(define-public (set-reward-cycle-length (new-reward-cycle-length uint))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set reward-cycle-length new-reward-cycle-length))
+  )
 )
 
 ;; @desc is-token-approved
@@ -181,10 +187,9 @@
 ;; @returns (response bool)
 (define-public (add-token (token principal))
   (begin
-    (try! (check-is-contract-owner))
+    (try! (check-is-owner))
     (map-set approved-tokens token true)
-    (map-set users-nonce token u0)
-    (ok true)
+    (ok (map-set users-nonce token u0))
   )
 )
 
@@ -194,9 +199,8 @@
 
 (define-public (set-apower-multiplier-in-fixed (token principal) (new-apower-multiplier-in-fixed uint))
   (begin
-    (try! (check-is-contract-owner))
-    (map-set apower-multiplier-in-fixed token new-apower-multiplier-in-fixed)
-    (ok true)
+    (try! (check-is-owner))
+    (ok (map-set apower-multiplier-in-fixed token new-apower-multiplier-in-fixed))
   )
 )
 
@@ -219,7 +223,7 @@
 ;; @returns (response bool)
 (define-public (set-activation-delay (new-activation-delay uint))
   (begin
-    (try! (check-is-contract-owner))
+    (try! (check-is-owner))
     (ok (var-set activation-delay new-activation-delay))
   )
 )
@@ -236,7 +240,7 @@
 ;; @returns (response bool)
 (define-public (set-activation-threshold (new-activation-threshold uint))
   (begin
-    (try! (check-is-contract-owner))
+    (try! (check-is-owner))
     (ok (var-set activation-threshold new-activation-threshold))
   )
 )
@@ -612,10 +616,9 @@
 ;; @returns (response bool)
 (define-public (set-token-halving-cycle (new-token-halving-cycle uint))
   (begin
-    (try! (check-is-contract-owner))
+    (try! (check-is-owner))
     (var-set token-halving-cycle new-token-halving-cycle)
-    (set-coinbase-thresholds)
-    (ok true)
+    (ok (set-coinbase-thresholds))
   )
 )
 
@@ -662,17 +665,18 @@
 ;; @returns (response bool)
 (define-public (set-coinbase-amount (token principal) (coinbase-1 uint) (coinbase-2 uint) (coinbase-3 uint) (coinbase-4 uint) (coinbase-5 uint))
   (begin
-    (try! (check-is-contract-owner))
-    (map-set coinbase-amounts token 
-      {
-        coinbase-amount-1: coinbase-1,
-        coinbase-amount-2: coinbase-2,
-        coinbase-amount-3: coinbase-3,
-        coinbase-amount-4: coinbase-4,
-        coinbase-amount-5: coinbase-5
-      }
+    (try! (check-is-owner))
+    (ok
+      (map-set coinbase-amounts token 
+        {
+          coinbase-amount-1: coinbase-1,
+          coinbase-amount-2: coinbase-2,
+          coinbase-amount-3: coinbase-3,
+          coinbase-amount-4: coinbase-4,
+          coinbase-amount-5: coinbase-5
+        }
+      )
     )
-    (ok true)
   )
 )
 
@@ -726,19 +730,11 @@
   )
 )
 
-;; @desc set-reward-cycle-length
-;; @restricted Contract-Owner
-;; @params new-reward-cycle-length
-;; @returns (response bool)
-(define-public (set-reward-cycle-length (new-reward-cycle-length uint))
-  (begin
-    (try! (check-is-contract-owner))
-    (ok (var-set reward-cycle-length new-reward-cycle-length))
-  )
-)
-
 ;; contract initialisation
-(map-set approved-contracts .collateral-rebalancing-pool true)  
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .fixed-weight-pool true)
+
+;; testing only
+(map-set approved-contracts .collateral-rebalancing-pool true)  
 (map-set approved-contracts .yield-token-pool true)
 (map-set approved-contracts .yield-collateral-rebalancing-pool true)

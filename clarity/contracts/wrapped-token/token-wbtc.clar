@@ -3,7 +3,12 @@
 
 (define-fungible-token wbtc)
 
-(define-data-var token-uri (string-utf8 256) u"")
+(define-data-var token-name (string-ascii 32) "Wrapped Bitcoin")
+(define-data-var token-symbol (string-ascii 10) "XBTC")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-wbtc.json"))
+
+(define-data-var token-decimals uint u8)
+
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
@@ -18,9 +23,41 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (set-name (new-name (string-ascii 32)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-name new-name))
+	)
+)
+
+(define-public (set-symbol (new-symbol (string-ascii 10)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-symbol new-symbol))
+	)
+)
+
+(define-public (set-decimals (new-decimals uint))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-decimals new-decimals))
+	)
+)
+
+(define-public (set-token-uri (new-uri (optional (string-utf8 256))))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-uri new-uri))
+	)
 )
 
 ;; ---------------------------------------------------------
@@ -36,19 +73,19 @@
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "wbtc")
+  (ok (var-get token-name))
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "wbtc")
+  (ok (var-get token-symbol))
 )
 
 ;; @desc get-decimals
 ;; @returns (response uint)
 (define-read-only (get-decimals)
-  (ok u8)
+  (ok (var-get token-decimals))
 )
 
 ;; @desc get-balance
@@ -59,21 +96,10 @@
   ;; (ok (/ (* (try! (contract-call? SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) ONE_8) (pow u10 u8)))
 )
 
-;; @desc set-token-uri
-;; @restricted Contract-Owner
-;; @params value
-;; @returns (response bool)
-(define-public (set-token-uri (value (string-utf8 256)))
-  (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set token-uri value))
-  )
-)
-
 ;; @desc get-token-uri
 ;; @returns (response some string-utf-8)
 (define-read-only (get-token-uri)
-  (ok (some (var-get token-uri)))
+  (ok (var-get token-uri))
 )
 
 ;; @desc transfer
@@ -86,8 +112,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) ONE_8) sender recipient memo))
-    (ok true)
+    (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) ONE_8) sender recipient memo)
   )
 )
 
@@ -177,3 +202,6 @@
 (define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
   (fold check-err (map transfer-from-tuple recipients) (ok true))
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)

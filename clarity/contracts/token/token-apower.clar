@@ -9,10 +9,11 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "APower Token")
-(define-data-var token-symbol (string-ascii 10) "apower")
-(define-data-var token-decimals uint u8)
+(define-data-var token-name (string-ascii 32) "ALEX Power Token")
+(define-data-var token-symbol (string-ascii 10) "APower")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-apower.json"))
+
+(define-data-var token-decimals uint u8)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -20,54 +21,54 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
 
 ;; --- Authorisation check
 
-;; @desc check-is-approved
-;; @restricted Approved-Contracts/Contract-Owner
-;; @params sender
-;; @returns (response bool)
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
 (define-private (check-is-approved)
-  (ok (asserts! (or (default-to false (map-get? approved-contracts tx-sender)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
 ;; Other
 
 (define-public (set-name (new-name (string-ascii 32)))
 	(begin
-		(try! (check-is-approved))
+		(try! (check-is-owner))
 		(ok (var-set token-name new-name))
 	)
 )
 
 (define-public (set-symbol (new-symbol (string-ascii 10)))
 	(begin
-		(try! (check-is-approved))
+		(try! (check-is-owner))
 		(ok (var-set token-symbol new-symbol))
 	)
 )
 
 (define-public (set-decimals (new-decimals uint))
 	(begin
-		(try! (check-is-approved))
+		(try! (check-is-owner))
 		(ok (var-set token-decimals new-decimals))
 	)
 )
 
 (define-public (set-token-uri (new-uri (optional (string-utf8 256))))
 	(begin
-		(try! (check-is-approved))
+		(try! (check-is-owner))
 		(ok (var-set token-uri new-uri))
 	)
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
 	(begin
-		(try! (check-is-approved))
+		(try! (check-is-owner))
 		(ok (map-set approved-contracts new-approved-contract true))
 	)
 )
@@ -116,7 +117,7 @@
 ;; @returns (response bool)
 (define-public (mint (amount uint) (recipient principal))
 	(begin		
-		(try! (check-is-approved))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(ft-mint? apower amount recipient)
 	)
 )
@@ -129,7 +130,7 @@
 ;; @returns (response bool)
 (define-public (burn (amount uint) (sender principal))
 	(begin
-		(try! (check-is-approved))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(ft-burn? apower amount sender)
 	)
 )
@@ -203,12 +204,16 @@
 
 (define-public (mint-fixed-many (recipients (list 200 {amount: uint, recipient: principal})))
 	(begin
-		(try! (check-is-approved))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(ok (map mint-fixed-many-iter recipients))
 	)
 )
 
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .alex-reserve-pool true)
+
+;; testing only
 (map-set approved-contracts .exchange true)
 
 

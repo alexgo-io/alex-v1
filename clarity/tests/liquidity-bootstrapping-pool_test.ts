@@ -9,6 +9,7 @@ const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance
 const poolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-lbp-alex-usda-90-10"
 const wrongPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
+const projectName = 'projectName';
 
 const ONE_8 = 1e+8;
 
@@ -39,7 +40,7 @@ Clarinet.test({
         result.expectOk();        
         
         // Deployer creating a pool, initial tokens injected to the pool
-        result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, priceMin, priceMax, alexQty, usdaQty);
+        result = LBPTest.createPool(deployer, projectName, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, priceMin, priceMax, alexQty, usdaQty);
         result.expectOk().expectBool(true);
 
         // Check pool details and print
@@ -176,11 +177,11 @@ Clarinet.test({
       result.expectOk();       
       
       // non-deployer creating a pool will throw an error
-      result = LBPTest.createPool(wallet_1, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
+      result = LBPTest.createPool(wallet_1, projectName, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
       result.expectErr().expectUint(1000);
 
       // Deployer creating a pool, initial tokens injected to the pool
-      result = LBPTest.createPool(deployer, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
+      result = LBPTest.createPool(deployer, projectName, alexAddress, usdaAddress, weightX1, weightX2, expiry, poolTokenAddress, multisigAddress, 0, 0, alexQty, usdaQty);
       result.expectOk().expectBool(true);
 
       // all time passed

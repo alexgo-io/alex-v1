@@ -3,7 +3,12 @@
 
 (define-fungible-token wstx)
 
-(define-data-var token-uri (string-utf8 256) u"")
+(define-data-var token-name (string-ascii 32) "Stacks Token")
+(define-data-var token-symbol (string-ascii 10) "STX")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-wstx.json"))
+
+(define-data-var token-decimals uint u8)
+
 (define-data-var contract-owner principal tx-sender)
 
 ;; errors
@@ -18,61 +23,68 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (set-name (new-name (string-ascii 32)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-name new-name))
+	)
+)
+
+(define-public (set-symbol (new-symbol (string-ascii 10)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-symbol new-symbol))
+	)
+)
+
+(define-public (set-decimals (new-decimals uint))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-decimals new-decimals))
+	)
+)
+
+(define-public (set-token-uri (new-uri (optional (string-utf8 256))))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-uri new-uri))
+	)
 )
 
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
 ;; ---------------------------------------------------------
 
-;; @desc get-total-supply
-;; @returns (response uint)
 (define-read-only (get-total-supply)
   (ok u0)
 )
-
-;; @desc get-name
-;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "wstx")
+	(ok (var-get token-name))
 )
 
-;; @desc get-symbol
-;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "wstx")
+	(ok (var-get token-symbol))
 )
 
-;; @desc get-decimals
-;; @returns (response uint)
 (define-read-only (get-decimals)
-  (ok u8)
+	(ok (var-get token-decimals))
 )
 
-;; @desc get-balance
-;; @params account
-;; @returns (response uint)
-(define-read-only (get-balance (account principal))
-  (ok (/ (* (stx-get-balance account) ONE_8) (pow u10 u6)))
+(define-read-only (get-balance (who principal))
+	(ok (/ (* (stx-get-balance who) ONE_8) (pow u10 u6)))
 )
 
-;; @desc set-token-uri
-;; @restricted Contract-Owner
-;; @params value
-;; @returns (response bool)
-(define-public (set-token-uri (value (string-utf8 256)))
-  (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set token-uri value))
-  )
-)
-
-;; @desc get-token-uri
-;; @returns (response some string-utf-8)
 (define-read-only (get-token-uri)
-  (ok (some (var-get token-uri)))
+	(ok (var-get token-uri))
 )
 
 ;; @desc transfer
@@ -177,3 +189,6 @@
 (define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
   (fold check-err (map transfer-from-tuple recipients) (ok true))
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)

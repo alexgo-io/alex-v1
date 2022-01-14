@@ -28,9 +28,13 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-private (check-is-owner)
+    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 ;; data maps and vars
@@ -156,14 +160,15 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-owner))
         (asserts! (not (get oracle-enabled pool)) ERR-ORACLE-ALREADY-ENABLED)
-        (map-set 
-            pools-data-map 
-            { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
-            (merge pool {oracle-enabled: true})
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
+                (merge pool {oracle-enabled: true})
+            )
         )
-        (ok true)
     )    
 )
 
@@ -195,20 +200,21 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-owner))
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
-        (map-set 
-            pools-data-map 
-            { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
-            (merge pool 
-                {
-                oracle-average: new-oracle-average,
-                oracle-resilient: (try! (get-oracle-instant token-x token-y weight-x weight-y))
-                }
+        (ok 
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
+                (merge pool 
+                    {
+                    oracle-average: new-oracle-average,
+                    oracle-resilient: (try! (get-oracle-instant token-x token-y weight-x weight-y))
+                    }
+                )
             )
         )
-        (ok true)
     )    
 )
 
@@ -317,7 +323,7 @@
             })
         )
 
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)        
+        (try! (check-is-owner))        
 
         (asserts!
             (and
@@ -617,7 +623,7 @@
         (            
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-owner))
 
         (map-set pools-data-map 
             { 
@@ -662,7 +668,7 @@
         (        
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -687,7 +693,7 @@
         (    
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-eq tx-sender (var-get contract-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
@@ -714,7 +720,7 @@
         (
             (pool (try! (get-pool-details token-x token-y weight-x weight-y)))
         )
-        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+        (try! (check-is-owner))
 
         (map-set pools-data-map 
             { 
@@ -1269,4 +1275,5 @@
     )  
 )
 
+;; contract initialisation
 ;; (set-contract-owner .executor-dao)

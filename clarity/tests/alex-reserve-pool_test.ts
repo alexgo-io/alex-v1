@@ -745,8 +745,14 @@ describe("STAKING :", () => {
           staker.address,
           "alex"
         );
+
+        receipts[1].events.expectFungibleTokenMintEvent(
+          ONE_8 * APOWER_MULTIPLIER,
+          staker.address,
+          "apower"
+        );
         
-        clients.apower.getBalance(staker).result.expectOk().expectUint(ONE_8 * APOWER_MULTIPLIER);
+        // clients.apower.getBalance(staker).result.expectOk().expectUint(ONE_8 * APOWER_MULTIPLIER);
 
       });
 
@@ -832,7 +838,7 @@ describe("STAKING :", () => {
             }
           });
 
-          let apower = Number(clients.apower.getBalance(staker).result.expectOk().substring(1));
+          // let apower = Number(clients.apower.getBalance(staker).result.expectOk().substring(1));
 
           const receipt = chain.mineBlock([
             clients.core.claimStakingReward(rewardCycle, staker, token),
@@ -849,7 +855,12 @@ describe("STAKING :", () => {
             result['entitled-token'].expectUint(ONE_8);
             result['to-return'].expectUint(0);
             assertEquals(receipt.events.length, (APOWER_MULTIPLIER > 0) ? 2 : 1);
-            assertEquals(Number(clients.apower.getBalance(staker).result.expectOk().substring(1)) - apower, ONE_8 * APOWER_MULTIPLIER);
+            // assertEquals(Number(clients.apower.getBalance(staker).result.expectOk().substring(1)) - apower, ONE_8 * APOWER_MULTIPLIER);
+            receipt.events.expectFungibleTokenMintEvent(
+              ONE_8 * APOWER_MULTIPLIER,
+              staker.address,
+              "apower"
+            );                
           } else {
             let result:any = receipt.result.expectOk().expectTuple();
             result['entitled-token'].expectUint(ONE_8);
@@ -861,7 +872,12 @@ describe("STAKING :", () => {
               staker.address,
               "alex"
             );
-            assertEquals(Number(clients.apower.getBalance(staker).result.expectOk().substring(1)) - apower, ONE_8 * APOWER_MULTIPLIER);
+            // assertEquals(Number(clients.apower.getBalance(staker).result.expectOk().substring(1)) - apower, ONE_8 * APOWER_MULTIPLIER);
+            receipt.events.expectFungibleTokenMintEvent(
+              ONE_8 * APOWER_MULTIPLIER,
+              staker.address,
+              "apower"
+            );                 
           }
         }
       });

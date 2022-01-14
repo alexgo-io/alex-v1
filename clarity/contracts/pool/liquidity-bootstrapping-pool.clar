@@ -54,6 +54,7 @@
     total-supply: uint,
     balance-x: uint,
     balance-y: uint,
+    balance-x-0: uint,
     pool-multisig: principal,
     pool-token: principal,
     listed: uint,
@@ -61,7 +62,8 @@
     weight-x-1: uint,
     weight-x-t: uint,
     price-x-min: uint,
-    price-x-max: uint    
+    price-x-max: uint,
+    project-name: (string-utf8 256)
   }
 )
 
@@ -90,6 +92,7 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
+                (balance-x-0 (get balance-x-0 pool))
                 (total-supply (get total-supply pool))
                 (add-data (try! (get-token-given-position token-x token-y expiry dx max-dy)))
                 (new-supply (get token add-data))
@@ -97,7 +100,8 @@
                 (pool-updated (merge pool {
                     total-supply: (+ new-supply total-supply),
                     balance-x: (+ balance-x dx),
-                    balance-y: (+ balance-y dy)
+                    balance-y: (+ balance-y dy),
+                    balance-x-0: (+ balance-x-0 dx)
                 }))
             )
             ;; CR-01
@@ -235,6 +239,7 @@
 
 ;; @desc create-pool
 ;; @restricted contract-owner
+;; @param project-name; name of project
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
 ;; @param weight-x-0; weight of token-x at start
@@ -245,16 +250,18 @@
 ;; @param dx; amount of token-x added
 ;; @param dy; amount of token-y added
 ;; @returns (response bool uint)
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (pool-token-trait <ft-trait>) (multisig-vote principal) (price-x-min uint) (price-x-max uint) (dx uint) (dy uint)) 
+(define-public (create-pool (project-name (string-utf8 256)) (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x-0 uint) (weight-x-1 uint) (expiry uint) (pool-token-trait <ft-trait>) (multisig-vote principal) (price-x-min uint) (price-x-max uint) (dx uint) (dy uint)) 
     (let
         (
             (pool-id (+ (var-get pool-count) u1))
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
             (pool-data {
+                project-name: project-name,
                 total-supply: u0,
                 balance-x: u0,
                 balance-y: u0,
+                balance-x-0: u0,
                 pool-multisig: multisig-vote,
                 pool-token: (contract-of pool-token-trait),
                 listed: (* block-height ONE_8),
