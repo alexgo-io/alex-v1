@@ -1,5 +1,6 @@
 
 (define-constant ONE_16 (pow u10 u16)) ;; 16 decimal places
+(define-constant MAX_POW_RELATIVE_ERROR u8)
 
 ;; The maximum digits clarity can give in uint is 39 digits, otherwise it overflows
 (define-read-only (maximum-integer (a uint) (b uint))
@@ -120,3 +121,16 @@
         ))))))))))))))))
 )
 
+(define-public (ln (a uint))
+    (ok (unwrap-panic (contract-call? .math-log-exp-biguint ln-priv (to-int a))))
+)
+
+;; (define-read-only (pow (a uint) (b uint))
+;;     (let
+;;         (
+;;             (raw (unwrap-panic (contract-call? .math-log-exp-biguint pow-fixed a b)))
+;;             (max-error (+ u1 (mul raw MAX_POW_RELATIVE_ERROR)))
+;;         )
+;;         (+ raw max-error)
+;;     )
+;; )
