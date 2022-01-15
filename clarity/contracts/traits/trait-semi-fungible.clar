@@ -1,7 +1,5 @@
 (define-trait semi-fungible-trait
 	(
-		;; (get-token-owned (principal) (list))
-
 		;; Get a token type balance of the passed principal.
 		(get-balance (uint principal) (response uint uint))
 
@@ -26,7 +24,7 @@
 		;; Transfer from one principal to another with a memo.
 		(transfer-memo (uint uint principal principal (buff 34)) (response bool uint))
 
-		;; helper functions for 8-digit fixed notation
+		;; helper functions for fixed notation
 		(transfer-fixed (uint uint principal principal) (response bool uint))
 		(transfer-memo-fixed (uint uint principal principal (buff 34)) (response bool uint))
     	(get-balance-fixed (uint principal) (response uint uint))

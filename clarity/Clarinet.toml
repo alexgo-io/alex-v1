@@ -71,7 +71,6 @@ depends_on = [
   "trait-vault",
   "weighted-equation",
   "alex-reserve-pool",
-  "trait-multisig-vote",
   "token-wstx"
 ]
 
