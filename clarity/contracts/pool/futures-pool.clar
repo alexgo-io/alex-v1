@@ -69,9 +69,6 @@
 (define-private (get-staking-reward (token principal) (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staking-reward token (get-user-id token) reward-cycle)
 )
-(define-private (register-user (token principal))
-  (as-contract (contract-call? .alex-reserve-pool register-user token none))
-)
 (define-private (get-user-id (token principal))
   (default-to u0 (contract-call? .alex-reserve-pool get-user-id token (as-contract tx-sender)))
 )
@@ -128,9 +125,6 @@
             (start-cycle (default-to u0 (element-at reward-cycles u0)))
         )
         (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-
-        ;; register if not registered
-        (try! (register-user (contract-of staked-token-trait)))
 
         (asserts! (is-none (map-get? pools-data-map { staked-token: staked-token, start-cycle: start-cycle })) ERR-POOL-ALREADY-EXISTS)
 

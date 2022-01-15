@@ -19,42 +19,6 @@ describe("STAKING :", () => {
         const result = clients.core.getActivationBlockOrHeight(token).result
         result.expectUint(100000000);
       });
-
-      it("succeeds and returns activation height", (chain, accounts, clients) => {
-        // arrange
-        const user = accounts.get("wallet_4")!;
-        const deployer = accounts.get("deployer")!;
-        const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(user, token),
-        ]);
-
-        const activationBlockHeight =
-           block.height + CoreClient.ACTIVATION_DELAY - 1;
-        const result = clients.core.getActivationBlockOrHeight(token).result; 
-        
-        // assert
-        result.expectUint(activationBlockHeight);
-      });
-    });
-
-    describe("get-activation-delay()", () => {
-      it("succeeds and returns activation delay", (chain, accounts, clients) => {
-        // act
-        const result = clients.core.getActivationDelay().result;
-        // assert
-        result.expectUint(CoreClient.ACTIVATION_DELAY);
-      });
-    });
-    describe("get-activation-threshold()", () => {
-      it("succeeds and returns activation threshold", (chain, accounts, clients) => {
-        // act
-        const result = clients.core.getActivationThreshold().result;
-        // assert
-        result.expectUint(CoreClient.ACTIVATION_THRESHOLD);
-      });
     });
 
     describe("get-registered-users-nonce()", () => {
@@ -63,104 +27,6 @@ describe("STAKING :", () => {
         const result = clients.core.getRegisteredUsersNonce(token).result;
         // assert
         result.expectNone();
-      });
-      it("succeeds and returns u1 if one user is registered", (chain, accounts, clients) => {
-        // arrange
-        const user = accounts.get("wallet_5")!;
-        const deployer = accounts.get("deployer")!;
-        const receipt = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(user, token)]
-        ); 
-        receipt.receipts[0].result.expectOk().expectBool(true);
-        receipt.receipts[1].result.expectOk().expectBool(true);
-        receipt.receipts[2].result.expectOk().expectBool(true);
-
-        // act
-        const result = clients.core.getRegisteredUsersNonce(token).result;
-        // assert
-        result.expectSome().expectUint(1);
-      });
-    });
-
-    describe("register-user()", () => {
-      it("successfully register new user and emits print event with memo when supplied", (chain, accounts, clients) => {
-        // arrange
-        const user = accounts.get("wallet_5")!;
-        const deployer = accounts.get("deployer")!;
-        const memo = "hello world";
-
-        // act
-        const receipts = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),          
-          clients.core.registerUser(user, token, memo)
-        ]).receipts;
-
-        // assert
-        receipts[0].result.expectOk().expectBool(true);
-        receipts[1].result.expectOk().expectBool(true);
-        receipts[2].result.expectOk().expectBool(true);
-        receipts[3].result.expectOk().expectBool(true);
-        clients.core.getUserId(token, user).result.expectSome().expectUint(1);
-
-        assertEquals(receipts[3].events.length, 1);
-
-        const expectedEvent = {
-          type: "contract_event",
-          contract_event: {
-            contract_identifier: clients.core.getContractAddress(),
-            topic: "print",
-            value: types.some(types.utf8(memo)),
-          },
-        };
-
-        assertEquals(receipts[3].events[0], expectedEvent);
-      });
-
-      it("successfully register new user and do not emit any events when memo is not supplied", (chain, accounts, clients) => {
-        // arrange
-        const user = accounts.get("wallet_4")!;
-        const deployer = accounts.get("deployer")!;
-
-        // act
-        const receipt = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(user, token)])
-          .receipts;
-
-        // assert
-        receipt[2].result.expectOk().expectBool(true);
-        clients.core.getUserId(token, user).result.expectSome().expectUint(1);
-
-        assertEquals(receipt[2].events.length, 0);
-      });
-
-      it("throws ERR_USER_ALREADY_REGISTERED while trying to register user 2nd time", (chain, accounts, clients) => {
-        // arrange
-        const user = accounts.get("wallet_4")!;
-        const deployer = accounts.get("deployer")!;
-        const registerUserTx = clients.core.registerUser(user, token);
-        
-
-        chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          registerUserTx]);
-        
-        // act
-        const receipt = chain.mineBlock([registerUserTx]).receipts[0];
-
-        // assert
-        receipt.result
-          .expectErr()
-          .expectUint(CoreClient.ErrCode.ERR_USER_ALREADY_REGISTERED);
       });
     });
   });
@@ -200,15 +66,13 @@ describe("STAKING :", () => {
         const amountTokens = 200 * ONE_8;
         const lockPeriod = 0;
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const receipt = chain.mineBlock([
@@ -229,15 +93,14 @@ describe("STAKING :", () => {
         const lockPeriod = 33;
         const block = chain.mineBlock([
 
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const receipt = chain.mineBlock([
@@ -258,15 +121,14 @@ describe("STAKING :", () => {
         const lockPeriod = 5;
         const block = chain.mineBlock([
 
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const receipt = chain.mineBlock([
@@ -287,15 +149,14 @@ describe("STAKING :", () => {
         const lockPeriod = 5;
         const block = chain.mineBlock([
 
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const receipt = chain.mineBlock([
@@ -315,16 +176,15 @@ describe("STAKING :", () => {
         const amountTokens = 20 * ONE_8;
         const lockPeriod = 5;
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
 
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const receipt = chain.mineBlock([
@@ -350,15 +210,14 @@ describe("STAKING :", () => {
         const lockPeriod = 5;
 
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens * 3, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const mineTokensTx = clients.core.stakeTokens(
@@ -394,15 +253,14 @@ describe("STAKING :", () => {
         const amountTokens = 20 * ONE_8;
         const lockPeriod = 1;
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         chain.mineBlock([
@@ -431,15 +289,14 @@ describe("STAKING :", () => {
         const amountTokens = 20 * ONE_8;
         const lockPeriod = 8;
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         chain.mineBlock([
@@ -496,21 +353,20 @@ describe("STAKING :", () => {
         );
 
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(totalAmountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         StakingRecords.forEach((record) => {
           // move chain tip to the beginning of specific cycle
           chain.mineEmptyBlockUntil(
-            activationBlockHeight +
+            CoreClient.ACTIVATION_BLOCK +
               record.stackInCycle * CoreClient.REWARD_CYCLE_LENGTH
           );
 
@@ -598,14 +454,12 @@ describe("STAKING :", () => {
         const targetCycle = 1;
         const setupBlock = chain.mineBlock([
 
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(otherUser, token),
+          
         ]);
-        chain.mineEmptyBlockUntil(
-          setupBlock.height + CoreClient.ACTIVATION_DELAY - 1
-        );
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         // act
         const receipt = chain.mineBlock([
@@ -623,15 +477,16 @@ describe("STAKING :", () => {
         const staker = accounts.get("wallet_1")!;
         const deployer = accounts.get("deployer")!;
         const targetCycle = 1;
+        const amount = 200 * ONE_8;
         const setupBlock = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          clients.token.mint(amount, staker, deployer),          
         ]);
-        chain.mineEmptyBlockUntil(
-          setupBlock.height + CoreClient.ACTIVATION_DELAY - 1
-        );
+
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK + 1);
+        let result = chain.mineBlock([clients.core.stakeTokens(amount, 1, staker, token)]).receipts;
 
         // act
         const receipt = chain.mineBlock([
@@ -644,35 +499,6 @@ describe("STAKING :", () => {
           .expectUint(CoreClient.ErrCode.ERR_REWARD_CYCLE_NOT_COMPLETED);
       });
 
-      it("returns nothing when staker didn't stack at all", (chain, accounts, clients) => {
-        // arrange
-        const staker = accounts.get("wallet_1")!;
-        const deployer = accounts.get("deployer")!;
-        const targetCycle = 1;
-        const setupBlock = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
-          clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
-        ]);
-        chain.mineEmptyBlockUntil(
-          setupBlock.height +
-            CoreClient.ACTIVATION_DELAY +
-            CoreClient.REWARD_CYCLE_LENGTH * 2 -
-            1
-        );
-
-        // act
-        const receipt = chain.mineBlock([
-          clients.core.claimStakingReward(targetCycle, staker, token),
-        ]).receipts[0];
-
-        // assert
-        let output:any = receipt.result.expectOk().expectTuple();
-        output['entitled-token'].expectUint(0);
-        output['to-return'].expectUint(0);
-      });
-
       it("returns nothing while trying to claim reward 2nd time", (chain, accounts, clients) => {
         // arrange
         const staker = accounts.get("wallet_1")!;
@@ -680,16 +506,13 @@ describe("STAKING :", () => {
         const targetCycle = 1;
         const amount = 200 * ONE_8;
         const setupBlock = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
-          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),          
           clients.token.mint(amount, staker, deployer),
         ]);
 
-        chain.mineEmptyBlockUntil(
-          setupBlock.height + CoreClient.ACTIVATION_DELAY + 1
-        );
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK + 1);
         let result = chain.mineBlock([clients.core.stakeTokens(amount, 1, staker, token)]).receipts;
 
         chain.mineEmptyBlock(CoreClient.REWARD_CYCLE_LENGTH * 2);
@@ -714,15 +537,13 @@ describe("STAKING :", () => {
         const targetCycle = 1;
         const amountTokens = 200 * ONE_8;
         const setupBlock = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(amountTokens, staker, deployer),
         ]);
-        chain.mineEmptyBlockUntil(
-          setupBlock.height + CoreClient.ACTIVATION_DELAY + 1
-        );
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK + 1);
         let res = chain.mineBlock([clients.core.stakeTokens(amountTokens, 1, staker, token)]);
         chain.mineEmptyBlock(CoreClient.REWARD_CYCLE_LENGTH * 2);
 
@@ -789,20 +610,19 @@ describe("STAKING :", () => {
         );
 
         const block = chain.mineBlock([
-          clients.core.setActivationThreshold(deployer, 1),
+          clients.core.setActivationBlock(deployer, token, CoreClient.ACTIVATION_BLOCK),
           clients.core.addToken(deployer, token),
           clients.core.setApowerMultiplierInFixed(deployer, token, APOWER_MULTIPLIER * ONE_8),
-          clients.core.registerUser(staker, token),
+          
           clients.token.mint(totalAmountTokens, staker, deployer),
         ]);
-        const activationBlockHeight =
-          block.height + CoreClient.ACTIVATION_DELAY - 1;
-        chain.mineEmptyBlockUntil(activationBlockHeight);
+        
+        chain.mineEmptyBlockUntil(CoreClient.ACTIVATION_BLOCK);
 
         StakingRecords.forEach((record) => {
           // move chain tip to the beginning of specific cycle
           chain.mineEmptyBlockUntil(
-            activationBlockHeight +
+            CoreClient.ACTIVATION_BLOCK +
               record.stackInCycle * CoreClient.REWARD_CYCLE_LENGTH
           );          
 
