@@ -30,10 +30,6 @@
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
-;; @desc add-approved-contract
-;; @restricted Contract-Owner
-;; @params new-approved-contract
-;; @returns (response bool)
 (define-public (add-approved-contract (new-approved-contract principal))
   (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
@@ -207,8 +203,7 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .alex-reserve-pool true)
+(map-set approved-contracts .t-alex-reserve-pool true)
 (map-set approved-contracts .faucet true)
-(map-set approved-contracts .exchange true)
 
 

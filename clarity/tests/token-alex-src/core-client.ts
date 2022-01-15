@@ -105,6 +105,18 @@ export class CoreClient extends Client {
     );
   }
 
+  setApowerMultiplierInFixed(sender: Account, token: string, apower: number): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "set-apower-multiplier-in-fixed",
+      [
+        types.principal(token),
+        types.uint(apower)
+      ],
+      sender.address
+    );
+  }  
+
   addToBalance(sender: Account, amount: number, token: string): Tx {
     return Tx.contractCall(
       this.contractName,

@@ -18,7 +18,7 @@
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant ONE_8 u100000000)
+(define-constant ONE_8 (pow u10 u8))
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -150,8 +150,8 @@
 ;; @desc is-token-accepted
 ;; @params token; sft-trait
 ;; @returns bool
-(define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .lbp-alex-usda-90-10)
+(define-read-only (is-token-accepted (token principal))
+    (is-eq token .lbp-alex-wstx-80-20)
 )
 
 
@@ -174,8 +174,8 @@
     (new-fee-rate-y uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-balance-fixed tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply-fixed)))
+    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-balance-fixed tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-total-supply-fixed)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -217,7 +217,7 @@
     
     )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -253,7 +253,7 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -283,7 +283,7 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .lbp-alex-usda-90-10 get-total-supply-fixed)))
+        (total-supply (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-total-supply-fixed)))
         (threshold-count (mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
@@ -316,12 +316,12 @@
       (proposal (get-proposal-by-id proposal-id))
     )
 
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     (asserts! (not (get is-open proposal)) ERR-NOT-AUTHORIZED)
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
+    (as-contract (try! (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
     (ok true)
   )
 )

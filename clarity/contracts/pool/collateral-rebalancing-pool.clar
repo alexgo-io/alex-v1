@@ -2,14 +2,12 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
-(use-trait multisig-trait .trait-multisig-vote.multisig-vote-sft-trait)
-
 ;; collateral-rebalancing-pool
 ;;
 
 ;; constants
 ;;
-(define-constant ONE_8 u100000000) ;; 8 decimal places
+(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
@@ -85,7 +83,7 @@
 )
 
 (define-data-var pool-count uint u0)
-(define-data-var pools-list (list 2000 uint) (list))
+(define-data-var pools-list (list 500 uint) (list))
 
 ;; private functions
 ;;
@@ -141,8 +139,8 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response (tuple) uint)
-(define-read-only (get-pool-details (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
-    (ok (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))
+(define-read-only (get-pool-details (token principal) (collateral principal) (expiry uint))
+    (ok (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
 )
 
 ;; @desc get-spot
@@ -151,12 +149,12 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-read-only (get-spot (token <ft-trait>) (collateral <ft-trait>))
+(define-read-only (get-spot (token principal) (collateral principal))
     (if (is-eq token collateral)
         (ok ONE_8)
-        (if (is-eq (contract-of token) .token-wstx)
+        (if (is-eq token .token-wstx)
             (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000)
-            (if (is-eq (contract-of collateral) .token-wstx)
+            (if (is-eq collateral .token-wstx)
                 (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))))
                 (ok
                     (div-down 
@@ -169,7 +167,7 @@
     )
 )
 
-(define-read-only (get-pool-value-in-token (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-pool-value-in-token (token principal) (collateral principal) (expiry uint))
     (get-pool-value-in-token-with-spot token collateral expiry (try! (get-spot token collateral)))
 )
 
@@ -179,10 +177,10 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-private (get-pool-value-in-token-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
+(define-private (get-pool-value-in-token-with-spot (token principal) (collateral principal) (expiry uint) (spot uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))            
             (balance-y (get balance-y pool))
             (balance-x-in-y (div-down (get balance-x pool) spot))
         )
@@ -190,7 +188,7 @@
     )
 )
 
-(define-read-only (get-pool-value-in-collateral (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-pool-value-in-collateral (token principal) (collateral principal) (expiry uint))
     (get-pool-value-in-collateral-with-spot token collateral expiry (try! (get-spot token collateral)))
 )
 
@@ -200,10 +198,10 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-private (get-pool-value-in-collateral-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
+(define-private (get-pool-value-in-collateral-with-spot (token principal) (collateral principal) (expiry uint) (spot uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))   
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))   
             (balance-x (get balance-x pool))
             (balance-y-in-x (mul-down (get balance-y pool) spot))
         )
@@ -211,7 +209,7 @@
     )
 )
 
-(define-read-only (get-ltv (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-ltv (token principal) (collateral principal) (expiry uint))
     (get-ltv-with-spot token collateral expiry (try! (get-spot token collateral)))
 )
 
@@ -221,10 +219,10 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
-(define-private (get-ltv-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
+(define-private (get-ltv-with-spot (token principal) (collateral principal) (expiry uint) (spot uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))            
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))            
             (yield-supply (get yield-supply pool)) ;; in token
             (pool-value (try! (get-pool-value-in-token-with-spot token collateral expiry spot))) ;; also in token
         )
@@ -236,7 +234,7 @@
     )
 )
 
-(define-read-only (get-weight-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-weight-y (token principal) (collateral principal) (expiry uint))
     (get-weight-y-with-spot token collateral expiry (try! (get-spot token collateral)))
 )
 
@@ -248,10 +246,10 @@
 ;; @param strike; reference strike price
 ;; @param bs-vol; reference black-scholes vol
 ;; @returns (response uint uint)
-(define-private (get-weight-y-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint))
+(define-private (get-weight-y-with-spot (token principal) (collateral principal) (expiry uint) (spot uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
             (strike (get strike pool))
             (bs-vol (get bs-vol pool))
             (moving-average (get moving-average pool))
@@ -299,8 +297,8 @@
 ;; @restricted contract-owner
 ;; @param token; borrow token
 ;; @param collateral; collateral token
-;; @param the-yield-token; yield-token to be minted
-;; @param the-key-token; key-token to be minted
+;; @param yield-token-trait; yield-token to be minted
+;; @param key-token-trait; key-token to be minted
 ;; @param multisig-vote; multisig to govern the pool being created
 ;; @param ltv-0; initial loan-to-value
 ;; @param conversion-ltv; loan-to-value at which conversion into borrow token happens
@@ -308,18 +306,18 @@
 ;; @param moving-average; weighting smoothing factor
 ;; @param dx; amount of collateral token being added
 ;; @returns (response bool uint)
-(define-public (create-pool (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (the-key-token <sft-trait>) (multisig-vote <multisig-trait>) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint)) 
+(define-public (create-pool (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint)) 
     (begin
         (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
         (asserts! 
-            (is-none (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }))
+            (is-none (map-get? pools-data-map { token-x: (contract-of collateral-trait), token-y: (contract-of token-trait), expiry: expiry }))
             ERR-POOL-ALREADY-EXISTS
         )            
         (let
             (
                 (pool-id (+ (var-get pool-count) u1))
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
+                (token-x (contract-of collateral-trait))
+                (token-y (contract-of token-trait))
                 
                 (now (* block-height ONE_8))
                 ;; assume 10mins per block
@@ -345,10 +343,10 @@
                     key-supply: u0,
                     balance-x: u0,
                     balance-y: u0,
-                    fee-to-address: (contract-of multisig-vote),
-                    yield-token: (contract-of the-yield-token),
-                    key-token: (contract-of the-key-token),
-                    strike: (try! (get-spot token collateral)),
+                    fee-to-address: multisig-vote,
+                    yield-token: (contract-of yield-token-trait),
+                    key-token: (contract-of key-token-trait),
+                    strike: (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))),
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
@@ -364,15 +362,15 @@
             (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, expiry: expiry })
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
         
-            (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u2000) ERR-TOO-MANY-POOLS))
+            (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
             (try! (contract-call? .alex-vault add-approved-token token-x))
             (try! (contract-call? .alex-vault add-approved-token token-y))
-            (try! (contract-call? .alex-vault add-approved-token (contract-of the-yield-token)))
-            (try! (contract-call? .alex-vault add-approved-token (contract-of the-key-token)))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of yield-token-trait)))
+            (try! (contract-call? .alex-vault add-approved-token (contract-of key-token-trait)))
 
-            (try! (add-to-position token collateral expiry the-yield-token the-key-token dx))
+            (try! (add-to-position token-trait collateral-trait expiry yield-token-trait key-token-trait dx))
             (print { object: "pool", action: "created", data: pool-data })
             (ok true)
         )
@@ -382,44 +380,44 @@
 ;; @desc mint yield-token and key-token, swap minted yield-token with token
 ;; @param token; borrow token
 ;; @param collateral; collateral token
-;; @param the-yield-token; yield-token to be minted
-;; @param the-key-token; key-token to be minted
+;; @param yield-token-trait; yield-token to be minted
+;; @param key-token-trait; key-token to be minted
 ;; @param dx; amount of collateral added
 ;; @post collateral; sender transfer exactly dx to alex-vault
 ;; @post yield-token; sender transfers > 0 to alex-vault
 ;; @post token; alex-vault transfers >0 to sender
 ;; @returns (response (tuple uint uint) uint)
-(define-public (add-to-position-and-switch (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (the-key-token <sft-trait>) (dx uint))
+(define-public (add-to-position-and-switch (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
     (let
         (
-            (minted-yield-token (get yield-token (try! (add-to-position token collateral expiry the-yield-token the-key-token dx))))
+            (minted-yield-token (get yield-token (try! (add-to-position token-trait collateral-trait expiry yield-token-trait key-token-trait dx))))
         )
-        (contract-call? .yield-token-pool swap-y-for-x expiry the-yield-token token minted-yield-token none)
+        (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none)
     )
 )
 
 ;; @desc mint yield-token and key-token, with single-sided liquidity
 ;; @param token; borrow token
 ;; @param collateral; collateral token
-;; @param the-yield-token; yield-token to be minted
-;; @param the-key-token; key-token to be minted
+;; @param yield-token-trait; yield-token to be minted
+;; @param key-token-trait; key-token to be minted
 ;; @param dx; amount of collateral added
 ;; @post collateral; sender transfer exactly dx to alex-vault
 ;; @returns (response (tuple uint uint) uint)
-(define-public (add-to-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (the-key-token <sft-trait>) (dx uint))    
+(define-public (add-to-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))    
     (let
         (   
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
+            (token-x (contract-of collateral-trait))
+            (token-y (contract-of token-trait))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
-            (spot (try! (get-spot token collateral)))
+            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
-        (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)
+        (asserts! (is-eq (get yield-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
+        (asserts! (is-eq (get key-token pool) (contract-of key-token-trait)) ERR-INVALID-TOKEN)
         ;; mint is possible only if ltv < 1
-        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token collateral expiry spot))) ERR-LTV-GREATER-THAN-ONE)
-        (asserts! (and (is-eq (get yield-token pool) (contract-of the-yield-token)) (is-eq (get key-token pool) (contract-of the-key-token))) ERR-INVALID-TOKEN)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (and (is-eq (get yield-token pool) (contract-of yield-token-trait)) (is-eq (get key-token pool) (contract-of key-token-trait))) ERR-INVALID-TOKEN)
         (let
             (
                 (balance-x (get balance-x pool))
@@ -428,7 +426,7 @@
                 (key-supply (get key-supply pool))
                 (weight-x (get weight-x pool))
 
-                (new-supply (try! (get-token-given-position-with-spot token collateral expiry spot dx)))
+                (new-supply (try! (get-token-given-position-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot dx)))
                 (yield-new-supply (get yield-token new-supply))
                 (key-new-supply (get key-token new-supply))
 
@@ -439,12 +437,12 @@
                     (if (is-eq token-x token-y)
                         dx-to-dy
                         (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token u50000000 dx-to-dy none)))
+                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
                             (if (is-eq token-y .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral u50000000 dx-to-dy none)))
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 dx-to-dy none)))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 dx-to-dy none)))
+                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
+                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
+                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
                                 )
                             )
                         )
@@ -462,16 +460,16 @@
 
             (if (is-eq token-x token-y)
                 u0
-                (unwrap! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token collateral))))) ERR-POOL-AT-CAPACITY)
+                (unwrap! (contract-call? .fixed-weight-pool get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot (contract-of token-trait) (contract-of collateral-trait)))))) ERR-POOL-AT-CAPACITY)
             )
 
-            (unwrap! (contract-call? collateral transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (unwrap! (contract-call? token transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
             ;; mint pool token and send to tx-sender
-            (as-contract (try! (contract-call? the-yield-token mint-fixed expiry yield-new-supply sender)))
-            (as-contract (try! (contract-call? the-key-token mint-fixed expiry key-new-supply sender)))
+            (as-contract (try! (contract-call? yield-token-trait mint-fixed expiry yield-new-supply sender)))
+            (as-contract (try! (contract-call? key-token-trait mint-fixed expiry key-new-supply sender)))
             (print { object: "pool", action: "liquidity-added", data: pool-updated })
             (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
@@ -481,11 +479,11 @@
 ;; @desc burn yield-token
 ;; @param token; borrow token
 ;; @param collateral; collateral token
-;; @param the-yield-token; yield-token to be burnt
+;; @param yield-token-trait; yield-token to be burnt
 ;; @param percent; % of yield-token held to be burnt
 ;; @post yield-token; alex-vault transfer exactly uints of token equal to (percent * yield-token held) to sender
 ;; @returns (response (tuple uint uint) uint)
-(define-public (reduce-position-yield (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-yield-token <sft-trait>) (percent uint))
+(define-public (reduce-position-yield (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         ;; burn supported only at maturity
@@ -493,13 +491,13 @@
         
         (let
             (
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
+                (token-x (contract-of collateral-trait))
+                (token-y (contract-of token-trait))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (yield-supply (get yield-supply pool))
-                (total-shares (unwrap! (contract-call? the-yield-token get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
+                (total-shares (unwrap! (contract-call? yield-token-trait get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (sender tx-sender)
 
@@ -509,15 +507,15 @@
                                 (if (is-eq token-x token-y)
                                     balance-x
                                     (begin
-                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender)))                                        
+                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait balance-x tx-sender)))                                        
                                         (as-contract 
                                             (if (is-eq token-x .token-wstx)
-                                                (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token u50000000 balance-x none)))
+                                                (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 balance-x none)))
                                                 (if (is-eq token-y .token-wstx)
-                                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral u50000000 balance-x none)))
-                                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x none)))
-                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x none)))
+                                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 balance-x none)))
+                                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 balance-x none)))
+                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 balance-x none)))
                                                     )
                                                 )
                                             )                                        
@@ -538,13 +536,13 @@
                 )
             )
 
-            (asserts! (is-eq (get yield-token pool) (contract-of the-yield-token)) ERR-INVALID-TOKEN)
+            (asserts! (is-eq (get yield-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
 
             ;; if any conversion happened at contract level, transfer back to vault
             (and 
                 (> bal-x-to-y u0) 
                 (not (is-eq token-x token-y)) 
-                (as-contract (unwrap! (contract-call? token transfer-fixed bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
+                (as-contract (unwrap! (contract-call? token-trait transfer-fixed bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
             )
 
             ;; if bal-y-short > 0, then transfer the shortfall from reserve (accounting only).
@@ -552,10 +550,10 @@
             (and (> bal-y-short u0) (try! (contract-call? .alex-reserve-pool remove-from-balance token-y bal-y-short)))            
         
             ;; transfer shares of token to tx-sender, ensuring convertability of yield-token
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token shares sender)))
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait shares sender)))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (as-contract (try! (contract-call? the-yield-token burn-fixed expiry shares sender)))
+            (as-contract (try! (contract-call? yield-token-trait burn-fixed expiry shares sender)))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
@@ -566,26 +564,26 @@
 ;; @desc burn key-token
 ;; @param token; borrow token
 ;; @param collateral; collateral token
-;; @param the-key-token; key-token to be burnt
+;; @param key-token-trait; key-token to be burnt
 ;; @param percent; % of key-token held to be burnt
 ;; @post token; alex-vault transfers > 0 token to sender
 ;; @post collateral; alex-vault transfers > 0 collateral to sender
 ;; @returns (response (tuple uint uint) uint)
-(define-public (reduce-position-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (the-key-token <sft-trait>) (percent uint))
+(define-public (reduce-position-key (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (key-token-trait <sft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         ;; burn supported only at maturity
         (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)        
         (let
             (
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
+                (token-x (contract-of collateral-trait))
+                (token-y (contract-of token-trait))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))            
                 (key-supply (get key-supply pool))    
                 (yield-supply (get yield-supply pool))        
-                (total-shares (unwrap! (contract-call? the-key-token get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
+                (total-shares (unwrap! (contract-call? key-token-trait get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
                 (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
                 (sender tx-sender)
                 ;; CR-02
@@ -595,16 +593,16 @@
                                 (if (is-eq token-x token-y)
                                     balance-x
                                     (begin
-                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral balance-x tx-sender)))
-                                        ;; (as-contract (try! (contract-call? .fixed-weight-pool swap-helper collateral token u50000000 u50000000 balance-x none)))
+                                        (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait balance-x tx-sender)))
+                                        ;; (as-contract (try! (contract-call? .fixed-weight-pool swap-helper collateral-trait token-trait u50000000 u50000000 balance-x none)))
                                         (as-contract
                                             (if (is-eq token-x .token-wstx)
-                                                (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token u50000000 balance-x none)))
+                                                (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 balance-x none)))
                                                 (if (is-eq token-y .token-wstx)
-                                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral u50000000 balance-x none)))
-                                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral token u50000000 u50000000 balance-x none)))
-                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token collateral u50000000 u50000000 balance-x none)))
+                                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 balance-x none)))
+                                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 balance-x none)))
+                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 balance-x none)))
                                                     )
                                                 )
                                             )                                        
@@ -625,12 +623,12 @@
                 )            
             )
 
-            (asserts! (is-eq (get key-token pool) (contract-of the-key-token)) ERR-INVALID-TOKEN)        
+            (asserts! (is-eq (get key-token pool) (contract-of key-token-trait)) ERR-INVALID-TOKEN)        
             
-            (and (> bal-y-reduce u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token bal-y-reduce sender))))
+            (and (> bal-y-reduce u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait bal-y-reduce sender))))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (as-contract (try! (contract-call? the-key-token burn-fixed expiry shares sender)))
+            (as-contract (try! (contract-call? key-token-trait burn-fixed expiry shares sender)))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: bal-y-reduce})
         )        
@@ -645,17 +643,17 @@
 ;; @param min-dy; max slippage
 ;; @post collateral; sender transfers exactly dx collateral to alex-vault
 ;; @returns (response (tuple uint uint) uint)
-(define-public (swap-x-for-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
+(define-public (swap-x-for-y (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL)
+        (asserts! (not (is-eq token-trait collateral-trait)) ERR-INVALID-POOL)
         ;; CR-03
         (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)            
         (let
             (
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
+                (token-x (contract-of collateral-trait))
+                (token-y (contract-of token-trait))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 ;; (strike (get strike pool))
                 ;; (bs-vol (get bs-vol pool)) 
@@ -663,14 +661,14 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y-with-spot token collateral expiry (try! (get-spot token collateral))) ERR-GET-WEIGHT-FAIL))
+                (weight-y (unwrap! (get-weight-y-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry (try! (get-spot (contract-of token-trait) (contract-of collateral-trait)))) ERR-GET-WEIGHT-FAIL))
                 (weight-x (- ONE_8 weight-y))            
             
                 ;; fee = dx * fee-rate-x
                 (fee (mul-up dx (get fee-rate-x pool)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
-                (dy (try! (get-y-given-x token collateral expiry dx-net-fees)))
+                (dy (try! (get-y-given-x (contract-of token-trait) (contract-of collateral-trait) expiry dx-net-fees)))
 
                 (pool-updated
                     (merge pool
@@ -687,8 +685,8 @@
 
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (unwrap! (contract-call? collateral transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token dy sender)))
+            (unwrap! (contract-call? collateral-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dy sender)))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
 
             ;; post setting
@@ -707,17 +705,17 @@
 ;; @param min-dx; max slippage
 ;; @post token; sender transfers exactly dy token to alex-vault
 ;; @returns (response (tuple uint uint) uint)
-(define-public (swap-y-for-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
+(define-public (swap-y-for-x (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token collateral)) ERR-INVALID-POOL)   
+        (asserts! (not (is-eq token-trait collateral-trait)) ERR-INVALID-POOL)   
         ;; CR-03
         (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)              
         (let
             (
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
+                (token-x (contract-of collateral-trait))
+                (token-y (contract-of token-trait))
                 (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
                 ;; (strike (get strike pool))
                 ;; (bs-vol (get bs-vol pool))
@@ -725,14 +723,14 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y-with-spot token collateral expiry (try! (get-spot token collateral))) ERR-GET-WEIGHT-FAIL))
+                (weight-y (unwrap! (get-weight-y-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry (try! (get-spot (contract-of token-trait) (contract-of collateral-trait)))) ERR-GET-WEIGHT-FAIL))
                 (weight-x (- ONE_8 weight-y))   
 
                 ;; fee = dy * fee-rate-y
                 (fee (mul-up dy (get fee-rate-y pool)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
-                (dx (try! (get-x-given-y token collateral expiry dy-net-fees)))        
+                (dx (try! (get-x-given-y (contract-of token-trait) (contract-of collateral-trait) expiry dy-net-fees)))        
 
                 (pool-updated
                     (merge pool
@@ -749,8 +747,8 @@
 
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
-            (as-contract (try! (contract-call? .alex-vault transfer-ft collateral dx sender)))
-            (unwrap! (contract-call? token transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender)))
+            (unwrap! (contract-call? token-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
             ;; post setting
@@ -766,7 +764,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @returns (response uint uint)
-(define-read-only (get-fee-rebate (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
+(define-read-only (get-fee-rebate (token principal) (collateral principal) (expiry uint)) 
    (ok (get fee-rebate (try! (get-pool-details token collateral expiry))))  
 )
 
@@ -777,7 +775,7 @@
 ;; @param expiry; borrow expiry
 ;; @param fee-rebate; new fee-rebate
 ;; @returns (response bool uint)
-(define-public (set-fee-rebate (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rebate uint))
+(define-public (set-fee-rebate (token principal) (collateral principal) (expiry uint) (fee-rebate uint))
     (let 
         (
             (pool (try! (get-pool-details token collateral expiry)))
@@ -786,7 +784,7 @@
 
         (map-set pools-data-map 
             { 
-                token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry 
+                token-x: collateral, token-y: token, expiry: expiry 
             }
             (merge pool { fee-rebate: fee-rebate })
         )
@@ -799,7 +797,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @returns (response uint uint)
-(define-read-only (get-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
+(define-read-only (get-fee-rate-x (token principal) (collateral principal) (expiry uint)) 
    (ok (get fee-rate-x (try! (get-pool-details token collateral expiry))))  
 )
 
@@ -808,7 +806,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @returns (response uint uint)
-(define-read-only (get-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint)) 
+(define-read-only (get-fee-rate-y (token principal) (collateral principal) (expiry uint)) 
    (ok (get fee-rate-y (try! (get-pool-details token collateral expiry))))  
 )
 
@@ -819,16 +817,16 @@
 ;; @param expiry; borrow expiry
 ;; @param fee-rate-x; new fee-rate-x
 ;; @returns (response bool uint)
-(define-public (set-fee-rate-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-x uint))
+(define-public (set-fee-rate-x (token principal) (collateral principal) (expiry uint) (fee-rate-x uint))
     (let 
         (
             (pool (try! (get-pool-details token collateral expiry)))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
-                token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry 
+                token-x: collateral, token-y: token, expiry: expiry 
             }
             (merge pool { fee-rate-x: fee-rate-x })
         )
@@ -843,16 +841,16 @@
 ;; @param expiry; borrow expiry
 ;; @param fee-rate-y; new fee-rate-y
 ;; @returns (response bool uint)
-(define-public (set-fee-rate-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (fee-rate-y uint))
+(define-public (set-fee-rate-y (token principal) (collateral principal) (expiry uint) (fee-rate-y uint))
     (let 
         (         
             (pool (try! (get-pool-details token collateral expiry)))
         )
-        (asserts! (is-eq contract-caller (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
 
         (map-set pools-data-map 
             { 
-                token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry
+                token-x: collateral, token-y: token, expiry: expiry
             }
             (merge pool { fee-rate-y: fee-rate-y })
         )
@@ -865,14 +863,24 @@
 ;; @param collateral; collateral token
 ;; @param expiry; borrow expiry
 ;; @returns (response principal uint)
-(define-read-only (get-fee-to-address (token <ft-trait>) (collateral <ft-trait>) (expiry uint))
+(define-read-only (get-fee-to-address (token principal) (collateral principal) (expiry uint))
+    (ok (get fee-to-address (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-fee-to-address (token principal) (collateral principal) (expiry uint) (fee-to-address principal))
     (let 
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))                
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token collateral expiry)))
         )
-        (ok (get fee-to-address pool))
+        (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+
+        (map-set pools-data-map 
+            { 
+                token-x: collateral, token-y: token, expiry: expiry 
+            }
+            (merge pool { fee-to-address: fee-to-address })
+        )
+        (ok true)     
     )
 )
 
@@ -882,10 +890,10 @@
 ;; @param expiry; borrow expiry
 ;; @param dx; amount of collateral being added
 ;; @returns (response uint uint)
-(define-read-only (get-y-given-x (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+(define-read-only (get-y-given-x (token principal) (collateral principal) (expiry uint) (dx uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry }) ERR-INVALID-POOL))
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
         (contract-call? .weighted-equation get-y-given-x
             (get balance-x pool)
@@ -903,11 +911,11 @@
 ;; @param expiry; borrow expiry
 ;; @param dy; amount of token being added
 ;; @returns (response uint uint)
-(define-read-only (get-x-given-y (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dy uint))
+(define-read-only (get-x-given-y (token principal) (collateral principal) (expiry uint) (dy uint))
 	(let
 		(
 			(pool (unwrap! (map-get? pools-data-map
-				{ token-x: (contract-of collateral), token-y: (contract-of token), expiry: expiry })
+				{ token-x: collateral, token-y: token, expiry: expiry })
 				ERR-INVALID-POOL)
 			)
 		)
@@ -927,18 +935,12 @@
 ;; @param expiry; borrow expiry
 ;; @param price; target price
 ;; @returns (response uint uint)
-(define-read-only (get-x-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
+(define-read-only (get-x-given-price (token principal) (collateral principal) (expiry uint) (price uint))
     (let 
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (weight-x (get weight-x pool))
-            (weight-y (get weight-y pool))         
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
+        (contract-call? .weighted-equation get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -948,22 +950,16 @@
 ;; @param expiry; borrow expiry
 ;; @param price; target price
 ;; @returns (response uint uint)
-(define-read-only (get-y-given-price (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (price uint))
+(define-read-only (get-y-given-price (token principal) (collateral principal) (expiry uint) (price uint))
     (let 
         (
-            (token-x (contract-of collateral))
-            (token-y (contract-of token))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
-            (weight-x (get weight-x pool))
-            (weight-y (get weight-y pool))         
+            (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+        (contract-call? .weighted-equation get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
-(define-read-only (get-token-given-position (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (dx uint))
+(define-read-only (get-token-given-position (token principal) (collateral principal) (expiry uint) (dx uint))
     (get-token-given-position-with-spot token collateral expiry (try! (get-spot token collateral)) dx)
 )
 
@@ -973,18 +969,18 @@
 ;; @param expiry; borrow expiry
 ;; @param dx; amount of collateral being added
 ;; @returns (response (tuple uint uint) uint)
-(define-private (get-token-given-position-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint) (dx uint))
+(define-private (get-token-given-position-with-spot (token principal) (collateral principal) (expiry uint) (spot uint) (dx uint))
     (begin
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY)
         (let 
             (
                 (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
-                (dy (if (is-eq (contract-of token) (contract-of collateral))
+                (dy (if (is-eq token collateral)
                         dx
                         ;; (try! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 dx))                    
-                        (if (is-eq (contract-of collateral) .token-wstx)
+                        (if (is-eq collateral .token-wstx)
                             (try! (contract-call? .fixed-weight-pool get-y-given-wstx token u50000000 dx))
-                            (if (is-eq (contract-of token) .token-wstx)
+                            (if (is-eq token .token-wstx)
                                 (try! (contract-call? .fixed-weight-pool get-wstx-given-y collateral u50000000 dx))
                                 (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
                                     (try! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dx))
@@ -1002,7 +998,7 @@
     )
 )
 
-(define-read-only (get-position-given-mint (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-mint (token principal) (collateral principal) (expiry uint) (shares uint))
     (get-position-given-mint-with-spot token collateral expiry (try! (get-spot token collateral)) shares)
 )
 
@@ -1013,14 +1009,12 @@
 ;; @param expiry; borrow expiry
 ;; @param shares; units of yield-/key-token to be minted
 ;; @returns (response (tuple uint uint uint) uint)
-(define-private (get-position-given-mint-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint) (shares uint))
+(define-private (get-position-given-mint-with-spot (token principal) (collateral principal) (expiry uint) (spot uint) (shares uint))
     (begin
         (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY) ;; mint supported until, but excl., expiry
         (let 
-            (
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
+            (                
+                (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))
                 (total-supply (get yield-supply pool)) ;; prior to maturity, yield-supply == key-supply, so we use yield-supply
@@ -1035,12 +1029,12 @@
                 (dy-weighted (get dy pos-data))
 
                 ;; always convert to collateral ccy
-                (dy-to-dx (if (is-eq token-x token-y)
+                (dy-to-dx (if (is-eq collateral token)
                             dy-weighted
                             ;; (try! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 dy-weighted))                    
-                            (if (is-eq (contract-of collateral) .token-wstx)
+                            (if (is-eq collateral .token-wstx)
                                 (try! (contract-call? .fixed-weight-pool get-y-given-wstx token u50000000 dy-weighted))
-                                (if (is-eq (contract-of token) .token-wstx)
+                                (if (is-eq token .token-wstx)
                                     (try! (contract-call? .fixed-weight-pool get-wstx-given-y collateral u50000000 dy-weighted))
                                     (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
                                         (try! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dy-weighted))
@@ -1057,7 +1051,7 @@
     )
 )
 
-(define-read-only (get-position-given-burn-key (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (shares uint))
+(define-read-only (get-position-given-burn-key (token principal) (collateral principal) (expiry uint) (shares uint))
     (get-position-given-burn-key-with-spot token collateral expiry (try! (get-spot token collateral)) shares)
 )
 
@@ -1067,13 +1061,11 @@
 ;; @param expiry; borrow expiry
 ;; @param shares; units of yield-/key-token to be burnt
 ;; @returns (response (tuple uint uint) uint)
-(define-private (get-position-given-burn-key-with-spot (token <ft-trait>) (collateral <ft-trait>) (expiry uint) (spot uint) (shares uint))
+(define-private (get-position-given-burn-key-with-spot (token principal) (collateral principal) (expiry uint) (spot uint) (shares uint))
     (begin         
         (let 
             (
-                (token-x (contract-of collateral))
-                (token-y (contract-of token))
-                (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
+                (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-x (get balance-x pool))
                 (balance-y (get balance-y pool))  
                 (yield-supply (get yield-supply pool))                  

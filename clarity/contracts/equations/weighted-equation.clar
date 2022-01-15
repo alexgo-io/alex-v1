@@ -19,6 +19,27 @@
 (define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 (define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 
+
+;; @desc get-contract-owner
+;; @returns principal
+(define-read-only (get-contract-owner)
+  (ok (var-get contract-owner))
+)
+
+;; @desc set-contract-owner
+;; @param new-contract-owner; new contract-owner
+;; @returns (response bool uint)
+(define-public (set-contract-owner (new-contract-owner principal))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set contract-owner new-contract-owner))
+  )
+)
+
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
 ;; @desc get-max-in-ratio
 ;; @returns uint
 (define-read-only (get-max-in-ratio)
@@ -30,11 +51,10 @@
 ;; @returns (response bool)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     ;; MI-03
     (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)
-    (var-set MAX-IN-RATIO new-max-in-ratio)
-    (ok true)
+    (ok (var-set MAX-IN-RATIO new-max-in-ratio))
   )
 )
 
@@ -49,28 +69,10 @@
 ;; @returns (response bool uint)
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     ;; MI-03
     (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)
-    (var-set MAX-OUT-RATIO new-max-out-ratio)
-    (ok true)
-  )
-)
-
-;; @desc get-contract-owner
-;; @returns principal
-(define-read-only (get-contract-owner)
-  (ok (var-get contract-owner))
-)
-
-;; @desc set-contract-owner
-;; @param new-contract-owner; new contract-owner
-;; @returns (response bool uint)
-(define-public (set-contract-owner (new-contract-owner principal))
-  (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (var-set contract-owner new-contract-owner)
-    (ok true)
+    (ok (var-set MAX-OUT-RATIO new-max-out-ratio))
   )
 )
 
@@ -236,10 +238,8 @@
                 (let
                     (
                         ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-                        (new-dy (mul-down balance-y 
-                                (div-down dx balance-x)))
-                        (token (mul-down total-supply  
-                                (div-down dx balance-x)))
+                        (new-dy (div-down (mul-down balance-y dx) balance-x))
+                        (token (div-down (mul-down total-supply dx) balance-x))
                     )
                     {token: token, dy: new-dy}
                 )   
@@ -619,3 +619,6 @@
     )
   )
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)

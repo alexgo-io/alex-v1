@@ -1,3 +1,6 @@
 [submodule "executor-dao"]
 	path = executor-dao
 	url = https://github.com/alexgo-io/executor-dao.git
+[submodule "alex-dao"]
+	path = alex-dao
+	url = https://github.com/alexgo-io/alex-dao.git

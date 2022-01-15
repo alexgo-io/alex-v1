@@ -18,9 +18,8 @@
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-MATH-CALL (err u2010))
 
-(define-constant ONE_8 u100000000)
+(define-constant ONE_8 (pow u10 u8))
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -151,8 +150,8 @@
 ;; @desc is-token-accepted
 ;; @params token; sft-trait
 ;; @returns bool
-(define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .fwp-wstx-usda-50-50)
+(define-read-only (is-token-accepted (token principal))
+    (is-eq token .fwp-wstx-usda-50-50)
 )
 
 
@@ -219,7 +218,7 @@
   )
 
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -255,7 +254,7 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -286,7 +285,7 @@
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
         (total-supply (unwrap-panic (contract-call? .fwp-wstx-usda-50-50 get-total-supply)))
-        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
+        (threshold-count (mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 
@@ -318,12 +317,12 @@
       (proposal (get-proposal-by-id proposal-id))
     )
 
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     (asserts! (not (get is-open proposal)) ERR-NOT-AUTHORIZED)
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
+    (as-contract (try! (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
     (ok true)
   )
 )
@@ -340,9 +339,25 @@
   ) 
   
     ;; Setting for Yield Token Pool
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .token-usda u50000000 u50000000 new-fee-rate-x))
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .token-usda u50000000 u50000000 new-fee-rate-y))
+    (as-contract (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .token-usda u50000000 u50000000 new-fee-rate-x)))
+    (as-contract (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .token-usda u50000000 u50000000 new-fee-rate-y)))
     
     (ok true)
   )
+)
+
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
+(define-private (mul-up (a uint) (b uint))
+    (let
+        (
+            (product (* a b))
+       )
+        (if (is-eq product u0)
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
+       )
+   )
 )

@@ -2,7 +2,7 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token alex)
+(define-fungible-token xbtc)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -23,7 +23,7 @@
 )
 
 ;; @desc check-is-approved
-;; @restricted Approved-Contracts/Contract-Owner
+;; @restricted Contract-Owner
 ;; @params sender
 ;; @returns (response bool)
 (define-private (check-is-approved (sender principal))
@@ -43,35 +43,35 @@
 ;; ---------------------------------------------------------
 
 ;; @desc get-total-supply
-;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply alex))
+  (ok (ft-get-supply xbtc))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "alex")
+  (ok "xbtc")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "alex")
+  (ok "xbtc")
 )
 
 ;; @desc get-decimals
 ;; @returns (response uint)
 (define-read-only (get-decimals)
-  (ok u8)
+   	(ok u8)
 )
 
 ;; @desc get-balance
-;; @params account
+;; @params token-id
+;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance alex account))
+  (ok (ft-get-balance xbtc account))
 )
 
 ;; @desc set-token-uri
@@ -98,11 +98,11 @@
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? alex amount sender recipient)
+    (match (ft-transfer? xbtc amount sender recipient)
       response (begin
         (print memo)
         (ok response)
@@ -117,11 +117,11 @@
 ;; @params token-id
 ;; @params amount
 ;; @params recipient
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-mint? alex amount recipient)
+    (ft-mint? xbtc amount recipient)
   )
 )
 
@@ -130,11 +130,11 @@
 ;; @params token-id
 ;; @params amount
 ;; @params sender
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-burn? alex amount sender)
+    (ft-burn? xbtc amount sender)
   )
 )
 
@@ -164,7 +164,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply alex)))
+  (ok (decimals-to-fixed (ft-get-supply xbtc)))
 )
 
 ;; @desc get-balance-fixed
@@ -172,7 +172,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance alex account)))
+  (ok (decimals-to-fixed (ft-get-balance xbtc account)))
 )
 
 ;; @desc transfer-fixed
@@ -180,7 +180,7 @@
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (transfer (fixed-to-decimals amount) sender recipient memo)
 )
@@ -189,7 +189,7 @@
 ;; @params token-id
 ;; @params amount
 ;; @params recipient
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-public (mint-fixed (amount uint) (recipient principal))
   (mint (fixed-to-decimals amount) recipient)
 )
@@ -198,12 +198,9 @@
 ;; @params token-id
 ;; @params amount
 ;; @params sender
-;; @returns (response bool)
+;; @returns (response boolean)
 (define-public (burn-fixed (amount uint) (sender principal))
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .alex-reserve-pool true)
 (map-set approved-contracts .faucet true)
-
-

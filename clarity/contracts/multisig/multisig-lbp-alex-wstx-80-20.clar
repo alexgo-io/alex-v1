@@ -14,13 +14,11 @@
 
 ;; Errors
 (define-constant ERR-INVALID-BALANCE (err u1001))
-(define-constant ERR-NO-FEE-CHANGE (err u8001))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-MATH-CALL (err u2010))
 
-(define-constant ONE_8 u100000000)
+(define-constant ONE_8 (pow u10 u8))
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -141,8 +139,8 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      new-fee-rate-x: u0,    
-      new-fee-rate-y: u0  
+      new-fee-rate-x: u0,
+      new-fee-rate-y: u0      
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -152,8 +150,8 @@
 ;; @desc is-token-accepted
 ;; @params token; sft-trait
 ;; @returns bool
-(define-read-only (is-token-accepted (token <ft-trait>))
-    (is-eq (contract-of token) .fwp-wstx-talex-50-50)
+(define-read-only (is-token-accepted (token principal))
+    (is-eq token .lbp-alex-wstx-80-20)
 )
 
 
@@ -176,8 +174,8 @@
     (new-fee-rate-y uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .fwp-wstx-talex-50-50 get-balance tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .fwp-wstx-talex-50-50 get-total-supply)))
+    (proposer-balance (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-balance-fixed tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-total-supply-fixed)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -196,8 +194,8 @@
         end-block-height: (+ start-block-height (var-get voting-period)),
         yes-votes: u0,
         no-votes: u0,
-        new-fee-rate-x: new-fee-rate-x,
-        new-fee-rate-y: new-fee-rate-y
+        new-fee-rate-x: u0,
+        new-fee-rate-y: u0        
       }
     )
     (var-set proposal-count proposal-id)
@@ -217,10 +215,9 @@
     (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
     
-  )
-
+    )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -256,7 +253,7 @@
     (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token)))
   )
     ;; Can vote with corresponding pool token
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     ;; Proposal should be open for voting
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
@@ -286,8 +283,8 @@
 (define-public (end-proposal (proposal-id uint))
   (let ((proposal (get-proposal-by-id proposal-id))
         (threshold-percent (var-get threshold))
-        (total-supply (unwrap-panic (contract-call? .fwp-wstx-talex-50-50 get-total-supply)))
-        (threshold-count (contract-call? .math-fixed-point mul-up total-supply threshold-percent))
+        (total-supply (unwrap-panic (contract-call? .lbp-alex-wstx-80-20 get-total-supply-fixed)))
+        (threshold-count (mul-up total-supply threshold-percent))
         (yes-votes (get yes-votes proposal))
   )
 
@@ -299,8 +296,8 @@
       { id: proposal-id }
       (merge proposal { is-open: false }))
 
-    ;; Execute the proposal when the yes-vote passes threshold-count.
-     (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
+    ;; ;; Execute the proposal when the yes-vote passes threshold-count.
+    ;;  (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
      (ok true)
     )
 )
@@ -319,31 +316,28 @@
       (proposal (get-proposal-by-id proposal-id))
     )
 
-    (asserts! (is-token-accepted token) ERR-INVALID-TOKEN)
+    (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
     (asserts! (not (get is-open proposal)) ERR-NOT-AUTHORIZED)
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (try! (as-contract (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
+    (as-contract (try! (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
     (ok true)
   )
 )
 
-;; Make needed contract changes on DAO
-;; @desc execute-proposal
-;; @params proposal-id
-;; @returns (response bool)
-(define-private (execute-proposal (proposal-id uint))
-  (let (
-    (proposal (get-proposal-by-id proposal-id))
-    (new-fee-rate-x (get new-fee-rate-x proposal))
-    (new-fee-rate-y (get new-fee-rate-y proposal))
-  ) 
-  
-    ;; Setting for Yield Token Pool
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .age000-governance-token u50000000 u50000000 new-fee-rate-x))
-    (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .age000-governance-token u50000000 u50000000 new-fee-rate-y))
-    
-    (ok true)
-  )
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
+(define-private (mul-up (a uint) (b uint))
+    (let
+        (
+            (product (* a b))
+       )
+        (if (is-eq product u0)
+            u0
+            (+ u1 (/ (- product u1) ONE_8))
+       )
+   )
 )

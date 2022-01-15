@@ -9,7 +9,7 @@
 ;; A proposal will just update the DAO with new contracts.
 
 ;; Voting can be done by locking up the corresponding pool token. 
-;; This prototype is for aywbtc-wbtc pool token. 
+;; This prototype is for aywstx-wstx pool token. 
 ;; Common Trait and for each pool, implementation is required. 
 ;; 
 
@@ -155,9 +155,8 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (is-eq token .ytp-yield-usda)
+    (is-eq token .ytp-yield-wstx)
 )
-
 
 ;; Start a proposal
 ;; Requires 10% of the supply in your wallet
@@ -179,8 +178,8 @@
     (new-fee-rate-yield-token uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .ytp-yield-usda get-balance-fixed expiry tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply-fixed expiry)))
+    (proposer-balance (unwrap-panic (contract-call? .ytp-yield-wstx get-balance-fixed expiry tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .ytp-yield-wstx get-total-supply-fixed expiry)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -244,9 +243,8 @@
       { amount: (+ amount token-count)})
 
     (ok amount)
-    
-    )
   )
+)
 
 ;; @desc vote-against 
 ;; @params token;sft-trait
@@ -280,9 +278,8 @@
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token), expiry: expiry }
       { amount: (+ amount token-count)})
     (ok amount)
-    )
-    
-    )
+  )    
+)
 
 ;; @desc end-proposal
 ;; @params proposal-id
@@ -293,7 +290,7 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-supply (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply-fixed expiry)))
+      (total-supply (unwrap-panic (contract-call? .ytp-yield-wstx get-total-supply-fixed expiry)))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
     )
@@ -350,8 +347,8 @@
   ) 
   
     ;; Setting for Yield Token Pool
-    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-usda new-fee-rate-token)))
-    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-usda new-fee-rate-yield-token)))
+    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-wstx new-fee-rate-token)))
+    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-wstx new-fee-rate-yield-token)))
     
     (ok true)
   )

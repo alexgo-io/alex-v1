@@ -9,7 +9,7 @@
 ;; A proposal will just update the DAO with new contracts.
 
 ;; Voting can be done by locking up the corresponding pool token. 
-;; This prototype is for aywbtc-wbtc pool token. 
+;; This prototype is for ayusda-usda pool token. 
 ;; Common Trait and for each pool, implementation is required. 
 ;; 
 
@@ -20,7 +20,6 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant ONE_8 (pow u10 u8))
-
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -51,8 +50,8 @@
     end-block-height: uint,
     yes-votes: uint,
     no-votes: uint,
-    new-fee-rate-token: uint,
-    new-fee-rate-yield-token: uint
+    new-fee-rate-x: uint,
+    new-fee-rate-y: uint
    }
 )
 
@@ -143,8 +142,8 @@
       end-block-height: u0,
       yes-votes: u0,
       no-votes: u0,
-      new-fee-rate-token: u0,    ;; Default token feerate
-      new-fee-rate-yield-token: u0  ;; default yield-token feerate
+      new-fee-rate-x: u0,    ;; Default token feerate
+      new-fee-rate-y: u0  ;; default yield-token feerate
     }
     (map-get? proposals { id: proposal-id })
   )
@@ -155,7 +154,7 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (is-eq token .ytp-yield-usda)
+    (or (is-eq token .yield-wstx) (is-eq token .key-wstx-wbtc))
 )
 
 
@@ -170,19 +169,24 @@
 ;; @params new-fee-rate-x
 ;; @params new-fee-rate-y
 ;; @returns uint
-(define-public (propose
-    (expiry uint)
+(define-public (propose  
+    (expiry uint)  
     (start-block-height uint)
     (title (string-utf8 256))
     (url (string-utf8 256))
-    (new-fee-rate-token uint)
-    (new-fee-rate-yield-token uint)
+    (new-fee-rate-x uint)
+    (new-fee-rate-y uint)
   )
-  (let (
-    (proposer-balance (unwrap-panic (contract-call? .ytp-yield-usda get-balance-fixed expiry tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply-fixed expiry)))
-    (proposal-id (+ u1 (var-get proposal-count)))
-  )
+  (let 
+    (
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-wstx get-balance-fixed expiry tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-wstx-wbtc get-balance-fixed expiry tx-sender)))
+      (proposer-balance (+ proposer-yield-balance proposer-key-balance))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-wstx get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-wstx-wbtc get-total-supply-fixed expiry)))
+      (total-supply (+ total-yield-supply total-key-supply))
+      (proposal-id (+ u1 (var-get proposal-count)))
+    )
 
     ;; Requires 10% of the supply 
     (asserts! (>= (* proposer-balance (var-get proposal-threshold)) total-supply) ERR-INVALID-BALANCE)
@@ -200,8 +204,8 @@
         end-block-height: (+ start-block-height (var-get voting-period)),
         yes-votes: u0,
         no-votes: u0,
-        new-fee-rate-token: new-fee-rate-token,
-        new-fee-rate-yield-token: new-fee-rate-yield-token
+        new-fee-rate-x: new-fee-rate-x,
+        new-fee-rate-y: new-fee-rate-y
       }
     )
     (var-set proposal-count proposal-id)
@@ -277,7 +281,7 @@
       { proposal-id: proposal-id, member: tx-sender }
       { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
-      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token), expiry: expiry }
+      { proposal-id: proposal-id, member: tx-sender, token: (contract-of token) , expiry: expiry }
       { amount: (+ amount token-count)})
     (ok amount)
     )
@@ -293,7 +297,9 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-supply (unwrap-panic (contract-call? .ytp-yield-usda get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-wstx get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-wstx-wbtc get-total-supply-fixed expiry)))
+      (total-supply (+ total-yield-supply total-key-supply))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
     )
@@ -308,8 +314,7 @@
 
     ;; Execute the proposal when the yes-vote passes threshold-count.
     (and (> yes-votes threshold-count) (try! (execute-proposal proposal-id)))
-    (ok true)
-  )
+    (ok true))
 )
 
 ;; Return votes to voter(member)
@@ -324,7 +329,7 @@
     (
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
-      (token-count (/ (get amount (get-tokens-by-member-by-id proposal-id member token expiry)) ONE_8))      
+      (token-count (get amount (get-tokens-by-member-by-id proposal-id member token expiry)))
     )
 
     (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
@@ -342,16 +347,16 @@
 ;; @params proposal-id
 ;; @returns (response bool)
 (define-private (execute-proposal (proposal-id uint))
-  (let (
-    (proposal (get-proposal-by-id proposal-id))
-    (expiry (get expiry proposal))
-    (new-fee-rate-token (get new-fee-rate-token proposal))
-    (new-fee-rate-yield-token (get new-fee-rate-yield-token proposal))
-  ) 
+  (let 
+    (
+      (proposal (get-proposal-by-id proposal-id))
+      (expiry (get expiry proposal))
+      (new-fee-rate-x (get new-fee-rate-x proposal))
+      (new-fee-rate-y (get new-fee-rate-y proposal))
+    ) 
   
-    ;; Setting for Yield Token Pool
-    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-usda new-fee-rate-token)))
-    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-usda new-fee-rate-yield-token)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-wbtc .token-wbtc expiry new-fee-rate-x)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-wbtc .token-wbtc expiry new-fee-rate-y)))
     
     (ok true)
   )

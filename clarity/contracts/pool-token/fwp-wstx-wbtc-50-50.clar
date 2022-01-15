@@ -1,15 +1,19 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 
 (define-fungible-token fwp-wstx-wbtc-50-50)
 
-(define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-;; errors
-(define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-data-var token-name (string-ascii 32) "STX-XBTC Pool Token Weight 50/50")
+(define-data-var token-symbol (string-ascii 32) "STX-XBTC-50-50")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/fwp-wstx-wbtc-50-50.json"))
+
+(define-data-var token-decimals uint u8)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -17,124 +21,124 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
 
-;; @desc check-is-approved
-;; @restricted Approved-Contracts/Contract-Owner
-;; @params sender
-;; @returns (response boolean)
-(define-private (check-is-approved (sender principal))
-  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+;; --- Authorisation check
+
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+;; Other
+
+(define-public (set-name (new-name (string-ascii 32)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-name new-name))
+	)
+)
+
+(define-public (set-symbol (new-symbol (string-ascii 10)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-symbol new-symbol))
+	)
+)
+
+(define-public (set-decimals (new-decimals uint))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-decimals new-decimals))
+	)
+)
+
+(define-public (set-token-uri (new-uri (optional (string-utf8 256))))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-uri new-uri))
+	)
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts new-approved-contract true))
+	)
+)
+
+;; --- Public functions
+
+;; sip010-ft-trait
+
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (map-set approved-contracts new-approved-contract true)
+    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+    (try! (ft-transfer? fwp-wstx-wbtc-50-50 amount sender recipient))
+    (match memo to-print (print to-print) 0x)
     (ok true)
   )
 )
 
-;; ---------------------------------------------------------
-;; SIP-10 Functions
-;; ---------------------------------------------------------
-
-;; @desc get-total-supply
-;; @returns (response uint)
-(define-read-only (get-total-supply)
-  (ok (ft-get-supply fwp-wstx-wbtc-50-50))
-)
-
-;; @desc get-name
-;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "fwp-wstx-wbtc-50-50")
+	(ok (var-get token-name))
 )
 
-;; @desc get-symbol
-;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "fwp-wstx-wbtc-50-50")
+	(ok (var-get token-symbol))
 )
 
-;; @desc get-decimals
-;; @returns (response uint)
 (define-read-only (get-decimals)
-  (ok u8)
+	(ok (var-get token-decimals))
 )
 
-;; @desc get-balance
-;; @params account
-;; @returns (response uint)
-(define-read-only (get-balance (account principal))
-  (ok (ft-get-balance fwp-wstx-wbtc-50-50 account))
+(define-read-only (get-balance (who principal))
+	(ok (ft-get-balance fwp-wstx-wbtc-50-50 who))
 )
 
-;; @desc set-token-uri
-;; @restricted Contract-Owner
-;; @params value
-;; @returns (response bool)
-(define-public (set-token-uri (value (string-utf8 256)))
-  (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (ok (var-set token-uri value))
-  )
+(define-read-only (get-total-supply)
+	(ok (ft-get-supply fwp-wstx-wbtc-50-50))
 )
 
-;; @desc get-token-uri
-;; @returns (response some string-utf-8)
 (define-read-only (get-token-uri)
-  (ok (some (var-get token-uri)))
+	(ok (var-get token-uri))
 )
 
-;; @desc transfer
-;; @restricted sender; tx-sender should be sender
-;; @params amount
-;; @params sender
-;; @params recipient
-;; @params memo; expiry
-;; @returns (response bool uint)/ error
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? fwp-wstx-wbtc-50-50 amount sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )
-  )
-)
+;; --- Protocol functions
+
+(define-constant ONE_8 (pow u10 u8))
 
 ;; @desc mint
-;; @restricted recipient; tx-sender should be recipient
+;; @restricted ContractOwner/Approved Contract
+;; @params token-id
 ;; @params amount
 ;; @params recipient
-;; @returns (response bool uint)
+;; @returns (response bool)
 (define-public (mint (amount uint) (recipient principal))
-  (begin
-    (try! (check-is-approved tx-sender))
-    (ft-mint? fwp-wstx-wbtc-50-50 amount recipient)
-  )
+	(begin		
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ft-mint? fwp-wstx-wbtc-50-50 amount recipient)
+	)
 )
 
 ;; @desc burn
-;; @restricted sender; tx-sender should be sender
+;; @restricted ContractOwner/Approved Contract
+;; @params token-id
 ;; @params amount
 ;; @params sender
-;; @returns (response bool uint)
+;; @returns (response bool)
 (define-public (burn (amount uint) (sender principal))
-  (begin
-    (try! (check-is-approved tx-sender))
-    (ft-burn? fwp-wstx-wbtc-50-50 amount sender)
-  )
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ft-burn? fwp-wstx-wbtc-50-50 amount sender)
+	)
 )
-
-(define-constant ONE_8 (pow u10 u8))
 
 ;; @desc pow-decimals
 ;; @returns uint
@@ -160,7 +164,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-wbtc-50-50)))
+  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
 )
 
 ;; @desc get-balance-fixed
@@ -168,7 +172,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-wbtc-50-50 account)))
+  (ok (decimals-to-fixed (unwrap-panic (get-balance account))))
 )
 
 ;; @desc transfer-fixed
@@ -199,4 +203,17 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
+(define-private (mint-fixed-many-iter (item {amount: uint, recipient: principal}))
+	(mint-fixed (get amount item) (get recipient item))
+)
+
+(define-public (mint-fixed-many (recipients (list 200 {amount: uint, recipient: principal})))
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ok (map mint-fixed-many-iter recipients))
+	)
+)
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .fixed-weight-pool true)
