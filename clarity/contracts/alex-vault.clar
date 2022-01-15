@@ -142,13 +142,7 @@
 ;; @returns (response uint)
 (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
   (begin
-    (asserts! 
-      (and 
-        (is-ok (check-is-approved-flash-loan-user (contract-of flash-loan-user))) 
-        (is-ok (check-is-approved-token (contract-of token)))
-      )
-      ERR-NOT-AUTHORIZED
-    )
+    (asserts! (and (is-ok (check-is-approved-flash-loan-user (contract-of flash-loan-user))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
     (let 
       (
         (pre-bal (unwrap! (get-balance token) ERR-INVALID-BALANCE))
