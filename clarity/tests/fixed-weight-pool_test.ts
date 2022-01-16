@@ -384,7 +384,7 @@ Clarinet.test({
 
         // end proposal 
         result = MultiSigTest.endProposal(1)
-        result.expectOk().expectBool(true) 
+        result.expectOk().expectBool(false) 
 
         // Fee didn't change
         result = FWPTest.getFeeX(deployer, wstxAddress, usdaAddress, weightX, weightY);
