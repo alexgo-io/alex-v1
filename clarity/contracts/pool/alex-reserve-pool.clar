@@ -7,7 +7,6 @@
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-USER-ALREADY-REGISTERED (err u10001))
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
-(define-constant ERR-ACTIVATION-THRESHOLD-REACHED (err u10004))
 (define-constant ERR-CONTRACT-NOT-ACTIVATED (err u10005))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-CANNOT-STAKE (err u10016))
@@ -29,8 +28,9 @@
 ;; STAKING CONFIGURATION
 (define-data-var reward-cycle-length uint u525) ;; number of block-heights per cycle
 (define-data-var token-halving-cycle uint u100) ;; number of cycles it takes for token emission to transition to the next
-(define-data-var activation-delay uint u150) ;; number of block-height before staking starts upon activation
-(define-data-var activation-threshold uint u20) ;; minimum number of addresses to register before staking commences
+
+;; activation-block for each stake-able token
+(define-map activation-block principal uint)
 
 ;; token <> coinbase-amounts
 (define-map coinbase-amounts 
@@ -67,9 +67,6 @@
     to-return: uint
   }
 )
-
-;; activation-block for each stake-able token
-(define-map activation-block principal uint)
 
 ;; multipler applicable to apower relative to the associated token
 (define-map apower-multiplier-in-fixed principal uint)
@@ -207,41 +204,15 @@
 
 ;; @desc get-activation-block-or-default 
 ;; @params token
-;; @returns uint; Stacks block height registration was activated at plus activationDelay
+;; @returns uint
 (define-read-only (get-activation-block-or-default (token principal))
   (default-to u100000000 (map-get? activation-block token))
 )
 
-;; @desc get-activation-delay
-;; @returns uint
-(define-read-only (get-activation-delay)
-  (var-get activation-delay)
-)
-
-;; @desc set-activation-delay 
-;; @params new-activation-delay
-;; @returns (response bool)
-(define-public (set-activation-delay (new-activation-delay uint))
+(define-public (set-activation-block (token principal) (new-activation-block uint))
   (begin
     (try! (check-is-owner))
-    (ok (var-set activation-delay new-activation-delay))
-  )
-)
-
-;; @desc get-activation-threshold
-;; @returns uint
-(define-read-only (get-activation-threshold)
-  (var-get activation-threshold)
-)
-
-;; @desc set-activation-threshold 
-;; @restricted Contract-Owner
-;; @params new-activation-threshold
-;; @returns (response bool)
-(define-public (set-activation-threshold (new-activation-threshold uint))
-  (begin
-    (try! (check-is-owner))
-    (ok (var-set activation-threshold new-activation-threshold))
+    (ok (map-set activation-block token new-activation-block))
   )
 )
 
@@ -312,34 +283,6 @@
       (map-insert user-ids {token: token, user: user} new-id)
       (map-set users-nonce token new-id)
       new-id
-    )
-  )
-)
-
-;; registers users that signal activation of contract until threshold is met
-;; @desc register-user
-;; @params token
-;; @params memo; expiry
-;; @returns (response bool)
-(define-public (register-user (token principal) (memo (optional (string-utf8 50))))
-  (let
-    (
-      (new-id (+ u1 (get-registered-users-nonce-or-default token)))
-      (threshold (var-get activation-threshold))
-    )
-    (asserts! (default-to false (map-get? approved-tokens token)) ERR-INVALID-TOKEN)
-    (asserts! (is-none (map-get? user-ids {token: token, user: tx-sender})) ERR-USER-ALREADY-REGISTERED)
-
-    (if (is-some memo) (print memo) none)
-
-    (get-or-create-user-id token tx-sender)
-
-    (if (is-eq new-id threshold)
-      (begin
-        (map-set activation-block token (+ block-height (var-get activation-delay)))
-        (ok true)
-      )
-      (ok true)
     )
   )
 )
