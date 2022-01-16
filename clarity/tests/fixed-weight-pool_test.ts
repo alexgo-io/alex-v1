@@ -179,6 +179,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let contractOwner = deployer;
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -272,6 +273,14 @@ Clarinet.test({
         position['balance-x'].expectUint(49203975232689); 
         position['balance-y'].expectUint(50000000000000 - 4545445000000 + 0.95 * ONE_8*wbtcPrice); // 620532212500000 + 0.95 * ONE_8 * wbtcPrice (4750000000000)
 
+        ROresult = fwpPoolToken.balanceOf(deployer.address);
+        ROresult.result.expectOk().expectUint(49999992342522 - Math.round(49999992342522 * 9 / 10));
+
+        result = MultiSigTest.returnVotesToMember(wallet_1, fwpwstxusdaAddress, 1, deployer.address);
+        result.expectOk();
+
+        ROresult = fwpPoolToken.balanceOf(deployer.address);
+        ROresult.result.expectOk().expectUint(49999992342522);        
     },
 });
 

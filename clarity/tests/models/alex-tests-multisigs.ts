@@ -61,6 +61,17 @@ class MS_FWP_WSTX_USDA_5050 {
         ]);
         return block.receipts[0].result;
     }
+
+    returnVotesToMember(contractCaller: Account, token: string, proposalID: number, member: string) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall("multisig-fwp-wstx-usda-50-50", "return-votes-to-member", [
+            types.principal(token),
+            types.uint(proposalID),
+            types.principal(member)
+          ], contractCaller.address),
+        ]);
+        return block.receipts[0].result;
+    }    
 }
 export { MS_FWP_WSTX_USDA_5050 };
 

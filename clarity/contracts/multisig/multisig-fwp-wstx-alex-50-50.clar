@@ -28,9 +28,13 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-private (check-is-owner)
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 ;; Proposal variables
@@ -62,19 +66,19 @@
 
 (define-public (set-voting-period (new-voting-period uint))
   (begin 
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set voting-period new-voting-period))
   )
 )
 (define-public (set-threshold (new-threshold uint))
   (begin 
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set threshold new-threshold))
   )
 )
 (define-public (set-proposal-threshold (new-proposal-threshold uint))
   (begin 
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set proposal-threshold new-proposal-threshold))
   )
 )
@@ -111,7 +115,6 @@
   )
 )
 
-;; @desc get-tokens-by-member-by-id 
 ;; @params proposal-id
 ;; @params member 
 ;; @params token; sft-trait
@@ -323,7 +326,7 @@
     (asserts! (>= block-height (get end-block-height proposal)) ERR-NOT-AUTHORIZED)
 
     ;; Return the pool token
-    (as-contract (try! (contract-call? token transfer-fixed token-count (as-contract tx-sender) member none)))
+    (as-contract (try! (contract-call? token transfer-fixed token-count tx-sender member none)))
     (ok true)
   )
 )
@@ -339,9 +342,8 @@
     (new-fee-rate-y (get new-fee-rate-y proposal))
   ) 
   
-    ;; Setting for Yield Token Pool
-    (as-contract (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .age000-governance-token u50000000 u50000000 new-fee-rate-x)))
-    (as-contract (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .age000-governance-token u50000000 u50000000 new-fee-rate-y)))
+    (as-contract (try! (contract-call? .fixed-weight-pool set-fee-rate-x .token-wstx .token-usda u50000000 u50000000 new-fee-rate-x)))
+    (as-contract (try! (contract-call? .fixed-weight-pool set-fee-rate-y .token-wstx .token-usda u50000000 u50000000 new-fee-rate-y)))
     
     (ok true)
   )
@@ -362,3 +364,4 @@
        )
    )
 )
+
