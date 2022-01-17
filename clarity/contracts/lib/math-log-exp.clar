@@ -55,6 +55,23 @@
 
 ;; private functions
 ;;
+(define-public (ln (a int))
+  (let
+    (
+      (a_sum_no_deci (fold accumulate_division x_a_list_no_deci {a: a, sum: 0}))
+      (a_sum (fold accumulate_division x_a_list {a: (get a a_sum_no_deci), sum: (get sum a_sum_no_deci)}))
+      (out_a (get a a_sum))
+      (out_sum (get sum a_sum))
+      (z (/ (* (- out_a ONE_8) ONE_8) (+ out_a ONE_8)))
+      (z_squared (/ (* z z) ONE_8))
+      (div_list (list 3 5 7 9 11))
+      (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
+      (seriesSum (get seriesSum num_sum_zsq))
+      (r (+ out_sum (* seriesSum 2)))
+   )
+    (ok {a_sum: a_sum, z: z, z_squared: z_squared})
+ )
+)
 
 ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-public (ln-priv (a int))
