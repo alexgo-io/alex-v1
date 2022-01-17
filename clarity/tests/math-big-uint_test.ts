@@ -279,5 +279,17 @@ Clarinet.test({
                 types.uint(10*ONE_16),
             ], deployer.address);
         assertEquals(call.result.expectOk(), "23025850929940452")
+
+        call = chain.callReadOnlyFn("math-big-uint", "ln",
+            [
+                types.uint(50000*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result.expectOk(), "108197782844102828")
+
+        call = chain.callReadOnlyFn("math-big-uint", "ln",
+            [
+                types.uint(0.5*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result.expectOk(), "-6931471805599448")
     }
 })
