@@ -121,9 +121,14 @@
         ))))))))))))))))
 )
 
-;; (define-public (ln (a uint))
-;;     (ok (unwrap-panic (contract-call? .math-log-exp-biguint ln-priv (to-int a))))
-;; )
+(define-public (ln (a uint))
+    (let
+        (
+            (a-int (to-int a))
+        )
+        (ok (unwrap-panic (contract-call? .math-log-exp-biguint ln-fixed a-int)))
+    )
+)
 
 ;; (define-read-only (pow (a uint) (b uint))
 ;;     (let

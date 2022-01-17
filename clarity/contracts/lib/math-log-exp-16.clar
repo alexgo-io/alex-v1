@@ -44,7 +44,6 @@
 {x_pre: 1250000000000000, a_pre: 11331484530668263, use_deci: true} ;; x8 = 2^-3, a8 = e^(x8)
 {x_pre: 625000000000000, a_pre: 10644944589178594, use_deci: true} ;; x9 = 2^-4, a9 = e^(x9)
 {x_pre: 312500000000000, a_pre: 10317434074991027, use_deci: true} ;; x10 = 2^-5, a10 = e^(x10)
-{x_pre: 156250000000000, a_pre: 10157477085866858, use_deci: true} ;; x11 = 2^-6, a11 = e^(x11)
 ))
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))

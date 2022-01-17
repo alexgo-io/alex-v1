@@ -21,8 +21,8 @@
 ;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
 ;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
 ;; We use 69.0 and -18.0 to have some safety margin.
-(define-constant MAX_NATURAL_EXPONENT 51)
-(define-constant MIN_NATURAL_EXPONENT -36)
+(define-constant MAX_NATURAL_EXPONENT (* 51 ONE_16))
+(define-constant MIN_NATURAL_EXPONENT (* -36 ONE_16))
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
 
@@ -30,22 +30,22 @@
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 
-(define-constant x_a_list_no_deci (list 
-{x_pre: 32, a_pre: 78962960182680695161, use_deci: false} ;; x2 = 2^5, a2 = e^(x2)
-))
+;; a_pre is in scientific notation
+;; a_n can all be stored in 16 decimal place
 
-;; Use Deci is ignored and not used
-;; 8 decimal constants
-(define-constant x_a_list (list
-{x_pre: 16, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
-{x_pre: 8, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
-{x_pre: 4, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
-{x_pre: 2, a_pre: 738905610, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
-{x_pre: 1, a_pre: 271828183, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
-{x_pre: 5, a_pre: 164872127, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
-{x_pre: 25, a_pre: 128402542, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
-{x_pre: 125, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
-{x_pre: 625, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
+;; 16 decimal constants
+(define-constant x_a_list (list 
+{x_pre: 320000000000000000, a_pre: 789629601826806951609780226351, a_exp: -16} ;; x0 = 2^5, a0 = e^(x0)
+{x_pre: 160000000000000000, a_pre: 88861105205078726367630, a_exp: -16} ;; x1 = 2^4, a1 = e^(x1)
+{x_pre: 80000000000000000, a_pre: 29809579870417282747, a_exp: -16} ;; x2 = 2^3, a2 = e^(x2)
+{x_pre: 40000000000000000, a_pre: 545981500331442391, a_exp: -16} ;; x3 = 2^2, a3 = e^(x3)
+{x_pre: 20000000000000000, a_pre: 73890560989306502, a_exp: -16} ;; x4 = 2^1, a4 = e^(x4)
+{x_pre: 10000000000000000, a_pre: 27182818284590452, a_exp: -16} ;; x5 = 2^0, a5 = e^(x5)
+{x_pre: 5000000000000000, a_pre: 16487212707001282, a_exp: -16} ;; x6 = 2^-1, a6 = e^(x6)
+{x_pre: 2500000000000000, a_pre: 12840254166877415, a_exp: -16} ;; x7 = 2^-2, a7 = e^(x7)
+{x_pre: 1250000000000000, a_pre: 11331484530668263, a_exp: -16} ;; x8 = 2^-3, a8 = e^(x8)
+{x_pre: 625000000000000, a_pre: 10644944589178594, a_exp: -16} ;; x9 = 2^-4, a9 = e^(x9)
+{x_pre: 312500000000000, a_pre: 10317434074991027, a_exp: -16} ;; x10 = 2^-5, a10 = e^(x10)
 ))
 
 
@@ -66,26 +66,26 @@
 ;; private functions
 ;;
 
-;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-(define-public (ln-priv (a int))
-  (let
-    (
-      (a_sum (fold accumulate_division x_a_list {a: a, sum: 0}))
-      (out_a (get a a_sum))
-      (out_sum (get sum a_sum))
-      (z (/ (scale-up (- out_a ONE_8)) (+ out_a ONE_8))) ;; this is scaling up for division precision
-      (z_squared (scale-down (* z z)))
-      (div_list (list 3 5 7 9 11))
-      (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
-      (seriesSum (get seriesSum num_sum_zsq))
-      (r (+ out_sum (* seriesSum 2)))
-   )
-    ;; (ok r)
-    (ok {a_sum: a_sum, z: z, z_squared: z_squared})
- )
-)
+;; ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+;; (define-public (ln-priv (a int))
+;;   (let
+;;     (
+;;       (a_sum (fold accumulate_division x_a_list {a: a, sum: 0}))
+;;       (out_a (get a a_sum))
+;;       (out_sum (get sum a_sum))
+;;       (z (/ (scale-up (- out_a ONE_8)) (+ out_a ONE_8))) ;; this is scaling up for division precision
+;;       (z_squared (scale-down (* z z)))
+;;       (div_list (list 3 5 7 9 11))
+;;       (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
+;;       (seriesSum (get seriesSum num_sum_zsq))
+;;       (r (+ out_sum (* seriesSum 2)))
+;;    )
+;;     ;; (ok r)
+;;     (ok {a_sum: a_sum, z: z, z_squared: z_squared})
+;;  )
+;; )
 
-(define-public (ln (a int))
+(define-private (ln-priv (a int))
     (let
         (
             ;; decomposition process
@@ -97,13 +97,18 @@
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
             ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
             (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
-            (z_squared (* z z))
+            (z_squared (/ (* z z) ONE_16))
+            (div_list (list 3 5 7 9 11))
+            (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
+            (seriesSum (get seriesSum num_sum_zsq))
+            (r (+ out_sum (* seriesSum 2)))
         )
-        (ok {a_sum: a_sum, z: z, z_squared: z_squared})
+        ;; (ok {a_sum: a_sum, z: z, z_squared: z_squared})
+        (ok r)
     )
 )
 
-(define-read-only (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
+(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (a_exp int))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
       (a_pre (get a_pre x_a_pre))
@@ -256,16 +261,16 @@
 ;;  )
 ;; )
 
-;; ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-;; (define-read-only (ln-fixed (a int))
-;;   (begin
-;;     (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
-;;     (if (< a ONE_8)
-;;       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-;;       ;; If a is less than one, 1/a will be greater than one.
-;;       ;; Fixed point division requires multiplying by ONE_8.
-;;       (ok (- 0 (unwrap-panic (ln-priv (/ (scale-up ONE_8) a)))))
-;;       (ln-priv a)
-;;    )
-;;  )
-;; )
+;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+(define-read-only (ln-fixed (a int))
+  (begin
+    (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
+    (if (< a ONE_16)
+      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
+      ;; If a is less than one, 1/a will be greater than one.
+      ;; Fixed point division requires multiplying by ONE_8.
+      (ok (- 0 (unwrap-panic (ln-priv (/ (scale-up ONE_16) a)))))
+      (ln-priv a)
+   )
+ )
+)

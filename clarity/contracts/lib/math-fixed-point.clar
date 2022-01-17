@@ -58,6 +58,15 @@
     )
 )
 
+(define-public (ln (a uint))
+    (let
+        (
+            (a-int (to-int a))
+        )
+        (ok (unwrap-panic (contract-call? .math-log-exp ln-fixed a-int)))
+    )
+)
+
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (

@@ -268,92 +268,16 @@ Clarinet.test({
     },
 });
 
-// Clarinet.test({
-//     name: "math-big-uint: power and log 10",
-//     async fn(chain: Chain, accounts: Map<string, Account>) {
+Clarinet.test({
+    name: "math-big-uint: natural log",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
         
-//         let deployer = accounts.get("deployer")!;
+        let deployer = accounts.get("deployer")!;
 
-//         let call = chain.callReadOnlyFn("math-big-uint", "power",
-//             [
-//                 types.uint(5), 
-//                 types.uint(5)
-//             ], deployer.address);
-//         call.result.expectUint(3125)
-
-//         call = chain.callReadOnlyFn("math-big-uint", "log-10",
-//             [
-//                 types.uint(5),
-//             ], deployer.address);
-//         call.result.expectUint(16)
-//     }
-// })
-
-// Clarinet.test({
-//     name: "math-big-uint: mul-16",
-//     async fn(chain: Chain, accounts: Map<string, Account>) {
-        
-//         let deployer = accounts.get("deployer")!;
-
-//         // Following multiplication tells 50 and 5 with one decimal to the left
-//         // making it 5 and 0.5
-//         let call = chain.callReadOnlyFn("math-big-uint", "mul-16",
-//             [
-//                 types.uint(5), //50000000000000000 
-//                 types.uint(16),
-//                 types.uint(5), //5000000000000000
-//                 types.uint(15),
-//             ], deployer.address);
-//         let position: any = call.result.expectTuple()
-//         position['result'].expectUint(25)
-//         position['decimals'].expectUint(1)
-
-//         call = chain.callReadOnlyFn("math-big-uint", "mul-16",
-//             [
-//                 types.uint(25), 
-//                 types.uint(16),
-//                 types.uint(25),
-//                 types.uint(14),
-//             ], deployer.address);
-//         position = call.result.expectTuple()
-//         position['result'].expectUint(625)
-//         position['decimals'].expectUint(2)
-
-//         call = chain.callReadOnlyFn("math-big-uint", "mul-16",
-//             [
-//                 types.uint(25), 
-//                 types.uint(14),
-//                 types.uint(25),
-//                 types.uint(16),
-//             ], deployer.address);
-//         position = call.result.expectTuple()
-//         position['result'].expectUint(625)
-//         position['decimals'].expectUint(2)
-
-//         call = chain.callReadOnlyFn("math-big-uint", "mul-16",
-//             [
-//                 types.uint(500000), 
-//                 types.uint(16),
-//                 types.uint(5),
-//                 types.uint(15),
-//             ], deployer.address);
-//         position = call.result.expectTuple()
-//         position['result'].expectUint(2500000)
-//         position['decimals'].expectUint(1)
-//     },
-// });
-
-// Clarinet.test({
-//     name: "math-big-uint: div",
-//     async fn(chain: Chain, accounts: Map<string, Account>) {
-        
-//         let deployer = accounts.get("deployer")!;
-
-//         let call = chain.callReadOnlyFn("math-big-uint", "div",
-//             [
-//                 "u500000000000000000000000",
-//                 "u500000000000000000000000"
-//             ], deployer.address);
-//         assertEquals(call.result, "u10000000000000000")
-//     },
-// });
+        let call = chain.callReadOnlyFn("math-big-uint", "ln",
+            [
+                types.uint(10*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result.expectOk(), "23025850929940452")
+    }
+})
