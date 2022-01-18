@@ -92,8 +92,8 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? .token-xbtc get-balance account)) ONE_8) (pow u10 u8)))
-  ;; (ok (/ (* (try! (contract-call? SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) ONE_8) (pow u10 u8)))
+  (ok (/ (* (unwrap-panic (contract-call? .token-xbtc get-balance account)) (pow-decimals)) (pow u10 u8)))
+  ;; (ok (/ (* (try! (contract-call? 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) (pow-decimals)) (pow u10 u8)))
 )
 
 ;; @desc get-token-uri
@@ -112,7 +112,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) ONE_8) sender recipient memo)
+    (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
   )
 )
 
