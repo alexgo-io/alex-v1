@@ -83,51 +83,12 @@
     (pow a b)
 )
 
-;; x = b^y; then y = logb(x); where b is the base
-(define-read-only (log-10 (v uint))
-        (if (>= v u10000000000000000)
-            u16
-        (if (>= v u1000000000000000)
-            u15
-        (if (>= v u100000000000000)
-            u14
-        (if (>= v u10000000000000)
-            u13
-        (if (>= v u1000000000000)
-            u12
-        (if (>= v u100000000000)
-            u11
-        (if (>= v u10000000000)
-            u10
-        (if (>= v u1000000000)
-            u9
-        (if (>= v u100000000)
-            u8
-        (if (>= v u10000000)
-            u7
-        (if (>= v u1000000)
-            u6
-        (if (>= v u100000)
-            u5
-        (if (>= v u10000)
-            u4
-        (if (>= v u1000)
-            u3
-        (if (>= v u100)
-            u2
-        (if (>= v u10)
-            u1
-        u0
-        ))))))))))))))))
+(define-read-only (ln (a int))
+    (unwrap-panic (contract-call? .math-log-exp-biguint ln-fixed a))
 )
 
-(define-public (ln (a uint))
-    (let
-        (
-            (a-int (to-int a))
-        )
-        (ok (unwrap-panic (contract-call? .math-log-exp-biguint ln-fixed a-int)))
-    )
+(define-read-only (exp (a int))
+    (unwrap-panic (contract-call? .math-log-exp-biguint exp-fixed a))
 )
 
 ;; (define-read-only (pow (a uint) (b uint))

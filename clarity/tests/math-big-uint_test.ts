@@ -276,20 +276,46 @@ Clarinet.test({
 
         let call = chain.callReadOnlyFn("math-big-uint", "ln",
             [
-                types.uint(10*ONE_16),
+                types.int(10*ONE_16),
             ], deployer.address);
-        assertEquals(call.result.expectOk(), "23025850929940452")
+        assertEquals(call.result, "23025850929940452")
 
         call = chain.callReadOnlyFn("math-big-uint", "ln",
             [
-                types.uint(50000*ONE_16),
+                types.int(50000*ONE_16),
             ], deployer.address);
-        assertEquals(call.result.expectOk(), "108197782844102828")
+        assertEquals(call.result, "108197782844102828")
 
         call = chain.callReadOnlyFn("math-big-uint", "ln",
             [
-                types.uint(0.5*ONE_16),
+                types.int(0.5*ONE_16),
             ], deployer.address);
-        assertEquals(call.result.expectOk(), "-6931471805599448")
+        assertEquals(call.result, "-6931471805599448")
+    }
+})
+
+Clarinet.test({
+    name: "math-big-uint: exponent",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+
+        let call = chain.callReadOnlyFn("math-big-uint", "exp",
+            [
+                types.int(10*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "220264657948067164354")
+
+        call = chain.callReadOnlyFn("math-big-uint", "exp",
+            [
+                types.int(1*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "27182818284590452")
+
+        call = chain.callReadOnlyFn("math-big-uint", "exp",
+            [
+                types.int(5*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "1484131591025766015")
     }
 })

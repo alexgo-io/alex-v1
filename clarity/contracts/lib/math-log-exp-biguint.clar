@@ -155,58 +155,50 @@
 ;;   )
 ;; )
 
-;; (define-read-only (exp-pos (x int))
-;;   (begin
-;;     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
-;;     (let
-;;       (
-;;         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-;;         ;; it and compute the accumulated product.
-;;         (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
-;;         (x_adj (get x x_product_no_deci))
-;;         (firstAN (get product x_product_no_deci))
-;;         (x_product (fold accumulate_product x_a_list {x: x_adj, product: ONE_8}))
-;;         ;; (x_product (fold accumulate_product x_a_list {x: x, product: 1}))
-;;         (product_out (get product x_product))
-;;         (x_out (get x x_product))
-;;         (seriesSum (+ ONE_8 x_out))
-;;         (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-;;         (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-;;         (sum (get seriesSum term_sum_x))
-;;      )
-;;       (ok (* (scale-down (* product_out sum)) firstAN))
-;;    )
-;;  )
-;; )
+(define-read-only (exp-pos (x int))
+    (let
+        (
+        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+        ;; it and compute the accumulated product.
+        (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
+        (product_out (get product x_product))
+        (x_out (get x x_product))
+        (seriesSum (+ ONE_16 x_out))
+        (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+        (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+        (sum (get seriesSum term_sum_x))
+        )
+        (ok (* (scale-down (* product_out sum)) 1))
+    )
+)
 
-;; (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
-;;   (let
-;;     (
-;;       (x_pre (get x_pre x_a_pre))
-;;       (a_pre (get a_pre x_a_pre))
-;;       (use_deci (get use_deci x_a_pre))
-;;       (rolling_x (get x rolling_x_p))
-;;       (rolling_product (get product rolling_x_p))
-;;    )
-;;     (if (>= rolling_x x_pre)
-;;       {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) (if use_deci ONE_8 1))}
-;;       {x: rolling_x, product: rolling_product}
-;;    )
-;;  )
-;; )
+(define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (a_exp int))) (rolling_x_p (tuple (x int) (product int))))
+  (let
+    (
+      (x_pre (get x_pre x_a_pre))
+      (a_pre (get a_pre x_a_pre))
+      (rolling_x (get x rolling_x_p))
+      (rolling_product (get product rolling_x_p))
+   )
+    (if (>= rolling_x x_pre)
+      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) ONE_16)}
+      {x: rolling_x, product: rolling_product}
+   )
+ )
+)
 
-;; (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
-;;   (let
-;;     (
-;;       (rolling_term (get term rolling))
-;;       (rolling_sum (get seriesSum rolling))
-;;       (x (get x rolling))
-;;       (next_term (/ (scale-down (* rolling_term x)) n))
-;;       (next_sum (+ rolling_sum next_term))
-;;    )
-;;     {term: next_term, seriesSum: next_sum, x: x}
-;;  )
-;; )
+(define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
+  (let
+    (
+      (rolling_term (get term rolling))
+      (rolling_sum (get seriesSum rolling))
+      (x (get x rolling))
+      (next_term (/ (scale-down (* rolling_term x)) n))
+      (next_sum (+ rolling_sum next_term))
+   )
+    {term: next_term, seriesSum: next_sum, x: x}
+ )
+)
 
 ;; ;; public functions
 ;; ;;
@@ -234,20 +226,20 @@
 ;;   )
 ;; )
 
-;; ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
-;; ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-;; (define-read-only (exp-fixed (x int))
-;;   (begin
-;;     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
-;;     (if (< x 0)
-;;       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-;;       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-;;       ;; Fixed point division requires multiplying by ONE_8.
-;;       (ok (/ (scale-up ONE_8) (unwrap-panic (exp-pos (* -1 x)))))
-;;       (exp-pos x)
-;;     )
-;;   )
-;; )
+;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
+;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+(define-read-only (exp-fixed (x int))
+  (begin
+    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
+    (if (< x 0)
+      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
+      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
+      ;; Fixed point division requires multiplying by ONE_8.
+      (ok (/ (scale-up ONE_16) (unwrap-panic (exp-pos (* -1 x)))))
+      (exp-pos x)
+    )
+  )
+)
 
 ;; ;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
 ;; (define-read-only (log-fixed (arg int) (base int))

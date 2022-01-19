@@ -144,6 +144,30 @@
  )
 )
 
+(define-read-only (exp (x int))
+  (begin
+    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
+    (let
+      (
+        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+        ;; it and compute the accumulated product.
+        (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
+        (x_adj (get x x_product_no_deci))
+        (firstAN (get product x_product_no_deci))
+        (x_product (fold accumulate_product x_a_list {x: x_adj, product: ONE_8}))
+        ;; (product_out (get product x_product))
+        ;; (x_out (get x x_product))
+        ;; (seriesSum (+ ONE_8 x_out))
+        ;; (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+        ;; (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+        ;; (sum (get seriesSum term_sum_x))
+     )
+      ;; (ok (* (/ (* product_out sum) ONE_8) firstAN))
+      (ok x_product)
+   )
+ )
+)
+
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
