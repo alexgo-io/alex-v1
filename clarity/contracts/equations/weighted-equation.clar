@@ -126,9 +126,9 @@
 
 ;; @desc d_y = dy                                                                            
 ;; @desc b_y = balance-y
-;; @desc b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
-;; @desc d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
-;; @desc w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; @desc b_x = balance-x              /     /            b_y             \    (w_y / w_x)  \          
+;; @desc d_x = dx         d_x = b_x * | 1 - | --------------------------  | ^              |         
+;; @desc w_x = weight-x               \     \       ( b_y + d_y )         /                /          
 ;; @desc w_y = weight-y                                                           
 ;; @param balance-x; balance of token-x
 ;; @param balance-y; balance of token-y
@@ -142,19 +142,19 @@
         (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
-                (base (div-down balance-y denominator))
-                (uncapped-exponent (div-down weight-y weight-x))
+                (denominator (+ balance-y dy)) ;; (b_y + d_y)
+                (base (div-up balance-y denominator)) ;; (b_y / (b_y + d_y))
+                (uncapped-exponent (div-up weight-y weight-x)) ;; (w_y / w_x)
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
-                (power (pow-down base exponent))
-                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
-                (dx (mul-down balance-x ratio))
+                (power (pow-up base exponent)) ;; (b_y / (b_y + d_y))^(w_y / w_x)
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power))) ;; (1 - (b_y / (b_y + d_y))^(w_y / w_x))
+                (dx (mul-down balance-x complement)) ;; b_x * (1 - (b_y / (b_y + d_y))^(w_y / w_x))
             )
             (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
             (ok dx)
-        )
-    )
+        ) 
+    )  
 )
 
 ;; @desc d_x = dx
