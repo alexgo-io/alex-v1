@@ -319,3 +319,46 @@ Clarinet.test({
         assertEquals(call.result, "1484131591025766015")
     }
 })
+
+Clarinet.test({
+    name: "math-big-uint: power",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+
+        let call = chain.callReadOnlyFn("math-big-uint", "power",
+            [
+                types.uint(2*ONE_16),
+                types.uint(10*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "u10239999999999944845")
+
+        call = chain.callReadOnlyFn("math-big-uint", "power",
+            [
+                types.uint(2*ONE_16),
+                types.uint(5*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "u319999999999999061")
+
+        call = chain.callReadOnlyFn("math-big-uint", "power",
+            [
+                types.uint(5*ONE_16),
+                types.uint(5*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "u31249999999999902485")
+
+        call = chain.callReadOnlyFn("math-big-uint", "power",
+            [
+                types.uint(5*ONE_16),
+                types.uint(0.5*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "u22360679774997883")
+
+        call = chain.callReadOnlyFn("math-big-uint", "power",
+            [
+                types.uint(5*ONE_16),
+                types.uint(0.125*ONE_16),
+            ], deployer.address);
+        assertEquals(call.result, "u12228445449938512")
+    }
+})

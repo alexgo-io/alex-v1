@@ -66,25 +66,6 @@
 ;; private functions
 ;;
 
-;; ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-;; (define-public (ln-priv (a int))
-;;   (let
-;;     (
-;;       (a_sum (fold accumulate_division x_a_list {a: a, sum: 0}))
-;;       (out_a (get a a_sum))
-;;       (out_sum (get sum a_sum))
-;;       (z (/ (scale-up (- out_a ONE_8)) (+ out_a ONE_8))) ;; this is scaling up for division precision
-;;       (z_squared (scale-down (* z z)))
-;;       (div_list (list 3 5 7 9 11))
-;;       (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
-;;       (seriesSum (get seriesSum num_sum_zsq))
-;;       (r (+ out_sum (* seriesSum 2)))
-;;    )
-;;     ;; (ok r)
-;;     (ok {a_sum: a_sum, z: z, z_squared: z_squared})
-;;  )
-;; )
-
 (define-private (ln-priv (a int))
     (let
         (
@@ -103,7 +84,6 @@
             (seriesSum (get seriesSum num_sum_zsq))
             (r (+ out_sum (* seriesSum 2)))
         )
-        ;; (ok {a_sum: a_sum, z: z, z_squared: z_squared})
         (ok r)
     )
 )
@@ -138,22 +118,22 @@
  )
 )
 
-;; ;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; ;; x^y = exp(y * ln(x)).
-;; ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-;; (define-read-only (pow-priv (x uint) (y uint))
-;;   (let
-;;     (
-;;       (x-int (to-int x))
-;;       (y-int (to-int y))
-;;       (lnx (unwrap-panic (ln-priv x-int)))
-;;       (logx-times-y (scale-down (* lnx y-int)))
-;;     )
-;;     (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
-;;     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
-;;   )
-;; )
+;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
+;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
+;; x^y = exp(y * ln(x)).
+;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+(define-read-only (pow-priv (x uint) (y uint))
+  (let
+    (
+      (x-int (to-int x))
+      (y-int (to-int y))
+      (lnx (unwrap-panic (ln-priv x-int)))
+      (logx-times-y (scale-down (* lnx y-int)))
+    )
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
+    (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
+  )
+)
 
 (define-read-only (exp-pos (x int))
     (let
@@ -200,31 +180,31 @@
  )
 )
 
-;; ;; public functions
-;; ;;
+;; public functions
+;;
 
-;; (define-read-only (get-exp-bound)
-;;   (ok MILD_EXPONENT_BOUND)
-;; )
+(define-read-only (get-exp-bound)
+  (ok MILD_EXPONENT_BOUND)
+)
 
-;; ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
-;; (define-read-only (pow-fixed (x uint) (y uint))
-;;   (begin
-;;     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-;;     (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
+;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
+(define-read-only (pow-fixed (x uint) (y uint))
+  (begin
+    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+    (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
 
-;;     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-;;     (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
+    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+    (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
 
-;;     (if (is-eq y u0) 
-;;       (ok (to-uint ONE_8))
-;;       (if (is-eq x u0) 
-;;         (ok u0)
-;;         (pow-priv x y)
-;;       )
-;;     )
-;;   )
-;; )
+    (if (is-eq y u0) 
+      (ok (to-uint ONE_8))
+      (if (is-eq x u0) 
+        (ok u0)
+        (pow-priv x y)
+      )
+    )
+  )
+)
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
