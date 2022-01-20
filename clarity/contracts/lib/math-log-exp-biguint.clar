@@ -1,6 +1,6 @@
 
 ;; math-log-exp
-;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
+;; Exponentiation and logarithm functions for 16 decimal fixed point numbers (both base and exponent/argument).
 ;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
 ;; exponentiation and logarithm (where the base is Euler's number).
 ;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
@@ -10,24 +10,21 @@
 ;;
 ;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
 ;; two numbers, and multiply by ONE when dividing them.
-;; All arguments and return values are 8 decimal fixed point numbers.
-(define-constant ONE_8 (pow 10 8))
-(define-constant ONE_10 (pow 10 10))
-
+;; All arguments and return values are 16 decimal fixed point numbers.
 (define-constant ONE_16 (pow 10 16))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
-;; The largest possible result is (2^127 - 1) / 10^8, 
-;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
-;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
-;; We use 69.0 and -18.0 to have some safety margin.
+;; The largest possible result is (2^127 - 1) / 10^16, 
+;; which makes the largest exponent ln((2^127 - 1) / 10^16) = 51.1883304432
+;; The smallest possible result is 10^(-16), which makes largest negative argument ln(10^(-16)) = -36.8413614879
+;; We use 51.0 and -36.0 to have some safety margin.
 (define-constant MAX_NATURAL_EXPONENT (* 51 ONE_16))
 (define-constant MIN_NATURAL_EXPONENT (* -36 ONE_16))
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
 
-;; Because largest exponent is 69, we start from 64
-;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
+;; Because largest exponent is 51, we start from 32
+;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
 
 ;; a_pre is in scientific notation
@@ -47,7 +44,6 @@
 {x_pre: 625000000000000, a_pre: 10644944589178594, a_exp: -16} ;; x9 = 2^-4, a9 = e^(x9)
 {x_pre: 312500000000000, a_pre: 10317434074991027, a_exp: -16} ;; x10 = 2^-5, a10 = e^(x10)
 ))
-
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
@@ -187,7 +183,7 @@
   (ok MILD_EXPONENT_BOUND)
 )
 
-;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
+;; Exponentiation (x^y) with unsigned 16 decimal fixed point base and exponent.
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
@@ -197,7 +193,7 @@
     (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
 
     (if (is-eq y u0) 
-      (ok (to-uint ONE_8))
+      (ok (to-uint ONE_16))
       (if (is-eq x u0) 
         (ok u0)
         (pow-priv x y)
@@ -206,7 +202,7 @@
   )
 )
 
-;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
+;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
 (define-read-only (exp-fixed (x int))
   (begin
@@ -214,33 +210,33 @@
     (if (< x 0)
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by ONE_8.
+      ;; Fixed point division requires multiplying by ONE_16.
       (ok (/ (scale-up ONE_16) (unwrap-panic (exp-pos (* -1 x)))))
       (exp-pos x)
     )
   )
 )
 
-;; ;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-;; (define-read-only (log-fixed (arg int) (base int))
-;;   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-;;   (let
-;;     (
-;;       (logBase (scale-up (unwrap-panic (ln-priv base))))
-;;       (logArg (scale-up (unwrap-panic (ln-priv arg))))
-;;    )
-;;     (ok (/ (scale-up logArg) logBase))
-;;  )
-;; )
+;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
+(define-read-only (log-fixed (arg int) (base int))
+  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
+  (let
+    (
+      (logBase (scale-up (unwrap-panic (ln-priv base))))
+      (logArg (scale-up (unwrap-panic (ln-priv arg))))
+   )
+    (ok (/ (scale-up logArg) logBase))
+ )
+)
 
-;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
 (define-read-only (ln-fixed (a int))
   (begin
     (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
     (if (< a ONE_16)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by ONE_8.
+      ;; Fixed point division requires multiplying by ONE_16.
       (ok (- 0 (unwrap-panic (ln-priv (/ (scale-up ONE_16) a)))))
       (ln-priv a)
    )
