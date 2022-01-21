@@ -744,7 +744,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
+        (contract-call? .weighted-equation-v1-01 get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
@@ -759,7 +759,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
+        (contract-call? .weighted-equation-v1-01 get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
@@ -804,7 +804,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-in-given-x-out (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
+        (contract-call? .weighted-equation-v1-01 get-y-in-given-x-out (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
@@ -814,7 +814,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-in-given-y-out (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
+        (contract-call? .weighted-equation-v1-01 get-x-in-given-y-out (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
@@ -850,7 +850,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
+        (contract-call? .weighted-equation-v1-01 get-x-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
     )
 )
 
@@ -866,7 +866,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
+        (contract-call? .weighted-equation-v1-01 get-y-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
     )
 )
 
@@ -883,7 +883,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-token-given-position (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
+        (contract-call? .weighted-equation-v1-01 get-token-given-position (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 
@@ -899,7 +899,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-position-given-mint (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
+        (contract-call? .weighted-equation-v1-01 get-position-given-mint (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
     )
 )
 
@@ -915,7 +915,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-position-given-burn (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
+        (contract-call? .weighted-equation-v1-01 get-position-given-burn (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
     )
 )
 
