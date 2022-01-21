@@ -252,15 +252,12 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (mul-down balance-y weight-x))
-                (denominator (mul-up balance-x weight-y))
-                (spot (div-down numerator denominator))
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (div-up spot price))
-                    (power (pow-down base weight-y))
+                  (power (pow-down (div-up spot price) weight-y))
                 )
                 (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
             )
@@ -269,6 +266,7 @@
 )
 
 ;; @desc follows from get-x-given-price
+;; @desc d_y = b_y * (1 - (spot / price) ^ w_x)
 ;; @param balance-x; balance of token-x
 ;; @param balance-y; balance of token-y
 ;; @param weight-x; weight of token-x
@@ -280,15 +278,12 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (mul-down balance-y weight-x))
-                (denominator (mul-up balance-x weight-y))
-                (spot (div-down numerator denominator))
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (div-up spot price))
-                    (power (pow-down base weight-y))
+                  (power (pow-down (div-up spot price) weight-y))
                 )
                 (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
             )

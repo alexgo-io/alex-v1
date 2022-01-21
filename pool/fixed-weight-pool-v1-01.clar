@@ -468,7 +468,7 @@
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
     
                 (dy (try! (get-y-given-wstx token-y weight-y dx-net-fees)))
-                (dydx (div-down (mul-down dy weight-x) (mul-down dx weight-y)))
+                (dy-gross (try! (get-y-given-wstx token-y weight-y dx)))
 
                 (pool-updated
                     (merge pool
@@ -482,9 +482,9 @@
                         }
                     )
                 )
-                (sender tx-sender)
+                (sender tx-sender)             
             )
-            (asserts! (< (div-down (mul-down dy weight-x) (mul-down dx-net-fees weight-y)) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)       
+            (asserts! (< (div-down dy dx-net-fees) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)       
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .token-wstx transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -537,7 +537,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (> (div-down (mul-down dy-net-fees weight-x) (mul-down dx weight-y)) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)
+            (asserts! (> (div-down dy-net-fees dx) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (as-contract (try! (contract-call? .alex-vault transfer-ft .token-wstx dx sender)))
