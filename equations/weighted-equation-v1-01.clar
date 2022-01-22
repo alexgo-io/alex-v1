@@ -266,7 +266,7 @@
 )
 
 ;; @desc follows from get-x-given-price
-;; @desc d_y = b_y * (1 - (spot / price) ^ w_x)
+;; @desc d_y = b_y * ((price / spot) ^ w_x - 1)
 ;; @param balance-x; balance of token-x
 ;; @param balance-y; balance of token-y
 ;; @param weight-x; weight of token-x
@@ -283,9 +283,9 @@
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                  (power (pow-down (div-up spot price) weight-y))
+                  (power (pow-down (div-up price spot) weight-x))
                 )
-                (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
+                (ok (mul-up balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
             )
         )
     )   
