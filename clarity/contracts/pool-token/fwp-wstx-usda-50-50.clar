@@ -196,4 +196,4 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .fixed-weight-pool-v1-01 true)
+(map-set approved-contracts .fixed-weight-pool true)

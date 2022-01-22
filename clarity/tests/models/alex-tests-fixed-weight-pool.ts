@@ -278,6 +278,24 @@ import {
         types.uint(weightY),
       ], this.deployer.address);
     }
+
+    setMaxInRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("weighted-equation-v1-01", "set-max-in-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+
+    setMaxOutRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("weighted-equation-v1-01", "set-max-out-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }            
   
   }
   

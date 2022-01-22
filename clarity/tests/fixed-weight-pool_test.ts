@@ -15,11 +15,11 @@ import {
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
-const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
-const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50"
-const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-50-50"
-const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50"
-const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-v1-01-v1-01"
+const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50-v1-01"
+const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50-v1-01"
+const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-50-50-v1-01"
+const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50-v1-01"
+const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-v1-01"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
@@ -62,6 +62,11 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, wbtcQ*wbtcPrice, wbtcQ);
         result.expectOk().expectBool(true);
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);        
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(wstxAddress, wbtcAddress,weightX, weightY);
@@ -207,6 +212,11 @@ Clarinet.test({
         result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, wbtcQ*wbtcPrice, wbtcQ);
         result.expectOk().expectBool(true);
 
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);        
+
         // Fee rate Setting Proposal of Multisig
         result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
         result.expectOk().expectUint(1) // First Proposal
@@ -310,6 +320,11 @@ Clarinet.test({
         // Duplicated pool creation
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
         result.expectErr().expectUint(2000);
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);        
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
@@ -412,6 +427,11 @@ Clarinet.test({
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
         result.expectOk().expectBool(true);
 
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);           
+
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
         let position:any = call.result.expectOk().expectTuple();
@@ -420,7 +440,7 @@ Clarinet.test({
         
         // let's do some arb
         call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, weightX, weightY, Math.round(ONE_8*1.1));
-        call.result.expectOk().expectUint(2326871500000);         
+        call.result.expectOk().expectUint(2440438000000);         
         result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, 2326871500000, 0)
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(2326871500000);
