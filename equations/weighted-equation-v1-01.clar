@@ -53,7 +53,7 @@
   (begin
     (try! (check-is-owner))
     ;; MI-03
-    (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)
+    (asserts! (and (> new-max-in-ratio u0) (< new-max-in-ratio ONE_8)) ERR-MAX-IN-RATIO)
     (ok (var-set MAX-IN-RATIO new-max-in-ratio))
   )
 )
@@ -71,7 +71,7 @@
   (begin
     (try! (check-is-owner))
     ;; MI-03
-    (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)
+    (asserts! (and (> new-max-out-ratio u0) (< new-max-out-ratio ONE_8)) ERR-MAX-OUT-RATIO)
     (ok (var-set MAX-OUT-RATIO new-max-out-ratio))
   )
 )
@@ -89,16 +89,6 @@
         (ok (mul-down (pow-down balance-x weight-x) (pow-down balance-y weight-y)))
     )
 )
-
-(define-read-only (check-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (balance-x-new uint) (balance-y-new uint))
-  (ok 
-    (is-eq 
-      (try! (get-invariant balance-x balance-y weight-x weight-y))
-      (try! (get-invariant balance-x-new balance-y-new weight-x weight-y))
-    )
-  )
-)
-
 
 ;; @desc get-y-given-x
 ;; @desc d_y = dy
@@ -185,7 +175,7 @@
         (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (denominator (if (<= balance-y dy) u0 (- balance-y dy)))
+                (denominator (- balance-y dy))
                 (base (div-down balance-y denominator))
                 (uncapped-exponent (div-down weight-y weight-x))
                 (bound (unwrap-panic (get-exp-bound)))
@@ -218,7 +208,7 @@
         (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
         (let 
             (
-                (denominator (if (<= balance-x dx) u0 (- balance-x dx)))
+                (denominator (- balance-x dx))
                 (base (div-down balance-x denominator))
                 (uncapped-exponent (div-down weight-x weight-y))
                 (bound (unwrap-panic (get-exp-bound)))

@@ -4,7 +4,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 
-(define-fungible-token fwp-wstx-wbtc-50-50)
+(define-fungible-token fwp-wstx-wbtc-50-50-v1-01)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
@@ -80,7 +80,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (ft-transfer? fwp-wstx-wbtc-50-50 amount sender recipient))
+    (try! (ft-transfer? fwp-wstx-wbtc-50-50-v1-01 amount sender recipient))
     (match memo to-print (print to-print) 0x)
     (ok true)
   )
@@ -99,11 +99,11 @@
 )
 
 (define-read-only (get-balance (who principal))
-	(ok (ft-get-balance fwp-wstx-wbtc-50-50 who))
+	(ok (ft-get-balance fwp-wstx-wbtc-50-50-v1-01 who))
 )
 
 (define-read-only (get-total-supply)
-	(ok (ft-get-supply fwp-wstx-wbtc-50-50))
+	(ok (ft-get-supply fwp-wstx-wbtc-50-50-v1-01))
 )
 
 (define-read-only (get-token-uri)
@@ -123,7 +123,7 @@
 (define-public (mint (amount uint) (recipient principal))
 	(begin		
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-mint? fwp-wstx-wbtc-50-50 amount recipient)
+		(ft-mint? fwp-wstx-wbtc-50-50-v1-01 amount recipient)
 	)
 )
 
@@ -136,7 +136,7 @@
 (define-public (burn (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-burn? fwp-wstx-wbtc-50-50 amount sender)
+		(ft-burn? fwp-wstx-wbtc-50-50-v1-01 amount sender)
 	)
 )
 
