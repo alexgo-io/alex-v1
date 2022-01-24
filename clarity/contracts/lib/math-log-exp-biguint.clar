@@ -254,12 +254,27 @@
 ;; (34-97) * 10^5
 ;; -63 * 10^5
 (define-read-only (subtraction-in-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
-    (let
-        (
-            (subtraction (- a b))
-            (exponent (if (> a_exp b_exp) a_exp b_exp))
+    (begin
+        (if (> a_exp b_exp)
+            (let
+                (
+                    (transformation (transform a a_exp b_exp))
+                    (new_a (get a transformation))
+                    (new_a_exp (get exp transformation))
+                    (subtraction (- new_a b))
+                )
+                {a: subtraction, exp: b_exp}
+            )
+            (let
+                (
+                    (transformation (transform b b_exp a_exp))
+                    (new_b (get a transformation))
+                    (new_b_exp (get exp transformation))
+                    (subtraction (- new_b a))
+                )
+                {a: subtraction, exp: a_exp}
+            )
         )
-        {a: subtraction, exp: exponent}
     )
 )
 
