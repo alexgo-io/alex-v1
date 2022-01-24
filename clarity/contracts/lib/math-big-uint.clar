@@ -80,14 +80,14 @@
 ;; ln(x) = log10(x) / log10(2.71828)
 ;; we need implementation of Exponent and Log10
 
-(define-read-only (ln (a int))
-    (unwrap-panic (contract-call? .math-log-exp-biguint ln-fixed a))
-)
+;; (define-read-only (ln (a int))
+;;     (unwrap-panic (contract-call? .math-log-exp-biguint ln-fixed a))
+;; )
 
-(define-read-only (exp (a int))
-    (unwrap-panic (contract-call? .math-log-exp-biguint exp-fixed a))
-)
+;; (define-read-only (exp (a int))
+;;     (unwrap-panic (contract-call? .math-log-exp-biguint exp-fixed a))
+;; )
 
-(define-read-only (power (a uint) (b uint))
-    (unwrap-panic (contract-call? .math-log-exp-biguint pow-fixed a b))
-)
+;; (define-read-only (power (a uint) (b uint))
+;;     (unwrap-panic (contract-call? .math-log-exp-biguint pow-fixed a b))
+;; )

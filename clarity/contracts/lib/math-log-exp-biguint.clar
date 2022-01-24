@@ -45,6 +45,25 @@
 {x_pre: 312500000000000, a_pre: 10317434074991027, a_exp: -16} ;; x10 = 2^-5, a10 = e^(x10)
 ))
 
+;; 2^5+2^4+2^3+2^2+2^1+2^0+2^(-1)+2^(-2)+2^(-3)+2^(-4)+2^(-5) = 63.96875
+;; 32+16+8+4+2+1+5+25+125+625+3125 = 3,968 0
+;; 32+16+8+4+2+1+0.5+0.25+0.125+0.0625+0.03125 = 63.96875 = 6396875 * 10^-5
+
+;; We must keep a_pre to 16 digits so that division won't give us 0 when divided by ONE_16
+(define-constant x_a_list_16 (list 
+{x_pre: 32, x_pre_exp: 0, a_pre: 7896296018268069, a_pre_exp: -2} ;; x0 = 2^5, a0 = e^(x0)
+{x_pre: 16, x_pre_exp: 0, a_pre: 8886110520507873, a_pre_exp: -9} ;; x1 = 2^4, a1 = e^(x1)
+{x_pre: 8, x_pre_exp: 0, a_pre: 2980957987041728, a_pre_exp: -12} ;; x2 = 2^3, a2 = e^(x2)
+{x_pre: 4, x_pre_exp: 0, a_pre: 5459815003314423, a_pre_exp: -14} ;; x3 = 2^2, a3 = e^(x3)
+{x_pre: 2, x_pre_exp: 0, a_pre: 7389056098930650, a_pre_exp: -15} ;; x4 = 2^1, a4 = e^(x4)
+{x_pre: 1, x_pre_exp: 0, a_pre: 2718281828459045, a_pre_exp: -15} ;; x5 = 2^0, a5 = e^(x5)
+{x_pre: 5, x_pre_exp: -1, a_pre: 1648721270700128, a_pre_exp: -15} ;; x6 = 2^-1, a6 = e^(x6)
+{x_pre: 25, x_pre_exp: -2, a_pre: 1284025416687741, a_pre_exp: -15} ;; x7 = 2^-2, a7 = e^(x7)
+{x_pre: 125, x_pre_exp: -3, a_pre: 1133148453066826, a_pre_exp: -15} ;; x8 = 2^-3, a8 = e^(x8)
+{x_pre: 625, x_pre_exp: -4, a_pre: 10644944589178594, a_pre_exp: -15} ;; x9 = 2^-4, a9 = e^(x9)
+{x_pre: 3125, x_pre_exp: -5, a_pre: 10317434074991027, a_pre_exp: -15} ;; x10 = 2^-5, a10 = e^(x10)
+))
+
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
@@ -62,7 +81,205 @@
 ;; private functions
 ;;
 
-(define-private (ln-priv (a int))
+(define-read-only (ln-priv-16 (a int) (a_exp int))
+    (let
+        (
+            ;; decomposition process
+            ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L349
+            (a_sum (fold accumulate_division_16 x_a_list_16 {a: {a: a, exp: a_exp}, sum: {a: 0, exp: 0}}))
+            (out_a (get a a_sum))
+            (out_sum (get sum a_sum))
+            ;; below is the Taylor series now 
+            ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
+            ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
+            ;; (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
+            ;; (z_squared (/ (* z z) ONE_16))
+            ;; (div_list (list 3 5 7 9 11))
+            ;; (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
+            ;; (seriesSum (get seriesSum num_sum_zsq))
+            ;; (r (+ out_sum (* seriesSum 2)))
+        )
+        (ok a_sum)
+        ;; (ok r)
+    )
+)
+
+(define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (a int) (exp int))) (sum (tuple (a int) (exp int))))))
+  (let
+    (
+      (a_pre (get a_pre x_a_pre))
+      (a_pre_exp (get a_pre_exp x_a_pre))
+      
+      (x_pre (get x_pre x_a_pre))
+      (x_pre_exp (get x_pre_exp x_a_pre))
+
+      (rolling_a (get a rolling_a_sum))
+      (rolling_a_a (get a rolling_a))
+      (rolling_a_exp (get exp rolling_a))
+      
+      (rolling_sum (get sum rolling_a_sum))
+      (rolling_sum_a (get a rolling_sum))
+      (rolling_sum_exp (get exp rolling_sum))
+   )
+   ;; I think we can simply use a_pre without scaling here
+   ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L347
+    ;; this rolling a and sum is working as a looped a and sum
+    (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp) 
+    ;; (if true
+        {
+            a: (division-with-scientific-notation rolling_a_a rolling_a_exp a_pre a_pre_exp),
+            sum: (addition-in-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
+        } ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
+        {a: rolling_a, sum: rolling_sum}
+    )
+ )
+)
+;; 50000 0 >= 7896296018268069 -2, true, 50000 0 / 7896296018268069 -2 = 0.000000000633208 -> a: 63320 -14, sum: 32 0
+;; 63320 -14 >= 8886110520507873 -9, false -> a: 63320 -14, sum: 32 0
+;; 63320 -14 >= 2980957987041728 -12, false -> a: 63320 -14, sum: 32 0
+;; 63320 -14 >= 5459815003314423 -14, false -> a: 63320 -14, sum: 32 0
+;; 63320 -14 >= 7389056098930650 -15, false -> a: 63320 -14, sum: 32 0
+
+;; 20 * 10 ^ 2
+;;788999999999999.9 * 10 ^ -1    
+(define-read-only (greater-than-equal-to (a int) (a_exp int) (b int) (b_exp int))
+  (if (> a_exp b_exp)
+      true
+      (if (is-eq a_exp b_exp)
+        (if (>= a b)
+        true
+        false)
+        false)
+  )
+)
+
+;; 3.4 * 10^5 + 9.7 * 10^6
+;; 34 * 10^4 + 97 * 10^5
+;; (34+97) * 10^5
+;; 131 * 10^5
+
+;; 100 * 10^0 + 35 * 10^-3
+;; 100+35 * 10^(0-3)
+;; 135 * 10^-3 (WRONG)
+;; 100000 * 10^-3 + 35 * 10^-3
+;; 100035 * 10^-3 (RIGHT)
+(define-read-only (addition-in-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
+    (begin
+        (if (> a_exp b_exp)
+            (let
+                (
+                    (transformation (transform a a_exp b_exp))
+                    (new_a (get a transformation))
+                    (new_a_exp (get exp transformation))
+                    (addition (+ new_a b))
+                )
+                {a: addition, exp: b_exp}
+            )
+            (let
+                (
+                    (transformation (transform b b_exp a_exp))
+                    (new_b (get a transformation))
+                    (new_b_exp (get exp transformation))
+                    (addition (+ new_b a))
+                )
+                {a: addition, exp: a_exp}
+            )
+        )
+    )
+)
+
+;; transformations upto 16 decimals
+;; You cannot transform -ve exponent to +ve exponent
+;; Meaning you cannot go forward exponent, only backwards
+
+;; 100 * 10^0 transform -3 (BACKWARD)
+;; 100000 * 10^-3 (POSSIBLE)
+
+;; 35 * 10^-3 transform 0 (FORWARDING)
+;; 0.0035 * 10^0 (NOT POSSIBLE)
+
+;; 35 * 10^-3 transform -4 (BACKWARD)
+;; 350 * 10^-4 (POSSIBLE)
+
+;; 35 * 10^-3 transform -2 (FORWARD)
+;; 3.5 * 10^-2 (NOT POSSIBLE)
+
+;; 35 * 10^3 transform 1 (BACKWARD)
+;; 3500 * 10^1 (POSSIBLE)
+
+(define-read-only (transform (a int) (a_exp int) (x int))
+    (let
+        (
+            (exp-diff (- x a_exp))
+        )
+        (if (or (is-eq exp-diff -1) (is-eq exp-diff 1))
+            {a: (* a 10), exp: x}
+        (if (or (is-eq exp-diff -2) (is-eq exp-diff 2))
+            {a: (* a 100), exp: x}
+        (if (or (is-eq exp-diff -3) (is-eq exp-diff 3))
+            {a: (* a 1000), exp: x}
+        (if (or (is-eq exp-diff -4) (is-eq exp-diff 4))
+            {a: (* a 10000), exp: x}
+        (if (or (is-eq exp-diff -5) (is-eq exp-diff 5))
+            {a: (* a 100000), exp: x}
+        (if (or (is-eq exp-diff -6) (is-eq exp-diff 6))
+            {a: (* a 1000000), exp: x}
+        (if (or (is-eq exp-diff -7) (is-eq exp-diff 7))
+            {a: (* a 10000000), exp: x}
+        (if (or (is-eq exp-diff -8) (is-eq exp-diff 8))
+            {a: (* a 100000000), exp: x}
+        (if (or (is-eq exp-diff -9) (is-eq exp-diff 9))
+            {a: (* a 1000000000), exp: x}
+        (if (or (is-eq exp-diff -10) (is-eq exp-diff 10))
+            {a: (* a 10000000000), exp: x}
+        (if (or (is-eq exp-diff -11) (is-eq exp-diff 11))
+            {a: (* a 100000000000), exp: x}
+        (if (or (is-eq exp-diff -12) (is-eq exp-diff 12))
+            {a: (* a 1000000000000), exp: x}
+        (if (or (is-eq exp-diff -13) (is-eq exp-diff 13))
+            {a: (* a 10000000000000), exp: x}
+        (if (or (is-eq exp-diff -14) (is-eq exp-diff 14))
+            {a: (* a 100000000000000), exp: x}
+        (if (or (is-eq exp-diff -15) (is-eq exp-diff 15))
+            {a: (* a 1000000000000000), exp: x}
+        (if (or (is-eq exp-diff -16) (is-eq exp-diff 16))
+            {a: (* a 10000000000000000), exp: x}
+        {a: a, exp: a_exp}
+        ))))))))))))))))
+    )
+)
+
+;; 3.4 * 10^5 - 9.7 * 10^6
+;; 34 * 10^4 - 97 * 10^5
+;; (34-97) * 10^5
+;; -63 * 10^5
+(define-read-only (subtraction-in-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
+    (let
+        (
+            (subtraction (- a b))
+            (exponent (if (> a_exp b_exp) a_exp b_exp))
+        )
+        {a: subtraction, exp: exponent}
+    )
+)
+
+;; 2.5 / 4 = 0.625
+;; (25*10^-1) / (4*10^0)
+;; (25/4) * (10^(-1-0))
+;; (625*10^14) * (10^-1 * 10^-16)
+;; (62500000000000000) * (10^-17)
+;; (0.625)
+(define-read-only (division-with-scientific-notation (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (
+            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
+            (exponent (+ (- a-exp b-exp) -16)) ;; scale down from the exponent part
+        )
+        {a: division, exp: exponent}
+    )
+)
+
+(define-read-only (ln-priv (a int))
     (let
         (
             ;; decomposition process
@@ -80,7 +297,8 @@
             (seriesSum (get seriesSum num_sum_zsq))
             (r (+ out_sum (* seriesSum 2)))
         )
-        (ok r)
+        (ok a_sum)
+        ;; (ok r)
     )
 )
 
@@ -114,131 +332,131 @@
  )
 )
 
-;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-(define-read-only (pow-priv (x uint) (y uint))
-  (let
-    (
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (scale-down (* lnx y-int)))
-    )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
-    (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
-  )
-)
+;; ;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
+;; ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
+;; ;; x^y = exp(y * ln(x)).
+;; ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+;; (define-read-only (pow-priv (x uint) (y uint))
+;;   (let
+;;     (
+;;       (x-int (to-int x))
+;;       (y-int (to-int y))
+;;       (lnx (unwrap-panic (ln-priv x-int)))
+;;       (logx-times-y (scale-down (* lnx y-int)))
+;;     )
+;;     (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
+;;     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
+;;   )
+;; )
 
-(define-read-only (exp-pos (x int))
-    (let
-        (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
-        (product_out (get product x_product))
-        (x_out (get x x_product))
-        (seriesSum (+ ONE_16 x_out))
-        (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        (sum (get seriesSum term_sum_x))
-        )
-        (ok (* (scale-down (* product_out sum)) 1))
-    )
-)
+;; (define-read-only (exp-pos (x int))
+;;     (let
+;;         (
+;;         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+;;         ;; it and compute the accumulated product.
+;;         (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
+;;         (product_out (get product x_product))
+;;         (x_out (get x x_product))
+;;         (seriesSum (+ ONE_16 x_out))
+;;         (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+;;         (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+;;         (sum (get seriesSum term_sum_x))
+;;         )
+;;         (ok (* (scale-down (* product_out sum)) 1))
+;;     )
+;; )
 
-(define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (a_exp int))) (rolling_x_p (tuple (x int) (product int))))
-  (let
-    (
-      (x_pre (get x_pre x_a_pre))
-      (a_pre (get a_pre x_a_pre))
-      (rolling_x (get x rolling_x_p))
-      (rolling_product (get product rolling_x_p))
-   )
-    (if (>= rolling_x x_pre)
-      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) ONE_16)}
-      {x: rolling_x, product: rolling_product}
-   )
- )
-)
+;; (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (a_exp int))) (rolling_x_p (tuple (x int) (product int))))
+;;   (let
+;;     (
+;;       (x_pre (get x_pre x_a_pre))
+;;       (a_pre (get a_pre x_a_pre))
+;;       (rolling_x (get x rolling_x_p))
+;;       (rolling_product (get product rolling_x_p))
+;;    )
+;;     (if (>= rolling_x x_pre)
+;;       {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) ONE_16)}
+;;       {x: rolling_x, product: rolling_product}
+;;    )
+;;  )
+;; )
 
-(define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
-  (let
-    (
-      (rolling_term (get term rolling))
-      (rolling_sum (get seriesSum rolling))
-      (x (get x rolling))
-      (next_term (/ (scale-down (* rolling_term x)) n))
-      (next_sum (+ rolling_sum next_term))
-   )
-    {term: next_term, seriesSum: next_sum, x: x}
- )
-)
+;; (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
+;;   (let
+;;     (
+;;       (rolling_term (get term rolling))
+;;       (rolling_sum (get seriesSum rolling))
+;;       (x (get x rolling))
+;;       (next_term (/ (scale-down (* rolling_term x)) n))
+;;       (next_sum (+ rolling_sum next_term))
+;;    )
+;;     {term: next_term, seriesSum: next_sum, x: x}
+;;  )
+;; )
 
-;; public functions
-;;
+;; ;; public functions
+;; ;;
 
-(define-read-only (get-exp-bound)
-  (ok MILD_EXPONENT_BOUND)
-)
+;; (define-read-only (get-exp-bound)
+;;   (ok MILD_EXPONENT_BOUND)
+;; )
 
-;; Exponentiation (x^y) with unsigned 16 decimal fixed point base and exponent.
-(define-read-only (pow-fixed (x uint) (y uint))
-  (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
+;; ;; Exponentiation (x^y) with unsigned 16 decimal fixed point base and exponent.
+;; (define-read-only (pow-fixed (x uint) (y uint))
+;;   (begin
+;;     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+;;     (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
 
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
+;;     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+;;     (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
 
-    (if (is-eq y u0) 
-      (ok (to-uint ONE_16))
-      (if (is-eq x u0) 
-        (ok u0)
-        (pow-priv x y)
-      )
-    )
-  )
-)
+;;     (if (is-eq y u0) 
+;;       (ok (to-uint ONE_16))
+;;       (if (is-eq x u0) 
+;;         (ok u0)
+;;         (pow-priv x y)
+;;       )
+;;     )
+;;   )
+;; )
 
-;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-(define-read-only (exp-fixed (x int))
-  (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
-    (if (< x 0)
-      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by ONE_16.
-      (ok (/ (scale-up ONE_16) (unwrap-panic (exp-pos (* -1 x)))))
-      (exp-pos x)
-    )
-  )
-)
+;; ;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
+;; ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+;; (define-read-only (exp-fixed (x int))
+;;   (begin
+;;     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
+;;     (if (< x 0)
+;;       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
+;;       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
+;;       ;; Fixed point division requires multiplying by ONE_16.
+;;       (ok (/ (scale-up ONE_16) (unwrap-panic (exp-pos (* -1 x)))))
+;;       (exp-pos x)
+;;     )
+;;   )
+;; )
 
-;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
-(define-read-only (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-  (let
-    (
-      (logBase (scale-up (unwrap-panic (ln-priv base))))
-      (logArg (scale-up (unwrap-panic (ln-priv arg))))
-   )
-    (ok (/ (scale-up logArg) logBase))
- )
-)
+;; ;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
+;; (define-read-only (log-fixed (arg int) (base int))
+;;   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
+;;   (let
+;;     (
+;;       (logBase (scale-up (unwrap-panic (ln-priv base))))
+;;       (logArg (scale-up (unwrap-panic (ln-priv arg))))
+;;    )
+;;     (ok (/ (scale-up logArg) logBase))
+;;  )
+;; )
 
-;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
-(define-read-only (ln-fixed (a int))
-  (begin
-    (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
-    (if (< a ONE_16)
-      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-      ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by ONE_16.
-      (ok (- 0 (unwrap-panic (ln-priv (/ (scale-up ONE_16) a)))))
-      (ln-priv a)
-   )
- )
-)
+;; ;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
+;; (define-read-only (ln-fixed (a int))
+;;   (begin
+;;     (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
+;;     (if (< a ONE_16)
+;;       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
+;;       ;; If a is less than one, 1/a will be greater than one.
+;;       ;; Fixed point division requires multiplying by ONE_16.
+;;       (ok (- 0 (unwrap-panic (ln-priv (/ (scale-up ONE_16) a)))))
+;;       (ln-priv a)
+;;    )
+;;  )
+;; )
