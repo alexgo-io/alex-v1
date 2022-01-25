@@ -4,6 +4,32 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 const ONE_16 = 10000000000000000
 
+Clarinet.test({
+    name: "math-big-uint: greater than equal to",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
+        [
+            types.int(250),
+            types.int(-4),
+            types.int(25),
+            types.int(-3)
+        ], deployer.address
+        );
+        call.result.expectBool(true);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
+        [
+            types.int(10),
+            types.int(3),
+            types.int(20),
+            types.int(3)
+        ], deployer.address
+        );
+        call.result.expectBool(false);
+    },
+});
+
 // Clarinet.test({
 //     name: "math-big-uint: max number",
 //     async fn(chain: Chain, accounts: Map<string, Account>) {
