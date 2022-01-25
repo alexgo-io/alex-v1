@@ -78,8 +78,21 @@
     (/ a ONE_16)
 )
 
+;; {value: {a: 123124, exp: 23}}
+(define-read-only (scale-up-with-scientific-notation (value (tuple (a int) (exp int))))
+    (multiplication-with-scientific-notation (get a value) (get exp value) 1 16)
+)
+
+(define-read-only (scale-down-with-scientific-notation (value (tuple (a int) (exp int))))
+    (division-with-scientific-notation (get a value) (get exp value) 1 16)
+)
+
 ;; private functions
 ;;
+
+;; (ok {a: {a: 100730153, exp: -8}, sum: {a: 108125, exp: -4}})
+;; out_a {a: 100730153, exp: -8}, out_sum: {a: 108125, exp: -4}
+;; out_a scaleup => 100730153*10^16 * 10^-8 => 100730153 * 10^8
 
 (define-read-only (ln-priv-16 (a int) (a_exp int))
     (let
@@ -92,6 +105,13 @@
             ;; below is the Taylor series now 
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
             ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
+            
+            (out-a-sn-sub (subtraction-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
+            (out-a-sn-add (addition-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
+            (scaled-out-a (scale-up-with-scientific-notation out-a-sn-sub))
+
+            (z (division-with-scientific-notation (get a scaled-out-a) (get exp scaled-out-a) (get a out-a-sn-add) (get exp out-a-sn-add)))
+            ;; (z_squared (multiplication-with-scientific-notation z z))
             ;; (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
             ;; (z_squared (/ (* z z) ONE_16))
             ;; (div_list (list 3 5 7 9 11))
@@ -99,7 +119,7 @@
             ;; (seriesSum (get seriesSum num_sum_zsq))
             ;; (r (+ out_sum (* seriesSum 2)))
         )
-        (ok a_sum)
+        (ok {a_sum: a_sum, z: z})
         ;; (ok r)
     )
 )
@@ -124,7 +144,7 @@
    ;; I think we can simply use a_pre without scaling here
    ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L347
     ;; this rolling a and sum is working as a looped a and sum
-    (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp) 
+    (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp)
     ;; (if true
         {
             a: (division-with-scientific-notation rolling_a_a rolling_a_exp a_pre a_pre_exp),
@@ -196,6 +216,102 @@
     )
 )
 
+;; 3.4 * 10^5 - 9.7 * 10^6
+;; 34 * 10^4 - 97 * 10^5
+;; (34-97) * 10^5
+;; -63 * 10^5
+(define-read-only (subtraction-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
+    (begin
+        (if (> a_exp b_exp)
+            (let
+                (
+                    (transformation (transform a a_exp b_exp))
+                    (new_a (get a transformation))
+                    (new_a_exp (get exp transformation))
+                    (subtraction (- new_a b))
+                )
+                {a: subtraction, exp: b_exp}
+            )
+            (let
+                (
+                    (transformation (transform b b_exp a_exp))
+                    (new_b (get a transformation))
+                    (new_b_exp (get exp transformation))
+                    (subtraction (- new_b a))
+                )
+                {a: subtraction, exp: a_exp}
+            )
+        )
+    )
+)
+
+;; 2.5 / 4 = 0.625
+;; (25*10^-1) / (4*10^0)
+;; (25/4) * (10^(-1-0))
+;; (625*10^14) * (10^-1 * 10^-16)
+;; (62500000000000000) * (10^-17)
+;; (0.625)
+(define-read-only (division-with-scientific-notation (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (
+            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
+            (exponent (+ (- a-exp b-exp) -16)) ;; scale down from the exponent part
+        )
+        {a: division, exp: exponent}
+    )
+)
+
+(define-read-only (multiplication-with-scientific-notation (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (
+            (product (* a b)) ;; 25*4=100
+            (exponent (+ a-exp b-exp)) ;;10^-1 + 10^0 = 10^(-1+0) = 10^-1
+        )
+        {a: product, exp: exponent} ;;100*10^-1
+    )
+)
+
+(define-read-only (div-update (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (
+            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
+            (division-exponent (- (+ a-exp -16) b-exp)) ;; scale down from the exponent part
+                        
+            (factor (- (scale-up a) (* division b)))
+            ;; (remainder-exponent (get exp (subtraction-with-scientific-notation (scale-up a) (+ a-exp -16) factor factor-exponent)))
+
+            (remainder (/ (scale-up factor) b))
+            ;; (rem-exponent (- (+ remainder-exponent -16) b-exp))
+            
+            (remainder-exponent (+ division-exponent -16))
+
+            (result (addition-with-scientific-notation division division-exponent remainder remainder-exponent))
+        )
+        {result: result}
+    )
+)
+
+;; {division: 63320, division-exponent: -14, finalfinal-answer: {a: 633208277454708827542, exp: -30}, remainder: 8277454708827542, remainder-exponent: -30}
+;; 0.000000000633208277454708827542
+
+;; {division: 63320, division-exponent: -14, rem-div: 8277454708827542, rem-exponent: -30}
+;; 50000 / 78962960182680.69 
+;; 63320*10^-14 + 8277454708827542*10^-30 => 0.000000000633208277454708827542
+;; 0.000000000633208277454708827542
+
+;; {exponent: -14, rem: 8277454708827542, result: 63320, result-exponent: -14}
+;; 50000 / 78962960182680.69 
+;; 0.000000000633208277454708827542 => 0.000000000633208
+;; 63320*10^(-14) = 0.0000000006332
+
+;; u63320 * 10^-16 + u8277454708827542 * 10^-32 => 6.332082775E-12
+
+;; {exponent: -14, rem: 1387273544137711, result: 316604}
+;; 250000 / 7896296018268069
+;; 0.00000000000316604 1387273544137711
+
+
+
 ;; transformations upto 16 decimals
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
@@ -262,97 +378,6 @@
         )))))))))))))))))
     )
 )
-
-;; 3.4 * 10^5 - 9.7 * 10^6
-;; 34 * 10^4 - 97 * 10^5
-;; (34-97) * 10^5
-;; -63 * 10^5
-(define-read-only (subtraction-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
-    (begin
-        (if (> a_exp b_exp)
-            (let
-                (
-                    (transformation (transform a a_exp b_exp))
-                    (new_a (get a transformation))
-                    (new_a_exp (get exp transformation))
-                    (subtraction (- new_a b))
-                )
-                {a: subtraction, exp: b_exp}
-            )
-            (let
-                (
-                    (transformation (transform b b_exp a_exp))
-                    (new_b (get a transformation))
-                    (new_b_exp (get exp transformation))
-                    (subtraction (- new_b a))
-                )
-                {a: subtraction, exp: a_exp}
-            )
-        )
-    )
-)
-
-;; 2.5 / 4 = 0.625
-;; (25*10^-1) / (4*10^0)
-;; (25/4) * (10^(-1-0))
-;; (625*10^14) * (10^-1 * 10^-16)
-;; (62500000000000000) * (10^-17)
-;; (0.625)
-(define-read-only (division-with-scientific-notation (a int) (a-exp int) (b int) (b-exp int))
-    (let
-        (
-            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
-            (exponent (+ (- a-exp b-exp) -16)) ;; scale down from the exponent part
-        )
-        {a: division, exp: exponent}
-    )
-)
-
-(define-read-only (div-update (a int) (a-exp int) (b int) (b-exp int))
-    (let
-        (
-            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
-            (division-exponent (- (+ a-exp -16) b-exp)) ;; scale down from the exponent part
-                        
-            (factor (- (scale-up a) (* division b)))
-            ;; (remainder-exponent (get exp (subtraction-with-scientific-notation (scale-up a) (+ a-exp -16) factor factor-exponent)))
-
-            (remainder (/ (scale-up factor) b))
-            ;; (rem-exponent (- (+ remainder-exponent -16) b-exp))
-            
-            (remainder-exponent (+ division-exponent -16))
-
-            (result (addition-with-scientific-notation division division-exponent remainder remainder-exponent))
-        )
-        ;; {
-        ;;     division: division,
-        ;;     division-exponent: division-exponent,
-        ;;     remainder: remainder,
-        ;;     remainder-exponent: remainder-exponent,
-        ;;     finalfinal-answer: final,
-        ;; }
-        {result: result}
-    )
-)
-
-;; {division: 63320, division-exponent: -14, finalfinal-answer: {a: 633208277454708827542, exp: -30}, remainder: 8277454708827542, remainder-exponent: -30}
-;; 0.000000000633208277454708827542
-
-;; {division: 63320, division-exponent: -14, rem-div: 8277454708827542, rem-exponent: -30}
-;; 50000 / 78962960182680.69 
-;; 63320*10^-14 + 8277454708827542*10^-30 => 0.000000000633208277454708827542
-;; 0.000000000633208277454708827542
-
-;; {exponent: -14, rem: 8277454708827542, result: 63320, result-exponent: -14}
-;; 50000 / 78962960182680.69 
-;; 0.000000000633208277454708827542 => 0.000000000633208
-;; 63320*10^(-14) = 0.0000000006332
-
-;; u63320 * 10^-16 + u8277454708827542 * 10^-32 => 6.332082775E-12
-
-;; {exponent: -14, rem: 1387273544137711, result: 316604}
-;; 250000 / 7896296018268069
-;; 0.00000000000316604 1387273544137711
 
 (define-read-only (ln-priv (a int))
     (let
