@@ -128,7 +128,7 @@
     ;; (if true
         {
             a: (division-with-scientific-notation rolling_a_a rolling_a_exp a_pre a_pre_exp),
-            sum: (addition-in-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
+            sum: (addition-with-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
         } ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
         {a: rolling_a, sum: rolling_sum}
     )
@@ -171,7 +171,7 @@
 ;; 135 * 10^-3 (WRONG)
 ;; 100000 * 10^-3 + 35 * 10^-3
 ;; 100035 * 10^-3 (RIGHT)
-(define-read-only (addition-in-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
+(define-read-only (addition-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
     (begin
         (if (> a_exp b_exp)
             (let
@@ -267,7 +267,7 @@
 ;; 34 * 10^4 - 97 * 10^5
 ;; (34-97) * 10^5
 ;; -63 * 10^5
-(define-read-only (subtraction-in-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
+(define-read-only (subtraction-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
     (begin
         (if (> a_exp b_exp)
             (let
@@ -307,6 +307,52 @@
         {a: division, exp: exponent}
     )
 )
+
+(define-read-only (div-update (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (
+            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
+            (division-exponent (- (+ a-exp -16) b-exp)) ;; scale down from the exponent part
+                        
+            (factor (- (scale-up a) (* division b)))
+            ;; (remainder-exponent (get exp (subtraction-with-scientific-notation (scale-up a) (+ a-exp -16) factor factor-exponent)))
+
+            (remainder (/ (scale-up factor) b))
+            ;; (rem-exponent (- (+ remainder-exponent -16) b-exp))
+            
+            (remainder-exponent (+ division-exponent -16))
+
+            (result (addition-with-scientific-notation division division-exponent remainder remainder-exponent))
+        )
+        ;; {
+        ;;     division: division,
+        ;;     division-exponent: division-exponent,
+        ;;     remainder: remainder,
+        ;;     remainder-exponent: remainder-exponent,
+        ;;     finalfinal-answer: final,
+        ;; }
+        {result: result}
+    )
+)
+
+;; {division: 63320, division-exponent: -14, finalfinal-answer: {a: 633208277454708827542, exp: -30}, remainder: 8277454708827542, remainder-exponent: -30}
+;; 0.000000000633208277454708827542
+
+;; {division: 63320, division-exponent: -14, rem-div: 8277454708827542, rem-exponent: -30}
+;; 50000 / 78962960182680.69 
+;; 63320*10^-14 + 8277454708827542*10^-30 => 0.000000000633208277454708827542
+;; 0.000000000633208277454708827542
+
+;; {exponent: -14, rem: 8277454708827542, result: 63320, result-exponent: -14}
+;; 50000 / 78962960182680.69 
+;; 0.000000000633208277454708827542 => 0.000000000633208
+;; 63320*10^(-14) = 0.0000000006332
+
+;; u63320 * 10^-16 + u8277454708827542 * 10^-32 => 6.332082775E-12
+
+;; {exponent: -14, rem: 1387273544137711, result: 316604}
+;; 250000 / 7896296018268069
+;; 0.00000000000316604 1387273544137711
 
 (define-read-only (ln-priv (a int))
     (let
