@@ -91,3 +91,17 @@
 ;; (define-read-only (power (a uint) (b uint))
 ;;     (unwrap-panic (contract-call? .math-log-exp-biguint pow-fixed a b))
 ;; )
+
+
+(define-read-only (div-update (a uint) (a-exp int) (b uint) (b-exp int))
+    (let
+        (
+            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
+            (factor (* division b))
+            (remainder (- (scale-up a) factor))
+            (rem-div (/ (scale-up remainder) b))
+            (exponent (+ (- a-exp b-exp) -16)) ;; scale down from the exponent part
+        )
+        {result: division, exponent: exponent, rem: rem-div}
+    )
+)
