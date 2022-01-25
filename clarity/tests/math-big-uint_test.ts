@@ -20,6 +20,32 @@ Clarinet.test({
 });
 
 Clarinet.test({
+    name: "math-big-uint: greater-than-equal-to",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
+        [
+            types.int(250),
+            types.int(-4),
+            types.int(25),
+            types.int(-3)
+        ], deployer.address
+        );
+        call.result.expectBool(true);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
+        [
+            types.int(10),
+            types.int(3),
+            types.int(20),
+            types.int(3)
+        ], deployer.address
+        );
+        call.result.expectBool(false);
+    },
+});
+
+Clarinet.test({
     name: "math-big-uint: mul",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         

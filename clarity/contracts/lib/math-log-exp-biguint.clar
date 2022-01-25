@@ -143,14 +143,22 @@
 ;; 20 * 10 ^ 2
 ;;788999999999999.9 * 10 ^ -1    
 (define-read-only (greater-than-equal-to (a int) (a_exp int) (b int) (b_exp int))
-  (if (> a_exp b_exp)
-      true
-      (if (is-eq a_exp b_exp)
-        (if (>= a b)
-        true
-        false)
-        false)
-  )
+    (if (> a_exp b_exp)
+        (let
+            (
+                (transformation (transform a a_exp b_exp))
+                (new_a (get a transformation))
+            )
+            (if (>= new_a b) true false)
+        )
+        (let
+            (
+                (transformation (transform b b_exp a_exp))
+                (new_b (get a transformation))
+            )
+            (if (>= a new_b) true false)
+        )
+    )       
 )
 
 ;; 3.4 * 10^5 + 9.7 * 10^6
@@ -207,11 +215,17 @@
 ;; 35 * 10^3 transform 1 (BACKWARD)
 ;; 3500 * 10^1 (POSSIBLE)
 
+
+;; 35 * 10^3 transform 3 (BACKWARD)
+;; 35 * 10^3 (POSSIBLE)
+
 (define-read-only (transform (a int) (a_exp int) (x int))
     (let
         (
             (exp-diff (- x a_exp))
         )
+        (if (is-eq exp-diff 0)
+            {a: (* a 1), exp: x}
         (if (or (is-eq exp-diff -1) (is-eq exp-diff 1))
             {a: (* a 10), exp: x}
         (if (or (is-eq exp-diff -2) (is-eq exp-diff 2))
@@ -245,7 +259,7 @@
         (if (or (is-eq exp-diff -16) (is-eq exp-diff 16))
             {a: (* a 10000000000000000), exp: x}
         {a: a, exp: a_exp}
-        ))))))))))))))))
+        )))))))))))))))))
     )
 )
 
