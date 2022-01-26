@@ -237,7 +237,7 @@
                     (transformation (transform b b_exp a_exp))
                     (new_b (get a transformation))
                     (new_b_exp (get exp transformation))
-                    (subtraction (- new_b a))
+                    (subtraction (- a new_b))
                 )
                 {a: subtraction, exp: a_exp}
             )
