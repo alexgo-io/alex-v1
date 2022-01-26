@@ -31,7 +31,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-big-uint: accumulate-division",
+    name: "math-big-uint: ln-priv-16",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -42,11 +42,11 @@ Clarinet.test({
         ], deployer.address);
         console.log('Result', call.result);
 
-        // call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv", 
-        // [
-        //     types.int(input * ONE_16),
-        //     ], deployer.address);
-        // console.log('Result 16 ', call.result);
+        call = chain.callReadOnlyFn("math-log-exp", "ln-priv", 
+        [
+            '5000000000000000000',
+            ], deployer.address);
+        console.log('Result 16 ', call.result);
     },
 });
 
