@@ -47,11 +47,6 @@ Clarinet.test({
         //     types.int(input * ONE_16),
         //     ], deployer.address);
         // console.log('Result 16 ', call.result);
-        call = chain.callReadOnlyFn("math-log-exp", "ln-priv-updated", 
-        [
-           '5000000000000000000',
-        ], deployer.address);
-        console.log('Result 8 ', call.result);
     },
 });
 
