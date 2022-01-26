@@ -87,6 +87,16 @@
     (division-with-scientific-notation (get a value) (get exp value) 1 16)
 )
 
+(define-read-only (scale-down-with-lost-precision (value (tuple (a int) (exp int))))
+    (let 
+        (
+            (a (/ (get a value) ONE_16))
+            (exp (+ (get exp value) 16))
+        )
+        {a: a, exp: exp}
+        
+    )
+)
 ;; private functions
 ;;
 
@@ -105,24 +115,50 @@
             ;; below is the Taylor series now 
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
             ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
-            
-            (out-a-sn-sub (subtraction-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
-            (out-a-sn-add (addition-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
-            (scaled-out-a (scale-up-with-scientific-notation out-a-sn-sub))
-
-            (z (division-with-scientific-notation (get a scaled-out-a) (get exp scaled-out-a) (get a out-a-sn-add) (get exp out-a-sn-add)))
-            ;; (z_squared (multiplication-with-scientific-notation z z))
             ;; (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
             ;; (z_squared (/ (* z z) ONE_16))
-            ;; (div_list (list 3 5 7 9 11))
-            ;; (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
+            (out-a-sn-sub (subtraction-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
+            (out-a-sn-add (addition-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
+            ;; (scaled-out-a (scale-up-with-scientific-notation out-a-sn-sub))
+            (z (division-with-scientific-notation (get a out-a-sn-sub) (get exp out-a-sn-sub) (get a out-a-sn-add) (get exp out-a-sn-add)))
+            (z_squared (multiplication-with-scientific-notation (get a z) (get exp z) (get a z) (get exp z)))
+            (z_squared_scaled_down (scale-down-with-lost-precision z_squared))
+            (div_list (list 3 5 7 9 11))
+            (num_sum_zsq (fold rolling_sum_div_16 div_list {num: z, seriesSum: z, z_squared: z_squared_scaled_down}))
             ;; (seriesSum (get seriesSum num_sum_zsq))
+            (seriesSum (get seriesSum num_sum_zsq))
+            (seriesSumDouble (multiplication-with-scientific-notation (get a seriesSum) (get exp seriesSum) 2 0))
+            (r (addition-with-scientific-notation (get a out_sum) (get exp out_sum) (get a seriesSumDouble) (get exp seriesSumDouble)))
             ;; (r (+ out_sum (* seriesSum 2)))
         )
-        (ok {a_sum: a_sum, z: z})
-        ;; (ok r)
+        ;; (ok {series_sum: seriesSumDouble, r: r})
+        (ok r)
     )
 )
+
+(define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (z_squared (tuple (a int) (exp int))))))
+  (let
+    (
+      (rolling_num (get num rolling))
+      (rolling_num_a (get a rolling_num))
+      (rolling_num_exp (get exp rolling_num))
+      (rolling_sum (get seriesSum rolling))
+      (rolling_sum_a (get a rolling_sum))
+      (rolling_sum_exp (get exp rolling_sum))
+      (z_squared (get z_squared rolling))
+      (z_squared_a (get a z_squared))
+      (z_squared_exp (get exp z_squared))
+      (next_num (multiplication-with-scientific-notation rolling_num_a rolling_num_exp z_squared_a z_squared_exp))
+      (next_num_scaled_down (scale-down-with-lost-precision next_num))
+      (next_div (division-with-scientific-notation (get a next_num_scaled_down) (get exp next_num_scaled_down) n 0))
+      (next_sum (addition-with-scientific-notation rolling_sum_a rolling_sum_exp (get a next_div) (get exp next_div)))
+;;     ;;   (next_num (scale-down (* rolling_num z_squared)))
+;;     ;;   (next_sum (+ rolling_sum (/ next_num n)))
+   )
+    {num: next_num_scaled_down, seriesSum: rolling_sum, z_squared: z_squared}
+    ;; rolling
+ )
+) 
 
 (define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (a int) (exp int))) (sum (tuple (a int) (exp int))))))
   (let
@@ -237,7 +273,7 @@
                     (transformation (transform b b_exp a_exp))
                     (new_b (get a transformation))
                     (new_b_exp (get exp transformation))
-                    (subtraction (- new_b a))
+                    (subtraction (- a new_b))
                 )
                 {a: subtraction, exp: a_exp}
             )
@@ -390,6 +426,8 @@
             ;; below is the Taylor series now 
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
             ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
+            (out-a-sn-sub (- out_a ONE_16))
+            (out-a-sn-add (+ out_a ONE_16))
             (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
             (z_squared (/ (* z z) ONE_16))
             (div_list (list 3 5 7 9 11))
@@ -397,7 +435,7 @@
             (seriesSum (get seriesSum num_sum_zsq))
             (r (+ out_sum (* seriesSum 2)))
         )
-        (ok a_sum)
+       (ok  {series_sum: seriesSum, r: r})
         ;; (ok r)
     )
 )
