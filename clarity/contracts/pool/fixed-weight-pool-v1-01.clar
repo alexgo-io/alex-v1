@@ -467,7 +467,7 @@
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
     
-                (dy (try! (get-y-given-wstx token-y weight-y dx-net-fees)))
+                (dy (try! (get-y-given-wstx token-y weight-y dx-net-fees)))                
 
                 (pool-updated
                     (merge pool
@@ -481,9 +481,9 @@
                         }
                     )
                 )
-                (sender tx-sender)
+                (sender tx-sender)             
             )
-
+            (asserts! (< (div-down dy dx-net-fees) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)       
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .token-wstx transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -536,7 +536,7 @@
                 )
                 (sender tx-sender)
             )
-
+            (asserts! (> (div-down dy-net-fees dx) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (as-contract (try! (contract-call? .alex-vault transfer-ft .token-wstx dx sender)))
@@ -792,6 +792,47 @@
         (if (is-eq token-y .token-wstx)
             (get-y-given-wstx token-x weight-x dy)
             (get-y-given-wstx token-x weight-x (try! (get-wstx-given-y token-y weight-y dy)))
+        )
+    )
+)
+
+
+(define-read-only (get-y-in-given-wstx-out (token-y principal) (weight-y uint) (dx uint))
+    (let 
+        (
+            (weight-x (- ONE_8 weight-y))
+            (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
+        )
+        (contract-call? .weighted-equation-v1-01 get-y-in-given-x-out (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
+    )
+)
+
+(define-read-only (get-wstx-in-given-y-out (token-y principal) (weight-y uint) (dy uint)) 
+    (let 
+        (
+            (weight-x (- ONE_8 weight-y))
+            (pool (unwrap! (map-get? pools-data-map { token-x: .token-wstx, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
+        )
+        (contract-call? .weighted-equation-v1-01 get-x-in-given-y-out (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
+    )
+)
+
+(define-read-only (get-y-in-given-x-out (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
+    (if (is-eq token-x .token-wstx)
+        (get-y-in-given-wstx-out token-y weight-y dx)
+        (if (is-eq token-y .token-wstx)
+            (get-wstx-in-given-y-out token-x weight-x dx)
+            (get-y-in-given-wstx-out token-y weight-y (try! (get-wstx-in-given-y-out token-x weight-x dx)))            
+        )
+    )
+)
+
+(define-read-only (get-x-in-given-y-out (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dy uint)) 
+    (if (is-eq token-x .token-wstx)
+        (get-wstx-in-given-y-out token-y weight-y dy)
+        (if (is-eq token-y .token-wstx)
+            (get-y-in-given-wstx-out token-x weight-x dy)
+            (get-y-in-given-wstx-out token-x weight-x (try! (get-wstx-in-given-y-out token-y weight-y dy)))
         )
     )
 )

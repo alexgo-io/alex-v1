@@ -16,8 +16,8 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; max in/out as % of liquidity
-(define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
-(define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
+(define-data-var MAX-IN-RATIO uint (* u1 (pow u10 u6))) ;; 1%
+(define-data-var MAX-OUT-RATIO uint (* u1 (pow u10 u6))) ;; 1%
 
 
 ;; @desc get-contract-owner
@@ -53,7 +53,7 @@
   (begin
     (try! (check-is-owner))
     ;; MI-03
-    (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)
+    (asserts! (and (> new-max-in-ratio u0) (< new-max-in-ratio ONE_8)) ERR-MAX-IN-RATIO)
     (ok (var-set MAX-IN-RATIO new-max-in-ratio))
   )
 )
@@ -71,7 +71,7 @@
   (begin
     (try! (check-is-owner))
     ;; MI-03
-    (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)
+    (asserts! (and (> new-max-out-ratio u0) (< new-max-out-ratio ONE_8)) ERR-MAX-OUT-RATIO)
     (ok (var-set MAX-OUT-RATIO new-max-out-ratio))
   )
 )
@@ -142,19 +142,85 @@
         (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-                (denominator (+ balance-y dy)) ;; (b_y + d_y)
-                (base (div-up balance-y denominator)) ;; (b_y / (b_y + d_y))
-                (uncapped-exponent (div-up weight-y weight-x)) ;; (w_y / w_x)
+                (denominator (+ balance-y dy))
+                (base (div-up balance-y denominator))
+                (uncapped-exponent (div-up weight-y weight-x))
                 (bound (unwrap-panic (get-exp-bound)))
                 (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
-                (power (pow-up base exponent)) ;; (b_y / (b_y + d_y))^(w_y / w_x)
-                (complement (if (<= ONE_8 power) u0 (- ONE_8 power))) ;; (1 - (b_y / (b_y + d_y))^(w_y / w_x))
-                (dx (mul-down balance-x complement)) ;; b_x * (1 - (b_y / (b_y + d_y))^(w_y / w_x))
+                (power (pow-up base exponent))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (dx (mul-down balance-x complement))
             )
             (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
             (ok dx)
         ) 
     )  
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
+;; @desc d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-read-only (get-x-in-given-y-out (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (let 
+            (
+                (denominator (- balance-y dy))
+                (base (div-down balance-y denominator))
+                (uncapped-exponent (div-down weight-y weight-x))
+                (bound (unwrap-panic (get-exp-bound)))
+                (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dx (mul-down balance-x ratio))
+            )
+            (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+            (ok dx)
+        )
+    )
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_x             \    (w_x / w_y)      \          
+;; @desc d_x = dx         d_y = b_y * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_x - d_x )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-read-only (get-y-in-given-x-out (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (let 
+            (
+                (denominator (- balance-x dx))
+                (base (div-down balance-x denominator))
+                (uncapped-exponent (div-down weight-x weight-y))
+                (bound (unwrap-panic (get-exp-bound)))
+                (exponent (if (< uncapped-exponent bound) uncapped-exponent bound))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dy (mul-down balance-y ratio))
+            )
+            (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+            (ok dy)
+        )
+    )
 )
 
 ;; @desc d_x = dx
@@ -176,15 +242,12 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (mul-down balance-y weight-x))
-                (denominator (mul-up balance-x weight-y))
-                (spot (div-down numerator denominator))
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (div-up spot price))
-                    (power (pow-down base weight-y))
+                  (power (pow-down (div-up spot price) weight-y))
                 )
                 (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
             )
@@ -193,6 +256,7 @@
 )
 
 ;; @desc follows from get-x-given-price
+;; @desc d_y = b_y * ((price / spot) ^ w_x - 1)
 ;; @param balance-x; balance of token-x
 ;; @param balance-y; balance of token-y
 ;; @param weight-x; weight of token-x
@@ -204,17 +268,14 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-                (numerator (mul-down balance-y weight-x))
-                (denominator (mul-up balance-x weight-y))
-                (spot (div-down numerator denominator))
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                    (base (div-up spot price))
-                    (power (pow-down base weight-y))
+                  (power (pow-down (div-up price spot) weight-x))
                 )
-                (ok (mul-up balance-y (if (<= ONE_8 power) u0 (- ONE_8 power))))
+                (ok (mul-up balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
             )
         )
     )   
