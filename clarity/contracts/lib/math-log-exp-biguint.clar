@@ -118,6 +118,28 @@
 ;; Log10 Result 16  (ok {a: 10215643133339429, sum: 22812500000000000})
 ;; Log50000 Result 16  (ok {a: 10073048354986305, sum: 108125000000000000})
 
+;; For input =5e2
+;; Result SN (ok {out_a: {a: 10274788656047302, exp: -16}, out_sum: {a: 61875, exp: -4}})
+;; Result 16 (ok {out_a: 10274788656047294, out_sum: 61875000000000000})
+
+ 
+
+;; For input =10
+;; Result SN (ok {out_a: {a: 10215643133339431, exp: -16}, out_sum: {a: 228125, exp: -5}})
+;; Result 16 (ok {out_a: 10215643133339429, out_sum: 22812500000000000})
+
+ 
+
+;; For input =250000
+;; Result SN (ok {out_a: {a: 10232319504937572, exp: -16}, out_sum: {a: 1240625, exp: -5}})
+;; Result 16 (ok {out_a: 10232319504937567, out_sum: 124062500000000000})
+
+ 
+
+;; For input = 800
+;; Result SN (ok {out_a: {a: 10287677508833671, exp: -16}, out_sum: {a: 665625, exp: -5}})
+;; Result 16 (ok {out_a: 10287677508833669, out_sum: 66562500000000000})
+
 
 (define-read-only (ln-priv-16 (a int) (a_exp int))
     (let
@@ -126,21 +148,25 @@
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L349
             (a_sum (fold accumulate_division_16 x_a_list_16 {a: {a: a, exp: a_exp}, sum: {a: 0, exp: 0}}))
             
-            (out_a {a: 10215643133339429, exp: -16})
-            ;; (out_a (get a a_sum))
+            ;; (out_a {a: 10287677508833671, exp: -16})
+            (out_a (get a a_sum))
             (out_a_a (get a out_a))
             (out_a_exp (get exp out_a))
 
-            (out_sum {a: 22812500000000000, exp: -16})
-            ;; (out_sum (get sum a_sum))
+            (out_a_transformed (transform-to-16 out_a_a out_a_exp))
+            (out_a_transformed_a (get a out_a_transformed))
+            (out_a_transformed_exp (get exp out_a_transformed))
+
+            ;; (out_sum {a: 665625, exp: -5})
+            (out_sum (get sum a_sum))
             (out_sum_a (get a out_sum))
             (out_sum_exp (get exp out_sum))
             
-            (out_a_sn_sub (subtraction-with-scientific-notation out_a_a out_a_exp 1 0))
+            (out_a_sn_sub (subtraction-with-scientific-notation out_a_transformed_a out_a_transformed_exp 1 0))
             (out_a_sn_sub_a (get a out_a_sn_sub))
             (out_a_sn_sub_exp (get exp out_a_sn_sub))
 
-            (out_a_sn_add (addition-with-scientific-notation out_a_a out_a_exp 1 0))
+            (out_a_sn_add (addition-with-scientific-notation out_a_transformed_a out_a_transformed_exp 1 0))
             (out_a_sn_add_a (get a out_a_sn_add))
             (out_a_sn_add_exp (get exp out_a_sn_add))
             
@@ -217,18 +243,14 @@
     (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp)
     ;; (if true
         {
-            ;; a: (/ (* rolling_a ONE_16) a_pre)
-            a: (division-with-scientific-notation rolling_a_a rolling_a_exp a_pre a_pre_exp),
+            a: (division-with-scientific-notation-with-precision rolling_a_a rolling_a_exp a_pre a_pre_exp),
             sum: (addition-with-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
         } ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
         {a: rolling_a, sum: rolling_sum}
     )
-;;     (if true 
-;;       {a: (/ (* rolling_a ONE_16) a_pre), sum: (+ rolling_sum x_pre)} ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
-;;       {a: rolling_a, sum: rolling_sum}
-;;    )
  )
 )
+
 ;; 50000 0 >= 7896296018268069 -2, true, 50000 0 / 7896296018268069 -2 = 0.000000000633208 -> a: 63320 -14, sum: 32 0
 ;; 63320 -14 >= 8886110520507873 -9, false -> a: 63320 -14, sum: 32 0
 ;; 63320 -14 >= 2980957987041728 -12, false -> a: 63320 -14, sum: 32 0
@@ -267,7 +289,8 @@
 ) 
 
 ;; 20 * 10 ^ 2
-;;788999999999999.9 * 10 ^ -1    
+;;788999999999999.9 * 10 ^ -1
+
 (define-read-only (greater-than-equal-to (a int) (a_exp int) (b int) (b_exp int))
     (if (> a_exp b_exp)
         (let
@@ -351,20 +374,6 @@
     )
 )
 
-;; if my exponent is greater than -16, we transform it backwards
-(define-read-only (division-with-scientific-notation-scaled (a int) (a-exp int) (b int) (b-exp int))
-    (if (>= a (pow 10 17))
-        (let
-            (
-                (scaled_a (scale-down-with-lost-precision {a: a, exp: a-exp}))
-                (division (division-with-scientific-notation (get a scaled_a) (get exp scaled_a) b b-exp))
-            )
-            division
-        )
-        (division-with-scientific-notation a a-exp b b-exp)
-    )
-)
-
 ;; 2.5 / 4 = 0.625
 ;; (25*10^-1) / (4*10^0)
 ;; (25/4) * (10^(-1-0))
@@ -391,21 +400,22 @@
     )
 )
 
-(define-read-only (div-update (a int) (a-exp int) (b int) (b-exp int))
+(define-read-only (division-with-scientific-notation-with-precision (a int) (a-exp int) (b int) (b-exp int))
     (let
         (
-            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
-            (division-exponent (- (+ a-exp -16) b-exp)) ;; scale down from the exponent part
-                        
-            (factor (- (scale-up a) (* division b)))
-            ;; (remainder-exponent (get exp (subtraction-with-scientific-notation (scale-up a) (+ a-exp -16) factor factor-exponent)))
+            (new-a (if (> a b) a (scale-up a)))
+            (division (/ new-a b)) ;; scale-up to get the decimal part precision ;; 14
 
-            (remainder (/ (scale-up factor) b))
-            ;; (rem-exponent (- (+ remainder-exponent -16) b-exp))
+            (exponent (if (> a b) 0 -16))
+            (division-exponent (+ (- a-exp b-exp) exponent)) ;; scale down from the exponent part
+            (factor (- new-a (* division b)))
+
+            (remainder (/ (* (pow 10 16) factor) b))
             
             (remainder-exponent (+ division-exponent -16))
 
             (result (addition-with-scientific-notation division division-exponent remainder remainder-exponent))
+
         )
         result
     )
@@ -454,7 +464,6 @@
 
 ;; 35 * 10^3 transform 3 (BACKWARD)
 ;; 35 * 10^3 (POSSIBLE)
-
 (define-read-only (transform (a int) (a_exp int) (x int))
     (let
         (
@@ -494,8 +503,46 @@
             {a: (* a 1000000000000000), exp: x}
         (if (or (is-eq exp-diff -16) (is-eq exp-diff 16))
             {a: (* a 10000000000000000), exp: x}
+        (if (or (is-eq exp-diff -17) (is-eq exp-diff 17))
+            {a: (* a 100000000000000000), exp: x}
+        (if (or (is-eq exp-diff -18) (is-eq exp-diff 18))
+            {a: (* a 1000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -19) (is-eq exp-diff 19))
+            {a: (* a 10000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -20) (is-eq exp-diff 20))
+            {a: (* a 100000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -21) (is-eq exp-diff 21))
+            {a: (* a 1000000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -22) (is-eq exp-diff 22))
+            {a: (* a 10000000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -23) (is-eq exp-diff 23))
+            {a: (* a 100000000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -24) (is-eq exp-diff 24))
+            {a: (* a 1000000000000000000000000), exp: x}
+        (if (or (is-eq exp-diff -25) (is-eq exp-diff 25))
+            {a: (* a 10000000000000000000000000), exp: x}
         {a: a, exp: a_exp}
-        )))))))))))))))))
+        ))))))))))))))))))))))))))
+    )
+)
+
+(define-read-only (transform-generalized (a int) (a_exp int) (x int))
+    (let
+        (
+            (exp-diff (- x a_exp))
+            (diff-power (if (>= exp-diff 0) exp-diff (* -1 exp-diff)))
+        )
+        {
+            a: (* a (pow 10 diff-power)),
+            exp: x
+        }
+    )
+)
+
+(define-read-only (transform-to-16 (a int) (exp int))
+    (if (< exp -16)
+        {a: (/ a (pow 10 (+ (* exp -1) -16))), exp: -16}
+        {a: a, exp: exp}
     )
 )
 

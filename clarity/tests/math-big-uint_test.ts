@@ -36,27 +36,40 @@ Clarinet.test({
         
         let deployer = accounts.get("deployer")!;
         
-        console.log("***********Log of 10***********")
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
             [
-            "10",
+            "5",
             types.int(0),
         ], deployer.address);
-        console.log('Result SN', call.result);
+        console.log('Result SN - 5', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv", 
-        [
-            "100000000000000000",
-            ], deployer.address);
-        console.log('Result 16 ', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+            [
+            "500000",
+            types.int(0),
+        ], deployer.address);
+        console.log('Result SN - 500000', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp", "ln-priv-extra", 
-        [
-            "1000000000",
-            ], deployer.address);
-        console.log('Result 8 ', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+            [
+            "5000000000000000000",
+            types.int(0),
+        ], deployer.address);
+        console.log('Result SN - 5000000000000000000', call.result);
 
-        // ln(50000) = 108197782844102828/1e16
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+            [
+            "1",
+            types.int(0),
+        ], deployer.address);
+        console.log('Result SN - 1', call.result);
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+            [
+            "112451252143",
+            types.int(0),
+        ], deployer.address);
+        console.log('Result SN - 112451252143', call.result);
     },
 });
 
