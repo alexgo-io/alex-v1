@@ -4,51 +4,87 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 const ONE_16 = 10000000000000000
 
-Clarinet.test({
-    name: "math-big-uint: greater than equal to",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
+// Clarinet.test({
+//     name: "math-big-uint: greater than equal to",
+//     async fn(chain: Chain, accounts: Map<string, Account>) {
         
-        let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
-        [
-            types.int(250),
-            types.int(-4),
-            types.int(25),
-            types.int(-3)
-        ], deployer.address
-        );
-        call.result.expectBool(true);
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
-        [
-            types.int(10),
-            types.int(3),
-            types.int(20),
-            types.int(3)
-        ], deployer.address
-        );
-        call.result.expectBool(false);
-    },
-});
+//         let deployer = accounts.get("deployer")!;
+//         let call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
+//         [
+//             types.int(250),
+//             types.int(-4),
+//             types.int(25),
+//             types.int(-3)
+//         ], deployer.address
+//         );
+//         call.result.expectBool(true);
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
+//         [
+//             types.int(10),
+//             types.int(3),
+//             types.int(20),
+//             types.int(3)
+//         ], deployer.address
+//         );
+//         call.result.expectBool(false);
+//     },
+// });
 
 Clarinet.test({
     name: "math-big-uint: ln-priv-16",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
+        
+        console.log("***********Log of 10***********")
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
             [
-            '50000000000',
+            "10",
             types.int(0),
         ], deployer.address);
-        console.log('Result', call.result);
+        console.log('Result SN', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp", "ln-priv", 
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv", 
         [
-            '5000000000000000000',
+            "100000000000000000",
             ], deployer.address);
         console.log('Result 16 ', call.result);
+
+        call = chain.callReadOnlyFn("math-log-exp", "ln-priv-extra", 
+        [
+            "1000000000",
+            ], deployer.address);
+        console.log('Result 8 ', call.result);
+
+        // ln(50000) = 108197782844102828/1e16
     },
 });
+
+// Clarinet.test({
+//     name: "math-big-uint: ln-priv-16-division",
+//     async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+//         let deployer = accounts.get("deployer")!;
+//         let call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+//             [
+//             "10",
+//             types.int(0),
+//         ], deployer.address);
+//         console.log('Result SN', call.result);
+
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv",
+//             [
+//             "100000000000000000",
+//         ], deployer.address);
+//         console.log('Result 16', call.result);
+
+//         call = chain.callReadOnlyFn("math-log-exp", "ln-priv-extra",
+//             [
+//             "1000000000",
+//         ], deployer.address);
+//         console.log('Result 8', call.result);
+//     },
+// });
 
 // Clarinet.test({
 //     name: "math-big-uint: max number",
@@ -409,37 +445,64 @@ Clarinet.test({
 //     }
 // })
 
-Clarinet.test({
-    name: "math-big-uint: div-update",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
+// Clarinet.test({
+//     name: "math-big-uint: div-update",
+//     async fn(chain: Chain, accounts: Map<string, Account>) {
         
-        let deployer = accounts.get("deployer")!;
+//         let deployer = accounts.get("deployer")!;
 
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
-            [
-                types.int(50000),
-                types.int(0),
-                types.int(2),
-                types.int(0)
-            ], deployer.address);
-        assertEquals(call.result, "{result: {a: 2500000000000000000000000000000000000, exp: -32}}")
+//         let call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
+//             [
+//                 types.int(50000),
+//                 types.int(0),
+//                 types.int(2),
+//                 types.int(0)
+//             ], deployer.address);
+//         assertEquals(call.result, "{a: 2500000000000000000000000000000000000, exp: -32}")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
-            [
-                types.int(50000),
-                types.int(0),
-                types.int(7896296018268069),
-                types.int(-2)
-            ], deployer.address);
-        assertEquals(call.result, "{result: {a: 633208277454708827542, exp: -30}}")
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
+//             [
+//                 types.int(50000),
+//                 types.int(0),
+//                 types.int(7896296018268069),
+//                 types.int(-2)
+//             ], deployer.address);
+//         assertEquals(call.result, "{a: 633208277454708827542, exp: -30}")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
-            [
-                types.int(ONE_16),
-                types.int(0),
-                types.int(2718281828459045),
-                types.int(-15)
-            ], deployer.address);
-        assertEquals(call.result, "{result: {a: 367879441171442353448074937747561, exp: -17}}")
-    }
-})
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
+//             [
+//                 types.int(ONE_16),
+//                 types.int(0),
+//                 types.int(2718281828459045),
+//                 types.int(-15)
+//             ], deployer.address);
+//         assertEquals(call.result, "{a: 367879441171442353448074937747561, exp: -17}")
+
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
+//             [
+//                 types.int(10),
+//                 types.int(0),
+//                 types.int(7896296018268069),
+//                 types.int(-2)
+//             ], deployer.address);
+//         assertEquals(call.result, "{a: 126641655490941765, exp: -30}")
+
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
+//             [
+//                 types.int(5000),
+//                 types.int(-10),
+//                 types.int(2),
+//                 types.int(-2)
+//             ], deployer.address);
+//         assertEquals(call.result, "{a: 250000000000000000000000000000000000, exp: -10}")
+
+//         call = chain.callReadOnlyFn("math-log-exp-biguint", "div-update",
+//             [
+//                 "126641655490941765",
+//                 types.int(-30),
+//                 types.int(8886110520507872),
+//                 types.int(-9)
+//             ], deployer.address);
+//         assertEquals(call.result, "{a: 1425164082740935295836293031997, exp: -30}")
+//     }
+// })

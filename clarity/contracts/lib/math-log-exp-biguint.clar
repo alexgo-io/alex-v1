@@ -32,19 +32,20 @@
 
 ;; 16 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 320000000000000000, a_pre: 789629601826806951609780226351, a_exp: -16} ;; x0 = 2^5, a0 = e^(x0)
-{x_pre: 160000000000000000, a_pre: 88861105205078726367630, a_exp: -16} ;; x1 = 2^4, a1 = e^(x1)
-{x_pre: 80000000000000000, a_pre: 29809579870417282747, a_exp: -16} ;; x2 = 2^3, a2 = e^(x2)
-{x_pre: 40000000000000000, a_pre: 545981500331442391, a_exp: -16} ;; x3 = 2^2, a3 = e^(x3)
-{x_pre: 20000000000000000, a_pre: 73890560989306502, a_exp: -16} ;; x4 = 2^1, a4 = e^(x4)
-{x_pre: 10000000000000000, a_pre: 27182818284590452, a_exp: -16} ;; x5 = 2^0, a5 = e^(x5)
-{x_pre: 5000000000000000, a_pre: 16487212707001282, a_exp: -16} ;; x6 = 2^-1, a6 = e^(x6)
-{x_pre: 2500000000000000, a_pre: 12840254166877415, a_exp: -16} ;; x7 = 2^-2, a7 = e^(x7)
-{x_pre: 1250000000000000, a_pre: 11331484530668263, a_exp: -16} ;; x8 = 2^-3, a8 = e^(x8)
-{x_pre: 625000000000000, a_pre: 10644944589178594, a_exp: -16} ;; x9 = 2^-4, a9 = e^(x9)
-{x_pre: 312500000000000, a_pre: 10317434074991027, a_exp: -16} ;; x10 = 2^-5, a10 = e^(x10)
+{x_pre: 320000000000000000, a_pre: 789629601826806951609780226351} ;; x0 = 2^5, a0 = e^(x0)
+{x_pre: 160000000000000000, a_pre: 88861105205078726367630} ;; x1 = 2^4, a1 = e^(x1)
+{x_pre: 80000000000000000, a_pre: 29809579870417282747} ;; x2 = 2^3, a2 = e^(x2)
+{x_pre: 40000000000000000, a_pre: 545981500331442391} ;; x3 = 2^2, a3 = e^(x3)
+{x_pre: 20000000000000000, a_pre: 73890560989306502} ;; x4 = 2^1, a4 = e^(x4)
+{x_pre: 10000000000000000, a_pre: 27182818284590452} ;; x5 = 2^0, a5 = e^(x5)
+{x_pre: 5000000000000000, a_pre: 16487212707001282} ;; x6 = 2^-1, a6 = e^(x6)
+{x_pre: 2500000000000000, a_pre: 12840254166877414} ;; x7 = 2^-2, a7 = e^(x7)
+{x_pre: 1250000000000000, a_pre: 11331484530668263} ;; x8 = 2^-3, a8 = e^(x8)
+{x_pre: 625000000000000, a_pre: 10644944589178594} ;; x9 = 2^-4, a9 = e^(x9)
+{x_pre: 312500000000000, a_pre: 10317434074991027} ;; x10 = 2^-5, a10 = e^(x10)
 ))
 
+;; 639687500000000000
 ;; 2^5+2^4+2^3+2^2+2^1+2^0+2^(-1)+2^(-2)+2^(-3)+2^(-4)+2^(-5) = 63.96875
 ;; 32+16+8+4+2+1+5+25+125+625+3125 = 3,968 0
 ;; 32+16+8+4+2+1+0.5+0.25+0.125+0.0625+0.03125 = 63.96875 = 6396875 * 10^-5
@@ -63,6 +64,11 @@
 {x_pre: 625, x_pre_exp: -4, a_pre: 1064494458917859, a_pre_exp: -15} ;; x9 = 2^-4, a9 = e^(x9)
 {x_pre: 3125, x_pre_exp: -5, a_pre: 1031743407499103, a_pre_exp: -15} ;; x10 = 2^-5, a10 = e^(x10)
 ))
+
+;; 2.28125 = 2+0.25+0.03125
+;; {x_pre: 2, x_pre_exp: 0, a_pre: 73890560989306, a_pre_exp: -13} ;; x4 = 2^1, a4 = e^(x4)
+;; {x_pre: 25, x_pre_exp: -2, a_pre: 12840254166877, a_pre_exp: -13} ;; x7 = 2^-2, a7 = e^(x7)
+;; {x_pre: 3125, x_pre_exp: -5, a_pre: 10317434074991, a_pre_exp: -13} ;; x10 = 2^-5, a10 = e^(x10)
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
@@ -104,61 +110,89 @@
 ;; out_a {a: 100730153, exp: -8}, out_sum: {a: 108125, exp: -4}
 ;; out_a scaleup => 100730153*10^16 * 10^-8 => 100730153 * 10^8
 
+;; Result SN (ok {z: {a: 106671418721174, exp: -16}, z_squared: {a: 1137879157198, exp: -16}})
+;; Result 16  (ok {z: 106671418721174, z_squared: 1137879157198})
+
+;; a_sum: {a: {a: 1053992245333503834, exp: -18}, sum: {a: 225, exp: -2}
+
+;; Log10 Result 16  (ok {a: 10215643133339429, sum: 22812500000000000})
+;; Log50000 Result 16  (ok {a: 10073048354986305, sum: 108125000000000000})
+
+
 (define-read-only (ln-priv-16 (a int) (a_exp int))
     (let
         (
             ;; decomposition process
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L349
             (a_sum (fold accumulate_division_16 x_a_list_16 {a: {a: a, exp: a_exp}, sum: {a: 0, exp: 0}}))
-            (out_a (get a a_sum))
-            (out_sum (get sum a_sum))
-            ;; below is the Taylor series now 
-            ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
-            ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
-            ;; (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
-            ;; (z_squared (/ (* z z) ONE_16))
-            (out-a-sn-sub (subtraction-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
-            (out-a-sn-add (addition-with-scientific-notation (get a out_a) (get exp out_a) 1 0))
-            ;; (scaled-out-a (scale-up-with-scientific-notation out-a-sn-sub))
-            (z (division-with-scientific-notation (get a out-a-sn-sub) (get exp out-a-sn-sub) (get a out-a-sn-add) (get exp out-a-sn-add)))
-            (z_squared (multiplication-with-scientific-notation (get a z) (get exp z) (get a z) (get exp z)))
+            
+            (out_a {a: 10215643133339429, exp: -16})
+            ;; (out_a (get a a_sum))
+            (out_a_a (get a out_a))
+            (out_a_exp (get exp out_a))
+
+            (out_sum {a: 22812500000000000, exp: -16})
+            ;; (out_sum (get sum a_sum))
+            (out_sum_a (get a out_sum))
+            (out_sum_exp (get exp out_sum))
+            
+            (out_a_sn_sub (subtraction-with-scientific-notation out_a_a out_a_exp 1 0))
+            (out_a_sn_sub_a (get a out_a_sn_sub))
+            (out_a_sn_sub_exp (get exp out_a_sn_sub))
+
+            (out_a_sn_add (addition-with-scientific-notation out_a_a out_a_exp 1 0))
+            (out_a_sn_add_a (get a out_a_sn_add))
+            (out_a_sn_add_exp (get exp out_a_sn_add))
+            
+            (z (division-with-scientific-notation out_a_sn_sub_a out_a_sn_sub_exp out_a_sn_add_a out_a_sn_add_exp))
+            (z_a (get a z))
+            (z_exp (get exp z))
+
+            (z_squared (multiplication-with-scientific-notation z_a z_exp z_a z_exp))
             (z_squared_scaled_down (scale-down-with-lost-precision z_squared))
+            
             (div_list (list 3 5 7 9 11))
             (num_sum_zsq (fold rolling_sum_div_16 div_list {num: z, seriesSum: z, z_squared: z_squared_scaled_down}))
-            ;; (seriesSum (get seriesSum num_sum_zsq))
+            
             (seriesSum (get seriesSum num_sum_zsq))
-            (seriesSumDouble (multiplication-with-scientific-notation (get a seriesSum) (get exp seriesSum) 2 0))
-            (r (addition-with-scientific-notation (get a out_sum) (get exp out_sum) (get a seriesSumDouble) (get exp seriesSumDouble)))
-            ;; (r (+ out_sum (* seriesSum 2)))
+            (seriesSumScaledDown (scale-down-with-lost-precision seriesSum))
+            (seriesSum_a (get a seriesSumScaledDown))
+            (seriesSum_exp (get exp seriesSumScaledDown))
+
+            (seriesSumDouble (multiplication-with-scientific-notation seriesSum_a seriesSum_exp 2 0))
+            (seriesSumDouble_a (get a seriesSumDouble))
+            (seriesSumDouble_exp (get exp seriesSumDouble))
+
+            (r (addition-with-scientific-notation out_sum_a out_sum_exp seriesSumDouble_a seriesSumDouble_exp))
         )
-        ;; (ok {series_sum: seriesSumDouble, r: r})
+        ;; (ok num_sum_zsq)
+        ;; (ok {out-a-sn-sub: out-a-sn-sub, out-a-sn-add: out-a-sn-add})
+        ;; (ok a_sum)
+        ;; (ok {z: z, z_squared: z_squared})
+        ;; (ok seriesSumDouble)
         (ok r)
     )
 )
 
-(define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (z_squared (tuple (a int) (exp int))))))
-  (let
-    (
-      (rolling_num (get num rolling))
-      (rolling_num_a (get a rolling_num))
-      (rolling_num_exp (get exp rolling_num))
-      (rolling_sum (get seriesSum rolling))
-      (rolling_sum_a (get a rolling_sum))
-      (rolling_sum_exp (get exp rolling_sum))
-      (z_squared (get z_squared rolling))
-      (z_squared_a (get a z_squared))
-      (z_squared_exp (get exp z_squared))
-      (next_num (multiplication-with-scientific-notation rolling_num_a rolling_num_exp z_squared_a z_squared_exp))
-      (next_num_scaled_down (scale-down-with-lost-precision next_num))
-      (next_div (division-with-scientific-notation (get a next_num_scaled_down) (get exp next_num_scaled_down) n 0))
-      (next_sum (addition-with-scientific-notation rolling_sum_a rolling_sum_exp (get a next_div) (get exp next_div)))
-;;     ;;   (next_num (scale-down (* rolling_num z_squared)))
-;;     ;;   (next_sum (+ rolling_sum (/ next_num n)))
-   )
-    {num: next_num_scaled_down, seriesSum: rolling_sum, z_squared: z_squared}
-    ;; rolling
- )
-) 
+;; EXPECTED ANSWERS
+;; 10*10^0 (if all true)
+;; 10 / 78962960182680.69 = 1.266416555E-13 => 126641655490941765 * 10^(-30)
+;; 1.266416555E-13 / 8886110.520507872 = 1.425164083E-20 => 14251640828428721412925147 * 10^(-53)
+;; 1.425164083E-20 / 2980.9579870417 = 4.780892885E-24
+;; 4.780892885E-24 / 54.5981500331 = 8.756510765E-26
+;; 8.756510765E-26 / 7.3890560989 = 1.185064865E-26
+;; 1.185064865E-26 / 2.7182818285 = 4.359610003E-27
+;; 4.359610003E-27 / 1.6487212707 = 2.644237131E-27
+;; 2.644237131E-27 / 1.2840254167 = 2.059333948E-27
+;; 2.059333948E-27 / 1.1331484531 = 1.81735583E-27
+;; 1.81735583E-27 / 1.0644944589 = 1.707247807E-27
+;; 1.707247807E-27 / 1.0317434075 = 1.654721314E-27
+;; a: 1.654721314E-27
+
+;; 10*10^0
+;; 10 / 7.3890560989306 = 1.3533528324 => {a: 1353, exp: -3}
+;; 1.3533528324 / 1.2840254166877 = 1.0539922456 => {a: 1053717, exp: -6}
+;; 1.0539922456 / 1.0317434074991 = 1.0215643133 => {a: 1021297536, exp: -9}
 
 (define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (a int) (exp int))) (sum (tuple (a int) (exp int))))))
   (let
@@ -183,11 +217,16 @@
     (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp)
     ;; (if true
         {
+            ;; a: (/ (* rolling_a ONE_16) a_pre)
             a: (division-with-scientific-notation rolling_a_a rolling_a_exp a_pre a_pre_exp),
             sum: (addition-with-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
         } ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
         {a: rolling_a, sum: rolling_sum}
     )
+;;     (if true 
+;;       {a: (/ (* rolling_a ONE_16) a_pre), sum: (+ rolling_sum x_pre)} ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
+;;       {a: rolling_a, sum: rolling_sum}
+;;    )
  )
 )
 ;; 50000 0 >= 7896296018268069 -2, true, 50000 0 / 7896296018268069 -2 = 0.000000000633208 -> a: 63320 -14, sum: 32 0
@@ -195,6 +234,37 @@
 ;; 63320 -14 >= 2980957987041728 -12, false -> a: 63320 -14, sum: 32 0
 ;; 63320 -14 >= 5459815003314423 -14, false -> a: 63320 -14, sum: 32 0
 ;; 63320 -14 >= 7389056098930650 -15, false -> a: 63320 -14, sum: 32 0
+
+
+(define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (z_squared (tuple (a int) (exp int))))))
+    (let
+        (
+            (rolling_num (get num rolling))
+            (rolling_num_a (get a rolling_num))
+            (rolling_num_exp (get exp rolling_num))
+
+            (rolling_sum (get seriesSum rolling))
+            (rolling_sum_a (get a rolling_sum))
+            (rolling_sum_exp (get exp rolling_sum))
+
+            (z_squared (get z_squared rolling))
+            (z_squared_a (get a z_squared))
+            (z_squared_exp (get exp z_squared))
+            
+            (next_num (multiplication-with-scientific-notation rolling_num_a rolling_num_exp z_squared_a z_squared_exp))
+            (next_num_scaled_down (scale-down-with-lost-precision next_num))
+
+            (next_num_scaled_down_a (get a next_num_scaled_down))
+            (next_num_scaled_down_exp (get exp next_num_scaled_down))
+            (next_sum_div (division-with-scientific-notation next_num_scaled_down_a next_num_scaled_down_exp n 0))
+            (next_sum_div_a (get a next_sum_div))
+            (next_sum_div_exp (get exp next_sum_div))
+
+            (next_sum (addition-with-scientific-notation next_sum_div_a next_sum_div_exp rolling_sum_a rolling_sum_exp))
+        )
+        {num: next_num_scaled_down, seriesSum: next_sum, z_squared: z_squared}
+    )
+) 
 
 ;; 20 * 10 ^ 2
 ;;788999999999999.9 * 10 ^ -1    
@@ -281,6 +351,20 @@
     )
 )
 
+;; if my exponent is greater than -16, we transform it backwards
+(define-read-only (division-with-scientific-notation-scaled (a int) (a-exp int) (b int) (b-exp int))
+    (if (>= a (pow 10 17))
+        (let
+            (
+                (scaled_a (scale-down-with-lost-precision {a: a, exp: a-exp}))
+                (division (division-with-scientific-notation (get a scaled_a) (get exp scaled_a) b b-exp))
+            )
+            division
+        )
+        (division-with-scientific-notation a a-exp b b-exp)
+    )
+)
+
 ;; 2.5 / 4 = 0.625
 ;; (25*10^-1) / (4*10^0)
 ;; (25/4) * (10^(-1-0))
@@ -323,7 +407,7 @@
 
             (result (addition-with-scientific-notation division division-exponent remainder remainder-exponent))
         )
-        {result: result}
+        result
     )
 )
 
@@ -423,24 +507,45 @@
             (a_sum (fold accumulate_division x_a_list {a: a, sum: 0}))
             (out_a (get a a_sum))
             (out_sum (get sum a_sum))
+            ;; (out_a 10215643133339429)
+            ;; (out_sum 22812500000000000)
             ;; below is the Taylor series now 
             ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
             ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
             (out-a-sn-sub (- out_a ONE_16))
             (out-a-sn-add (+ out_a ONE_16))
-            (z (/ (scale-up (- out_a ONE_16)) (+ out_a ONE_16)))
+            (z (/ (scale-up out-a-sn-sub) out-a-sn-add))
             (z_squared (/ (* z z) ONE_16))
             (div_list (list 3 5 7 9 11))
             (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
             (seriesSum (get seriesSum num_sum_zsq))
-            (r (+ out_sum (* seriesSum 2)))
+            (seriesSumDouble (* seriesSum 2))
+            (r (+ out_sum seriesSumDouble))
         )
-       (ok  {series_sum: seriesSum, r: r})
-        ;; (ok r)
+        ;; (ok num_sum_zsq)
+        ;; (ok {out-a-sn-sub: out-a-sn-sub, out-a-sn-add: out-a-sn-add})
+        ;; (ok {z: z, z_squared: z_squared})
+        ;; (ok seriesSumDouble)
+        ;; (ok a_sum)
+        (ok r)
     )
 )
 
-(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (a_exp int))) (rolling_a_sum (tuple (a int) (sum int))))
+;; 100000000000000000
+;; 100000000000000000 / 78962960182680.69 = 1.266416555E-13
+;; 1.266416555E-13 / 8886110.520507872 = 1.425164083E-20 => 14251640828428721412925147 * 10^(-53)
+;; 1.425164083E-20 / 2980.9579870417 = 4.780892885E-24
+;; 4.780892885E-24 / 54.5981500331 = 8.756510765E-26
+;; 8.756510765E-26 / 7.3890560989 = 1.185064865E-26
+;; 1.185064865E-26 / 2.7182818285 = 4.359610003E-27
+;; 4.359610003E-27 / 1.6487212707 = 2.644237131E-27
+;; 2.644237131E-27 / 1.2840254167 = 2.059333948E-27
+;; 2.059333948E-27 / 1.1331484531 = 1.81735583E-27
+;; 1.81735583E-27 / 1.0644944589 = 1.707247807E-27
+;; 1.707247807E-27 / 1.0317434075 = 1.654721314E-27
+;; a: 1.654721314E-27
+
+(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
       (a_pre (get a_pre x_a_pre))
@@ -450,7 +555,8 @@
    )
    ;; I think we can simply use a_pre without scaling here
    ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L347
-    (if (>= rolling_a a_pre) 
+    (if (>= rolling_a a_pre)
+    ;; (if true 
       {a: (/ (* rolling_a ONE_16) a_pre), sum: (+ rolling_sum x_pre)} ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
       {a: rolling_a, sum: rolling_sum}
    )
@@ -466,6 +572,7 @@
       (next_num (scale-down (* rolling_num z_squared)))
       (next_sum (+ rolling_sum (/ next_num n)))
    )
+    ;; {num: next_num, seriesSum: next_sum, z_squared: z_squared}
     {num: next_num, seriesSum: next_sum, z_squared: z_squared}
  )
 )
