@@ -3,7 +3,7 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { YCRPTestAgent1 } from './models/alex-tests-yield-collateral-rebalancing-pool.ts';
 import {CRPTestAgent1} from './models/alex-tests-collateral-rebalancing-pool.ts' 
-import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
+import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool-v1-01.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';
 import { MS_CRP_WBTC_USDA } from './models/alex-tests-multisigs.ts';
 import { USDAToken, WBTCToken, WSTXToken, YIELD_WBTC, YIELD_USDA, KEY_WBTC_USDA } from './models/alex-tests-tokens.ts';

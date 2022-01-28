@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-;; fixed-weight-pool
+;; fixed-weight-pool-v1-01
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;;
 

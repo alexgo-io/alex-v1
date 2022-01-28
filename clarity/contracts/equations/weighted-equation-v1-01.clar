@@ -153,8 +153,8 @@
             )
             (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
             (ok dx)
-        ) 
-    )  
+        )
+    )
 )
 
 ;; @desc d_y = dy                                                                            
