@@ -4,7 +4,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
-import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool-v1-01.ts';
+import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';
 import { MS_CRP_WBTC_USDA } from './models/alex-tests-multisigs.ts';
 import { USDAToken, WBTCToken, WSTXToken, YIELD_WBTC, KEY_WBTC_USDA } from './models/alex-tests-tokens.ts';

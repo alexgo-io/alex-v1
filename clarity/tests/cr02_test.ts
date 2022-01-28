@@ -7,7 +7,7 @@ import {
   } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
   
   import { CRPTestAgent1 } from "./models/alex-tests-collateral-rebalancing-pool.ts";
-  import { FWPTestAgent1 } from "./models/alex-tests-fixed-weight-pool-v1-01.ts";
+  import { FWPTestAgent1 } from "./models/alex-tests-fixed-weight-pool.ts";
   import { YTPTestAgent1 } from "./models/alex-tests-yield-token-pool.ts";
   import { WBTCToken, USDAToken, WSTXToken } from './models/alex-tests-tokens.ts';
 
