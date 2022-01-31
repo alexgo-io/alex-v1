@@ -31,40 +31,47 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-big-uint: ln-priv-16",
+    name: "math-big-uint: ln-fixed",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
         
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
             [
             "5",
             types.int(0),
         ], deployer.address);
         console.log('Result SN - 5', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
             [
             "500000",
             types.int(0),
         ], deployer.address);
         console.log('Result SN - 500000', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
             [
             "5000000000000000000",
             types.int(0),
         ], deployer.address);
         console.log('Result SN - 5000000000000000000', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+            [
+            "5",
+            types.int(-1),
+        ], deployer.address);
+        console.log('Result SN - 0.5', call.result);
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
             [
             "1",
-            types.int(0),
+            types.int(-3),
         ], deployer.address);
-        console.log('Result SN - 1', call.result);
+        console.log('Result SN - 0.001', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
             [
             "112451252143",
             types.int(0),

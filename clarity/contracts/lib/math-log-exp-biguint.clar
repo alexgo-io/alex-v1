@@ -739,16 +739,27 @@
 ;;  )
 ;; )
 
-;; ;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
-;; (define-read-only (ln-fixed (a int))
-;;   (begin
-;;     (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
-;;     (if (< a ONE_16)
-;;       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-;;       ;; If a is less than one, 1/a will be greater than one.
-;;       ;; Fixed point division requires multiplying by ONE_16.
-;;       (ok (- 0 (unwrap-panic (ln-priv (/ (scale-up ONE_16) a)))))
-;;       (ln-priv a)
-;;    )
-;;  )
-;; )
+;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
+(define-read-only (ln-fixed (a int) (exp int))
+    (begin
+        (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
+        (if (< exp 0)
+            ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
+            ;; If a is less than one, 1/a will be greater than one.
+            ;; Fixed point division requires multiplying by ONE_8.
+            (let
+                (
+                    (division (division-with-scientific-notation 1 0 a exp))
+                    (division_a (get a division))
+                    (division_exp (get exp division))
+                    
+                    (ln (unwrap-panic (ln-priv-16 division_a division_exp)))
+                    (ln_a (get a ln))
+                    (ln_exp (get exp ln))
+                )
+                (ok (subtraction-with-scientific-notation 0 0 ln_a ln_exp))
+            )
+            (ln-priv-16 a exp)
+        )
+    )
+)
