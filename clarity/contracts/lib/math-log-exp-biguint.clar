@@ -45,11 +45,6 @@
 {x_pre: 312500000000000, a_pre: 10317434074991027} ;; x10 = 2^-5, a10 = e^(x10)
 ))
 
-;; 639687500000000000
-;; 2^5+2^4+2^3+2^2+2^1+2^0+2^(-1)+2^(-2)+2^(-3)+2^(-4)+2^(-5) = 63.96875
-;; 32+16+8+4+2+1+5+25+125+625+3125 = 3,968 0
-;; 32+16+8+4+2+1+0.5+0.25+0.125+0.0625+0.03125 = 63.96875 = 6396875 * 10^-5
-
 ;; We must keep a_pre to 16 digits so that division won't give us 0 when divided by ONE_16
 (define-constant x_a_list_16 (list 
 {x_pre: 32, x_pre_exp: 0, a_pre: 7896296018268069, a_pre_exp: -2} ;; x0 = 2^5, a0 = e^(x0)
@@ -65,11 +60,6 @@
 {x_pre: 3125, x_pre_exp: -5, a_pre: 1031743407499103, a_pre_exp: -15} ;; x10 = 2^-5, a10 = e^(x10)
 ))
 
-;; 2.28125 = 2+0.25+0.03125
-;; {x_pre: 2, x_pre_exp: 0, a_pre: 73890560989306, a_pre_exp: -13} ;; x4 = 2^1, a4 = e^(x4)
-;; {x_pre: 25, x_pre_exp: -2, a_pre: 12840254166877, a_pre_exp: -13} ;; x7 = 2^-2, a7 = e^(x7)
-;; {x_pre: 3125, x_pre_exp: -5, a_pre: 10317434074991, a_pre_exp: -13} ;; x10 = 2^-5, a10 = e^(x10)
-
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
@@ -84,7 +74,6 @@
     (/ a ONE_16)
 )
 
-;; {value: {a: 123124, exp: 23}}
 (define-read-only (scale-up-with-scientific-notation (value (tuple (a int) (exp int))))
     (multiplication-with-scientific-notation (get a value) (get exp value) 1 16)
 )
@@ -103,52 +92,12 @@
         
     )
 )
-;; private functions
-;;
-
-;; (ok {a: {a: 100730153, exp: -8}, sum: {a: 108125, exp: -4}})
-;; out_a {a: 100730153, exp: -8}, out_sum: {a: 108125, exp: -4}
-;; out_a scaleup => 100730153*10^16 * 10^-8 => 100730153 * 10^8
-
-;; Result SN (ok {z: {a: 106671418721174, exp: -16}, z_squared: {a: 1137879157198, exp: -16}})
-;; Result 16  (ok {z: 106671418721174, z_squared: 1137879157198})
-
-;; a_sum: {a: {a: 1053992245333503834, exp: -18}, sum: {a: 225, exp: -2}
-
-;; Log10 Result 16  (ok {a: 10215643133339429, sum: 22812500000000000})
-;; Log50000 Result 16  (ok {a: 10073048354986305, sum: 108125000000000000})
-
-;; For input =5e2
-;; Result SN (ok {out_a: {a: 10274788656047302, exp: -16}, out_sum: {a: 61875, exp: -4}})
-;; Result 16 (ok {out_a: 10274788656047294, out_sum: 61875000000000000})
-
- 
-
-;; For input =10
-;; Result SN (ok {out_a: {a: 10215643133339431, exp: -16}, out_sum: {a: 228125, exp: -5}})
-;; Result 16 (ok {out_a: 10215643133339429, out_sum: 22812500000000000})
-
- 
-
-;; For input =250000
-;; Result SN (ok {out_a: {a: 10232319504937572, exp: -16}, out_sum: {a: 1240625, exp: -5}})
-;; Result 16 (ok {out_a: 10232319504937567, out_sum: 124062500000000000})
-
- 
-
-;; For input = 800
-;; Result SN (ok {out_a: {a: 10287677508833671, exp: -16}, out_sum: {a: 665625, exp: -5}})
-;; Result 16 (ok {out_a: 10287677508833669, out_sum: 66562500000000000})
-
 
 (define-read-only (ln-priv-16 (a int) (a_exp int))
     (let
         (
-            ;; decomposition process
-            ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L349
             (a_sum (fold accumulate_division_16 x_a_list_16 {a: {a: a, exp: a_exp}, sum: {a: 0, exp: 0}}))
             
-            ;; (out_a {a: 10287677508833671, exp: -16})
             (out_a (get a a_sum))
             (out_a_a (get a out_a))
             (out_a_exp (get exp out_a))
@@ -157,7 +106,6 @@
             (out_a_transformed_a (get a out_a_transformed))
             (out_a_transformed_exp (get exp out_a_transformed))
 
-            ;; (out_sum {a: 665625, exp: -5})
             (out_sum (get sum a_sum))
             (out_sum_a (get a out_sum))
             (out_sum_exp (get exp out_sum))
@@ -191,72 +139,36 @@
 
             (r (addition-with-scientific-notation out_sum_a out_sum_exp seriesSumDouble_a seriesSumDouble_exp))
         )
-        ;; (ok num_sum_zsq)
-        ;; (ok {out-a-sn-sub: out-a-sn-sub, out-a-sn-add: out-a-sn-add})
-        ;; (ok a_sum)
-        ;; (ok {z: z, z_squared: z_squared})
-        ;; (ok seriesSumDouble)
         (ok r)
     )
 )
 
-;; EXPECTED ANSWERS
-;; 10*10^0 (if all true)
-;; 10 / 78962960182680.69 = 1.266416555E-13 => 126641655490941765 * 10^(-30)
-;; 1.266416555E-13 / 8886110.520507872 = 1.425164083E-20 => 14251640828428721412925147 * 10^(-53)
-;; 1.425164083E-20 / 2980.9579870417 = 4.780892885E-24
-;; 4.780892885E-24 / 54.5981500331 = 8.756510765E-26
-;; 8.756510765E-26 / 7.3890560989 = 1.185064865E-26
-;; 1.185064865E-26 / 2.7182818285 = 4.359610003E-27
-;; 4.359610003E-27 / 1.6487212707 = 2.644237131E-27
-;; 2.644237131E-27 / 1.2840254167 = 2.059333948E-27
-;; 2.059333948E-27 / 1.1331484531 = 1.81735583E-27
-;; 1.81735583E-27 / 1.0644944589 = 1.707247807E-27
-;; 1.707247807E-27 / 1.0317434075 = 1.654721314E-27
-;; a: 1.654721314E-27
-
-;; 10*10^0
-;; 10 / 7.3890560989306 = 1.3533528324 => {a: 1353, exp: -3}
-;; 1.3533528324 / 1.2840254166877 = 1.0539922456 => {a: 1053717, exp: -6}
-;; 1.0539922456 / 1.0317434074991 = 1.0215643133 => {a: 1021297536, exp: -9}
-
 (define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (a int) (exp int))) (sum (tuple (a int) (exp int))))))
-  (let
-    (
-      (a_pre (get a_pre x_a_pre))
-      (a_pre_exp (get a_pre_exp x_a_pre))
-      
-      (x_pre (get x_pre x_a_pre))
-      (x_pre_exp (get x_pre_exp x_a_pre))
+    (let
+        (
+            (a_pre (get a_pre x_a_pre))
+            (a_pre_exp (get a_pre_exp x_a_pre))
+            
+            (x_pre (get x_pre x_a_pre))
+            (x_pre_exp (get x_pre_exp x_a_pre))
 
-      (rolling_a (get a rolling_a_sum))
-      (rolling_a_a (get a rolling_a))
-      (rolling_a_exp (get exp rolling_a))
-      
-      (rolling_sum (get sum rolling_a_sum))
-      (rolling_sum_a (get a rolling_sum))
-      (rolling_sum_exp (get exp rolling_sum))
-   )
-   ;; I think we can simply use a_pre without scaling here
-   ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L347
-    ;; this rolling a and sum is working as a looped a and sum
-    (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp)
-    ;; (if true
-        {
-            a: (division-with-scientific-notation-with-precision rolling_a_a rolling_a_exp a_pre a_pre_exp),
-            sum: (addition-with-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
-        } ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
-        {a: rolling_a, sum: rolling_sum}
+            (rolling_a (get a rolling_a_sum))
+            (rolling_a_a (get a rolling_a))
+            (rolling_a_exp (get exp rolling_a))
+            
+            (rolling_sum (get sum rolling_a_sum))
+            (rolling_sum_a (get a rolling_sum))
+            (rolling_sum_exp (get exp rolling_sum))
+        )
+        (if (greater-than-equal-to rolling_a_a rolling_a_exp a_pre a_pre_exp)
+            {
+                a: (division-with-scientific-notation-with-precision rolling_a_a rolling_a_exp a_pre a_pre_exp),
+                sum: (addition-with-scientific-notation rolling_sum_a rolling_sum_exp x_pre x_pre_exp) 
+            }
+            {a: rolling_a, sum: rolling_sum}
+        )
     )
- )
 )
-
-;; 50000 0 >= 7896296018268069 -2, true, 50000 0 / 7896296018268069 -2 = 0.000000000633208 -> a: 63320 -14, sum: 32 0
-;; 63320 -14 >= 8886110520507873 -9, false -> a: 63320 -14, sum: 32 0
-;; 63320 -14 >= 2980957987041728 -12, false -> a: 63320 -14, sum: 32 0
-;; 63320 -14 >= 5459815003314423 -14, false -> a: 63320 -14, sum: 32 0
-;; 63320 -14 >= 7389056098930650 -15, false -> a: 63320 -14, sum: 32 0
-
 
 (define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (z_squared (tuple (a int) (exp int))))))
     (let
@@ -288,9 +200,6 @@
     )
 ) 
 
-;; 20 * 10 ^ 2
-;;788999999999999.9 * 10 ^ -1
-
 (define-read-only (greater-than-equal-to (a int) (a_exp int) (b int) (b_exp int))
     (if (> a_exp b_exp)
         (let
@@ -310,16 +219,6 @@
     )       
 )
 
-;; 3.4 * 10^5 + 9.7 * 10^6
-;; 34 * 10^4 + 97 * 10^5
-;; (34+97) * 10^5
-;; 131 * 10^5
-
-;; 100 * 10^0 + 35 * 10^-3
-;; 100+35 * 10^(0-3)
-;; 135 * 10^-3 (WRONG)
-;; 100000 * 10^-3 + 35 * 10^-3
-;; 100035 * 10^-3 (RIGHT)
 (define-read-only (addition-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
     (begin
         (if (> a_exp b_exp)
@@ -345,10 +244,6 @@
     )
 )
 
-;; 3.4 * 10^5 - 9.7 * 10^6
-;; 34 * 10^4 - 97 * 10^5
-;; (34-97) * 10^5
-;; -63 * 10^5
 (define-read-only (subtraction-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
     (begin
         (if (> a_exp b_exp)
@@ -374,17 +269,11 @@
     )
 )
 
-;; 2.5 / 4 = 0.625
-;; (25*10^-1) / (4*10^0)
-;; (25/4) * (10^(-1-0))
-;; (625*10^14) * (10^-1 * 10^-16)
-;; (62500000000000000) * (10^-17)
-;; (0.625)
 (define-read-only (division-with-scientific-notation (a int) (a-exp int) (b int) (b-exp int))
     (let
         (
-            (division (/ (scale-up a) b)) ;; scale-up to get the decimal part precision
-            (exponent (+ (- a-exp b-exp) -16)) ;; scale down from the exponent part
+            (division (/ (scale-up a) b))
+            (exponent (+ (- a-exp b-exp) -16))
         )
         {a: division, exp: exponent}
     )
@@ -393,10 +282,10 @@
 (define-read-only (multiplication-with-scientific-notation (a int) (a-exp int) (b int) (b-exp int))
     (let
         (
-            (product (* a b)) ;; 25*4=100
-            (exponent (+ a-exp b-exp)) ;;10^-1 + 10^0 = 10^(-1+0) = 10^-1
+            (product (* a b))
+            (exponent (+ a-exp b-exp))
         )
-        {a: product, exp: exponent} ;;100*10^-1
+        {a: product, exp: exponent}
     )
 )
 
@@ -404,10 +293,10 @@
     (let
         (
             (new-a (if (> a b) a (scale-up a)))
-            (division (/ new-a b)) ;; scale-up to get the decimal part precision ;; 14
+            (division (/ new-a b))
 
             (exponent (if (> a b) 0 -16))
-            (division-exponent (+ (- a-exp b-exp) exponent)) ;; scale down from the exponent part
+            (division-exponent (+ (- a-exp b-exp) exponent))
             (factor (- new-a (* division b)))
 
             (remainder (/ (* (pow 10 16) factor) b))
@@ -421,49 +310,15 @@
     )
 )
 
-;; {division: 63320, division-exponent: -14, finalfinal-answer: {a: 633208277454708827542, exp: -30}, remainder: 8277454708827542, remainder-exponent: -30}
-;; 0.000000000633208277454708827542
-
-;; {division: 63320, division-exponent: -14, rem-div: 8277454708827542, rem-exponent: -30}
-;; 50000 / 78962960182680.69 
-;; 63320*10^-14 + 8277454708827542*10^-30 => 0.000000000633208277454708827542
-;; 0.000000000633208277454708827542
-
-;; {exponent: -14, rem: 8277454708827542, result: 63320, result-exponent: -14}
-;; 50000 / 78962960182680.69 
-;; 0.000000000633208277454708827542 => 0.000000000633208
-;; 63320*10^(-14) = 0.0000000006332
-
-;; u63320 * 10^-16 + u8277454708827542 * 10^-32 => 6.332082775E-12
-
-;; {exponent: -14, rem: 1387273544137711, result: 316604}
-;; 250000 / 7896296018268069
-;; 0.00000000000316604 1387273544137711
-
-
-
-;; transformations upto 16 decimals
+;; transformation
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
-
-;; 100 * 10^0 transform -3 (BACKWARD)
-;; 100000 * 10^-3 (POSSIBLE)
-
-;; 35 * 10^-3 transform 0 (FORWARDING)
-;; 0.0035 * 10^0 (NOT POSSIBLE)
-
-;; 35 * 10^-3 transform -4 (BACKWARD)
-;; 350 * 10^-4 (POSSIBLE)
 
 ;; 35 * 10^-3 transform -2 (FORWARD)
 ;; 3.5 * 10^-2 (NOT POSSIBLE)
 
 ;; 35 * 10^3 transform 1 (BACKWARD)
 ;; 3500 * 10^1 (POSSIBLE)
-
-
-;; 35 * 10^3 transform 3 (BACKWARD)
-;; 35 * 10^3 (POSSIBLE)
 (define-read-only (transform (a int) (a_exp int) (x int))
     (let
         (
@@ -549,16 +404,9 @@
 (define-read-only (ln-priv (a int))
     (let
         (
-            ;; decomposition process
-            ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L349
             (a_sum (fold accumulate_division x_a_list {a: a, sum: 0}))
             (out_a (get a a_sum))
             (out_sum (get sum a_sum))
-            ;; (out_a 10215643133339429)
-            ;; (out_sum 22812500000000000)
-            ;; below is the Taylor series now 
-            ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L416 
-            ;; z = (a-1)/(a+1) so for precision we multiply dividend with ONE_16 to retain precision
             (out-a-sn-sub (- out_a ONE_16))
             (out-a-sn-add (+ out_a ONE_16))
             (z (/ (scale-up out-a-sn-sub) out-a-sn-add))
@@ -569,28 +417,9 @@
             (seriesSumDouble (* seriesSum 2))
             (r (+ out_sum seriesSumDouble))
         )
-        ;; (ok num_sum_zsq)
-        ;; (ok {out-a-sn-sub: out-a-sn-sub, out-a-sn-add: out-a-sn-add})
-        ;; (ok {z: z, z_squared: z_squared})
-        ;; (ok seriesSumDouble)
-        ;; (ok a_sum)
         (ok r)
     )
 )
-
-;; 100000000000000000
-;; 100000000000000000 / 78962960182680.69 = 1.266416555E-13
-;; 1.266416555E-13 / 8886110.520507872 = 1.425164083E-20 => 14251640828428721412925147 * 10^(-53)
-;; 1.425164083E-20 / 2980.9579870417 = 4.780892885E-24
-;; 4.780892885E-24 / 54.5981500331 = 8.756510765E-26
-;; 8.756510765E-26 / 7.3890560989 = 1.185064865E-26
-;; 1.185064865E-26 / 2.7182818285 = 4.359610003E-27
-;; 4.359610003E-27 / 1.6487212707 = 2.644237131E-27
-;; 2.644237131E-27 / 1.2840254167 = 2.059333948E-27
-;; 2.059333948E-27 / 1.1331484531 = 1.81735583E-27
-;; 1.81735583E-27 / 1.0644944589 = 1.707247807E-27
-;; 1.707247807E-27 / 1.0317434075 = 1.654721314E-27
-;; a: 1.654721314E-27
 
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
@@ -600,11 +429,8 @@
       (rolling_a (get a rolling_a_sum))
       (rolling_sum (get sum rolling_a_sum))
    )
-   ;; I think we can simply use a_pre without scaling here
-   ;; https://github.com/balancer-labs/balancer-v2-monorepo/blob/a62e10f948c5de65ddfd6d07f54818bf82379eea/pkg/solidity-utils/contracts/math/LogExpMath.sol#L347
     (if (>= rolling_a a_pre)
-    ;; (if true 
-      {a: (/ (* rolling_a ONE_16) a_pre), sum: (+ rolling_sum x_pre)} ;; rolling_a is scaled up so that precision is not lost when dividing by a_pre
+      {a: (/ (* rolling_a ONE_16) a_pre), sum: (+ rolling_sum x_pre)}
       {a: rolling_a, sum: rolling_sum}
    )
  )
@@ -619,7 +445,6 @@
       (next_num (scale-down (* rolling_num z_squared)))
       (next_sum (+ rolling_sum (/ next_num n)))
    )
-    ;; {num: next_num, seriesSum: next_sum, z_squared: z_squared}
     {num: next_num, seriesSum: next_sum, z_squared: z_squared}
  )
 )

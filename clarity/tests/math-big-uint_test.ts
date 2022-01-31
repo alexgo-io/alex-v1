@@ -31,47 +31,47 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-big-uint: ln-fixed",
+    name: "math-big-uint: ln-with-scientific-notation",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
         
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+        let call = chain.callReadOnlyFn("math-big-uint", "ln-with-scientific-notation",
             [
             "5",
             types.int(0),
         ], deployer.address);
         console.log('Result SN - 5', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+        call = chain.callReadOnlyFn("math-big-uint", "ln-with-scientific-notation",
             [
             "500000",
             types.int(0),
         ], deployer.address);
         console.log('Result SN - 500000', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+        call = chain.callReadOnlyFn("math-big-uint", "ln-with-scientific-notation",
             [
             "5000000000000000000",
             types.int(0),
         ], deployer.address);
         console.log('Result SN - 5000000000000000000', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+        call = chain.callReadOnlyFn("math-big-uint", "ln-with-scientific-notation",
             [
             "5",
             types.int(-1),
         ], deployer.address);
         console.log('Result SN - 0.5', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+        call = chain.callReadOnlyFn("math-big-uint", "ln-with-scientific-notation",
             [
             "1",
             types.int(-3),
         ], deployer.address);
         console.log('Result SN - 0.001', call.result);
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "ln-fixed",
+        call = chain.callReadOnlyFn("math-big-uint", "ln-with-scientific-notation",
             [
             "112451252143",
             types.int(0),
@@ -96,250 +96,189 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-big-uint: mul",
+    name: "math-big-uint: multiplication-with-scientific-notation",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
 
-        let call = chain.callReadOnlyFn("math-big-uint", "mul",
+        let call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(5),
-                types.uint(5),
-            ], deployer.address);
-        call.result.expectUint(25*ONE_16)
-    },
-});
-
-
-Clarinet.test({
-    name: "math-big-uint: div",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        
-        let deployer = accounts.get("deployer")!;
-
-        let call = chain.callReadOnlyFn("math-big-uint", "div",
-            [
-                types.uint(5),
-                types.uint(5)
-            ], deployer.address);
-        call.result.expectUint(1*ONE_16)
-
-        call = chain.callReadOnlyFn("math-big-uint", "div",
-            [
-                types.uint(25123124213),
-                types.uint(4125312513461)
-            ], deployer.address);
-        call.result.expectUint(60899929716894)
-    },
-});
-
-
-Clarinet.test({
-    name: "math-big-uint: mul-with-scientific-notation",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        
-        let deployer = accounts.get("deployer")!;
-
-        let call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
-            [
-                types.uint(25), 
+                types.int(25), 
                 types.int(-1),
-                // this number becomes 25*10^-1=2.5
-                types.uint(4),
+                types.int(4),
                 types.int(0),
-                // this number becomes 4*10^0=4
             ], deployer.address);
         let position: any = call.result.expectTuple()
-        position['result'].expectUint(100)
-        position['exponent'].expectInt(-1)
-        // the answer is 100*10^-1 = 10
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(0),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u1259634630379109987517020812944")
-        position['exponent'].expectInt(0)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(0),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u1259634630379109987517020812944")
-        position['exponent'].expectInt(-16)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(-16),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u1259634630379109987517020812944")
-        position['exponent'].expectInt(-16)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(-16),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u1259634630379109987517020812944")
-        position['exponent'].expectInt(-32)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(16),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u1259634630379109987517020812944")
-        position['exponent'].expectInt(0)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(500000), 
+                types.int(500000), 
                 types.int(0),
-                types.uint(5),
+                types.int(5),
                 types.int(-1),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u2500000")
-        position['exponent'].expectInt(-1)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "mul-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "multiplication-with-scientific-notation",
             [
-                types.uint(6000000), 
+                types.int(6000000), 
                 types.int(0),
-                types.uint(67),
+                types.int(67),
                 types.int(-2),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u402000000")
-        position['exponent'].expectInt(-2)
+        console.log(position)
 
     },
 });
 
 Clarinet.test({
-    name: "math-big-uint: div-with-scientific-notation",
+    name: "math-big-uint: division-with-scientific-notation",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
 
-        let call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        let call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(25),
+                types.int(25),
                 types.int(-1),
-                // this number becomes 25*10^-1=2.5
-                types.uint(4),
+                types.int(4),
                 types.int(0),
-                // this number becomes 4*10^0=4
             ], deployer.address);
         let position: any = call.result.expectTuple()
-        position['result'].expectUint(6.25*ONE_16)
-        position['exponent'].expectInt(-17)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
         [
-            types.uint(1122334455667788), 
+            types.int(1122334455667788), 
             types.int(0),
-            types.uint(1122334455667788),
+            types.int(1122334455667788),
             types.int(0),
         ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(-16)
+        console.log(position)
         
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(0),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(0)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(-16),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(-32)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(-16),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(-16)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(1122334455667788), 
+                types.int(1122334455667788), 
                 types.int(16),
-                types.uint(1122334455667788),
+                types.int(1122334455667788),
                 types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
-        position['result'].expectUint(1*ONE_16)
-        position['exponent'].expectInt(16)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(500000), 
+                types.int(500000), 
                 types.int(0),
-                types.uint(5),
+                types.int(5),
                 types.int(-1),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u1000000000000000000000") // 1,000,000 * ONE_16
-        position['exponent'].expectInt(-15)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(6000000), 
+                types.int(6000000), 
                 types.int(0),
-                types.uint(67),
+                types.int(67),
                 types.int(-2),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u895522388059701492537") //8,955,223.88059701492537
-        position['exponent'].expectInt(-14)
+        console.log(position)
 
-        call = chain.callReadOnlyFn("math-big-uint", "div-with-scientific-notation",
+        call = chain.callReadOnlyFn("math-big-uint", "division-with-scientific-notation",
             [
-                types.uint(8877665544332211), 
+                types.int(8877665544332211), 
                 types.int(0),
-                types.uint(1122334),
+                types.int(1122334),
                 types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['result'], "u79100032114613038542893648") //7,910,003,211.38542893648
-        position['exponent'].expectInt(-16)
+        console.log(position)
 
     },
 });
