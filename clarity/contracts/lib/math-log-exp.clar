@@ -275,7 +275,7 @@
 ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-read-only (ln-fixed (a int))
   (begin
-    (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
+    (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
     (if (< a ONE_8)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.
