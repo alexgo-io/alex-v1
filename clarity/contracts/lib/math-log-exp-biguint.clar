@@ -310,6 +310,16 @@
     )
 )
 
+(define-read-only (multiplication-with-scientific-notation-with-precision (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (
+            (product (* a b))
+            (exponent (+ a-exp b-exp))
+        )
+        {a: product, exp: exponent}
+    )
+)
+
 ;; transformation
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
@@ -466,37 +476,85 @@
 ;;   )
 ;; )
 
-;; (define-read-only (exp-pos (x int))
-;;     (let
-;;         (
-;;         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-;;         ;; it and compute the accumulated product.
-;;         (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
-;;         (product_out (get product x_product))
-;;         (x_out (get x x_product))
-;;         (seriesSum (+ ONE_16 x_out))
-;;         (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-;;         (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-;;         (sum (get seriesSum term_sum_x))
-;;         )
-;;         (ok (* (scale-down (* product_out sum)) 1))
-;;     )
-;; )
+(define-read-only (exp-pos-16 (x int) (exp int))
+    (let
+        (
+        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+        ;; it and compute the accumulated product.
+        (x_product (fold accumulate_product_16 x_a_list_16 {x: {a: x, exp: exp}, product: {a: 1, exp: 0}}))
+        ;; (product_out (get product x_product))
+        ;; (x_out (get x x_product))
+        ;; (seriesSum (+ ONE_16 x_out))
+        ;; (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+        ;; (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+        ;; (sum (get seriesSum term_sum_x))
+        )
+        ;; (ok (* (scale-down (* product_out sum)) 1))
+        (ok x_product)
+    )
+)
 
-;; (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (a_exp int))) (rolling_x_p (tuple (x int) (product int))))
-;;   (let
-;;     (
-;;       (x_pre (get x_pre x_a_pre))
-;;       (a_pre (get a_pre x_a_pre))
-;;       (rolling_x (get x rolling_x_p))
-;;       (rolling_product (get product rolling_x_p))
-;;    )
-;;     (if (>= rolling_x x_pre)
-;;       {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) ONE_16)}
-;;       {x: rolling_x, product: rolling_product}
-;;    )
-;;  )
-;; )
+(define-private (accumulate_product_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (a int) (exp int))) (product (tuple (a int) (exp int))))))
+    (let
+        (
+            (x_pre (get x_pre x_a_pre))
+            (x_pre_exp (get x_pre_exp x_a_pre))
+
+            (a_pre (get a_pre x_a_pre))
+            (a_pre_exp (get a_pre_exp x_a_pre))
+
+            (rolling_x (get x rolling_x_p))
+            (rolling_x_a (get a rolling_x))
+            (rolling_x_a_exp (get exp rolling_x))
+
+            (rolling_product (get product rolling_x_p))
+            (rolling_product_a (get a rolling_product))
+            (rolling_product_a_exp (get exp rolling_product))
+        )
+        (if (greater-than-equal-to rolling_x_a rolling_x_a_exp x_pre x_pre_exp)
+            {
+                x: (subtraction-with-scientific-notation rolling_x_a rolling_x_a_exp x_pre x_pre_exp),
+                product: (multiplication-with-scientific-notation-with-precision rolling_product_a rolling_product_a_exp a_pre a_pre_exp)
+            }
+            {x: rolling_x, product: rolling_product}
+        )
+    )
+)
+
+;; (ok {product: 220264657948067164354, x: 0})
+;; (ok {product: {a: 22026465794806713809497728163200, exp: -27}, x: {a: 0, exp: 0}})
+(define-read-only (exp-pos (x int))
+    (let
+        (
+        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+        ;; it and compute the accumulated product.
+        (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
+        ;; (product_out (get product x_product))
+        ;; (x_out (get x x_product))
+        ;; (seriesSum (+ ONE_16 x_out))
+        ;; (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+        ;; (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+        ;; (sum (get seriesSum term_sum_x))
+        )
+        ;; (ok (* (scale-down (* product_out sum)) 1))
+        (ok x_product)
+    )
+)
+
+(define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int))) (rolling_x_p (tuple (x int) (product int))))
+  (let
+    (
+      (x_pre (get x_pre x_a_pre))
+      (a_pre (get a_pre x_a_pre))
+      (rolling_x (get x rolling_x_p))
+      (rolling_product (get product rolling_x_p))
+   )
+    (if (>= rolling_x x_pre)
+      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) ONE_16)}
+      {x: rolling_x, product: rolling_product}
+   )
+ )
+)
 
 ;; (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
 ;;   (let
