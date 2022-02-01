@@ -568,7 +568,8 @@
 (define-read-only (ln-fixed (a int) (exp int))
     (begin
         (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
-        (if (< exp 0)
+        (if (greater-than-equal-to a exp 1 0)
+            (ln-priv-16 a exp)
             ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
             ;; If a is less than one, 1/a will be greater than one.
             ;; Fixed point division requires multiplying by ONE_8.
@@ -584,7 +585,6 @@
                 )
                 (ok (subtraction-with-scientific-notation 0 0 ln_a ln_exp))
             )
-            (ln-priv-16 a exp)
         )
     )
 )
