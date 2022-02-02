@@ -428,7 +428,7 @@ Clarinet.test({
 
     },
 });
-*/
+
 
 Clarinet.test({
     name: "math-big-uint: exp-pos",
@@ -487,3 +487,4 @@ Clarinet.test({
         console.log('5.5 in SN format', call.result+"\n\n");
     },
 });
+*/

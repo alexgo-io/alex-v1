@@ -546,18 +546,25 @@
         (
             ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
             ;; it and compute the accumulated product.
-            ;; (x_product (fold accumulate_product_16 x_a_list_16 {x: {a: x, exp: exp}, product: {a: 1, exp: 0}}))
-            (x_product {product: {a: 21842008108156168, exp: -16}, x: {a: 1875, exp: -5}})
+            (x_product (fold accumulate_product_16 x_a_list_16 {x: {a: x, exp: exp}, product: {a: 1, exp: 0}}))
             
             (product_out (get product x_product))
             (product_out_a (get a product_out))
             (product_out_exp (get exp product_out))
             
+            (transformed_product (transform-to-16 product_out_a product_out_exp))
+            (transformed_product_a (get a transformed_product))
+            (transformed_product_exp (get exp transformed_product))
+
             (x_out (get x x_product))
             (x_out_a (get a x_out))
             (x_out_exp (get exp x_out))
             
-            (seriesSum (addition-with-scientific-notation 1 0 x_out_a x_out_exp))
+            (transformed_x (transform-to-16 x_out_a x_out_exp))
+            (transformed_x_a (get a transformed_x))
+            (transformed_x_exp (get exp transformed_x))
+            
+            (seriesSum (addition-with-scientific-notation 1 0 transformed_x_a transformed_x_exp))
             (seriesSum_a (get a seriesSum))
             (seriesSum_exp (get exp seriesSum))
 
@@ -567,10 +574,37 @@
             (sum_a (get a sum))
             (sum_exp (get exp sum))
 
-            (r (multiplication-with-scientific-notation product_out_a product_out_exp sum_a sum_exp))
+            (r (multiplication-with-scientific-notation transformed_product_a transformed_product_exp sum_a sum_exp))
             (r_scaled_down (scale-down-with-lost-precision r))
         )
         (ok r_scaled_down)
+    )
+)
+
+(define-private (accumulate_product_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (a int) (exp int))) (product (tuple (a int) (exp int))))))
+    (let
+        (
+            (x_pre (get x_pre x_a_pre))
+            (x_pre_exp (get x_pre_exp x_a_pre))
+
+            (a_pre (get a_pre x_a_pre))
+            (a_pre_exp (get a_pre_exp x_a_pre))
+
+            (rolling_x (get x rolling_x_p))
+            (rolling_x_a (get a rolling_x))
+            (rolling_x_a_exp (get exp rolling_x))
+
+            (rolling_product (get product rolling_x_p))
+            (rolling_product_a (get a rolling_product))
+            (rolling_product_a_exp (get exp rolling_product))
+        )
+        (if (greater-than-equal-to rolling_x_a rolling_x_a_exp x_pre x_pre_exp)
+            {
+                x: (subtraction-with-scientific-notation rolling_x_a rolling_x_a_exp x_pre x_pre_exp),
+                product: (multiplication-with-scientific-notation-with-precision rolling_product_a rolling_product_a_exp a_pre a_pre_exp)
+            }
+            {x: rolling_x, product: rolling_product}
+        )
     )
 )
 
