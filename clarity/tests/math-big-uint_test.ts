@@ -429,3 +429,61 @@ Clarinet.test({
     },
 });
 */
+
+Clarinet.test({
+    name: "math-big-uint: exp-pos",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+
+        let deployer = accounts.get("deployer")!;
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-pos",
+        [
+            '5000000000',
+        ], deployer.address);
+        console.log('5e-7 in 16 format', call.result);
+        call = chain.callReadOnlyFn("math-log-exp", "exp-pos-8",
+        [
+            '50',
+        ], deployer.address);
+        console.log('5e-7 in 8 format', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-pos-16",
+        [
+            '5',
+            types.int(-7)
+        ], deployer.address);
+        console.log('5e-7 in SN format', call.result+"\n\n");
+
+        call = chain.callReadOnlyFn("math-log-exp", "exp-pos-8",
+        [
+            '2000000',
+        ], deployer.address);
+        console.log('0.02 in 8 format', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-pos",
+        [
+            '200000000000000',
+        ], deployer.address);
+        console.log('0.02 in 16 format', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-pos-16",
+        [
+            '002',
+            types.int(-2)
+        ], deployer.address);
+        console.log('0.02 in SN format', call.result + "\n\n");
+        
+        call = chain.callReadOnlyFn("math-log-exp", "exp-pos-8",
+        [
+            '550000000',
+        ], deployer.address);
+        console.log('5.5 in 8 format', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-pos",
+        [
+            '55000000000000000',
+        ], deployer.address);
+        console.log('5.5 in 16 format', call.result);
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-pos-16",
+        [
+            '5500000000000',
+            types.int(-12)
+        ], deployer.address);
+        console.log('5.5 in SN format', call.result+"\n\n");
+    },
+});
