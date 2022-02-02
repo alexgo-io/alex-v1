@@ -4,6 +4,7 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 const ONE_16 = 10000000000000000
 
+/*
 Clarinet.test({
     name: "math-big-uint: max number",
     async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -129,7 +130,100 @@ Clarinet.test({
         assertEquals(position['exp'], "-16")
     },
 });
+*/
+Clarinet.test({
+    name: "math-big-uint: exp (0 -> 1)",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+        
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "0",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "10000000000000000")
 
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+            [
+            "0",
+            "0"
+        ], deployer.address);
+        console.log("RESULT SN: "+call.result.expectOk());
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "1000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "11051709180756472")
+        // RESULT SN: {a: 11051709180756472, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "2000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "12214027581601695")
+        // RESULT SN: {a: 12214027581601695, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "3000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "13498588075760028")
+        // RESULT SN: {a: 13498588075760028, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "4000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "14918246976412698")
+        // RESULT SN: {a: 14918246976412698, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "5000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "16487212707001282")
+        // RESULT SN: {a: 16487212707001282, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "6000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "18221188003905083")
+        // RESULT SN: {a: 18221188003905083, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "7000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "20137527074704760")
+        // RESULT SN: {a: 20137527074704760, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "8000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "22255409284924672")
+        // RESULT SN: {a: 22255409284924661, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "9000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "24596031111569487")
+        // RESULT SN: {a: 24596031111569487, exp: -16}
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+            [
+            "10000000000000000",
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "27182818284590452")
+        // RESULT SN: {a: 27182818284590452, exp: -16}
+
+    },
+});
+
+/*
 Clarinet.test({
     name: "math-big-uint: multiplication-with-scientific-notation",
     async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -334,3 +428,4 @@ Clarinet.test({
 
     },
 });
+*/

@@ -20,6 +20,8 @@
 ;; We use 51.0 and -36.0 to have some safety margin.
 (define-constant MAX_NATURAL_EXPONENT (* 51 ONE_16))
 (define-constant MIN_NATURAL_EXPONENT (* -36 ONE_16))
+(define-constant MAX_NATURAL_EXPONENT_16 51)
+(define-constant MIN_NATURAL_EXPONENT_16 -36)
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
 
@@ -186,10 +188,11 @@
             (z_squared_exp (get exp z_squared))
             
             (next_num (multiplication-with-scientific-notation rolling_num_a rolling_num_exp z_squared_a z_squared_exp))
+            
             (next_num_scaled_down (scale-down-with-lost-precision next_num))
-
             (next_num_scaled_down_a (get a next_num_scaled_down))
             (next_num_scaled_down_exp (get exp next_num_scaled_down))
+
             (next_sum_div (division-with-scientific-notation next_num_scaled_down_a next_num_scaled_down_exp n 0))
             (next_sum_div_a (get a next_sum_div))
             (next_sum_div_exp (get exp next_sum_div))
@@ -476,68 +479,169 @@
 ;;   )
 ;; )
 
+;; 0.1 => (ok {product: 10982851403078258, x: 62500000000000})
+;; (x_product {product: {a: 10982851403078258, exp: -16}, x: {a: 62500000000000, exp: -16}})
+;; (ok {a: 11051709180756472, exp: -16})
+
+;; 0.2 => (ok {product: 12062302494209806, x: 125000000000000})
+;; (x_product {product: {a: 12062302494209806, exp: -16}, x: {a: 125000000000000, exp: -16}})
+;; (ok {a: 12214027581601695, exp: -16})
+
+;; 0.3 => (ok {product: 13247847587288655, x: 187500000000000})
+;; (x_product {product: {a: 13247847587288655, exp: -16}, x: {a: 187500000000000, exp: -16}})
+;; (ok {a: 13498588075760028, exp: -16})
+
+;; 0.4 => (ok {product: 14549914146182012, x: 250000000000000})
+;; (x_product {product: {a: 14549914146182012, exp: -16}, x: {a: 250000000000000, exp: -16}})
+;; (ok {a: 14918246976412698, exp: -16})
+
+;; 0.5 => (ok {product: 16487212707001282, x: 0})
+;; (x_product {product: {a: 16487212707001282, exp: -16}, x: {a: 0, exp: -16}})
+;; (ok {a: 16487212707001282, exp: -16})
+
+;; 0.6 => (ok {product: 18107660721193871, x: 62500000000000})
+;; (x_product {product: {a: 18107660721193871, exp: -16}, x: {a: 62500000000000, exp: -16}})
+;; (ok {a: 18221188003905083, exp: -16})
+
+;; 0.7 => (ok {product: 19887374695822917, x: 125000000000000})
+;; (x_product {product: {a: 19887374695822917, exp: -16}, x: {a: 125000000000000, exp: -16}})
+;; (ok {a: 20137527074704760, exp: -16})
+
+;; 0.8 => (ok {product: 21842008108156178, x: 187500000000000})
+;; (x_product {product: {a: 21842008108156178, exp: -16}, x: {a: 187500000000000, exp: -16}})
+;; (ok {a: 22255409284924672, exp: -16})
+
+;; 0.9 => (ok {product: 23988752939670976, x: 250000000000000})
+;; (x_product {product: {a: 23988752939670976, exp: -16}, x: {a: 250000000000000, exp: -16}})
+;; (ok {a: 24596031111569487, exp: -16})
+
+;; 1 => (ok {product: 27182818284590452, x: 0})
+;; (x_product {product: {a: 27182818284590452, exp: -16}, x: {a: 0, exp: -16}})
+;; (ok {a: 27182818284590452, exp: -16})
+
+;; 0.1 in SN format (ok {transformed-product: {a: 10982851403078257, exp: -16}, transformed-x: {a: 625, exp: -5}})
+;; 0.1 => (ok {product: 10982851403078258, x: 62500000000000})
+
+;; 0.2 in SN format (ok {transformed-product: {a: 12062302494209798, exp: -16}, transformed-x: {a: 125, exp: -4}})
+;; 0.2 => (ok {product: 12062302494209806, x: 125000000000000})
+
+;; 0.3 in SN format (ok {transformed-product: {a: 13247847587288654, exp: -16}, transformed-x: {a: 18750000, exp: -9}})
+;; 0.3 => (ok {product: 13247847587288655, x: 187500000000000})
+
+;; 0.4 in SN format (ok {transformed-product: {a: 14549914146182003, exp: -16}, transformed-x: {a: 250000000000000, exp: -16}})
+;; 0.4 => (ok {product: 14549914146182012, x: 250000000000000})
+
+;; 0.5 in SN format (ok {transformed-product: {a: 1648721270700128, exp: -15}, transformed-x: {a: 0, exp: -2}})
+;; 0.5 => (ok {product: 16487212707001282, x: 0})
+
+;; 0.6 in SN format (ok {transformed-product: {a: 18107660721193861, exp: -16}, transformed-x: {a: 625, exp: -5}})
+;; 0.6 => (ok {product: 18107660721193871, x: 62500000000000})
+
+;; 0.7 in SN format (ok {transformed-product: {a: 19887374695822895, exp: -16}, transformed-x: {a: 125, exp: -4}})
+;; 0.7 => (ok {product: 19887374695822917, x: 125000000000000})
+
+;; 0.8 in SN format (ok {transformed-product: {a: 21842008108156168, exp: -16}, transformed-x: {a: 1875, exp: -5}})
+;; 0.8 => (ok {product: 21842008108156178, x: 187500000000000})
+
+;; 0.9 in SN format (ok {transformed-product: {a: 23988752939670953, exp: -16}, transformed-x: {a: 25, exp: -3}})
+;; 0.9 => (ok {product: 23988752939670976, x: 250000000000000})
+
+;; 1 in SN format (ok {transformed-product: {a: 2718281828459045, exp: -15}, transformed-x: {a: 0, exp: 0}})
+;; 1 => (ok {product: 27182818284590452, x: 0})
+;; RESULT SN: {a: 0, exp: 1}
+;; RESULT SN: {a: 2718281828459045, exp: -15}
+
 (define-read-only (exp-pos-16 (x int) (exp int))
     (let
         (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x_product (fold accumulate_product_16 x_a_list_16 {x: {a: x, exp: exp}, product: {a: 1, exp: 0}}))
-        ;; (product_out (get product x_product))
-        ;; (x_out (get x x_product))
-        ;; (seriesSum (+ ONE_16 x_out))
-        ;; (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        ;; (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        ;; (sum (get seriesSum term_sum_x))
+            ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+            ;; it and compute the accumulated product.
+            ;; (x_product (fold accumulate_product_16 x_a_list_16 {x: {a: x, exp: exp}, product: {a: 1, exp: 0}}))
+            (x_product {product: {a: 21842008108156168, exp: -16}, x: {a: 1875, exp: -5}})
+            
+            (product_out (get product x_product))
+            (product_out_a (get a product_out))
+            (product_out_exp (get exp product_out))
+            
+            (x_out (get x x_product))
+            (x_out_a (get a x_out))
+            (x_out_exp (get exp x_out))
+            
+            (seriesSum (addition-with-scientific-notation 1 0 x_out_a x_out_exp))
+            (seriesSum_a (get a seriesSum))
+            (seriesSum_exp (get exp seriesSum))
+
+            (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+            (term_sum_x (fold rolling_div_sum_16 div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+            (sum (get seriesSum term_sum_x))
+            (sum_a (get a sum))
+            (sum_exp (get exp sum))
+
+            (r (multiplication-with-scientific-notation product_out_a product_out_exp sum_a sum_exp))
+            (r_scaled_down (scale-down-with-lost-precision r))
         )
-        ;; (ok (* (scale-down (* product_out sum)) 1))
-        (ok x_product)
+        (ok r_scaled_down)
     )
 )
 
-(define-private (accumulate_product_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (a int) (exp int))) (product (tuple (a int) (exp int))))))
-    (let
-        (
-            (x_pre (get x_pre x_a_pre))
-            (x_pre_exp (get x_pre_exp x_a_pre))
+(define-private (rolling_div_sum_16 (n int) (rolling (tuple (term (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (x (tuple (a int) (exp int))))))
+  (let
+    (
+      ;; (rolling_term (get term rolling))
+      (rolling_term (get term rolling))
+      (rolling_term_a (get a rolling_term))
+      (rolling_term_exp (get exp rolling_term))
 
-            (a_pre (get a_pre x_a_pre))
-            (a_pre_exp (get a_pre_exp x_a_pre))
+      ;; (rolling_sum (get seriesSum rolling))
+      (rolling_sum (get seriesSum rolling))
+      (rolling_sum_a (get a rolling_sum))
+      (rolling_sum_exp (get exp rolling_sum))
 
-            (rolling_x (get x rolling_x_p))
-            (rolling_x_a (get a rolling_x))
-            (rolling_x_a_exp (get exp rolling_x))
+      ;; (x (get x rolling))
+      (x (get x rolling))
+      (x_a (get a x))
+      (x_exp (get exp x))
 
-            (rolling_product (get product rolling_x_p))
-            (rolling_product_a (get a rolling_product))
-            (rolling_product_a_exp (get exp rolling_product))
-        )
-        (if (greater-than-equal-to rolling_x_a rolling_x_a_exp x_pre x_pre_exp)
-            {
-                x: (subtraction-with-scientific-notation rolling_x_a rolling_x_a_exp x_pre x_pre_exp),
-                product: (multiplication-with-scientific-notation-with-precision rolling_product_a rolling_product_a_exp a_pre a_pre_exp)
-            }
-            {x: rolling_x, product: rolling_product}
-        )
-    )
+      ;; (next_term (/ (scale-down (* rolling_term x)) n))
+      (next_term (multiplication-with-scientific-notation rolling_term_a rolling_term_exp x_a x_exp))
+      (next_term_a (get a next_term))
+      (next_term_exp (get exp next_term))
+
+      (next_term_transformed (transform-to-16 next_term_a next_term_exp))
+      (next_term_transformed_a (get a next_term_transformed))
+      (next_term_transformed_exp (get exp next_term_transformed))
+
+      (next_term_div (division-with-scientific-notation next_term_transformed_a next_term_transformed_exp n 0))
+      (next_term_div_a (get a next_term_div))
+      (next_term_div_exp (get exp next_term_div))
+
+      (next_term_div_transformed (transform-to-16 next_term_div_a next_term_div_exp))
+      (next_term_div_transformed_a (get a next_term_div_transformed))
+      (next_term_div_transformed_exp (get exp next_term_div_transformed))
+
+      ;; (next_sum (+ rolling_sum next_term))
+      (next_sum (addition-with-scientific-notation rolling_sum_a rolling_sum_exp next_term_div_transformed_a next_term_div_transformed_exp))
+   )
+    {term: next_term_div_transformed, seriesSum: next_sum, x: x}
+ )
 )
 
-;; (ok {product: 220264657948067164354, x: 0})
-;; (ok {product: {a: 22026465794806713809497728163200, exp: -27}, x: {a: 0, exp: 0}})
 (define-read-only (exp-pos (x int))
     (let
         (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
-        ;; (product_out (get product x_product))
-        ;; (x_out (get x x_product))
-        ;; (seriesSum (+ ONE_16 x_out))
-        ;; (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        ;; (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        ;; (sum (get seriesSum term_sum_x))
+            ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+            ;; it and compute the accumulated product.
+            (x_product (fold accumulate_product x_a_list {x: x, product: ONE_16}))
+            (product_out (get product x_product))
+            (x_out (get x x_product))
+            (seriesSum (+ ONE_16 x_out))
+            (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+            (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+            (sum (get seriesSum term_sum_x))
+            (r (* product_out sum))
+            (r_scaled_down (scale-down r))
         )
-        ;; (ok (* (scale-down (* product_out sum)) 1))
-        (ok x_product)
+        (ok r_scaled_down)
     )
 )
 
@@ -556,18 +660,21 @@
  )
 )
 
-;; (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
-;;   (let
-;;     (
-;;       (rolling_term (get term rolling))
-;;       (rolling_sum (get seriesSum rolling))
-;;       (x (get x rolling))
-;;       (next_term (/ (scale-down (* rolling_term x)) n))
-;;       (next_sum (+ rolling_sum next_term))
-;;    )
-;;     {term: next_term, seriesSum: next_sum, x: x}
-;;  )
-;; )
+(define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
+  (let
+    (
+      (rolling_term (get term rolling))
+      (rolling_sum (get seriesSum rolling))
+      (x (get x rolling))
+      (next_term (* rolling_term x))
+      (next_term_scaled_down (scale-down next_term))
+      (next_term_div (/ next_term_scaled_down n))
+      (next_sum (+ rolling_sum next_term_div))
+   )
+    {term: next_term_div, seriesSum: next_sum, x: x}
+ )
+)
+
 
 ;; ;; public functions
 ;; ;;
@@ -595,20 +702,40 @@
 ;;   )
 ;; )
 
-;; ;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
-;; ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-;; (define-read-only (exp-fixed (x int))
-;;   (begin
-;;     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
-;;     (if (< x 0)
-;;       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-;;       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-;;       ;; Fixed point division requires multiplying by ONE_16.
-;;       (ok (/ (scale-up ONE_16) (unwrap-panic (exp-pos (* -1 x)))))
-;;       (exp-pos x)
-;;     )
-;;   )
-;; )
+(define-read-only (exp-fixed-16 (x int) (exp int))
+  (begin
+    (asserts! (and (<= MIN_NATURAL_EXPONENT_16 x) (<= x MAX_NATURAL_EXPONENT_16)) (err ERR-INVALID-EXPONENT))
+    (if (greater-than-equal-to x exp 0 0)
+      (exp-pos-16 x exp)
+      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
+      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
+      ;; Fixed point division requires multiplying by ONE_16.
+      (let
+        (
+            (multiplication (multiplication-with-scientific-notation x exp -1 0))
+            (multiplication_a (get a multiplication))
+            (multiplication_exp (get exp multiplication))
+        )
+        (exp-pos-16 multiplication_a multiplication_exp)
+      )
+    )
+  )
+)
+
+;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
+;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+(define-read-only (exp-fixed (x int))
+  (begin
+    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
+    (if (< x 0)
+      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
+      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
+      ;; Fixed point division requires multiplying by ONE_16.
+      (ok (/ (scale-up ONE_16) (unwrap-panic (exp-pos (* -1 x)))))
+      (exp-pos x)
+    )
+  )
+)
 
 ;; ;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
 ;; (define-read-only (log-fixed (arg int) (base int))
