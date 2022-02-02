@@ -310,16 +310,6 @@
     )
 )
 
-(define-read-only (multiplication-with-scientific-notation-with-precision (a int) (a-exp int) (b int) (b-exp int))
-    (let
-        (
-            (product (* a b))
-            (exponent (+ a-exp b-exp))
-        )
-        {a: product, exp: exponent}
-    )
-)
-
 ;; transformation
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
@@ -521,6 +511,44 @@
     )
 )
 
+(define-read-only (multiplication-with-scientific-notation-with-precision (a int) (a-exp int) (b int) (b-exp int))
+    (let
+        (   (a-count (digit-count a))
+        ;;(unwrap! (count-digits a) (ok {a: 1, exp: 0 })))
+            (first (if (> a-count 16)
+                {a: (/ a (pow 10 (- a-count 16))), exp: (+ a-exp (- a-count 16))}
+                {a: a, exp: a-exp}
+            ))
+            (b-count (digit-count b))
+            ;; (unwrap! (count-digits b) (ok {a: 1, exp: 0 })))
+            (second (if (> b-count 16)
+                {a: (/ b (pow 10 (- b-count 16))), exp: (+ b-exp (- b-count 16))}
+                {a: b, exp: b-exp}
+            ))
+            
+            (product (* (get a first) (get a second)))
+            (exponent (+ (get exp first) (get exp second)))
+        )
+        {a: product, exp: exponent }
+    )
+)
+
+(define-read-only (count-digits (a int))
+    (let
+        (   (input (if (< a 0) (* -1 a) a))
+            (natural-log (try! (ln-fixed input 0)))
+            (natural-log-a (get a natural-log))
+            (natural-log-exp (get exp natural-log))
+            (count (division-with-scientific-notation natural-log-a natural-log-exp 2303 -3))
+            (exponent (get exp count))
+            (exp (if (< exponent 1) (* -1 exponent ) exponent))
+            (total-digits (+ (/ (get a count) (pow 10 exp)) 1))
+        )
+        (ok total-digits)
+    )
+)
+
+
 ;; (ok {product: 220264657948067164354, x: 0})
 ;; (ok {product: {a: 22026465794806713809497728163200, exp: -27}, x: {a: 0, exp: 0}})
 (define-read-only (exp-pos (x int))
@@ -643,6 +671,91 @@
                 )
                 (ok (subtraction-with-scientific-notation 0 0 ln_a ln_exp))
             )
+        )
+    )
+)
+
+(define-read-only (digit-count (digits int))
+    (let 
+        ((a (if (< digits 0) (* -1 digits) digits)))
+        (if (<= a 9)
+            1
+        (if (<= a 99)
+            2
+        (if (<= a 999)
+            3
+        (if (<= a 9999)
+            4
+        (if (<= a 99999)
+            5
+        (if (<= a 999999)
+            6
+        (if (<= a 9999999)
+            7
+        (if (<= a 99999999)
+            8
+        (if (<= a 999999999)
+            9
+        (if (<= a 9999999999)
+            10
+        (if (<= a 99999999999)
+            11
+        (if (<= a 999999999999)
+            12
+        (if (<= a 9999999999999)
+            13
+        (if (<= a 99999999999999)
+            14
+        (if (<= a 999999999999999)
+            15
+        (if (<= a 9999999999999999)
+            16
+        (if (<= a 99999999999999999)
+            17
+        (if (<= a 999999999999999999)
+            18
+        (if (<= a 9999999999999999999)
+            19
+        (if (<= a 99999999999999999999)
+            20
+        (if (<= a 999999999999999999999)
+            21
+        (if (<= a 9999999999999999999999)
+            22
+        (if (<= a 99999999999999999999999)
+            23
+        (if (<= a 999999999999999999999999)
+            24
+        (if (<= a 9999999999999999999999999)
+            25
+        (if (<= a 99999999999999999999999999)
+            26
+        (if (<= a 999999999999999999999999999)
+            27
+        (if (<= a 9999999999999999999999999999)
+            28
+        (if (<= a 99999999999999999999999999999)
+            29
+        (if (<= a 999999999999999999999999999999)
+            30
+        (if (<= a 9999999999999999999999999999999)
+            31
+        (if (<= a 99999999999999999999999999999999)
+            32
+        (if (<= a 999999999999999999999999999999999)
+            33
+        (if (<= a 9999999999999999999999999999999999)
+            34
+        (if (<= a 99999999999999999999999999999999999)
+            35
+        (if (<= a 999999999999999999999999999999999999)
+            36
+        (if (<= a 9999999999999999999999999999999999999)
+            37
+        (if (<= a 99999999999999999999999999999999999999)
+            38
+        39
+        )))))))))))))))))))))))))))))))))))))
         )
     )
 )
