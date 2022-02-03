@@ -574,10 +574,10 @@
             (sum_a (get a sum))
             (sum_exp (get exp sum))
 
-            (r (multiplication-with-scientific-notation transformed_product_a transformed_product_exp sum_a sum_exp))
+            (r (multiplication-with-scientific-notation-with-precision transformed_product_a transformed_product_exp sum_a sum_exp))
             (r_scaled_down (scale-down-with-lost-precision r))
         )
-        (ok r_scaled_down)
+        r_scaled_down
     )
 )
 
@@ -768,9 +768,9 @@
 
 (define-read-only (exp-fixed-16 (x int) (exp int))
   (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT_16 x) (<= x MAX_NATURAL_EXPONENT_16)) (err ERR-INVALID-EXPONENT))
+    (asserts! (and (greater-than-equal-to x exp MIN_NATURAL_EXPONENT_16 0) (greater-than-equal-to MAX_NATURAL_EXPONENT_16 0 x exp)) (err ERR-INVALID-EXPONENT))
     (if (greater-than-equal-to x exp 0 0)
-      (exp-pos-16 x exp)
+      (ok (exp-pos-16 x exp))
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
       ;; Fixed point division requires multiplying by ONE_16.
@@ -779,8 +779,11 @@
             (multiplication (multiplication-with-scientific-notation x exp -1 0))
             (multiplication_a (get a multiplication))
             (multiplication_exp (get exp multiplication))
+            (exponent_result (exp-pos-16 multiplication_a multiplication_exp))
+            (exponent_result_a (get a exponent_result))
+            (exponent_result_exp (get exp exponent_result))
         )
-        (exp-pos-16 multiplication_a multiplication_exp)
+        (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp)) 
       )
     )
   )
