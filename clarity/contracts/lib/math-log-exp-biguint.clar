@@ -595,7 +595,7 @@
 
             (r (multiplication-with-scientific-notation-with-precision transformed_product_a transformed_product_exp sum_a sum_exp))
         )
-        (if (greater-than x exp 1 0)
+        (if (greater-than-equal-to x exp 1 0)
             (scale-down-with-lost-precision r)
         r
         )
@@ -803,8 +803,13 @@
             (exponent_result (exp-pos-16 multiplication_a multiplication_exp))
             (exponent_result_a (get a exponent_result))
             (exponent_result_exp (get exp exponent_result))
+            (transformed_result (transform-to-16 (get a exponent_result) (get exp exponent_result)))
+            (transformed_result_a (get a transformed_result))
+            (transformed_result_exp (get exp transformed_result))
         )
-        (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp))
+        (ok (division-with-scientific-notation-with-precision 1 0 transformed_result_a transformed_result_exp))
+        ;; )
+        ;; (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp))
       )
     )
   )
