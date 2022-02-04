@@ -222,6 +222,25 @@
     )       
 )
 
+(define-read-only (greater-than (a int) (a_exp int) (b int) (b_exp int))
+    (if (> a_exp b_exp)
+        (let
+            (
+                (transformation (transform a a_exp b_exp))
+                (new_a (get a transformation))
+            )
+            (if (> new_a b) true false)
+        )
+        (let
+            (
+                (transformation (transform b b_exp a_exp))
+                (new_b (get a transformation))
+            )
+            (if (> a new_b) true false)
+        )
+    )       
+)
+
 (define-read-only (addition-with-scientific-notation (a int) (a_exp int) (b int) (b_exp int))
     (begin
         (if (> a_exp b_exp)
@@ -575,9 +594,11 @@
             (sum_exp (get exp sum))
 
             (r (multiplication-with-scientific-notation-with-precision transformed_product_a transformed_product_exp sum_a sum_exp))
-            (r_scaled_down (scale-down-with-lost-precision r))
         )
-        r_scaled_down
+        (if (greater-than x exp 0 0)
+            (scale-down-with-lost-precision r)
+        r
+        )
     )
 )
 
@@ -783,7 +804,7 @@
             (exponent_result_a (get a exponent_result))
             (exponent_result_exp (get exp exponent_result))
         )
-        (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp)) 
+        (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp))
       )
     )
   )

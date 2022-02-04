@@ -142,8 +142,8 @@ Clarinet.test({
             "0","0"
         ], deployer.address);
         let position: any = call.result.expectOk().expectTuple()
-        assertEquals(position['a'], "0")
-        assertEquals(position['exp'], "1")
+        assertEquals(position['a'], "1000000000000000")
+        assertEquals(position['exp'], "-15")
 
         call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
             [
@@ -177,7 +177,7 @@ Clarinet.test({
         assertEquals(position['a'], "231952283024357220")
         assertEquals(position['exp'], "-33")
         
-        console.log("RESULT TTMATH: 2.319522830243569388")
+        console.log("RESULT TTMATH: 2.319522830243569388e-16")
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
@@ -193,7 +193,7 @@ Clarinet.test({
         ], deployer.address);
         assertEquals(call.result.expectOk(), "1")
         
-        console.log("RESULT TTMATH: 0.0000000152299797")
+        console.log("RESULT TTMATH: 0.00000001522997974471262843613")
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
@@ -210,6 +210,22 @@ Clarinet.test({
         assertEquals(call.result.expectOk(), "271828183")
 
         console.log("RESULT TTMATH: 2.718281828459045235360")
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+            [
+            "-1","0"
+        ], deployer.address);
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "367879441171443030")
+        assertEquals(position['exp'], "-18")
+
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
+        [
+        "-100000000"
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "36787944")
+
+        console.log("RESULT TTMATH: 0.36787944117144232159552377")
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
