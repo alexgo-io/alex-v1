@@ -131,6 +131,8 @@ Clarinet.test({
     },
 });
 */
+
+/*
 Clarinet.test({
     name: "math-log-exp-biguint: exp-16",
     async fn(chain: Chain, accounts: Map<string, Account>) {
@@ -232,8 +234,8 @@ Clarinet.test({
             "1","-1"
         ], deployer.address);
         position = call.result.expectOk().expectTuple()
-        assertEquals(position['a'], "1105170918075645661413597729825")
-        assertEquals(position['exp'], "-30")
+        assertEquals(position['a'], "110517091807564")
+        assertEquals(position['exp'], "-14")
 
         call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
             [
@@ -248,8 +250,8 @@ Clarinet.test({
             "-1","-1"
         ], deployer.address);
         position = call.result.expectOk().expectTuple()
-        assertEquals(position['a'], "9048374180359612")
-        assertEquals(position['exp'], "-16")
+        assertEquals(position['a'], "904837418035965815")
+        assertEquals(position['exp'], "-18")
 
         call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
             [
@@ -275,26 +277,9 @@ Clarinet.test({
 
         console.log("RESULT TTMATH: 22026.46579480671651695790")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
-            [
-            "2","-2"
-        ], deployer.address);
-        position = call.result.expectOk().expectTuple()
-        assertEquals(position['a'], "1020201340026755")
-        assertEquals(position['exp'], "-15")
-        console.log("RESULT TTMATH: 1.02020134002675581016")
-
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
-            [
-            "2","-3"
-        ], deployer.address);
-        position = call.result.expectOk().expectTuple()
-        assertEquals(position['a'], "1002002001334000")
-        assertEquals(position['exp'], "-15")
-        console.log("RESULT TTMATH: 1.002002001334000266755")
-
     },
 });
+*/
 
 /*
 Clarinet.test({
@@ -561,3 +546,256 @@ Clarinet.test({
     },
 });
 */
+
+Clarinet.test({
+    name: "math-big-uint: exp-fixed",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+
+        let deployer = accounts.get("deployer")!;
+        // 0.0000005
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '5',
+            types.int(-7)
+        ], deployer.address);
+        let result: any = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1000000500000125');
+        result['exp'].expectInt(-15);
+
+        // 0.02
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '2',
+            types.int(-2)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1020201340026755');
+        result['exp'].expectInt(-15);
+
+        //0.1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '1',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1105170918075645661413597729825');
+        result['exp'].expectInt(-30);
+
+        //0.2
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '2',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1221402758160167647388990560686');
+        result['exp'].expectInt(-30);
+
+        //0.3
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '3',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1349858807576002225893152930490');
+        result['exp'].expectInt(-30);
+
+        // 0.4
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '4',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1491824697641267724769393389600'); 
+        result['exp'].expectInt(-30);
+
+        // 0.5
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '5',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1648721270700128000000000000000');
+        result['exp'].expectInt(-30);
+
+        // 0.6
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '6',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1822118800390505974320033010746');
+        result['exp'].expectInt(-30);
+
+        // 0.7
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '7',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '2013752707470472905784490231226');
+        result['exp'].expectInt(-30);
+
+        // 0.8
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '8',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '2225540928492465151619653238016'); 
+        result['exp'].expectInt(-30);
+
+        // 0.9
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '9',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '2459603111156944658640975696660');
+        result['exp'].expectInt(-30);
+
+        //1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '1',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '271828182845904');
+        result['exp'].expectInt(-14);
+
+        // 4.5
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '45',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '900171313005218');
+        result['exp'].expectInt(-13);
+
+
+        // 7.1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '71',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '121196707449257');
+        result['exp'].expectInt(-11);
+
+        //10
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '10',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '220264657948067');
+        result['exp'].expectInt(-10);
+
+        // 51
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '51',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '140934908242693');
+        result['exp'].expectInt(8);
+
+        //0
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '0',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '1000000000000000');
+        result['exp'].expectInt(-15);
+
+        //-1.01
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '-101',
+            types.int(-2)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '364218979571524181');
+        result['exp'].expectInt(-18);
+
+        //-1.8
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '-18',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '165298888221586704');
+        result['exp'].expectInt(-18);
+
+        // -7.1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '-71',
+            types.int(-1)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '825104923265908845');
+        result['exp'].expectInt(-21);
+
+        // -8
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '-80000000000',
+            types.int(-10)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '335462627902512770');
+        result['exp'].expectInt(-21);
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            "-18",
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple()
+        assertEquals(result['a'], "152299797447126310")
+        result['exp'].expectInt(-25)
+
+        // -36
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '-36',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['a'], '231952283024357220');
+        result['exp'].expectInt(-33);
+
+        // 52
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '52',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectErr().expectErr().expectUint(5012);
+
+        // 37
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        [
+            '-37',
+            types.int(0)
+        ], deployer.address);
+        result = call.result.expectErr().expectErr().expectUint(5012);
+    },
+});
