@@ -24,6 +24,8 @@
 (define-constant MIN_NATURAL_EXPONENT_16 -36)
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
+(define-constant UPPER_BASE_BOUND_16 {a: 17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
+(define-constant LOWER_EXPONENT_BOUND_16 {a: 85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
 
 ;; Because largest exponent is 51, we start from 32
 ;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
@@ -218,25 +220,6 @@
                 (new_b (get a transformation))
             )
             (if (>= a new_b) true false)
-        )
-    )       
-)
-
-(define-read-only (greater-than (a int) (a_exp int) (b int) (b_exp int))
-    (if (> a_exp b_exp)
-        (let
-            (
-                (transformation (transform a a_exp b_exp))
-                (new_a (get a transformation))
-            )
-            (if (> new_a b) true false)
-        )
-        (let
-            (
-                (transformation (transform b b_exp a_exp))
-                (new_b (get a transformation))
-            )
-            (if (> a new_b) true false)
         )
     )       
 )
@@ -471,94 +454,41 @@
  )
 )
 
-;; ;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; ;; x^y = exp(y * ln(x)).
-;; ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-;; (define-read-only (pow-priv (x uint) (y uint))
-;;   (let
-;;     (
-;;       (x-int (to-int x))
-;;       (y-int (to-int y))
-;;       (lnx (unwrap-panic (ln-priv x-int)))
-;;       (logx-times-y (scale-down (* lnx y-int)))
-;;     )
-;;     (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
-;;     (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
-;;   )
-;; )
+;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
+;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
+;; x^y = exp(y * ln(x)).
+;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+(define-read-only (pow-priv (x uint) (y uint))
+  (let
+    (
+      (x-int (to-int x))
+      (y-int (to-int y))
+      (lnx (unwrap-panic (ln-priv x-int)))
+      (logx-times-y (scale-down (* lnx y-int)))
+    )
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
+    (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
+  )
+)
 
-;; 0.1 => (ok {product: 10982851403078258, x: 62500000000000})
-;; (x_product {product: {a: 10982851403078258, exp: -16}, x: {a: 62500000000000, exp: -16}})
-;; (ok {a: 11051709180756472, exp: -16})
+(define-read-only (pow-priv-16 (x int) (x_exp int) (y int) (y_exp int))
+  (let
+    (
+      
+      (lnx (unwrap-panic (ln-priv-16 x x_exp)))
+      (lnx_a (get a lnx))
+      (lnx_exp (get exp lnx))
 
-;; 0.2 => (ok {product: 12062302494209806, x: 125000000000000})
-;; (x_product {product: {a: 12062302494209806, exp: -16}, x: {a: 125000000000000, exp: -16}})
-;; (ok {a: 12214027581601695, exp: -16})
-
-;; 0.3 => (ok {product: 13247847587288655, x: 187500000000000})
-;; (x_product {product: {a: 13247847587288655, exp: -16}, x: {a: 187500000000000, exp: -16}})
-;; (ok {a: 13498588075760028, exp: -16})
-
-;; 0.4 => (ok {product: 14549914146182012, x: 250000000000000})
-;; (x_product {product: {a: 14549914146182012, exp: -16}, x: {a: 250000000000000, exp: -16}})
-;; (ok {a: 14918246976412698, exp: -16})
-
-;; 0.5 => (ok {product: 16487212707001282, x: 0})
-;; (x_product {product: {a: 16487212707001282, exp: -16}, x: {a: 0, exp: -16}})
-;; (ok {a: 16487212707001282, exp: -16})
-
-;; 0.6 => (ok {product: 18107660721193871, x: 62500000000000})
-;; (x_product {product: {a: 18107660721193871, exp: -16}, x: {a: 62500000000000, exp: -16}})
-;; (ok {a: 18221188003905083, exp: -16})
-
-;; 0.7 => (ok {product: 19887374695822917, x: 125000000000000})
-;; (x_product {product: {a: 19887374695822917, exp: -16}, x: {a: 125000000000000, exp: -16}})
-;; (ok {a: 20137527074704760, exp: -16})
-
-;; 0.8 => (ok {product: 21842008108156178, x: 187500000000000})
-;; (x_product {product: {a: 21842008108156178, exp: -16}, x: {a: 187500000000000, exp: -16}})
-;; (ok {a: 22255409284924672, exp: -16})
-
-;; 0.9 => (ok {product: 23988752939670976, x: 250000000000000})
-;; (x_product {product: {a: 23988752939670976, exp: -16}, x: {a: 250000000000000, exp: -16}})
-;; (ok {a: 24596031111569487, exp: -16})
-
-;; 1 => (ok {product: 27182818284590452, x: 0})
-;; (x_product {product: {a: 27182818284590452, exp: -16}, x: {a: 0, exp: -16}})
-;; (ok {a: 27182818284590452, exp: -16})
-
-;; 0.1 in SN format (ok {transformed-product: {a: 10982851403078257, exp: -16}, transformed-x: {a: 625, exp: -5}})
-;; 0.1 => (ok {product: 10982851403078258, x: 62500000000000})
-
-;; 0.2 in SN format (ok {transformed-product: {a: 12062302494209798, exp: -16}, transformed-x: {a: 125, exp: -4}})
-;; 0.2 => (ok {product: 12062302494209806, x: 125000000000000})
-
-;; 0.3 in SN format (ok {transformed-product: {a: 13247847587288654, exp: -16}, transformed-x: {a: 18750000, exp: -9}})
-;; 0.3 => (ok {product: 13247847587288655, x: 187500000000000})
-
-;; 0.4 in SN format (ok {transformed-product: {a: 14549914146182003, exp: -16}, transformed-x: {a: 250000000000000, exp: -16}})
-;; 0.4 => (ok {product: 14549914146182012, x: 250000000000000})
-
-;; 0.5 in SN format (ok {transformed-product: {a: 1648721270700128, exp: -15}, transformed-x: {a: 0, exp: -2}})
-;; 0.5 => (ok {product: 16487212707001282, x: 0})
-
-;; 0.6 in SN format (ok {transformed-product: {a: 18107660721193861, exp: -16}, transformed-x: {a: 625, exp: -5}})
-;; 0.6 => (ok {product: 18107660721193871, x: 62500000000000})
-
-;; 0.7 in SN format (ok {transformed-product: {a: 19887374695822895, exp: -16}, transformed-x: {a: 125, exp: -4}})
-;; 0.7 => (ok {product: 19887374695822917, x: 125000000000000})
-
-;; 0.8 in SN format (ok {transformed-product: {a: 21842008108156168, exp: -16}, transformed-x: {a: 1875, exp: -5}})
-;; 0.8 => (ok {product: 21842008108156178, x: 187500000000000})
-
-;; 0.9 in SN format (ok {transformed-product: {a: 23988752939670953, exp: -16}, transformed-x: {a: 25, exp: -3}})
-;; 0.9 => (ok {product: 23988752939670976, x: 250000000000000})
-
-;; 1 in SN format (ok {transformed-product: {a: 2718281828459045, exp: -15}, transformed-x: {a: 0, exp: 0}})
-;; 1 => (ok {product: 27182818284590452, x: 0})
-;; RESULT SN: {a: 0, exp: 1}
-;; RESULT SN: {a: 2718281828459045, exp: -15}
+      (logx_times_y (multiplication-with-scientific-notation lnx_a lnx_exp y y_exp))
+      (logx_times_y_a (get a logx_times_y))
+      (logx_times_y_exp (get exp logx_times_y))
+    )
+    (asserts! (and (greater-than-equal-to logx_times_y_a logx_times_y_exp MIN_NATURAL_EXPONENT_16 0)
+                    (greater-than-equal-to MAX_NATURAL_EXPONENT_16 0 logx_times_y_a logx_times_y_exp)) 
+                    (err ERR-INVALID-EXPONENT))
+    (exp-fixed-16 logx_times_y_a logx_times_y_exp)
+  )
+)
 
 (define-read-only (exp-pos-16 (x int) (exp int))
     (let
@@ -761,31 +691,54 @@
 )
 
 
-;; ;; public functions
-;; ;;
+;; public functions
+;;
 
-;; (define-read-only (get-exp-bound)
-;;   (ok MILD_EXPONENT_BOUND)
-;; )
+(define-read-only (get-exp-bound)
+  (ok MILD_EXPONENT_BOUND)
+)
 
-;; ;; Exponentiation (x^y) with unsigned 16 decimal fixed point base and exponent.
-;; (define-read-only (pow-fixed (x uint) (y uint))
-;;   (begin
-;;     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-;;     (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
+;; Exponentiation (x^y) with unsigned 16 decimal fixed point base and exponent.
+(define-read-only (pow-fixed (x uint) (x_exp int) (y uint) (y_exp int))
+  (begin
+    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+    (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
 
-;;     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-;;     (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
+    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+    (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
 
-;;     (if (is-eq y u0) 
-;;       (ok (to-uint ONE_16))
-;;       (if (is-eq x u0) 
-;;         (ok u0)
-;;         (pow-priv x y)
-;;       )
-;;     )
-;;   )
-;; )
+    (if (is-eq y u0) 
+      (ok (to-uint ONE_16))
+      (if (is-eq x u0) 
+        (ok u0)
+        (pow-priv x y)
+      )
+    )
+  )
+)
+
+;; 10 127 ^ 2 -1
+;; 10 ^ 0.2
+;; (>= x x_exp (pow 2 127) 0)
+
+(define-read-only (pow-fixed-16 (x int) (x_exp int) (y int) (y_exp int))
+  (begin
+    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+    ;; (asserts! (< x (pow 2 127)) ERR-X-OUT-OF-BOUNDS)
+    (asserts! (not (greater-than-equal-to x x_exp (get a UPPER_BASE_BOUND_16) (get exp UPPER_BASE_BOUND_16))) ERR-X-OUT-OF-BOUNDS)
+
+    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+    (asserts! (not (greater-than-equal-to y y_exp (get a LOWER_EXPONENT_BOUND_16) (get exp LOWER_EXPONENT_BOUND_16))) ERR-Y-OUT-OF-BOUNDS)
+
+    (if (is-eq y 0) 
+      (ok {a: 1, exp: 0})
+      (if (is-eq x 0) 
+        (ok {a: 0, exp: 0})
+        (ok (unwrap-panic (pow-priv-16 x x_exp y y_exp)))
+      )
+    )
+  )
+)
 
 (define-read-only (exp-fixed-16 (x int) (exp int))
   (begin
