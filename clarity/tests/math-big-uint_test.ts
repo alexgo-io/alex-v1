@@ -132,93 +132,132 @@ Clarinet.test({
 });
 */
 Clarinet.test({
-    name: "math-big-uint: exp (0 -> 1)",
+    name: "math-log-exp-biguint: exp-16",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
         
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
-            "0",
+            "0","0"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "10000000000000000")
+        let position: any = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "0")
+        assertEquals(position['exp'], "1")
+
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
+            [
+            "0"
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "100000000")
+
+        console.log("RESULT TTMATH: 1")
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
-            "0",
-            "0"
+            "51","0"
         ], deployer.address);
-        console.log("RESULT SN: "+call.result.expectOk());
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "140934908242693")
+        assertEquals(position['exp'], "8")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
             [
-            "1000000000000000",
+            "5100000000"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "11051709180756472")
-        // RESULT SN: {a: 11051709180756472, exp: -16}
+        assertEquals(call.result.expectOk(), "14093490834298401095131234655")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
-            [
-            "2000000000000000",
-        ], deployer.address);
-        assertEquals(call.result.expectOk(), "12214027581601695")
-        // RESULT SN: {a: 12214027581601695, exp: -16}
+        console.log("RESULT TTMATH: 1.4093490824269387964")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
-            "3000000000000000",
+            "-36","0"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "13498588075760028")
-        // RESULT SN: {a: 13498588075760028, exp: -16}
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "231952283024357220")
+        assertEquals(position['exp'], "-33")
+        
+        console.log("RESULT TTMATH: 2.319522830243569388")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
-            "4000000000000000",
+            "-18","0"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "14918246976412698")
-        // RESULT SN: {a: 14918246976412698, exp: -16}
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "152299797447126310")
+        assertEquals(position['exp'], "-25")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
-            [
-            "5000000000000000",
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
+        [
+            "-1800000000"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "16487212707001282")
-        // RESULT SN: {a: 16487212707001282, exp: -16}
+        assertEquals(call.result.expectOk(), "1")
+        
+        console.log("RESULT TTMATH: 0.0000000152299797")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
-            "6000000000000000",
+            "1","0"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "18221188003905083")
-        // RESULT SN: {a: 18221188003905083, exp: -16}
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "271828182845904")
+        assertEquals(position['exp'], "-14")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
-            [
-            "7000000000000000",
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
+        [
+        "100000000"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "20137527074704760")
-        // RESULT SN: {a: 20137527074704760, exp: -16}
+        assertEquals(call.result.expectOk(), "271828183")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
-            [
-            "8000000000000000",
-        ], deployer.address);
-        assertEquals(call.result.expectOk(), "22255409284924672")
-        // RESULT SN: {a: 22255409284924661, exp: -16}
+        console.log("RESULT TTMATH: 2.718281828459045235360")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
             [
-            "9000000000000000",
+            "1","-1"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "24596031111569487")
-        // RESULT SN: {a: 24596031111569487, exp: -16}
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "110517091807564")
+        assertEquals(position['exp'], "-14")
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed",
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
             [
-            "10000000000000000",
+            "10000000"
         ], deployer.address);
-        assertEquals(call.result.expectOk(), "27182818284590452")
-        // RESULT SN: {a: 27182818284590452, exp: -16}
+        assertEquals(call.result.expectOk(), "110517090")
+
+        console.log("RESULT TTMATH: 1.105170918075647624")
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+            [
+            "-1","-1"
+        ], deployer.address);
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "904837418035965815")
+        assertEquals(position['exp'], "-18")
+
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
+            [
+            "-10000000"
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "90483743")
+
+        console.log("RESULT TTMATH: 0.904837418035959573")
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+            [
+            "1","1"
+        ], deployer.address);
+        position = call.result.expectOk().expectTuple()
+        assertEquals(position['a'], "220264657948067")
+        assertEquals(position['exp'], "-10")
+
+        call = chain.callReadOnlyFn("math-log-exp", "exp-fixed",
+            [
+            "1000000000"
+        ], deployer.address);
+        assertEquals(call.result.expectOk(), "2202646579798")
+
+        console.log("RESULT TTMATH: 22026.46579480671651695790")
 
     },
 });
