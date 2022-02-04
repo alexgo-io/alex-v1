@@ -595,7 +595,7 @@
 
             (r (multiplication-with-scientific-notation-with-precision transformed_product_a transformed_product_exp sum_a sum_exp))
         )
-        (if (greater-than x exp 0 0)
+        (if (greater-than x exp 1 0)
             (scale-down-with-lost-precision r)
         r
         )
