@@ -22,13 +22,13 @@ class FuturesPool{
         );
     }
 
-    //(contract-call? .alex-reserve-pool set-activation-threshold u1)
-    setActivationThreshold(sender: Account, threshold: number): Tx {
+    setActivationBlock(sender: Account, token: string, block: number): Tx {
         return Tx.contractCall(
             "alex-reserve-pool",
-            "set-activation-threshold",
+            "set-activation-block",
             [
-                types.uint(threshold)
+                types.principal(token),
+                types.uint(block)
             ],
             sender.address
         );
@@ -41,21 +41,6 @@ class FuturesPool{
             "add-token",
             [
                 types.principal(token)
-            ],
-            sender.address
-        );
-    }
-
-    //(contract-call? .alex-reserve-pool register-user 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token none)
-    registerUser(sender: Account, token: string, memo: string | undefined = undefined): Tx {
-        return Tx.contractCall(
-            "alex-reserve-pool",
-            "register-user",
-            [
-                types.principal(token),
-                typeof memo == "undefined"
-                    ? types.none()
-                    : types.some(types.utf8(memo)),
             ],
             sender.address
         );
@@ -74,7 +59,7 @@ class FuturesPool{
             ],
             sender.address
         );
-    }
+    }   
 
     //(contract-call? .futures-pool reduce-position 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token u1 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.stacked-alex u10)
     reducePosition(sender: Account, token: string, startCycle: number, yieldToken: string, percent: number): Tx {
@@ -86,6 +71,19 @@ class FuturesPool{
                 types.uint(startCycle),
                 types.principal(yieldToken),
                 types.uint(percent),
+            ],
+            sender.address
+        )
+    }
+
+    //(define-public (claim-and-stake (staked-token-trait <ft-trait>) (start-cycle uint))
+    claimAndStake(sender: Account, token: string, startCycle: number): Tx {
+        return Tx.contractCall(
+            "futures-pool",
+            "claim-and-stake",
+            [
+                types.principal(token),
+                types.uint(startCycle)
             ],
             sender.address
         )
@@ -108,6 +106,16 @@ class FuturesPool{
             sender.address
         )
     }
+
+    getUserId(sender: Account, token: string, user: string){
+        return this.chain.callReadOnlyFn(
+            "alex-reserve-pool",
+            "get-user-id",
+            [types.principal(token),
+            types.principal(user)],
+            sender.address
+        )
+    }    
 
     setCoinbaseAmount(sender: Account, token: string, coinbaseOne: number, coinbaseTwo: number,
       coinbaseThree: number, coinbaseFour: number, coinbaseFive: number): Tx {

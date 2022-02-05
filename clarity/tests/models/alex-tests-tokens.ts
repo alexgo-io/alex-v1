@@ -128,6 +128,49 @@ class USDAToken {
 }
 export { USDAToken };
 
+class FWP_WSTX_ALEX_5050 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  getBalanceFixed(account: string) {
+    return this.chain.callReadOnlyFn("fwp-wstx-alex-50-50-v1-01", "get-balance", [
+      types.principal(account),
+    ], this.deployer.address);
+  }
+
+  mintFixed(sender: Account, recipient: string, amount : number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("fwp-wstx-alex-50-50-v1-01", "mint-fixed", [
+        types.uint(amount),
+        types.principal(recipient)        
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+  
+  transferFixed(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("fwp-wstx-alex-50-50-v1-01", "transfer-fixed", [
+          types.uint(amount),
+          types.principal(sender.address),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  totalSupplyFixed() {
+    return this.chain.callReadOnlyFn("fwp-wstx-alex-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FWP_WSTX_ALEX_5050 };
+
 
 class WBTCToken {
   chain: Chain;

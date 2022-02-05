@@ -319,6 +319,10 @@ depends_on = [ "trait-ownable", "trait-sip-010", "token-wstx", "executor-dao" ]
 path = "contracts/staked-token/staked-alex.clar"
 depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
+[contracts.staked-fwp-wstx-alex-50-50]
+path = "contracts/staked-token/staked-fwp-wstx-alex-50-50.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
 [contracts.flash-loan-user-margin-wbtc-usda]
 path = "contracts/flash-loan-user-margin-wbtc-usda.clar"
 depends_on = [
