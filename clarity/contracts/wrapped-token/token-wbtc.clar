@@ -93,7 +93,7 @@
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
   (ok (/ (* (unwrap-panic (contract-call? .token-xbtc get-balance account)) (pow-decimals)) (pow u10 u8)))
-  ;; (ok (/ (* (try! (contract-call? 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) (pow-decimals)) (pow u10 u8)))
+  ;; (ok (/ (* (unwrap-panic (contract-call? 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) (pow-decimals)) (pow u10 u8)))
 )
 
 ;; @desc get-token-uri

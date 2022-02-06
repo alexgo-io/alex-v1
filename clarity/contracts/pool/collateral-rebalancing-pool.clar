@@ -153,13 +153,13 @@
     (if (is-eq token collateral)
         (ok ONE_8)
         (if (is-eq token .token-wstx)
-            (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000)
+            (contract-call? .fixed-weight-pool-v1-01 get-oracle-resilient .token-wstx collateral u50000000 u50000000)
             (if (is-eq collateral .token-wstx)
-                (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))))
+                (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool-v1-01 get-oracle-resilient .token-wstx token u50000000 u50000000))))
                 (ok
                     (div-down 
-                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
-                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))
+                        (try! (contract-call? .fixed-weight-pool-v1-01 get-oracle-resilient .token-wstx collateral u50000000 u50000000))
+                        (try! (contract-call? .fixed-weight-pool-v1-01 get-oracle-resilient .token-wstx token u50000000 u50000000))
                     )
                 )   
             )
@@ -437,12 +437,12 @@
                     (if (is-eq token-x token-y)
                         dx-to-dy
                         (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
+                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
                             (if (is-eq token-y .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
-                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
+                                (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
+                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
                                 )
                             )
                         )
@@ -460,7 +460,7 @@
 
             (if (is-eq token-x token-y)
                 u0
-                (unwrap! (contract-call? .fixed-weight-pool get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot (contract-of token-trait) (contract-of collateral-trait)))))) ERR-POOL-AT-CAPACITY)
+                (unwrap! (contract-call? .fixed-weight-pool-v1-01 get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot (contract-of token-trait) (contract-of collateral-trait)))))) ERR-POOL-AT-CAPACITY)
             )
 
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -510,12 +510,12 @@
                                         (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait balance-x tx-sender)))                                        
                                         (as-contract 
                                             (if (is-eq token-x .token-wstx)
-                                                (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 balance-x none)))
+                                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 balance-x none)))
                                                 (if (is-eq token-y .token-wstx)
-                                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 balance-x none)))
-                                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
-                                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 balance-x none)))
-                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 balance-x none)))
+                                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 balance-x none)))
+                                                    (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 balance-x none)))
+                                                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 balance-x none)))
                                                     )
                                                 )
                                             )                                        
@@ -594,15 +594,15 @@
                                     balance-x
                                     (begin
                                         (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait balance-x tx-sender)))
-                                        ;; (as-contract (try! (contract-call? .fixed-weight-pool swap-helper collateral-trait token-trait u50000000 u50000000 balance-x none)))
+                                        ;; (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper collateral-trait token-trait u50000000 u50000000 balance-x none)))
                                         (as-contract
                                             (if (is-eq token-x .token-wstx)
-                                                (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 balance-x none)))
+                                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 balance-x none)))
                                                 (if (is-eq token-y .token-wstx)
-                                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 balance-x none)))
-                                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
-                                                        (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 balance-x none)))
-                                                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 balance-x none)))
+                                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 balance-x none)))
+                                                    (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 balance-x none)))
+                                                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 balance-x none)))
                                                     )
                                                 )
                                             )                                        
@@ -895,7 +895,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-x
+        (contract-call? .weighted-equation-v1-01 get-y-given-x
             (get balance-x pool)
             (get balance-y pool)
             (get weight-x pool)
@@ -919,7 +919,7 @@
 				ERR-INVALID-POOL)
 			)
 		)
-		(contract-call? .weighted-equation get-x-given-y 
+		(contract-call? .weighted-equation-v1-01 get-x-given-y 
 			(get balance-x pool) 
 			(get balance-y pool) 
 			(get weight-x pool) 
@@ -940,7 +940,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (contract-call? .weighted-equation-v1-01 get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -955,7 +955,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (contract-call? .weighted-equation-v1-01 get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -977,14 +977,14 @@
                 (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
                 (dy (if (is-eq token collateral)
                         dx
-                        ;; (try! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 dx))                    
+                        ;; (try! (contract-call? .fixed-weight-pool-v1-01 get-helper collateral token u50000000 u50000000 dx))                    
                         (if (is-eq collateral .token-wstx)
-                            (try! (contract-call? .fixed-weight-pool get-y-given-wstx token u50000000 dx))
+                            (try! (contract-call? .fixed-weight-pool-v1-01 get-y-given-wstx token u50000000 dx))
                             (if (is-eq token .token-wstx)
-                                (try! (contract-call? .fixed-weight-pool get-wstx-given-y collateral u50000000 dx))
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                    (try! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dx))
-                                    (try! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dx))
+                                (try! (contract-call? .fixed-weight-pool-v1-01 get-wstx-given-y collateral u50000000 dx))
+                                (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists collateral token u50000000 u50000000))
+                                    (try! (contract-call? .fixed-weight-pool-v1-01 get-y-given-x collateral token u50000000 u50000000 dx))
+                                    (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token collateral u50000000 u50000000 dx))
                                 )
                             )
                         )
@@ -1023,7 +1023,7 @@
             
                 (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
 
-                (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
+                (pos-data (unwrap! (contract-call? .weighted-equation-v1-01 get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
 
                 (dx-weighted (get dx pos-data))
                 (dy-weighted (get dy pos-data))
@@ -1031,14 +1031,14 @@
                 ;; always convert to collateral ccy
                 (dy-to-dx (if (is-eq collateral token)
                             dy-weighted
-                            ;; (try! (contract-call? .fixed-weight-pool get-helper collateral token u50000000 u50000000 dy-weighted))                    
+                            ;; (try! (contract-call? .fixed-weight-pool-v1-01 get-helper collateral token u50000000 u50000000 dy-weighted))                    
                             (if (is-eq collateral .token-wstx)
-                                (try! (contract-call? .fixed-weight-pool get-y-given-wstx token u50000000 dy-weighted))
+                                (try! (contract-call? .fixed-weight-pool-v1-01 get-y-given-wstx token u50000000 dy-weighted))
                                 (if (is-eq token .token-wstx)
-                                    (try! (contract-call? .fixed-weight-pool get-wstx-given-y collateral u50000000 dy-weighted))
-                                    (if (is-some (contract-call? .fixed-weight-pool get-pool-exists collateral token u50000000 u50000000))
-                                        (try! (contract-call? .fixed-weight-pool get-y-given-x collateral token u50000000 u50000000 dy-weighted))
-                                        (try! (contract-call? .fixed-weight-pool get-x-given-y token collateral u50000000 u50000000 dy-weighted))
+                                    (try! (contract-call? .fixed-weight-pool-v1-01 get-wstx-given-y collateral u50000000 dy-weighted))
+                                    (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists collateral token u50000000 u50000000))
+                                        (try! (contract-call? .fixed-weight-pool-v1-01 get-y-given-x collateral token u50000000 u50000000 dy-weighted))
+                                        (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token collateral u50000000 u50000000 dy-weighted))
                                     )
                                 )
                             )                            
@@ -1469,12 +1469,12 @@
                     (if (is-eq token-x token-y)
                         dx-to-dy
                         (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
+                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
                             (if (is-eq token-y .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
-                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
+                                (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
+                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
                                 )
                             )
                         )
@@ -1492,7 +1492,7 @@
 
             (if (is-eq token-x token-y)
                 u0
-                (unwrap! (contract-call? .fixed-weight-pool get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y spot))) ERR-POOL-AT-CAPACITY)
+                (unwrap! (contract-call? .fixed-weight-pool-v1-01 get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y spot))) ERR-POOL-AT-CAPACITY)
             )
 
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)

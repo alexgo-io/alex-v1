@@ -16,7 +16,7 @@ import {
     }
   
     getPoolDetails(tokenX: string, tokenY: string, weightX: number, weightY: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-pool-details", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-pool-details", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -25,7 +25,7 @@ import {
     }
 
     getOracleResilient(tokenX: string, tokenY: string, weightX: number, weightY: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-oracle-resilient", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-oracle-resilient", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -34,7 +34,7 @@ import {
     }    
 
     getOracleInstant(tokenX: string, tokenY: string, weightX: number, weightY: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-oracle-instant", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-oracle-instant", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -44,7 +44,7 @@ import {
 
     setOracleEnabled(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "set-oracle-enabled", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "set-oracle-enabled", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -56,7 +56,7 @@ import {
 
     setOracleAverage(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, average: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "set-oracle-average", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "set-oracle-average", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -69,7 +69,7 @@ import {
   
     createPool(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, multisig: string, balanceX: number, balanceY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "create-pool", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "create-pool", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -85,7 +85,7 @@ import {
   
     addToPosition(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, dX: number, dY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "add-to-position", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "add-to-position", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -100,7 +100,7 @@ import {
   
     reducePosition(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, pooltoken: string, percentage: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "reduce-position", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "reduce-position", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -114,7 +114,7 @@ import {
   
     swapXForY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dx: number, dy_min: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "swap-x-for-y", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "swap-x-for-y", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -128,7 +128,7 @@ import {
   
     swapYForX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, dy: number, dx_min: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "swap-y-for-x", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "swap-y-for-x", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -141,7 +141,7 @@ import {
     } 
 
     getXgivenPrice(tokenX: string, tokenY: string, weightX: number, weightY: number, price: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-price", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-x-given-price", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -151,7 +151,7 @@ import {
     } 
     
     getYgivenPrice(tokenX: string, tokenY: string, weightX: number, weightY: number, price: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-y-given-price", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-y-given-price", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -162,7 +162,7 @@ import {
   
     setFeetoAddress(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, address: string) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "set-fee-to-address", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "set-fee-to-address", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -175,7 +175,7 @@ import {
   
     getFeetoAddress(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "get-fee-to-address", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "get-fee-to-address", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -187,7 +187,7 @@ import {
 
     getFeeX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "get-fee-rate-x", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "get-fee-rate-x", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -199,7 +199,7 @@ import {
 
     getFeeY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "get-fee-rate-y", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "get-fee-rate-y", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -213,7 +213,7 @@ import {
   
     setFeeRateX(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, feerate:number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "set-fee-rate-x", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "set-fee-rate-x", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -226,7 +226,7 @@ import {
   
     setFeeRateY(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, feerate:number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "set-fee-rate-y", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "set-fee-rate-y", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -238,7 +238,7 @@ import {
     }
 
     getYgivenX(tokenX: string, tokenY: string, weightX: number, weightY: number, dx: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-y-given-x", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-y-given-x", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -248,7 +248,7 @@ import {
     }
     
     getXgivenY(tokenX: string, tokenY: string, weightX: number, weightY: number, dy: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-x-given-y", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-x-given-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
@@ -259,7 +259,7 @@ import {
 
     setFeeRebate(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, rebate : number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("fixed-weight-pool", "set-fee-rebate", [
+        Tx.contractCall("fixed-weight-pool-v1-01", "set-fee-rebate", [
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX),
@@ -271,13 +271,31 @@ import {
     }
 
     getFeeRebate(tokenX: string, tokenY: string, weightX: number, weightY: number) {
-      return this.chain.callReadOnlyFn("fixed-weight-pool", "get-fee-rebate", [
+      return this.chain.callReadOnlyFn("fixed-weight-pool-v1-01", "get-fee-rebate", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(weightX),
         types.uint(weightY),
       ], this.deployer.address);
     }
+
+    setMaxInRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("weighted-equation-v1-01", "set-max-in-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+
+    setMaxOutRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("weighted-equation-v1-01", "set-max-out-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }            
   
   }
   
