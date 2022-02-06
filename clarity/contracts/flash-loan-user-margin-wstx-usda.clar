@@ -13,19 +13,13 @@
 (define-public (execute (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
     (let
         (   
-            ;; gross amount * ltv / price = amount
-            ;; gross amount = amount * price / ltv
-            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))        
-            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wstx memo-uint)))
-            (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
-            (gross-amount (mul-up amount (div-down price ltv)))
-            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .token-wstx memo-uint .yield-usda .key-usda-wstx gross-amount))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
+            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
+            (swapped-token-with-amount (try! (contract-call? .collateral-rebalancing-pool get-swapped-token token amount memo-uint))) 
         )
         (asserts! (is-eq .token-wstx (contract-of token)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-usda .token-wstx u50000000 u50000000 swapped-token none))        
-        (print { object: "flash-loan-user-margin-wstx-usda", action: "execute", data: gross-amount })
+        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-usda .token-wstx u50000000 u50000000 (get token swapped-token-with-amount) none))        
+        (print { object: "flash-loan-user-margin-wstx-usda", action: "execute", data: (get amount swapped-token-with-amount) })
         (ok true)
     )
 )

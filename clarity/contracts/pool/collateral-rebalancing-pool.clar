@@ -1427,3 +1427,98 @@
    )
  )
 )
+
+;; @desc mint yield-token and key-token, with single-sided liquidity
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param yield-token-trait; yield-token to be minted
+;; @param key-token-trait; key-token to be minted
+;; @param dx; amount of collateral added
+;; @param spot
+;; @post collateral; sender transfer exactly dx to alex-vault
+;; @returns (response (tuple uint uint) uint)
+(define-public (add-to-position-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (spot uint))    
+    (let
+        (   
+            (token-x (contract-of collateral-trait))
+            (token-y (contract-of token-trait))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
+        )
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        (asserts! (is-eq (get yield-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
+        (asserts! (is-eq (get key-token pool) (contract-of key-token-trait)) ERR-INVALID-TOKEN)
+        ;; mint is possible only if ltv < 1
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (and (is-eq (get yield-token pool) (contract-of yield-token-trait)) (is-eq (get key-token pool) (contract-of key-token-trait))) ERR-INVALID-TOKEN)
+        (let
+            (
+                (balance-x (get balance-x pool))
+                (balance-y (get balance-y pool))
+                (yield-supply (get yield-supply pool))   
+                (key-supply (get key-supply pool))
+                (weight-x (get weight-x pool))
+
+                (new-supply (try! (get-token-given-position-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot dx)))
+                (yield-new-supply (get yield-token new-supply))
+                (key-new-supply (get key-token new-supply))
+
+                (dx-weighted (mul-down weight-x dx))
+                (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
+
+                (dy-weighted 
+                    (if (is-eq token-x token-y)
+                        dx-to-dy
+                        (if (is-eq token-x .token-wstx)
+                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
+                            (if (is-eq token-y .token-wstx)
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
+                                (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
+                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
+                                )
+                            )
+                        )
+                    )
+                )
+
+                (pool-updated (merge pool {
+                    yield-supply: (+ yield-new-supply yield-supply),                    
+                    key-supply: (+ key-new-supply key-supply),
+                    balance-x: (+ balance-x dx-weighted),
+                    balance-y: (+ balance-y dy-weighted)
+                }))
+                (sender tx-sender)
+            ) 
+
+            (if (is-eq token-x token-y)
+                u0
+                (unwrap! (contract-call? .fixed-weight-pool-v1-01 get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y spot))) ERR-POOL-AT-CAPACITY)
+            )
+
+            (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
+            (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
+
+            (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
+            ;; mint pool token and send to tx-sender
+            (as-contract (try! (contract-call? yield-token-trait mint-fixed expiry yield-new-supply sender)))
+            (as-contract (try! (contract-call? key-token-trait mint-fixed expiry key-new-supply sender)))
+            (print { object: "pool", action: "liquidity-added", data: pool-updated })
+            (ok {yield-token: yield-new-supply, key-token: key-new-supply})
+        )
+    )
+)
+
+(define-public (get-swapped-token (token <ft-trait>) (amount uint) (memo-uint uint) )
+    (let
+        (   
+            (spot (try! (get-spot .token-usda .token-wstx)))
+            (ltv (try! (get-ltv-with-spot .token-usda .token-wstx memo-uint spot)))
+            (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
+            (gross-amount (mul-up amount (div-down price ltv)))
+            (minted-yield-token (get yield-token (try! (add-to-position-with-spot .token-usda .token-wstx memo-uint .yield-usda .key-usda-wstx gross-amount spot))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
+        )
+        (ok {token: swapped-token, amount: gross-amount})
+    )
+)
+      

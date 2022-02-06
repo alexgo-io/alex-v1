@@ -46,7 +46,10 @@ depends_on = [
   "weighted-equation-v1-01",
   "fixed-weight-pool-v1-01",
   "alex-reserve-pool",
-  "yield-token-pool"
+  "yield-token-pool",
+  "yield-usda",
+  "key-usda-wstx",
+  "token-usda"
 ]
 
 [contracts.yield-collateral-rebalancing-pool]
