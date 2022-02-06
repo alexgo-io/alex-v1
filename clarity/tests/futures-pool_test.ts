@@ -197,7 +197,7 @@ Clarinet.test({
             futuresPool.setCoinbaseAmount(deployer, poolTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             futuresPool.createPool(deployer, poolTokenAddress, rewardCycles, stakedTokenAddress),
         ]);
-        setupBlock.receipts[6].result.expectOk().expectBool(true);
+        setupBlock.receipts[6].result.expectOk().expectBool(true);        
 
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
 
@@ -207,10 +207,10 @@ Clarinet.test({
         ]);        
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true);
 
-        console.log(futuresPool.getRewardCycleLength(deployer).result)
-        console.log(futuresPool.getFirstStacksBlockInRewardCycle(deployer, poolTokenAddress, 32).result) 
+        const reward_cycle_length = Number((futuresPool.getRewardCycleLength(deployer).result.replace(/\D/g, "")));
+        const first_block = Number((futuresPool.getFirstStacksBlockInRewardCycle(deployer, poolTokenAddress, 32).result.replace(/\D/g, "")));
         
-        chain.mineEmptyBlockUntil(16820 + 525 + 1);
+        chain.mineEmptyBlockUntil(first_block + reward_cycle_length + 1);
 
         const reducePosBlock = chain.mineBlock([
             futuresPool.reducePosition(wallet_1, poolTokenAddress, startCycle, stakedTokenAddress, ONE_8)
@@ -238,7 +238,7 @@ Clarinet.test({
         token.mintFixed(deployer, wallet_1.address, dx);
 
         // setting up a working stacking pool
-        const setupBlock = chain.mineBlock([
+        const setupBlock = chain.mineBlock([            
             futuresPool.addToken(deployer, alexTokenAddress),
             futuresPool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             futuresPool.addToken(deployer, poolTokenAddress),
@@ -249,6 +249,8 @@ Clarinet.test({
         ]);
         setupBlock.receipts[6].result.expectOk().expectBool(true);
 
+        const reward_cycle_length = Number((futuresPool.getRewardCycleLength(deployer).result.replace(/\D/g, "")));
+
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
 
         // creating a new pool
@@ -256,24 +258,24 @@ Clarinet.test({
             futuresPool.addToPosition(wallet_1, poolTokenAddress, startCycle, stakedTokenAddress, dx),
         ]);        
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true);        
-
-        console.log(futuresPool.getRewardCycleLength(deployer).result)
-        console.log(futuresPool.getFirstStacksBlockInRewardCycle(deployer, poolTokenAddress, 2).result) 
+                
+        let first_block = Number((futuresPool.getFirstStacksBlockInRewardCycle(deployer, poolTokenAddress, 2).result.replace(/\D/g, "")));
         
-        chain.mineEmptyBlockUntil(1070);
+        chain.mineEmptyBlockUntil(first_block);
         const claimStakeBlock = chain.mineBlock([
             futuresPool.claimAndStake(wallet_1, poolTokenAddress, startCycle)
         ]);
         claimStakeBlock.receipts[0].result.expectOk().expectBool(true);
 
-        console.log(futuresPool.getFirstStacksBlockInRewardCycle(deployer, poolTokenAddress, 32).result)         
-        chain.mineEmptyBlockUntil(16820 + 525 + 1);
+        first_block = Number((futuresPool.getFirstStacksBlockInRewardCycle(deployer, poolTokenAddress, 32).result.replace(/\D/g, "")));       
+
+        chain.mineEmptyBlockUntil(first_block + reward_cycle_length + 1);
         const reducePosBlock = chain.mineBlock([
             futuresPool.reducePosition(wallet_1, poolTokenAddress, startCycle, stakedTokenAddress, ONE_8)
         ]);
         // console.log(reducePosBlock.receipts);
         let tuple: any = reducePosBlock.receipts[0].result.expectOk().expectTuple();
         tuple['staked-token'].expectUint(dx);
-        tuple['reward-token'].expectUint((32 - 0.01 + 30) * ONE_8);
+        tuple['reward-token'].expectUint(32 * ONE_8 - 0.01 * ONE_8 + 30 * ONE_8);
     }
 })
