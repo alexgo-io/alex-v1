@@ -562,22 +562,18 @@
 (define-private (rolling_div_sum_16 (n int) (rolling (tuple (term (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (x (tuple (a int) (exp int))))))
   (let
     (
-      ;; (rolling_term (get term rolling))
       (rolling_term (get term rolling))
       (rolling_term_a (get a rolling_term))
       (rolling_term_exp (get exp rolling_term))
 
-      ;; (rolling_sum (get seriesSum rolling))
       (rolling_sum (get seriesSum rolling))
       (rolling_sum_a (get a rolling_sum))
       (rolling_sum_exp (get exp rolling_sum))
 
-      ;; (x (get x rolling))
       (x (get x rolling))
       (x_a (get a x))
       (x_exp (get exp x))
 
-      ;; (next_term (/ (scale-down (* rolling_term x)) n))
       (next_term (multiplication-with-scientific-notation rolling_term_a rolling_term_exp x_a x_exp))
       (next_term_a (get a next_term))
       (next_term_exp (get exp next_term))
@@ -594,7 +590,6 @@
       (next_term_div_transformed_a (get a next_term_div_transformed))
       (next_term_div_transformed_exp (get exp next_term_div_transformed))
 
-      ;; (next_sum (+ rolling_sum next_term))
       (next_sum (addition-with-scientific-notation rolling_sum_a rolling_sum_exp next_term_div_transformed_a next_term_div_transformed_exp))
    )
     {term: next_term_div_transformed, seriesSum: next_sum, x: x}
