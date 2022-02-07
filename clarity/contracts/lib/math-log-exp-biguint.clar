@@ -167,8 +167,8 @@
                 (a_exp (get exp tuple-a))
                 (b (get x tuple-b))
                 (b_exp (get exp tuple-b))
-                (transformation (transform {a: a, exp: a_exp} b_exp))
-                (new_a (get a transformation))
+                (transformation (transform {x: a, exp: a_exp} b_exp))
+                (new_a (get x transformation))
             )
             (if (>= new_a b) true false)
         )
@@ -178,8 +178,8 @@
                 (a_exp (get exp tuple-a))
                 (b (get x tuple-b))
                 (b_exp (get exp tuple-b))
-                (transformation (transform {a: b, exp: b_exp} a_exp))
-                (new_b (get a transformation))
+                (transformation (transform {x: b, exp: b_exp} a_exp))
+                (new_b (get x transformation))
             )
             (if (>= a new_b) true false)
         )
@@ -195,8 +195,8 @@
                     (a_exp (get exp tuple-a))
                     (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
-                    (transformation (transform {a: a, exp: a_exp} b_exp))
-                    (new_a (get a transformation))
+                    (transformation (transform {x: a, exp: a_exp} b_exp))
+                    (new_a (get x transformation))
                     (new_a_exp (get exp transformation))
                     (addition (+ new_a b))
                 )
@@ -208,8 +208,8 @@
                     (a_exp (get exp tuple-a))
                     (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
-                    (transformation (transform {a: b, exp: b_exp} a_exp))
-                    (new_b (get a transformation))
+                    (transformation (transform {x: b, exp: b_exp} a_exp))
+                    (new_b (get x transformation))
                     (new_b_exp (get exp transformation))
                     (addition (+ new_b a))
                 )
@@ -228,8 +228,8 @@
                     (a_exp (get exp tuple-a))
                     (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
-                    (transformation (transform {a: a, exp: a_exp} b_exp))
-                    (new_a (get a transformation))
+                    (transformation (transform {x: a, exp: a_exp} b_exp))
+                    (new_a (get x transformation))
                     (new_a_exp (get exp transformation))
                     (subtraction (- new_a b))
                 )
@@ -241,8 +241,8 @@
                     (a_exp (get exp tuple-a))
                     (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
-                    (transformation (transform {a: b, exp: b_exp} a_exp))
-                    (new_b (get a transformation))
+                    (transformation (transform {x: b, exp: b_exp} a_exp))
+                    (new_b (get x transformation))
                     (new_b_exp (get exp transformation))
                     (subtraction (- a new_b))
                 )
@@ -309,71 +309,67 @@
 ;; transformation
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
-
-;; 35 * 10^-3 transform -2 (FORWARD)
-;; 3.5 * 10^-2 (NOT POSSIBLE)
-
-;; 35 * 10^3 transform 1 (BACKWARD)
-;; 3500 * 10^1 (POSSIBLE)
-(define-read-only (transform (num (tuple (a int) (exp int))) (x int))
+;; 35 * 10^-3 transform -2 (FORWARD) ;; 3.5 * 10^-2 (NOT POSSIBLE)
+;; 35 * 10^3 transform 1 (BACKWARD) ;; 3500 * 10^1 (POSSIBLE)
+(define-read-only (transform (num (tuple (x int) (exp int))) (power int))
     (let
         (
-            (a (get a num))
+            (x (get x num))
             (exp (get exp num))
-            (exp-diff (- x exp))
+            (exp-diff (- power exp))
         )
         (if (is-eq exp-diff 0)
-            {a: (* a 1), exp: x}
+            {x: (* x 1), exp: power}
         (if (or (is-eq exp-diff -1) (is-eq exp-diff 1))
-            {a: (* a 10), exp: x}
+            {x: (* x 10), exp: power}
         (if (or (is-eq exp-diff -2) (is-eq exp-diff 2))
-            {a: (* a 100), exp: x}
+            {x: (* x 100), exp: power}
         (if (or (is-eq exp-diff -3) (is-eq exp-diff 3))
-            {a: (* a 1000), exp: x}
+            {x: (* x 1000), exp: power}
         (if (or (is-eq exp-diff -4) (is-eq exp-diff 4))
-            {a: (* a 10000), exp: x}
+            {x: (* x 10000), exp: power}
         (if (or (is-eq exp-diff -5) (is-eq exp-diff 5))
-            {a: (* a 100000), exp: x}
+            {x: (* x 100000), exp: power}
         (if (or (is-eq exp-diff -6) (is-eq exp-diff 6))
-            {a: (* a 1000000), exp: x}
+            {x: (* x 1000000), exp: power}
         (if (or (is-eq exp-diff -7) (is-eq exp-diff 7))
-            {a: (* a 10000000), exp: x}
+            {x: (* x 10000000), exp: power}
         (if (or (is-eq exp-diff -8) (is-eq exp-diff 8))
-            {a: (* a 100000000), exp: x}
+            {x: (* x 100000000), exp: power}
         (if (or (is-eq exp-diff -9) (is-eq exp-diff 9))
-            {a: (* a 1000000000), exp: x}
+            {x: (* x 1000000000), exp: power}
         (if (or (is-eq exp-diff -10) (is-eq exp-diff 10))
-            {a: (* a 10000000000), exp: x}
+            {x: (* x 10000000000), exp: power}
         (if (or (is-eq exp-diff -11) (is-eq exp-diff 11))
-            {a: (* a 100000000000), exp: x}
+            {x: (* x 100000000000), exp: power}
         (if (or (is-eq exp-diff -12) (is-eq exp-diff 12))
-            {a: (* a 1000000000000), exp: x}
+            {x: (* x 1000000000000), exp: power}
         (if (or (is-eq exp-diff -13) (is-eq exp-diff 13))
-            {a: (* a 10000000000000), exp: x}
+            {x: (* x 10000000000000), exp: power}
         (if (or (is-eq exp-diff -14) (is-eq exp-diff 14))
-            {a: (* a 100000000000000), exp: x}
+            {x: (* x 100000000000000), exp: power}
         (if (or (is-eq exp-diff -15) (is-eq exp-diff 15))
-            {a: (* a 1000000000000000), exp: x}
+            {x: (* x 1000000000000000), exp: power}
         (if (or (is-eq exp-diff -16) (is-eq exp-diff 16))
-            {a: (* a 10000000000000000), exp: x}
+            {x: (* x 10000000000000000), exp: power}
         (if (or (is-eq exp-diff -17) (is-eq exp-diff 17))
-            {a: (* a 100000000000000000), exp: x}
+            {x: (* x 100000000000000000), exp: power}
         (if (or (is-eq exp-diff -18) (is-eq exp-diff 18))
-            {a: (* a 1000000000000000000), exp: x}
+            {x: (* x 1000000000000000000), exp: power}
         (if (or (is-eq exp-diff -19) (is-eq exp-diff 19))
-            {a: (* a 10000000000000000000), exp: x}
+            {x: (* x 10000000000000000000), exp: power}
         (if (or (is-eq exp-diff -20) (is-eq exp-diff 20))
-            {a: (* a 100000000000000000000), exp: x}
+            {x: (* x 100000000000000000000), exp: power}
         (if (or (is-eq exp-diff -21) (is-eq exp-diff 21))
-            {a: (* a 1000000000000000000000), exp: x}
+            {x: (* x 1000000000000000000000), exp: power}
         (if (or (is-eq exp-diff -22) (is-eq exp-diff 22))
-            {a: (* a 10000000000000000000000), exp: x}
+            {x: (* x 10000000000000000000000), exp: power}
         (if (or (is-eq exp-diff -23) (is-eq exp-diff 23))
-            {a: (* a 100000000000000000000000), exp: x}
+            {x: (* x 100000000000000000000000), exp: power}
         (if (or (is-eq exp-diff -24) (is-eq exp-diff 24))
-            {a: (* a 1000000000000000000000000), exp: x}
+            {x: (* x 1000000000000000000000000), exp: power}
         (if (or (is-eq exp-diff -25) (is-eq exp-diff 25))
-            {a: (* a 10000000000000000000000000), exp: x}
+            {x: (* x 10000000000000000000000000), exp: power}
         num ))))))))))))))))))))))))))
     )
 )
