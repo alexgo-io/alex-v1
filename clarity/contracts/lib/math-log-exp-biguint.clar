@@ -78,140 +78,94 @@
     (/ a ONE_16)
 )
 
-(define-read-only (scale-up-with-scientific-notation (num (tuple (a int) (exp int))))
-    (multiplication-with-scientific-notation num {b: 1, exp: 16})
+(define-read-only (scale-up-with-scientific-notation (num (tuple (x int) (exp int))))
+    (multiplication-with-scientific-notation num {x: 1, exp: 16})
 )
 
-(define-read-only (scale-down-with-scientific-notation (num (tuple (a int) (exp int))))
-    (division-with-scientific-notation num {b: 1, exp: 16})
+(define-read-only (scale-down-with-scientific-notation (num (tuple (x int) (exp int))))
+    (division-with-scientific-notation num {x: 1, exp: 16})
 )
 
-(define-read-only (scale-down-with-lost-precision (num (tuple (a int) (exp int))))
+(define-read-only (scale-down-with-lost-precision (num (tuple (x int) (exp int))))
     (let 
         (
-            (a (/ (get a num) ONE_16))
+            (x (/ (get x num) ONE_16))
             (exp (+ (get exp num) 16))
         )
-        {a: a, exp: exp}
+        {x: x, exp: exp}
         
     )
 )
 
-(define-read-only (ln-priv-16 (num (tuple (a int) (exp int))))
+(define-read-only (ln-priv-16 (num (tuple (x int) (exp int))))
     (let
         (
-            (a_sum (fold accumulate_division_16 x_a_list_16 {a: num, sum: {a: 0, exp: 0}}))
-            
+            ;; decomposition
+            (a_sum (fold accumulate_division_16 x_a_list_16 {a: num, sum: {x: 0, exp: 0}}))
             (out_a (get a a_sum))
-            (out_a_a (get a out_a))
-            (out_a_exp (get exp out_a))
-
             (out_a_transformed (transform-to-16 out_a))
-            (out_a_transformed_a (get a out_a_transformed))
-            (out_a_transformed_exp (get exp out_a_transformed))
-
             (out_sum (get sum a_sum))
-            (out_sum_a (get a out_sum))
-            (out_sum_exp (get exp out_sum))
-            
-            (out_a_sn_sub (subtraction-with-scientific-notation {a: out_a_transformed_a, exp: out_a_transformed_exp} {b: 1, exp: 0}))
-            (out_a_sn_sub_a (get a out_a_sn_sub))
-            (out_a_sn_sub_exp (get exp out_a_sn_sub))
-
-            (out_a_sn_add (addition-with-scientific-notation {a: out_a_transformed_a, exp: out_a_transformed_exp} {b: 1, exp: 0}))
-            (out_a_sn_add_a (get a out_a_sn_add))
-            (out_a_sn_add_exp (get exp out_a_sn_add))
-            
-            (z (division-with-scientific-notation {a: out_a_sn_sub_a, exp: out_a_sn_sub_exp} {b: out_a_sn_add_a, exp: out_a_sn_add_exp}))
-            (z_a (get a z))
-            (z_exp (get exp z))
-
-            (z_squared (multiplication-with-scientific-notation {a: z_a, exp: z_exp} {b: z_a, exp: z_exp}))
+            (out_a_sn_sub (subtraction-with-scientific-notation out_a_transformed {x: 1, exp: 0}))
+            (out_a_sn_add (addition-with-scientific-notation out_a_transformed {x: 1, exp: 0}))
+            ;; z calculation
+            (z (division-with-scientific-notation out_a_sn_sub out_a_sn_add))
+            (z_squared (multiplication-with-scientific-notation z z))
             (z_squared_scaled_down (scale-down-with-lost-precision z_squared))
-            
+            ;; taylor series
             (div_list (list 3 5 7 9 11))
             (num_sum_zsq (fold rolling_sum_div_16 div_list {num: z, seriesSum: z, z_squared: z_squared_scaled_down}))
-            
             (seriesSum (get seriesSum num_sum_zsq))
             (seriesSumScaledDown (scale-down-with-lost-precision seriesSum))
-            (seriesSum_a (get a seriesSumScaledDown))
-            (seriesSum_exp (get exp seriesSumScaledDown))
+            (seriesSumDouble (multiplication-with-scientific-notation seriesSumScaledDown {x: 2, exp: 0}))
 
-            (seriesSumDouble (multiplication-with-scientific-notation {a: seriesSum_a, exp: seriesSum_exp} {b: 2, exp: 0}))
-            (seriesSumDouble_a (get a seriesSumDouble))
-            (seriesSumDouble_exp (get exp seriesSumDouble))
-
-            (r (addition-with-scientific-notation {a: out_sum_a, exp: out_sum_exp} {b: seriesSumDouble_a, exp: seriesSumDouble_exp}))
+            (r (addition-with-scientific-notation out_sum seriesSumDouble))
         )
         (ok r)
     )
 )
 
-(define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (a int) (exp int))) (sum (tuple (a int) (exp int))))))
+(define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (x int) (exp int))) (sum (tuple (x int) (exp int))))))
     (let
         (
             (a_pre (get a_pre x_a_pre))
             (a_pre_exp (get a_pre_exp x_a_pre))
-            
             (x_pre (get x_pre x_a_pre))
             (x_pre_exp (get x_pre_exp x_a_pre))
-
             (rolling_a (get a rolling_a_sum))
-            (rolling_a_a (get a rolling_a))
-            (rolling_a_exp (get exp rolling_a))
-            
             (rolling_sum (get sum rolling_a_sum))
-            (rolling_sum_a (get a rolling_sum))
-            (rolling_sum_exp (get exp rolling_sum))
         )
-        (if (greater-than-equal-to {a: rolling_a_a, exp: rolling_a_exp} {b: a_pre, exp: a_pre_exp})
+        (if (greater-than-equal-to rolling_a {x: a_pre, exp: a_pre_exp})
             {
-                a: (division-with-scientific-notation-with-precision {a: rolling_a_a, exp: rolling_a_exp} {b: a_pre, exp: a_pre_exp}),
-                sum: (addition-with-scientific-notation {a: rolling_sum_a, exp: rolling_sum_exp} {b: x_pre, exp: x_pre_exp}) 
+                a: (division-with-scientific-notation-with-precision rolling_a {x: a_pre, exp: a_pre_exp}),
+                sum: (addition-with-scientific-notation rolling_sum {x: x_pre, exp: x_pre_exp}) 
             }
             {a: rolling_a, sum: rolling_sum}
         )
     )
 )
 
-(define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (z_squared (tuple (a int) (exp int))))))
+(define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (x int) (exp int))) (seriesSum (tuple (x int) (exp int))) (z_squared (tuple (x int) (exp int))))))
     (let
         (
             (rolling_num (get num rolling))
-            (rolling_num_a (get a rolling_num))
-            (rolling_num_exp (get exp rolling_num))
-
             (rolling_sum (get seriesSum rolling))
-            (rolling_sum_a (get a rolling_sum))
-            (rolling_sum_exp (get exp rolling_sum))
-
             (z_squared (get z_squared rolling))
-            (z_squared_a (get a z_squared))
-            (z_squared_exp (get exp z_squared))
-            
-            (next_num (multiplication-with-scientific-notation {a: rolling_num_a, exp: rolling_num_exp} {b: z_squared_a, exp: z_squared_exp}))
-            
+            (next_num (multiplication-with-scientific-notation rolling_num z_squared))
             (next_num_scaled_down (scale-down-with-lost-precision next_num))
-            (next_num_scaled_down_a (get a next_num_scaled_down))
-            (next_num_scaled_down_exp (get exp next_num_scaled_down))
-
-            (next_sum_div (division-with-scientific-notation {a: next_num_scaled_down_a, exp: next_num_scaled_down_exp} {b: n, exp: 0}))
-            (next_sum_div_a (get a next_sum_div))
-            (next_sum_div_exp (get exp next_sum_div))
-
-            (next_sum (addition-with-scientific-notation {a: next_sum_div_a, exp: next_sum_div_exp} {b: rolling_sum_a, exp: rolling_sum_exp}))
+            (next_sum_div (division-with-scientific-notation next_num_scaled_down {x: n, exp: 0}))
+            (next_sum (addition-with-scientific-notation next_sum_div rolling_sum))
         )
         {num: next_num_scaled_down, seriesSum: next_sum, z_squared: z_squared}
     )
 ) 
 
-(define-read-only (greater-than-equal-to (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (greater-than-equal-to (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (if (> (get exp tuple-a) (get exp tuple-b))
         (let
             (
-                (a (get a tuple-a))
+                (a (get x tuple-a))
                 (a_exp (get exp tuple-a))
-                (b (get b tuple-b))
+                (b (get x tuple-b))
                 (b_exp (get exp tuple-b))
                 (transformation (transform {a: a, exp: a_exp} b_exp))
                 (new_a (get a transformation))
@@ -220,9 +174,9 @@
         )
         (let
             (
-                (a (get a tuple-a))
+                (a (get x tuple-a))
                 (a_exp (get exp tuple-a))
-                (b (get b tuple-b))
+                (b (get x tuple-b))
                 (b_exp (get exp tuple-b))
                 (transformation (transform {a: b, exp: b_exp} a_exp))
                 (new_b (get a transformation))
@@ -232,106 +186,106 @@
     )       
 )
 
-(define-read-only (addition-with-scientific-notation (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (addition-with-scientific-notation (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (begin
         (if (> (get exp tuple-a) (get exp tuple-b))
             (let
                 (
-                    (a (get a tuple-a))
+                    (a (get x tuple-a))
                     (a_exp (get exp tuple-a))
-                    (b (get b tuple-b))
+                    (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
                     (transformation (transform {a: a, exp: a_exp} b_exp))
                     (new_a (get a transformation))
                     (new_a_exp (get exp transformation))
                     (addition (+ new_a b))
                 )
-                {a: addition, exp: b_exp}
+                {x: addition, exp: b_exp}
             )
             (let
                 (
-                    (a (get a tuple-a))
+                    (a (get x tuple-a))
                     (a_exp (get exp tuple-a))
-                    (b (get b tuple-b))
+                    (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
                     (transformation (transform {a: b, exp: b_exp} a_exp))
                     (new_b (get a transformation))
                     (new_b_exp (get exp transformation))
                     (addition (+ new_b a))
                 )
-                {a: addition, exp: a_exp}
+                {x: addition, exp: a_exp}
             )
         )
     )
 )
 
-(define-read-only (subtraction-with-scientific-notation (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (subtraction-with-scientific-notation (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (begin
         (if (> (get exp tuple-a) (get exp tuple-b))
             (let
                 (
-                    (a (get a tuple-a))
+                    (a (get x tuple-a))
                     (a_exp (get exp tuple-a))
-                    (b (get b tuple-b))
+                    (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
                     (transformation (transform {a: a, exp: a_exp} b_exp))
                     (new_a (get a transformation))
                     (new_a_exp (get exp transformation))
                     (subtraction (- new_a b))
                 )
-                {a: subtraction, exp: b_exp}
+                {x: subtraction, exp: b_exp}
             )
             (let
                 (
-                    (a (get a tuple-a))
+                    (a (get x tuple-a))
                     (a_exp (get exp tuple-a))
-                    (b (get b tuple-b))
+                    (b (get x tuple-b))
                     (b_exp (get exp tuple-b))
                     (transformation (transform {a: b, exp: b_exp} a_exp))
                     (new_b (get a transformation))
                     (new_b_exp (get exp transformation))
                     (subtraction (- a new_b))
                 )
-                {a: subtraction, exp: a_exp}
+                {x: subtraction, exp: a_exp}
             )
         )
     )
 )
 
-(define-read-only (division-with-scientific-notation (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (division-with-scientific-notation (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (let
         (
-            (a (get a tuple-a))
+            (a (get x tuple-a))
             (a_exp (get exp tuple-a))
-            (b (get b tuple-b))
+            (b (get x tuple-b))
             (b_exp (get exp tuple-b))
             (division (/ (scale-up a) b))
             (exponent (+ (- a_exp b_exp) -16))
         )
-        {a: division, exp: exponent}
+        {x: division, exp: exponent}
     )
 )
 
-(define-read-only (multiplication-with-scientific-notation (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (multiplication-with-scientific-notation (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (let
         (
-            (a (get a tuple-a))
+            (a (get x tuple-a))
             (a_exp (get exp tuple-a))
-            (b (get b tuple-b))
+            (b (get x tuple-b))
             (b_exp (get exp tuple-b))
             (product (* a b))
             (exponent (+ a_exp b_exp))
         )
-        {a: product, exp: exponent}
+        {x: product, exp: exponent}
     )
 )
 
-(define-read-only (division-with-scientific-notation-with-precision (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (division-with-scientific-notation-with-precision (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (let
         (
-            (a (get a tuple-a))
+            (a (get x tuple-a))
             (a-exp (get exp tuple-a))
-            (b (get b tuple-b))
+            (b (get x tuple-b))
             (b-exp (get exp tuple-b))
 
             (new-a (if (> a b) a (scale-up a)))
@@ -345,7 +299,7 @@
             
             (remainder-exponent (+ division-exponent -16))
 
-            (result (addition-with-scientific-notation {a: division, exp: division-exponent} {b: remainder, exp: remainder-exponent}))
+            (result (addition-with-scientific-notation {x: division, exp: division-exponent} {x: remainder, exp: remainder-exponent}))
 
         )
         result
@@ -437,9 +391,9 @@
     )
 )
 
-(define-read-only (transform-to-16 (num (tuple (a int) (exp int))))
+(define-read-only (transform-to-16 (num (tuple (x int) (exp int))))
     (if (< (get exp num) -16)
-        {a: (/ (get a num) (pow 10 (+ (* (get exp num) -1) -16))), exp: -16}
+        {x: (/ (get x num) (pow 10 (+ (* (get exp num) -1) -16))), exp: -16}
         num
     )
 )
@@ -528,49 +482,49 @@
 ;;   )
 ;; )
 
-(define-read-only (exp-pos-16 (num (tuple (a int) (exp int))))
+(define-read-only (exp-pos-16 (num (tuple (x int) (exp int))))
     (let
         (
             ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
             ;; it and compute the accumulated product.
-            (x_product (fold accumulate_product_16 x_a_list_16 {x: num, product: {a: 1, exp: 0}}))
+            (x_product (fold accumulate_product_16 x_a_list_16 {x: {x: (get x num), exp: (get exp num)}, product: {x: 1, exp: 0}}))
             
             (product_out (get product x_product))
-            (product_out_a (get a product_out))
+            (product_out_a (get x product_out))
             (product_out_exp (get exp product_out))
             
             (transformed_product (transform-to-16 product_out))
-            (transformed_product_a (get a transformed_product))
+            (transformed_product_a (get x transformed_product))
             (transformed_product_exp (get exp transformed_product))
 
             (x_out (get x x_product))
-            (x_out_a (get a x_out))
+            (x_out_a (get x x_out))
             (x_out_exp (get exp x_out))
             
             (transformed_x (transform-to-16 x_out))
-            (transformed_x_a (get a transformed_x))
+            (transformed_x_a (get x transformed_x))
             (transformed_x_exp (get exp transformed_x))
             
-            (seriesSum (addition-with-scientific-notation {a: 1, exp: 0} {b: transformed_x_a, exp: transformed_x_exp}))
-            (seriesSum_a (get a seriesSum))
+            (seriesSum (addition-with-scientific-notation {x: 1, exp: 0} {x: transformed_x_a, exp: transformed_x_exp}))
+            (seriesSum_a (get x seriesSum))
             (seriesSum_exp (get exp seriesSum))
 
             (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
             (term_sum_x (fold rolling_div_sum_16 div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
             (sum (get seriesSum term_sum_x))
-            (sum_a (get a sum))
+            (sum_a (get x sum))
             (sum_exp (get exp sum))
 
-            (r (multiplication-with-scientific-notation-with-precision {a: transformed_product_a, exp: transformed_product_exp} {b: sum_a, exp: sum_exp}))
+            (r (multiplication-with-scientific-notation-with-precision {x: transformed_product_a, exp: transformed_product_exp} {x: sum_a, exp: sum_exp}))
         )
-        (if (greater-than-equal-to num {b: 1, exp: 0})
+        (if (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: 1, exp: 0})
             (scale-down-with-lost-precision r)
         r
         )
     )
 )
 
-(define-private (accumulate_product_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (a int) (exp int))) (product (tuple (a int) (exp int))))))
+(define-private (accumulate_product_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (x int) (exp int))) (product (tuple (x int) (exp int))))))
     (let
         (
             (x_pre (get x_pre x_a_pre))
@@ -580,66 +534,66 @@
             (a_pre_exp (get a_pre_exp x_a_pre))
 
             (rolling_x (get x rolling_x_p))
-            (rolling_x_a (get a rolling_x))
+            (rolling_x_a (get x rolling_x))
             (rolling_x_a_exp (get exp rolling_x))
 
             (rolling_product (get product rolling_x_p))
-            (rolling_product_a (get a rolling_product))
+            (rolling_product_a (get x rolling_product))
             (rolling_product_a_exp (get exp rolling_product))
         )
-        (if (greater-than-equal-to {a: rolling_x_a, exp: rolling_x_a_exp} {b: x_pre, exp: x_pre_exp})
+        (if (greater-than-equal-to {x: rolling_x_a, exp: rolling_x_a_exp} {x: x_pre, exp: x_pre_exp})
             {
-                x: (subtraction-with-scientific-notation {a: rolling_x_a, exp: rolling_x_a_exp} {b: x_pre, exp: x_pre_exp}),
-                product: (multiplication-with-scientific-notation-with-precision {a: rolling_product_a, exp: rolling_product_a_exp} {b: a_pre, exp: a_pre_exp})
+                x: (subtraction-with-scientific-notation {x: rolling_x_a, exp: rolling_x_a_exp} {x: x_pre, exp: x_pre_exp}),
+                product: (multiplication-with-scientific-notation-with-precision {x: rolling_product_a, exp: rolling_product_a_exp} {x: a_pre, exp: a_pre_exp})
             }
             {x: rolling_x, product: rolling_product}
         )
     )
 )
 
-(define-private (rolling_div_sum_16 (n int) (rolling (tuple (term (tuple (a int) (exp int))) (seriesSum (tuple (a int) (exp int))) (x (tuple (a int) (exp int))))))
+(define-private (rolling_div_sum_16 (n int) (rolling (tuple (term (tuple (x int) (exp int))) (seriesSum (tuple (x int) (exp int))) (x (tuple (x int) (exp int))))))
   (let
     (
       (rolling_term (get term rolling))
-      (rolling_term_a (get a rolling_term))
+      (rolling_term_a (get x rolling_term))
       (rolling_term_exp (get exp rolling_term))
 
       (rolling_sum (get seriesSum rolling))
-      (rolling_sum_a (get a rolling_sum))
+      (rolling_sum_a (get x rolling_sum))
       (rolling_sum_exp (get exp rolling_sum))
 
       (x (get x rolling))
-      (x_a (get a x))
+      (x_a (get x x))
       (x_exp (get exp x))
 
-      (next_term (multiplication-with-scientific-notation {a: rolling_term_a, exp: rolling_term_exp} {b: x_a, exp: x_exp}))
-      (next_term_a (get a next_term))
+      (next_term (multiplication-with-scientific-notation {x: rolling_term_a, exp: rolling_term_exp} {x: x_a, exp: x_exp}))
+      (next_term_a (get x next_term))
       (next_term_exp (get exp next_term))
 
-      (next_term_transformed (transform-to-16 {a: next_term_a, exp: next_term_exp}))
-      (next_term_transformed_a (get a next_term_transformed))
+      (next_term_transformed (transform-to-16 next_term))
+      (next_term_transformed_a (get x next_term_transformed))
       (next_term_transformed_exp (get exp next_term_transformed))
 
-      (next_term_div (division-with-scientific-notation {a: next_term_transformed_a, exp: next_term_transformed_exp} {b: n, exp: 0}))
-      (next_term_div_a (get a next_term_div))
+      (next_term_div (division-with-scientific-notation {x: next_term_transformed_a, exp: next_term_transformed_exp} {x: n, exp: 0}))
+      (next_term_div_a (get x next_term_div))
       (next_term_div_exp (get exp next_term_div))
 
       (next_term_div_transformed (transform-to-16 next_term_div))
-      (next_term_div_transformed_a (get a next_term_div_transformed))
+      (next_term_div_transformed_a (get x next_term_div_transformed))
       (next_term_div_transformed_exp (get exp next_term_div_transformed))
 
-      (next_sum (addition-with-scientific-notation {a: rolling_sum_a, exp: rolling_sum_exp} {b: next_term_div_transformed_a, exp: next_term_div_transformed_exp}))
+      (next_sum (addition-with-scientific-notation {x: rolling_sum_a, exp: rolling_sum_exp} {x: next_term_div_transformed_a, exp: next_term_div_transformed_exp}))
    )
     {term: next_term_div_transformed, seriesSum: next_sum, x: x}
  )
 )
 
-(define-read-only (multiplication-with-scientific-notation-with-precision (tuple-a (tuple (a int) (exp int))) (tuple-b (tuple (b int) (exp int))))
+(define-read-only (multiplication-with-scientific-notation-with-precision (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (let
         (   
-            (a (get a tuple-a))
+            (a (get x tuple-a))
             (a-exp (get exp tuple-a))
-            (b (get b tuple-b))
+            (b (get x tuple-b))
             (b-exp (get exp tuple-b))
 
             (a-count (digit-count a))
@@ -658,7 +612,7 @@
             (product (* (get a first) (get a second)))
             (exponent (+ (get exp first) (get exp second)))
         )
-        {a: product, exp: exponent }
+        {x: product, exp: exponent }
     )
 )
 
@@ -779,28 +733,28 @@
 ;;   )
 ;; )
 
-(define-read-only (exp-fixed-16 (num (tuple (a int) (exp int))))
+(define-read-only (exp-fixed-16 (num (tuple (x int) (exp int))))
   (begin
-    (asserts! (and (greater-than-equal-to {a: (get a num), exp: (get exp num)} {b: MIN_NATURAL_EXPONENT_16, exp: 0}) 
-    (greater-than-equal-to {a: MAX_NATURAL_EXPONENT_16, exp: 0} {b: (get a num), exp: (get exp num)})) (err ERR-INVALID-EXPONENT))
-    (if (greater-than-equal-to {a: (get a num), exp: (get exp num)} {b: 0, exp: 0})
+    (asserts! (and (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: MIN_NATURAL_EXPONENT_16, exp: 0}) 
+    (greater-than-equal-to {x: MAX_NATURAL_EXPONENT_16, exp: 0} {x: (get x num), exp: (get exp num)})) (err ERR-INVALID-EXPONENT))
+    (if (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: 0, exp: 0})
       (ok (exp-pos-16 num))
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
       ;; Fixed point division requires multiplying by ONE_16.
       (let
         (
-            (multiplication (multiplication-with-scientific-notation num {b: -1, exp: 0}))
-            (multiplication_a (get a multiplication))
+            (multiplication (multiplication-with-scientific-notation num {x: -1, exp: 0}))
+            (multiplication_a (get x multiplication))
             (multiplication_exp (get exp multiplication))
-            (exponent_result (exp-pos-16 {a: multiplication_a, exp: multiplication_exp}))
-            (exponent_result_a (get a exponent_result))
+            (exponent_result (exp-pos-16 {x: multiplication_a, exp: multiplication_exp}))
+            (exponent_result_a (get x exponent_result))
             (exponent_result_exp (get exp exponent_result))
             (transformed_result (transform-to-16 exponent_result))
-            (transformed_result_a (get a transformed_result))
+            (transformed_result_a (get x transformed_result))
             (transformed_result_exp (get exp transformed_result))
         )
-        (ok (division-with-scientific-notation-with-precision {a: 1, exp: 0} {b: transformed_result_a, exp: transformed_result_exp}))
+        (ok (division-with-scientific-notation-with-precision {x: 1, exp: 0} {x: transformed_result_a, exp: transformed_result_exp}))
         ;; )
         ;; (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp))
       )
@@ -836,23 +790,23 @@
 ;; )
 
 ;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
-(define-read-only (ln-fixed (num (tuple (a int) (exp int))))
+(define-read-only (ln-fixed (num (tuple (x int) (exp int))))
     (begin
-        (asserts! (> (get a num) 0) ERR-OUT-OF-BOUNDS)
-        (if (greater-than-equal-to num {b: 1, exp: 0})
+        (asserts! (> (get x num) 0) ERR-OUT-OF-BOUNDS)
+        (if (greater-than-equal-to num {x: 1, exp: 0})
             (ln-priv-16 num)
             ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
             ;; If a is less than one, 1/a will be greater than one.
             ;; Fixed point division requires multiplying by ONE_8.
             (let
                 (
-                    (division (division-with-scientific-notation {a: 1, exp: 0} {b: (get a num), exp: (get exp num)}))
+                    (division (division-with-scientific-notation {x: 1, exp: 0} num))
                     
                     (ln (unwrap-panic (ln-priv-16 division)))
-                    (ln_a (get a ln))
+                    (ln_a (get x ln))
                     (ln_exp (get exp ln))
                 )
-                (ok (subtraction-with-scientific-notation {a: 0, exp: 0} {b: ln_a, exp: ln_exp}))
+                (ok (subtraction-with-scientific-notation {x: 0, exp: 0} {x: ln_a, exp: ln_exp}))
             )
         )
     )
