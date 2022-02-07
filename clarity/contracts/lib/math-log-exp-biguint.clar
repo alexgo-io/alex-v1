@@ -20,8 +20,8 @@
 ;; We use 51.0 and -36.0 to have some safety margin.
 (define-constant MAX_NATURAL_EXPONENT (* 51 ONE_16))
 (define-constant MIN_NATURAL_EXPONENT (* -36 ONE_16))
-(define-constant MAX_NATURAL_EXPONENT_16 51)
-(define-constant MIN_NATURAL_EXPONENT_16 -36)
+(define-constant MAX_NATURAL_EXPONENT_16 {x: 51, exp: 0})
+(define-constant MIN_NATURAL_EXPONENT_16 {x: -36, exp: 0})
 
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
 (define-constant UPPER_BASE_BOUND_16 {a: 17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
@@ -459,24 +459,18 @@
   )
 )
 
-;; (define-read-only (pow-priv-16 (x int) (x_exp int) (y int) (y_exp int))
-;;   (let
-;;     (
-      
-;;       (lnx (unwrap-panic (ln-priv-16 x x_exp)))
-;;       (lnx_a (get a lnx))
-;;       (lnx_exp (get exp lnx))
-
-;;       (logx_times_y (multiplication-with-scientific-notation lnx_a lnx_exp y y_exp))
-;;       (logx_times_y_a (get a logx_times_y))
-;;       (logx_times_y_exp (get exp logx_times_y))
-;;     )
-;;     (asserts! (and (greater-than-equal-to logx_times_y_a logx_times_y_exp MIN_NATURAL_EXPONENT_16 0)
-;;                     (greater-than-equal-to MAX_NATURAL_EXPONENT_16 0 logx_times_y_a logx_times_y_exp)) 
-;;                     (err ERR-INVALID-EXPONENT))
-;;     (exp-fixed-16 logx_times_y_a logx_times_y_exp)
-;;   )
-;; )
+(define-read-only (pow-priv-16 (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
+  (let
+    (
+      (lnx (unwrap-panic (ln-priv-16 tuple-x)))
+      (logx_times_y (multiplication-with-scientific-notation lnx tuple-y))
+    )
+    (asserts! (and (greater-than-equal-to logx_times_y MIN_NATURAL_EXPONENT_16)
+                    (greater-than-equal-to MAX_NATURAL_EXPONENT_16 logx_times_y)) 
+                    (err ERR-INVALID-EXPONENT))
+    (exp-fixed-16 logx_times_y)
+  )
+)
 
 (define-read-only (exp-pos-16 (num (tuple (x int) (exp int))))
     (let
@@ -731,8 +725,8 @@
 
 (define-read-only (exp-fixed-16 (num (tuple (x int) (exp int))))
   (begin
-    (asserts! (and (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: MIN_NATURAL_EXPONENT_16, exp: 0}) 
-    (greater-than-equal-to {x: MAX_NATURAL_EXPONENT_16, exp: 0} {x: (get x num), exp: (get exp num)})) (err ERR-INVALID-EXPONENT))
+    (asserts! (and (greater-than-equal-to {x: (get x num), exp: (get exp num)} MIN_NATURAL_EXPONENT_16) 
+    (greater-than-equal-to MAX_NATURAL_EXPONENT_16 {x: (get x num), exp: (get exp num)})) (err ERR-INVALID-EXPONENT))
     (if (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: 0, exp: 0})
       (ok (exp-pos-16 num))
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
@@ -741,18 +735,10 @@
       (let
         (
             (multiplication (multiplication-with-scientific-notation num {x: -1, exp: 0}))
-            (multiplication_a (get x multiplication))
-            (multiplication_exp (get exp multiplication))
-            (exponent_result (exp-pos-16 {x: multiplication_a, exp: multiplication_exp}))
-            (exponent_result_a (get x exponent_result))
-            (exponent_result_exp (get exp exponent_result))
+            (exponent_result (exp-pos-16 multiplication))
             (transformed_result (transform-to-16 exponent_result))
-            (transformed_result_a (get x transformed_result))
-            (transformed_result_exp (get exp transformed_result))
         )
-        (ok (division-with-scientific-notation-with-precision {x: 1, exp: 0} {x: transformed_result_a, exp: transformed_result_exp}))
-        ;; )
-        ;; (ok (division-with-scientific-notation-with-precision 1 0 exponent_result_a exponent_result_exp))
+        (ok (division-with-scientific-notation-with-precision {x: 1, exp: 0} transformed_result))
       )
     )
   )
