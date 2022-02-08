@@ -287,7 +287,7 @@ Clarinet.test({
 
         let deployer = accounts.get("deployer")!;
         // 0.0000005
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 5, exp: -7}),
         ], deployer.address);
@@ -296,7 +296,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         // 0.02
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 2, exp: -2}),
         ], deployer.address);
@@ -305,7 +305,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         //0.1
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 1, exp: -1}),
         ], deployer.address);
@@ -314,7 +314,7 @@ Clarinet.test({
         result['exp'].expectInt(-30);
 
         //0.2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 2, exp: -1}),
         ], deployer.address);
@@ -323,7 +323,7 @@ Clarinet.test({
         result['exp'].expectInt(-30);
 
         //1
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 1, exp: 0}),
         ], deployer.address);
@@ -332,7 +332,7 @@ Clarinet.test({
         result['exp'].expectInt(-14);
 
         // 4.5
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 45, exp: -1}),
         ], deployer.address);
@@ -341,7 +341,7 @@ Clarinet.test({
         result['exp'].expectInt(-13);
 
         // 51
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 51, exp: 0}),
         ], deployer.address);
@@ -350,7 +350,7 @@ Clarinet.test({
         result['exp'].expectInt(8);
 
         //0
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 0, exp: 0}),
         ], deployer.address);
@@ -359,7 +359,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         //-1.01
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: -101, exp: -2}),
         ], deployer.address);
@@ -368,7 +368,7 @@ Clarinet.test({
         result['exp'].expectInt(-18);
 
         // -36
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: -36, exp: 0}),
         ], deployer.address);
@@ -377,7 +377,7 @@ Clarinet.test({
         result['exp'].expectInt(-33);
 
         // 52
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "exp-fixed ",
         [
             types.tuple({x: 52, exp: 0}),
         ], deployer.address);
@@ -393,7 +393,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
 
         // 0.0000005^0.6
-        let call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 50000000, exp: -14}),
             types.tuple({x: 6, exp: -1}),
@@ -403,7 +403,7 @@ Clarinet.test({
         result['exp'].expectInt(-18);
 
         // 0.02^0.08
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 2, exp: -2}),
             types.tuple({x: 8, exp: -2}),
@@ -413,7 +413,7 @@ Clarinet.test({
         result['exp'].expectInt(-16);
 
         //0.1^1
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 1, exp: -1}),
             types.tuple({x: 1, exp: 0}),
@@ -423,7 +423,7 @@ Clarinet.test({
         result['exp'].expectInt(-18);
 
         // 10^100
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 10, exp: 0}),
             types.tuple({x: 10, exp: 1}),
@@ -431,7 +431,7 @@ Clarinet.test({
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         // 81^0
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 81, exp: 0}),
             types.tuple({x: 0, exp: 0}),
@@ -441,7 +441,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         // 90 ^ 9
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 9, exp: 1}),
             types.tuple({x: 9, exp: 0}),
@@ -451,7 +451,7 @@ Clarinet.test({
         result['exp'].expectInt(3);
 
         // 123 ^ 8
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: '12300000000', exp: -8}),
             types.tuple({x: 8, exp: 0}),
@@ -461,7 +461,7 @@ Clarinet.test({
         result['exp'].expectInt(2);
 
         // 123 ^ 2.46
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: '12300000000', exp: -8}),
             types.tuple({x: '246000000000', exp: -11}),
@@ -469,7 +469,7 @@ Clarinet.test({
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         // 21 ^ 0.0046
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: '210000', exp: -4}),
             types.tuple({x:  '46000000000000000', exp: -19}),
@@ -477,7 +477,7 @@ Clarinet.test({
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         //0 ^ 1
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: 0, exp: 0}),
             types.tuple({x:  1, exp: 0}),
@@ -487,7 +487,7 @@ Clarinet.test({
         result['exp'].expectInt(-19);
 
         //-0.01^2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: -1, exp: -2}),
             types.tuple({x:  2, exp: 0}),
@@ -497,7 +497,7 @@ Clarinet.test({
         result['exp'].expectInt(-21);
 
         //-1.8 ^ 2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: -18, exp: -2}),
             types.tuple({x:  2, exp: 0}),
@@ -505,7 +505,7 @@ Clarinet.test({
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         // -7.1 ^ 3.2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: -71, exp: -1}),
             types.tuple({x:  32, exp: -1}),
@@ -515,7 +515,7 @@ Clarinet.test({
         result['exp'].expectInt(6);
 
 
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: -52, exp: 0}),
             types.tuple({x:  82, exp: -1}),
@@ -525,7 +525,7 @@ Clarinet.test({
         result['exp'].expectInt(1)
 
         // -37.6 ^ 11.2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv-16",
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
             types.tuple({x: -376, exp: -1}),
             types.tuple({x:  112, exp: -1}),

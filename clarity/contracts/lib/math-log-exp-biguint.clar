@@ -18,14 +18,12 @@
 ;; which makes the largest exponent ln((2^127 - 1) / 10^16) = 51.1883304432
 ;; The smallest possible result is 10^(-16), which makes largest negative argument ln(10^(-16)) = -36.8413614879
 ;; We use 51.0 and -36.0 to have some safety margin.
-(define-constant MAX_NATURAL_EXPONENT (* 51 ONE_16))
-(define-constant MIN_NATURAL_EXPONENT (* -36 ONE_16))
-(define-constant MAX_NATURAL_EXPONENT_16 {x: 51, exp: 0})
-(define-constant MIN_NATURAL_EXPONENT_16 {x: -36, exp: 0})
+(define-constant MAX_NATURAL_EXPONENT {x: 51, exp: 0})
+(define-constant MIN_NATURAL_EXPONENT {x: -36, exp: 0})
 
-(define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint ONE_16)))
-(define-constant UPPER_BASE_BOUND_16 {x: 17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
-(define-constant LOWER_EXPONENT_BOUND_16 {x: 85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
+(define-constant MILD_EXPONENT_BOUND (pow u2 u126))
+(define-constant UPPER_BASE_BOUND {x: 17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
+(define-constant LOWER_EXPONENT_BOUND {x: 85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
 
 ;; Because largest exponent is 51, we start from 32
 ;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
@@ -35,22 +33,8 @@
 ;; a_n can all be stored in 16 decimal place
 
 ;; 16 decimal constants
-(define-constant x_a_list (list 
-{x_pre: 320000000000000000, a_pre: 789629601826806951609780226351} ;; x0 = 2^5, a0 = e^(x0)
-{x_pre: 160000000000000000, a_pre: 88861105205078726367630} ;; x1 = 2^4, a1 = e^(x1)
-{x_pre: 80000000000000000, a_pre: 29809579870417282747} ;; x2 = 2^3, a2 = e^(x2)
-{x_pre: 40000000000000000, a_pre: 545981500331442391} ;; x3 = 2^2, a3 = e^(x3)
-{x_pre: 20000000000000000, a_pre: 73890560989306502} ;; x4 = 2^1, a4 = e^(x4)
-{x_pre: 10000000000000000, a_pre: 27182818284590452} ;; x5 = 2^0, a5 = e^(x5)
-{x_pre: 5000000000000000, a_pre: 16487212707001282} ;; x6 = 2^-1, a6 = e^(x6)
-{x_pre: 2500000000000000, a_pre: 12840254166877414} ;; x7 = 2^-2, a7 = e^(x7)
-{x_pre: 1250000000000000, a_pre: 11331484530668263} ;; x8 = 2^-3, a8 = e^(x8)
-{x_pre: 625000000000000, a_pre: 10644944589178594} ;; x9 = 2^-4, a9 = e^(x9)
-{x_pre: 312500000000000, a_pre: 10317434074991027} ;; x10 = 2^-5, a10 = e^(x10)
-))
-
 ;; We must keep a_pre to 16 digits so that division won't give us 0 when divided by ONE_16
-(define-constant x_a_list_16 (list 
+(define-constant x_a_list (list 
 {x_pre: 32, x_pre_exp: 0, a_pre: 7896296018268069, a_pre_exp: -2} ;; x0 = 2^5, a0 = e^(x0)
 {x_pre: 16, x_pre_exp: 0, a_pre: 8886110520507873, a_pre_exp: -9} ;; x1 = 2^4, a1 = e^(x1)
 {x_pre: 8, x_pre_exp: 0, a_pre: 2980957987041728, a_pre_exp: -12} ;; x2 = 2^3, a2 = e^(x2)
@@ -69,6 +53,221 @@
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
+
+(define-read-only (ln-priv (num (tuple (x int) (exp int))))
+    (let
+        (
+            ;; decomposition
+            (a_sum (fold accumulate_division x_a_list {a: num, sum: {x: 0, exp: 0}}))
+            (out_a (get a a_sum))
+            (out_a_transformed (transform-to-16 out_a))
+            (out_sum (get sum a_sum))
+            (out_a_sn_sub (subtraction-with-scientific-notation out_a_transformed {x: 1, exp: 0}))
+            (out_a_sn_add (addition-with-scientific-notation out_a_transformed {x: 1, exp: 0}))
+            ;; z calculation
+            (z (division-with-scientific-notation out_a_sn_sub out_a_sn_add))
+            (z_squared (multiplication-with-scientific-notation z z))
+            (z_squared_scaled_down (scale-down-with-lost-precision z_squared))
+            ;; taylor series
+            (div_list (list 3 5 7 9 11))
+            (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared_scaled_down}))
+            (seriesSum (get seriesSum num_sum_zsq))
+            (seriesSumScaledDown (scale-down-with-lost-precision seriesSum))
+            (seriesSumDouble (multiplication-with-scientific-notation seriesSumScaledDown {x: 2, exp: 0}))
+
+            (r (addition-with-scientific-notation out_sum seriesSumDouble))
+        )
+        (ok r)
+    )
+)
+
+(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (x int) (exp int))) (sum (tuple (x int) (exp int))))))
+    (let
+        (
+            (a_pre (get a_pre x_a_pre))
+            (a_pre_exp (get a_pre_exp x_a_pre))
+            (x_pre (get x_pre x_a_pre))
+            (x_pre_exp (get x_pre_exp x_a_pre))
+            (rolling_a (get a rolling_a_sum))
+            (rolling_sum (get sum rolling_a_sum))
+        )
+        (if (greater-than-equal-to rolling_a {x: a_pre, exp: a_pre_exp})
+            {
+                a: (division-with-scientific-notation-with-precision rolling_a {x: a_pre, exp: a_pre_exp}),
+                sum: (addition-with-scientific-notation rolling_sum {x: x_pre, exp: x_pre_exp}) 
+            }
+            {a: rolling_a, sum: rolling_sum}
+        )
+    )
+)
+
+(define-private (rolling_sum_div (n int) (rolling (tuple (num (tuple (x int) (exp int))) (seriesSum (tuple (x int) (exp int))) (z_squared (tuple (x int) (exp int))))))
+    (let
+        (
+            (rolling_num (get num rolling))
+            (rolling_sum (get seriesSum rolling))
+            (z_squared (get z_squared rolling))
+            (next_num (multiplication-with-scientific-notation rolling_num z_squared))
+            (next_num_scaled_down (scale-down-with-lost-precision next_num))
+            (next_sum_div (division-with-scientific-notation next_num_scaled_down {x: n, exp: 0}))
+            (next_sum (addition-with-scientific-notation next_sum_div rolling_sum))
+        )
+        {num: next_num_scaled_down, seriesSum: next_sum, z_squared: z_squared}
+    )
+) 
+
+;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
+;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
+;; x^y = exp(y * ln(x)).
+;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+(define-read-only (pow-priv (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
+  (let
+    (
+      (lnx (unwrap-panic (ln-priv tuple-x)))
+      (logx_times_y (multiplication-with-scientific-notation lnx tuple-y))
+    )
+    (asserts! (and (greater-than-equal-to logx_times_y MIN_NATURAL_EXPONENT)
+                    (greater-than-equal-to MAX_NATURAL_EXPONENT logx_times_y)) 
+                    (err ERR-INVALID-EXPONENT))
+    (exp-fixed logx_times_y)
+  )
+)
+
+(define-read-only (exp-pos (num (tuple (x int) (exp int))))
+    (let
+        (
+            ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
+            ;; it and compute the accumulated product.
+            (x_product (fold accumulate_product x_a_list {x: num, product: {x: 1, exp: 0}}))
+            (product_out (get product x_product))
+            (transformed_product (transform-to-16 product_out))
+            (x_out (get x x_product))
+            (transformed_x (transform-to-16 x_out))
+            (seriesSum (addition-with-scientific-notation {x: 1, exp: 0} transformed_x))
+            (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
+            (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
+            (sum (get seriesSum term_sum_x))
+            (r (multiplication-with-scientific-notation-with-precision transformed_product sum))
+        )
+        (if (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: 1, exp: 0})
+            (scale-down-with-lost-precision r)
+         r
+        )
+    )
+)
+
+(define-private (accumulate_product (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (x int) (exp int))) (product (tuple (x int) (exp int))))))
+    (let
+        (
+            (x_pre (get x_pre x_a_pre))
+            (x_pre_exp (get x_pre_exp x_a_pre))
+            (a_pre (get a_pre x_a_pre))
+            (a_pre_exp (get a_pre_exp x_a_pre))
+            (rolling_x (get x rolling_x_p))
+            (rolling_product (get product rolling_x_p))
+        )
+        (if (greater-than-equal-to rolling_x {x: x_pre, exp: x_pre_exp})
+            {
+                x: (subtraction-with-scientific-notation rolling_x {x: x_pre, exp: x_pre_exp}),
+                product: (multiplication-with-scientific-notation-with-precision rolling_product {x: a_pre, exp: a_pre_exp})
+            }
+            {x: rolling_x, product: rolling_product}
+        )
+    )
+)
+
+(define-private (rolling_div_sum (n int) (rolling (tuple (term (tuple (x int) (exp int))) (seriesSum (tuple (x int) (exp int))) (x (tuple (x int) (exp int))))))
+  (let
+    (
+      (rolling_term (get term rolling))
+      (rolling_sum (get seriesSum rolling))
+      (x (get x rolling))
+      (next_term (multiplication-with-scientific-notation rolling_term x))
+      (next_term_transformed (transform-to-16 next_term))
+      (next_term_div (division-with-scientific-notation next_term_transformed {x: n, exp: 0}))
+      (next_term_div_transformed (transform-to-16 next_term_div))
+      (next_sum (addition-with-scientific-notation rolling_sum next_term_div_transformed))
+   )
+    {term: next_term_div_transformed, seriesSum: next_sum, x: x}
+ )
+)
+
+(define-read-only (pow-fixed (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
+  (begin
+    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+    ;; (asserts! (< x (pow 2 127)) ERR-X-OUT-OF-BOUNDS)
+    (asserts! (not (greater-than-equal-to tuple-x UPPER_BASE_BOUND)) ERR-X-OUT-OF-BOUNDS)
+
+    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+    (asserts! (not (greater-than-equal-to tuple-y LOWER_EXPONENT_BOUND)) ERR-Y-OUT-OF-BOUNDS)
+
+    (if (is-eq (get x tuple-y) 0) 
+      (ok {x: 1, exp: 0})
+      (if (is-eq (get x tuple-x) 0) 
+        (ok {x: 0, exp: 0})
+        (ok (unwrap-panic (pow-priv tuple-x tuple-y)))
+      )
+    )
+  )
+)
+
+;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
+;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+(define-read-only (exp-fixed (num (tuple (x int) (exp int))))
+  (begin
+    (asserts! (and (greater-than-equal-to num MIN_NATURAL_EXPONENT) 
+    (greater-than-equal-to MAX_NATURAL_EXPONENT num)) (err ERR-INVALID-EXPONENT))
+    (if (greater-than-equal-to num {x: 0, exp: 0})
+      (ok (exp-pos num))
+      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
+      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
+      ;; Fixed point division requires multiplying by ONE_16.
+      (let
+        (
+            (multiplication (multiplication-with-scientific-notation num {x: -1, exp: 0}))
+            (exponent_result (exp-pos multiplication))
+            (transformed_result (transform-to-16 exponent_result))
+        )
+        (ok (division-with-scientific-notation-with-precision {x: 1, exp: 0} transformed_result))
+      )
+    )
+  )
+)
+
+;; ;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
+;; (define-read-only (log-fixed (arg int) (base int))
+;;   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
+;;   (let
+;;     (
+;;       (logBase (scale-up (unwrap-panic (ln-priv base))))
+;;       (logArg (scale-up (unwrap-panic (ln-priv arg))))
+;;    )
+;;     (ok (/ (scale-up logArg) logBase))
+;;  )
+;; )
+
+;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
+(define-read-only (ln-fixed (num (tuple (x int) (exp int))))
+    (begin
+        (asserts! (> (get x num) 0) ERR-OUT-OF-BOUNDS)
+        (if (greater-than-equal-to num {x: 1, exp: 0})
+            (ln-priv num)
+            ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
+            ;; If a is less than one, 1/a will be greater than one.
+            ;; Fixed point division requires multiplying by ONE_8.
+            (let
+                (
+                    (division (division-with-scientific-notation {x: 1, exp: 0} num))
+                    
+                    (ln (unwrap-panic (ln-priv division)))
+                    (ln_a (get x ln))
+                    (ln_exp (get exp ln))
+                )
+                (ok (subtraction-with-scientific-notation {x: 0, exp: 0} {x: ln_a, exp: ln_exp}))
+            )
+        )
+    )
+)
 
 (define-read-only (scale-up (a int))
     (* a ONE_16)
@@ -93,71 +292,8 @@
             (exp (+ (get exp num) 16))
         )
         {x: x, exp: exp}
-        
     )
 )
-
-(define-read-only (ln-priv-16 (num (tuple (x int) (exp int))))
-    (let
-        (
-            ;; decomposition
-            (a_sum (fold accumulate_division_16 x_a_list_16 {a: num, sum: {x: 0, exp: 0}}))
-            (out_a (get a a_sum))
-            (out_a_transformed (transform-to-16 out_a))
-            (out_sum (get sum a_sum))
-            (out_a_sn_sub (subtraction-with-scientific-notation out_a_transformed {x: 1, exp: 0}))
-            (out_a_sn_add (addition-with-scientific-notation out_a_transformed {x: 1, exp: 0}))
-            ;; z calculation
-            (z (division-with-scientific-notation out_a_sn_sub out_a_sn_add))
-            (z_squared (multiplication-with-scientific-notation z z))
-            (z_squared_scaled_down (scale-down-with-lost-precision z_squared))
-            ;; taylor series
-            (div_list (list 3 5 7 9 11))
-            (num_sum_zsq (fold rolling_sum_div_16 div_list {num: z, seriesSum: z, z_squared: z_squared_scaled_down}))
-            (seriesSum (get seriesSum num_sum_zsq))
-            (seriesSumScaledDown (scale-down-with-lost-precision seriesSum))
-            (seriesSumDouble (multiplication-with-scientific-notation seriesSumScaledDown {x: 2, exp: 0}))
-
-            (r (addition-with-scientific-notation out_sum seriesSumDouble))
-        )
-        (ok r)
-    )
-)
-
-(define-private (accumulate_division_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_a_sum (tuple (a (tuple (x int) (exp int))) (sum (tuple (x int) (exp int))))))
-    (let
-        (
-            (a_pre (get a_pre x_a_pre))
-            (a_pre_exp (get a_pre_exp x_a_pre))
-            (x_pre (get x_pre x_a_pre))
-            (x_pre_exp (get x_pre_exp x_a_pre))
-            (rolling_a (get a rolling_a_sum))
-            (rolling_sum (get sum rolling_a_sum))
-        )
-        (if (greater-than-equal-to rolling_a {x: a_pre, exp: a_pre_exp})
-            {
-                a: (division-with-scientific-notation-with-precision rolling_a {x: a_pre, exp: a_pre_exp}),
-                sum: (addition-with-scientific-notation rolling_sum {x: x_pre, exp: x_pre_exp}) 
-            }
-            {a: rolling_a, sum: rolling_sum}
-        )
-    )
-)
-
-(define-private (rolling_sum_div_16 (n int) (rolling (tuple (num (tuple (x int) (exp int))) (seriesSum (tuple (x int) (exp int))) (z_squared (tuple (x int) (exp int))))))
-    (let
-        (
-            (rolling_num (get num rolling))
-            (rolling_sum (get seriesSum rolling))
-            (z_squared (get z_squared rolling))
-            (next_num (multiplication-with-scientific-notation rolling_num z_squared))
-            (next_num_scaled_down (scale-down-with-lost-precision next_num))
-            (next_sum_div (division-with-scientific-notation next_num_scaled_down {x: n, exp: 0}))
-            (next_sum (addition-with-scientific-notation next_sum_div rolling_sum))
-        )
-        {num: next_num_scaled_down, seriesSum: next_sum, z_squared: z_squared}
-    )
-) 
 
 (define-read-only (greater-than-equal-to (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
     (if (> (get exp tuple-a) (get exp tuple-b))
@@ -294,6 +430,45 @@
     )
 )
 
+(define-read-only (multiplication-with-scientific-notation-with-precision (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
+    (let
+        (   
+            (a (get x tuple-a))
+            (a-exp (get exp tuple-a))
+            (b (get x tuple-b))
+            (b-exp (get exp tuple-b))
+
+            (a-count (digit-count a))
+            (first (if (> a-count 16)
+                {a: (/ a (pow 10 (- a-count 16))), exp: (+ a-exp (- a-count 16))}
+                {a: a, exp: a-exp}
+            ))
+            (b-count (digit-count b))
+            (second (if (> b-count 16)
+                {a: (/ b (pow 10 (- b-count 16))), exp: (+ b-exp (- b-count 16))}
+                {a: b, exp: b-exp}
+            ))
+            
+            (product (* (get a first) (get a second)))
+            (exponent (+ (get exp first) (get exp second)))
+        )
+        {x: product, exp: exponent }
+    )
+)
+
+(define-read-only (count-digits (a int))
+    (let
+        (   (input (if (< a 0) (* -1 a) a))
+            (natural-log (try! (ln-fixed {x: input, exp: 0})))
+            (count (division-with-scientific-notation natural-log {x: 2303, exp: -3}))
+            (exponent (get exp count))
+            (exp (if (< exponent 1) (* -1 exponent ) exponent))
+            (total-digits (+ (/ (get x count) (pow 10 exp)) 1))
+        )
+        (ok total-digits)
+    )
+)
+
 ;; transformation
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
@@ -382,204 +557,6 @@
     )
 )
 
-;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-(define-read-only (pow-priv-16 (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
-  (let
-    (
-      (lnx (unwrap-panic (ln-priv-16 tuple-x)))
-      (logx_times_y (multiplication-with-scientific-notation lnx tuple-y))
-    )
-    (asserts! (and (greater-than-equal-to logx_times_y MIN_NATURAL_EXPONENT_16)
-                    (greater-than-equal-to MAX_NATURAL_EXPONENT_16 logx_times_y)) 
-                    (err ERR-INVALID-EXPONENT))
-    (exp-fixed-16 logx_times_y)
-  )
-)
-
-(define-read-only (exp-pos-16 (num (tuple (x int) (exp int))))
-    (let
-        (
-            ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-            ;; it and compute the accumulated product.
-            (x_product (fold accumulate_product_16 x_a_list_16 {x: num, product: {x: 1, exp: 0}}))
-            (product_out (get product x_product))
-            (transformed_product (transform-to-16 product_out))
-            (x_out (get x x_product))
-            (transformed_x (transform-to-16 x_out))
-            (seriesSum (addition-with-scientific-notation {x: 1, exp: 0} transformed_x))
-            (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-            (term_sum_x (fold rolling_div_sum_16 div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-            (sum (get seriesSum term_sum_x))
-            (r (multiplication-with-scientific-notation-with-precision transformed_product sum))
-        )
-        (if (greater-than-equal-to {x: (get x num), exp: (get exp num)} {x: 1, exp: 0})
-            (scale-down-with-lost-precision r)
-         r
-        )
-    )
-)
-
-(define-private (accumulate_product_16 (x_a_pre (tuple (x_pre int) (x_pre_exp int) (a_pre int) (a_pre_exp int))) (rolling_x_p (tuple (x (tuple (x int) (exp int))) (product (tuple (x int) (exp int))))))
-    (let
-        (
-            (x_pre (get x_pre x_a_pre))
-            (x_pre_exp (get x_pre_exp x_a_pre))
-            (a_pre (get a_pre x_a_pre))
-            (a_pre_exp (get a_pre_exp x_a_pre))
-            (rolling_x (get x rolling_x_p))
-            (rolling_product (get product rolling_x_p))
-        )
-        (if (greater-than-equal-to rolling_x {x: x_pre, exp: x_pre_exp})
-            {
-                x: (subtraction-with-scientific-notation rolling_x {x: x_pre, exp: x_pre_exp}),
-                product: (multiplication-with-scientific-notation-with-precision rolling_product {x: a_pre, exp: a_pre_exp})
-            }
-            {x: rolling_x, product: rolling_product}
-        )
-    )
-)
-
-(define-private (rolling_div_sum_16 (n int) (rolling (tuple (term (tuple (x int) (exp int))) (seriesSum (tuple (x int) (exp int))) (x (tuple (x int) (exp int))))))
-  (let
-    (
-      (rolling_term (get term rolling))
-      (rolling_sum (get seriesSum rolling))
-      (x (get x rolling))
-      (next_term (multiplication-with-scientific-notation rolling_term x))
-      (next_term_transformed (transform-to-16 next_term))
-      (next_term_div (division-with-scientific-notation next_term_transformed {x: n, exp: 0}))
-      (next_term_div_transformed (transform-to-16 next_term_div))
-      (next_sum (addition-with-scientific-notation rolling_sum next_term_div_transformed))
-   )
-    {term: next_term_div_transformed, seriesSum: next_sum, x: x}
- )
-)
-
-(define-read-only (multiplication-with-scientific-notation-with-precision (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
-    (let
-        (   
-            (a (get x tuple-a))
-            (a-exp (get exp tuple-a))
-            (b (get x tuple-b))
-            (b-exp (get exp tuple-b))
-
-            (a-count (digit-count a))
-            (first (if (> a-count 16)
-                {a: (/ a (pow 10 (- a-count 16))), exp: (+ a-exp (- a-count 16))}
-                {a: a, exp: a-exp}
-            ))
-            (b-count (digit-count b))
-            (second (if (> b-count 16)
-                {a: (/ b (pow 10 (- b-count 16))), exp: (+ b-exp (- b-count 16))}
-                {a: b, exp: b-exp}
-            ))
-            
-            (product (* (get a first) (get a second)))
-            (exponent (+ (get exp first) (get exp second)))
-        )
-        {x: product, exp: exponent }
-    )
-)
-
-(define-read-only (count-digits (a int))
-    (let
-        (   (input (if (< a 0) (* -1 a) a))
-            (natural-log (try! (ln-fixed {x: input, exp: 0})))
-            (count (division-with-scientific-notation natural-log {x: 2303, exp: -3}))
-            (exponent (get exp count))
-            (exp (if (< exponent 1) (* -1 exponent ) exponent))
-            (total-digits (+ (/ (get x count) (pow 10 exp)) 1))
-        )
-        (ok total-digits)
-    )
-)
-
-
-;; public functions
-;;
-(define-read-only (get-exp-bound)
-  (ok MILD_EXPONENT_BOUND)
-)
-
-(define-read-only (pow-fixed-16 (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
-  (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    ;; (asserts! (< x (pow 2 127)) ERR-X-OUT-OF-BOUNDS)
-    (asserts! (not (greater-than-equal-to tuple-x UPPER_BASE_BOUND_16)) ERR-X-OUT-OF-BOUNDS)
-
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (not (greater-than-equal-to tuple-y LOWER_EXPONENT_BOUND_16)) ERR-Y-OUT-OF-BOUNDS)
-
-    (if (is-eq (get x tuple-y) 0) 
-      (ok {x: 1, exp: 0})
-      (if (is-eq (get x tuple-x) 0) 
-        (ok {x: 0, exp: 0})
-        (ok (unwrap-panic (pow-priv-16 tuple-x tuple-y)))
-      )
-    )
-  )
-)
-
-;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-(define-read-only (exp-fixed-16 (num (tuple (x int) (exp int))))
-  (begin
-    (asserts! (and (greater-than-equal-to num MIN_NATURAL_EXPONENT_16) 
-    (greater-than-equal-to MAX_NATURAL_EXPONENT_16 num)) (err ERR-INVALID-EXPONENT))
-    (if (greater-than-equal-to num {x: 0, exp: 0})
-      (ok (exp-pos-16 num))
-      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by ONE_16.
-      (let
-        (
-            (multiplication (multiplication-with-scientific-notation num {x: -1, exp: 0}))
-            (exponent_result (exp-pos-16 multiplication))
-            (transformed_result (transform-to-16 exponent_result))
-        )
-        (ok (division-with-scientific-notation-with-precision {x: 1, exp: 0} transformed_result))
-      )
-    )
-  )
-)
-
-;; ;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
-;; (define-read-only (log-fixed (arg int) (base int))
-;;   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-;;   (let
-;;     (
-;;       (logBase (scale-up (unwrap-panic (ln-priv base))))
-;;       (logArg (scale-up (unwrap-panic (ln-priv arg))))
-;;    )
-;;     (ok (/ (scale-up logArg) logBase))
-;;  )
-;; )
-
-;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
-(define-read-only (ln-fixed (num (tuple (x int) (exp int))))
-    (begin
-        (asserts! (> (get x num) 0) ERR-OUT-OF-BOUNDS)
-        (if (greater-than-equal-to num {x: 1, exp: 0})
-            (ln-priv-16 num)
-            ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-            ;; If a is less than one, 1/a will be greater than one.
-            ;; Fixed point division requires multiplying by ONE_8.
-            (let
-                (
-                    (division (division-with-scientific-notation {x: 1, exp: 0} num))
-                    
-                    (ln (unwrap-panic (ln-priv-16 division)))
-                    (ln_a (get x ln))
-                    (ln_exp (get exp ln))
-                )
-                (ok (subtraction-with-scientific-notation {x: 0, exp: 0} {x: ln_a, exp: ln_exp}))
-            )
-        )
-    )
-)
 
 (define-read-only (digit-count (digits int))
     (let 
