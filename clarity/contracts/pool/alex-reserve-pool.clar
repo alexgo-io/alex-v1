@@ -676,6 +676,7 @@
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .fixed-weight-pool-v1-01 true)
+(map-set approved-contracts .fixed-weight-pool-v1-01a true)
 
 ;; testing only
 (map-set approved-contracts .collateral-rebalancing-pool true)  
