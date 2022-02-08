@@ -16,6 +16,7 @@
 (define-constant ERR-MINT-FAILED (err u6002))
 (define-constant ERR-BURN-FAILED (err u6003))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
+(define-constant ERR-NOT-SUPPORTED (err u6004))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -67,7 +68,7 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok u0)
+  ERR-NOT-SUPPORTED
 )
 
 ;; @desc get-name
