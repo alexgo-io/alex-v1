@@ -68,6 +68,7 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
+  ;; least authority Issue D
   ERR-NOT-SUPPORTED
 )
 
