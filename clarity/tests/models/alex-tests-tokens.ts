@@ -28,17 +28,6 @@ class ALEXToken {
     ], this.deployer.address);
   }
 
-  // Always need to called by deployer
-  mint(sender: Account, recipient: string, amount : number) {
-    let block = this.chain.mineBlock([
-      Tx.contractCall("age000-governance-token", "mint", [
-        types.uint(amount),
-        types.principal(recipient)        
-      ], sender.address),
-    ]);
-    return block.receipts[0].result;
-  }
-
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("age000-governance-token", "mint-fixed", [
@@ -312,6 +301,27 @@ class FWP_WSTX_USDA_5050 {
   }
 }
 export { FWP_WSTX_USDA_5050 };
+
+class FWP_ALEX_USDA_5050 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50-v1-01", "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FWP_ALEX_USDA_5050 };
 
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
