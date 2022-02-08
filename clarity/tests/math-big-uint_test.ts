@@ -3,6 +3,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 const ONE_16 = 10000000000000000
+const ONE_8 = 100000000
 
 
 Clarinet.test({
@@ -11,12 +12,19 @@ Clarinet.test({
         
         let deployer = accounts.get("deployer")!;
 
-        let call = chain.callReadOnlyFn("math-big-uint", "maximum-integer",
+        let call = chain.callReadOnlyFn("math-big-uint", "maximum-unsigned-integer",
             [
-                types.uint(500*ONE_16), //19 digits
-                types.uint(5000*ONE_16), //20 digits
+                types.uint(500*ONE_16), //20 digits
+                types.uint(5000*ONE_16), //21 digits
             ], deployer.address);
         assertEquals(call.result, "u250000000000000000000000000000000000000") //39 digits MAX
+
+        call = chain.callReadOnlyFn("math-big-uint", "maximum-integer",
+            [
+                types.int(500*ONE_16), //20 digits
+                types.int(500*ONE_16), //20 digits
+            ], deployer.address);
+        assertEquals(call.result, "25000000000000000000000000000000000000") //38 digits MAX
     },
 });
 
@@ -395,8 +403,8 @@ Clarinet.test({
         // 0.0000005^0.6
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 50000000, exp: -14}),
-            types.tuple({x: 6, exp: -1}),
+            types.tuple({x: types.uint(50000000), exp: -14}),
+            types.tuple({x: types.uint(6), exp: -1}),
         ], deployer.address);
         let result: any = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '104994678204640105');
@@ -405,8 +413,8 @@ Clarinet.test({
         // 0.02^0.08
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 2, exp: -2}),
-            types.tuple({x: 8, exp: -2}),
+            types.tuple({x: types.uint(2), exp: -2}),
+            types.tuple({x: types.uint(8), exp: -2}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '7662321819045797');
@@ -415,8 +423,8 @@ Clarinet.test({
         //0.1^1
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 1, exp: -1}),
-            types.tuple({x: 1, exp: 0}),
+            types.tuple({x: types.uint(1), exp: -1}),
+            types.tuple({x: types.uint(1), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '102817675584246604');
@@ -425,16 +433,16 @@ Clarinet.test({
         // 10^100
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 10, exp: 0}),
-            types.tuple({x: 10, exp: 1}),
+            types.tuple({x: types.uint(10), exp: 0}),
+            types.tuple({x: types.uint(10), exp: 1}),
         ], deployer.address);
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         // 81^0
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 81, exp: 0}),
-            types.tuple({x: 0, exp: 0}),
+            types.tuple({x: types.uint(81), exp: 0}),
+            types.tuple({x: types.uint(0), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '1000000000000000');
@@ -443,8 +451,8 @@ Clarinet.test({
         // 90 ^ 9
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 9, exp: 1}),
-            types.tuple({x: 9, exp: 0}),
+            types.tuple({x: types.uint(9), exp: 1}),
+            types.tuple({x: types.uint(9), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '387420489000000');
@@ -453,8 +461,8 @@ Clarinet.test({
         // 123 ^ 8
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: '12300000000', exp: -8}),
-            types.tuple({x: 8, exp: 0}),
+            types.tuple({x: 'u12300000000', exp: -8}),
+            types.tuple({x: types.uint(8), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '523890944282627');
@@ -463,76 +471,28 @@ Clarinet.test({
         // 123 ^ 2.46
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: '12300000000', exp: -8}),
-            types.tuple({x: '246000000000', exp: -11}),
+            types.tuple({x: 'u12300000000', exp: -8}),
+            types.tuple({x: 'u246000000000', exp: -11}),
         ], deployer.address);
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         // 21 ^ 0.0046
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: '210000', exp: -4}),
-            types.tuple({x:  '46000000000000000', exp: -19}),
+            types.tuple({x: 'u210000', exp: -4}),
+            types.tuple({x:  'u46000000000000000', exp: -19}),
         ], deployer.address);
         result = call.result.expectErr().expectErr().expectUint(5012);
 
         //0 ^ 1
         call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
         [
-            types.tuple({x: 0, exp: 0}),
-            types.tuple({x:  1, exp: 0}),
+            types.tuple({x: types.uint(0), exp: 0}),
+            types.tuple({x:  types.uint(1), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '233672138547078697');
         result['exp'].expectInt(-19);
-
-        //-0.01^2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
-        [
-            types.tuple({x: -1, exp: -2}),
-            types.tuple({x:  2, exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '327750807875699953');
-        result['exp'].expectInt(-21);
-
-        //-1.8 ^ 2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
-        [
-            types.tuple({x: -18, exp: -2}),
-            types.tuple({x:  2, exp: 0}),
-        ], deployer.address);
-        result = call.result.expectErr().expectErr().expectUint(5012);
-
-        // -7.1 ^ 3.2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
-        [
-            types.tuple({x: -71, exp: -1}),
-            types.tuple({x:  32, exp: -1}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '534132473145821');
-        result['exp'].expectInt(6);
-
-
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
-        [
-            types.tuple({x: -52, exp: 0}),
-            types.tuple({x:  82, exp: -1}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple()
-        assertEquals(result['x'], "170637486177869")
-        result['exp'].expectInt(1)
-
-        // -37.6 ^ 11.2
-        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
-        [
-            types.tuple({x: -376, exp: -1}),
-            types.tuple({x:  112, exp: -1}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '894967902944789');
-        result['exp'].expectInt(7);
 
     },
 });

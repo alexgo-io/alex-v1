@@ -56,27 +56,6 @@
 ;; private functions
 ;;
 
-(define-public (ln-priv-extra (a int))
-  (let
-    (
-      (a_sum_no_deci (fold accumulate_division x_a_list_no_deci {a: a, sum: 0}))
-      (a_sum (fold accumulate_division x_a_list {a: (get a a_sum_no_deci), sum: (get sum a_sum_no_deci)}))
-      (out_a (get a a_sum))
-      (out_sum (get sum a_sum))
-      (z (/ (* (- out_a ONE_8) ONE_8) (+ out_a ONE_8)))
-      (z_squared (/ (* z z) ONE_8))
-      (div_list (list 3 5 7 9 11))
-      (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
-      (seriesSum (get seriesSum num_sum_zsq))
-      (r (+ out_sum (* seriesSum 2)))
-   )
-  ;;  (ok a_sum)
-  ;;  (ok {z: z, z_squared: z_squared})
-  ;;  (ok {series_sum: seriesSum, r: r})
-    (ok r)
- )
-)
-
 ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
 (define-public (ln-priv (a int))
   (let
@@ -106,7 +85,6 @@
       (rolling_sum (get sum rolling_a_sum))
    )
     (if (>= rolling_a (if use_deci a_pre (* a_pre ONE_8)))
-    ;; (if true
       {a: (/ (* rolling_a (if use_deci ONE_8 1)) a_pre), sum: (+ rolling_sum x_pre)}
       {a: rolling_a, sum: rolling_sum}
    )
@@ -162,30 +140,6 @@
         (sum (get seriesSum term_sum_x))
      )
       (ok (* (/ (* product_out sum) ONE_8) firstAN))
-   )
- )
-)
-
-(define-read-only (exp (x int))
-  (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
-    (let
-      (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
-        (x_adj (get x x_product_no_deci))
-        (firstAN (get product x_product_no_deci))
-        (x_product (fold accumulate_product x_a_list {x: x_adj, product: ONE_8}))
-        ;; (product_out (get product x_product))
-        ;; (x_out (get x x_product))
-        ;; (seriesSum (+ ONE_8 x_out))
-        ;; (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        ;; (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        ;; (sum (get seriesSum term_sum_x))
-     )
-      ;; (ok (* (/ (* product_out sum) ONE_8) firstAN))
-      (ok x_product)
    )
  )
 )
@@ -304,29 +258,5 @@
   ;;(ok logx-times-y)
   ;;x_product
   (ok (pow-fixed x y))
- )
-)
-
-;; added just for comparing results
-(define-read-only (exp-pos-8 (x int))
-  (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) (err ERR-INVALID-EXPONENT))
-    (let
-      (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
-        (x_adj (get x x_product_no_deci))
-        (firstAN (get product x_product_no_deci))
-        (x_product (fold accumulate_product x_a_list {x: x_adj, product: ONE_8}))
-        (product_out (get product x_product))
-        (x_out (get x x_product))
-        (seriesSum (+ ONE_8 x_out))
-        (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        (sum (get seriesSum term_sum_x))
-     )
-      (ok  x_product)
-   )
  )
 )

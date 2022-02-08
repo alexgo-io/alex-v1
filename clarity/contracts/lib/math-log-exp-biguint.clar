@@ -120,11 +120,13 @@
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
 ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-(define-read-only (pow-priv (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
+(define-read-only (pow-priv (tuple-x (tuple (x uint) (exp int))) (tuple-y (tuple (x uint) (exp int))))
   (let
     (
-      (lnx (unwrap-panic (ln-priv tuple-x)))
-      (logx_times_y (multiplication-with-scientific-notation lnx tuple-y))
+      (x-int (to-int (get x tuple-x)))
+      (y-int (to-int (get x tuple-y)))
+      (lnx (unwrap-panic (ln-priv {x: x-int, exp: (get exp tuple-x)})))
+      (logx_times_y (multiplication-with-scientific-notation lnx {x: y-int, exp: (get exp tuple-y)}))
     )
     (asserts! (and (greater-than-equal-to logx_times_y MIN_NATURAL_EXPONENT)
                     (greater-than-equal-to MAX_NATURAL_EXPONENT logx_times_y)) 
@@ -192,24 +194,25 @@
  )
 )
 
-(define-read-only (pow-fixed (tuple-x (tuple (x int) (exp int))) (tuple-y (tuple (x int) (exp int))))
-  (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    ;; (asserts! (< x (pow 2 127)) ERR-X-OUT-OF-BOUNDS)
-    (asserts! (not (greater-than-equal-to tuple-x UPPER_BASE_BOUND)) ERR-X-OUT-OF-BOUNDS)
+;; ;; this function should take uint as parameter for digits to check the max range
+;; (define-read-only (pow-fixed (tuple-x (tuple (x uint) (exp int))) (tuple-y (tuple (x uint) (exp int))))
+;;   (begin
+;;     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+;;     ;; (asserts! (< x (pow 2 127)) ERR-X-OUT-OF-BOUNDS)
+;;     (asserts! (not (greater-than-equal-to tuple-x UPPER_BASE_BOUND)) ERR-X-OUT-OF-BOUNDS)
 
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (not (greater-than-equal-to tuple-y LOWER_EXPONENT_BOUND)) ERR-Y-OUT-OF-BOUNDS)
+;;     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+;;     (asserts! (not (greater-than-equal-to tuple-y LOWER_EXPONENT_BOUND)) ERR-Y-OUT-OF-BOUNDS)
 
-    (if (is-eq (get x tuple-y) 0) 
-      (ok {x: 1, exp: 0})
-      (if (is-eq (get x tuple-x) 0) 
-        (ok {x: 0, exp: 0})
-        (ok (unwrap-panic (pow-priv tuple-x tuple-y)))
-      )
-    )
-  )
-)
+;;     (if (is-eq (get x tuple-y) 0) 
+;;       (ok {x: 1, exp: 0})
+;;       (if (is-eq (get x tuple-x) 0) 
+;;         (ok {x: 0, exp: 0})
+;;         (ok (unwrap-panic (pow-priv tuple-x tuple-y)))
+;;       )
+;;     )
+;;   )
+;; )
 
 ;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
