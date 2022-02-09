@@ -12,6 +12,7 @@
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 16 decimal fixed point numbers.
 (define-constant ONE_16 (pow 10 16))
+(define-constant uONE_16 (pow u10 u16))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^16, 
@@ -22,8 +23,8 @@
 (define-constant MIN_NATURAL_EXPONENT {x: -36, exp: 0})
 
 (define-constant MILD_EXPONENT_BOUND (pow u2 u126))
-(define-constant UPPER_BASE_BOUND {x: 17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
-(define-constant LOWER_EXPONENT_BOUND {x: 85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
+(define-constant UPPER_BASE_BOUND {x: u17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
+(define-constant LOWER_EXPONENT_BOUND {x: u85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
 
 ;; Because largest exponent is 51, we start from 32
 ;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
@@ -130,7 +131,7 @@
     )
     (asserts! (and (greater-than-equal-to logx_times_y MIN_NATURAL_EXPONENT)
                     (greater-than-equal-to MAX_NATURAL_EXPONENT logx_times_y)) 
-                    (err ERR-INVALID-EXPONENT))
+                    ERR-INVALID-EXPONENT)
     (exp-fixed logx_times_y)
   )
 )
@@ -194,32 +195,34 @@
  )
 )
 
-;; ;; this function should take uint as parameter for digits to check the max range
-;; (define-read-only (pow-fixed (tuple-x (tuple (x uint) (exp int))) (tuple-y (tuple (x uint) (exp int))))
-;;   (begin
-;;     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-;;     ;; (asserts! (< x (pow 2 127)) ERR-X-OUT-OF-BOUNDS)
-;;     (asserts! (not (greater-than-equal-to tuple-x UPPER_BASE_BOUND)) ERR-X-OUT-OF-BOUNDS)
+;; this function should take uint as parameter for digits to check the max range
+(define-read-only (pow-fixed (tuple-x (tuple (x uint) (exp int))) (tuple-y (tuple (x uint) (exp int))))
+  (begin
+    
+    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+    (asserts! (not (greater-than-equal-to-uint (scale-down-with-lost-precision-uint tuple-x) 
+    (scale-down-with-lost-precision-uint UPPER_BASE_BOUND))) ERR-X-OUT-OF-BOUNDS)
 
-;;     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-;;     (asserts! (not (greater-than-equal-to tuple-y LOWER_EXPONENT_BOUND)) ERR-Y-OUT-OF-BOUNDS)
+    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+    (asserts! (not (greater-than-equal-to-uint (scale-down-with-lost-precision-uint tuple-y) 
+    (scale-down-with-lost-precision-uint LOWER_EXPONENT_BOUND))) ERR-Y-OUT-OF-BOUNDS)
 
-;;     (if (is-eq (get x tuple-y) 0) 
-;;       (ok {x: 1, exp: 0})
-;;       (if (is-eq (get x tuple-x) 0) 
-;;         (ok {x: 0, exp: 0})
-;;         (ok (unwrap-panic (pow-priv tuple-x tuple-y)))
-;;       )
-;;     )
-;;   )
-;; )
+    (if (is-eq (get x tuple-y) u0) 
+      (ok {x: 1, exp: 0})
+      (if (is-eq (get x tuple-x) u0) 
+        (ok {x: 0, exp: 0})
+        (pow-priv tuple-x tuple-y)
+      )
+    )
+  )
+)
 
 ;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
 (define-read-only (exp-fixed (num (tuple (x int) (exp int))))
   (begin
     (asserts! (and (greater-than-equal-to num MIN_NATURAL_EXPONENT) 
-    (greater-than-equal-to MAX_NATURAL_EXPONENT num)) (err ERR-INVALID-EXPONENT))
+    (greater-than-equal-to MAX_NATURAL_EXPONENT num)) ERR-INVALID-EXPONENT)
     (if (greater-than-equal-to num {x: 0, exp: 0})
       (ok (exp-pos num))
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
@@ -296,6 +299,43 @@
         )
         {x: x, exp: exp}
     )
+)
+
+(define-read-only (scale-down-with-lost-precision-uint (num (tuple (x uint) (exp int))))
+    (let 
+        (
+            (x (/ (get x num) uONE_16))
+            (exp (+ (get exp num) 16))
+        )
+        {x: x, exp: exp}
+    )
+)
+
+(define-read-only (greater-than-equal-to-uint (tuple-a (tuple (x uint) (exp int))) (tuple-b (tuple (x uint) (exp int))))
+    (if (> (get exp tuple-a) (get exp tuple-b))
+        (let
+            (
+                (b (to-int (get x tuple-b)))
+                (b_exp (get exp tuple-b))
+                (a (to-int (get x tuple-a)))
+                (a_exp (get exp tuple-a))
+                (transformation (transform {x: a, exp: a_exp} b_exp))
+                (new_a (get x transformation))
+            )
+            (if (>= new_a b) true false)
+        )
+        (let
+            (
+                (a (to-int (get x tuple-a)))
+                (a_exp (get exp tuple-a))
+                (b (to-int (get x tuple-b)))
+                (b_exp (get exp tuple-b))
+                (transformation (transform {x: b, exp: b_exp} a_exp))
+                (new_b (get x transformation))
+            )
+            (if (>= a new_b) true false)
+        )
+    )       
 )
 
 (define-read-only (greater-than-equal-to (tuple-a (tuple (x int) (exp int))) (tuple-b (tuple (x int) (exp int))))
