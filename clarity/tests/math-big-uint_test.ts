@@ -494,5 +494,15 @@ Clarinet.test({
         assertEquals(result['x'], '233672138547078697');
         result['exp'].expectInt(-19);
 
+        //0 ^ 1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-priv ",
+        [
+            types.tuple({x: types.uint(1122334455667788), exp: 16}),
+            types.tuple({x:  types.uint(1122334455667788), exp: -10}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '233672138547078697');
+        result['exp'].expectInt(-19);
+
     },
 });
