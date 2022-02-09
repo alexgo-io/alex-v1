@@ -666,6 +666,7 @@ Clarinet.test({
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
         let FWPTest = new FWPTestAgent2(chain, deployer);     
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -682,6 +683,8 @@ Clarinet.test({
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
         result.expectOk().expectBool(true);
 
+        result = FWPTest.setStartBlock(wallet_1, 100);
+        result.expectErr().expectUint(1000);        
         result = FWPTest.setStartBlock(deployer, 100);
         result.expectOk().expectBool(true);
         
@@ -697,6 +700,8 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         result.expectOk().expectTuple();        
 
+        result = FWPTest.setEndBlock(wallet_1, 200);
+        result.expectErr().expectUint(1000);        
         result = FWPTest.setEndBlock(deployer, 200);
         result.expectOk().expectBool(true);
 
