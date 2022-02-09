@@ -588,7 +588,25 @@ import {
         ], user.address),
       ]);
       return block.receipts[0].result;
-    }            
+    }    
+    
+    setStartBlock(user: Account, start_block: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool-v1-01a", "set-start-block", [
+          types.uint(start_block)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+
+    setEndBlock(user: Account, end_block: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool-v1-01a", "set-end-block", [
+          types.uint(end_block)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }         
   
   }
   

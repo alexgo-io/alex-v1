@@ -22,6 +22,8 @@
 (define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-data-var contract-owner principal tx-sender)
+(define-data-var start-block uint u0)
+(define-data-var end-block uint u340282366920938463463374607431768211455)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -36,6 +38,32 @@
 
 (define-private (check-is-owner)
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-read-only (get-start-block)
+    (ok (var-get start-block))
+)
+
+(define-public (set-start-block (new-start-block uint))
+    (begin
+        (try! (check-is-owner))
+        (ok (var-set start-block new-start-block))
+    )
+)
+
+(define-read-only (get-end-block)
+    (ok (var-get end-block))
+)
+
+(define-public (set-end-block (new-end-block uint))
+    (begin
+        (try! (check-is-owner))
+        (ok (var-set end-block new-end-block))
+    )
+)
+
+(define-private (check-pool-status)
+    (ok (asserts! (and (>= block-height (var-get start-block)) (<= block-height (var-get end-block))) ERR-NOT-AUTHORIZED))
 )
 
 ;; data maps and vars
@@ -454,6 +482,7 @@
 ;; @returns (ok (tuple))
 (define-public (swap-alex-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
+        (try! (check-pool-status))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
@@ -507,6 +536,7 @@
 ;; @returns (response tuple)
 (define-public (swap-y-for-alex (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
+        (try! (check-pool-status))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
             (
@@ -561,32 +591,34 @@
 ;; @param min-dy; optional, min amount of token-y to receive
 ;; @returns (response (tuple uint uint) uint)
 (define-public (swap-x-for-y (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
-    (ok 
-        {
-            dx: dx, 
-            dy: 
-                (if (is-eq (contract-of token-x-trait) .age000-governance-token)
-                    (if (is-eq (contract-of token-y-trait) .token-wstx)
-                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait weight-x dx min-dy)))
-                        (get dy (try! (swap-alex-for-y token-y-trait weight-y dx min-dy)))
-                    )
-                    (if (is-eq (contract-of token-y-trait) .age000-governance-token)
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait weight-y dx min-dy)))
-                            (get dx (try! (swap-y-for-alex token-x-trait weight-x dx min-dy)))
+    (begin
+        (try! (check-pool-status))
+        (ok 
+            {
+                dx: dx, 
+                dy: 
+                    (if (is-eq (contract-of token-x-trait) .age000-governance-token)
+                        (if (is-eq (contract-of token-y-trait) .token-wstx)
+                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait weight-x dx min-dy)))
+                            (get dy (try! (swap-alex-for-y token-y-trait weight-y dx min-dy)))
                         )
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token weight-x dx none))) min-dy)))
-                            (if (is-eq (contract-of token-y-trait) .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
-                                (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
+                        (if (is-eq (contract-of token-y-trait) .age000-governance-token)
+                            (if (is-eq (contract-of token-x-trait) .token-wstx)
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait weight-y dx min-dy)))
+                                (get dx (try! (swap-y-for-alex token-x-trait weight-x dx min-dy)))
+                            )
+                            (if (is-eq (contract-of token-x-trait) .token-wstx)
+                                (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token weight-x dx none))) min-dy)))
+                                (if (is-eq (contract-of token-y-trait) .token-wstx)
+                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
+                                    (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
+                                )
                             )
                         )
                     )
-                )
-        }
+            }
+        )
     )
-
 )
 
 ;; @desc swap-y-for-x
@@ -598,30 +630,33 @@
 ;; @param min-dx; optional, min amount of token-x to receive
 ;; @returns (response (tuple uint uint) uint)
 (define-public (swap-y-for-x (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dy uint) (min-dx (optional uint)))
-    (ok 
-        {
-            dx:
-                (if (is-eq (contract-of token-x-trait) .age000-governance-token)
-                    (if (is-eq (contract-of token-y-trait) .token-wstx)
-                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-x-trait weight-x dy min-dx)))
-                        (get dx (try! (swap-y-for-alex token-y-trait weight-y dy min-dx)))
-                    )
-                    (if (is-eq (contract-of token-y-trait) .age000-governance-token)
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-y-trait weight-y dy min-dx)))
-                            (get dy (try! (swap-alex-for-y token-x-trait weight-x dy min-dx)))
+    (begin
+        (try! (check-pool-status))
+        (ok 
+            {
+                dx:
+                    (if (is-eq (contract-of token-x-trait) .age000-governance-token)
+                        (if (is-eq (contract-of token-y-trait) .token-wstx)
+                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-x-trait weight-x dy min-dx)))
+                            (get dx (try! (swap-y-for-alex token-y-trait weight-y dy min-dx)))
                         )
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
-                            (if (is-eq (contract-of token-y-trait) .token-wstx)
-                                (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token weight-y dy none))) min-dx)))        
-                                (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
+                        (if (is-eq (contract-of token-y-trait) .age000-governance-token)
+                            (if (is-eq (contract-of token-x-trait) .token-wstx)
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-y-trait weight-y dy min-dx)))
+                                (get dy (try! (swap-alex-for-y token-x-trait weight-x dy min-dx)))
+                            )
+                            (if (is-eq (contract-of token-x-trait) .token-wstx)
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
+                                (if (is-eq (contract-of token-y-trait) .token-wstx)
+                                    (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token weight-y dy none))) min-dx)))        
+                                    (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
+                                )
                             )
                         )
-                    )
-                ),
-            dy: dy
-        }
+                    ),
+                dy: dy
+            }
+        )
     )
 )
 

@@ -660,5 +660,59 @@ Clarinet.test({
         position['dy'].expectUint(100000000);         
     },       
 }); 
+
+Clarinet.test({
+    name: "FWP : check start-block and end-block",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let FWPTest = new FWPTestAgent2(chain, deployer);     
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+        let alexToken = new ALEXToken(chain, deployer);
+
+        // Deployer minting initial tokens        
+        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        result.expectOk();
+        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
+        result.expectOk();
+        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        result.expectOk();                 
+
+        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
+        result.expectOk().expectBool(true);
+
+        result = FWPTest.setStartBlock(wallet_1, 100);
+        result.expectErr().expectUint(1000);        
+        result = FWPTest.setStartBlock(deployer, 100);
+        result.expectOk().expectBool(true);
         
+        result = FWPTest.swapYForX(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);
+        result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);        
+
+        chain.mineEmptyBlockUntil(100);
+
+        result = FWPTest.swapYForX(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectOk().expectTuple();
+        result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectOk().expectTuple();        
+
+        result = FWPTest.setEndBlock(wallet_1, 200);
+        result.expectErr().expectUint(1000);        
+        result = FWPTest.setEndBlock(deployer, 200);
+        result.expectOk().expectBool(true);
+
+        chain.mineEmptyBlockUntil(201);
+
+        result = FWPTest.swapYForX(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);
+        result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);        
+        
+        
+    },       
+}); 
         
