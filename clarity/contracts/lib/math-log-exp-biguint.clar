@@ -50,7 +50,11 @@
 ))
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
+(define-constant ERR-X-OUT-OF-BOUNDS-MANTISSA (err u50091))
+(define-constant ERR-X-OUT-OF-BOUNDS-EXP (err u50092))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
+(define-constant ERR-Y-OUT-OF-BOUNDS-MATISSA (err u50101))
+(define-constant ERR-Y-OUT-OF-BOUNDS-EXP (err u50102))
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
@@ -200,12 +204,14 @@
   (begin
     
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (not (greater-than-equal-to-uint (scale-down-with-lost-precision-uint tuple-x) 
-    (scale-down-with-lost-precision-uint UPPER_BASE_BOUND))) ERR-X-OUT-OF-BOUNDS)
+    (asserts! (not (greater-than-equal-to-uint (scale-down-with-lost-precision-uint tuple-x) (scale-down-with-lost-precision-uint UPPER_BASE_BOUND))) ERR-X-OUT-OF-BOUNDS)
+    (asserts! (not (greater-than-equal-to-uint tuple-x {x: (pow u10 u30), exp: 0})) ERR-X-OUT-OF-BOUNDS-MANTISSA)
+    (asserts! (not (greater-than-equal-to-uint tuple-x {x: u1, exp: 25})) ERR-X-OUT-OF-BOUNDS-EXP) ;; because transformations fail after 25
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (not (greater-than-equal-to-uint (scale-down-with-lost-precision-uint tuple-y) 
-    (scale-down-with-lost-precision-uint LOWER_EXPONENT_BOUND))) ERR-Y-OUT-OF-BOUNDS)
+    (asserts! (not (greater-than-equal-to-uint (scale-down-with-lost-precision-uint tuple-y) (scale-down-with-lost-precision-uint LOWER_EXPONENT_BOUND))) ERR-Y-OUT-OF-BOUNDS)
+    (asserts! (not (greater-than-equal-to-uint tuple-y {x: (pow u10 u30), exp: 0})) ERR-Y-OUT-OF-BOUNDS-MANTISSA)
+    (asserts! (not (greater-than-equal-to-uint tuple-y {x: u1, exp: 25})) ERR-Y-OUT-OF-BOUNDS-EXP) ;; because transformations fail after 25
 
     (if (is-eq (get x tuple-y) u0) 
       (ok {x: 1, exp: 0})
