@@ -1,0 +1,19 @@
+{
+  "name": "lottery-poc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "winners-list": "esrun scripts/winners-list.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@digitak/esrun": "^3.1.2"
+  }
+}

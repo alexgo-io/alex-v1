@@ -1,0 +1,27 @@
+[project]
+name = "lottery-poc"
+requirements = []
+costs_version = 2
+[contracts.banana-token]
+path = "contracts/banana-token.clar"
+depends_on = ["sip010-ft-trait"]
+
+[contracts.ido-ticket]
+path = "contracts/ido-ticket.clar"
+depends_on = ["sip010-ft-trait"]
+
+[contracts.lottery]
+path = "contracts/lottery.clar"
+depends_on = ["sip010-ft-trait"]
+
+[contracts.sip010-ft-trait]
+path = "contracts/sip010-ft-trait.clar"
+depends_on = []
+
+# [contracts.tests]
+# path = "contracts/tests.clar"
+# depends_on = []
+
+[contracts.wrapped-stx]
+path = "contracts/wrapped-stx.clar"
+depends_on = []
