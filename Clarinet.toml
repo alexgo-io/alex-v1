@@ -4,18 +4,18 @@ requirements = []
 costs_version = 2
 [contracts.banana-token]
 path = "contracts/banana-token.clar"
-depends_on = ["sip010-ft-trait"]
+depends_on = ["trait-sip-010", "trait-ido-ft"]
 
 [contracts.ido-ticket]
 path = "contracts/ido-ticket.clar"
-depends_on = ["sip010-ft-trait"]
+depends_on = ["trait-sip-010"]
 
 [contracts.lottery]
 path = "contracts/lottery.clar"
-depends_on = ["sip010-ft-trait"]
+depends_on = ["trait-sip-010", "trait-ido-ft"]
 
-[contracts.sip010-ft-trait]
-path = "contracts/sip010-ft-trait.clar"
+[contracts.trait-ido-ft]
+path = "contracts/trait-ido-ft.clar"
 depends_on = []
 
 # [contracts.tests]
@@ -24,7 +24,7 @@ depends_on = []
 
 [contracts.wrapped-stx]
 path = "contracts/wrapped-stx.clar"
-depends_on = []
+depends_on = ["trait-sip-010"]
 
 [contracts.trait-sip-010]
 path = "alex-v1/clarity/contracts/traits/trait-sip-010.clar"
