@@ -1,5 +1,5 @@
-(use-trait token-trait .sip010-ft-trait.sip010-ft-trait)
-(use-trait ticket-trait .sip010-ft-trait.sip010-ft-trait)
+(use-trait token-trait .trait-sip-010.sip-010-trait)
+(use-trait ticket-trait .trait-sip-010.sip-010-trait)
 
 (define-constant err-unknown-ido (err u100))
 (define-constant err-block-height-not-reached (err u101))
@@ -14,7 +14,35 @@
 (define-constant walk-resolution (pow u10 u5))
 (define-constant claim-grace-period u144)
 
+(define-constant ONE_8 u100000000)
+
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-operators principal bool)
+
+(define-private (check-is-owner)
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-placeholder-error-replace-me))
+)
+
+(define-private (check-is-approved (operator principal))
+	(ok (asserts! (default-to false (map-get? approved-operators operator)) err-placeholder-error-replace-me))
+)
+
+(define-read-only (get-contract-owner)
+	(ok (var-get contract-owner))
+)
+
+(define-public (set-contract-owner (new-contract-owner principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set contract-owner new-contract-owner))
+	)
+)
+(define-public (add-approved-operator (new-approved-operator principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-operators new-approved-operator true))
+	)
+)
 
 (define-data-var ido-id-nonce uint u0)
 
@@ -26,7 +54,7 @@
 	payment-token-contract: principal,
 	ido-owner: principal,
 	ido-tokens-per-ticket: uint,
-	price-per-ticket: uint,
+	price-per-ticket-in-fixed: uint,
 	activation-threshold: uint,
 	registration-start-height: uint,
 	registration-end-height: uint,
@@ -54,7 +82,7 @@
 		{
 		ido-owner: principal,
 		ido-tokens-per-ticket: uint,
-		price-per-ticket: uint,
+		price-per-ticket-in-fixed: uint,
 		activation-threshold: uint,
 		registration-start-height: uint,
 		registration-end-height: uint,
@@ -91,9 +119,10 @@
 (define-public (add-to-position (ido-id uint) (tickets uint) (ido-token <token-trait>))
 	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
 		(asserts! (< block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
-		(asserts! (is-eq (get ido-owner offering) tx-sender) err-placeholder-error-replace-me)
+		;; ido-owner, contract-owner, approved-operator can add to position
+		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-placeholder-error-replace-me)
 		(asserts! (is-eq (contract-of ido-token) (get ido-token-contract offering)) err-invalid-ido-token)
-		(try! (contract-call? ido-token transfer (* (get ido-tokens-per-ticket offering) tickets) tx-sender (as-contract tx-sender) none))
+		(try! (contract-call? ido-token transfer-fixed (* (get ido-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
 		(map-set offerings ido-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
 		(ok true)
 	)
@@ -125,11 +154,10 @@
 		(asserts! (>= block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
 		(asserts! (< block-height (get registration-end-height offering)) err-placeholder-error-replace-me)
 		(asserts! (is-eq (get ticket-contract offering) (contract-of ticket)) err-placeholder-error-replace-me)
-		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)
-		;;TODO need to-fixed ONE_8?
-		(try! (contract-call? payment-token transfer (* (get price-per-ticket offering) tickets) tx-sender (as-contract tx-sender) none))
+		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)		
+		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) tx-sender (as-contract tx-sender) none))
 		;;TODO burn tickets instead
-		(try! (contract-call? ticket transfer tickets tx-sender (as-contract tx-sender) none))
+		(try! (contract-call? ticket burn-fixed (* tickets ONE_8) tx-sender (as-contract tx-sender) none))
 		(map-set offering-ticket-registrations {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
 		(ok bounds)
@@ -199,7 +227,7 @@
 			err-cannot-trigger-claim
 		)
 		(try! (as-contract (contract-call? ido-token transfer-many-ido (get ido-tokens-per-ticket offering) input)))
-		(try! (as-contract (contract-call? payment-token transfer (* (len input) (get price-per-ticket offering)) tx-sender (get ido-owner offering) none)))
+		(try! (as-contract (contract-call? payment-token transfer (* (len input) (get price-per-ticket-in-fixed offering)) tx-sender (get ido-owner offering) none)))
 		(map-set claim-walk-positions ido-id (get w result))
 		(ok (get w result))
 	)
