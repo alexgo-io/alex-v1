@@ -83,7 +83,6 @@
 			})
 		)
 		(var-set ido-id-nonce (+ ido-id u1))
-		(map-set claim-walk-positions ido-id u0)
 		(ok ido-id)
 	)
 )
@@ -102,6 +101,10 @@
 		(map-set offerings ido-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
 		(ok true)
 	)
+)
+
+(define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
+	(* u2 (/ (* tickets-registered walk-resolution) total-tickets))
 )
 
 (define-private (next-bounds (ido-id uint) (tickets uint))
@@ -151,21 +154,26 @@
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
-			(max-step-size (* u2 (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering))))
-			(walk-position (unwrap! (map-get? claim-walk-positions ido-id) err-unknown-ido))
+			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
+			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
 		)
 		(ok {max-step-size: max-step-size, walk-position: walk-position})
 	)
 )
 
-(define-private (verify-winner-iter (participant principal) (params {i: uint, w: uint, m: uint, h: uint, s: bool}))
+(define-private (verify-winner-iter (participant principal) (params {i: uint, w: uint, m: uint, s: bool}))
 	(let
 		(
 			(r (unwrap! (map-get? offering-ticket-registrations {ido-id: (get i params), owner: participant}) (merge params {s: false})))
-			(n (unwrap! (next-winner (get w params) (get h params) (get m params)) (merge params {s: false})))
+			(n (+ (get w params) (lcg-next (get w params) (get m params))))
 		)
 		(asserts! (get s params) params)
-		(merge params {w: n, s: (and (>= n (get start r)) (< n (get end r)))})
+		(and (>= n (get end r)) ;; reached the end of the bound, the next winner is a different principal.
+			(map-delete offering-ticket-registrations {ido-id: (get i params), owner: participant})
+			(begin (print "delete") true)
+		)
+		(print (get w params))
+		(merge params {w: n, s: (and (>= (get w params) (get start r)) (< (get w params) (get end r)))})
 	)
 )
 
@@ -176,16 +184,13 @@
 	)
 )
 
-;;  10 tix    20 tix    20 tix
-;;0   -    10   -    30   -    50
-
 (define-public (claim (ido-id uint) (input (list 200 principal)) (ido-token <ido-ft-trait>) (payment-token <ft-trait>))
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
-			(max-step-size (* u2 (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering))))
-			(walk-position (unwrap! (map-get? claim-walk-positions ido-id) err-unknown-ido))
-			(result (fold verify-winner-iter input {i: ido-id, w: walk-position, m: max-step-size, h: (+ (get registration-end-height offering) u1), s: true}))
+			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
+			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
+			(result (fold verify-winner-iter input {i: ido-id, w: walk-position, m: max-step-size, s: true}))
 		)
 		(asserts! (< walk-position (unwrap-panic (map-get? start-indexes ido-id))) err-already-at-end)
 		(asserts! (get s result) err-invalid-sequence)
@@ -217,13 +222,6 @@
 (define-constant lcg-a u134775813)
 (define-constant lcg-c u1)
 (define-constant lcg-m u4294967296)
-
-(define-read-only (next-winner (current uint) (height uint) (max-step uint))
-	(if (is-eq current u0) 
-		(ok (+ (mod (try! (get-vrf-uint height)) max-step) u1))
-		(ok (+ current (lcg-next current max-step) u1))
-	)
-)
 
 (define-read-only (lcg-next (current uint) (max-step uint))
 	(mod (mod (+ (* lcg-a current) lcg-c) lcg-m) max-step)
