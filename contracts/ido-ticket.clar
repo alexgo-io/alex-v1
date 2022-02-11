@@ -207,3 +207,5 @@
 		(ok (map mint-fixed-many-iter recipients))
 	)
 )
+
+(add-approved-contract .lottery)

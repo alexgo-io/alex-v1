@@ -123,6 +123,7 @@
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 			(bounds (next-bounds ido-id tickets))
+			(sender tx-sender)
 		)
 		(asserts! (is-none (map-get? offering-ticket-registrations {ido-id: ido-id, owner: tx-sender})) err-placeholder-error-replace-me)
 		(asserts! (> tickets u0) err-placeholder-error-replace-me)
@@ -130,9 +131,8 @@
 		(asserts! (< block-height (get registration-end-height offering)) err-placeholder-error-replace-me)
 		(asserts! (is-eq (get ticket-contract offering) (contract-of ticket)) err-placeholder-error-replace-me)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)		
-		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) tx-sender (as-contract tx-sender) none))
-		;;TODO burn tickets instead
-		(try! (contract-call? ticket burn-fixed (* tickets ONE_8) tx-sender))
+		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
+		(as-contract (try! (contract-call? ticket burn-fixed (* tickets ONE_8) sender)))
 		(map-set offering-ticket-registrations {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
 		(ok bounds)
@@ -150,7 +150,7 @@
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
-			(max-step-size (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering)))
+			(max-step-size (* u2 (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering))))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
 		)
 		(ok {max-step-size: max-step-size, walk-position: walk-position})
@@ -182,7 +182,7 @@
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
-			(max-step-size (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering)))
+			(max-step-size (* u2 (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering))))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
 			(result (fold verify-winner-iter input {i: ido-id, w: walk-position, m: max-step-size, s: true}))
 		)
@@ -202,8 +202,8 @@
 			)
 			err-cannot-trigger-claim
 		)
-		(try! (as-contract (contract-call? ido-token transfer-many-ido (get ido-tokens-per-ticket offering) input)))
-		(try! (as-contract (contract-call? payment-token transfer (* (len input) (get price-per-ticket-in-fixed offering)) tx-sender (get ido-owner offering) none)))
+		(try! (as-contract (contract-call? ido-token transfer-many-ido (* (get ido-tokens-per-ticket offering) ONE_8) input)))
+		(try! (as-contract (contract-call? payment-token transfer-fixed (* (len input) (get price-per-ticket-in-fixed offering)) tx-sender (get ido-owner offering) none)))
 		(map-set claim-walk-positions ido-id (get w result))
 		(ok (get w result))
 	)
