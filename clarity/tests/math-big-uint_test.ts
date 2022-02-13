@@ -814,3 +814,183 @@ Clarinet.test({
         result['exp'].expectInt(-15);
     },
 });
+
+Clarinet.test({
+    name: "math-big-uint: pow-fixed",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+
+        let deployer = accounts.get("deployer")!;
+
+        // 0.0000005^0.6
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(50000000), exp: -14}),
+            types.tuple({x: types.uint(6), exp: -1}),
+        ], deployer.address);
+        let result: any = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '104994678204640105');
+        result['exp'].expectInt(-18);
+
+        // 0.02^0.08
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(2), exp: -2}),
+            types.tuple({x: types.uint(8), exp: -2}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '7662321819045797');
+        result['exp'].expectInt(-16);
+
+        //0.1^1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(1), exp: -1}),
+            types.tuple({x: types.uint(1), exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '102817675584246604');
+        result['exp'].expectInt(-18);
+
+        // 81^0
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(81), exp: 0}),
+            types.tuple({x: types.uint(0), exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '1');
+        result['exp'].expectInt(0);
+
+        // 90 ^ 9
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(9), exp: 1}),
+            types.tuple({x: types.uint(9), exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '387420489000000');
+        result['exp'].expectInt(3);
+
+        // 123 ^ 8
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u12300000000', exp: -8}),
+            types.tuple({x: types.uint(8), exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '523890944282627');
+        result['exp'].expectInt(2);
+
+        // 21000 ^ 0.2
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u21000', exp: 0}),
+            types.tuple({x:  'u2', exp: -1}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '731886706417574');
+        result['exp'].expectInt(-14);
+
+        // 21320 ^ 2
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u21320', exp: 0}),
+            types.tuple({x:  'u2', exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '454542400000000');
+        result['exp'].expectInt(-6);
+
+        // 50^ 10
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u5', exp: 1}),
+            types.tuple({x:  'u10', exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '976562499999999');
+        result['exp'].expectInt(2);
+
+        //0 ^ 1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(0), exp: 0}),
+            types.tuple({x:  types.uint(1), exp: 0}),
+        ], deployer.address);
+        result = call.result.expectOk().expectTuple();
+        assertEquals(result['x'], '0');
+        result['exp'].expectInt(0);
+
+        // 10^100
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: types.uint(10), exp: 0}),
+            types.tuple({x: types.uint(10), exp: 1}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(5012);
+ 
+        // 123 ^ 2.46
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u12300000000', exp: -8}),
+            types.tuple({x: 'u24600000000', exp: -10}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(5012);
+
+        // 99999999999e23 ^  99999999999e23
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u99999999999', exp: 23}),
+            types.tuple({x: 'u99999999999', exp: 23}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(5012);
+
+        // 10000000000000e23 ^  5
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u10000000000000', exp: 23}),
+            types.tuple({x: 'u5', exp: 0}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(50091);
+
+        // 10000000e24 ^ 5
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u10000000', exp: 24}),
+            types.tuple({x: 'u5', exp: 0}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(50092);
+
+        // 1000000000e23  ^ 0.5
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u1000000000', exp: 23}),
+            types.tuple({x: 'u500000000000', exp: -12}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(50101);
+
+        // 1000000000e23 ^ 5e-14
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u1000000000', exp: 23}),
+            types.tuple({x: 'u50000000000', exp: 24}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(50102);
+
+        // 170141183460469231731687303715884105720 ^  1
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u17014118346046923173168730371588410572', exp: 1}),
+            types.tuple({x: 'u1', exp: 0}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(5009);
+
+        // 1 ^ 85070591730234615865843651857942052864
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "pow-fixed",
+        [
+            types.tuple({x: 'u1', exp: 0}),
+            types.tuple({x: 'u85070591730234615865843651857942052864', exp: 0}),
+        ], deployer.address);
+        result = call.result.expectErr().expectUint(5010);
+    },
+});
