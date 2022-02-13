@@ -246,17 +246,17 @@
   )
 )
 
-;; ;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
-;; (define-read-only (log-fixed (arg int) (base int))
-;;   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-;;   (let
-;;     (
-;;       (logBase (scale-up (unwrap-panic (ln-priv base))))
-;;       (logArg (scale-up (unwrap-panic (ln-priv arg))))
-;;    )
-;;     (ok (/ (scale-up logArg) logBase))
-;;  )
-;; )
+;; Logarithm (log(arg, base), with signed 16 decimal fixed point base and argument.
+(define-read-only (log-fixed (arg (tuple (x int) (exp int))) (base (tuple (x int) (exp int))))
+  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
+  (let
+    (
+      (logBase (unwrap-panic (ln-priv base)))
+      (logArg (unwrap-panic (ln-priv arg)))
+   )
+   (division-with-scientific-notation logArg logBase)
+ )
+)
 
 ;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
 (define-read-only (ln-fixed (num (tuple (x int) (exp int))))

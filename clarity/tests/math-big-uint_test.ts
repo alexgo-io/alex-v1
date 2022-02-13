@@ -994,3 +994,50 @@ Clarinet.test({
         result = call.result.expectErr().expectUint(5010);
     },
 });
+
+Clarinet.test({
+    name: "math-big-uint: log-fixed",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let call = chain.callReadOnlyFn("math-log-exp-biguint", "log-fixed",
+            [
+                types.tuple({ x: 20, exp: 0 }),
+                types.tuple({ x: 10, exp: 0 }),
+            ], deployer.address
+        );
+        let result: any = call.result.expectTuple();
+        assertEquals(result['x'],'13010299956639815');
+        result['exp'].expectInt(-16);
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "log-fixed",
+            [
+                types.tuple({ x: 2, exp: 5 }),
+                types.tuple({ x: 4, exp: 0 }),
+            ], deployer.address
+        );
+        result = call.result.expectTuple();
+        assertEquals(result['x'],'88048202372184036');
+        result['exp'].expectInt(-16);
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "log-fixed",
+            [
+                types.tuple({ x: 2, exp: 5 }),
+                types.tuple({ x: 4, exp: -1 }),
+            ], deployer.address
+        );
+        result = call.result.expectTuple();
+        assertEquals(result['x'],'-133212225707184803');
+        result['exp'].expectInt(-16);
+
+        call = chain.callReadOnlyFn("math-log-exp-biguint", "log-fixed",
+        [
+            types.tuple({ x: 2, exp: 5 }),
+            types.tuple({ x: 30, exp: 0 }),
+        ], deployer.address
+        );
+        result = call.result.expectTuple();
+        assertEquals(result['x'], '35887575097347334');
+        result['exp'].expectInt(-16);
+            
+    },
+});
