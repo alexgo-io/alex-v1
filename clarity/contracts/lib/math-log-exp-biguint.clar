@@ -58,6 +58,7 @@
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
+(define-constant ERR-NOT-POSITIVE (err u5014))
 
 (define-read-only (ln-priv (num (tuple (x int) (exp int))))
     (let
@@ -606,7 +607,6 @@
     )
 )
 
-
 (define-read-only (digit-count (digits int))
     (let 
         ((a (if (< digits 0) (* -1 digits) digits)))
@@ -690,4 +690,20 @@
         )))))))))))))))))))))))))))))))))))))
         )
     )
+)
+
+(define-constant uONE_8 (pow u10 u8))
+
+(define-read-only (pow-from-fixed-to-fixed (a uint) (b uint))
+    (transform-to-fixed (pow-fixed (try! (transform-from-fixed a)) (try! (transform-from-fixed b))))
+)
+
+;; transform scientific notation to 8-digit fixed-point notation
+(define-read-only (transform-to-fixed (num (tuple (x int) (exp int))))
+    (ok u0)
+)
+
+;; transform 8-digit fixed-point notation to 8 decimal scientific notation
+(define-read-only (transform-from-fixed (fixed uint))
+    (ok {x: u0, exp: 8})
 )
