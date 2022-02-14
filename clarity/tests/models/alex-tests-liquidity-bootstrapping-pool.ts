@@ -23,9 +23,10 @@ import {
       ], this.deployer.address);
     }
   
-    createPool(user: Account, tokenX: string, tokenY: string, weightX1: number, weightX2: number, expiry :number, pooltoken: string, multisig: string, price_x_min: number, price_x_max: number, dX: number, dY: number) {
+    createPool(user: Account, projectName: string, tokenX: string, tokenY: string, weightX1: number, weightX2: number, expiry :number, pooltoken: string, multisig: string, price_x_min: number, price_x_max: number, dX: number, dY: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("liquidity-bootstrapping-pool", "create-pool", [
+          types.utf8(projectName),
           types.principal(tokenX),
           types.principal(tokenY),
           types.uint(weightX1),
@@ -126,6 +127,24 @@ import {
         types.uint(dx)
       ], this.deployer.address);
     }
+
+    setMaxInRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("weighted-equation-v1-01", "set-max-in-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+
+    setMaxOutRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("weighted-equation-v1-01", "set-max-out-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }       
   
   }
   

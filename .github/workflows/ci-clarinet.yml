@@ -5,29 +5,34 @@ name: CI Clarinet
 
 # Controls when the action will run.
 on:
-  pull_request:
+  push:
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+concurrency:
+  group: 'ci-${{ github.ref }}'
+  cancel-in-progress: true
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
+  check:
+    name: check - ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: "Check contract"
-        uses: docker://hirosystems/clarinet:latest
+        uses: docker://hirosystems/clarinet:0.20.0
         with:
           entrypoint: "bash"
           args: -c "cd clarity && clarinet check"
+  test:
+    name: test - ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Set CI env"
+        run: |
+          echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
       - name: "Execute test suite"
-        uses: docker://hirosystems/clarinet:latest
+        uses: docker://hirosystems/clarinet:0.20.0
         with:
           entrypoint: "bash"
+          #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
           args: -c "cd clarity && clarinet test --coverage"
-      - name: "Export code coverage"
-        uses: codecov/codecov-action@v1
-        with:
-          files: ./coverage.lcov
-          verbose: true

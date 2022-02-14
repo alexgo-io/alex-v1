@@ -5,25 +5,34 @@
 (define-fungible-token lottery-t-alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 
-(define-read-only (get-owner)
-  (ok (var-get CONTRACT-OWNER))
+(define-read-only (get-contract-owner)
+  (ok (var-get contract-owner))
 )
 
-(define-public (set-owner (owner principal))
+(define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (ok (var-set CONTRACT-OWNER owner))
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (ok (var-set contract-owner owner))
   )
 )
 
 (define-private (check-is-approved (sender principal))
-  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get CONTRACT-OWNER))) ERR-NOT-AUTHORIZED))
+  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
 )
 
 ;; ---------------------------------------------------------
@@ -52,7 +61,7 @@
 
 (define-public (set-token-uri (value (string-utf8 256)))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set token-uri value))
   )
 )
@@ -76,14 +85,14 @@
 
 (define-public (mint (amount uint) (recipient principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-mint? lottery-t-alex amount recipient)
   )
 )
 
 (define-public (burn (amount uint) (sender principal))
   (begin
-    (try! (check-is-approved contract-caller))
+    (try! (check-is-approved tx-sender))
     (ft-burn? lottery-t-alex amount sender)
   )
 )
@@ -122,7 +131,43 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(begin
-  (map-set approved-contracts .fixed-weight-pool true)
-  (map-set approved-contracts .alex-launchpad true)
+;; @desc check-err
+;; @params result 
+;; @params prior
+;; @returns (response bool uint)
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)
+    )
 )
+
+;; @desc mint-from-tuple
+;; @params recipient; tuple
+;; returns (response bool uint)
+(define-private (mint-from-tuple (recipient { to: principal, amount: uint }))
+  (ok (unwrap! (mint-fixed (get amount recipient) (get to recipient)) ERR-TRANSFER-FAILED))
+)
+
+(define-private (transfer-from-tuple (recipient { to: principal, amount: uint }))
+  (ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
+)
+
+;; @desc mint-many
+;; @params recipient; list of tuple
+;; returns (bool uint)
+(define-public (mint-many (recipients (list 200 { to: principal, amount: uint })))
+  (begin
+    (try! (check-is-approved tx-sender))
+    (fold check-err (map mint-from-tuple recipients) (ok true))
+  )
+)
+
+(define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
+  (begin
+    (try! (check-is-approved tx-sender))
+    (fold check-err (map transfer-from-tuple recipients) (ok true))
+  )
+)
+
+(map-set approved-contracts .alex-launchpad true)

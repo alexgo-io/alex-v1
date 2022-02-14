@@ -3,26 +3,31 @@
 
 (define-constant ONE_8 (pow u10 u8))
 (define-constant ERR-EXPIRY-IS-NONE (err u2027))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
+;; @desc execute
+;; @params token ; ft-trait
+;; @params amount
+;; @memo ; expiry
+;; @returns (response true)
 (define-public (execute (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
     (let
         (   
-            ;; gross amount * ltv / price = amount
-            ;; gross amount = amount * price / ltv
-            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))        
-            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wstx memo-uint)))
-            (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
-            (gross-amount (mul-up amount (div-down price ltv)))
-            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .token-wstx memo-uint .yield-usda .key-usda-wstx gross-amount))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
+            (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
+            (swapped-token-with-amount (try! (contract-call? .collateral-rebalancing-pool get-swapped-token token amount memo-uint))) 
         )
+        (asserts! (is-eq .token-wstx (contract-of token)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool swap-helper .token-usda .token-wstx u50000000 u50000000 swapped-token none))        
-        (print { object: "flash-loan-user-margin-wstx-usda", action: "execute", data: gross-amount })
+        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-usda .token-wstx u50000000 u50000000 (get token swapped-token-with-amount) none))        
+        (print { object: "flash-loan-user-margin-wstx-usda", action: "execute", data: (get amount swapped-token-with-amount) })
         (ok true)
     )
 )
 
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-private (mul-up (a uint) (b uint))
     (let
         (
@@ -35,6 +40,10 @@
    )
 )
 
+;; @desc div-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -42,6 +51,9 @@
    )
 )
 
+;; @desc buff-to-uint
+;; @params bytes
+;; @returns uint
 (define-private (buff-to-uint (bytes (buff 16)))
     (let
         (
@@ -88,14 +100,24 @@
     0xf0 0xf1 0xf2 0xf3 0xf4 0xf5 0xf6 0xf7 0xf8 0xf9 0xfa 0xfb 0xfc 0xfd 0xfe 0xff
 ))
 
+;; @desc byte-to-uint
+;; @params byte
+;; @returns uint
 (define-read-only (byte-to-uint (byte (buff 1)))
     (unwrap-panic (index-of BUFF-TO-BYTE byte))
 )
 
+;; @desc concat-buff
+;; @params a
+;; @params b
+;; @returns buff
 (define-private (concat-buff (a (buff 16)) (b (buff 16)))
     (unwrap-panic (as-max-len? (concat a b) u16))
 )
 
+;; @desc reverse-buff
+;; @params a
+;; @returns buff
 (define-read-only (reverse-buff (a (buff 16)))
     (fold concat-buff a 0x)
 )

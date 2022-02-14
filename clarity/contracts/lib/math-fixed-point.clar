@@ -15,23 +15,38 @@
 ;; public functions
 ;;
 
+;; @desc get_one
+;; @returns (response uint)
 (define-read-only (get_one)
     (ok ONE_8)
 )
 
+;; @desc scale-up
+;; @params a 
+;; @returns uint
 (define-read-only (scale-up (a uint))
     (* a ONE_8)
 )
 
+;; @desc scale-down
+;; @params a 
+;; @returns uint
 (define-read-only (scale-down (a uint))
     (/ a ONE_8)
 )
 
+;; @desc mul-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
-
+;; @desc mul-up
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (mul-up (a uint) (b uint))
     (let
         (
@@ -44,6 +59,10 @@
    )
 )
 
+;; @desc div-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -51,6 +70,10 @@
    )
 )
 
+;; @desc div-up
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -66,6 +89,10 @@
     (unwrap-panic (contract-call? .math-log-exp exp-fixed a))
 )
 
+;; @desc pow-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
@@ -81,6 +108,10 @@
     )
 )
 
+;; @desc pow-up
+;; @params a 
+;; @params b
+;; @returns uint
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
@@ -89,21 +120,5 @@
         )
         (+ raw max-error)
         ;;(if (>= a ONE_8)  (round-for-up raw TOLERANCE_CONSTANT) (+ raw max-error))
-    )
-)
-
-;; TODO : Precision for 6 Decimals should be introduced later on. 
-(define-read-only (round-for-up (a uint) (tolerance uint))
-    (begin
-    (if (is-eq (mod a tolerance) u0) (ok a)
-        (let
-            (
-                (divided (/ a tolerance))
-                (new-value (+ divided u1))
-                (rounded (* new-value tolerance))
-            )
-        (ok rounded)
-        )
-    )
     )
 )

@@ -7,7 +7,6 @@ enum ErrCode {
   ERR_USER_ALREADY_REGISTERED = 10001,
   ERR_USER_NOT_FOUND = 10002,
   ERR_USER_ID_NOT_FOUND = 10003,
-  ERR_ACTIVATION_THRESHOLD_REACHED = 10004,
   ERR_CONTRACT_NOT_ACTIVATED = 10005,
   ERR_CLAIMED_BEFORE_MATURITY = 10010,
   ERR_NO_MINERS_AT_BLOCK = 10011,
@@ -22,13 +21,11 @@ enum ErrCode {
 
 export class CoreClient extends Client {
   static readonly ErrCode = ErrCode;
-  static readonly ACTIVATION_BLOCKS = 10000000;
-  static readonly ACTIVATION_DELAY = 150;
-  static readonly ACTIVATION_THRESHOLD = 20;
   static readonly TOKEN_HALVING_CYCLE = 100;
   static readonly REWARD_CYCLE_LENGTH = 525;
   static readonly TOKEN_REWARD_MATURITY = 100;
   static readonly BONUS_PERIOD_LENGTH = 10000;
+  static readonly ACTIVATION_BLOCK = 100;
 
   //////////////////////////////////////////////////
   // REGISTRATION
@@ -41,32 +38,6 @@ export class CoreClient extends Client {
 
   getActivationBlock(): ReadOnlyFn {
     return this.callReadOnlyFn("get-activation-block");
-  }
-
-  getActivationDelay(): ReadOnlyFn {
-    return this.callReadOnlyFn("get-activation-delay");
-  }
-
-  getActivationStatus(): ReadOnlyFn {
-    return this.callReadOnlyFn("get-activation-status");
-  }
-
-  getActivationThreshold(): ReadOnlyFn {
-    return this.callReadOnlyFn("get-activation-threshold");
-  }
-
-  registerUser(sender: Account, token: string, memo: string | undefined = undefined): Tx {
-    return Tx.contractCall(
-      this.contractName,
-      "register-user",
-      [
-        types.principal(token),
-        typeof memo == "undefined"
-          ? types.none()
-          : types.some(types.utf8(memo)),
-      ],
-      sender.address
-    );
   }
 
   getRegisteredUsersNonce(token: string): ReadOnlyFn {
@@ -83,12 +54,13 @@ export class CoreClient extends Client {
     return this.callReadOnlyFn("get-user", [types.uint(userId)]);
   }
 
-  setActivationThreshold(sender: Account, threshold: number): Tx {
+  setActivationBlock(sender: Account, token: string, block: number): Tx {
     return Tx.contractCall(
       this.contractName,
-      "set-activation-threshold",
+      "set-activation-block",
       [
-        types.uint(threshold)
+        types.principal(token),
+        types.uint(block)
       ],
       sender.address
     );
@@ -104,6 +76,18 @@ export class CoreClient extends Client {
       sender.address
     );
   }
+
+  setApowerMultiplierInFixed(sender: Account, token: string, apower: number): Tx {
+    return Tx.contractCall(
+      this.contractName,
+      "set-apower-multiplier-in-fixed",
+      [
+        types.principal(token),
+        types.uint(apower)
+      ],
+      sender.address
+    );
+  }  
 
   addToBalance(sender: Account, amount: number, token: string): Tx {
     return Tx.contractCall(

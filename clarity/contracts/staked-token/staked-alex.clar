@@ -9,18 +9,18 @@
 (define-fungible-token staked-alex)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
-(define-map token-owned principal (list 2000 uint))
+(define-map token-owned principal (list 200 uint))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-read-only (get-owner)
+(define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
 )
 
-(define-public (set-owner (owner principal))
+(define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set contract-owner owner))
   )
 )
@@ -29,14 +29,25 @@
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
+)
+
 (define-read-only (get-token-owned (owner principal))
     (default-to (list) (map-get? token-owned owner))
 )
 
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
     (begin
+		(and 
+			(is-none (index-of (get-token-owned owner) token-id))
+			(map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u200) ERR-TOO-MANY-POOLS))
+		)	
 	    (map-set token-balances {token-id: token-id, owner: owner} balance)
-        (map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u2000) ERR-TOO-MANY-POOLS))
         (ok true)
     )
 )
@@ -101,7 +112,7 @@
 
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(try! (check-is-approved contract-caller))
+		(try! (check-is-approved tx-sender))
 		(try! (ft-mint? staked-alex amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
@@ -112,7 +123,7 @@
 
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(try! (check-is-approved contract-caller))
+		(try! (check-is-approved tx-sender))
 		(try! (ft-burn? staked-alex amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
@@ -156,7 +167,7 @@
 )
 
 (define-public (transfer-memo-fixed (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)))
-  	(transfer token-id (fixed-to-decimals amount) sender recipient memo)
+  	(transfer-memo token-id (fixed-to-decimals amount) sender recipient memo)
 )
 
 (define-public (mint-fixed (token-id uint) (amount uint) (recipient principal))
@@ -167,6 +178,4 @@
   	(burn token-id (fixed-to-decimals amount) sender)
 )
 
-(begin
-  (map-set approved-contracts .futures-pool true)
-)
+(map-set approved-contracts .futures-pool true)

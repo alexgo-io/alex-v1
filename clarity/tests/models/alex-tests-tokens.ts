@@ -17,31 +17,20 @@ class ALEXToken {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-alex", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("age000-governance-token", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-alex", "get-balance", [
+    return this.chain.callReadOnlyFn("age000-governance-token", "get-balance", [
       types.principal(account),
     ], this.deployer.address);
   }
 
-  // Always need to called by deployer
-  mint(sender: Account, recipient: string, amount : number) {
-    let block = this.chain.mineBlock([
-      Tx.contractCall("token-alex", "mint", [
-        types.uint(amount),
-        types.principal(recipient)        
-      ], sender.address),
-    ]);
-    return block.receipts[0].result;
-  }
-
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-alex", "mint-fixed", [
+      Tx.contractCall("age000-governance-token", "mint-fixed", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -51,7 +40,7 @@ class ALEXToken {
   
   transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("token-alex", "transfer-fixed", [
+        Tx.contractCall("age000-governance-token", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender.address),
           types.principal(receiver),
@@ -62,7 +51,7 @@ class ALEXToken {
   }
 
   totalSupply() {
-    return this.chain.callReadOnlyFn("token-alex", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("age000-governance-token", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { ALEXToken };
@@ -128,6 +117,49 @@ class USDAToken {
 }
 export { USDAToken };
 
+class FWP_WSTX_ALEX_5050 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  getBalanceFixed(account: string) {
+    return this.chain.callReadOnlyFn("fwp-wstx-alex-50-50-v1-01", "get-balance", [
+      types.principal(account),
+    ], this.deployer.address);
+  }
+
+  mintFixed(sender: Account, recipient: string, amount : number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("fwp-wstx-alex-50-50-v1-01", "mint-fixed", [
+        types.uint(amount),
+        types.principal(recipient)        
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+  
+  transferFixed(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("fwp-wstx-alex-50-50-v1-01", "transfer-fixed", [
+          types.uint(amount),
+          types.principal(sender.address),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  totalSupplyFixed() {
+    return this.chain.callReadOnlyFn("fwp-wstx-alex-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FWP_WSTX_ALEX_5050 };
+
 
 class WBTCToken {
   chain: Chain;
@@ -139,13 +171,13 @@ class WBTCToken {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("token-xbtc", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-balance", [
+    return this.chain.callReadOnlyFn("token-xbtc", "get-balance", [
       types.principal(account),
     ], this.deployer.address);
   }
@@ -153,7 +185,7 @@ class WBTCToken {
   // Always need to called by deployer
   mint(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-wbtc", "mint", [
+      Tx.contractCall("token-xbtc", "mint", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -163,7 +195,7 @@ class WBTCToken {
 
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-wbtc", "mint-fixed", [
+      Tx.contractCall("token-xbtc", "mint-fixed", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -173,7 +205,7 @@ class WBTCToken {
   
   transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("token-wbtc", "transfer-fixed", [
+        Tx.contractCall("token-xbtc", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender.address),
           types.principal(receiver),
@@ -184,7 +216,7 @@ class WBTCToken {
   }
 
   totalSupply() {
-    return this.chain.callReadOnlyFn("token-wbtc", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("token-xbtc", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { WBTCToken };
@@ -259,16 +291,37 @@ class FWP_WSTX_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50-v1-01", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_WSTX_USDA_5050 };
+
+class FWP_ALEX_USDA_5050 {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50-v1-01", "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+  
+  totalSupply() {
+    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FWP_ALEX_USDA_5050 };
 
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
@@ -280,13 +333,13 @@ class FWP_WBTC_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50-v1-01", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_WBTC_USDA_5050 };
@@ -418,7 +471,14 @@ class YIELD_WBTC {
   }
 }
 export { YIELD_WBTC };
-class TestALEXLottery {
+
+class ManyRecord {
+  constructor(
+    readonly to: Account,
+    readonly amount: number
+  ) {}
+}
+class ALEXLottery {
 
   chain: Chain;
   deployer: Account;
@@ -429,13 +489,13 @@ class TestALEXLottery {
   }
   
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("lottery-t-alex", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("lottery-ido-alex", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("lottery-t-alex", "get-balance", [
+    return this.chain.callReadOnlyFn("lottery-ido-alex", "get-balance", [
       types.principal(account),
     ], this.deployer.address);
   }
@@ -443,7 +503,7 @@ class TestALEXLottery {
   // Always need to called by deployer
   mint(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("lottery-t-alex", "mint", [
+      Tx.contractCall("lottery-ido-alex", "mint", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -453,7 +513,7 @@ class TestALEXLottery {
 
   mintFixed(sender: Account, recipient: string, amount : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("lottery-t-alex", "mint-fixed", [
+      Tx.contractCall("lottery-ido-alex", "mint-fixed", [
         types.uint(amount),
         types.principal(recipient)        
       ], sender.address),
@@ -463,7 +523,7 @@ class TestALEXLottery {
 
   transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
     let block = this.chain.mineBlock([
-        Tx.contractCall("lottery-t-alex", "transfer-fixed", [
+        Tx.contractCall("lottery-ido-alex", "transfer-fixed", [
           types.uint(amount),
           types.principal(sender.address),
           types.principal(receiver),
@@ -474,71 +534,21 @@ class TestALEXLottery {
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("lottery-t-alex", "get-total-supply-fixed", [], this.deployer.address);
-  }
-}
-export { TestALEXLottery };
-
-class TestALEXToken {
-  chain: Chain;
-  deployer: Account;
-
-  constructor(chain: Chain, deployer: Account) {
-    this.chain = chain;
-    this.deployer = deployer;
+    return this.chain.callReadOnlyFn("lottery-ido-alex", "get-total-supply-fixed", [], this.deployer.address);
   }
 
-  balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("token-t-alex", "get-balance-fixed", [
-      types.principal(wallet),
-    ], this.deployer.address);
-  }
-
-  getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-t-alex", "get-balance", [
-      types.principal(account),
-    ], this.deployer.address);
-  }
-
-  // Always need to called by deployer
-  mint(sender: Account, recipient: string, amount : number) {
+  mintMany(sender: Account, recipients: Array<ManyRecord>) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("token-t-alex", "mint", [
-        types.uint(amount),
-        types.principal(recipient)        
-      ], sender.address),
-    ]);
-    return block.receipts[0].result;
-  }
-
-  mintFixed(sender: Account, recipient: string, amount : number) {
-    let block = this.chain.mineBlock([
-      Tx.contractCall("token-t-alex", "mint-fixed", [
-        types.uint(amount),
-        types.principal(recipient)     
-      ], sender.address),
-    ]);
-    return block.receipts[0].result;
-  }
-
-  transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
-    let block = this.chain.mineBlock([
-        Tx.contractCall("token-t-alex", "transfer-fixed", [
-          types.uint(amount),
-          types.principal(sender.address),
-          types.principal(receiver),
-          types.some(types.buff(memo))
+        Tx.contractCall("lottery-ido-alex", "mint-many", [
+          types.list(recipients.map((record) => { 
+            return types.tuple({ to: types.principal(record.to.address), amount: types.uint(record.amount) });
+          }))
         ], sender.address),
       ]);
       return block.receipts[0].result;
-  }
-
-  totalSupply() {
-    return this.chain.callReadOnlyFn("token-t-alex", "get-total-supply-fixed", [], this.deployer.address);
-  }
+  }    
 }
-export { TestALEXToken };
-
+export { ALEXLottery, ManyRecord };
 class YIELD_USDA {
   chain: Chain;
   deployer: Account;

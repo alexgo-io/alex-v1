@@ -3,7 +3,13 @@
 
 (define-constant ONE_8 (pow u10 u8))
 (define-constant ERR-EXPIRY-IS-NONE (err u2027))
+(define-constant ERR-INVALID-TOKEN (err u2026))
 
+;; @desc execute
+;; @params collateral
+;; @params amount
+;; @params memo ; expiry
+;; @returns (response boolean)
 (define-public (execute (collateral <ft-trait>) (amount uint) (memo (optional (buff 16))))
     (let
         (   
@@ -17,13 +23,18 @@
             (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wbtc .token-usda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-wbtc .token-wbtc minted-yield-token none))))
         )
+        (asserts! (is-eq .token-usda (contract-of collateral)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool swap-helper .token-wbtc .token-usda u50000000 u50000000 swapped-token none))
+        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-wbtc .token-usda u50000000 u50000000 swapped-token none))
         (print { object: "flash-loan-user-margin-usda-wbtc", action: "execute", data: gross-amount })
         (ok true)
     )
 )
 
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-private (mul-up (a uint) (b uint))
     (let
         (
@@ -36,6 +47,10 @@
    )
 )
 
+;; @desc div-down
+;; @params a 
+;; @params b
+;; @returns uint
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -43,6 +58,9 @@
    )
 )
 
+;; @desc buff-to-uint
+;; @params bytes
+;; @returns uint
 (define-private (buff-to-uint (bytes (buff 16)))
     (let
         (
@@ -89,14 +107,24 @@
     0xf0 0xf1 0xf2 0xf3 0xf4 0xf5 0xf6 0xf7 0xf8 0xf9 0xfa 0xfb 0xfc 0xfd 0xfe 0xff
 ))
 
+;; @desc byte-to-uint
+;; @params byte
+;; @returns uint
 (define-read-only (byte-to-uint (byte (buff 1)))
     (unwrap-panic (index-of BUFF-TO-BYTE byte))
 )
 
+;; @desc concat-buff
+;; @params a
+;; @params b
+;; @returns buff
 (define-private (concat-buff (a (buff 16)) (b (buff 16)))
     (unwrap-panic (as-max-len? (concat a b) u16))
 )
 
+;; @desc reverse-buff
+;; @params a
+;; @returns buff
 (define-read-only (reverse-buff (a (buff 16)))
     (fold concat-buff a 0x)
 )

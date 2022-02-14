@@ -11,10 +11,9 @@
 (define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
-(define-constant ERR-INSUFFICIENT-BALANCE (err u4004))
-(define-constant ERR-INVALID-BALANCE (err u2008))
+(define-constant ERR-INVALID-BALANCE (err u1001))
 
-(define-data-var CONTRACT-OWNER principal tx-sender)
+(define-data-var contract-owner principal tx-sender)
 
 ;; max in/out as % of liquidity
 (define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
@@ -31,7 +30,7 @@
 ;; @returns (response bool uint)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     ;; MI-03
     (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)    
     (var-set MAX-IN-RATIO new-max-in-ratio)
@@ -50,7 +49,7 @@
 ;; @returns (response bool uint)
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     ;; MI-03
     (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)    
     (var-set MAX-OUT-RATIO new-max-out-ratio)
@@ -58,19 +57,19 @@
   )
 )
 
-;; @desc get-owner
+;; @desc get-contract-owner
 ;; @returns principal
-(define-read-only (get-owner)
-  (ok (var-get CONTRACT-OWNER))
+(define-read-only (get-contract-owner)
+  (ok (var-get contract-owner))
 )
 
-;; @desc set-owner
-;; @param new-contract-owner; new CONTRACT-OWNER
+;; @desc set-contract-owner
+;; @param new-contract-owner; new contract-owner
 ;; @returns (response bool uint)
-(define-public (set-owner (new-contract-owner principal))
+(define-public (set-contract-owner (new-contract-owner principal))
   (begin
-    (asserts! (is-eq contract-caller (var-get CONTRACT-OWNER)) ERR-NOT-AUTHORIZED)
-    (var-set CONTRACT-OWNER new-contract-owner)
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (var-set contract-owner new-contract-owner)
     (ok true)
   )
 )
@@ -117,7 +116,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-x (balance-x uint) (balance-y uint) (t uint) (dx uint))
   (begin
-    (asserts! (>= balance-x dx) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (>= balance-x dx) ERR-INVALID-BALANCE)
     (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
     (let 
       (
@@ -152,7 +151,7 @@
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-y (balance-x uint) (balance-y uint) (t uint) (dy uint))
   (begin
-    (asserts! (>= balance-y dy) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (>= balance-y dy) ERR-INVALID-BALANCE)
     (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
     (let 
       (          
@@ -325,11 +324,18 @@
 ;; public functions
 ;;
 
+;; @desc mul-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
   (/ (* a b) ONE_8)
 )
 
-
+;; @desc mul-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (mul-up (a uint) (b uint))
     (let
         (
@@ -342,6 +348,10 @@
    )
 )
 
+;; @desc div-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0
@@ -349,6 +359,10 @@
   )
 )
 
+;; @desc pow-down
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
@@ -362,6 +376,10 @@
     )
 )
 
+;; @desc pow-up
+;; @params a
+;; @params b
+;; @returns uint
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
@@ -385,7 +403,6 @@
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 8 decimal fixed point numbers.
 (define-constant iONE_8 (pow 10 8))
-(define-constant ONE_10 (pow 10 10))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^8, 
@@ -427,6 +444,9 @@
 ;;
 
 ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+;; @desc ln-priv
+;; @params a
+;; @returns (response uint)
 (define-private (ln-priv (a int))
   (let
     (
@@ -445,6 +465,10 @@
  )
 )
 
+;; @desc accumulate_division
+;; @params x_a_pre ; tuple(x_pre a_pre use_deci)
+;; @params rolling_a_sum ; tuple (a sum)
+;; @returns uint
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
@@ -461,6 +485,10 @@
  )
 )
 
+;; @desc rolling_sum_div
+;; @params n
+;; @params rolling ; tuple (num seriesSum z_squared)
+;; returns tuple
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
   (let
     (
@@ -478,6 +506,10 @@
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
 ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+;; @desc pow-priv
+;; @params x
+;; @params y
+;; @returns (response uint)
 (define-private (pow-priv (x uint) (y uint))
   (let
     (
@@ -491,6 +523,9 @@
   )
 )
 
+;; @desc exp-pos
+;; @params x
+;; @returns (response uint)
 (define-private (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
@@ -514,6 +549,10 @@
  )
 )
 
+;; @desc accumulate_product
+;; @params x_a_pre ; tuple (x_pre a_pre use_deci)
+;; @params rolling_x_p ; tuple (x product)
+;; @returns tuple
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
@@ -530,6 +569,10 @@
  )
 )
 
+;; @desc rolling_div_sum
+;; @params n
+;; @params rolling ; tuple (term seriesSum x)
+;; @returns tuple
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
     (
@@ -546,11 +589,17 @@
 ;; public functions
 ;;
 
+;; @desc get-exp-bound
+;; @returns (response uint)
 (define-read-only (get-exp-bound)
   (ok MILD_EXPONENT_BOUND)
 )
 
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
+;; @desc pow-fixed
+;; @params x
+;; @params y
+;; @returns (response uint)
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
@@ -571,6 +620,9 @@
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+;; @desc exp-fixed
+;; @params x
+;; @returns (response uint)
 (define-read-only (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
@@ -585,6 +637,10 @@
 )
 
 ;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+;; @desc ln-fixed 
+;; @params a
+;; @returns (response uint)
+
 (define-read-only (ln-fixed (a int))
   (begin
     (asserts! (> a 0) ERR_OUT_OF_BOUNDS)
