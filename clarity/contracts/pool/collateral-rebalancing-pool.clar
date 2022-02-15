@@ -273,24 +273,29 @@
         (asserts! 
             (is-none (map-get? pools-data-map { token-x: (contract-of collateral-trait), token-y: (contract-of token-trait), expiry: expiry }))
             ERR-POOL-ALREADY-EXISTS
+        )
+        (asserts! 
+            (and 
+                (< conversion-ltv ONE_8) 
+                (< ltv-0 conversion-ltv) 
+                (< moving-average ONE_8) 
+                (< token-to-maturity (- expiry (* block-height ONE_8)))
+            ) 
+            ERR-INVALID-POOL
         )            
         (let
             (
                 (token-x (contract-of collateral-trait))
-                (token-y (contract-of token-trait))
-                
-                (now (* block-height ONE_8))
+                (token-y (contract-of token-trait))              
 
                 ;; TODO assume 10mins per block
-                (t (div-down (- expiry now) (* u52560 ONE_8)))
-               
+                (t (div-down (- expiry (* block-height ONE_8)) (* u52560 ONE_8)))
                 ;; we calculate d1 first
-                ;; because we support 'at-the-money' only, we can simplify formula
-                (d1 (div-up (mul-up t (div-up (mul-down bs-vol bs-vol) u200000000)) (mul-down bs-vol (pow-down t u50000000))))
+                (d1 (div-up (+ (mul-up t (div-up (mul-down bs-vol bs-vol) u200000000)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
                 (erf-term (erf (div-up d1 (pow-down u200000000 u50000000))))
                 (weighted (div-up (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term)) u200000000))                
                 (weight-y (if (> weighted u100000) weighted u100000))
-                (weight-x (- ONE_8 weight-y))
+                (weight-x (- ONE_8 weight-y))     
 
                 (pool-data {
                     yield-supply: u0,
@@ -300,7 +305,7 @@
                     fee-to-address: multisig-vote,
                     yield-token: (contract-of yield-token-trait),
                     key-token: (contract-of key-token-trait),
-                    strike: (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))),
+                    strike: (mul-down (try! (get-spot token-y token-x)) ltv-0),
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
@@ -311,7 +316,7 @@
                     moving-average: moving-average,
                     conversion-ltv: conversion-ltv,
                     token-to-maturity: token-to-maturity
-                })
+                })                             
             )
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-data)
 
