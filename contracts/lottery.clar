@@ -1,5 +1,5 @@
-(use-trait token-trait .sip010-ft-trait.sip010-ft-trait)
-(use-trait ticket-trait .sip010-ft-trait.sip010-ft-trait)
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait ido-ft-trait .trait-ido-ft.ido-ft-trait)
 
 (define-constant err-unknown-ido (err u100))
 (define-constant err-block-height-not-reached (err u101))
@@ -8,13 +8,18 @@
 (define-constant err-invalid-payment-token (err u104))
 (define-constant err-cannot-trigger-claim (err u105))
 (define-constant err-not-in-claim-phase (err u106))
-(define-constant err-already-at-end (err u107))
+(define-constant err-no-more-claims (err u107))
+(define-constant err-use-claim-simple (err u108))
+(define-constant err-more-to-claim (err u109))
 (define-constant err-placeholder-error-replace-me (err u999))
 
 (define-constant walk-resolution (pow u10 u5))
 (define-constant claim-grace-period u144)
 
+(define-constant ONE_8 u100000000)
+
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-operators principal bool)
 
 (define-data-var ido-id-nonce uint u0)
 
@@ -26,7 +31,7 @@
 	payment-token-contract: principal,
 	ido-owner: principal,
 	ido-tokens-per-ticket: uint,
-	price-per-ticket: uint,
+	price-per-ticket-in-fixed: uint,
 	activation-threshold: uint,
 	registration-start-height: uint,
 	registration-end-height: uint,
@@ -39,22 +44,34 @@
 
 (define-map start-indexes uint uint)
 
-(define-map offering-ticket-registrations
+(define-map offering-ticket-bounds
 	{ido-id: uint, owner: principal}
 	{start: uint, end: uint}
+)
+
+(define-map offering-ticket-amounts
+	{ido-id: uint, owner: principal}
+	uint
+)
+
+(define-map total-tickets-won uint uint)
+
+(define-map tickets-won
+	{ido-id: uint, owner: principal}
+	uint
 )
 
 (define-map claim-walk-positions uint uint)
 
 (define-public (create-pool
-	(ido-token <token-trait>)
-	(ticket <ticket-trait>)
-	(payment-token <token-trait>)
+	(ido-token <ft-trait>)
+	(ticket <ft-trait>)
+	(payment-token <ft-trait>)
 	(offering
 		{
 		ido-owner: principal,
 		ido-tokens-per-ticket: uint,
-		price-per-ticket: uint,
+		price-per-ticket-in-fixed: uint,
 		activation-threshold: uint,
 		registration-start-height: uint,
 		registration-end-height: uint,
@@ -88,15 +105,19 @@
 	(ok (map-get? offerings ido-id))
 )
 
-(define-public (add-to-position (ido-id uint) (tickets uint) (ido-token <token-trait>))
+(define-public (add-to-position (ido-id uint) (tickets uint) (ido-token <ft-trait>))
 	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
 		(asserts! (< block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
-		(asserts! (is-eq (get ido-owner offering) tx-sender) err-placeholder-error-replace-me)
+		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-placeholder-error-replace-me)
 		(asserts! (is-eq (contract-of ido-token) (get ido-token-contract offering)) err-invalid-ido-token)
-		(try! (contract-call? ido-token transfer (* (get ido-tokens-per-ticket offering) tickets) tx-sender (as-contract tx-sender) none))
+		(try! (contract-call? ido-token transfer-fixed (* (get ido-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
 		(map-set offerings ido-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
 		(ok true)
 	)
+)
+
+(define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
+	(* u2 (/ (* tickets-registered walk-resolution) total-tickets))
 )
 
 (define-private (next-bounds (ido-id uint) (tickets uint))
@@ -114,23 +135,34 @@
 	(default-to u0 (map-get? total-tickets-registered ido-id))
 )
 
-(define-public (register (ido-id uint) (tickets uint) (ticket <ticket-trait>) (payment-token <token-trait>))
+(define-read-only (get-total-tickets-won (ido-id uint))
+	(default-to u0 (map-get? total-tickets-won ido-id))
+)
+
+(define-read-only (get-tickets-won (ido-id uint) (owner principal))
+	(default-to u0 (map-get? tickets-won {ido-id: ido-id, owner: owner}))
+)
+
+(define-read-only (get-offering-ticket-bounds (ido-id uint) (owner principal))
+	(map-get? offering-ticket-bounds {ido-id: ido-id, owner: owner})
+)
+
+(define-public (register (ido-id uint) (tickets uint) (ticket <ft-trait>) (payment-token <ft-trait>))
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 			(bounds (next-bounds ido-id tickets))
+			(sender tx-sender)
 		)
-		(asserts! (is-none (map-get? offering-ticket-registrations {ido-id: ido-id, owner: tx-sender})) err-placeholder-error-replace-me)
+		(asserts! (is-none (map-get? offering-ticket-bounds {ido-id: ido-id, owner: tx-sender})) err-placeholder-error-replace-me)
 		(asserts! (> tickets u0) err-placeholder-error-replace-me)
 		(asserts! (>= block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
 		(asserts! (< block-height (get registration-end-height offering)) err-placeholder-error-replace-me)
 		(asserts! (is-eq (get ticket-contract offering) (contract-of ticket)) err-placeholder-error-replace-me)
-		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)
-		;;TODO need to-fixed ONE_8?
-		(try! (contract-call? payment-token transfer (* (get price-per-ticket offering) tickets) tx-sender (as-contract tx-sender) none))
-		;;TODO burn tickets instead
-		(try! (contract-call? ticket transfer tickets tx-sender (as-contract tx-sender) none))
-		(map-set offering-ticket-registrations {ido-id: ido-id, owner: tx-sender} bounds)
+		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)		
+		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
+		(as-contract (try! (contract-call? ticket burn-fixed (* tickets ONE_8) sender)))
+		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
 		(ok bounds)
 	)
@@ -147,49 +179,52 @@
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
-			(max-step-size (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering)))
+			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
 		)
 		(ok {max-step-size: max-step-size, walk-position: walk-position})
 	)
 )
 
-(define-private (verify-winner-iter (participant principal) (params {i: uint, w: uint, m: uint, s: bool}))
+(define-private (verify-winner-iter (o principal) (p {i: uint, t: uint, w: uint, m: uint, s: bool}))
 	(let
 		(
-			(r (unwrap! (map-get? offering-ticket-registrations {ido-id: (get i params), owner: participant}) (merge params {s: false})))
-			(n (+ (get w params) (lcg-next (get w params) (get m params))))
+			(k {ido-id: (get i p), owner: o})
+			(r (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})))
+			(n (+ (get w p) (lcg-next (get w p) (get m p))))
+			(b (>= n (get end r)))
+			(t (+ (get t p) u1))
 		)
-		(asserts! (get s params) params)
-		(merge params {w: n, s: (and (>= n (get start r)) (< n (get end r)))})
+		(asserts! (get s p) p)
+		(print (map-get? tickets-won k))
+		(and b (map-set tickets-won k (+ (default-to u0 (map-get? tickets-won k)) t)))
+		(merge p { t: (if b u0 t), w: n, s: (and (>= (get w p) (get start r)) (< (get w p) (get end r)))})
 	)
 )
 
 (define-private (verify-registered-for-ido-iter (participant principal) (params {i: uint, s: bool}))
 	(if (get s params)
-		{i: (get i params), s: (is-some (map-get? offering-ticket-registrations {ido-id: (get i params), owner: participant}))}
+		{i: (get i params), s: (is-some (map-get? offering-ticket-bounds {ido-id: (get i params), owner: participant}))}
 		{i: (get i params), s: false}
 	)
 )
 
-;;  10 tix    20 tix    20 tix
-;;0   -    10   -    30   -    50
-
-(define-public (claim (ido-id uint) (input (list 200 principal)) (ido-token <token-trait>) (payment-token <token-trait>))
+(define-private (claim-process (ido-id uint) (input (list 200 principal)) (ido-token principal) (payment-token <ft-trait>))
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
-			(max-step-size (/ (* (get-total-tickets-registered ido-id) walk-resolution) (get total-tickets offering)))
+			(total-won (default-to u0 (map-get? total-tickets-won ido-id)))
+			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
-			(result (fold verify-winner-iter input {i: ido-id, w: walk-position, m: max-step-size, s: true}))
+			(result (fold verify-winner-iter input {i: ido-id, t: u0, w: walk-position, m: max-step-size, s: true}))
 		)
-		(asserts! (< walk-position (unwrap-panic (map-get? start-indexes ido-id))) err-already-at-end)
-		(asserts! (get s result) err-invalid-sequence)
-		;;TODO max-step-size < walk-position means everyone wins
-		(asserts! (is-eq (get ido-token-contract offering) (contract-of ido-token)) err-invalid-ido-token)
+		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
+		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
+		(asserts! (and (<= (+ (len input) total-won) (get total-tickets offering)) (get s result)) err-invalid-sequence) ;; do we need the first condition?
+		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-placeholder-error-replace-me)
+ 		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
 		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-not-in-claim-phase)
-		;; only IDO owner can trigger claim during grace period.
 		(asserts!
 			(or
 				(>= block-height (+ (get claim-end-height offering) claim-grace-period))
@@ -198,36 +233,83 @@
 			)
 			err-cannot-trigger-claim
 		)
-		(try! (as-contract (contract-call? ido-token transfer-many-ido (get ido-tokens-per-ticket offering) input)))
-		(try! (as-contract (contract-call? payment-token transfer (* (len input) (get price-per-ticket offering)) tx-sender (get ido-owner offering) none)))
 		(map-set claim-walk-positions ido-id (get w result))
-		(ok (get w result))
+		(map-set total-tickets-won ido-id (+ (len input) total-won))
+		(try! (as-contract (contract-call? payment-token transfer-fixed (* (len input) (get price-per-ticket-in-fixed offering)) tx-sender (get ido-owner offering) none)))
+		(ok (get ido-tokens-per-ticket offering))
 	)
 )
 
-(define-public (refund (ido-id uint) (input (list 200 principal)))
-	(ok true)
+(define-public (claim-optimal (ido-id uint) (input (list 200 principal)) (ido-token <ido-ft-trait>) (payment-token <ft-trait>))
+	(let ((ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token))))
+		(as-contract (contract-call? ido-token transfer-many-ido (* ido-tokens-per-ticket ONE_8) input))
+	)
+)
+
+(define-public (claim-fallback (ido-id uint) (input (list 200 principal)) (ido-token <ft-trait>) (payment-token <ft-trait>))
+	(let ((ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token))))
+		(var-set tm-amount (* ido-tokens-per-ticket ONE_8))
+		(fold transfer-many-iter input ido-token)
+		(ok true)
+	)
+)
+
+(define-data-var tm-amount uint u0)
+(define-private (transfer-many-iter (recipient principal) (ido-token <ft-trait>))
+	(begin
+		(unwrap-panic (as-contract (contract-call? ido-token transfer-fixed (var-get tm-amount) tx-sender recipient none)))
+		ido-token
+	)
+)
+
+(define-private (refund-optimal-iter (e {recipient: principal, amount: uint}) (p {i: uint, p: uint, s: bool}))
+	(let
+		(
+			(k {ido-id: (get i p), owner: (get recipient e)})
+			(b (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})))
+		)
+		(asserts! (get s p) p)
+		(map-delete offering-ticket-bounds k)
+		{
+			i: (get i p),
+			p: (get p p),
+			s: (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e))
+		}
+	)
+)
+
+(define-public (refund-optimal (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ido-ft-trait>))
+	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
+		(asserts! (and
+				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
+				(>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
+			)
+			err-more-to-claim
+		)
+		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
+		(asserts! (get s
+			(fold refund-optimal-iter input
+				{
+					i: ido-id,
+					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
+					s: true
+				}))
+			err-invalid-sequence
+		)
+		(as-contract (contract-call? payment-token transfer-many-amounts-ido input))
+	)
 )
 
 (define-constant lcg-a u134775813)
 (define-constant lcg-c u1)
-;;(define-constant lcg-c walk-resolution)
 (define-constant lcg-m u4294967296)
 
 (define-read-only (lcg-next (current uint) (max-step uint))
-	(mod (mod (+ (* lcg-a (if (is-eq current u0) u1 current)) lcg-c) lcg-m) max-step)
-)
-
-(define-read-only (lcg-next-capped (current uint) (max-step uint))
-	(/ (* (/ (* (mod (+ (* lcg-a (if (is-eq current u0) u1 current)) lcg-c) lcg-m) walk-resolution) lcg-m) max-step) walk-resolution)
-)
-
-(define-read-only (lcg-next-d (current uint))
-	(mod (+ (* lcg-a current) lcg-c) lcg-m)
+	(mod (mod (+ (* lcg-a current) lcg-c) lcg-m) max-step)
 )
 
 (define-read-only (get-vrf-uint (height uint))
-	(ok (buff-to-uint (unwrap! (get-block-info? vrf-seed height) err-block-height-not-reached)))
+	(ok (buff-to-uint64 (unwrap! (get-block-info? vrf-seed height) err-block-height-not-reached)))
 )
 
 (define-constant byte-list
@@ -255,7 +337,7 @@
 	(unwrap-panic (index-of byte-list byte))
 )
 
-(define-read-only (buff-to-uint (bytes (buff 32)))
+(define-read-only (buff-to-uint64 (bytes (buff 32)))
 	(+
 		(match (element-at bytes u0) byte (byte-to-uint byte) u0)
 		(match (element-at bytes u1) byte (* (byte-to-uint byte) u256) u0)
@@ -265,14 +347,6 @@
 		(match (element-at bytes u5) byte (* (byte-to-uint byte) u1099511627776) u0)
 		(match (element-at bytes u6) byte (* (byte-to-uint byte) u281474976710656) u0)
 		(match (element-at bytes u7) byte (* (byte-to-uint byte) u72057594037927936) u0)
-		;; (match (element-at bytes u8) byte (* (byte-to-uint byte) u18446744073709551616) u0)
-		;; (match (element-at bytes u9) byte (* (byte-to-uint byte) u4722366482869645213696) u0)
-		;; (match (element-at bytes u10) byte (* (byte-to-uint byte) u1208925819614629174706176) u0)
-		;; (match (element-at bytes u11) byte (* (byte-to-uint byte) u309485009821345068724781056) u0)
-		;; (match (element-at bytes u12) byte (* (byte-to-uint byte) u79228162514264337593543950336) u0)
-		;; (match (element-at bytes u13) byte (* (byte-to-uint byte) u20282409603651670423947251286016) u0)
-		;; (match (element-at bytes u14) byte (* (byte-to-uint byte) u5192296858534827628530496329220096) u0)
-		;; (match (element-at bytes u15) byte (* (byte-to-uint byte) u1329227995784915872903807060280344576) u0)
 	)
 )
 
@@ -284,5 +358,20 @@
 	(begin
 		(asserts! (is-eq tx-sender (var-get contract-owner)) err-placeholder-error-replace-me)
 		(ok (var-set contract-owner owner))
+	)
+)
+
+(define-private (check-is-owner)
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-placeholder-error-replace-me))
+)
+
+(define-private (check-is-approved)
+	(ok (asserts! (default-to false (map-get? approved-operators tx-sender)) err-placeholder-error-replace-me))
+)
+
+(define-public (add-approved-operator (new-approved-operator principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-operators new-approved-operator true))
 	)
 )
