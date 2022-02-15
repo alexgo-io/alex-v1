@@ -8,8 +8,9 @@
 (define-constant err-invalid-payment-token (err u104))
 (define-constant err-cannot-trigger-claim (err u105))
 (define-constant err-not-in-claim-phase (err u106))
-(define-constant err-already-at-end (err u107))
+(define-constant err-no-more-claims (err u107))
 (define-constant err-use-claim-simple (err u108))
+(define-constant err-more-to-claim (err u109))
 (define-constant err-placeholder-error-replace-me (err u999))
 
 (define-constant walk-resolution (pow u10 u5))
@@ -52,6 +53,8 @@
 	{ido-id: uint, owner: principal}
 	uint
 )
+
+(define-map total-tickets-won uint uint)
 
 (define-map tickets-won
 	{ido-id: uint, owner: principal}
@@ -105,7 +108,6 @@
 (define-public (add-to-position (ido-id uint) (tickets uint) (ido-token <ft-trait>))
 	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
 		(asserts! (< block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
-		;; ido-owner, contract-owner, approved-operator can add to position
 		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-placeholder-error-replace-me)
 		(asserts! (is-eq (contract-of ido-token) (get ido-token-contract offering)) err-invalid-ido-token)
 		(try! (contract-call? ido-token transfer-fixed (* (get ido-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
@@ -131,6 +133,10 @@
 
 (define-read-only (get-total-tickets-registered (ido-id uint))
 	(default-to u0 (map-get? total-tickets-registered ido-id))
+)
+
+(define-read-only (get-total-tickets-won (ido-id uint))
+	(default-to u0 (map-get? total-tickets-won ido-id))
 )
 
 (define-read-only (get-tickets-won (ido-id uint) (owner principal))
@@ -192,7 +198,6 @@
 		(asserts! (get s p) p)
 		(print (map-get? tickets-won k))
 		(and b (map-set tickets-won k (+ (default-to u0 (map-get? tickets-won k)) t)))
-		;;(and b (map-set tickets-won k t))
 		(merge p { t: (if b u0 t), w: n, s: (and (>= (get w p) (get start r)) (< (get w p) (get end r)))})
 	)
 )
@@ -208,13 +213,14 @@
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
+			(total-won (default-to u0 (map-get? total-tickets-won ido-id)))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
 			(result (fold verify-winner-iter input {i: ido-id, t: u0, w: walk-position, m: max-step-size, s: true}))
 		)
 		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
-		(asserts! (< walk-position (unwrap-panic (map-get? start-indexes ido-id))) err-already-at-end)
-		(asserts! (get s result) err-invalid-sequence)
+		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
+		(asserts! (and (<= (+ (len input) total-won) (get total-tickets offering)) (get s result)) err-invalid-sequence) ;; do we need the first condition?
 		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-placeholder-error-replace-me)
  		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
@@ -228,6 +234,7 @@
 			err-cannot-trigger-claim
 		)
 		(map-set claim-walk-positions ido-id (get w result))
+		(map-set total-tickets-won ido-id (+ (len input) total-won))
 		(try! (as-contract (contract-call? payment-token transfer-fixed (* (len input) (get price-per-ticket-in-fixed offering)) tx-sender (get ido-owner offering) none)))
 		(ok (get ido-tokens-per-ticket offering))
 	)
@@ -235,8 +242,7 @@
 
 (define-public (claim-optimal (ido-id uint) (input (list 200 principal)) (ido-token <ido-ft-trait>) (payment-token <ft-trait>))
 	(let ((ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token))))
-		(try! (contract-call? ido-token transfer-many-ido (* ido-tokens-per-ticket ONE_8) input))
-		(ok true)
+		(as-contract (contract-call? ido-token transfer-many-ido (* ido-tokens-per-ticket ONE_8) input))
 	)
 )
 
@@ -273,9 +279,14 @@
 )
 
 (define-public (refund-optimal (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ido-ft-trait>))
-	(begin
-		;;TODO check if claim phase has ended
-		;;TODO check payment-token principal
+	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
+		(asserts! (and
+				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
+				(>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
+			)
+			err-more-to-claim
+		)
+		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
 		(asserts! (get s
 			(fold refund-optimal-iter input
 				{

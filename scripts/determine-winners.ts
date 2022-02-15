@@ -11,7 +11,7 @@ if (!list) {
 	console.log('IDO participant list JSON is in the following format:');
 	console.log('[ {"participant": "SP123...", "start": 0, "end": 100}, {"participant": "SP456...", "start": 100, "end": 200}, ... ]');
 	console.log('Example call:');
-	console.log(`npm run determine-winners '{"maxStepSize": 600000, "walkPosition": 371421}' '[ {"participant": "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "start": 0, "end": 1000000}, {"participant": "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC", "start": 1000000, "end": 3000000} ]'`);
+	console.log(`npm run determine-winners '{"maxStepSize": 600000, "walkPosition": 371421, "ticketsForSale": 10}' '[ {"participant": "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "start": 0, "end": 1000000}, {"participant": "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC", "start": 1000000, "end": 3000000} ]'`);
 	process.exit(0);
 }
 
@@ -32,16 +32,18 @@ class LCG {
 	}
 }
 
-type IdoParameters = { maxStepSize: number, walkPosition: number };
+type IdoParameters = { maxStepSize: number, walkPosition: number, ticketsForSale: number };
 type IdoParticipant = { participant: string, start: number, end: number };
 type IdoWinnersResult = { nextParameters: IdoParameters, winners: string[] };
 
 function determineWinners(lcg: LCG, parameters: IdoParameters, participants: IdoParticipant[]): IdoWinnersResult {
-	let { walkPosition, maxStepSize } = parameters;
+	let { walkPosition, maxStepSize, ticketsForSale } = parameters;
 	let winners: string[] = [];
 	participants.sort((a, b) => a.start < b.start ? -1 : 0);
 	participants.forEach(entry => {
 		while (walkPosition >= entry.start && walkPosition < entry.end) {
+			if (winners.length >= ticketsForSale)
+				return;
 			winners.push(entry.participant);
 			walkPosition += lcg.next(walkPosition, maxStepSize);
 			if (walkPosition >= entry.end)
@@ -49,7 +51,7 @@ function determineWinners(lcg: LCG, parameters: IdoParameters, participants: Ido
 		}
 		walkPosition += lcg.next(walkPosition, maxStepSize);
 	});
-	return { nextParameters: { walkPosition, maxStepSize }, winners };
+	return { nextParameters: { walkPosition, maxStepSize, ticketsForSale }, winners };
 }
 
 function jsonParseSafe(json: string) {
