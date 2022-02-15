@@ -197,33 +197,10 @@
 	)
 )
 
-(define-data-var iter-ido-id uint u0)
-(define-data-var iter-max-step uint u0)
-
-(define-private (verify-winner-iter2 (participant principal) (walk-position (response uint uint)))
-	(let
-		(
-			(k {ido-id: (var-get iter-ido-id), owner: participant})
-			(r (unwrap! (map-get? offering-ticket-bounds k) err-invalid-sequence))
-		)
-		(asserts! (and (>= (try! walk-position) (get start r)) (< (try! walk-position) (get end r))) err-invalid-sequence)
-		(map-set tickets-won k (+ (default-to u0 (map-get? tickets-won k)) u1))
-		(ok (+ (try! walk-position) (lcg-next (try! walk-position) (var-get iter-max-step))))
-	)
-)
-
 (define-private (verify-registered-for-ido-iter (participant principal) (params {i: uint, s: bool}))
 	(if (get s params)
 		{i: (get i params), s: (is-some (map-get? offering-ticket-bounds {ido-id: (get i params), owner: participant}))}
 		{i: (get i params), s: false}
-	)
-)
-
-(define-private (do-walk (input (list 200 principal)) (ido-id uint) (walk-position uint) (max-step uint))
-	(begin
-		(var-set iter-ido-id ido-id)
-		(var-set iter-max-step max-step)
-		(fold verify-winner-iter2 input (ok walk-position))
 	)
 )
 
@@ -234,7 +211,6 @@
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
 			(result (fold verify-winner-iter input {i: ido-id, t: u0, w: walk-position, m: max-step-size, s: true}))
-			;;(result (try! (do-walk input ido-id walk-position max-step-size)))
 		)
 		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
 		(asserts! (< walk-position (unwrap-panic (map-get? start-indexes ido-id))) err-already-at-end)
