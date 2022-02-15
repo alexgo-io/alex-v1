@@ -17,18 +17,18 @@
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 
 (define-read-only (get-contract-owner)
-  (ok (var-get contract-owner))
+	(ok (var-get contract-owner))
 )
 
 (define-public (set-contract-owner (owner principal))
-  (begin
-    (try! (check-is-owner))
-    (ok (var-set contract-owner owner))
-  )
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set contract-owner owner))
+	)
 )
 
 (define-private (check-is-owner)
-  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 (define-public (set-name (new-name (string-ascii 32)))
@@ -64,7 +64,7 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok u0)
+	(ok (ft-get-supply wstx))
 )
 (define-read-only (get-name)
 	(ok (var-get token-name))
@@ -79,7 +79,7 @@
 )
 
 (define-read-only (get-balance (who principal))
-	(ok (/ (* (stx-get-balance who) ONE_8) (pow u10 u6)))
+	(ok (/ (* (ft-get-balance wstx who) ONE_8) (pow u10 u6)))
 )
 
 (define-read-only (get-token-uri)
@@ -94,12 +94,12 @@
 ;; @params memo; expiry
 ;; @returns (response bool uint)/ error
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) sender recipient))
-    (match memo to-print (print to-print) 0x)
-    (ok true)
-  )
+	(begin
+		(asserts! (or (is-eq sender tx-sender) (is-eq sender contract-caller)) ERR-NOT-AUTHORIZED)
+		(try! (ft-transfer? wstx (/ (* amount (pow u10 u6)) ONE_8) sender recipient))
+		(match memo to-print (print to-print) 0x)
+		(ok true)
+	)
 )
 
 (define-constant ONE_8 (pow u10 u8))
@@ -107,28 +107,28 @@
 ;; @desc pow-decimals
 ;; @returns uint
 (define-private (pow-decimals)
-  (pow u10 (unwrap-panic (get-decimals)))
+	(pow u10 (unwrap-panic (get-decimals)))
 )
 
 ;; @desc fixed-to-decimals
 ;; @params amount
 ;; @returns uint
 (define-read-only (fixed-to-decimals (amount uint))
-  (/ (* amount (pow-decimals)) ONE_8)
+	(/ (* amount (pow-decimals)) ONE_8)
 )
 
 ;; @desc decimals-to-fixed 
 ;; @params amount
 ;; @returns uint
 (define-private (decimals-to-fixed (amount uint))
-  (/ (* amount ONE_8) (pow-decimals))
+	(/ (* amount ONE_8) (pow-decimals))
 )
 
 ;; @desc get-total-supply-fixed
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
+	(ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
 )
 
 ;; @desc get-balance-fixed
@@ -136,7 +136,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (unwrap-panic (get-balance account))))
+	(ok (decimals-to-fixed (unwrap-panic (get-balance account))))
 )
 
 ;; @desc transfer-fixed
@@ -146,19 +146,19 @@
 ;; @params recipient
 ;; @returns (response bool)
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (transfer (fixed-to-decimals amount) sender recipient memo)
+	(transfer (fixed-to-decimals amount) sender recipient memo)
 )
 
 (define-public (mint (amount uint) (recipient principal))
-  ERR-MINT-FAILED
+	ERR-MINT-FAILED
 )
 
 (define-public (burn (amount uint) (sender principal))
-  ERR-BURN-FAILED
+	ERR-BURN-FAILED
 )
 
 (define-public (mint-fixed (amount uint) (recipient principal))
-  (mint (fixed-to-decimals amount) recipient)
+	(mint (fixed-to-decimals amount) recipient)
 )
 
 ;; @desc burn-fixed
@@ -167,7 +167,7 @@
 ;; @params sender
 ;; @returns (response bool)
 (define-public (burn-fixed (amount uint) (sender principal))
-  (burn (fixed-to-decimals amount) sender)
+	(burn (fixed-to-decimals amount) sender)
 )
 
 ;; @desc check-err
@@ -175,19 +175,57 @@
 ;; @params prior
 ;; @returns (response bool uint)
 (define-private (check-err (result (response bool uint)) (prior (response bool uint)))
-    (match prior 
-        ok-value result
-        err-value (err err-value)
-    )
+		(match prior 
+				ok-value result
+				err-value (err err-value)
+		)
 )
 
 (define-private (transfer-from-tuple (recipient { to: principal, amount: uint }))
-  (ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
+	(ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
 )
 
 (define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
-  (fold check-err (map transfer-from-tuple recipients) (ok true))
+	(fold check-err (map transfer-from-tuple recipients) (ok true))
 )
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
+
+(define-private (transfer-many-ido-iter (recipient principal) (params {amount: uint, result: (response bool uint)}))
+	(begin
+		(unwrap! (get result params) params)
+		{amount: (get amount params), result: (transfer-fixed (get amount params) contract-caller recipient none)}
+	)
+)
+
+(define-public (transfer-many-ido (amount uint) (recipients (list 200 principal)))
+	(get result (fold transfer-many-ido-iter recipients {amount: amount, result: (ok true)}))
+)
+
+(define-private (transfer-many-amounts-ido-iter (item {recipient: principal, amount: uint}) (result (response bool uint)))
+	(begin
+		(try! result)
+		(transfer-fixed (get amount item) contract-caller (get recipient item) none)
+	)
+)
+
+(define-public (transfer-many-amounts-ido (recipients (list 200 {recipient: principal, amount: uint})))
+	(fold transfer-many-amounts-ido-iter recipients (ok true))
+)
+
+(define-public (wrap (amount uint))
+	(begin
+		(try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
+		(try! (ft-mint? wstx amount tx-sender))
+		(ok true)
+	)
+)
+
+(define-public (unwrap (amount uint))
+	(let ((recipient tx-sender))
+		(try! (ft-burn? wstx amount tx-sender))
+		(try! (as-contract (stx-transfer? amount tx-sender recipient)))
+		(ok true)
+	)
+)
