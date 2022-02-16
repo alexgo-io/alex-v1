@@ -1,3 +1,5 @@
+import { determineWinners, LCG } from "../lib/launchpad.ts";
+
 const [, , inputParameters, list] = process.argv;
 
 const idoLcgA = 134775813;
@@ -13,45 +15,6 @@ if (!list) {
 	console.log('Example call:');
 	console.log(`npm run determine-winners '{"maxStepSize": 600000, "walkPosition": 371421, "ticketsForSale": 10}' '[ {"participant": "ST2CY5V39NHDPWSXMW9QDT3HC3GD6Q6XX4CFRK9AG", "start": 0, "end": 1000000}, {"participant": "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC", "start": 1000000, "end": 3000000} ]'`);
 	process.exit(0);
-}
-
-class LCG {
-	a: number;
-	c: number;
-	m: number;
-
-	constructor(a: number, c: number, m: number) {
-		this.a = a;
-		this.c = c;
-		this.m = m;
-	}
-
-	next(current: number, maxStep: number = 0) {
-		const next = (current * this.a + this.c) % this.m;
-		return maxStep > 1 ? next % maxStep : next;
-	}
-}
-
-type IdoParameters = { maxStepSize: number, walkPosition: number, ticketsForSale: number };
-type IdoParticipant = { participant: string, start: number, end: number };
-type IdoWinnersResult = { nextParameters: IdoParameters, winners: string[] };
-
-function determineWinners(lcg: LCG, parameters: IdoParameters, participants: IdoParticipant[]): IdoWinnersResult {
-	let { walkPosition, maxStepSize, ticketsForSale } = parameters;
-	let winners: string[] = [];
-	participants.sort((a, b) => a.start < b.start ? -1 : 0);
-	participants.forEach(entry => {
-		while (walkPosition >= entry.start && walkPosition < entry.end) {
-			if (winners.length >= ticketsForSale)
-				return;
-			winners.push(entry.participant);
-			walkPosition += lcg.next(walkPosition, maxStepSize);
-			if (walkPosition >= entry.end)
-				return;
-		}
-		walkPosition += lcg.next(walkPosition, maxStepSize);
-	});
-	return { nextParameters: { walkPosition, maxStepSize, ticketsForSale }, winners };
 }
 
 function jsonParseSafe(json: string) {
