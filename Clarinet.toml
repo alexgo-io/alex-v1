@@ -12,7 +12,7 @@ depends_on = ["trait-sip-010"]
 
 [contracts.lottery]
 path = "contracts/lottery.clar"
-depends_on = ["trait-sip-010", "trait-ido-ft"]
+depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
 
 [contracts.trait-ido-ft]
 path = "contracts/trait-ido-ft.clar"
@@ -29,4 +29,25 @@ depends_on = ["trait-sip-010"]
 [contracts.trait-sip-010]
 path = "../clarity/contracts/traits/trait-sip-010.clar"
 depends_on = [ ]
+
+[contracts.trait-ownable]
+path = "alex-v1/clarity/contracts/traits/trait-ownable.clar"
+depends_on = [ ]
+
+[contracts.token-t-alex]
+path = "alex-v1/clarity/contracts/token/token-t-alex.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-apower]
+path = "alex-v1/clarity/contracts/token/token-apower.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wstx]
+path = "alex-v1/clarity/contracts/wrapped-token/token-wstx.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+
+
+
+
 

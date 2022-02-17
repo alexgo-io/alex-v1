@@ -1,10 +1,6 @@
-import { determineWinners, LCG } from "../lib/launchpad.ts";
+import { determineWinners } from "../lib/launchpad.ts";
 
 const [, , inputParameters, list] = process.argv;
-
-const idoLcgA = 134775813;
-const idoLcgC = 1;
-const idoLcgM = 4294967296;
 
 if (!list) {
 	console.log('Usage: npm run determine-winners <input parameters JSON> <IDO participant list JSON>');
@@ -26,8 +22,6 @@ function jsonParseSafe(json: string) {
 	}
 }
 
-const lcg = new LCG(idoLcgA, idoLcgC, idoLcgM);
-
 const [inputParametersParsed, listParsed] = [inputParameters, list].map(jsonParseSafe);
 
 if (!inputParametersParsed || !listParsed) {
@@ -35,7 +29,7 @@ if (!inputParametersParsed || !listParsed) {
 	process.exit(1);
 }
 
-const result = determineWinners(lcg, inputParametersParsed, listParsed);
+const result = determineWinners(inputParametersParsed, listParsed);
 
 console.log('Parameters:', inputParametersParsed);
 console.log('Winner count:', result.winners.length);
