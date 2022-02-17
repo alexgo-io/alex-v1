@@ -90,7 +90,7 @@
     (ok (get total-supply (unwrap! (map-get? pools-data-map staked-token) ERR-INVALID-POOL)))
 )
 
-(define-public (create-pool (staked-token principal) (reward-cycles (list 32 uint)) (yield-token principal)) 
+(define-public (create-pool (staked-token principal) (yield-token principal)) 
     (let
         (
             (pool-data {
