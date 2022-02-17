@@ -25,6 +25,8 @@
 (define-constant MILD_EXPONENT_BOUND (pow u2 u126))
 (define-constant UPPER_BASE_BOUND {x: u17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
 (define-constant LOWER_EXPONENT_BOUND {x: u85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
+(define-constant DIGITS_31 9999999999999999999999999999999)
+(define-constant DIGIT_LIST (list u10 u10 u10 u10 u10 u10 u10 u10))
 
 ;; Because largest exponent is 51, we start from 32
 ;; The first several a_n are too large if stored as 16 decimal numbers, and could cause intermediate overflows.
@@ -59,6 +61,7 @@
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
 (define-constant ERR-NOT-POSITIVE (err u5014))
+(define-constant INT_RANGE_EXCEEDED  (err u5015))
 
 (define-read-only (ln-priv (num (tuple (x int) (exp int))))
     (let
@@ -692,18 +695,50 @@
     )
 )
 
-(define-constant uONE_8 (pow u10 u8))
-
 (define-read-only (pow-from-fixed-to-fixed (a uint) (b uint))
-    (transform-to-fixed (pow-fixed (try! (transform-from-fixed a)) (try! (transform-from-fixed b))))
+    (transform-to-fixed (try! (pow-fixed (transform-from-fixed a) (transform-from-fixed b))))
+)
+
+(define-read-only (count-zero (a uint) (result (tuple (input uint) (continue bool) (zero int))))
+    (let 
+        (
+            (continue (get continue result))
+            (input (get input result))
+            (zero (get zero result))
+        )
+        (if (not continue) 
+            result
+            (if (is-eq (mod input a) u0)
+                {input: (/ input a), continue: true, zero: (+ 1 zero)}
+                {input: input, continue: false, zero: zero} 
+            )
+        )
+    )
+)
+
+;; transform 8-digit fixed-point notation to 8 decimal scientific notation
+(define-read-only (transform-from-fixed (a uint))
+    (let 
+        (
+            (transformed-input (fold count-zero DIGIT_LIST {input: a, continue: true, zero: 0}))
+            (exp (- (get zero transformed-input) 8))
+        )
+        {x: (get input transformed-input), exp: exp}
+    )  
 )
 
 ;; transform scientific notation to 8-digit fixed-point notation
 (define-read-only (transform-to-fixed (num (tuple (x int) (exp int))))
-    (ok u0)
-)
-
-;; transform 8-digit fixed-point notation to 8 decimal scientific notation
-(define-read-only (transform-from-fixed (fixed uint))
-    (ok {x: u0, exp: 8})
+    (let 
+        (
+            (x (get x num))
+            (exp (get exp num))
+            (new-exp (+ 8 exp))
+        )
+        ;; (asserts! (< result DIGITS_31) INT_RANGE_EXCEEDED)
+        (if (>= new-exp 0)
+            (ok (* x (pow 10 new-exp)))
+            (ok (/ x (pow 10 (* -1 new-exp))))
+        )
+    )  
 )

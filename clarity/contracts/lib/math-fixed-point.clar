@@ -83,11 +83,11 @@
 )
 
 (define-read-only (ln (a int))
-    (try! (contract-call? .math-log-exp ln-fixed a))
+    (unwrap-panic (contract-call? .math-log-exp ln-fixed a))
 )
 
 (define-read-only (exp (a int))
-    (try! (contract-call? .math-log-exp exp-fixed a))
+    (unwrap-panic (contract-call? .math-log-exp exp-fixed a))
 )
 
 ;; @desc pow-down
@@ -97,7 +97,7 @@
 (define-read-only (pow-down (a uint) (b uint))    
     (let
         (
-            (raw (try! (contract-call? .math-log-exp-biguint pow-from-fixed-to-fixed a b)))
+            (raw (to-uint (unwrap-panic (contract-call? .math-log-exp-biguint pow-from-fixed-to-fixed a b))))
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (if (< raw max-error)
@@ -114,7 +114,7 @@
 (define-read-only (pow-up (a uint) (b uint))
     (let
         (
-            (raw (try! (contract-call? .math-log-exp-biguint pow-from-fixed-to-fixed a b)))
+            (raw (to-uint (unwrap-panic (contract-call? .math-log-exp-biguint pow-from-fixed-to-fixed a b))))
             (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
         )
         (+ raw max-error)
