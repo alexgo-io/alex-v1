@@ -27,7 +27,6 @@
 	uint
 	{
 	ido-token-contract: principal,
-	ticket-contract: principal,
 	payment-token-contract: principal,
 	ido-owner: principal,
 	ido-tokens-per-ticket: uint,
@@ -36,7 +35,8 @@
 	registration-start-height: uint,
 	registration-end-height: uint,
 	claim-end-height: uint,
-	total-tickets: uint
+	total-tickets: uint,
+	apower-per-ticket-in-fixed: uint
 	}
 )
 
@@ -65,7 +65,6 @@
 
 (define-public (create-pool
 	(ido-token <ft-trait>)
-	(ticket <ft-trait>)
 	(payment-token <ft-trait>)
 	(offering
 		{
@@ -75,10 +74,14 @@
 		activation-threshold: uint,
 		registration-start-height: uint,
 		registration-end-height: uint,
-		claim-end-height: uint
+		claim-end-height: uint,
+		apower-per-ticket-in-fixed: uint
 		})
 	)
-	(let ((ido-id (var-get ido-id-nonce)))
+	(let 
+		(
+			(ido-id (var-get ido-id-nonce))
+		)
 		(asserts! (is-eq (var-get contract-owner) tx-sender) err-placeholder-error-replace-me)
 		(asserts!
 			(and
@@ -91,7 +94,6 @@
 		(map-set offerings ido-id (merge offering
 			{
 				ido-token-contract: (contract-of ido-token),
-				ticket-contract: (contract-of ticket),
 				payment-token-contract: (contract-of payment-token),
 				total-tickets: u0
 			})
@@ -149,21 +151,21 @@
 	(map-get? offering-ticket-bounds {ido-id: ido-id, owner: owner})
 )
 
-(define-public (register (ido-id uint) (tickets uint) (ticket <ft-trait>) (payment-token <ft-trait>))
+(define-public (register (ido-id uint) (apower-in-fixed uint) (payment-token <ft-trait>))
 	(let
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
+			(tickets (/ apower-in-fixed (get apower-per-ticket-in-fixed offering)))
 			(bounds (next-bounds ido-id tickets))
 			(sender tx-sender)
 		)
 		(asserts! (is-none (map-get? offering-ticket-bounds {ido-id: ido-id, owner: tx-sender})) err-placeholder-error-replace-me)
 		(asserts! (> tickets u0) err-placeholder-error-replace-me)
 		(asserts! (>= block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
-		(asserts! (< block-height (get registration-end-height offering)) err-placeholder-error-replace-me)
-		(asserts! (is-eq (get ticket-contract offering) (contract-of ticket)) err-placeholder-error-replace-me)
+		(asserts! (< block-height (get registration-end-height offering)) err-placeholder-error-replace-me)		
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)		
 		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
-		(as-contract (try! (contract-call? ticket burn-fixed (* tickets ONE_8) sender)))
+		(as-contract (try! (contract-call? .token-apower burn-fixed apower-in-fixed sender)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
 		(ok bounds)
@@ -242,7 +244,10 @@
 )
 
 (define-public (claim-optimal (ido-id uint) (input (list 200 principal)) (ido-token <ido-ft-trait>) (payment-token <ft-trait>))
-	(let ((ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token))))
+	(let 
+		(
+			(ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token)))
+		)
 		(as-contract (contract-call? ido-token transfer-many-ido (* ido-tokens-per-ticket ONE_8) input))
 	)
 )
@@ -413,4 +418,23 @@
 		(try! (check-is-owner))
 		(ok (map-set approved-operators new-approved-operator true))
 	)
+)
+
+;; @desc mul-down
+;; @params a
+;; @params b
+;; @returns uint
+(define-read-only (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+;; @desc div-down
+;; @params a
+;; @params b
+;; @returns uint
+(define-read-only (div-down (a uint) (b uint))
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
