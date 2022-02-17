@@ -219,6 +219,7 @@
 			(result (fold verify-winner-iter input {i: ido-id, t: u0, r: {start: u0, end: u0}, w: walk-position, m: max-step-size, l: (len input), s: true}))
 		)
 		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
+		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-placeholder-error-replace-me)
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
 		(asserts! (and (<= (+ (len input) total-won) (get total-tickets offering)) (get s result)) err-invalid-sequence) ;; do we need the first condition?
 		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-placeholder-error-replace-me)
