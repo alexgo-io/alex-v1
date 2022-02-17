@@ -229,7 +229,8 @@
 			(or
 				(>= block-height (+ (get claim-end-height offering) claim-grace-period))
 				(is-eq (get ido-owner offering) tx-sender)
-				(is-eq (var-get contract-owner) tx-sender)
+				(is-ok (check-is-owner))
+				(is-ok (check-is-approved))
 			)
 			err-cannot-trigger-claim
 		)
@@ -259,6 +260,13 @@
 	(begin
 		(unwrap-panic (as-contract (contract-call? ido-token transfer-fixed (var-get tm-amount) tx-sender recipient none)))
 		ido-token
+	)
+)
+
+(define-private (transfer-many-amounts-iter (e {recipient: principal, amount: uint}) (payment-token <ft-trait>))
+	(begin
+		(unwrap-panic (as-contract (contract-call? payment-token transfer-fixed (get amount e) tx-sender (get recipient e) none)))
+		payment-token
 	)
 )
 
@@ -316,7 +324,7 @@
 	)
 )
 
-(define-public (refund-fallback (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ido-ft-trait>))
+(define-public (refund-fallback (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ft-trait>))
 	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
 		(asserts! (and
 				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
@@ -334,7 +342,8 @@
 				}))
 			err-invalid-sequence
 		)
-		(as-contract (contract-call? payment-token transfer-many-amounts-ido input))
+		(fold transfer-many-amounts-iter input payment-token)
+		(ok true)
 	)
 )
 
