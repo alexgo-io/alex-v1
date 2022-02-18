@@ -27,7 +27,7 @@ path = "contracts/wrapped-stx.clar"
 depends_on = ["trait-sip-010"]
 
 [contracts.trait-sip-010]
-path = "../clarity/contracts/traits/trait-sip-010.clar"
+path = "alex-v1/clarity/contracts/traits/trait-sip-010.clar"
 depends_on = [ ]
 
 [contracts.trait-ownable]
