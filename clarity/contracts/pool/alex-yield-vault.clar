@@ -36,7 +36,7 @@
 ;;
 (define-data-var total-supply uint u0)
 (define-data-var activated bool false)
-(define-data-var claim-and-stake-bounty-in-fixed uint u1000000) ;; 1%
+(define-data-var claim-and-stake-bounty-in-fixed uint u100000) ;; 0.1%
 
 (define-read-only (get-claim-and-stake-bounty-in-fixed)
   (ok (var-get claim-and-stake-bounty-in-fixed))
@@ -87,6 +87,10 @@
 ;; public functions
 ;;   
 
+;; @desc get the next capital base of the vault
+;; @desc next-base = principal to be staked at the next cycle 
+;; @desc           + principal to be claimed at the next cycle and staked for the following cycle
+;; @desc           + reward to be claimed at the next cycle and staked for the following cycle
 (define-read-only (get-next-base)
   (let 
     (
@@ -102,10 +106,15 @@
   )
 )
 
+;; @desc get the intrinsic value of auto-alex
+;; @desc intrinsic = next capital base of the vault / total supply of auto-alex
 (define-read-only (get-intrinsic)
   (ok (mul-down (try! (get-next-base)) (var-get total-supply)))
 )
 
+;; @desc add to position
+;; @desc transfers dx to vault, stake them for 32 cycles and mints auto-alex, the number of which is determined as % of total supply / next base
+;; @param dx the number of $ALEX in 8-digit fixed point notation
 (define-public (add-to-position (dx uint))
   (let
     (
@@ -132,6 +141,9 @@
   )
 )
 
+;; @desc triggers external event that claims all that's available and stake for another 32 cycles
+;; @desc this can be triggered by anyone at a fee (at the moment 0.1% of whatever is claimed)
+;; @param reward-cycle the target cycle to claim (and stake for current cycle + 32 cycles). reward-cycle must be < current cycle.
 (define-public (claim-and-stake (reward-cycle uint))
   (let 
     (
@@ -149,6 +161,10 @@
   )
 )
 
+;; @desc dissolves the vault and allows auto-alex holders to withdraw $ALEX unstaked from the vault
+;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
+;; @assert contract-owner to set-activated to false before such withdrawal can happen.
+;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
 (define-public (reduce-position)
   (let 
     (
