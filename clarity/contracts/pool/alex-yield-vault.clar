@@ -12,6 +12,8 @@
 (define-constant ERR-STAKING-IN-PROGRESS (err u2018))
 (define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
+(define-constant ERR-NOT-ACTIVATED (err u2043))
+(define-constant ERR-ACTIVATED (err u2044))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -33,6 +35,7 @@
 ;; data maps and vars
 ;;
 (define-data-var total-supply uint u0)
+(define-data-var activated bool false)
 (define-data-var claim-and-stake-bounty-in-fixed uint u1000000) ;; 1%
 
 (define-read-only (get-claim-and-stake-bounty-in-fixed)
@@ -43,6 +46,17 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set claim-and-stake-bounty-in-fixed new-claim-and-stake-bounty-in-fixed))
+  )
+)
+
+(define-read-only (get-activated)
+  (ok (var-get activated))
+)
+
+(define-public (set-activated (new-activated bool))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set activated new-activated))
   )
 )
 
@@ -88,20 +102,31 @@
   )
 )
 
+(define-read-only (get-intrinsic)
+  (ok (mul-down (try! (get-next-base)) (var-get total-supply)))
+)
+
 (define-public (add-to-position (dx uint))
   (let
     (
-      (new-supply (div-down (mul-down dx (var-get total-supply)) (try! (get-next-base))))
+      (new-supply 
+        (if (is-eq u0 (var-get total-supply))
+          dx ;; initial position
+          (div-down (mul-down (var-get total-supply) dx) (try! (get-next-base)))
+        )
+      )
+      (sender tx-sender)
     )
+    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     
     ;; transfer dx to contract to stake for max cycles
-    (try! (contract-call? .age000-governance-token transfer-fixed dx tx-sender (as-contract tx-sender) none))
+    (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
     (as-contract (try! (stake-tokens dx u32)))
         
     ;; mint pool token and send to tx-sender
     (var-set total-supply (+ (var-get total-supply) new-supply))
-    (as-contract (try! (contract-call? .auto-alex mint-fixed dx tx-sender)))
+    (as-contract (try! (contract-call? .auto-alex mint-fixed new-supply sender)))
     (print { object: "pool", action: "liquidity-added", data: new-supply })
     (ok true)
   )
@@ -118,10 +143,36 @@
       (bounty (mul-down balance (var-get claim-and-stake-bounty-in-fixed)))
     )
     (asserts! (> current-cycle reward-cycle) ERR-STAKING-IN-PROGRESS)
-    (and (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
+    (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
     (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     (ok true)
   )
+)
+
+(define-public (reduce-position)
+  (let 
+    (
+      (sender tx-sender)
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+      ;; claim last cycle just in case claim-and-stake has not yet been triggered    
+      (claimed (as-contract (try! (claim-staking-reward (- current-cycle u1)))))
+      (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
+      (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
+    )
+    ;; only if de-activated
+    (asserts! (not (var-get activated)) ERR-ACTIVATED)
+    ;; only if no staking positions
+    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
+    ;; transfer relevant balance to sender
+    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-balance tx-sender sender none)))
+    
+    ;; burn pool token
+    (var-set total-supply (- (var-get total-supply) reduce-supply))
+    (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
+    (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
+    (ok true)
+  ) 
 )
 
 (define-read-only (mul-down (a uint) (b uint))
