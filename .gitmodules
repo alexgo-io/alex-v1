@@ -7,3 +7,6 @@
 [submodule "alex-v1.01"]
 	path = alex-v1.01
 	url = https://github.com/alexgo-io/alex-v1.01.git
+[submodule "ido-launchpad-poc"]
+	path = ido-launchpad-poc
+	url = https://github.com/alexgo-io/ido-launchpad-poc.git
