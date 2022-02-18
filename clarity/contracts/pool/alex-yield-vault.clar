@@ -73,26 +73,35 @@
 ;; public functions
 ;;   
 
+(define-read-only (get-next-base)
+  (let 
+    (
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+    )
+    (ok 
+      (+ 
+        (get amount-staked (as-contract (get-staker-at-cycle (+ current-cycle u1)))) 
+        (get to-return (as-contract (get-staker-at-cycle current-cycle))) 
+        (as-contract (get-staking-reward current-cycle))
+      )
+    )
+  )
+)
+
 (define-public (add-to-position (dx uint))
   (let
     (
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
-      (current-reward (as-contract (get-staking-reward current-cycle)))
-      (current-staked (as-contract (get-staker-at-cycle current-cycle)))
-      (next-staked (as-contract (get-staker-at-cycle (+ current-cycle u1))))
-      (next-base (+ (get amount-staked next-staked) (get to-return current-staked) current-reward))
-      (new-supply (div-down (mul-down dx (var-get total-supply)) next-base))
-      (sender tx-sender)
+      (new-supply (div-down (mul-down dx (var-get total-supply)) (try! (get-next-base))))
     )
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     
     ;; transfer dx to contract to stake for max cycles
-    (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
+    (try! (contract-call? .age000-governance-token transfer-fixed dx tx-sender (as-contract tx-sender) none))
     (as-contract (try! (stake-tokens dx u32)))
         
     ;; mint pool token and send to tx-sender
     (var-set total-supply (+ (var-get total-supply) new-supply))
-    (as-contract (try! (contract-call? .auto-alex mint-fixed dx sender)))
+    (as-contract (try! (contract-call? .auto-alex mint-fixed dx tx-sender)))
     (print { object: "pool", action: "liquidity-added", data: new-supply })
     (ok true)
   )
@@ -104,7 +113,7 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (sender tx-sender)
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (as-contract ((try! claim-staking-reward reward-cycle))))
+      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (mul-down balance (var-get claim-and-stake-bounty-in-fixed)))
     )
