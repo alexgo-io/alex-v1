@@ -12,14 +12,15 @@ export type StandardTestParameters = {
 	totalIdoTokens: number,
 	idoOwner: Account,
 	ticketsForSale: number,
-	idoTokensPerTicket?: number,
+	idoTokensPerTicket: number,
 	pricePerTicketInFixed: number,
 	activationThreshold?: number,
 	registrationStartHeight?: number,
 	registrationEndHeight?: number,
 	claimEndHeight?: number,
 	wrappedStxTokensPerTicketRecipients?: number,
-	ticketRecipients: TicketAllocation[]
+	ticketRecipients: TicketAllocation[],
+	apowerPerTicketInFixed: number
 };
 
 export const contractPrincipal = (address: Account | string, contractName: string) => `${(address as Account).address || address}.${contractName}`;
@@ -36,31 +37,33 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		registrationEndHeight,
 		claimEndHeight,
 		wrappedStxTokensPerTicketRecipients,
-		ticketRecipients
+		ticketRecipients,
+		apowerPerTicketInFixed
 	} = parameters;
-	const first = chain.mineBlock([
-		Tx.contractCall("banana-token", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * 100000000), types.principal(idoOwner.address)], deployer.address),
-		...ticketRecipients.map(allocation => Tx.contractCall("ido-ticket", "mint-fixed", [types.uint(allocation.amount * ONE_8), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
-		...ticketRecipients.map(allocation => Tx.contractCall("wrapped-stx", "wrap", [types.uint(wrappedStxTokensPerTicketRecipients || 10000000000)], (allocation.recipient as Account).address || allocation.recipient as string)),
+	const first = chain.mineBlock([		
+		Tx.contractCall("token-t-alex", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
+		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "lottery"))], deployer.address),
+		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(allocation.amount * apowerPerTicketInFixed / ONE_8), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
+		// ...ticketRecipients.map(allocation => Tx.contractCall("wrapped-stx", "wrap", [types.uint(wrappedStxTokensPerTicketRecipients || 10000000000)], (allocation.recipient as Account).address || allocation.recipient as string)),
 		Tx.contractCall("lottery", "create-pool", [
-			types.principal(contractPrincipal(deployer, "banana-token")),
-			types.principal(contractPrincipal(deployer, "ido-ticket")),
-			types.principal(contractPrincipal(deployer, "wrapped-stx")),
+			types.principal(contractPrincipal(deployer, "token-t-alex")),
+			types.principal(contractPrincipal(deployer, "token-wstx")),
 			types.tuple({
 				"ido-owner": types.principal(idoOwner.address),
-				"ido-tokens-per-ticket": types.uint(idoTokensPerTicket || 1),
+				"ido-tokens-per-ticket": types.uint(idoTokensPerTicket),
 				"price-per-ticket-in-fixed": types.uint(pricePerTicketInFixed),
 				"activation-threshold": types.uint(activationThreshold || 1),
 				"registration-start-height": types.uint(registrationStartHeight || 0),
 				"registration-end-height": types.uint(registrationEndHeight || 10),
-				"claim-end-height": types.uint(claimEndHeight || 20)
+				"claim-end-height": types.uint(claimEndHeight || 20),
+				"apower-per-ticket-in-fixed": types.uint(apowerPerTicketInFixed)
 			}),
 		], deployer.address),
 	]);
 	const idoId = parseInt(first.receipts[first.receipts.length - 1].result.expectOk().toString().substring(1));
 	assertEquals(isNaN(idoId), false, "failed to get IDO ID");
 	const second = chain.mineBlock([
-		Tx.contractCall("lottery", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "banana-token"))], idoOwner.address),
+		Tx.contractCall("lottery", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-t-alex"))], idoOwner.address),
 	]);
 	return { idoId, blocks: [first, second] };
 }
