@@ -11,7 +11,11 @@
 (define-constant err-no-more-claims (err u107))
 (define-constant err-use-claim-simple (err u108))
 (define-constant err-more-to-claim (err u109))
-(define-constant err-placeholder-error-replace-me (err u999))
+(define-constant err-invalid-ido-setting (err u110))
+(define-constant err-invalid-input (err u111))
+(define-constant err-already-registered (err u112))
+(define-constant err-activation-threshold-not-reached (err u113))
+(define-constant err-not-authorized (err u1000))
 
 (define-constant walk-resolution (pow u10 u5))
 (define-constant claim-grace-period u144)
@@ -82,14 +86,14 @@
 		(
 			(ido-id (var-get ido-id-nonce))
 		)
-		(asserts! (is-eq (var-get contract-owner) tx-sender) err-placeholder-error-replace-me)
+		(asserts! (is-eq (var-get contract-owner) tx-sender) err-not-authorized)
 		(asserts!
 			(and
 				(< block-height (get registration-start-height offering))
 				(< (get registration-start-height offering) (get registration-end-height offering))
 				(< (get registration-end-height offering) (get claim-end-height offering))
 			)
-			err-placeholder-error-replace-me
+			err-invalid-ido-setting
 		)
 		(map-set offerings ido-id (merge offering
 			{
@@ -109,8 +113,8 @@
 
 (define-public (add-to-position (ido-id uint) (tickets uint) (ido-token <ft-trait>))
 	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
-		(asserts! (< block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
-		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-placeholder-error-replace-me)
+		(asserts! (< block-height (get registration-start-height offering)) err-block-height-not-reached)
+		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-not-authorized)
 		(asserts! (is-eq (contract-of ido-token) (get ido-token-contract offering)) err-invalid-ido-token)
 		(try! (contract-call? ido-token transfer-fixed (* (get ido-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
 		(map-set offerings ido-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
@@ -159,11 +163,11 @@
 			(bounds (next-bounds ido-id tickets))
 			(sender tx-sender)
 		)
-		(asserts! (is-none (map-get? offering-ticket-bounds {ido-id: ido-id, owner: tx-sender})) err-placeholder-error-replace-me)
-		(asserts! (> tickets u0) err-placeholder-error-replace-me)
-		(asserts! (>= block-height (get registration-start-height offering)) err-placeholder-error-replace-me)
-		(asserts! (< block-height (get registration-end-height offering)) err-placeholder-error-replace-me)		
-		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-placeholder-error-replace-me)		
+		(asserts! (is-none (map-get? offering-ticket-bounds {ido-id: ido-id, owner: tx-sender})) err-already-registered)
+		(asserts! (> tickets u0) err-invalid-input)
+		(asserts! (>= block-height (get registration-start-height offering)) err-block-height-not-reached)
+		(asserts! (< block-height (get registration-end-height offering)) err-block-height-not-reached)		
+		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
 		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
 		(as-contract (try! (contract-call? .token-apower burn-fixed apower-in-fixed sender)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
@@ -221,10 +225,10 @@
 			(result (fold verify-winner-iter input {i: ido-id, t: u0, r: {start: u0, end: u0}, w: walk-position, m: max-step-size, l: (len input), s: true}))
 		)
 		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
-		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-placeholder-error-replace-me)
+		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-block-height-not-reached)
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
 		(asserts! (and (<= (+ (len input) total-won) (get total-tickets offering)) (get s result)) err-invalid-sequence) ;; do we need the first condition?
-		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-placeholder-error-replace-me)
+		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-activation-threshold-not-reached)
  		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
 		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-not-in-claim-phase)
@@ -409,17 +413,17 @@
 
 (define-public (set-contract-owner (owner principal))
 	(begin
-		(asserts! (is-eq tx-sender (var-get contract-owner)) err-placeholder-error-replace-me)
+		(asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorized)
 		(ok (var-set contract-owner owner))
 	)
 )
 
 (define-private (check-is-owner)
-	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-placeholder-error-replace-me))
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorized))
 )
 
 (define-private (check-is-approved)
-	(ok (asserts! (default-to false (map-get? approved-operators tx-sender)) err-placeholder-error-replace-me))
+	(ok (asserts! (default-to false (map-get? approved-operators tx-sender)) err-not-authorized))
 )
 
 (define-public (add-approved-operator (new-approved-operator principal))
