@@ -121,7 +121,8 @@
 ;; reduce position after claim period ends
 
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
-	(* u2 (/ (* tickets-registered walk-resolution) total-tickets))
+	(- (* u2 (/ (* tickets-registered walk-resolution) total-tickets)) (/ walk-resolution u1))
+	;; (* u1 (/ (* tickets-registered walk-resolution) total-tickets))
 )
 
 (define-private (next-bounds (ido-id uint) (tickets uint))

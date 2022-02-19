@@ -137,7 +137,7 @@ Clarinet.test({
             deployer.address
           ),
         ]);
-        console.log(t, claim.receipts[0].result.expectOk());
+        console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
         let events = claim.receipts[0].events;
         assertEquals(events.length, 1 + winners_sliced.length);
         events.expectSTXTransferEvent(
