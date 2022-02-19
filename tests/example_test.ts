@@ -25,21 +25,23 @@ Clarinet.test({
       "wallet_2",
     ].map((wallet) => accounts.get(wallet)!);
 
-    for (let t = 0; t < 4000; ) {
+    let winners_list: number[] = [];
+
+    for (let t = 0; t < 1; ) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
       const claimEndHeight = registrationEndHeight + 10;
       t += claimEndHeight - registrationStartHeight + 10;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 100000000000 },
-        { recipient: accountB, amount: 200000000000 },
+        { recipient: accountA, amount: 1000 * 10000000000 },
+        { recipient: accountB, amount: 2000 * 10000000000 },
       ];
 
       const parameters: StandardTestParameters = {
-        totalIdoTokens: 200,
+        totalIdoTokens: 2000,
         idoOwner: accountA,
-        ticketsForSale: 10,
+        ticketsForSale: 100,
         idoTokensPerTicket: 24,
         pricePerTicketInFixed: 10000000000,
         activationThreshold: 10,
@@ -115,7 +117,7 @@ Clarinet.test({
         })
       );
       const winners = determineWinners(idoParameters, idoParticipants);
-      // console.log(winners);
+      console.log(winners);
 
       const maxChunkSize = 200;
       for (
@@ -137,7 +139,9 @@ Clarinet.test({
             deployer.address
           ),
         ]);
-        console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
+        // console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
+        winners_list.push(winners.winners.length);
+
         let events = claim.receipts[0].events;
         assertEquals(events.length, 1 + winners_sliced.length);
         events.expectSTXTransferEvent(
@@ -158,5 +162,18 @@ Clarinet.test({
       }
       chain.mineEmptyBlockUntil(claimEndHeight);
     }
+
+    console.log(
+      "min: ",
+      Math.min(...winners_list),
+      "median: ",
+      winners_list.sort((a, b) => (a > b ? 1 : -1))[
+        Math.floor(winners_list.length / 2)
+      ],
+      "mean: ",
+      winners_list.reduce((sum, x) => sum + x, 0) / winners_list.length,
+      "max: ",
+      Math.max(...winners_list)
+    );
   },
 });

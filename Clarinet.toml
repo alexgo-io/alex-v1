@@ -1,7 +1,7 @@
 [project]
 name = "lottery-poc"
 requirements = []
-costs_version = 2
+repl.costs_version = 2
 [contracts.banana-token]
 path = "contracts/banana-token.clar"
 depends_on = ["trait-sip-010", "trait-ido-ft"]
