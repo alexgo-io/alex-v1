@@ -5,11 +5,13 @@ import { determineWinners, IdoParameters, IdoParticipant } from "../lib/launchpa
 Clarinet.test({
 	name: "Example claim walk test",
 	async fn(chain: Chain, accounts: Map<string, Account>) {
-		const [deployer, accountA, accountB] = ["deployer", "wallet_1", "wallet_2"].map(wallet => accounts.get(wallet)!);
-
-		const registrationStartHeight = 10;
-		const registrationEndHeight = 20;
-		const claimEndHeight = 30;		
+		const [deployer, accountA, accountB] = ["deployer", "wallet_1", "wallet_2"].map(wallet => accounts.get(wallet)!);		
+		
+		for(let t = 0; t < 4000; ){
+		const registrationStartHeight = 10 + t;
+		const registrationEndHeight = registrationStartHeight + 10;
+		const claimEndHeight = registrationEndHeight + 10;		
+		t += (claimEndHeight - registrationStartHeight) + 10;		
 
 		const ticketRecipients = [{ recipient: accountA, amount: 100000000000 }, { recipient: accountB, amount: 200000000000 }];
 
@@ -58,7 +60,7 @@ Clarinet.test({
 
 		const idoParticipants: IdoParticipant[] = ticketRecipients.map((entry, index) => ({ participant: entry.recipient.address, ...bounds[index] }));
 		const winners = determineWinners(idoParameters, idoParticipants);
-		console.log(winners);
+		// console.log(winners);
 		
 		const maxChunkSize = 200;
 		for (let index = 0; index < winners.winners.length; index += maxChunkSize) {
@@ -75,7 +77,8 @@ Clarinet.test({
 					], 
 					deployer.address)
 			]);
-			let events = claim.receipts[0].events;
+			console.log(t, claim.receipts[0].result.expectOk());
+			let events = claim.receipts[0].events;			
 			assertEquals(events.length, 1 + winners_sliced.length);
 			events.expectSTXTransferEvent(
 				(parameters['pricePerTicketInFixed'] * winners_sliced.length / ONE_8 * 1e6),
@@ -90,8 +93,8 @@ Clarinet.test({
 					"t-alex"
 				)					
 			}
-
 		}
-
+		chain.mineEmptyBlockUntil(claimEndHeight);
+		}
 	},
 });
