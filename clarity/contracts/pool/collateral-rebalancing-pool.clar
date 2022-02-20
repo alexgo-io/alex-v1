@@ -223,9 +223,10 @@
                     ;; TODO: assume 15secs per block 
                     (t (div-down (- expiry now) (* u2102400 ONE_8)))
                     (t-2 (div-down (- expiry now) (get token-to-maturity pool)))
+                    (spot (try! (get-spot token collateral)))
 
                     ;; we calculate d1 first
-                    (spot-term (div-up (try! (get-spot token collateral)) strike))
+                    (spot-term (div-up spot strike))
                     (d1 
                         (div-up 
                             (+ 
@@ -242,7 +243,7 @@
                             (mul-down moving-average (get weight-y pool)) 
                             (mul-down 
                                 (- ONE_8 moving-average) 
-                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) u99900000)))
+                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) (div-down strike spot))))
                             )
                         )
                     )                    
@@ -280,6 +281,7 @@
                 (< ltv-0 conversion-ltv) 
                 (< moving-average ONE_8) 
                 (< token-to-maturity (- expiry (* block-height ONE_8)))
+                (not (is-eq (contract-of collateral-trait) (contract-of token-trait)))
             ) 
             ERR-INVALID-POOL
         )            
@@ -384,16 +386,13 @@
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
 
                 (dy-weighted 
-                    (if (is-eq token-x token-y)
-                        dx-to-dy
-                        (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
-                            (if (is-eq token-y .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
-                                (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
-                                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
-                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
-                                )
+                    (if (is-eq token-x .token-wstx)
+                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
+                        (if (is-eq token-y .token-wstx)
+                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
+                            (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
                             )
                         )
                     )
@@ -410,7 +409,7 @@
 
             (if (is-eq token-x token-y)
                 u0
-                (unwrap! (contract-call? .fixed-weight-pool-v1-01 get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot (contract-of token-trait) (contract-of collateral-trait)))))) ERR-POOL-AT-CAPACITY)
+                (unwrap! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x token-y u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token-y token-x))))) ERR-POOL-AT-CAPACITY)
             )
 
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -474,13 +473,23 @@
                                 )
                             )
                 )
-                (new-bal-y (+ balance-y bal-x-to-y))
-                ;; CR-02
-                (bal-y-short (if (<= new-bal-y yield-supply) (- yield-supply new-bal-y) u0))                       
+
+                ;; TODO: need to adjust bal-y-short by fee amount
+                (bal-y-short (if (<= yield-supply balance-y) u0 (- yield-supply balance-y)))
+                (bal-x-to-sell 
+                    (if (<= yield-supply balance-y)
+                        u0
+                        (if (is-some (contract-call? fixed-weight-pool-v1-01 get-pool-exists token-x token-y u50000000 u50000000))
+                            (try! (contract-call? .fixed-weight-pool-v1-01 get-x-in-given-y-out token-x token-y u50000000 u50000000 bal-y-short))
+                            (try! (contract-call? .fixed-weight-pool-v1-01 get-y-in-given-x-out token-y token-x u50000000 u50000000 bal-y-short))
+                        )
+                    )
+                )                
+                (bal-x-short (if (<= bal-x-to-sell balance-x) u0 (- bal-x-to-sell balance-x)))
 
                 (pool-updated (merge pool {
                     yield-supply: (if (<= yield-supply shares) u0 (- yield-supply shares)),
-                    balance-x: u0,
+                    balance-x: (- (+ balance-x bal-x-short) bal-x-to-sell),
                     balance-y: (if (<= (+ new-bal-y bal-y-short) shares) u0 (- (+ new-bal-y bal-y-short) shares))
                     })
                 )
@@ -488,11 +497,26 @@
 
             (asserts! (is-eq (get yield-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
 
+            (if (> bal-x-to-sell u0)
+                (begin
+                    (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
+                    (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists token-x token-y u50000000 u50000000))
+                        (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y collateral-trait token-trait u50000000 u50000000 bal-x-to-sell none)))
+                        (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-x token-trait collateral-trait u50000000 u50000000 bal-x-to-sell none)))
+                    )
+                )
+            )
+
             ;; if any conversion happened at contract level, transfer back to vault
+            (and (> bal-y-short u0) (as-contract (try! (contract-call? token-trait transfer-fixed bal-y-short tx-sender .alex-vault none))))
+            (and (> bal-x-short u0) (as-contract (try! (contract-call? .alex-reserve-pool remove-from-balance token-x bal-x-short))))
+
+
+            
             (and 
                 (> bal-x-to-y u0) 
                 (not (is-eq token-x token-y)) 
-                (as-contract (unwrap! (contract-call? token-trait transfer-fixed bal-x-to-y tx-sender .alex-vault none) ERR-TRANSFER-FAILED))
+                
             )
 
             ;; if bal-y-short > 0, then transfer the shortfall from reserve (accounting only).
