@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "determine-winners": "esrun scripts/determine-winners.ts"
+    "determine-winners": "esrun scripts/determine-winners.ts",
+    "determine-losers": "esrun scripts/determine-losers.ts"
   },
   "keywords": [],
   "author": "",
