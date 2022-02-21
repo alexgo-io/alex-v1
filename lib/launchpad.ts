@@ -78,15 +78,20 @@ export function determineLosers(parameters: IdoParameters, participants: IdoPart
 	const lcg = new IDOLCG();
 	participants.sort((a, b) => a.start < b.start ? -1 : 0);
 	let lastUpperBound = 0;
+	let totalTicketsProcessed = 0;
 	participants.forEach(entry => {
 		if (lastUpperBound !== entry.start)
 			throw new Error(`Error, gap in bound detected for boundary ${entry.start}`);
+		if (totalTicketsProcessed >= ticketsForSale)
+			return;
 		let atleastOneWin = false;
 		let ticketsLost = ~~((entry.end - entry.start) / walkResolution);
 		while (walkPosition >= entry.start && walkPosition < entry.end) {
 			--ticketsLost;
 			walkPosition += lcg.next(walkPosition, maxStepSize);
 			atleastOneWin = true;
+			if (++totalTicketsProcessed >= ticketsForSale)
+				break;
 		}
 		if (ticketsLost > 0)
 			losers.push({ recipient: entry.participant, amount: ticketsLost });
