@@ -509,19 +509,6 @@
     )
 )
 
-(define-read-only (count-digits (a int))
-    (let
-        (   (input (if (< a 0) (* -1 a) a))
-            (natural-log (try! (ln-fixed {x: input, exp: 0})))
-            (count (division-with-scientific-notation natural-log {x: 2303, exp: -3}))
-            (exponent (get exp count))
-            (exp (if (< exponent 1) (* -1 exponent ) exponent))
-            (total-digits (+ (/ (get x count) (pow 10 exp)) 1))
-        )
-        (ok total-digits)
-    )
-)
-
 ;; transformation
 ;; You cannot transform -ve exponent to +ve exponent
 ;; Meaning you cannot go forward exponent, only backwards
@@ -531,75 +518,16 @@
     (let
         (
             (x (get x num))
-            (exp (get exp num))
-            (exp-diff (- power exp))
-        )
-        (if (is-eq exp-diff 0)
-            {x: (* x 1), exp: power}
-        (if (or (is-eq exp-diff -1) (is-eq exp-diff 1))
-            {x: (* x 10), exp: power}
-        (if (or (is-eq exp-diff -2) (is-eq exp-diff 2))
-            {x: (* x 100), exp: power}
-        (if (or (is-eq exp-diff -3) (is-eq exp-diff 3))
-            {x: (* x 1000), exp: power}
-        (if (or (is-eq exp-diff -4) (is-eq exp-diff 4))
-            {x: (* x 10000), exp: power}
-        (if (or (is-eq exp-diff -5) (is-eq exp-diff 5))
-            {x: (* x 100000), exp: power}
-        (if (or (is-eq exp-diff -6) (is-eq exp-diff 6))
-            {x: (* x 1000000), exp: power}
-        (if (or (is-eq exp-diff -7) (is-eq exp-diff 7))
-            {x: (* x 10000000), exp: power}
-        (if (or (is-eq exp-diff -8) (is-eq exp-diff 8))
-            {x: (* x 100000000), exp: power}
-        (if (or (is-eq exp-diff -9) (is-eq exp-diff 9))
-            {x: (* x 1000000000), exp: power}
-        (if (or (is-eq exp-diff -10) (is-eq exp-diff 10))
-            {x: (* x 10000000000), exp: power}
-        (if (or (is-eq exp-diff -11) (is-eq exp-diff 11))
-            {x: (* x 100000000000), exp: power}
-        (if (or (is-eq exp-diff -12) (is-eq exp-diff 12))
-            {x: (* x 1000000000000), exp: power}
-        (if (or (is-eq exp-diff -13) (is-eq exp-diff 13))
-            {x: (* x 10000000000000), exp: power}
-        (if (or (is-eq exp-diff -14) (is-eq exp-diff 14))
-            {x: (* x 100000000000000), exp: power}
-        (if (or (is-eq exp-diff -15) (is-eq exp-diff 15))
-            {x: (* x 1000000000000000), exp: power}
-        (if (or (is-eq exp-diff -16) (is-eq exp-diff 16))
-            {x: (* x 10000000000000000), exp: power}
-        (if (or (is-eq exp-diff -17) (is-eq exp-diff 17))
-            {x: (* x 100000000000000000), exp: power}
-        (if (or (is-eq exp-diff -18) (is-eq exp-diff 18))
-            {x: (* x 1000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -19) (is-eq exp-diff 19))
-            {x: (* x 10000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -20) (is-eq exp-diff 20))
-            {x: (* x 100000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -21) (is-eq exp-diff 21))
-            {x: (* x 1000000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -22) (is-eq exp-diff 22))
-            {x: (* x 10000000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -23) (is-eq exp-diff 23))
-            {x: (* x 100000000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -24) (is-eq exp-diff 24))
-            {x: (* x 1000000000000000000000000), exp: power}
-        (if (or (is-eq exp-diff -25) (is-eq exp-diff 25))
-            {x: (* x 10000000000000000000000000), exp: power}
-        num ))))))))))))))))))))))))))
-    )
-)
-
-(define-read-only (transform-generalized (a int) (a_exp int) (x int))
-    (let
-        (
-            (exp-diff (- x a_exp))
+            (exp-diff (- power (get exp num)))
             (diff-power (if (>= exp-diff 0) exp-diff (* -1 exp-diff)))
         )
-        {
-            a: (* a (pow 10 diff-power)),
-            exp: x
-        }
+        (if (and (<= exp-diff 25) (>= exp-diff -25))
+            {
+                x: (* x (pow 10 diff-power)),
+                exp: power
+            }
+            num
+        )
     )
 )
 
