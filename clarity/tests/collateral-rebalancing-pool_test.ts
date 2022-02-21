@@ -134,6 +134,9 @@ Clarinet.test({
         position['dx'].expectUint(100 * ONE_8);
         position['dy'].expectUint(197702); 
 
+        call = await CRPTest.getWeightY(wbtcAddress, usdaAddress, expiry);
+        call.result.expectOk().expectUint(52715811);          
+
         // arbtrageur selling 0.002 wbtc for usda
         result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.002 * ONE_8, 0);
         position = result.expectOk().expectTuple();

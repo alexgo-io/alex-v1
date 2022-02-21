@@ -226,25 +226,19 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
-    (begin
-        (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
-            (let
-                (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
+    (let
+        (
+            (pool 
+                (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
+                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL)
+                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL)
                 )
-                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
-                       (mul-down (get oracle-average pool) (get oracle-resilient pool))))
             )
-            (let
-                (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL))
-                )
-                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
-                       (mul-down (get oracle-average pool) (div-down ONE_8 (get oracle-resilient pool)))))
-            )
-        )            
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
+            (mul-down (get oracle-average pool) (get oracle-resilient pool)))
+        )           
     )
 )
 
@@ -267,10 +261,10 @@
             )
             (let
                 (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL))
+                    (pool (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL))
                 )
                 (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (div-down (mul-down (get balance-x pool) weight-y) (mul-down (get balance-y pool) weight-x)))
+                (ok (div-down (mul-down (get balance-x pool) weight-x) (mul-down (get balance-y pool) weight-y)))
             )
         )
     )
