@@ -43,8 +43,7 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 	const first = chain.mineBlock([		
 		Tx.contractCall("token-t-alex", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
 		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "lottery"))], deployer.address),
-		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(allocation.amount * apowerPerTicketInFixed / ONE_8), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
-		// ...ticketRecipients.map(allocation => Tx.contractCall("wrapped-stx", "wrap", [types.uint(wrappedStxTokensPerTicketRecipients || 10000000000)], (allocation.recipient as Account).address || allocation.recipient as string)),
+		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(allocation.amount), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
 		Tx.contractCall("lottery", "create-pool", [
 			types.principal(contractPrincipal(deployer, "token-t-alex")),
 			types.principal(contractPrincipal(deployer, "token-wstx")),
