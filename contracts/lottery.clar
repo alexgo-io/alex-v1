@@ -297,10 +297,14 @@
 )
 
 (define-public (refund-optimal (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ido-ft-trait>))
-	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
-		(asserts! (and
+	(let 
+		(
+			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
+		)
+		(asserts! 
+			(and
 				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
-				(>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
+				;; (>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
 			)
 			err-more-to-claim
 		)
@@ -335,16 +339,20 @@
 )
 
 (define-public (refund-fallback (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ft-trait>))
-	(let ((offering (unwrap! (map-get? offerings ido-id) err-unknown-ido)))
-		(asserts! (and
+	(let 
+		(
+			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
+		)
+		(asserts! 
+			(and
 				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
-				(>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
+				;; (>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
 			)
 			err-more-to-claim
 		)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
 		(asserts! (get s
-			(fold refund-optimal-iter input
+			(fold refund-fallback-iter input
 				{
 					i: ido-id,
 					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
