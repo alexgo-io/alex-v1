@@ -12,6 +12,7 @@ import {
 import type { Chain, Account, StandardTestParameters } from "./deps.ts";
 import {
   determineWinners,
+  determineLosers,
   IdoParameters,
   IdoParticipant,
 } from "../lib/launchpad.ts";
@@ -116,6 +117,7 @@ Clarinet.test({
           ...bounds[index],
         })
       );
+      // console.log(idoParticipants);
       const winners = determineWinners(idoParameters, idoParticipants);
       console.log(winners);
 
@@ -161,6 +163,49 @@ Clarinet.test({
         }
       }
       chain.mineEmptyBlockUntil(claimEndHeight);
+      
+      for(let index = 0; index < idoParticipants.length; index++){
+        let participant = idoParticipants[index]['participant'];
+        console.log(participant, "won:", winners.winners.lastIndexOf(participant) - winners.winners.indexOf(participant) + 1);
+      }
+
+      const losers = determineLosers(idoParameters, idoParticipants);
+      console.log(losers);      
+            
+
+      // for (
+      //   let index = 0;
+      //   index < losers.losers.length;
+      //   index += maxChunkSize
+      // ) {
+      //   let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
+      //   const claim = chain.mineBlock([
+      //     Tx.contractCall(
+      //       "lottery",
+      //       "refund-fallback",
+      //       [
+      //         types.uint(idoId),
+      //         types.list(losers_sliced.map(types.principal)),
+      //         types.principal(contractPrincipal(deployer, "token-wstx")),
+      //       ],
+      //       deployer.address
+      //     ),
+      //   ]);
+      //   console.log(t, claim.receipts[0].result.expectOk(), losers.losers.length);
+
+      //   let events = claim.receipts[0].events;
+      //   assertEquals(events.length, losers_sliced.length);
+        
+      //   for (let j = 0; j < events.length; j++) {
+      //     events.expectSTXTransferEvent(
+      //       ((parameters["pricePerTicketInFixed"] * losers_sliced.length) /
+      //       ONE_8) *
+      //       1e6,
+      //       deployer.address + ".lottery",
+      //       losers_sliced[j],
+      //     );
+        // }
+      // }      
     }
 
     console.log(
