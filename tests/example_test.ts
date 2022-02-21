@@ -117,8 +117,11 @@ Clarinet.test({
           ...bounds[index],
         })
       );
-      // console.log(idoParticipants);
-      const winners = determineWinners(idoParameters, idoParticipants);
+
+      console.log(idoParameters);
+      console.log(idoParticipants);
+      
+      const winners = determineWinners(idoParameters, idoParticipants);      
       console.log(winners);
 
       const maxChunkSize = 200;
