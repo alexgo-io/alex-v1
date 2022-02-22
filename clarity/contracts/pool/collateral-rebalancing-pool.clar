@@ -361,7 +361,7 @@
 ;; @post collateral; sender transfer exactly dx to alex-vault
 ;; @returns (response (tuple uint uint) uint)
 (define-public (add-to-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))    
-    (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait dx (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+    (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
 )    
 
 ;; @desc mint yield-token and key-token, with single-sided liquidity
@@ -372,7 +372,7 @@
 ;; @param dx; amount of collateral added
 ;; @post collateral; sender transfer exactly dx to alex-vault
 ;; @returns (response (tuple uint uint) uint)
-(define-private (add-to-position-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (spot uint))    
+(define-private (add-to-position-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (spot uint) (dx uint))    
     (let
         (   
             (token-x (contract-of collateral-trait))
@@ -414,10 +414,7 @@
                 (sender tx-sender)
             ) 
 
-            (if (is-eq token-x token-y)
-                u0
-                (unwrap! (contract-call? .fixed-weight-pool get-helper token-x token-y u50000000 u50000000 (+ dx balance-x (mul-down balance-y (try! (get-spot token-y token-x))))) ERR-POOL-AT-CAPACITY)
-            )
+            (unwrap! (contract-call? .fixed-weight-pool get-helper token-x token-y u50000000 u50000000 (+ dx balance-x (div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
 
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -502,7 +499,7 @@
             (and (> shares u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait shares sender))))
 
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (as-contract (try! (contract-call? yield-token-trait burn-fixed expiry shares sender)))
+            (and (> shares u0) (as-contract (try! (contract-call? yield-token-trait burn-fixed expiry shares sender))))
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
@@ -587,7 +584,7 @@
             (and (> bal-y-to-reduce u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait bal-y-to-reduce sender))))
         
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            (as-contract (try! (contract-call? key-token-trait burn-fixed expiry shares sender)))
+            (and (> shares u0) (as-contract (try! (contract-call? key-token-trait burn-fixed expiry shares sender))))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: bal-x-to-reduce, dy: bal-y-to-reduce})
         )        
@@ -1339,6 +1336,7 @@
  )
 )
 
+;; TODO this needs to be removed/re-written
 (define-public (get-swapped-token (token <ft-trait>) (amount uint) (memo-uint uint) )
     (let
         (   
@@ -1346,7 +1344,7 @@
             (ltv (try! (get-ltv-with-spot .token-usda .token-wstx memo-uint spot)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
             (gross-amount (mul-up amount (div-down price ltv)))
-            (minted-yield-token (get yield-token (try! (add-to-position-with-spot .token-usda .token-wstx memo-uint .yield-usda .key-usda-wstx gross-amount spot))))
+            (minted-yield-token (get yield-token (try! (add-to-position-with-spot .token-usda .token-wstx memo-uint .yield-usda .key-usda-wstx spot gross-amount))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
         )
         (ok {token: swapped-token, amount: gross-amount})
