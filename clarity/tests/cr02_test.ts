@@ -187,21 +187,21 @@ import {
       // call.result.expectOk();
   
       call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-      call.result.expectOk().expectUint(99651765);
+      call.result.expectOk().expectUint(99883792);
         
       call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
-      call.result.expectOk().expectUint(78320290);
+      call.result.expectOk().expectUint(78138355);
   
       // Check pool details and print
       call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
       position = call.result.expectOk().expectTuple();
       position["yield-supply"].expectUint(78047552);
       position["key-supply"].expectUint(78047552);
-      position["weight-x"].expectUint(66532890);
-      position["weight-y"].expectUint(ONE_8 - 66532890);
-      position["balance-x"].expectUint(3326644500000);
-      position["balance-y"].expectUint(33188320);
-      position["strike"].expectUint(50000 * ONE_8);
+      position["weight-x"].expectUint(89933406);
+      position["weight-y"].expectUint(ONE_8 - 89933406);
+      position["balance-x"].expectUint(4496670300000);
+      position["balance-y"].expectUint(10040320);
+      position["strike"].expectUint(ltv_0 * ONE_8 / wbtcPrice);
       position["ltv-0"].expectUint(ltv_0);
       position["bs-vol"].expectUint(bs_vol);
       position["conversion-ltv"].expectUint(conversion_ltv);
@@ -216,7 +216,7 @@ import {
       chain.mineEmptyBlockUntil((expiry / ONE_8) + 1);
   
       call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-      call.result.expectOk().expectUint(99651765);
+      call.result.expectOk().expectUint(99883792);
   
       call = chain.callReadOnlyFn(wbtcAddress, "get-balance", [
         types.principal(deployer.address),
@@ -243,15 +243,15 @@ import {
   
       // Pool has value left for key-token only
       call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-      call.result.expectOk().expectUint(19511172);
+      call.result.expectOk().expectUint(20300584);
   
       // key-token remains, with some balances
       call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
       position = call.result.expectOk().expectTuple();
       position["yield-supply"].expectUint(0);
       position["key-supply"].expectUint(78047552);
-      position["balance-x"].expectUint(0);
-      position["balance-y"].expectUint(19511172);  
+      position["balance-x"].expectUint(984616551528);
+      position["balance-y"].expectUint(677177);  
   
       // remove all key tokens for nothing
       result = CRPTest.reducePositionKey(
@@ -263,8 +263,8 @@ import {
         ONE_8,
       );
       position = result.expectOk().expectTuple();
-      position["dx"].expectUint(0);
-      position["dy"].expectUint(19511172);
+      position["dx"].expectUint(984616551528);
+      position["dy"].expectUint(677177);
   
       call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
       position = call.result.expectOk().expectTuple();
@@ -276,11 +276,11 @@ import {
       call = chain.callReadOnlyFn(wbtcAddress, "get-balance", [
         types.principal(deployer.address),
       ], deployer.address);
-      call.result.expectOk().expectUint(9991097558724);
+      call.result.expectOk().expectUint(9991078724729);
   
       call = chain.callReadOnlyFn(usdaAddress, "get-balance", [
         types.principal(deployer.address),
       ], deployer.address);
-      call.result.expectOk().expectUint(9595000000000000);
+      call.result.expectOk().expectUint(9595984616551528);
     },
   });

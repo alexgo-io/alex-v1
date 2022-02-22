@@ -27,8 +27,8 @@ const multisigncrpwbtcwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.m
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda"
 // conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
 const ONE_8 = 100000000
-const expiry = 59760 * ONE_8
-const expiry79760 = 79760 * ONE_8
+const expiry = 59760
+const expiry79760 = 79760
 const ltv_0 = 0.5 * ONE_8
 const conversion_ltv = 0.95 * ONE_8
 const bs_vol = 0.8 * ONE_8
@@ -148,7 +148,7 @@ Clarinet.test({
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 5000 * ONE_8);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(4858099);
-        position['dx'].expectUint(4857998);
+        position['dx'].expectUint(4857837);
 
         // supply increased
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
@@ -170,14 +170,14 @@ Clarinet.test({
         call.result.expectOk().expectUint(95000000);                     
         
         // simulate to expiry
-        chain.mineEmptyBlockUntil((expiry / ONE_8)) 
+        chain.mineEmptyBlockUntil(expiry) 
 
         // but lender cannot yet redeem
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0.5 * ONE_8);
         result.expectErr().expectUint(2017);        
 
         // simulate to expiry + 1
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)  
+        chain.mineEmptyBlockUntil(expiry + 1)  
         
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
         call.result.expectOk().expectUint(109833588)
@@ -277,7 +277,7 @@ Clarinet.test({
         result.expectErr().expectUint(2026);        
 
         // simulate to expiry + 1
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)
+        chain.mineEmptyBlockUntil(expiry + 1)
 
         // supplying a wrong pool-token throws an error
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, wrongPooltokenAddress, ONE_8);        
@@ -341,7 +341,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // simulate to half way to expiry
-        chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)
+        chain.mineEmptyBlockUntil(expiry / 2)
 
         result = YTPTest.createPool(deployer, expiry79760, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
@@ -532,7 +532,7 @@ Clarinet.test({
         result.expectErr().expectUint(4001) 
 
         // simulate to expiry + 1
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)    
+        chain.mineEmptyBlockUntil(expiry + 1)    
         
         // arbtrageur attepmts to retreive back with zero value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0);        

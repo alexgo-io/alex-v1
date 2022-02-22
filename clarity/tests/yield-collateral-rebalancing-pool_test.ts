@@ -896,28 +896,6 @@ Clarinet.test({
 
         result = YCRPTest.setFeeRebate(contractOwner, wbtcAddress, yieldusdaAddress, expiry, feeRebate)
         result.expectOk().expectBool(true) // Success      
-    
-        // Swap
-        result = YCRPTest.swapXForY(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, 100 * ONE_8, 0);
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(100 * ONE_8);  // 10% of fee charged
-        position['dy'].expectUint(197488);         
 
-        // fee : 10 * ONE_8 
-        // fee-rebate : 0.5 * ONE_8
-        let call = await YCRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(3336611950000);
-        position['balance-y'].expectUint(32998912); 
-
-        result = YCRPTest.swapYForX(deployer, wbtcAddress, yieldusdaAddress, usdaAddress, expiry, 0.001 * ONE_8, 0);
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(11314918248);
-        position['dy'].expectUint(0.001 * ONE_8);    
-
-        call = await YCRPTest.getPoolDetails(wbtcAddress, yieldusdaAddress, expiry);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(3336611950000 - 11314918248);  
-        position['balance-y'].expectUint(32998912 + 0.001 * ONE_8); 
     }
 })
