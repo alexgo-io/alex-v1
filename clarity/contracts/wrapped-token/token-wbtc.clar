@@ -144,7 +144,8 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
+  ;; least authority Issue D
+  ERR-NOT-SUPPORTED
 )
 
 ;; @desc get-balance-fixed
