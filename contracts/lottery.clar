@@ -303,7 +303,7 @@
 (define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint))
 	(if (is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
 		(* total-tickets walk-resolution)
-		(unwrap-panic (map-get? claim-walk-positions ido-id))
+		(default-to u0 (map-get? claim-walk-positions ido-id))
 	)
 )
 
