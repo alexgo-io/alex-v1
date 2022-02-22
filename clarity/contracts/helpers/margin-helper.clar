@@ -21,7 +21,7 @@
             (token-to-collateral 
                                 (if (is-eq token-amount u0) 
                                     u0 
-                                    (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper token collateral u50000000 u50000000 token-amount none)) 
+                                    (try! (contract-call? .fixed-weight-pool swap-helper token collateral u50000000 u50000000 token-amount none)) 
                                 )
             )
             (expiry-to-roll-buff (uint-to-buff expiry-to-roll))
