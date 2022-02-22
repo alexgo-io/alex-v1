@@ -159,7 +159,6 @@
 (define-public (claim-and-stake (reward-cycle uint))
   (let 
     (
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (sender tx-sender)
       ;; claim all that's available to claim for the reward-cycle
       (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
@@ -171,7 +170,7 @@
         )
       )
     )
-    (asserts! (> current-cycle reward-cycle) ERR-STAKING-IN-PROGRESS)
+    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
     (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
     (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     (ok true)
