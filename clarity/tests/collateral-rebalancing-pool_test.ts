@@ -186,28 +186,28 @@ Clarinet.test({
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(78047552);
+        position['dy'].expectUint(48779720);
 
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(28777049);
-        position['yield-supply'].expectUint(7701262);
-        position['key-supply'].expectUint(85748814);
+        position['balance-x'].expectUint(2756906689600);
+        position['balance-y'].expectUint(5336456);
+        position['yield-supply'].expectUint(4858099);
+        position['key-supply'].expectUint(53637819);
     
         // also remove all key tokens
         result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, expiry, keywbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(21075787)
+        position['dx'].expectUint(2756906689600);
+        position['dy'].expectUint(478357)
         
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(7701262);
+        position['yield-supply'].expectUint(4858099);
         position['key-supply'].expectUint(0);        
         position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(28777049 - 21075787);                
+        position['balance-y'].expectUint(4858099);                
     },    
 });
 

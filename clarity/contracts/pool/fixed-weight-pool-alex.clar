@@ -295,6 +295,7 @@
 )
 
 ;; @desc get-oracle-instant
+;; price of token-x in terms of token-y
 ;; @desc price-oracle that is more up to date but less resilient to manipulation
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal

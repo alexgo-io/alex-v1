@@ -295,7 +295,34 @@ import {
         ], user.address),
       ]);
       return block.receipts[0].result;
-    }            
+    }   
+
+    setStartBlock(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, start_block: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "set-start-block", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),          
+          types.uint(start_block)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+
+    setEndBlock(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, end_block: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("fixed-weight-pool", "set-end-block", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),          
+          types.uint(end_block)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }     
+    
   
   }
 
@@ -590,18 +617,26 @@ import {
       return block.receipts[0].result;
     }    
     
-    setStartBlock(user: Account, start_block: number) {
+    setStartBlock(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, start_block: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("fixed-weight-pool-alex", "set-start-block", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),          
           types.uint(start_block)
         ], user.address),
       ]);
       return block.receipts[0].result;
     }        
 
-    setEndBlock(user: Account, end_block: number) {
+    setEndBlock(user: Account, tokenX: string, tokenY: string, weightX: number, weightY: number, end_block: number) {
       let block = this.chain.mineBlock([
         Tx.contractCall("fixed-weight-pool-alex", "set-end-block", [
+          types.principal(tokenX),
+          types.principal(tokenY),
+          types.uint(weightX),
+          types.uint(weightY),          
           types.uint(end_block)
         ], user.address),
       ]);

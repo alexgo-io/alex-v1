@@ -683,9 +683,9 @@ Clarinet.test({
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
         result.expectOk().expectBool(true);
 
-        result = FWPTest.setStartBlock(wallet_1, 100);
+        result = FWPTest.setStartBlock(wallet_1, alexAddress, usdaAddress, weightX, weightY, 100);
         result.expectErr().expectUint(1000);        
-        result = FWPTest.setStartBlock(deployer, 100);
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 100);
         result.expectOk().expectBool(true);
         
         result = FWPTest.swapYForX(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
@@ -700,9 +700,9 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, weightX, weightY, ONE_8, 0);
         result.expectOk().expectTuple();        
 
-        result = FWPTest.setEndBlock(wallet_1, 200);
+        result = FWPTest.setEndBlock(wallet_1, alexAddress, usdaAddress, weightX, weightY, 200);
         result.expectErr().expectUint(1000);        
-        result = FWPTest.setEndBlock(deployer, 200);
+        result = FWPTest.setEndBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 200);
         result.expectOk().expectBool(true);
 
         chain.mineEmptyBlockUntil(201);

@@ -47,6 +47,19 @@
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
+(define-data-var shortfall-coverage uint u101000000) ;; 1.01x
+
+(define-read-only (get-shortfall-coverage)
+  (ok (var-get shortfall-coverage))
+)
+
+(define-public (set-shortfall-coverage (new-shortfall-coverage uint))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set shortfall-coverage new-shortfall-coverage))
+  )
+)
+
 ;; data maps and vars
 ;;
 (define-map pools-data-map
@@ -348,12 +361,23 @@
 ;; @post collateral; sender transfer exactly dx to alex-vault
 ;; @returns (response (tuple uint uint) uint)
 (define-public (add-to-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))    
+    (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait dx (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+)    
+
+;; @desc mint yield-token and key-token, with single-sided liquidity
+;; @param token; borrow token
+;; @param collateral; collateral token
+;; @param yield-token-trait; yield-token to be minted
+;; @param key-token-trait; key-token to be minted
+;; @param dx; amount of collateral added
+;; @post collateral; sender transfer exactly dx to alex-vault
+;; @returns (response (tuple uint uint) uint)
+(define-private (add-to-position-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (spot uint))    
     (let
         (   
             (token-x (contract-of collateral-trait))
             (token-y (contract-of token-trait))
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
-            (spot (try! (get-spot token-y token-x)))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         ;; mint is possible only if ltv < conversion-ltv
@@ -434,14 +458,25 @@
                 (sender tx-sender)
 
                 ;; if balance-y does not cover yield-supply, swap some balance-x to meet the requirement.
-                ;; TODO: need to adjust bal-y-short by fee amount
-                (bal-y-short (if (<= yield-supply balance-y) u0 (- yield-supply balance-y)))
+                (bal-y-short (if (<= yield-supply balance-y) u0 (mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
                 (bal-x-to-sell 
-                    (if (<= yield-supply balance-y)
+                    (if (is-eq bal-y-short u0)
                         u0
                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token-x token-y u50000000 u50000000))
                             (try! (contract-call? .fixed-weight-pool get-x-in-given-y-out token-x token-y u50000000 u50000000 bal-y-short))
                             (try! (contract-call? .fixed-weight-pool get-y-in-given-x-out token-y token-x u50000000 u50000000 bal-y-short))
+                        )
+                    )
+                )
+                (bal-y-short-act 
+                    (if (is-eq bal-x-to-sell u0)
+                        u0
+                        (begin
+                            (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token-x token-y u50000000 u50000000))
+                                (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 bal-x-to-sell none))))
+                                (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 bal-x-to-sell none))))
+                            )      
                         )
                     )
                 )                
@@ -450,24 +485,14 @@
                 (pool-updated (merge pool {
                     yield-supply: (if (<= yield-supply shares) u0 (- yield-supply shares)),
                     balance-x: (- (+ balance-x bal-x-short) bal-x-to-sell),
-                    balance-y: (if (<= (+ balance-y bal-y-short) shares) u0 (- (+ balance-y bal-y-short) shares))
+                    balance-y: (if (<= (+ balance-y bal-y-short-act) shares) u0 (- (+ balance-y bal-y-short-act) shares))
                     })
                 )
             )
-
             (asserts! (is-eq (get yield-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
 
-            (and 
-                (> bal-x-to-sell u0)
-                (is-ok (as-contract (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token-x token-y u50000000 u50000000))
-                    (is-ok (as-contract (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 bal-x-to-sell none)))
-                    (is-ok (as-contract (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 bal-x-to-sell none)))
-                )
-            )
-
             ;; if any conversion happened at contract level, transfer back to vault
-            (and (> bal-y-short u0) (as-contract (try! (contract-call? token-trait transfer-fixed bal-y-short tx-sender .alex-vault none))))
+            (and (> bal-y-short-act u0) (as-contract (try! (contract-call? token-trait transfer-fixed bal-y-short-act tx-sender .alex-vault none))))
             
             ;; if bal-x-short > 0, then transfer the shortfall from reserve (accounting only).
             ;; TODO: what if token is exhausted but reserve have others?
@@ -512,20 +537,31 @@
                 (sender tx-sender)
 
                 ;; if balance-y does not cover yield-supply, swap some balance-x to meet the requirement.
-                ;; TODO: need to adjust bal-y-short by fee amount
-                (bal-y-short (if (<= yield-supply balance-y) u0 (- yield-supply balance-y)))
+                (bal-y-short (if (<= yield-supply balance-y) u0 (mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
                 (bal-x-to-sell 
-                    (if (<= yield-supply balance-y)
+                    (if (is-eq bal-y-short u0)
                         u0
                         (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token-x token-y u50000000 u50000000))
                             (try! (contract-call? .fixed-weight-pool get-x-in-given-y-out token-x token-y u50000000 u50000000 bal-y-short))
                             (try! (contract-call? .fixed-weight-pool get-y-in-given-x-out token-y token-x u50000000 u50000000 bal-y-short))
                         )
                     )
-                )                
+                )
+                (bal-y-short-act 
+                    (if (is-eq bal-x-to-sell u0)
+                        u0
+                        (begin
+                            (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
+                            (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token-x token-y u50000000 u50000000))
+                                (get dy (as-contract (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 bal-x-to-sell none))))
+                                (get dx (as-contract (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 bal-x-to-sell none))))
+                            )      
+                        )
+                    )
+                )                                 
                 (bal-x-short (if (<= bal-x-to-sell balance-x) u0 (- bal-x-to-sell balance-x)))
                 
-                (bal-y-key (if (<= (+ balance-y bal-y-short) yield-supply) u0 (- (+ balance-y bal-y-short) yield-supply)))
+                (bal-y-key (if (<= (+ balance-y bal-y-short-act) yield-supply) u0 (- (+ balance-y bal-y-short-act) yield-supply)))
                 (shares-to-key (div-down shares key-supply))
                 (bal-y-to-reduce (mul-down bal-y-key shares-to-key))
                 (bal-x-to-reduce (mul-down (- (+ balance-x bal-x-short) bal-x-to-sell) shares-to-key))
@@ -533,24 +569,15 @@
                 (pool-updated (merge pool {
                     key-supply: (if (<= key-supply shares) u0 (- key-supply shares)),
                     balance-x: (- (- (+ balance-x bal-x-short) bal-x-to-sell) bal-x-to-reduce),
-                    balance-y: (- (+ balance-y bal-y-short) bal-y-to-reduce)
+                    balance-y: (- (+ balance-y bal-y-short-act) bal-y-to-reduce)
                     })
                 )            
             )
 
             (asserts! (is-eq (get key-token pool) (contract-of key-token-trait)) ERR-INVALID-TOKEN)
 
-            (and 
-                (> bal-x-to-sell u0)
-                (is-ok (as-contract (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists token-x token-y u50000000 u50000000))
-                    (is-ok (as-contract (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 bal-x-to-sell none)))
-                    (is-ok (as-contract (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 bal-x-to-sell none)))
-                )
-            )
-
             ;; if any conversion happened at contract level, transfer back to vault
-            (and (> bal-y-short u0) (as-contract (try! (contract-call? token-trait transfer-fixed bal-y-short tx-sender .alex-vault none))))
+            (and (> bal-y-short-act u0) (as-contract (try! (contract-call? token-trait transfer-fixed bal-y-short-act tx-sender .alex-vault none))))
             
             ;; if bal-x-short > 0, then transfer the shortfall from reserve (accounting only).
             ;; TODO: what if token is exhausted but reserve have others?
@@ -1310,86 +1337,6 @@
       (ln-priv a)
    )
  )
-)
-
-;; @desc mint yield-token and key-token, with single-sided liquidity
-;; @param token; borrow token
-;; @param collateral; collateral token
-;; @param yield-token-trait; yield-token to be minted
-;; @param key-token-trait; key-token to be minted
-;; @param dx; amount of collateral added
-;; @param spot
-;; @post collateral; sender transfer exactly dx to alex-vault
-;; @returns (response (tuple uint uint) uint)
-(define-public (add-to-position-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (spot uint))    
-    (let
-        (   
-            (token-x (contract-of collateral-trait))
-            (token-y (contract-of token-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
-        )
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (is-eq (get yield-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
-        (asserts! (is-eq (get key-token pool) (contract-of key-token-trait)) ERR-INVALID-TOKEN)
-        ;; mint is possible only if ltv < 1
-        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))) ERR-LTV-GREATER-THAN-ONE)
-        (asserts! (and (is-eq (get yield-token pool) (contract-of yield-token-trait)) (is-eq (get key-token pool) (contract-of key-token-trait))) ERR-INVALID-TOKEN)
-        (let
-            (
-                (balance-x (get balance-x pool))
-                (balance-y (get balance-y pool))
-                (yield-supply (get yield-supply pool))   
-                (key-supply (get key-supply pool))
-                (weight-x (get weight-x pool))
-
-                (new-supply (try! (get-token-given-position-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot dx)))
-                (yield-new-supply (get yield-token new-supply))
-                (key-new-supply (get key-token new-supply))
-
-                (dx-weighted (mul-down weight-x dx))
-                (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
-
-                (dy-weighted 
-                    (if (is-eq token-x token-y)
-                        dx-to-dy
-                        (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-trait u50000000 dx-to-dy none)))
-                            (if (is-eq token-y .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx collateral-trait u50000000 dx-to-dy none)))
-                                (if (is-some (contract-call? .fixed-weight-pool get-pool-exists (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000))
-                                    (get dy (try! (contract-call? .fixed-weight-pool swap-x-for-y collateral-trait token-trait u50000000 u50000000 dx-to-dy none)))
-                                    (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-x token-trait collateral-trait u50000000 u50000000 dx-to-dy none)))
-                                )
-                            )
-                        )
-                    )
-                )
-
-                (pool-updated (merge pool {
-                    yield-supply: (+ yield-new-supply yield-supply),                    
-                    key-supply: (+ key-new-supply key-supply),
-                    balance-x: (+ balance-x dx-weighted),
-                    balance-y: (+ balance-y dy-weighted)
-                }))
-                (sender tx-sender)
-            ) 
-
-            (if (is-eq token-x token-y)
-                u0
-                (unwrap! (contract-call? .fixed-weight-pool get-helper (contract-of collateral-trait) (contract-of token-trait) u50000000 u50000000 (+ dx balance-x (mul-down balance-y spot))) ERR-POOL-AT-CAPACITY)
-            )
-
-            (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
-
-            (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
-            ;; mint pool token and send to tx-sender
-            (as-contract (try! (contract-call? yield-token-trait mint-fixed expiry yield-new-supply sender)))
-            (as-contract (try! (contract-call? key-token-trait mint-fixed expiry key-new-supply sender)))
-            (print { object: "pool", action: "liquidity-added", data: pool-updated })
-            (ok {yield-token: yield-new-supply, key-token: key-new-supply})
-        )
-    )
 )
 
 (define-public (get-swapped-token (token <ft-trait>) (amount uint) (memo-uint uint) )

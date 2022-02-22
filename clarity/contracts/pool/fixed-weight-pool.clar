@@ -66,7 +66,9 @@
     fee-rebate: uint,
     oracle-enabled: bool,
     oracle-average: uint,
-    oracle-resilient: uint
+    oracle-resilient: uint,
+    start-block: uint,
+    end-block: uint    
   }
 )
 
@@ -132,6 +134,54 @@
   )
 )
 
+(define-read-only (get-start-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (ok (get start-block (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-start-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (new-start-block uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL))
+        )
+        (try! (check-is-owner))
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
+                (merge pool {start-block: new-start-block})
+            )
+        )    
+    )
+)
+
+(define-read-only (get-end-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (ok (get end-block (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-end-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (new-end-block uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL))
+        )
+        (try! (check-is-owner))
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
+                (merge pool {end-block: new-end-block})
+            )
+        )    
+    )
+)
+
+(define-private (check-pool-status (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL))
+        )
+        (ok (asserts! (and (>= block-height (get start-block pool)) (<= block-height (get end-block pool))) ERR-NOT-AUTHORIZED))
+    )
+)
 ;; @desc get-oracle-enabled
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
@@ -243,6 +293,7 @@
 )
 
 ;; @desc get-oracle-instant
+;; price of token-x in terms of token-y
 ;; @desc price-oracle that is more up to date but less resilient to manipulation
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
@@ -313,7 +364,9 @@
                 fee-rebate: u0,
                 oracle-enabled: false,
                 oracle-average: u0,
-                oracle-resilient: u0
+                oracle-resilient: u0,
+                start-block: u0,
+                end-block: u340282366920938463463374607431768211455                
             })
         )
 
@@ -447,6 +500,7 @@
 ;; @returns (ok (tuple))
 (define-public (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
+        (try! (check-pool-status .token-wstx (contract-of token-y-trait) (- ONE_8 weight-y) weight-y))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
@@ -500,6 +554,7 @@
 ;; @returns (response tuple)
 (define-public (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
+        (try! (check-pool-status .token-wstx (contract-of token-y-trait) (- ONE_8 weight-y) weight-y))    
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
             (
