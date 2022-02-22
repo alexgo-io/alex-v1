@@ -261,15 +261,14 @@
             (moving-average (get moving-average pool))
             (strike (get strike pool))
             (bs-vol (get bs-vol pool))
-            (now (* block-height ONE_8))
         )
-        (if (or (> (try! (get-ltv-with-spot token collateral collateral-token expiry spot)) (get conversion-ltv pool)) (>= now expiry))
+        (if (or (> (try! (get-ltv-with-spot token collateral collateral-token expiry spot)) (get conversion-ltv pool)) (>= block-height expiry))
             (ok u99900000)   
             (let 
                 (
                     ;; assume 15secs per block 
-                    (t (div-down (- expiry now) (* u2102400 ONE_8)))
-                    (t-2 (div-down (- expiry now) (get token-to-maturity pool)))
+                    (t (div-down (* ONE_8 (- expiry block-height)) (* u2102400 ONE_8)))
+                    (t-2 (div-down (* ONE_8 (- expiry block-height)) (get token-to-maturity pool)))
 
                     ;; we calculate d1 first
                     (spot-term (div-up spot strike))
@@ -327,9 +326,8 @@
                 (token-x (contract-of collateral-trait))
                 (token-y (contract-of token-trait))
                 
-                (now (* block-height ONE_8))
                 ;; assume 10mins per block
-                (t (div-down (- expiry now) (* u52560 ONE_8)))
+                (t (div-down (* (- expiry block-height)) (* u52560 ONE_8)))
                
                 ;; we calculate d1 first
                 ;; because we support 'at-the-money' only, we can simplify formula
@@ -494,7 +492,7 @@
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         ;; burn supported only at maturity
-        (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)        
+        (asserts! (> block-height expiry) ERR-EXPIRY)        
         (let
             (
                 (token-x (contract-of collateral-trait))
@@ -580,7 +578,7 @@
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         ;; burn supported only at maturity
-        (asserts! (> (* block-height ONE_8) expiry) ERR-EXPIRY)        
+        (asserts! (> block-height expiry) ERR-EXPIRY)        
         (let
             (
                 (token-x (contract-of collateral-trait))
@@ -963,7 +961,7 @@
 ;; @returns (response (tuple uint uint) uint)
 (define-private (get-token-given-position-with-spot (token principal) (collateral principal) (collateral-token principal) (expiry uint) (spot uint) (dx uint))
     (begin
-        (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY)
+        (asserts! (< block-height expiry) ERR-EXPIRY)
         (let 
             (
                 (ltv (try! (get-ltv-with-spot token collateral collateral-token expiry spot)))
@@ -1010,7 +1008,7 @@
 ;; @returns (response (tuple uint uint uint) uint)
 (define-private (get-position-given-mint-with-spot (token principal) (collateral principal) (collateral-token principal) (expiry uint) (spot uint) (shares uint))
     (begin
-        (asserts! (< (* block-height ONE_8) expiry) ERR-EXPIRY) ;; mint supported until, but excl., expiry
+        (asserts! (< block-height expiry) ERR-EXPIRY) ;; mint supported until, but excl., expiry
         (let 
             (
                 (token-x collateral)
