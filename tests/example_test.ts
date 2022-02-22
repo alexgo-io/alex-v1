@@ -28,7 +28,7 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 4000; ) {
+    for (let t = 0; t < 1; ) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
       const claimEndHeight = registrationEndHeight + 10;
@@ -201,6 +201,7 @@ Clarinet.test({
         ]);
 
         let events = claim.receipts[0].events;
+        console.log(events);
         assertEquals(events.length, losers_sliced.length);
         
         for (let j = 0; j < events.length; j++) {
