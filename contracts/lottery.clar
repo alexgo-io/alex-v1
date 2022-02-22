@@ -266,6 +266,7 @@
 )
 
 (define-data-var tm-amount uint u0)
+
 (define-private (transfer-many-iter (recipient principal) (ido-token <ft-trait>))
 	(begin
 		(unwrap-panic (as-contract (contract-call? ido-token transfer-fixed (var-get tm-amount) tx-sender recipient none)))
