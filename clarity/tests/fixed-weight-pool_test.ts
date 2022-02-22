@@ -15,11 +15,11 @@ import {
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
-const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50-v1-01"
-const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50-v1-01"
-const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-50-50-v1-01"
-const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50-v1-01"
-const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-v1-01"
+const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
+const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50"
+const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-50-50"
+const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50"
+const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
@@ -490,4 +490,55 @@ Clarinet.test({
     },
 });          
         
+
+Clarinet.test({
+    name: "FWP : check start-block and end-block",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let FWPTest = new FWPTestAgent1(chain, deployer);     
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+
+        // Deployer minting initial tokens        
+        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        result.expectOk();
+        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
+        result.expectOk();               
+
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
+        result.expectOk().expectBool(true);
+
+        result = FWPTest.setStartBlock(wallet_1, wstxAddress, usdaAddress, weightX, weightY, 100);
+        result.expectErr().expectUint(1000);        
+        result = FWPTest.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 100);
+        result.expectOk().expectBool(true);
         
+        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);
+        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);        
+
+        chain.mineEmptyBlockUntil(100);
+
+        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectOk().expectTuple();
+        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectOk().expectTuple();        
+
+        result = FWPTest.setEndBlock(wallet_1, wstxAddress, usdaAddress, weightX, weightY, 200);
+        result.expectErr().expectUint(1000);        
+        result = FWPTest.setEndBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 200);
+        result.expectOk().expectBool(true);
+
+        chain.mineEmptyBlockUntil(201);
+
+        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);
+        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0);
+        result.expectErr().expectUint(1000);        
+        
+        
+    },       
+});       
