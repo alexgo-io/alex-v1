@@ -106,20 +106,20 @@
 )
 
 ;; @desc get-spot
-;; @desc units of token per unit of collateral
+;; @desc price of collateral in token
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
 (define-read-only (get-spot (token principal) (collateral principal))
     (if (is-eq token .token-wstx)
-        (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000)
+        (contract-call? .fixed-weight-pool get-oracle-resilient collateral .token-wstx u50000000 u50000000)
         (if (is-eq collateral .token-wstx)
-            (ok (div-down ONE_8 (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))))
+            (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000)
             (ok
-                (div-down 
-                    (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
+                (div-down                
                     (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx token u50000000 u50000000))
+                    (try! (contract-call? .fixed-weight-pool get-oracle-resilient .token-wstx collateral u50000000 u50000000))
                 )   
             )
         )
@@ -141,7 +141,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))            
         )
-        (ok (+ (div-down (get balance-x pool) spot) (get balance-y pool)))
+        (ok (+ (mul-down (get balance-x pool) spot) (get balance-y pool)))
     )
 )
 
@@ -160,7 +160,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))   
         )
-        (ok (+ (mul-down (get balance-y pool) spot) (get balance-x pool)))
+        (ok (+ (div-down (get balance-y pool) spot) (get balance-x pool)))
     )
 )
 
@@ -182,31 +182,32 @@
         ;; if no liquidity in the pool, return ltv-0
         (if (is-eq (get yield-supply pool) u0)
             (ok (get ltv-0 pool))
-            (ok (div-down (get yield-supply pool) (+ (div-down (get balance-x pool) spot) (get balance-y pool))))
+            (ok (div-down (get yield-supply pool) (+ (mul-down (get balance-x pool) spot) (get balance-y pool))))
         )
     )
 )
 
-(define-read-only (get-weight-y (token principal) (collateral principal) (expiry uint))
-    (get-weight-y-with-spot token collateral expiry (try! (get-spot token collateral)))
+(define-read-only (get-weight-x (token principal) (collateral principal) (expiry uint))
+    (get-weight-x-with-spot token collateral expiry (try! (get-spot token collateral)))
 )
 
-;; @desc get-weight-y-with-spot
-;; @desc delta of borrow token (risky asset) based on reference black-scholes option with expiry/strike/bs-vol
+;; @desc get-weight-x-with-spot
+;; @desc call delta of collateral token (risky asset) based on reference black-scholes option with expiry/strike/bs-vol
 ;; @param token; borrow token
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @param strike; reference strike price
 ;; @param bs-vol; reference black-scholes vol
 ;; @returns (response uint uint)
-(define-private (get-weight-y-with-spot (token principal) (collateral principal) (expiry uint) (spot uint))
+(define-private (get-weight-x-with-spot (token principal) (collateral principal) (expiry uint) (spot uint))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
             (bs-vol (get bs-vol pool))
+            (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
         )
-        (if (> (try! (get-ltv-with-spot token collateral expiry spot)) (get conversion-ltv pool))
-            (ok u99900000)   
+        (if (>= ltv (get conversion-ltv pool))
+            (ok u100000) ;; move everything to risk-free asset
             (let 
                 (
                     ;; TODO: assume 15secs per block 
@@ -214,30 +215,30 @@
                     (t-2 (div-down (- expiry (* block-height ONE_8)) (get token-to-maturity pool)))
 
                     ;; we calculate d1 first
-                    (spot-term (div-up spot (get strike pool)))
+                    (spot-term (div-down spot (get strike pool)))
                     (d1 
-                        (div-up 
+                        (div-down 
                             (+ 
-                                (mul-up t (div-up (mul-down bs-vol bs-vol) u200000000)) 
-                                (- (if (> spot-term ONE_8) spot-term ONE_8) (if (> spot-term ONE_8) ONE_8 spot-term))
+                                (mul-down t (div-down (mul-down bs-vol bs-vol) u200000000)) 
+                                (if (> spot-term ONE_8) (- spot-term ONE_8) (- ONE_8 spot-term))
                             )
                             (mul-down bs-vol (pow-down t u50000000))
                         )
                     )
-                    (erf-term (erf (div-up d1 (pow-down u200000000 u50000000))))
-                    (weight-t (div-up (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u200000000))
+                    (erf-term (erf (div-down d1 (pow-down u200000000 u50000000))))
+                    (weight-t (div-down (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u200000000))
                     (weighted 
                         (+ 
                             (mul-down (get moving-average pool) (get weight-y pool)) 
                             (mul-down 
                                 (- ONE_8 (get moving-average pool)) 
-                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) (div-down (get strike pool) spot))))
+                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) (- ONE_8 ltv))))
                             )
                         )
                     )                    
                 )
-                ;; make sure weight-x > 0 so it works with weighted-equation
-                (ok (if (> weighted u100000) weighted u100000))
+                ;; make sure weight-x <= 0.9 so it works with weighted-equation
+                (ok (if (< weighted u95000000) weighted u95000000))
             )    
         )
     )
@@ -276,16 +277,16 @@
         (let
             (
                 (token-x (contract-of collateral-trait))
-                (token-y (contract-of token-trait))              
-
-                ;; TODO assume 10mins per block
-                (t (div-down (- expiry (* block-height ONE_8)) (* u52560 ONE_8)))
-                ;; we calculate d1 (of put on token at strike) first
-                (d1 (div-up (+ (mul-up t (div-up (mul-down bs-vol bs-vol) u200000000)) (- (mul-down ONE_8 ltv-8) ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
-                (erf-term (erf (div-up d1 (pow-down u200000000 u50000000))))
-                (weighted (div-up (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term)) u200000000))                
-                (weight-y (if (> weighted u100000) weighted u100000))
-                (weight-x (- ONE_8 weight-y))     
+                (token-y (contract-of token-trait))
+                    
+                ;; TODO: assume 15secs per block 
+                (t (div-down (- expiry (* block-height ONE_8)) (* u2102400 ONE_8)))                
+                ;; we calculate d1 first (of call on collateral at strike) first                
+                (d1 (div-down (+ (mul-down t (div-down (mul-down bs-vol bs-vol) u200000000)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
+                (erf-term (erf (div-down d1 (pow-down u200000000 u50000000))))
+                (weighted (div-down (+ ONE_8 erf-term) u200000000))
+                (weight-x (if (< weighted u95000000) weighted u95000000))
+                (weight-y (- ONE_8 weight-x))
 
                 (pool-data {
                     yield-supply: u0,
@@ -577,8 +578,6 @@
 (define-public (swap-x-for-y (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token-trait collateral-trait)) ERR-INVALID-POOL)
         ;; CR-03
         (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)            
         (let
@@ -590,8 +589,8 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y-with-spot token-y token-x expiry (try! (get-spot token-y token-x))) ERR-GET-WEIGHT-FAIL))
-                (weight-x (- ONE_8 weight-y))            
+                (weight-x (unwrap! (get-weight-x-with-spot token-y token-x expiry (try! (get-spot token-y token-x))) ERR-GET-WEIGHT-FAIL))
+                (weight-y (- ONE_8 weight-x))            
             
                 ;; fee = dx * fee-rate-x
                 (fee (mul-up dx (get fee-rate-x pool)))
@@ -637,8 +636,6 @@
 (define-public (swap-y-for-x (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
-        ;; swap is supported only if token /= collateral
-        (asserts! (not (is-eq token-trait collateral-trait)) ERR-INVALID-POOL)   
         ;; CR-03
         (asserts! (<= (* block-height ONE_8) expiry) ERR-EXPIRY)              
         (let
@@ -650,8 +647,8 @@
                 (balance-y (get balance-y pool))
 
                 ;; every swap call updates the weights
-                (weight-y (unwrap! (get-weight-y-with-spot token-y token-x expiry (try! (get-spot token-y token-x))) ERR-GET-WEIGHT-FAIL))
-                (weight-x (- ONE_8 weight-y))   
+                (weight-x (unwrap! (get-weight-x-with-spot token-y token-x expiry (try! (get-spot token-y token-x))) ERR-GET-WEIGHT-FAIL))
+                (weight-y (- ONE_8 weight-x))   
 
                 ;; fee = dy * fee-rate-y
                 (fee (mul-up dy (get fee-rate-y pool)))
