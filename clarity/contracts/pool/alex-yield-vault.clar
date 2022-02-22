@@ -37,6 +37,7 @@
 (define-data-var total-supply uint u0)
 (define-data-var activated bool false)
 (define-data-var claim-and-stake-bounty-in-fixed uint u100000) ;; 0.1%
+(define-data-var claim-and-stake-bounty-max-in-fixed uint u1000000000) ;; 10 $ALEX
 
 (define-read-only (get-claim-and-stake-bounty-in-fixed)
   (ok (var-get claim-and-stake-bounty-in-fixed))
@@ -46,6 +47,17 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set claim-and-stake-bounty-in-fixed new-claim-and-stake-bounty-in-fixed))
+  )
+)
+
+(define-read-only (get-claim-and-stake-bounty-max-in-fixed)
+  (ok (var-get claim-and-stake-bounty-max-in-fixed))
+)
+
+(define-public (set-claim-and-stake-bounty-max-in-fixed (new-claim-and-stake-bounty-max-in-fixed uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set claim-and-stake-bounty-max-in-fixed new-claim-and-stake-bounty-max-in-fixed))
   )
 )
 
@@ -152,7 +164,12 @@
       ;; claim all that's available to claim for the reward-cycle
       (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (bounty (mul-down balance (var-get claim-and-stake-bounty-in-fixed)))
+      (bounty 
+        (if (> (mul-down balance (var-get claim-and-stake-bounty-in-fixed)) (var-get claim-and-stake-bounty-max-in-fixed))
+          (var-get claim-and-stake-bounty-max-in-fixed)
+          (mul-down balance (var-get claim-and-stake-bounty-in-fixed))
+        )
+      )
     )
     (asserts! (> current-cycle reward-cycle) ERR-STAKING-IN-PROGRESS)
     (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
