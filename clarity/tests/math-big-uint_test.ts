@@ -35,16 +35,20 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
         [
-            types.tuple({x: 250, exp: -4}),
-            types.tuple({x: 25, exp: -3})
+            types.int(250),
+            types.int(-4),
+            types.int(25),
+            types.int(-3),
         ], deployer.address
         );
         call.result.expectBool(true);
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "greater-than-equal-to", 
         [
-            types.tuple({x: 10, exp: 3}),
-            types.tuple({x: 20, exp: 3})
+            types.int(10),
+            types.int(3),
+            types.int(20),
+            types.int(3),
         ], deployer.address
         );
         call.result.expectBool(false);
@@ -190,8 +194,10 @@ Clarinet.test({
 
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: 25, exp: -1}),
-                types.tuple({x: 4, exp: 0}),
+                types.int(25),
+                types.int(-1),
+                types.int(4),
+                types.int(0),
             ], deployer.address);
         let position: any = call.result.expectTuple()
         assertEquals(position['x'], "100")
@@ -199,8 +205,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: 0}),
-                types.tuple({x: "1122334455667788", exp: 0}),
+                "1122334455667788",
+                types.int(0),
+                "1122334455667788",
+                types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "1259634630379109987517020812944")
@@ -208,8 +216,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: 0}),
-                types.tuple({x: "1122334455667788", exp: -16}),
+                "1122334455667788",
+                types.int(0),
+                "1122334455667788",
+                types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "1259634630379109987517020812944")
@@ -217,8 +227,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: -16}),
-                types.tuple({x: "1122334455667788", exp: 0}),
+                "1122334455667788",
+                types.int(-16),
+                "1122334455667788",
+                types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "1259634630379109987517020812944")
@@ -226,8 +238,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: -16}),
-                types.tuple({x: "1122334455667788", exp: -16}),
+                "1122334455667788",
+                types.int(-16),
+                "1122334455667788",
+                types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "1259634630379109987517020812944")
@@ -235,8 +249,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: 16}),
-                types.tuple({x: "1122334455667788", exp: -16}),
+                "1122334455667788",
+                types.int(16),
+                "1122334455667788",
+                types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "1259634630379109987517020812944")
@@ -244,8 +260,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: 500000, exp: 0}),
-                types.tuple({x: 5, exp: -1}),
+                types.int(500000),
+                types.int(0),
+                types.int(5),
+                types.int(-1),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "2500000")
@@ -253,8 +271,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "multiplication-with-scientific-notation",
             [
-                types.tuple({x: 6000000, exp: 0}),
-                types.tuple({x: 67, exp: -2}),
+                types.int(6000000),
+                types.int(0),
+                types.int(67),
+                types.int(-2),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "402000000")
@@ -271,8 +291,10 @@ Clarinet.test({
 
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: 25, exp: -1}),
-                types.tuple({x: 4, exp: 0}),
+                types.int(25),
+                types.int(-1),
+                types.int(4),
+                types.int(0),
             ], deployer.address);
         let position: any = call.result.expectTuple()
         assertEquals(position['x'], "62500000000000000")
@@ -280,8 +302,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
         [
-            types.tuple({x: "1122334455667788", exp: 0}),
-            types.tuple({x: "1122334455667788", exp: 0}),
+            "1122334455667788",
+            types.int(0),
+            "1122334455667788",
+            types.int(0),
         ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "10000000000000000")
@@ -289,8 +313,10 @@ Clarinet.test({
         
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: 0}),
-            types.tuple({x: "1122334455667788", exp: -16}),
+                "1122334455667788",
+                types.int(0),
+                "1122334455667788",
+                types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "10000000000000000")
@@ -298,8 +324,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: -16}),
-                types.tuple({x: "1122334455667788", exp: 0}),
+                "1122334455667788",
+                types.int(-16),
+                "1122334455667788",
+                types.int(0),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "10000000000000000")
@@ -307,8 +335,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: -16}),
-            types.tuple({x: "1122334455667788", exp: -16}),
+                "1122334455667788",
+                types.int(-16),
+                "1122334455667788",
+                types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "10000000000000000")
@@ -316,8 +346,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: "1122334455667788", exp: 16}),
-            types.tuple({x: "1122334455667788", exp: -16}),
+                "1122334455667788",
+                types.int(16),
+                "1122334455667788",
+                types.int(-16),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "10000000000000000")
@@ -325,8 +357,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: 500000, exp: 0}),
-            types.tuple({x: 5, exp: -1}),
+                types.int(500000),
+                types.int(0),
+                types.int(5),
+                types.int(-1),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "1000000000000000000000")
@@ -334,8 +368,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "division-with-scientific-notation",
             [
-                types.tuple({x: 6000000, exp: 0}),
-            types.tuple({x: 67, exp: -2}),
+                types.int(6000000),
+                types.int(0),
+                types.int(67),
+                types.int(-2),
             ], deployer.address);
         position = call.result.expectTuple()
         assertEquals(position['x'], "895522388059701492537")
@@ -669,8 +705,10 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "addition-with-scientific-notation",
             [
-                types.tuple({ x: 320000000000000000, exp: -4 }),
-                types.tuple({ x: 1600000000000000, exp: -15 }),
+                "320000000000000000",
+                types.int(-4),
+                "1600000000000000",
+                types.int(-15),
             ], deployer.address
         );
         let result: any = call.result.expectTuple();
@@ -679,8 +717,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "addition-with-scientific-notation",
             [
-                types.tuple({ x: '234932806661705911188785462338167591', exp: -35 }),
-                types.tuple({ x: '-8088245021529212865977835549028607449', exp: -34}),
+                "234932806661705911188785462338167591",
+                types.int(-35),
+                "-8088245021529212865977835549028607449",
+                types.int(-34),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -689,8 +729,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "addition-with-scientific-notation",
             [
-                types.tuple({ x: '4879050372792131586543547012911498289', exp: -11 }),
-                types.tuple({ x: 0, exp: 0}),
+                "4879050372792131586543547012911498289",
+                types.int(-11),
+                "0",
+                types.int(0),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -705,8 +747,10 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "subtraction-with-scientific-notation",
             [
-                types.tuple({ x: '1407899272653447767215467463', exp: -12 }),
-                types.tuple({ x: '17650706659942525608226366899', exp: -21 }),
+                '1407899272653447767215467463',
+                types.int(-12),
+                '17650706659942525608226366899',
+                types.int(-21),
             ], deployer.address
         );
         let result: any = call.result.expectTuple();
@@ -715,8 +759,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "subtraction-with-scientific-notation",
             [
-                types.tuple({ x: '28191504282207712212364439220350', exp: -35 }),
-                types.tuple({ x: '-12891104957000012549830113619842', exp: -31 }),
+                '28191504282207712212364439220350',
+                types.int(-35),
+                '-12891104957000012549830113619842',
+                types.int(-31),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -725,8 +771,10 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "subtraction-with-scientific-notation",
             [
-                types.tuple({ x: 0, exp: 0 }),
-                types.tuple({ x: '4879050372792131586543547012911498289', exp: -18 }),
+                types.int(0),
+                types.int(0),
+                '4879050372792131586543547012911498289',
+                types.int(-18),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -741,7 +789,8 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-log-exp-biguint", "transform",
             [
-                types.tuple({ x: 11114936106354, exp: -8 }),
+                types.int(11114936106354),
+                types.int(-8),
                 types.int(-13)
             ], deployer.address
         );
@@ -751,8 +800,8 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-log-exp-biguint", "transform",
             [
-                
-                types.tuple({ x:  '829487965402890273820142', exp: -5 }),
+                '829487965402890273820142',
+                types.int(-5),
                 types.int(-5)
             ], deployer.address
         );
