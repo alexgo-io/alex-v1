@@ -28,15 +28,15 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 1; ) {
+    for (let t = 0; t < 1; t += 30) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
       const claimEndHeight = registrationEndHeight + 10;
-      t += claimEndHeight - registrationStartHeight + 10;
+      // t += claimEndHeight - registrationStartHeight + 10;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 1000 * 10000000000 },
-        { recipient: accountB, amount: 2000 * 10000000000 },
+        { recipient: accountA, amount: 100 * 10000000000 },
+        { recipient: accountB, amount: 200 * 10000000000 },
       ];
 
       const parameters: StandardTestParameters = {
@@ -123,8 +123,7 @@ Clarinet.test({
       
       const winners = determineWinners(idoParameters, idoParticipants);      
       // console.log(winners);
-
-      const maxChunkSize = 200;
+      const maxChunkSize = 90;
       for (
         let index = 0;
         index < winners.winners.length;
@@ -146,8 +145,8 @@ Clarinet.test({
         ]);
         // console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
         winners_list.push(winners.winners.length);
-
         let events = claim.receipts[0].events;
+        console.log(index, claim.receipts[0].result);
         assertEquals(events.length, 1 + winners_sliced.length);
         events.expectSTXTransferEvent(
           ((parameters["pricePerTicketInFixed"] * winners_sliced.length) /
@@ -201,7 +200,7 @@ Clarinet.test({
         ]);
 
         let events = claim.receipts[0].events;
-        console.log(events);
+        // console.log(events);
         assertEquals(events.length, losers_sliced.length);
         
         for (let j = 0; j < events.length; j++) {
