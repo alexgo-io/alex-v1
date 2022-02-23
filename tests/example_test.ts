@@ -28,7 +28,7 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 1; t += 30) {
+    for (let t = 0; t < 400; t += 30) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
       const claimEndHeight = registrationEndHeight + 10;
@@ -41,7 +41,7 @@ Clarinet.test({
       const parameters: StandardTestParameters = {
         totalIdoTokens: 2000,
         idoOwner: accountA,
-        ticketsForSale: 501,
+        ticketsForSale: 500,
         idoTokensPerTicket: 24,
         pricePerTicketInFixed: 10000000000,
         activationThreshold: 10,
@@ -185,7 +185,7 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
-        console.log(losers_sliced);
+        // console.log(losers_sliced);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
