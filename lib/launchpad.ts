@@ -45,15 +45,16 @@ export function determineWinners(parameters: IdoParameters, participants: IdoPar
 	let winners: string[] = [];
 	const lcg = new IDOLCG();
 	participants.sort((a, b) => a.start < b.start ? -1 : 0);
-	let lastUpperBound = 0;
+	let lastUpperBound = 0;	
 	participants.forEach(entry => {
 		if (lastUpperBound !== entry.start)
 			throw new Error(`Error, gap in bound detected for boundary ${entry.start}`);
 		let atleastOneWin = false;
-		while (walkPosition >= entry.start && walkPosition < entry.end) {
-			if (winners.length >= ticketsForSale)
-				return;
-			winners.push(entry.participant);
+		let ticketsRegistered = (entry.end - entry.start) / walkResolution;
+		while (walkPosition >= entry.start && walkPosition < entry.end) {			
+			if (winners.length >= ticketsForSale) return;
+			if (ticketsRegistered > 0) winners.push(entry.participant);
+			ticketsRegistered--;
 			walkPosition += lcg.next(walkPosition, maxStepSize);
 			atleastOneWin = true;
 		}

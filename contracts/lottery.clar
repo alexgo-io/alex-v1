@@ -122,8 +122,6 @@
 	)
 )
 
-;; reduce position after claim period ends
-
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
 	(/ (* u17 (/ (* tickets-registered walk-resolution) total-tickets)) u10)
 )
@@ -206,7 +204,7 @@
 			(e (get end r))
 			(l (get l p))
 			(n (+ (get w p) (lcg-next (get w p) (get m p))))
-			(b (or (>= n e) (is-eq l u1)))
+			(b (or (>= n e) (is-eq l u1) (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) (default-to u0 (map-get? tickets-won k)))))
 			(t (+ (if (is-eq (get t p) u0) (default-to u0 (map-get? tickets-won k)) (get t p)) u1))
 		)
 		(asserts! (get s p) p)
