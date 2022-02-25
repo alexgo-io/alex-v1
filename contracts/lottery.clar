@@ -17,7 +17,7 @@
 (define-constant err-activation-threshold-not-reached (err u113))
 (define-constant err-not-authorized (err u1000))
 
-(define-constant walk-resolution (pow u10 u5))
+(define-constant walk-resolution u100)
 (define-constant claim-grace-period u144)
 
 (define-constant ONE_8 u100000000)
@@ -169,6 +169,7 @@
 		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
 		(as-contract (try! (contract-call? .token-apower burn-fixed apower-in-fixed sender)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
+		(map-set offering-ticket-amounts {ido-id: ido-id, owner: tx-sender} tickets)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
 		(ok bounds)
 	)
@@ -196,20 +197,18 @@
 	)
 )
 
-(define-private (verify-winner-iter (o principal) (p {i: uint, t: uint, r: {start: uint, end: uint}, w: uint, m: uint, l: uint, s: bool}))
+(define-private (verify-winner-iter (o principal) (prior (response {o: (optional principal), i: uint, t: uint, r: {start: uint, end: uint}, w: uint, m: uint} uint)))
 	(let
 		(
+			(p (try! prior))
 			(k {ido-id: (get i p), owner: o})
-			(r (if (is-eq (get t p) u0) (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})) (get r p)))
-			(e (get end r))
-			(l (get l p))
-			(n (+ (get w p) (lcg-next (get w p) (get m p))))
-			(b (or (>= n e) (is-eq l u1) (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) (default-to u0 (map-get? tickets-won k)))))
-			(t (+ (if (is-eq (get t p) u0) (default-to u0 (map-get? tickets-won k)) (get t p)) u1))
+			(r (if (and (is-some (get o p)) (is-eq (unwrap-panic (get o p)) o)) (get r p) (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input)))
+			(t (+ u1 (if (and (is-some (get o p)) (is-eq (unwrap-panic (get o p)) o)) (get t p) (default-to u0 (map-get? tickets-won k)))))
+			(n (+ (if (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) t) (get end r) (get w p)) (lcg-next (get w p) (get m p))))
 		)
-		(asserts! (get s p) p)
-		(and b (map-set tickets-won k t))
-		(merge p { t: (if b u0 t), r: (if b {start: u0, end: u0} r), w: n, l: (- l u1), s: (and (>= (get w p) (get start r)) (< (get w p) e))})
+		(asserts! (and (>= (get w p) (get start r)) (< (get w p) (get end r))) err-invalid-sequence)
+		(and (is-some (get o p)) (is-eq (unwrap-panic (get o p)) o) (map-set tickets-won k t))
+		(ok (merge p { o: (some o), t: t, r: r, w: n}))
 	)
 )
 
@@ -220,12 +219,10 @@
 			(total-won (default-to u0 (map-get? total-tickets-won ido-id)))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
-			(result (fold verify-winner-iter input {i: ido-id, t: u0, r: {start: u0, end: u0}, w: walk-position, m: max-step-size, l: (len input), s: true}))
+			(result (try! (fold verify-winner-iter input (ok {o: none, i: ido-id, t: u0, r: {start: u0, end: u0}, w: walk-position, m: max-step-size}))))
 		)
-		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
 		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-block-height-not-reached)
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
-		(asserts! (and (<= (+ (len input) total-won) (get total-tickets offering)) (get s result)) err-invalid-sequence) ;; do we need the first condition?		
 		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-activation-threshold-not-reached)
  		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
@@ -329,20 +326,22 @@
 	)
 )
 
-(define-private (refund-fallback-iter (e {recipient: principal, amount: uint}) (p {i: uint, u: uint, p: uint, s: bool}))
+(define-private (refund-fallback-iter (e {recipient: principal, amount: uint}) (prior (response {i: uint, u: uint, p: uint} uint)))
 	(let
 		(
+			(p (try! prior))
 			(k {ido-id: (get i p), owner: (get recipient e)})
-			(b (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})))
-		)
-		(asserts! (get s p) p)
+			(b (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input))
+		)		
 		(map-delete offering-ticket-bounds k)
-		{
-			i: (get i p),
-			u: (get u p),
-			p: (get p p),
-			s: (and (<= (get end b) (get u p)) (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e)))
-		}
+		(asserts! 
+			(and 
+				(<= (get end b) (get u p)) 
+				(is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e))
+			)
+			(err (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))))
+		)
+		(ok {i: (get i p), u: (get u p), p: (get p p)})
 	)
 )
 
@@ -352,15 +351,18 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
-		(asserts! (get s
-			(fold refund-fallback-iter input
-				{
-					i: ido-id,
-					u: (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id)),
-					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
-					s: true
-				}))
-			err-invalid-sequence
+		(try! 
+			(fold 
+				refund-fallback-iter 
+				input
+				(ok 
+					{
+						i: ido-id,
+						u: (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id)),
+						p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
+					}
+				)
+			)
 		)
 		(fold transfer-many-amounts-iter input payment-token)
 		(ok true)

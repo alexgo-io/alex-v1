@@ -28,20 +28,20 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 400; t += 30) {
+    for (let t = 0; t < 1; t += 120) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
-      const claimEndHeight = registrationEndHeight + 10;
+      const claimEndHeight = registrationEndHeight + 1000;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 1000 * 10000000000 },
-        { recipient: accountB, amount: 2000 * 10000000000 },
+        { recipient: accountA, amount: 100000 * 10000000000 },
+        { recipient: accountB, amount: 200000 * 10000000000 },
       ];
 
       const parameters: StandardTestParameters = {
-        totalIdoTokens: 2000,
+        totalIdoTokens: 20000,
         idoOwner: accountA,
-        ticketsForSale: 500,
+        ticketsForSale: 10001,
         idoTokensPerTicket: 24,
         pricePerTicketInFixed: 10000000000,
         activationThreshold: 10,
@@ -106,6 +106,7 @@ Clarinet.test({
         [types.uint(idoId)],
         deployer.address
       );
+
       const idoParameters: IdoParameters = extractParameters(
         parametersFromChain.result
       );
@@ -120,6 +121,7 @@ Clarinet.test({
       // console.log(idoParameters);
       // console.log(idoParticipants);
       
+      // console.log("determining winners...");
       const winners = determineWinners(idoParameters, idoParticipants);      
       // console.log(winners);
       let maxChunkSize = 200;
@@ -129,6 +131,7 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let winners_sliced = winners.winners.slice(index, index + maxChunkSize);
+        // console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
@@ -145,7 +148,7 @@ Clarinet.test({
         // console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
         winners_list.push(winners.winners.length);
         let events = claim.receipts[0].events;
-        console.log(index, claim.receipts[0].result);
+        // console.log(index, claim.receipts[0].result);
         assertEquals(events.length, 1 + winners_sliced.length);
         events.expectSTXTransferEvent(
           ((parameters["pricePerTicketInFixed"] * winners_sliced.length) /
@@ -165,11 +168,14 @@ Clarinet.test({
       }
       chain.mineEmptyBlockUntil(claimEndHeight);
 
-      const losers = determineLosers(idoParameters, idoParticipants);
+      // console.log("determining losers...");
+      const losers = determineLosers(idoParameters, idoParticipants); 
+      // console.log(losers);
+      
       for(let index = 0; index < idoParticipants.length; index++){
         let participant = idoParticipants[index]['participant'];
-        let won = winners.winners.lastIndexOf(participant) - winners.winners.indexOf(participant) + 1;
-        let lost = losers.losers[index]['amount'];
+        let won = winners.winners.indexOf(participant) == -1 ? 0 : winners.winners.lastIndexOf(participant) - winners.winners.indexOf(participant) + 1;
+        let lost = losers.losers.length == 0 ? 0 : losers.losers[index]['amount'];
         console.log(
           participant, 
           "registered:", won + lost,
@@ -177,7 +183,8 @@ Clarinet.test({
           "lost:", lost
         );
         assertEquals(ticketRecipients[index]['amount'] / parameters['apowerPerTicketInFixed'], won + lost);
-      }             
+      }
+                   
       maxChunkSize = 1;
       for (
         let index = 0;
@@ -185,7 +192,7 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
-        // console.log(losers_sliced);
+        console.log(losers_sliced);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",

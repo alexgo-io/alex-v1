@@ -10,12 +10,12 @@ export class LCG {
 	}
 
 	next(current: number, maxStep: number = 0) {
-		const next = (current * this.a + this.c) % this.m;
-		return maxStep > 1 ? next % maxStep : next;
+		const next = (BigInt(current) * BigInt(this.a) + BigInt(this.c)) % BigInt(this.m);
+		return maxStep > 1 ? Number(next % BigInt(maxStep)) : Number(next);
 	}
 }
 
-export const walkResolution = 100000;
+export const walkResolution = 100;
 
 const idoLcgA = 134775813;
 const idoLcgC = 1;
@@ -29,6 +29,7 @@ export class IDOLCG extends LCG {
 
 export type IdoParameters = { maxStepSize: number, walkPosition: number, ticketsForSale: number };
 export type IdoParticipant = { participant: string, start: number, end: number };
+export type IdoResult = { nextParameters: IdoParameters, winners: string[], losers: { recipient: string, amount: number }[] };
 export type IdoWinnersResult = { nextParameters: IdoParameters, winners: string[] };
 export type IdoLosersResult = { nextParameters: IdoParameters, losers: { recipient: string, amount: number }[] };
 
@@ -40,65 +41,39 @@ export type IdoLosersResult = { nextParameters: IdoParameters, losers: { recipie
  * @param participants A list of participants, sorted in order. There should be no gaps in the bounds.
  * @returns A winners result set and walk parameters for the next iteration.
  */
-export function determineWinners(parameters: IdoParameters, participants: IdoParticipant[]): IdoWinnersResult {
+export function determineOutcome(parameters: IdoParameters, participants: IdoParticipant[]): IdoResult {
 	let { walkPosition, maxStepSize, ticketsForSale } = parameters;
 	let winners: string[] = [];
+	let losers: { recipient: string, amount: number }[] = [];
 	const lcg = new IDOLCG();
-	participants.sort((a, b) => a.start < b.start ? -1 : 0);
+	participants.sort((a, b) => a.start < b.start ? -1 : 1);
 	let lastUpperBound = 0;	
 	participants.forEach(entry => {
 		if (lastUpperBound !== entry.start)
 			throw new Error(`Error, gap in bound detected for boundary ${entry.start}`);
 		let atleastOneWin = false;
-		let ticketsRegistered = (entry.end - entry.start) / walkResolution;
-		while (walkPosition >= entry.start && walkPosition < entry.end) {			
-			if (winners.length >= ticketsForSale) return;
-			if (ticketsRegistered > 0) winners.push(entry.participant);
-			ticketsRegistered--;
-			walkPosition += lcg.next(walkPosition, maxStepSize);
+		let ticketsLost = (entry.end - entry.start) / walkResolution;
+		while (walkPosition >= entry.start && walkPosition < entry.end && winners.length < ticketsForSale && ticketsLost > 0) {	
+			// console.log(walkPosition);
+			ticketsLost--;
+			winners.push(entry.participant);
 			atleastOneWin = true;
+			walkPosition = (ticketsLost == 0 ? entry.end : walkPosition) + lcg.next(walkPosition, maxStepSize);			
 		}
+		if (ticketsLost > 0) losers.push({ recipient: entry.participant, amount: ticketsLost });
 		if (!atleastOneWin)
 			walkPosition += lcg.next(walkPosition, maxStepSize);
 		lastUpperBound = entry.end;
 	});
-	return { nextParameters: { walkPosition, maxStepSize, ticketsForSale }, winners };
+	return { nextParameters: { walkPosition, maxStepSize, ticketsForSale }, winners, losers };
 }
 
-/**
- * Takes walk parameters and a participant list and will return a losers list, with one entry per principal,
- * containing the amount of tickets lost. This number should be multiplied by the `price-per-ticket-in-fixed`
- * parameter of the IDO before being submitted to the refund-* functions of the IDO contract.
- * @param parameters Initial walk parameters (or continued walk parameters)
- * @param participants A list of participants, sorted in order. There should be no gaps in the bounds.
- * @returns A losers result set and walk parameters for the next iteration.
- */
+export function determineWinners(parameters: IdoParameters, participants: IdoParticipant[]): IdoWinnersResult {
+	let idoResult: IdoResult = determineOutcome(parameters, participants);
+	return {nextParameters: idoResult.nextParameters, winners: idoResult.winners};
+}
+
 export function determineLosers(parameters: IdoParameters, participants: IdoParticipant[]): IdoLosersResult {
-	let { walkPosition, maxStepSize, ticketsForSale } = parameters;
-	let losers: { recipient: string, amount: number }[] = [];
-	const lcg = new IDOLCG();
-	participants.sort((a, b) => a.start < b.start ? -1 : 0);
-	let lastUpperBound = 0;
-	let totalTicketsProcessed = 0;
-	participants.forEach(entry => {
-		if (lastUpperBound !== entry.start)
-			throw new Error(`Error, gap in bound detected for boundary ${entry.start}`);
-		if (totalTicketsProcessed >= ticketsForSale)
-			return;
-		let atleastOneWin = false;
-		let ticketsLost = ~~((entry.end - entry.start) / walkResolution);
-		while (walkPosition >= entry.start && walkPosition < entry.end) {
-			--ticketsLost;
-			walkPosition += lcg.next(walkPosition, maxStepSize);
-			atleastOneWin = true;
-			if (++totalTicketsProcessed >= ticketsForSale)
-				break;
-		}
-		if (ticketsLost > 0)
-			losers.push({ recipient: entry.participant, amount: ticketsLost });
-		if (!atleastOneWin)
-			walkPosition += lcg.next(walkPosition, maxStepSize);
-		lastUpperBound = entry.end;
-	});
-	return { nextParameters: { walkPosition, maxStepSize, ticketsForSale }, losers };
+	let idoResult: IdoResult = determineOutcome(parameters, participants);
+	return {nextParameters: idoResult.nextParameters, losers: idoResult.losers};
 }
