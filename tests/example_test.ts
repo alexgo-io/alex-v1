@@ -131,7 +131,7 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let winners_sliced = winners.winners.slice(index, index + maxChunkSize);
-        // console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
+        console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
@@ -170,7 +170,6 @@ Clarinet.test({
 
       // console.log("determining losers...");
       const losers = determineLosers(idoParameters, idoParticipants); 
-      // console.log(losers);
       
       for(let index = 0; index < idoParticipants.length; index++){
         let participant = idoParticipants[index]['participant'];

@@ -60,6 +60,7 @@ export function determineOutcome(parameters: IdoParameters, participants: IdoPar
 			atleastOneWin = true;
 			walkPosition = (ticketsLost == 0 ? entry.end : walkPosition) + lcg.next(walkPosition, maxStepSize);			
 		}
+		
 		if (ticketsLost > 0) losers.push({ recipient: entry.participant, amount: ticketsLost });
 		if (!atleastOneWin)
 			walkPosition += lcg.next(walkPosition, maxStepSize);
