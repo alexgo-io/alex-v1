@@ -17,7 +17,7 @@
 (define-constant err-activation-threshold-not-reached (err u113))
 (define-constant err-not-authorized (err u1000))
 
-(define-constant walk-resolution (pow u10 u5))
+(define-constant walk-resolution u100)
 (define-constant claim-grace-period u144)
 
 (define-constant ONE_8 u100000000)
@@ -122,8 +122,6 @@
 	)
 )
 
-;; reduce position after claim period ends
-
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
 	(/ (* u17 (/ (* tickets-registered walk-resolution) total-tickets)) u10)
 )
@@ -171,6 +169,7 @@
 		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
 		(as-contract (try! (contract-call? .token-apower burn-fixed apower-in-fixed sender)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
+		(map-set offering-ticket-amounts {ido-id: ido-id, owner: tx-sender} tickets)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
 		(ok bounds)
 	)
@@ -198,20 +197,18 @@
 	)
 )
 
-(define-private (verify-winner-iter (o principal) (p {i: uint, t: uint, r: {start: uint, end: uint}, w: uint, m: uint, l: uint, s: bool}))
+(define-private (verify-winner-iter (o principal) (prior (response {o: (optional principal), i: uint, t: uint, r: {start: uint, end: uint}, w: uint, m: uint} uint)))
 	(let
 		(
+			(p (try! prior))
 			(k {ido-id: (get i p), owner: o})
-			(r (if (is-eq (get t p) u0) (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})) (get r p)))
-			(e (get end r))
-			(l (get l p))
-			(n (+ (get w p) (lcg-next (get w p) (get m p))))
-			(b (or (>= n e) (is-eq l u1)))
-			(t (+ (if (is-eq (get t p) u0) (default-to u0 (map-get? tickets-won k)) (get t p)) u1))
+			(r (if (and (is-some (get o p)) (is-eq (unwrap-panic (get o p)) o)) (get r p) (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input)))
+			(t (+ u1 (if (and (is-some (get o p)) (is-eq (unwrap-panic (get o p)) o)) (get t p) (default-to u0 (map-get? tickets-won k)))))
+			(n (+ (if (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) t) (get end r) (get w p)) (lcg-next (get w p) (get m p))))
 		)
-		(asserts! (get s p) p)
-		(and b (map-set tickets-won k t))
-		(merge p { t: (if b u0 t), r: (if b {start: u0, end: u0} r), w: n, l: (- l u1), s: (and (>= (get w p) (get start r)) (< (get w p) e))})
+		(asserts! (and (>= (get w p) (get start r)) (< (get w p) (get end r))) err-invalid-sequence)
+		(and (is-some (get o p)) (is-eq (unwrap-panic (get o p)) o) (map-set tickets-won k t))
+		(ok (merge p { o: (some o), t: t, r: r, w: n}))
 	)
 )
 
@@ -222,12 +219,10 @@
 			(total-won (default-to u0 (map-get? total-tickets-won ido-id)))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
-			(result (fold verify-winner-iter input {i: ido-id, t: u0, r: {start: u0, end: u0}, w: walk-position, m: max-step-size, l: (len input), s: true}))
+			(result (try! (fold verify-winner-iter input (ok {o: none, i: ido-id, t: u0, r: {start: u0, end: u0}, w: walk-position, m: max-step-size}))))
 		)
-		;;(asserts! (> max-step-size walk-resolution) err-use-claim-simple)
 		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-block-height-not-reached)
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
-		(asserts! (and (<= (+ (len input) total-won) (get total-tickets offering)) (get s result)) err-invalid-sequence) ;; do we need the first condition?
 		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-activation-threshold-not-reached)
  		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
@@ -258,7 +253,10 @@
 )
 
 (define-public (claim-fallback (ido-id uint) (input (list 200 principal)) (ido-token <ft-trait>) (payment-token <ft-trait>))
-	(let ((ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token))))
+	(let 
+		(
+			(ido-tokens-per-ticket (try! (claim-process ido-id input (contract-of ido-token) payment-token)))
+		)
 		(var-set tm-amount (* ido-tokens-per-ticket ONE_8))
 		(fold transfer-many-iter input ido-token)
 		(ok true)
@@ -266,6 +264,7 @@
 )
 
 (define-data-var tm-amount uint u0)
+
 (define-private (transfer-many-iter (recipient principal) (ido-token <ft-trait>))
 	(begin
 		(unwrap-panic (as-contract (contract-call? ido-token transfer-fixed (var-get tm-amount) tx-sender recipient none)))
@@ -280,7 +279,7 @@
 	)
 )
 
-(define-private (refund-optimal-iter (e {recipient: principal, amount: uint}) (p {i: uint, p: uint, s: bool}))
+(define-private (refund-optimal-iter (e {recipient: principal, amount: uint}) (p {i: uint, u: uint, p: uint, s: bool}))
 	(let
 		(
 			(k {ido-id: (get i p), owner: (get recipient e)})
@@ -290,9 +289,20 @@
 		(map-delete offering-ticket-bounds k)
 		{
 			i: (get i p),
+			u: (get u p),
 			p: (get p p),
-			s: (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e))
+			s: (and (<= (get end b) (get u p)) (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e)))
 		}
+	)
+)
+
+;; Calculate the maximum upper bound allowed to be refunded. It is either set to the maximum IDO bound
+;; in case all tickets have been won, or to the last walk position in case the claim walk is still
+;; in progress. Participants whose upper bound is larger than this value cannot yet get a refund.
+(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint))
+	(if (is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
+		(* total-tickets-register walk-resolution)
+		(default-to u0 (map-get? claim-walk-positions ido-id))
 	)
 )
 
@@ -301,18 +311,12 @@
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
-		(asserts! 
-			(and
-				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
-				;; (>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
-			)
-			err-more-to-claim
-		)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
 		(asserts! (get s
 			(fold refund-optimal-iter input
 				{
 					i: ido-id,
+					u: (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id)),
 					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					s: true
 				}))
@@ -322,19 +326,22 @@
 	)
 )
 
-(define-private (refund-fallback-iter (e {recipient: principal, amount: uint}) (p {i: uint, p: uint, s: bool}))
+(define-private (refund-fallback-iter (e {recipient: principal, amount: uint}) (prior (response {i: uint, u: uint, p: uint} uint)))
 	(let
 		(
+			(p (try! prior))
 			(k {ido-id: (get i p), owner: (get recipient e)})
-			(b (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})))
-		)
-		(asserts! (get s p) p)
+			(b (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input))
+		)		
 		(map-delete offering-ticket-bounds k)
-		{
-			i: (get i p),
-			p: (get p p),
-			s: (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e))
-		}
+		(asserts! 
+			(and 
+				(<= (get end b) (get u p)) 
+				(is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e))
+			)
+			(err (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))))
+		)
+		(ok {i: (get i p), u: (get u p), p: (get p p)})
 	)
 )
 
@@ -343,22 +350,19 @@
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
-		(asserts! 
-			(and
-				(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) (get total-tickets offering)) ;; all winning tickets have been claimed
-				;; (>= (unwrap! (map-get? claim-walk-positions ido-id) err-more-to-claim) (unwrap! (map-get? start-indexes ido-id) err-more-to-claim)) ;; claim walk has reached the end
-			)
-			err-more-to-claim
-		)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
-		(asserts! (get s
-			(fold refund-fallback-iter input
-				{
-					i: ido-id,
-					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
-					s: true
-				}))
-			err-invalid-sequence
+		(try! 
+			(fold 
+				refund-fallback-iter 
+				input
+				(ok 
+					{
+						i: ido-id,
+						u: (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id)),
+						p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
+					}
+				)
+			)
 		)
 		(fold transfer-many-amounts-iter input payment-token)
 		(ok true)
