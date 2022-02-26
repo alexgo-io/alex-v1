@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "alex_dao": {
+      "commit": "1ddf440f",
+      "git": "git@github.com:alexgo-io/alex-dao.git",
+      "contracts_path": "contracts"
+    }
+  }
+}
