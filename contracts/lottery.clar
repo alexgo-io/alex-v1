@@ -204,7 +204,7 @@
 	)
 )
 
-(define-private (verify-winner-iter (owner principal) (prior (response {owner: (optional principal), ido-id: uint, tickets-won-so-far: uint, bounds: {start: uint, end: uint}, walk-position: uint, max-step-size: uint} uint)))
+(define-private (verify-winner-iter (owner principal) (prior (response {owner: (optional principal), ido-id: uint, tickets-won-so-far: uint, bounds: {start: uint, end: uint}, walk-position: uint, max-step-size: uint, l: uint} uint)))
 	(let
 		(
 			(p (try! prior))
@@ -213,18 +213,17 @@
 			(tickets-won-so-far (+ u1 (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get tickets-won-so-far p) (default-to u0 (map-get? tickets-won k)))))
 			(new-walk-position 
 				(+ 
-					;; (if (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) tickets-won-so-far) 
-					;; 	(get end bounds)
-					;; 	(get walk-position p)
-					;; )
-					(get walk-position p) 
+					(if (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) tickets-won-so-far) 
+						(get end bounds)
+						(get walk-position p)
+					)
 					(lcg-next (get walk-position p) (get max-step-size p))
 				)
 			)
 		)
 		(asserts! (and (>= (get walk-position p) (get start bounds)) (< (get walk-position p) (get end bounds))) err-invalid-sequence)
-		(map-set tickets-won k tickets-won-so-far)
-		(ok (merge p { owner: (some owner), tickets-won-so-far: tickets-won-so-far, bounds: bounds, walk-position: new-walk-position}))
+		(and (or (>= new-walk-position (get end bounds)) (is-eq (get l p) u1)) (map-set tickets-won k tickets-won-so-far))
+		(ok (merge p { owner: (some owner), tickets-won-so-far: tickets-won-so-far, bounds: bounds, walk-position: new-walk-position, l: (- (get l p) u1)}))
 	)
 )
 
@@ -235,7 +234,7 @@
 			(total-won (default-to u0 (map-get? total-tickets-won ido-id)))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position ido-id (get registration-end-height offering) max-step-size)))
-			(result (try! (fold verify-winner-iter input (ok {owner: none, ido-id: ido-id, tickets-won-so-far: u0, bounds: {start: u0, end: u0}, walk-position: walk-position, max-step-size: max-step-size}))))
+			(result (try! (fold verify-winner-iter input (ok {owner: none, ido-id: ido-id, tickets-won-so-far: u0, bounds: {start: u0, end: u0}, walk-position: walk-position, max-step-size: max-step-size, l: (len input)}))))
 		)
 		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-block-height-not-reached)
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
@@ -309,7 +308,7 @@
 				(<= (get end bounds) (get upper-bound p)) 
 				(is-eq (* (- (/ (- (get end bounds) (get start bounds)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get price-per-ticket p)) (get amount e))
 			)
-			(err (default-to u0 (map-get? tickets-won k)))
+			(err (get upper-bound p))
 		)
 		(ok {ido-id: (get ido-id p), upper-bound: (get upper-bound p), price-per-ticket: (get price-per-ticket p)})
 	)
