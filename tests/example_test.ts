@@ -28,20 +28,20 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 1; t += 120) {
+    for (let t = 0; t < 1000; t += 120) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
-      const claimEndHeight = registrationEndHeight + 1000;
+      const claimEndHeight = registrationEndHeight + 100;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 100000 * 10000000000 },
-        { recipient: accountB, amount: 200000 * 10000000000 },
+        { recipient: accountA, amount: 10000 * 10000000000 },
+        { recipient: accountB, amount: 20000 * 10000000000 },
       ];
 
       const parameters: StandardTestParameters = {
         totalIdoTokens: 20000,
         idoOwner: accountA,
-        ticketsForSale: 10001,
+        ticketsForSale: 1381,
         idoTokensPerTicket: 24,
         pricePerTicketInFixed: 10000000000,
         activationThreshold: 10,
@@ -135,7 +135,7 @@ Clarinet.test({
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
-            "claim-fallback",
+            "claim",
             [
               types.uint(idoId),
               types.list(winners_sliced.map(types.principal)),
@@ -195,7 +195,7 @@ Clarinet.test({
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
-            "refund-fallback",
+            "refund",
             [
               types.uint(idoId),
               types.list(losers_sliced.map(e => { return types.tuple({recipient: types.principal(e.recipient), amount: types.uint(e.amount * parameters["pricePerTicketInFixed"])})})),

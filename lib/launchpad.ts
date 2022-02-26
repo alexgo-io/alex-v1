@@ -10,12 +10,13 @@ export class LCG {
 	}
 
 	next(current: number, maxStep: number = 0) {
+		// to avoid overflow, cast numbers to bigint first.
 		const next = (BigInt(current) * BigInt(this.a) + BigInt(this.c)) % BigInt(this.m);
 		return maxStep > 1 ? Number(next % BigInt(maxStep)) : Number(next);
 	}
 }
 
-export const walkResolution = 100;
+export const walkResolution = 100000;
 
 const idoLcgA = 134775813;
 const idoLcgC = 1;
