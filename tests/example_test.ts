@@ -20,31 +20,34 @@ import {
 Clarinet.test({
   name: "Example claim walk test",
   async fn(chain: Chain, accounts: Map<string, Account>) {
-    const [deployer, accountA, accountB] = [
-      "deployer",
-      "wallet_1",
-      "wallet_2",
+    const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
+      "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
     ].map((wallet) => accounts.get(wallet)!);
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 1; t += 120) {
+    for (let t = 0; t < 1000; t += 120) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
-      const claimEndHeight = registrationEndHeight + 1000;
+      const claimEndHeight = registrationEndHeight + 100;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 100000 * 10000000000 },
-        { recipient: accountB, amount: 200000 * 10000000000 },
+        { recipient: accountA, amount: 1 * 10000000000 },
+        { recipient: accountB, amount: 10000 * 10000000000 },
+        { recipient: accountC, amount: 200 * 10000000000 },
+        { recipient: accountD, amount: 5000 * 10000000000 },
+        { recipient: accountE, amount: 101 * 10000000000 },
+        { recipient: accountF, amount: 10000 * 10000000000 },
+        { recipient: accountG, amount: 1 * 10000000000 },
       ];
 
       const parameters: StandardTestParameters = {
-        totalIdoTokens: 20000,
+        totalIdoTokens: 200000,
         idoOwner: accountA,
-        ticketsForSale: 10001,
+        ticketsForSale: 346,
         idoTokensPerTicket: 24,
         pricePerTicketInFixed: 10000000000,
-        activationThreshold: 10,
+        activationThreshold: 1,
         registrationStartHeight,
         registrationEndHeight,
         claimEndHeight,
@@ -131,11 +134,11 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let winners_sliced = winners.winners.slice(index, index + maxChunkSize);
-        // console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
+        console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
-            "claim-fallback",
+            "claim",
             [
               types.uint(idoId),
               types.list(winners_sliced.map(types.principal)),
@@ -145,6 +148,7 @@ Clarinet.test({
             deployer.address
           ),
         ]);
+
         // console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
         winners_list.push(winners.winners.length);
         let events = claim.receipts[0].events;
@@ -170,12 +174,12 @@ Clarinet.test({
 
       // console.log("determining losers...");
       const losers = determineLosers(idoParameters, idoParticipants); 
-      // console.log(losers);
-      
+      let losers_list = losers.losers.map(e => { return e.recipient });
+
       for(let index = 0; index < idoParticipants.length; index++){
         let participant = idoParticipants[index]['participant'];
         let won = winners.winners.indexOf(participant) == -1 ? 0 : winners.winners.lastIndexOf(participant) - winners.winners.indexOf(participant) + 1;
-        let lost = losers.losers.length == 0 ? 0 : losers.losers[index]['amount'];
+        let lost = losers_list.indexOf(participant) == -1 ? 0 : losers.losers[losers_list.indexOf(participant)]['amount'];
         console.log(
           participant, 
           "registered:", won + lost,
@@ -185,18 +189,18 @@ Clarinet.test({
         assertEquals(ticketRecipients[index]['amount'] / parameters['apowerPerTicketInFixed'], won + lost);
       }
                    
-      maxChunkSize = 1;
+      maxChunkSize = 200;
       for (
         let index = 0;
         index < losers.losers.length;
         index += maxChunkSize
       ) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
-        console.log(losers_sliced);
+        // console.log(losers_sliced);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
-            "refund-fallback",
+            "refund",
             [
               types.uint(idoId),
               types.list(losers_sliced.map(e => { return types.tuple({recipient: types.principal(e.recipient), amount: types.uint(e.amount * parameters["pricePerTicketInFixed"])})})),
@@ -207,7 +211,7 @@ Clarinet.test({
         ]);
 
         let events = claim.receipts[0].events;
-        console.log(index, claim.receipts[0].result);
+        // console.log(index, claim.receipts[0].result);
         assertEquals(events.length, losers_sliced.length);
         
         for (let j = 0; j < events.length; j++) {
