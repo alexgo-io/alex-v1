@@ -56,7 +56,7 @@ export function determineOutcome(parameters: IdoParameters, participants: IdoPar
 		while (walkPosition >= entry.start && walkPosition < entry.end && winners.length < ticketsForSale && ticketsLost > 0) {	
 			--ticketsLost;
 			winners.push(entry.participant);
-			walkPosition = (ticketsLost == 0 ? entry.end : walkPosition) + lcg.next(walkPosition, maxStepSize);			
+			walkPosition = (Math.floor(walkPosition / walkResolution) + 1) * walkResolution + lcg.next(walkPosition, maxStepSize);		
 		}
 		
 		if (ticketsLost > 0) losers.push({ recipient: entry.participant, amount: ticketsLost });

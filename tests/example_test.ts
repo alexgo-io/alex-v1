@@ -33,7 +33,7 @@ Clarinet.test({
 
       const ticketRecipients = [
         { recipient: accountA, amount: 1 * 10000000000 },
-        { recipient: accountB, amount: 10000 * 10000000000 },
+        { recipient: accountB, amount: 400 * 10000000000 },
         { recipient: accountC, amount: 200 * 10000000000 },
         { recipient: accountD, amount: 5000 * 10000000000 },
         { recipient: accountE, amount: 101 * 10000000000 },
@@ -44,7 +44,7 @@ Clarinet.test({
       const parameters: StandardTestParameters = {
         totalIdoTokens: 40000,
         idoOwner: accountA,
-        ticketsForSale: 800,
+        ticketsForSale: 401,
         idoTokensPerTicket: 50,
         pricePerTicketInFixed: 5000000000,
         activationThreshold: 1,
