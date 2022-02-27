@@ -130,7 +130,7 @@
 )
 
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
-	(/ (* u17 (/ (* tickets-registered walk-resolution) total-tickets)) u10)
+	(/ (* tickets-registered walk-resolution) total-tickets)
 )
 
 (define-private (next-bounds (ido-id uint) (tickets uint))
@@ -211,15 +211,7 @@
 			(k {ido-id: (get ido-id p), owner: owner})
 			(bounds (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get bounds p) (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input)))
 			(tickets-won-so-far (+ u1 (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get tickets-won-so-far p) (default-to u0 (map-get? tickets-won k)))))
-			(new-walk-position 
-				(+ 
-					(if (is-eq (unwrap-panic (map-get? offering-ticket-amounts k)) tickets-won-so-far) 
-						(get end bounds)
-						(get walk-position p)
-					)
-					(lcg-next (get walk-position p) (get max-step-size p))
-				)
-			)
+			(new-walk-position (+ (* (+ u1 (/ (get walk-position p) walk-resolution)) walk-resolution) (lcg-next (get walk-position p) (get max-step-size p))))
 		)
 		(asserts! (and (>= (get walk-position p) (get start bounds)) (< (get walk-position p) (get end bounds))) err-invalid-sequence)
 		(and (or (>= new-walk-position (get end bounds)) (is-eq (get l p) u1)) (map-set tickets-won k tickets-won-so-far))
