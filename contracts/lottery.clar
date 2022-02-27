@@ -288,10 +288,10 @@
 ;; Calculate the maximum upper bound allowed to be refunded. It is either set to the maximum IDO bound
 ;; in case all tickets have been won, or to the last walk position in case the claim walk is still
 ;; in progress. Participants whose upper bound is larger than this value cannot yet get a refund.
-(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint))
+(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint) (registration-end-height uint) )
 	(if (is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
-		(* total-tickets-register walk-resolution)
-		(default-to u0 (map-get? claim-walk-positions ido-id))
+		(ok (* total-tickets-register walk-resolution))
+		(get-last-claim-walk-position ido-id registration-end-height (calculate-max-step-size total-tickets-register total-tickets))
 	)
 )
 
@@ -308,7 +308,7 @@
 				(<= (get end bounds) (get upper-bound p)) 
 				(is-eq (* (- (/ (- (get end bounds) (get start bounds)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get price-per-ticket p)) (get amount e))
 			)
-			(err (get upper-bound p))
+			err-invalid-sequence
 		)
 		(ok {ido-id: (get ido-id p), upper-bound: (get upper-bound p), price-per-ticket: (get price-per-ticket p)})
 	)
@@ -327,7 +327,7 @@
 				(ok 
 					{
 						ido-id: ido-id,
-						upper-bound: (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id)),
+						upper-bound: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering))),
 						price-per-ticket: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					}
 				)
@@ -360,7 +360,7 @@
 			(fold refund-optimal-iter input
 				{
 					i: ido-id,
-					u: (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id)),
+					u: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering))),
 					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					s: true
 				}))

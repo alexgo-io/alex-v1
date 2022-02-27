@@ -42,11 +42,11 @@ Clarinet.test({
       ];
 
       const parameters: StandardTestParameters = {
-        totalIdoTokens: 200000,
+        totalIdoTokens: 40000,
         idoOwner: accountA,
-        ticketsForSale: 346,
-        idoTokensPerTicket: 24,
-        pricePerTicketInFixed: 10000000000,
+        ticketsForSale: 800,
+        idoTokensPerTicket: 50,
+        pricePerTicketInFixed: 5000000000,
         activationThreshold: 1,
         registrationStartHeight,
         registrationEndHeight,
