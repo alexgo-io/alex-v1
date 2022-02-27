@@ -1,4 +1,5 @@
 {
+  "name": "alex-v1",
   "dependencies": {
     "alex_dao": {
       "commit": "1ddf440f",
