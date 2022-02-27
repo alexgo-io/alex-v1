@@ -18,7 +18,6 @@ export type StandardTestParameters = {
 	registrationStartHeight?: number,
 	registrationEndHeight?: number,
 	claimEndHeight?: number,
-	wrappedStxTokensPerTicketRecipients?: number,
 	ticketRecipients: TicketAllocation[],
 	apowerPerTicketInFixed: number
 };
@@ -36,7 +35,6 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		registrationStartHeight,
 		registrationEndHeight,
 		claimEndHeight,
-		wrappedStxTokensPerTicketRecipients,
 		ticketRecipients,
 		apowerPerTicketInFixed
 	} = parameters;

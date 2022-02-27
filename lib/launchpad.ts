@@ -10,12 +10,13 @@ export class LCG {
 	}
 
 	next(current: number, maxStep: number = 0) {
+		// to avoid overflow, cast numbers to bigint first.
 		const next = (BigInt(current) * BigInt(this.a) + BigInt(this.c)) % BigInt(this.m);
 		return maxStep > 1 ? Number(next % BigInt(maxStep)) : Number(next);
 	}
 }
 
-export const walkResolution = 100;
+export const walkResolution = 100000;
 
 const idoLcgA = 134775813;
 const idoLcgC = 1;
@@ -46,23 +47,19 @@ export function determineOutcome(parameters: IdoParameters, participants: IdoPar
 	let winners: string[] = [];
 	let losers: { recipient: string, amount: number }[] = [];
 	const lcg = new IDOLCG();
-	participants.sort((a, b) => a.start < b.start ? -1 : 1);
+	participants.sort((a, b) => a.start < b.start ? -1 : 0);
 	let lastUpperBound = 0;	
 	participants.forEach(entry => {
 		if (lastUpperBound !== entry.start)
 			throw new Error(`Error, gap in bound detected for boundary ${entry.start}`);
-		let atleastOneWin = false;
 		let ticketsLost = (entry.end - entry.start) / walkResolution;
 		while (walkPosition >= entry.start && walkPosition < entry.end && winners.length < ticketsForSale && ticketsLost > 0) {	
-			// console.log(walkPosition);
-			ticketsLost--;
+			--ticketsLost;
 			winners.push(entry.participant);
-			atleastOneWin = true;
 			walkPosition = (ticketsLost == 0 ? entry.end : walkPosition) + lcg.next(walkPosition, maxStepSize);			
 		}
+		
 		if (ticketsLost > 0) losers.push({ recipient: entry.participant, amount: ticketsLost });
-		if (!atleastOneWin)
-			walkPosition += lcg.next(walkPosition, maxStepSize);
 		lastUpperBound = entry.end;
 	});
 	return { nextParameters: { walkPosition, maxStepSize, ticketsForSale }, winners, losers };
