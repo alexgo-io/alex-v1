@@ -104,7 +104,7 @@
         (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
         (let 
             (
-              (dy (mul-down balance-y (if (<= ONE_8 (div-up balance-x (+ balance-x dx))) u0 (- ONE_8 (div-up balance-x (+ balance-x dx))))))
+              (dy (mul-down balance-y (if (<= ONE_8 (div-down balance-x (+ balance-x dx))) u0 (- ONE_8 (div-down balance-x (+ balance-x dx))))))
             )
             (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
             (ok dy)
@@ -129,7 +129,7 @@
         (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
         (let 
             (
-              (dx (mul-down balance-x (if (<= ONE_8 (div-up balance-y (+ balance-y dy))) u0 (- ONE_8 (div-up balance-y (+ balance-y dy))))))
+              (dx (mul-down balance-x (if (<= ONE_8 (div-down balance-y (+ balance-y dy))) u0 (- ONE_8 (div-down balance-y (+ balance-y dy))))))
             )
             (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
             (ok dx)
@@ -201,10 +201,10 @@
   (let
     (
       (spot (div-down balance-y balance-x))
-      (power (pow-down (div-up spot price) u50000000))
+      (power (pow-down (div-down spot price) u50000000))
     )
     (asserts! (< price spot) ERR-NO-LIQUIDITY)
-    (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
+    (ok (mul-down balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
   )  
 )
 
@@ -220,10 +220,10 @@
   (let
     (
       (spot (div-down balance-y balance-x))
-      (power (pow-down (div-up price spot) u50000000))
+      (power (pow-down (div-down price spot) u50000000))
     )
     (asserts! (> price spot) ERR-NO-LIQUIDITY)
-    (ok (mul-up balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
+    (ok (mul-down balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
   )
 )
 
@@ -246,38 +246,25 @@
 ;; @desc get-position-given-mint
 ;; @param balance-x; balance of token-x
 ;; @param balance-y; balance of token-y
-;; @param weight-x; weight of token-x
-;; @param weight-y; weight of token-y
 ;; @param total-supply; total supply of pool tokens
 ;; @param token; amount of pool token minted
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+(define-read-only (get-position-given-mint (balance-x uint) (balance-y uint) (total-supply uint) (token uint))
     (begin
-        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
-        (let
-            (   
-                ;; first calculate what % you need to mint
-                (token-supply (div-down token total-supply))
-                ;; calculate dx as % of balance-x corresponding to % you need to mint
-                (dx (mul-down balance-x token-supply))
-                (dy (mul-down balance-y token-supply))
-            )
-            (ok {dx: dx, dy: dy})
-        )
+        ;; calculate dx as % of balance-x corresponding to % you need to mint
+        (ok {dx: (div-down (mul-down balance-x token) total-supply), dy: (div-down (mul-down balance-y token) total-supply)})
     )
 )
 
 ;; @desc get-position-given-burn
 ;; @param balance-x; balance of token-x
 ;; @param balance-y; balance of token-y
-;; @param weight-x; weight of token-x
-;; @param weight-y; weight of token-y
 ;; @param total-supply; total supply of pool tokens
 ;; @param token; amount of pool token to be burnt
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
-    (get-position-given-mint balance-x balance-y weight-x weight-y total-supply token)
+(define-read-only (get-position-given-burn (balance-x uint) (balance-y uint) (total-supply uint) (token uint))
+    (get-position-given-mint balance-x balance-y total-supply token)
 )
 
 
