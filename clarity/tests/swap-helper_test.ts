@@ -2,7 +2,7 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
-import { FWPTestAgent1, FWPTestAgent2 } from './models/alex-tests-fixed-weight-pool.ts';
+import { FWPTestAgent1, FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
 import { USDAToken, WBTCToken, ALEXToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
@@ -37,7 +37,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let FWPTestSTX = new FWPTestAgent1(chain, deployer);
-        let FWPTestALEX = new FWPTestAgent2(chain, deployer);
+        let FWPTestALEX = new FWPTestAgent3(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         let alexToken = new ALEXToken(chain, deployer);
@@ -57,9 +57,9 @@ Clarinet.test({
         result.expectOk();      
         
         // Deployer creating a pool, initial tokens injected to the pool
-        result = FWPTestALEX.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, quantity * price, quantity * price);
+        result = FWPTestALEX.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, quantity * price, quantity * price);
         result.expectOk().expectBool(true);
-        result = FWPTestALEX.createPool(deployer, alexAddress, wbtcAddress, weightX, weightY, fwpalexwbtcAddress, multisigalexwbtcAddress, quantity * price, quantity);
+        result = FWPTestALEX.createPool(deployer, alexAddress, wbtcAddress, fwpalexwbtcAddress, multisigalexwbtcAddress, quantity * price, quantity);
         result.expectOk().expectBool(true);
 
         result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
@@ -69,7 +69,7 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(alexAddress), types.principal(wbtcAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(alexAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
@@ -83,7 +83,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let FWPTestSTX = new FWPTestAgent1(chain, deployer);
-        let FWPTestALEX = new FWPTestAgent2(chain, deployer);
+        let FWPTestALEX = new FWPTestAgent3(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         let alexToken = new ALEXToken(chain, deployer);
@@ -115,7 +115,7 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
@@ -129,7 +129,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let FWPTestSTX = new FWPTestAgent1(chain, deployer);
-        let FWPTestALEX = new FWPTestAgent2(chain, deployer);
+        let FWPTestALEX = new FWPTestAgent3(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         let alexToken = new ALEXToken(chain, deployer);
@@ -153,7 +153,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);        
         result = FWPTestSTX.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, quantity * price, quantity * price);
         result.expectOk().expectBool(true);
-        result = FWPTestALEX.createPool(deployer, alexAddress, wbtcAddress, weightX, weightY, fwpalexwbtcAddress, multisigalexwbtcAddress, quantity * price, quantity);
+        result = FWPTestALEX.createPool(deployer, alexAddress, wbtcAddress, fwpalexwbtcAddress, multisigalexwbtcAddress, quantity * price, quantity);
         result.expectOk().expectBool(true);
 
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
@@ -167,8 +167,8 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
