@@ -876,7 +876,7 @@ class FWPTestAgent3 {
 
   setMaxInRatio(user: Account, ratio: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("weighted-equation-50-50", "set-max-in-ratio", [
+      Tx.contractCall("simple-equation", "set-max-in-ratio", [
         types.uint(ratio)
       ], user.address),
     ]);
@@ -885,7 +885,7 @@ class FWPTestAgent3 {
 
   setMaxOutRatio(user: Account, ratio: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("weighted-equation-50-50", "set-max-out-ratio", [
+      Tx.contractCall("simple-equation", "set-max-out-ratio", [
         types.uint(ratio)
       ], user.address),
     ]);

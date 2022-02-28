@@ -529,8 +529,8 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/helpers/swap-helper.clar"
 depends_on = [ "trait-sip-010", "fixed-weight-pool", "fixed-weight-pool-alex" ]
 
-[contracts.weighted-equation-50-50]
-path = "contracts/equations/weighted-equation-50-50.clar"
+[contracts.simple-equation]
+path = "contracts/equations/simple-equation.clar"
 depends_on = [ ]
 
 [contracts.simple-weight-pool-alex]
@@ -539,7 +539,7 @@ depends_on = [
   "alex-vault",
   "trait-sip-010",
   "trait-vault",
-  "weighted-equation-50-50",
+  "simple-equation",
   "fixed-weight-pool",
   "alex-reserve-pool",
   "age000-governance-token",
