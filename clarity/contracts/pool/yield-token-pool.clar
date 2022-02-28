@@ -26,6 +26,7 @@
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
 (define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
+(define-constant ERR-INVALID-BALANCE (err u1001))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -161,7 +162,7 @@
             (balance-yield-token (+ (get balance-yield-token pool) (get balance-virtual pool)))
             (t-value (try! (get-t expiry listed)))
         )
-        (contract-call? .yield-token-equation get-yield balance-token balance-yield-token t-value)
+        (get-yield-from-equation balance-token balance-yield-token t-value)
     )
 )
 
@@ -177,7 +178,7 @@
             (balance-yield-token (+ (get balance-yield-token pool) (get balance-virtual pool)))
             (t-value (try! (get-t expiry listed)))
         )
-        (contract-call? .yield-token-equation get-price balance-token balance-yield-token t-value)
+        (get-price-from-equation balance-token balance-yield-token t-value)
     )
 )
 
@@ -1209,4 +1210,36 @@
       (ln-priv a)
    )
  )
+)
+
+;; @desc get-price
+;; @desc b_y = balance-yield-token
+;; @desc b_x = balance-token
+;; @desc price = (b_y / b_x) ^ t
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @returns (response uint uint)
+(define-read-only (get-price-from-equation (balance-x uint) (balance-y uint) (t uint))
+  (begin
+    (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
+    (ok (pow-up (div-down balance-y balance-x) t))
+  )
+)
+
+;; @desc get-yield
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @returns (response uint uint)
+(define-read-only (get-yield-from-equation (balance-x uint) (balance-y uint) (t uint))
+  (begin
+    (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)
+    (let
+        (
+            (price (pow-up (div-down balance-y balance-x) t))
+        )
+        (if (<= price ONE_8) (ok u0) (ok (- price ONE_8)))
+    )
+  )
 )

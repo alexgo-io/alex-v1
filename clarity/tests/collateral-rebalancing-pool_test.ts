@@ -27,16 +27,15 @@ const multisigncrpwbtcwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.m
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda"
 // conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
 const ONE_8 = 100000000
-const expiry = 59760 * ONE_8
-const expiry79760 = 79760 * ONE_8
-const ltv_0 = 0.8 * ONE_8
+const expiry = 59760
+const expiry79760 = 79760
+const ltv_0 = 0.5 * ONE_8
 const conversion_ltv = 0.95 * ONE_8
 const bs_vol = 0.8 * ONE_8
 const moving_average = 0 * ONE_8 // for testing only
 const token_to_maturity = 1 * ONE_8 // for testing only
 
 const wbtcPrice = 50000*ONE_8
-const usdaPrice = 1*ONE_8
 
 const weightX = 0.5 * ONE_8
 const weightY = 0.5 * ONE_8
@@ -76,6 +75,11 @@ Clarinet.test({
         // result.expectOk();  
         chain.mineEmptyBlock(2);
 
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
+
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
     
@@ -103,22 +107,22 @@ Clarinet.test({
         
         let spot = Number((call.result.replace(/\D/g, "")));
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(99928977);
+        call.result.expectOk().expectUint(99897640);
 
         // ltv-0 is 80%, but injecting liquidity pushes up LTV
         call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(80055898);
+        call.result.expectOk().expectUint(48829702);
 
         // Check pool details and print
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(79999040);
-        position['key-supply'].expectUint(79999040);
-        position['weight-x'].expectUint(66533020);
-        position['weight-y'].expectUint(ONE_8 - 66533020);        
-        position['balance-x'].expectUint(3326651000000);
-        position['balance-y'].expectUint(33465520);
-        position['strike'].expectUint(50000 * ONE_8);
+        position['yield-supply'].expectUint(48779720);
+        position['key-supply'].expectUint(48779720);
+        position['weight-x'].expectUint(95000000);
+        position['weight-y'].expectUint(ONE_8 - 95000000);        
+        position['balance-x'].expectUint(4750000000000);
+        position['balance-y'].expectUint(4992640);
+        position['strike'].expectUint(ltv_0 / 50000);
         position['ltv-0'].expectUint(ltv_0);
         position['bs-vol'].expectUint(bs_vol);
         position['conversion-ltv'].expectUint(conversion_ltv);
@@ -128,79 +132,82 @@ Clarinet.test({
         result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(100 * ONE_8);
-        position['dy'].expectUint(199093); 
+        position['dy'].expectUint(195561); 
+
+        call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
+        call.result.expectOk().expectUint(95000000);          
 
         // arbtrageur selling 0.002 wbtc for usda
         result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.002 * ONE_8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(22269275905);
+        position['dx'].expectUint(10221814400);
         position['dy'].expectUint(0.002 * ONE_8);        
 
         // borrow $5,000 more and convert to wbtc
         // remember, the first sell creates profit to LP
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 5000 * ONE_8);
         position = result.expectOk().expectTuple();
-        position['dy'].expectUint(7890937);
-        position['dx'].expectUint(7891094);
+        position['dy'].expectUint(4858099);
+        position['dx'].expectUint(4857837);
 
         // supply increased
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(3552123214095);
-        position['balance-y'].expectUint(38623324);
-        position['yield-supply'].expectUint(87889977);
-        position['key-supply'].expectUint(87889977)
+        position['balance-x'].expectUint(5224778185600);
+        position['balance-y'].expectUint(5494768);
+        position['yield-supply'].expectUint(53637819);
+        position['key-supply'].expectUint(53637819)
 
         // pool value increases after adding positions
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(109514119);
+        call.result.expectOk().expectUint(109833588);
         
         call = await CRPTest.getPoolValueInCollateral(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(5487421094631);
+        call.result.expectOk().expectUint(5499929312290);
         
         // let's check what is the weight to wbtc (token)
-        call = await CRPTest.getWeightY(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(52716714);                     
+        call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
+        call.result.expectOk().expectUint(95000000);                     
         
         // simulate to expiry
-        chain.mineEmptyBlockUntil((expiry / ONE_8)) 
+        chain.mineEmptyBlockUntil(expiry) 
 
         // but lender cannot yet redeem
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0.5 * ONE_8);
         result.expectErr().expectUint(2017);        
 
         // simulate to expiry + 1
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)  
+        chain.mineEmptyBlockUntil(expiry + 1)  
         
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(109514119)
+        call.result.expectOk().expectUint(109833588)
 
         // deployer holds less than total supply because he sold some yield-wbtc for wbtc
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(79999040);
+        position['dy'].expectUint(48779720);
 
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(28308470);
-        position['yield-supply'].expectUint(7890937);
-        position['key-supply'].expectUint(87889977);
+        position['balance-x'].expectUint(2756906689600);
+        position['balance-y'].expectUint(5336456);
+        position['yield-supply'].expectUint(4858099);
+        position['key-supply'].expectUint(53637819);
     
         // also remove all key tokens
         result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, expiry, keywbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(20417533)
+        position['dx'].expectUint(2756906689600);
+        position['dy'].expectUint(478357)
         
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(7890937);
+        position['yield-supply'].expectUint(4858099);
         position['key-supply'].expectUint(0);        
         position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(7890937);                
+        position['balance-y'].expectUint(4858099);                
     },    
 });
 
@@ -231,6 +238,11 @@ Clarinet.test({
         // result = wstxToken.mintFixed(wallet_1, wallet_1.address, 200000 * ONE_8);
         // result.expectOk();        
         chain.mineEmptyBlock(2);
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -265,7 +277,7 @@ Clarinet.test({
         result.expectErr().expectUint(2026);        
 
         // simulate to expiry + 1
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)
+        chain.mineEmptyBlockUntil(expiry + 1)
 
         // supplying a wrong pool-token throws an error
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, wrongPooltokenAddress, ONE_8);        
@@ -302,6 +314,11 @@ Clarinet.test({
         // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         // result.expectOk();
         chain.mineEmptyBlock(1);
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -324,7 +341,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         // simulate to half way to expiry
-        chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)
+        chain.mineEmptyBlockUntil(expiry / 2)
 
         result = YTPTest.createPool(deployer, expiry79760, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
         result.expectOk().expectBool(true);
@@ -354,6 +371,11 @@ Clarinet.test({
         // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         // result.expectOk(); 
         chain.mineEmptyBlock(1);    
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -380,107 +402,23 @@ Clarinet.test({
         call.result.expectOk();
         let spot = Number((call.result.replace(/\D/g, "")));
 
-        call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(99929048);
-
-        // ltv-0 is 80%, but injecting liquidity pushes up LTV
-        call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(80055841);
-
         call = await CRPTest.getXgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
-        call.result.expectOk().expectUint(107361307607);
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 107361307607, 0);
+        call.result.expectOk().expectUint(22355495000);
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 22355495000, 0);
         let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(107361307607);
-        position['dy'].expectUint(2047874);
+        position['dx'].expectUint(22355495000);
+        position['dy'].expectUint(426112);
         
         call = await CRPTest.getYgivenPrice(wbtcAddress, usdaAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 * 0.98/ ONE_8)));
-        call.result.expectOk().expectUint(666208);
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 666208, 0);
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(38841132995);
-        position['dy'].expectUint(666208);   
+        call.result.expectOk().expectUint(3032352);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 3032352, 0);
+        position = result.expectErr().expectUint(4002);
+        
     },    
 });  
 
 Clarinet.test({
-    name: "CRP : testing pegged CRP (= yield-token collateralised by token)",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let CRPTest = new CRPTestAgent1(chain, deployer);
-        let YTPTest = new YTPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let yieldWBTC = new YIELD_WBTC(chain, deployer);
-        // let wstxToken = new WSTXToken(chain, deployer);
-
-        // Deployer minting initial tokens
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        // result.expectOk();
-        result = yieldWBTC.mintFixed(deployer, expiry, 10000 * ONE_8, deployer.address);
-        result.expectOk().expectBool(true);  
-        chain.mineEmptyBlock(1);
-
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
-        result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
-        result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
-        result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
-        result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
-        result.expectOk().expectBool(true);              
-
-        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ, wbtcQ);        
-        result.expectOk().expectBool(true);        
-
-        // sell some yield-token to create a positive yield
-        result = YTPTest.swapYForX(deployer, expiry, yieldwbtcAddress, wbtcAddress, 5*ONE_8, 0);
-        let position:any = result.expectOk().expectTuple();
-        
-        let call = await YTPTest.getPrice(expiry, yieldwbtcAddress);
-        call.result.expectOk().expectUint(100071149);        
-
-        let ltv_00 = 0.8e+8;
-        let conversion_ltv_0 = 0.98e+8;
-        let bs_vol_0 = 0.1e+8;
-        let collateral = ONE_8;
-        let moving_average_0 = 0.95e+8
-
-        //Deployer creating a pool, initial tokens injected to the pool
-        result = CRPTest.createPool(deployer, wbtcAddress, wbtcAddress, expiry, yieldwbtcAddress, keywbtcwbtcAddress, multisigncrpwbtcwbtcAddress, ltv_00, conversion_ltv_0, bs_vol_0, moving_average_0, token_to_maturity, collateral);
-        result.expectOk().expectBool(true);
-
-        call = await CRPTest.getSpot(wbtcAddress,usdaAddress)
-        call.result.expectOk();
-        let spot = Number((call.result.replace(/\D/g, "")));
-
-        call = await CRPTest.getPoolValueInToken(wbtcAddress, wbtcAddress, expiry);
-        call.result.expectOk().expectUint(collateral);
-        
-        // ltv-0 is 80%, but injecting liquidity pushes up LTV
-        call = await CRPTest.getLtv(wbtcAddress, wbtcAddress, expiry);
-        call.result.expectOk().expectUint(ltv_00);
-
-        // pegged CRP throws error if someone tries to swap
-        call = await CRPTest.getXgivenPrice(wbtcAddress, wbtcAddress, expiry, Math.round( ONE_8 / (wbtcPrice * 1.1 / ONE_8)));
-        call.result.expectOk().expectUint(9657868729);
-        result = CRPTest.swapXForY(deployer, wbtcAddress, wbtcAddress, expiry, 9657868729, 0);
-        position = result.expectErr().expectUint(2001);
-    },    
-});        
-
-Clarinet.test({
-    name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool throws error",
+    name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01 throws error",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -501,6 +439,11 @@ Clarinet.test({
         result = yieldWBTC.mintFixed(deployer, expiry, 10000 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);  
         chain.mineEmptyBlock(1);
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -518,6 +461,9 @@ Clarinet.test({
         let ltv_0_0 = 0.5 * ONE_8;
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 0.2 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
+
+       let call:any = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
+        call.result.expectOk().expectUint(95000000);                
 
         // attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool throws error
         result = CRPTest.addToPosition(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0.11 * Math.round(wbtcPrice * wbtcQ / ONE_8));
@@ -545,6 +491,11 @@ Clarinet.test({
         // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         // result.expectOk();  
         chain.mineEmptyBlock(1);   
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -581,11 +532,13 @@ Clarinet.test({
         result.expectErr().expectUint(4001) 
 
         // simulate to expiry + 1
-        chain.mineEmptyBlockUntil((expiry / ONE_8) + 1)    
+        chain.mineEmptyBlockUntil(expiry + 1)    
         
         // arbtrageur attepmts to retreive back with zero value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0);        
-        result.expectErr().expectUint(3) 
+        let position:any = result.expectOk().expectTuple();
+        position['dx'].expectUint(0);
+        position['dy'].expectUint(0);
 
         // arbitrageur attempts to retreuve back with small value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0.001 * ONE_8);        
@@ -614,7 +567,12 @@ Clarinet.test({
         result.expectOk();
         // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         // result.expectOk();  
-        chain.mineEmptyBlock(1);     
+        chain.mineEmptyBlock(1);   
+        
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -633,7 +591,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8);
-        result.expectOk().expectUint(1996);
+        result.expectOk().expectUint(1995);
 
         result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, 0);
         result.expectOk().expectUint(0);
@@ -642,7 +600,7 @@ Clarinet.test({
         result.expectErr().expectUint(2001);
 
         result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, expiry, 500);
-        result.expectOk().expectUint(24750477);
+        result.expectOk().expectUint(24747500);
 
         result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, expiry, 0);
         result.expectOk().expectUint(0);
@@ -681,6 +639,11 @@ Clarinet.test({
         // result = wstxToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
         // result.expectOk();  
         chain.mineEmptyBlock(1);    
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);          
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
@@ -703,15 +666,15 @@ Clarinet.test({
         result.expectOk().expectBool(true);
 
         let ROresult:any = YieldToken.totalSupply(expiry)
-        ROresult.result.expectOk().expectUint(79999040);
+        ROresult.result.expectOk().expectUint(48779720);
 
         ROresult = YieldToken.balanceOf(expiry, deployer.address)
-        ROresult.result.expectOk().expectUint(79999040);
+        ROresult.result.expectOk().expectUint(48779720);
 
         ROresult = KeyToken.totalSupply(expiry)
-        ROresult.result.expectOk().expectUint(79999040);
+        ROresult.result.expectOk().expectUint(48779720);
         ROresult = KeyToken.balanceOf(expiry, deployer.address)
-        ROresult.result.expectOk().expectUint(79999040);
+        ROresult.result.expectOk().expectUint(48779720);
 
         // Fee rate Setting Proposal of Multisig
         result = MultiSigTest.propose(deployer, expiry, 1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
@@ -720,10 +683,10 @@ Clarinet.test({
         // Block 1000 mining
         chain.mineEmptyBlock(1000);
 
-        result = MultiSigTest.voteFor(deployer, yieldwbtcAddress, 1, 79999040 * 9 / 10 )
-        result.expectOk().expectUint(71999136)
-        result = MultiSigTest.voteFor(deployer, keywbtcAddress, 1, 79999040 * 9 / 10 )
-        result.expectOk().expectUint(71999136)
+        result = MultiSigTest.voteFor(deployer, yieldwbtcAddress, 1, Math.round(48779720 * 9 / 10) )
+        result.expectOk().expectUint(Math.round(48779720 * 9 / 10))
+        result = MultiSigTest.voteFor(deployer, keywbtcAddress, 1, Math.round(48779720 * 9 / 10) )
+        result.expectOk().expectUint(Math.round(48779720 * 9 / 10))
 
         // Block 1440 mining for ending proposal
         chain.mineEmptyBlockUntil(2441);
@@ -734,28 +697,5 @@ Clarinet.test({
 
         result = CRPTest.setFeeRebate(contractOwner, wbtcAddress, usdaAddress, expiry, feeRebate)
         result.expectOk().expectBool(true) // Success      
-        
-        // Swap
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 100 * ONE_8, 0);
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(90 * ONE_8);  // 10% of fee charged
-        position['dy'].expectUint(179264);         
-
-        // fee : 10 * ONE_8 
-        // fee-rebate : 0.5 * ONE_8
-        let call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(3336170600000);
-        position['balance-y'].expectUint(33285936); 
-
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.001 * ONE_8, 0);
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(9952530857);
-        position['dy'].expectUint(0.0009 * ONE_8);    
-
-        call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
-        position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(3336170600000 - 9952530857);
-        position['balance-y'].expectUint(33285936 + 0.00095 * ONE_8);
     }
 })

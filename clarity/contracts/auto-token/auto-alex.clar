@@ -1,23 +1,18 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
-(define-fungible-token wstx)
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-data-var token-name (string-ascii 32) "Stacks Token")
-(define-data-var token-symbol (string-ascii 10) "STX")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-wstx.json"))
-
-(define-data-var token-decimals uint u8)
+(define-fungible-token auto-alex)
 
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
-;; errors
-(define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-MINT-FAILED (err u6002))
-(define-constant ERR-BURN-FAILED (err u6003))
-(define-constant ERR-TRANSFER-FAILED (err u3000))
-(define-constant ERR-NOT-SUPPORTED (err u6004))
+(define-data-var token-name (string-ascii 32) "Auto ALEX")
+(define-data-var token-symbol (string-ascii 10) "auto-alex")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-alex.json"))
 
+(define-data-var token-decimals uint u8)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -30,9 +25,17 @@
   )
 )
 
+;; --- Authorisation check
+
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+;; Other
 
 (define-public (set-name (new-name (string-ascii 32)))
 	(begin
@@ -62,14 +65,26 @@
 	)
 )
 
-;; ---------------------------------------------------------
-;; SIP-10 Functions
-;; ---------------------------------------------------------
-
-(define-read-only (get-total-supply)
-  ;; least authority Issue D
-  ERR-NOT-SUPPORTED
+(define-public (add-approved-contract (new-approved-contract principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts new-approved-contract true))
+	)
 )
+
+;; --- Public functions
+
+;; sip010-ft-trait
+
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+    (begin
+        (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+        (try! (ft-transfer? auto-alex amount sender recipient))
+        (match memo to-print (print to-print) 0x)
+        (ok true)
+    )
+)
+
 (define-read-only (get-name)
 	(ok (var-get token-name))
 )
@@ -83,30 +98,46 @@
 )
 
 (define-read-only (get-balance (who principal))
-	(ok (/ (* (stx-get-balance who) ONE_8) (pow u10 u6)))
+	(ok (ft-get-balance auto-alex who))
+)
+
+(define-read-only (get-total-supply)
+	(ok (ft-get-supply auto-alex))
 )
 
 (define-read-only (get-token-uri)
 	(ok (var-get token-uri))
 )
 
-;; @desc transfer
-;; @restricted sender; tx-sender should be sender
-;; @params amount
-;; @params sender
-;; @params recipient
-;; @params memo; expiry
-;; @returns (response bool uint)/ error
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (stx-transfer? (/ (* amount (pow u10 u6)) ONE_8) sender recipient))
-    (match memo to-print (print to-print) 0x)
-    (ok true)
-  )
-)
+;; --- Protocol functions
 
 (define-constant ONE_8 (pow u10 u8))
+
+;; @desc mint
+;; @restricted ContractOwner/Approved Contract
+;; @params token-id
+;; @params amount
+;; @params recipient
+;; @returns (response bool)
+(define-public (mint (amount uint) (recipient principal))
+	(begin		
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ft-mint? auto-alex amount recipient)
+	)
+)
+
+;; @desc burn
+;; @restricted ContractOwner/Approved Contract
+;; @params token-id
+;; @params amount
+;; @params sender
+;; @returns (response bool)
+(define-public (burn (amount uint) (sender principal))
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ft-burn? auto-alex amount sender)
+	)
+)
 
 ;; @desc pow-decimals
 ;; @returns uint
@@ -132,8 +163,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  ;; least authority Issue D
-  ERR-NOT-SUPPORTED
+  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
 )
 
 ;; @desc get-balance-fixed
@@ -154,14 +184,11 @@
   (transfer (fixed-to-decimals amount) sender recipient memo)
 )
 
-(define-public (mint (amount uint) (recipient principal))
-  ERR-MINT-FAILED
-)
-
-(define-public (burn (amount uint) (sender principal))
-  ERR-BURN-FAILED
-)
-
+;; @desc mint-fixed
+;; @params token-id
+;; @params amount
+;; @params recipient
+;; @returns (response bool)
 (define-public (mint-fixed (amount uint) (recipient principal))
   (mint (fixed-to-decimals amount) recipient)
 )
@@ -175,24 +202,17 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-;; @desc check-err
-;; @params result 
-;; @params prior
-;; @returns (response bool uint)
-(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
-    (match prior 
-        ok-value result
-        err-value (err err-value)
-    )
+(define-private (mint-fixed-many-iter (item {amount: uint, recipient: principal}))
+	(mint-fixed (get amount item) (get recipient item))
 )
 
-(define-private (transfer-from-tuple (recipient { to: principal, amount: uint }))
-  (ok (unwrap! (transfer-fixed (get amount recipient) tx-sender (get to recipient) none) ERR-TRANSFER-FAILED))
-)
-
-(define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
-  (fold check-err (map transfer-from-tuple recipients) (ok true))
+(define-public (mint-fixed-many (recipients (list 200 {amount: uint, recipient: principal})))
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ok (map mint-fixed-many-iter recipients))
+	)
 )
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
+(map-set approved-contracts .alex-yield-vault true)

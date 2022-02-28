@@ -82,6 +82,11 @@ Clarinet.test({
         // result = wstxToken.mintFixed(wallet_5, wallet_5.address, 200000 * ONE_8);
         // result.expectOk();
         chain.mineEmptyBlock(3);
+
+        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);             
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
