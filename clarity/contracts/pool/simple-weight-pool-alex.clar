@@ -2,7 +2,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; simple-weight-pool-alex
-;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
+;; simple-weight-pool implements 50:50 fixed-weight-pool (i.e. uniswap)
 ;; simple-weight-pool-alex is anchored to ALEX (and routes other tokens)
 ;; ALEX / STX is bridged to fixed-weight-pool (i.e. STX-anchored pool)
 
@@ -767,7 +767,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-y-given-x (get balance-x pool) (get balance-y pool) dx)        
+        (contract-call? .simple-equation get-y-given-x (get balance-x pool) (get balance-y pool) dx)        
     )
 )
 
@@ -780,7 +780,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-x-given-y (get balance-x pool) (get balance-y pool) dy)
+        (contract-call? .simple-equation get-x-given-y (get balance-x pool) (get balance-y pool) dy)
     )
 )
 
@@ -843,7 +843,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-y-in-given-x-out (get balance-x pool) (get balance-y pool) dx)        
+        (contract-call? .simple-equation get-y-in-given-x-out (get balance-x pool) (get balance-y pool) dx)        
     )
 )
 
@@ -852,7 +852,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-x-in-given-y-out (get balance-x pool) (get balance-y pool) dy)
+        (contract-call? .simple-equation get-x-in-given-y-out (get balance-x pool) (get balance-y pool) dy)
     )
 )
 
@@ -911,7 +911,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-x-given-price (get balance-x pool) (get balance-y pool) price)
+        (contract-call? .simple-equation get-x-given-price (get balance-x pool) (get balance-y pool) price)
     )
 )
 
@@ -926,7 +926,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-y-given-price (get balance-x pool) (get balance-y pool) price)
+        (contract-call? .simple-equation get-y-given-price (get balance-x pool) (get balance-y pool) price)
     )
 )
 
@@ -942,7 +942,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-token-given-position (get balance-x pool) (get balance-y pool) (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
+        (contract-call? .simple-equation get-token-given-position (get balance-x pool) (get balance-y pool) (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 
@@ -957,7 +957,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-position-given-mint (get balance-x pool) (get balance-y pool) (get total-supply pool) token)
+        (contract-call? .simple-equation get-position-given-mint (get balance-x pool) (get balance-y pool) (get total-supply pool) token)
     )
 )
 
@@ -972,7 +972,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation-50-50 get-position-given-burn (get balance-x pool) (get balance-y pool) (get total-supply pool) token)
+        (contract-call? .simple-equation get-position-given-burn (get balance-x pool) (get balance-y pool) (get total-supply pool) token)
     )
 )
 

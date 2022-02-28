@@ -115,10 +115,12 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("fixed-weight-pool", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
+        block.receipts[1].result.expectOk();
     },
 });
 
@@ -168,10 +170,12 @@ Clarinet.test({
         const block = chain.mineBlock(
             [
                 Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("fixed-weight-pool", "swap-helper", [types.principal(usdaAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
         block.receipts[1].result.expectOk();
+        block.receipts[2].result.expectOk();
     },
 });
