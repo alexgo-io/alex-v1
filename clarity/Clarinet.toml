@@ -524,3 +524,27 @@ depends_on = [ "auto-alex", "age000-governance-token", "trait-ownable", "alex-re
 [contracts.fwp-alex-wbtc-50-50]
 path = "contracts/pool-token/fwp-alex-wbtc-50-50.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.weighted-equation-50-50]
+path = "contracts/equations/weighted-equation-50-50.clar"
+depends_on = [ ]
+
+[contracts.simple-weight-pool-alex]
+path = "contracts/pool/simple-weight-pool-alex.clar"
+depends_on = [
+  "alex-vault",
+  "trait-sip-010",
+  "trait-vault",
+  "weighted-equation-50-50",
+  "fixed-weight-pool",
+  "alex-reserve-pool",
+  "age000-governance-token",
+  "token-wstx"
+]
+
+[contracts.multisig-fwp-alex-usda-simple]
+path = "contracts/multisig/multisig-fwp-alex-usda-simple.clar"
+depends_on = [
+  "fwp-alex-usda-50-50",
+  "simple-weight-pool-alex"
+]
