@@ -322,7 +322,6 @@ class FWP_ALEX_USDA_5050 {
   }
 }
 export { FWP_ALEX_USDA_5050 };
-
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
   deployer: Account;
