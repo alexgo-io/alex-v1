@@ -525,6 +525,10 @@ depends_on = [ "auto-alex", "age000-governance-token", "trait-ownable", "alex-re
 path = "contracts/pool-token/fwp-alex-wbtc-50-50.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
 
+[contracts.swap-helper]
+path = "contracts/helpers/swap-helper.clar"
+depends_on = [ "trait-sip-010", "fixed-weight-pool", "fixed-weight-pool-alex" ]
+
 [contracts.weighted-equation-50-50]
 path = "contracts/equations/weighted-equation-50-50.clar"
 depends_on = [ ]

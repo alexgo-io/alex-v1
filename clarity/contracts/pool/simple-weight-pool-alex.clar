@@ -1,9 +1,9 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-;; fixed-weight-pool-alex
+;; simple-weight-pool-alex
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
-;; fixed-weight-pool-alex is anchored to ALEX (and routes other tokens)
+;; simple-weight-pool-alex is anchored to ALEX (and routes other tokens)
 ;; ALEX / STX is bridged to fixed-weight-pool (i.e. STX-anchored pool)
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
@@ -471,7 +471,7 @@
 ;; @params dx 
 ;; @params min-dy 
 ;; @returns (ok (tuple))
-(define-private (swap-alex-for-y (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))    
+(define-public (swap-alex-for-y (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))    
     (begin
         (try! (check-pool-status .age000-governance-token (contract-of token-y-trait)))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
@@ -523,7 +523,7 @@
 ;; @params dy
 ;; @params dx
 ;; @returns (response tuple)
-(define-private (swap-y-for-alex (token-y-trait <ft-trait>) (dy uint) (min-dx (optional uint)))
+(define-public (swap-y-for-alex (token-y-trait <ft-trait>) (dy uint) (min-dx (optional uint)))
     (begin
         (try! (check-pool-status .age000-governance-token (contract-of token-y-trait)))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
