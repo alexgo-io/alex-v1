@@ -527,7 +527,7 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.swap-helper]
 path = "contracts/helpers/swap-helper.clar"
-depends_on = [ "trait-sip-010", "fixed-weight-pool", "fixed-weight-pool-alex" ]
+depends_on = [ "trait-sip-010", "fixed-weight-pool", "simple-weight-pool-alex" ]
 
 [contracts.simple-equation]
 path = "contracts/equations/simple-equation.clar"
