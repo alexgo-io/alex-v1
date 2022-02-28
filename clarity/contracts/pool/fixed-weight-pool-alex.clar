@@ -500,7 +500,7 @@
 ;; @params dx 
 ;; @params min-dy 
 ;; @returns (ok (tuple))
-(define-private (swap-alex-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
+(define-public (swap-alex-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
         (try! (check-pool-status .age000-governance-token (contract-of token-y-trait) (- ONE_8 weight-y) weight-y))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
@@ -554,7 +554,7 @@
 ;; @params dy
 ;; @params dx
 ;; @returns (response tuple)
-(define-private (swap-y-for-alex (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
+(define-public (swap-y-for-alex (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
         (try! (check-pool-status .age000-governance-token (contract-of token-y-trait) (- ONE_8 weight-y) weight-y))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
