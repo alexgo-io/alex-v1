@@ -107,7 +107,6 @@
 ;; @desc get-pool-exists
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (optional (tuple))
 (define-read-only (get-pool-exists (token-x principal) (token-y principal))
     (map-get? pools-data-map { token-x: token-x, token-y: token-y }) 
@@ -178,7 +177,6 @@
 ;; @desc get-oracle-enabled
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response bool uint)
 (define-read-only (get-oracle-enabled (token-x principal) (token-y principal))
     (ok 
@@ -194,7 +192,6 @@
 ;; @restricted contract-owner
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response bool uint)
 (define-public (set-oracle-enabled (token-x principal) (token-y principal))
     (let
@@ -217,7 +214,6 @@
 ;; @desc returns the moving average used to determine oracle price
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-average (token-x principal) (token-y principal))
     (ok 
@@ -261,7 +257,6 @@
 ;; @desc price-oracle that is less up to date but more resilient to manipulation
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x principal) (token-y principal))
     (let
@@ -285,7 +280,6 @@
 ;; @desc price-oracle that is more up to date but less resilient to manipulation
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (token-x principal) (token-y principal))
     (begin                
@@ -327,7 +321,6 @@
 ;; @restricted contract-owner
 ;; @param token-x-trait; token-x
 ;; @param token-y-trait; token-y
-
 ;; @param pool-token; pool token representing ownership of the pool
 ;; @param multisig-vote; DAO used by pool token holers
 ;; @param dx; amount of token-x added
@@ -681,7 +674,6 @@
 ;; @desc get-fee-rate-x
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response uint uint)
 (define-read-only (get-fee-rate-x (token-x principal) (token-y principal))
     (ok (get fee-rate-x (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL)))
@@ -690,7 +682,6 @@
 ;; @desc get-fee-rate-y
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response uint uint)
 (define-read-only (get-fee-rate-y (token-x principal) (token-y principal))
     (ok (get fee-rate-y (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL)))
@@ -700,7 +691,6 @@
 ;; @restricted fee-to-address
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @param fee-rate-x; new fee-rate-x
 ;; @returns (response bool uint)
 (define-public (set-fee-rate-x (token-x principal) (token-y principal) (fee-rate-x uint))
@@ -724,7 +714,6 @@
 ;; @restricted fee-to-address
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @param fee-rate-y; new fee-rate-y
 ;; @returns (response bool uint)
 (define-public (set-fee-rate-y (token-x principal) (token-y principal) (fee-rate-y uint))
@@ -747,7 +736,6 @@
 ;; @desc get-fee-to-address
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
-
 ;; @returns (response principal uint)
 (define-read-only (get-fee-to-address (token-x principal) (token-y principal))
     (ok (get fee-to-address (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL)))
