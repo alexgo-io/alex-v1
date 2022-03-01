@@ -160,6 +160,10 @@
 	(map-get? offering-ticket-bounds {ido-id: ido-id, owner: owner})
 )
 
+(define-read-only (get-offering-ticket-amounts (ido-id uint) (owner principal))
+	(map-get? offering-ticket-amounts {ido-id: ido-id, owner: owner})
+)
+
 (define-public (register (ido-id uint) (apower-in-fixed uint) (payment-token <ft-trait>))
 	(let
 		(
@@ -294,7 +298,7 @@
 			(k {ido-id: (get ido-id p), owner: (get recipient e)})
 			(bounds (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input))
 		)		
-		;; (map-delete offering-ticket-bounds k)
+		(map-delete offering-ticket-bounds k)
 		(asserts! 
 			(and 
 				(<= (get end bounds) (get upper-bound p)) 
