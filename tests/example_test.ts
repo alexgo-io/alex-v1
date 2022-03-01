@@ -44,7 +44,7 @@ Clarinet.test({
       const parameters: StandardTestParameters = {
         totalIdoTokens: 40000,
         idoOwner: accountA,
-        ticketsForSale: 401,
+        ticketsForSale: 801,
         idoTokensPerTicket: 50,
         pricePerTicketInFixed: 5000000000,
         activationThreshold: 1,
@@ -100,7 +100,6 @@ Clarinet.test({
         extractBounds(receipt.result)
       );
 
-      //FIXME this +2 is needed because the VRF of block registrationEndHeight + 1 is used, we need to guard for this in the contract.
       chain.mineEmptyBlockUntil(registrationEndHeight + 2);
 
       const parametersFromChain = chain.callReadOnlyFn(
