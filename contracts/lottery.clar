@@ -294,7 +294,7 @@
 			(k {ido-id: (get ido-id p), owner: (get recipient e)})
 			(bounds (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input))
 		)		
-		(map-delete offering-ticket-bounds k)
+		;; (map-delete offering-ticket-bounds k)
 		(asserts! 
 			(and 
 				(<= (get end bounds) (get upper-bound p)) 
