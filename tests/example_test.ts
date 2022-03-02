@@ -188,14 +188,14 @@ Clarinet.test({
         assertEquals(ticketRecipients[index]['amount'] / parameters['apowerPerTicketInFixed'], won + lost);
       }
                    
-      maxChunkSize = 200;
+      maxChunkSize = 1;
       for (
         let index = 0;
         index < losers.losers.length;
         index += maxChunkSize
       ) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
-        // console.log(losers_sliced);
+        console.log(losers_sliced);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
