@@ -1,1 +1,1 @@
-{ "name": "alex-launchpad", "dependencies": { "alex_v1": { "commit": "cade9ca60fa5c91718afd5c9efc4af450dabc4ca", "git": "git@github.com:alexgo-io/alex-v1.git", "contracts_path": "clarity/contracts" } } }
+{ "name": "alex-launchpad", "dependencies": { "alex_v1": { "commit": "3f77b7a130c6ce56ec2766152c9a40e576505a40", "git": "git@github.com:alexgo-io/alex-v1.git", "contracts_path": "clarity/contracts" } } }

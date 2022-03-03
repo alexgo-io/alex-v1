@@ -8,6 +8,7 @@ import {
   contractPrincipal,
   extractBounds,
   extractParameters,
+  determineApower
 } from "./deps.ts";
 import type { Chain, Account, StandardTestParameters } from "./deps.ts";
 import {
@@ -17,8 +18,209 @@ import {
   IdoParticipant,
 } from "../lib/launchpad.ts";
 
+const parameters = {
+  totalIdoTokens: 40000,
+  idoOwners: undefined,
+  ticketsForSale: 801,
+  idoTokensPerTicket: 50,
+  pricePerTicketInFixed: 5000000000,
+  activationThreshold: 1,
+  ticketRecipients: undefined,  
+  registrationStartHeight: 10,
+  registrationEndHeight: 20,
+  claimEndHeight: 30,
+  apowerPerTicketInFixed: [10000000000, 10000000000, 10000000000, 10000000000, 10000000000],
+  tierThreshold: 10,
+  registrationMaxTickets: 999999999999
+};
+
 Clarinet.test({
-  name: "Example claim walk test",
+  name: "Launchpad: only owner can create pool",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
+      "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
+    ].map((wallet) => accounts.get(wallet)!);
+
+    let params =
+      {
+        ...parameters,
+        idoOwner: accountA
+      };
+
+    const block = chain.mineBlock([
+      Tx.contractCall("lottery", "create-pool", [
+        types.principal(contractPrincipal(deployer, "token-t-alex")),
+        types.principal(contractPrincipal(deployer, "token-wstx")),
+        types.tuple({
+          "ido-owner": types.principal(params.idoOwner.address),
+          "ido-tokens-per-ticket": types.uint(params.idoTokensPerTicket),
+          "price-per-ticket-in-fixed": types.uint(params.pricePerTicketInFixed),
+          "activation-threshold": types.uint(params.activationThreshold),
+          "registration-start-height": types.uint(params.registrationStartHeight),
+          "registration-end-height": types.uint(params.registrationEndHeight),
+          "claim-end-height": types.uint(params.claimEndHeight),
+          "apower-per-ticket-in-fixed": types.list(params.apowerPerTicketInFixed.map(e => { return types.uint(e) })),
+          "tier-threshold": types.uint(params.tierThreshold),
+          "registration-max-tickets": types.uint(params.registrationMaxTickets)
+        }),
+      ], accountA.address),
+    ]);
+    block.receipts[0].result.expectErr().expectUint(1000);   
+    }
+});
+
+Clarinet.test({
+  name: "Launchpad: only ido-owner/approved-address can add-to-positions",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
+      "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
+    ].map((wallet) => accounts.get(wallet)!);
+
+    let params =
+      {
+        ...parameters,
+        idoOwner: accountA
+      };
+
+    const first = chain.mineBlock([
+      Tx.contractCall("lottery", "create-pool", 
+        [
+          types.principal(contractPrincipal(deployer, "token-t-alex")),
+          types.principal(contractPrincipal(deployer, "token-wstx")),
+          types.tuple({
+            "ido-owner": types.principal(params.idoOwner.address),
+            "ido-tokens-per-ticket": types.uint(params.idoTokensPerTicket),
+            "price-per-ticket-in-fixed": types.uint(params.pricePerTicketInFixed),
+            "activation-threshold": types.uint(params.activationThreshold),
+            "registration-start-height": types.uint(params.registrationStartHeight),
+            "registration-end-height": types.uint(params.registrationEndHeight),
+            "claim-end-height": types.uint(params.claimEndHeight),
+            "apower-per-ticket-in-fixed": types.list(params.apowerPerTicketInFixed.map(e => { return types.uint(e) })),
+            "tier-threshold": types.uint(params.tierThreshold),
+            "registration-max-tickets": types.uint(params.registrationMaxTickets)
+          }),
+        ], deployer.address),
+    ]);
+    
+    const idoId = Number(first.receipts[0].result.expectOk().replace(/\D/g, ""));
+
+    const second = chain.mineBlock([
+      Tx.contractCall("lottery", "add-to-position", 
+        [
+          types.uint(idoId), 
+          types.uint(params.ticketsForSale), 
+          types.principal(contractPrincipal(deployer, "token-t-alex"))
+        ], accountB.address),
+    ]);
+    second.receipts[0].result.expectErr().expectUint(1000);
+
+    const approved_operator = accountC;
+    const third = chain.mineBlock([
+      Tx.contractCall("lottery", "add-approved-operator", 
+        [
+          types.principal(approved_operator.address)
+        ], deployer.address),
+      Tx.contractCall("token-t-alex", "mint-fixed", 
+        [
+          types.uint(params.totalIdoTokens * params.ticketsForSale * ONE_8), 
+          types.principal(approved_operator.address)
+        ], deployer.address),
+      Tx.contractCall("lottery", "add-to-position", 
+        [
+          types.uint(idoId), 
+          types.uint(params.ticketsForSale), 
+          types.principal(contractPrincipal(deployer, "token-t-alex"))
+        ], approved_operator.address),      
+    ]);
+    third.receipts[2].result.expectOk();
+  }
+});
+
+Clarinet.test({
+  name: "Launchpad: registration is allowed only once",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
+      "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
+    ].map((wallet) => accounts.get(wallet)!);
+
+      const ticketRecipient = { recipient: accountG, amount: 1 };
+
+      const params: StandardTestParameters = 
+        {
+          ...parameters,
+          idoOwner: accountA,
+          ticketRecipients: [ticketRecipient]
+        };
+        
+      const preparation = prepareStandardTest(chain, params, deployer);
+      preparation.blocks.map((block) =>
+        block.receipts.map(({ result }) => result.expectOk())
+      );
+
+      const { idoId } = preparation;
+      
+      chain.mineEmptyBlockUntil(parameters.registrationStartHeight);
+
+      const block = chain.mineBlock([
+        Tx.contractCall("lottery", "register",
+          [
+            types.uint(idoId),
+            types.uint(ticketRecipient.amount),
+            types.principal(contractPrincipal(deployer, "token-wstx")),
+          ], ticketRecipient.recipient.address),
+        Tx.contractCall("lottery", "register",
+          [
+            types.uint(idoId),
+            types.uint(ticketRecipient.amount),
+            types.principal(contractPrincipal(deployer, "token-wstx")),
+          ], ticketRecipient.recipient.address),          
+        ]);
+      block.receipts[0].result.expectOk();
+      block.receipts[1].result.expectErr().expectUint(10001);
+  },
+});
+
+Clarinet.test({
+  name: "Launchpad: attempt to register more than max fails",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
+      "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
+    ].map((wallet) => accounts.get(wallet)!);
+
+      const ticketRecipient = { recipient: accountG, amount: 2 };
+
+      const params: StandardTestParameters = 
+        {
+          ...parameters,
+          idoOwner: accountA,
+          ticketRecipients: [ticketRecipient],
+          registrationMaxTickets: 1
+        };
+        
+      const preparation = prepareStandardTest(chain, params, deployer);
+      preparation.blocks.map((block) =>
+        block.receipts.map(({ result }) => result.expectOk())
+      );
+
+      const { idoId } = preparation;
+      
+      chain.mineEmptyBlockUntil(parameters.registrationStartHeight);
+
+      const block = chain.mineBlock([
+        Tx.contractCall("lottery", "register",
+          [
+            types.uint(idoId),
+            types.uint(ticketRecipient.amount),
+            types.principal(contractPrincipal(deployer, "token-wstx")),
+          ], ticketRecipient.recipient.address),          
+        ]);
+      block.receipts[0].result.expectErr().expectUint(2048);
+  },
+});
+
+
+Clarinet.test({
+  name: "Launchpad: example claim walk test",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
       "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
@@ -26,35 +228,37 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
-    for (let t = 0; t < 1000; t += 120) {
+    for (let t = 0; t < 500; t += 120) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
       const claimEndHeight = registrationEndHeight + 100;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 1 * 10000000000 },
-        { recipient: accountB, amount: 400 * 10000000000 },
-        { recipient: accountC, amount: 200 * 10000000000 },
-        { recipient: accountD, amount: 5000 * 10000000000 },
-        { recipient: accountE, amount: 101 * 10000000000 },
-        { recipient: accountF, amount: 10000 * 10000000000 },
-        { recipient: accountG, amount: 1 * 10000000000 },
+        { recipient: accountA, amount: 1 },
+        { recipient: accountB, amount: 400 },
+        { recipient: accountC, amount: 200 },
+        { recipient: accountD, amount: 5000 },
+        { recipient: accountE, amount: 101 },
+        { recipient: accountF, amount: 10000 },
+        { recipient: accountG, amount: 1 },
       ];
 
-      const parameters: StandardTestParameters = {
-        totalIdoTokens: 40000,
-        idoOwner: accountA,
-        ticketsForSale: 801,
-        idoTokensPerTicket: 50,
-        pricePerTicketInFixed: 5000000000,
-        activationThreshold: 1,
-        registrationStartHeight,
-        registrationEndHeight,
-        claimEndHeight,
-        ticketRecipients,
-        apowerPerTicketInFixed: 10000000000,
-      };
-      const preparation = prepareStandardTest(chain, parameters, deployer);
+      const params: StandardTestParameters = 
+        {
+          ...parameters,
+          totalIdoTokens: 40000,
+          idoOwner: accountA,
+          ticketsForSale: 801,
+          idoTokensPerTicket: 50,
+          pricePerTicketInFixed: 5000000000,
+          activationThreshold: 1,          
+          ticketRecipients: ticketRecipients,
+          registrationStartHeight: registrationStartHeight,
+          registrationEndHeight: registrationEndHeight,
+          claimEndHeight: claimEndHeight,          
+        };
+
+      const preparation = prepareStandardTest(chain, params, deployer);
       preparation.blocks.map((block) =>
         block.receipts.map(({ result }) => result.expectOk())
       );
@@ -80,17 +284,16 @@ Clarinet.test({
       registrations.receipts.map(({ result }) => result.expectOk());
       assertEquals(registrations.receipts.length, ticketRecipients.length);
       for (let i = 0; i < ticketRecipients.length; i++) {
+        // console.log(registrations.receipts[i].events);
         registrations.receipts[i].events.expectSTXTransferEvent(
-          (((ticketRecipients[i]["amount"] /
-            parameters["apowerPerTicketInFixed"]) *
-            parameters["pricePerTicketInFixed"]) /
-            ONE_8) *
-            1e6,
+          ticketRecipients[i]["amount"] * parameters["pricePerTicketInFixed"] / ONE_8 * 1e6,
           ticketRecipients[i]["recipient"].address,
           deployer.address + ".lottery"
         );
+
+        // console.log(determineApower(ticketRecipients[i]["amount"], parameters["apowerPerTicketInFixed"], parameters["activationThreshold"]));
         registrations.receipts[i].events.expectFungibleTokenBurnEvent(
-          ticketRecipients[i]["amount"],
+          determineApower(ticketRecipients[i]["amount"], parameters["apowerPerTicketInFixed"], parameters["activationThreshold"]),
           ticketRecipients[i]["recipient"].address,
           "apower"
         );
@@ -133,7 +336,7 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let winners_sliced = winners.winners.slice(index, index + maxChunkSize);
-        console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
+        // console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
@@ -185,7 +388,7 @@ Clarinet.test({
           "won:", won,
           "lost:", lost
         );
-        assertEquals(ticketRecipients[index]['amount'] / parameters['apowerPerTicketInFixed'], won + lost);
+        assertEquals(ticketRecipients[index]['amount'], won + lost);
       }
                    
       maxChunkSize = 1;
@@ -195,7 +398,7 @@ Clarinet.test({
         index += maxChunkSize
       ) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
-        console.log(losers_sliced);
+        // console.log(losers_sliced);
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
@@ -215,7 +418,7 @@ Clarinet.test({
         
         for (let j = 0; j < events.length; j++) {
           events.expectSTXTransferEvent(
-            (losers_sliced[j]['amount'] * parameters["pricePerTicketInFixed"] / ONE_8) * 1e6,
+            losers_sliced[j]['amount'] * parameters["pricePerTicketInFixed"] / ONE_8 * 1e6,
             deployer.address + ".lottery",
             losers_sliced[j]['recipient'],
           );
