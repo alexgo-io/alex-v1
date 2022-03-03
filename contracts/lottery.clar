@@ -164,15 +164,21 @@
 	(map-get? offering-ticket-amounts {ido-id: ido-id, owner: owner})
 )
 
-(define-private (get-apower-required-iter (apower-per-ticket-in-fixed uint) (prior {remaining-tickets: uint, apower-so-far: uint, tier-threshold: uint}))
+(define-private (get-apower-required-iter (apower-per-ticket-in-fixed uint) (prior {remaining-tickets: uint, apower-so-far: uint, tier-threshold: uint, length: uint}))
 	(let
 		( 
-			(tickets-to-process (if (< (get remaining-tickets prior) (get tier-threshold prior)) (get remaining-tickets prior) (get tier-threshold prior)))
+			(tickets-to-process 
+				(if (or (is-eq (get length prior) u1) (< (get remaining-tickets prior) (get tier-threshold prior))) 
+					(get remaining-tickets prior)
+					(get tier-threshold prior)
+				)
+			)
 		)
 		{ 
 			remaining-tickets: (- (get remaining-tickets prior) tickets-to-process), 
 			apower-so-far: (+ (get apower-so-far prior) (* tickets-to-process apower-per-ticket-in-fixed)), 
-			tier-threshold: (get tier-threshold prior)
+			tier-threshold: (get tier-threshold prior),
+			length: (- (get length prior) u1)
 		}
 	)	
 )
@@ -181,8 +187,9 @@
 	(let 
 		(
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
+			(tiers (get apower-per-ticket-in-fixed offering))
 		)
-		(ok (get apower-so-far (fold get-apower-required-iter (get apower-per-ticket-in-fixed offering) {remaining-tickets: tickets, apower-so-far: u0, tier-threshold: (get tier-threshold offering)})))
+		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, tier-threshold: (get tier-threshold offering), length: (len tiers)})))
 	)	
 )
 
@@ -199,8 +206,8 @@
 		(asserts! (>= block-height (get registration-start-height offering)) err-block-height-not-reached)
 		(asserts! (< block-height (get registration-end-height offering)) err-block-height-not-reached)		
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
-		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
-		(as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender)))
+		(unwrap! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none) (err u2234))		
+		(as-contract (unwrap! (contract-call? .token-apower burn-fixed apower-to-burn sender) (err u1234)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set offering-ticket-amounts {ido-id: ido-id, owner: tx-sender} tickets)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
