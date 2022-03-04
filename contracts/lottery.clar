@@ -373,7 +373,12 @@
 ;; if ido-token implements <ido-ft-trait>, we can process claim/refund much more efficiently
 
 (define-public (claim-optimal (ido-id uint) (input (list 200 principal)) (ido-token <ido-ft-trait>) (payment-token <ft-trait>))
-	(as-contract (contract-call? ido-token transfer-many-ido (* ONE_8 (try! (claim-process ido-id input (contract-of ido-token) payment-token))) input))
+	(let
+		(
+			(ido-tokens-per-ticket (* ONE_8 (try! (claim-process ido-id input (contract-of ido-token) payment-token))))
+		)
+		(as-contract (contract-call? ido-token transfer-many-ido ido-tokens-per-ticket input))
+	)
 )
 
 (define-public (refund-optimal (ido-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <ido-ft-trait>))
