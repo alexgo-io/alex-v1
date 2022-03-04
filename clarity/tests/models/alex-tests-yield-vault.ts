@@ -59,6 +59,30 @@ class YieldVault{
             sender.address
         )
     }   
+
+    //(define-public (stake-tokens (amount-token uint) (lock-period uint))
+    stakeTokens(sender: Account, amount_token: number, lock_period: number){
+        return Tx.contractCall(
+            "alex-yield-vault",
+            "stake-tokens",
+            [
+                types.uint(amount_token),
+                types.uint(lock_period)
+            ],
+            sender.address
+        )
+    } 
+    
+    claimStakingReward(sender: Account, target_cycle: number){
+        return Tx.contractCall(
+            "alex-yield-vault",
+            "claim-staking-reward",
+            [
+                types.uint(target_cycle)
+            ],
+            sender.address
+        )
+    }    
 }
 
 export { YieldVault }

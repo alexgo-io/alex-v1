@@ -71,7 +71,20 @@ class ReservePool{
         ],
         sender.address
       );
-    }     
+    } 
+
+    setApowerMultiplierInFixed(sender: Account, token: string, apower: number): Tx {
+        return Tx.contractCall(
+          "alex-reserve-pool",
+          "set-apower-multiplier-in-fixed",
+          [
+            types.principal(token),
+            types.uint(apower)
+          ],
+          sender.address
+        );
+      }      
+    
 }
 
 export { ReservePool }

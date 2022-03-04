@@ -14,6 +14,7 @@
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 (define-constant ERR-NOT-ACTIVATED (err u2043))
 (define-constant ERR-ACTIVATED (err u2044))
+(define-constant ERR-USER-ID-NOT-FOUND (err u10003))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -86,13 +87,13 @@
 (define-private (get-reward-cycle (stack-height uint))
   (contract-call? .alex-reserve-pool get-reward-cycle .age000-governance-token stack-height)
 )
-(define-private (stake-tokens (amount-tokens uint) (lock-period uint))
+(define-private (stake-tokens-internal (amount-tokens uint) (lock-period uint))
   (contract-call? .alex-reserve-pool stake-tokens .age000-governance-token amount-tokens lock-period)
 )
 (define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle .age000-governance-token reward-cycle)
 )
-(define-private (claim-staking-reward (reward-cycle uint))
+(define-private (claim-staking-reward-internal (reward-cycle uint))
   (contract-call? .alex-reserve-pool claim-staking-reward .age000-governance-token reward-cycle)
 )
 
@@ -143,7 +144,7 @@
     
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
-    (as-contract (try! (stake-tokens dx u32)))
+    (as-contract (try! (stake-tokens-internal dx u32)))
         
     ;; mint pool token and send to tx-sender
     (var-set total-supply (+ (var-get total-supply) new-supply))
@@ -161,7 +162,7 @@
     (
       (sender tx-sender)
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
+      (claimed (as-contract (try! (claim-staking-reward-internal reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty 
         (if (> (mul-down balance (var-get claim-and-stake-bounty-in-fixed)) (var-get claim-and-stake-bounty-max-in-fixed))
@@ -171,7 +172,7 @@
       )
     )
     (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
-    (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
+    (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens-internal (- balance bounty) u32))))
     (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     (ok true)
   )
@@ -187,7 +188,7 @@
       (sender tx-sender)
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       ;; claim last cycle just in case claim-and-stake has not yet been triggered    
-      (claimed (as-contract (try! (claim-staking-reward (- current-cycle u1)))))
+      (claimed (as-contract (try! (claim-staking-reward-internal (- current-cycle u1)))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
@@ -207,6 +208,30 @@
   ) 
 )
 
+(define-public (stake-tokens (amount-token uint) (lock-period uint))
+  (contract-call? .alex-reserve-pool stake-tokens .auto-alex amount-token lock-period)
+)
+
+(define-public (claim-staking-reward (target-cycle uint))
+  (begin
+    (try! (claim-and-stake target-cycle))    
+    (let 
+      (
+        (sender tx-sender)
+        (user-id (unwrap! (contract-call? .alex-reserve-pool get-user-id .auto-alex sender) ERR-USER-ID-NOT-FOUND))
+        (total-staked-this-cycle (contract-call? .alex-reserve-pool get-staking-stats-at-cycle-or-default .auto-alex target-cycle))
+        (user-staked-this-cycle (get amount-staked (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .auto-alex target-cycle user-id)))
+        (total-balance (unwrap! (contract-call? .token-apower get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+        (balance (div-down (mul-down total-balance user-staked-this-cycle) total-staked-this-cycle))      
+      )    
+      (try! (contract-call? .alex-reserve-pool claim-staking-reward .auto-alex target-cycle))
+      (as-contract (try! (contract-call? .token-apower burn-fixed balance tx-sender)))
+      (as-contract (try! (contract-call? .token-apower mint-fixed balance sender)))
+      (ok true)
+    )
+  )
+)
+
 (define-read-only (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
@@ -217,3 +242,5 @@
     (/ (* a ONE_8) b)
   )
 )
+
+(contract-call? .alex-vault add-approved-token .auto-alex)

@@ -552,7 +552,3 @@ depends_on = [
   "fwp-alex-usda-50-50",
   "simple-weight-pool-alex"
 ]
-
-[contracts.agp025]
-path = "contracts_modules/alex_dao_proposals/agp025.clar"
-depends_on = []
