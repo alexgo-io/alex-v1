@@ -124,6 +124,7 @@
 ;; @param collateral; collateral token
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
+;; TODO move to oracle-helper
 (define-read-only (get-spot (token principal) (collateral principal))
     (if (is-eq token .token-wstx)
         (contract-call? .fixed-weight-pool get-oracle-resilient collateral .token-wstx u50000000 u50000000)
