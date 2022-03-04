@@ -33,3 +33,37 @@
         )
     )
 )
+
+(define-read-only (get-helper-simple (token-x principal) (token-y principal) (dx uint))
+    (ok
+        (if (or 
+                (is-eq token-x .token-wstx)
+                (is-eq token-y .token-wstx)
+                (and
+                    (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-x u50000000 u50000000))
+                    (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-y u50000000 u50000000))
+                )
+            )
+            (try! (contract-call? .fixed-weight-pool get-helper token-x token-y u50000000 u50000000 dx))
+            (if (or 
+                    (is-eq token-x .age000-governance-token) 
+                    (is-eq token-y .age000-governance-token)
+                    (and
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
+                    )                    
+                )
+                (try! (contract-call? .simple-weight-pool-alex get-helper token-x token-y dx))
+                (if (and 
+                        (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-x u50000000 u50000000))
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
+                    )
+                    (try! (contract-call? .simple-weight-pool-alex get-y-given-alex token-y 
+                        (try! (contract-call? .fixed-weight-pool get-helper token-x .age000-governance-token u50000000 u50000000 dx)))) 
+                    (try! (contract-call? .fixed-weight-pool get-helper .age000-governance-token token-y u50000000 u50000000 
+                        (try! (contract-call? .simple-weight-pool-alex get-alex-given-y token-x dx))))
+                )
+            )
+        )
+    )
+)
