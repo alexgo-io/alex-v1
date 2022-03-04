@@ -4,29 +4,9 @@ requirements = []
 [repl]
 costs_version = 2
 
-[contracts.banana-token]
-path = "contracts/banana-token.clar"
-depends_on = ["trait-sip-010", "trait-ido-ft"]
-
-[contracts.ido-ticket]
-path = "contracts/ido-ticket.clar"
-depends_on = ["trait-sip-010"]
-
 [contracts.lottery]
 path = "contracts/lottery.clar"
 depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
-
-[contracts.trait-ido-ft]
-path = "contracts/trait-ido-ft.clar"
-depends_on = []
-
-# [contracts.tests]
-# path = "contracts/tests.clar"
-# depends_on = []
-
-[contracts.wrapped-stx]
-path = "contracts/wrapped-stx.clar"
-depends_on = ["trait-sip-010"]
 
 [contracts.trait-sip-010]
 path = "contracts_modules/alex_v1/traits/trait-sip-010.clar"
@@ -47,6 +27,18 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 [contracts.token-wstx]
 path = "contracts_modules/alex_v1/wrapped-token/token-wstx.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-banana]
+path = "contracts_modules/alex_v1/token/token-banana.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wban]
+path = "contracts_modules/alex_v1/wrapped-token/token-wban.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "trait-ido-ft", "token-banana" ]
+
+[contracts.trait-ido-ft]
+path = "contracts_modules/alex_v1/traits/trait-ido-ft.clar"
+depends_on = [ ]
 
 
 

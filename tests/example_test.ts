@@ -49,7 +49,7 @@ Clarinet.test({
 
     const block = chain.mineBlock([
       Tx.contractCall("lottery", "create-pool", [
-        types.principal(contractPrincipal(deployer, "token-t-alex")),
+        types.principal(contractPrincipal(deployer, "token-wban")),
         types.principal(contractPrincipal(deployer, "token-wstx")),
         types.tuple({
           "ido-owner": types.principal(params.idoOwner.address),
@@ -85,7 +85,7 @@ Clarinet.test({
     const first = chain.mineBlock([
       Tx.contractCall("lottery", "create-pool", 
         [
-          types.principal(contractPrincipal(deployer, "token-t-alex")),
+          types.principal(contractPrincipal(deployer, "token-wban")),
           types.principal(contractPrincipal(deployer, "token-wstx")),
           types.tuple({
             "ido-owner": types.principal(params.idoOwner.address),
@@ -109,7 +109,7 @@ Clarinet.test({
         [
           types.uint(idoId), 
           types.uint(params.ticketsForSale), 
-          types.principal(contractPrincipal(deployer, "token-t-alex"))
+          types.principal(contractPrincipal(deployer, "token-wban"))
         ], accountB.address),
     ]);
     second.receipts[0].result.expectErr().expectUint(1000);
@@ -120,7 +120,7 @@ Clarinet.test({
         [
           types.principal(approved_operator.address)
         ], deployer.address),
-      Tx.contractCall("token-t-alex", "mint-fixed", 
+      Tx.contractCall("token-banana", "mint-fixed", 
         [
           types.uint(params.totalIdoTokens * params.ticketsForSale * ONE_8), 
           types.principal(approved_operator.address)
@@ -129,7 +129,7 @@ Clarinet.test({
         [
           types.uint(idoId), 
           types.uint(params.ticketsForSale), 
-          types.principal(contractPrincipal(deployer, "token-t-alex"))
+          types.principal(contractPrincipal(deployer, "token-wban"))
         ], approved_operator.address),      
     ]);
     third.receipts[2].result.expectOk();
@@ -340,17 +340,17 @@ Clarinet.test({
         const claim = chain.mineBlock([
           Tx.contractCall(
             "lottery",
-            "claim",
+            "claim-optimal",
             [
               types.uint(idoId),
               types.list(winners_sliced.map(types.principal)),
-              types.principal(contractPrincipal(deployer, "token-t-alex")),
+              types.principal(contractPrincipal(deployer, "token-wban")),
               types.principal(contractPrincipal(deployer, "token-wstx")),
             ],
             deployer.address
           ),
-        ]);
-
+        ]);        
+        // console.log(claim);
         // console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
         winners_list.push(winners.winners.length);
         let events = claim.receipts[0].events;
@@ -365,10 +365,10 @@ Clarinet.test({
         );
         for (let j = 1; j < events.length; j++) {
           events.expectFungibleTokenTransferEvent(
-            parameters["idoTokensPerTicket"] * ONE_8,
+            parameters["idoTokensPerTicket"] * 1e6,
             deployer.address + ".lottery",
             winners_sliced[j - 1],
-            "t-alex"
+            "banana"
           );
         }
       }

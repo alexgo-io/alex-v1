@@ -54,11 +54,11 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		registrationMaxTickets
 	} = parameters;
 	const first = chain.mineBlock([		
-		Tx.contractCall("token-t-alex", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
+		Tx.contractCall("token-banana", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
 		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "lottery"))], deployer.address),
 		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(determineApower(allocation.amount, apowerPerTicketInFixed, tierThreshold)), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
 		Tx.contractCall("lottery", "create-pool", [
-			types.principal(contractPrincipal(deployer, "token-t-alex")),
+			types.principal(contractPrincipal(deployer, "token-wban")),
 			types.principal(contractPrincipal(deployer, "token-wstx")),
 			types.tuple({
 				"ido-owner": types.principal(idoOwner.address),
@@ -77,7 +77,7 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 	const idoId = parseInt(first.receipts[first.receipts.length - 1].result.expectOk().toString().substring(1));
 	assertEquals(isNaN(idoId), false, "failed to get IDO ID");
 	const second = chain.mineBlock([
-		Tx.contractCall("lottery", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-t-alex"))], idoOwner.address),
+		Tx.contractCall("lottery", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
 	]);
 	return { idoId, blocks: [first, second] };
 }
