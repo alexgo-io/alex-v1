@@ -552,3 +552,11 @@ depends_on = [
   "fwp-alex-usda-50-50",
   "simple-weight-pool-alex"
 ]
+
+[contracts.token-banana]
+path = "contracts/token/token-banana.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wban]
+path = "contracts/wrapped-token/token-wban.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-banana" ]
