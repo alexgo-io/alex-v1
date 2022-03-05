@@ -28,14 +28,14 @@ const unauthorisedTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.toke
 const unauthorisedFlashLoanUserAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.flash-loan-user-unauthorised"
 
 const ONE_8 = 100000000
-const expiry = 23040e+8 //0x0218711A0000 => 2304000000000
-const expiryBuff = new Uint8Array([0x02,0x18,0x71,0x1A,0x00,0x00]).buffer
-const nextExpiry = 51840e+8
+const expiry = 23040 //5A00 => 23040
+const expiryBuff = new Uint8Array([0x00,0x00,0x00,0x00,0x5A,0x00]).buffer
+const nextExpiry = 51840
 const ltv_0 = 0.8e+8
 const conversion_ltv = 0.95e+8
 const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
-const token_to_maturity = 2100e8;
+const token_to_maturity = 2100;
 
 const wbtcPrice = 50000e+8
 const wbtcQ = 10e8
