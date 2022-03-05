@@ -552,3 +552,7 @@ depends_on = [
   "fwp-alex-usda-50-50",
   "simple-weight-pool-alex"
 ]
+
+[contracts.alex-launchpad-v1-1]
+path = "contracts/pool/alex-launchpad-v1-1.clar"
+depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
