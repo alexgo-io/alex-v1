@@ -2,7 +2,7 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
-import { FWPTestAgent1, FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
+import { FWPTestAgent1, FWPTestAgent3, FWPTestAgent4 } from './models/alex-tests-fixed-weight-pool.ts';
 import { USDAToken, WBTCToken, ALEXToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
@@ -69,7 +69,7 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(alexAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(alexAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
@@ -115,7 +115,7 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
                 Tx.contractCall("fixed-weight-pool", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
@@ -131,6 +131,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let FWPTestSTX = new FWPTestAgent1(chain, deployer);
+        let FWPTestSTX2 = new FWPTestAgent4(chain, deployer);
         let FWPTestALEX = new FWPTestAgent3(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -153,15 +154,19 @@ Clarinet.test({
         // Deployer creating a pool, initial tokens injected to the pool
         result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpwstxalexAddress, multisigwstxalexAddress, quantity * price, quantity * price);
         result.expectOk().expectBool(true);        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, quantity * price, quantity * price);
-        result.expectOk().expectBool(true);
+        result = FWPTestSTX2.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, quantity * price, quantity * price);
+        result.expectOk().expectBool(true);        
         result = FWPTestALEX.createPool(deployer, alexAddress, wbtcAddress, fwpalexwbtcAddress, multisigalexwbtcAddress, quantity * price, quantity);
         result.expectOk().expectBool(true);
 
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
+        result.expectOk().expectBool(true);   
+        result = FWPTestSTX2.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTestSTX2.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
         result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestALEX.setMaxOutRatio(deployer, 0.3e8);
@@ -169,13 +174,15 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper-simple", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("fixed-weight-pool", "swap-helper", [types.principal(usdaAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wstxAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                                
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("fixed-weight-pool", "swap-helper", [types.principal(wstxAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
-        block.receipts[0].result.expectOk();
-        block.receipts[1].result.expectOk();
-        block.receipts[2].result.expectOk();
+        block.receipts.map(e => { console.log(e.result); return e.result.expectOk() });
     },
 });

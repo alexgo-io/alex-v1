@@ -4,7 +4,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
-import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
+import { FWPTestAgent4 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';
 import { MS_CRP_WBTC_USDA } from './models/alex-tests-multisigs.ts';
 import { USDAToken, WBTCToken, WSTXToken, YIELD_WBTC, KEY_WBTC_USDA } from './models/alex-tests-tokens.ts';
@@ -54,7 +54,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -80,19 +80,19 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
 
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
     
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
 
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);          
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);
@@ -218,7 +218,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -244,17 +244,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);         
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
@@ -300,7 +300,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -320,17 +320,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);          
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
@@ -357,7 +357,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -377,17 +377,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);  
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
@@ -423,7 +423,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         let yieldWBTC = new YIELD_WBTC(chain, deployer);
@@ -445,17 +445,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);      
 
         let ltv_0_0 = 0.5 * ONE_8;
@@ -477,7 +477,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
@@ -497,17 +497,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);    
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
@@ -555,7 +555,7 @@ Clarinet.test({
     async fn (chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
         let wbtcToken = new WBTCToken(chain, deployer);
         // let wstxToken = new WSTXToken(chain, deployer);
@@ -574,17 +574,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);     
 
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
@@ -618,7 +618,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let contractOwner = deployer;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let MultiSigTest = new MS_CRP_WBTC_USDA(chain, deployer);
         let YieldToken = new YIELD_WBTC(chain, deployer);
@@ -645,17 +645,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);          
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), 0.8 * wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);         
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        

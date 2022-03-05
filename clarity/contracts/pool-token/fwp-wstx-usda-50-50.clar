@@ -197,3 +197,4 @@
 )
 
 (map-set approved-contracts .fixed-weight-pool true)
+(map-set approved-contracts .simple-weight-pool true)

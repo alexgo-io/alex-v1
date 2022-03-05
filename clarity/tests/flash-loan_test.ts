@@ -2,7 +2,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
-import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
+import { FWPTestAgent4 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';  
 import { FLTestAgent1 } from './models/alex-tests-flash-loan.ts';
 import { USDAToken ,WBTCToken, WSTXToken } from './models/alex-tests-tokens.ts';
@@ -57,7 +57,7 @@ Clarinet.test({
         let wallet_1 = accounts.get("wallet_1")!;
         let wallet_5 = accounts.get("wallet_5")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
-        let FWPTest = new FWPTestAgent1(chain, deployer);
+        let FWPTest = new FWPTestAgent4(chain, deployer);
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let FLTest = new FLTestAgent1(chain, deployer);
         let usdaToken = new USDAToken(chain, deployer);
@@ -88,17 +88,17 @@ Clarinet.test({
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);             
         
-        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
+        result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, fwpwstxusdaAddress, multisigwstxusdaAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), Math.round(wbtcPrice * wbtcQ / ONE_8));
         result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, weightX, weightY, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), wbtcQ);
+        result = FWPTest.createPool(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, multisigwstxwbtcAddress, Math.round(wbtcPrice * wbtcQ / ONE_8), wbtcQ);
         result.expectOk().expectBool(true);
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress, weightX, weightY);
+        result = FWPTest.setOracleEnabled(deployer, wstxAddress, wbtcAddress);
         result.expectOk().expectBool(true);   
-        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0.95e8);
+        result = FWPTest.setOracleAverage(deployer, wstxAddress, wbtcAddress, 0.95e8);
         result.expectOk().expectBool(true);    
 
         result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        

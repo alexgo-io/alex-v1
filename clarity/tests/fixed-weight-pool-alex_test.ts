@@ -36,7 +36,7 @@ const wbtcPrice = 50000;
 const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
-    name: "FWP : pool creation, adding values and reducing values",
+    name: "Fixed Weight Pool - ALEX : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -130,7 +130,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "FWP : trait check",
+    name: "Fixed Weight Pool - ALEX : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>){
         let deployer = accounts.get("deployer")!;
@@ -183,7 +183,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "FWP : fee setting using multisig ",
+    name: "Fixed Weight Pool - ALEX : fee setting using multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -295,7 +295,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : error testing",
+    name: "Fixed Weight Pool - ALEX : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -410,7 +410,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "FWP : testing get-x-given-price and get-y-given-price",
+    name: "Fixed Weight Pool - ALEX : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -494,175 +494,7 @@ Clarinet.test({
 });      
 
 Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-x-for-y wstx => usda",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent2(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);       
-             
-        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(100000000);         
-        position['dy'].expectUint(93500000);         
-    },       
-});
-
-Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-y-for-x wstx => usda",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent2(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);                   
-
-        result = FWPTest.swapYForX(deployer, usdaAddress, wstxAddress, weightX, weightY, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(93500000);         
-        position['dy'].expectUint(100000000);        
-    },       
-}); 
-
-Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-x-for-y usda => wstx",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent2(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);      
-        
-        result = FWPTest.swapXForY(deployer, usdaAddress, wstxAddress, weightX, weightY, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(100000000);         
-        position['dy'].expectUint(93500000);            
-    },       
-}); 
-
-Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-y-for-x usda => wstx",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent2(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);            
-        
-        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, weightX, weightY, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(93500000);         
-        position['dy'].expectUint(100000000);         
-    },       
-}); 
-
-Clarinet.test({
-    name: "FWP : check start-block and end-block",
+    name: "Fixed Weight Pool - ALEX : check start-block and end-block",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

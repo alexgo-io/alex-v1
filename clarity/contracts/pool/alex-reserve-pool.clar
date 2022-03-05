@@ -676,6 +676,7 @@
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .fixed-weight-pool true)
+(map-set approved-contracts .simple-weight-pool true)
 (map-set approved-contracts .fixed-weight-pool-alex true)
 (map-set approved-contracts .simple-weight-pool-alex true)
 
