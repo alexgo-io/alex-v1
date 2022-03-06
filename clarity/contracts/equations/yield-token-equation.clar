@@ -328,7 +328,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
   (/ (* a b) ONE_8)
 )
 
@@ -336,7 +336,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -352,7 +352,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0
     (/ (* a ONE_8) b)
@@ -363,7 +363,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -380,7 +380,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))

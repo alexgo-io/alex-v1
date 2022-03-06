@@ -276,6 +276,18 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
+        (get-oracle-resilient-internal token-x token-y weight-x weight-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-resilient-internal .token-wstx token-y u50000000 u50000000))
+                (try! (get-oracle-resilient-internal .token-wstx token-x u50000000 u50000000))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-resilient-internal (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
     (let
         (
             (pool 
@@ -286,7 +298,7 @@
             )
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-x token-y weight-x weight-y))) 
             (mul-down (get oracle-average pool) (get oracle-resilient pool)))
         )           
     )
@@ -301,6 +313,18 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
+        (get-oracle-instant-internal token-x token-y weight-x weight-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-instant-internal .token-wstx token-y u50000000 u50000000))
+                (try! (get-oracle-instant-internal .token-wstx token-x u50000000 u50000000))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-instant-internal (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
     (begin                
         (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
             (let
@@ -983,7 +1007,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
@@ -991,7 +1015,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -1007,7 +1031,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (/ (* a ONE_8) b)
@@ -1018,7 +1042,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
+(define-private (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (+ u1 (/ (- (* a ONE_8) u1) b))
@@ -1029,7 +1053,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -1046,7 +1070,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))

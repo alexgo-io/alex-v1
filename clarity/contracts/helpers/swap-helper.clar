@@ -104,6 +104,10 @@
     )
 )
 
+;; @desc oracle-instant-helper returns price of token-x in token-y
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
 (define-read-only (oracle-instant-helper (token-x principal) (token-y principal))
     (ok
         (if (or 
@@ -143,14 +147,88 @@
                         )
                         (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
                     )
-                    (try! (contract-call? .simple-weight-pool-alex get-y-given-alex token-y 
-                        (try! (contract-call? .fixed-weight-pool get-helper token-x .age000-governance-token u50000000 u50000000 dx)))) 
-                    (try! (contract-call? .fixed-weight-pool get-helper .age000-governance-token token-y u50000000 u50000000 
-                        (try! (contract-call? .simple-weight-pool-alex get-alex-given-y token-x dx))))
+                    (div-down 
+                        (try! (contract-call? .simple-weight-pool-alex get-oracle-instant .age000-governance-token token-y))
+                        (try! (contract-call? .fixed-weight-pool get-oracle-instant .age000-governance-token token-x u50000000 u50000000))
+                    )
+                    (div-down 
+                        (try! (contract-call? .fixed-weight-pool get-oracle-instant .age000-governance-token token-y u50000000 u50000000))
+                        (try! (contract-call? .simple-weight-pool-alex get-oracle-instant .age000-governance-token token-x))                        
+                    )                                        
                 )
             )
         )
     )
+)
+
+;; @desc oracle-resilient-helper returns moving average price of token-x in token-y
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
+(define-read-only (oracle-resilient-helper (token-x principal) (token-y principal))
+    (ok
+        (if (or 
+                (and
+                    (is-eq token-x .token-wstx)
+                    (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-y u50000000 u50000000))
+                )
+                (and
+                    (is-eq token-y .token-wstx)
+                    (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-x u50000000 u50000000))
+                )
+                (and
+                    (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-y u50000000 u50000000))
+                    (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-x u50000000 u50000000))
+                )
+            )
+            (try! (contract-call? .fixed-weight-pool get-oracle-resilient token-x token-y u50000000 u50000000))
+            (if (or
+                    (and
+                        (is-eq token-x .age000-governance-token)
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
+                    )
+                    (and 
+                        (is-eq token-y .age000-governance-token)
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
+                    )
+                    (and 
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
+                    )
+                )
+                (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient token-x token-y))
+                (if (and 
+                        (or 
+                            (is-eq token-x .token-wstx)
+                            (is-some (contract-call? .fixed-weight-pool get-pool-exists .token-wstx token-x u50000000 u50000000))
+                        )
+                        (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
+                    )
+                    (div-down 
+                        (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient .age000-governance-token token-y))
+                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .age000-governance-token token-x u50000000 u50000000))
+                    )
+                    (div-down 
+                        (try! (contract-call? .fixed-weight-pool get-oracle-resilient .age000-governance-token token-y u50000000 u50000000))
+                        (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient .age000-governance-token token-x))                        
+                    )                                        
+                )
+            )
+        )
+    )
+)
+
+(define-constant ONE_8 u100000000)
+
+(define-private (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+(define-private (div-down (a uint) (b uint))
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
 
 

@@ -258,6 +258,18 @@
 ;; @param token-y; token-y principal
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x principal) (token-y principal))
+    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+        (get-oracle-resilient-internal token-x token-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-resilient-internal .age000-governance-token token-y))
+                (try! (get-oracle-resilient-internal .age000-governance-token token-x))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-resilient-internal (token-x principal) (token-y principal))
     (let
         (
             (pool 
@@ -268,7 +280,7 @@
             )
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y))) 
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-x token-y))) 
             (mul-down (get oracle-average pool) (get oracle-resilient pool)))
         )           
     )
@@ -281,6 +293,18 @@
 ;; @param token-y; token-y principal
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (token-x principal) (token-y principal))
+    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+        (get-oracle-instant-internal token-x token-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-instant-internal .age000-governance-token token-y))
+                (try! (get-oracle-instant-internal .age000-governance-token token-x))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-instant-internal (token-x principal) (token-y principal))
     (begin                
         (if (is-some (get-pool-exists token-x token-y))
             (let
@@ -919,7 +943,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
@@ -927,7 +951,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -943,7 +967,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (/ (* a ONE_8) b)
@@ -954,7 +978,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
+(define-private (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (+ u1 (/ (- (* a ONE_8) u1) b))
@@ -965,7 +989,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -982,7 +1006,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
