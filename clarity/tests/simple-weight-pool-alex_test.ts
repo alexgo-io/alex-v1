@@ -36,7 +36,7 @@ const wbtcPrice = 50000;
 const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
-    name: "FWP : pool creation, adding values and reducing values",
+    name: "Simple Weight Pool - ALEX : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -69,7 +69,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);    
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, 0);   
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
+        result.expectOk().expectBool(true);                              
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(alexAddress, wbtcAddress);
@@ -113,12 +117,12 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(ONE_8);
-        position['dy'].expectUint(4166667500000);    
+        position['dy'].expectUint(4166666666666);    
         
         // swap some usda into wbtc
         result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, wbtcPrice*ONE_8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(116129046);
+        position['dx'].expectUint(116129032);
         position['dy'].expectUint(wbtcPrice*ONE_8);        
 
         // attempt to swap zero throws an error
@@ -130,7 +134,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "FWP : trait check",
+    name: "Simple Weight Pool - ALEX : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>){
         let deployer = accounts.get("deployer")!;
@@ -183,7 +187,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "FWP : fee setting using multisig ",
+    name: "Simple Weight Pool - ALEX : fee setting using multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -218,7 +222,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);   
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, 0);   
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
+        result.expectOk().expectBool(true);                
 
         // Fee rate Setting Proposal of Multisig
         result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
@@ -260,17 +268,17 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(ONE_8);    
-        position['dy'].expectUint(3781513000000); 
+        position['dy'].expectUint(3781512605041); 
 
         ROresult = FWPTest.getPoolDetails(alexAddress, usdaAddress);
         position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(54318182250000);
-        position['balance-y'].expectUint(50000000000000 - 3781513000000); 
+        position['balance-x'].expectUint(54318181818181);
+        position['balance-y'].expectUint(50000000000000 - 3781512605041); 
 
         // Swapping 
         result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, ONE_8*wbtcPrice, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(105448728);    // Corresponding dx value
+        position['dx'].expectUint(105448718);    // Corresponding dx value
         position['dy'].expectUint(ONE_8*wbtcPrice);    // 10% fee charged on alex-usda leg, so you don't see
         
         // fee : 0.1 * ONE_8 * wbtcPrice
@@ -279,8 +287,8 @@ Clarinet.test({
 
         ROresult = FWPTest.getPoolDetails(alexAddress, usdaAddress);
         position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(49498798813960); 
-        position['balance-y'].expectUint(50968487000000);
+        position['balance-x'].expectUint(49498798773921); 
+        position['balance-y'].expectUint(50968487394959);
 
         ROresult = fwpPoolToken.balanceOf(deployer.address);
         ROresult.result.expectOk().expectUint(25000000000000000000 - Math.round(25000000000000000000 * 9 / 10));
@@ -295,7 +303,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : error testing",
+    name: "Simple Weight Pool - ALEX : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -327,7 +335,9 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);       
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, 0);   
+        result.expectOk().expectBool(true);              
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
@@ -358,7 +368,7 @@ Clarinet.test({
         result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, wbtcPrice*ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(wbtcPrice*ONE_8);
-        position['dy'].expectUint(4629630000000);   
+        position['dy'].expectUint(4629629629629);   
 
         // Attempts to trade more than limit
         result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, ONE_8*ONE_8, 0);
@@ -410,7 +420,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "FWP : testing get-x-given-price and get-y-given-price",
+    name: "Simple Weight Pool - ALEX : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -433,7 +443,9 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);           
+        result.expectOk().expectBool(true);      
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, 0);   
+        result.expectOk().expectBool(true);                  
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(alexAddress, usdaAddress);
@@ -447,12 +459,12 @@ Clarinet.test({
         result = FWPTest.swapYForX(deployer, alexAddress, usdaAddress, 2326871500000, 0)
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(2326871500000);
-        position['dx'].expectUint(2223400500000);
+        position['dx'].expectUint(2223400170216);
 
         // now pool price implies 1.1
         call = await FWPTest.getPoolDetails(alexAddress, usdaAddress);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(50000000000000 - 2223400500000);
+        position['balance-x'].expectUint(50000000000000 - 2223400170216);
         position['balance-y'].expectUint(50000000000000 + 2326871500000);       
         
         // let's do some arb
@@ -461,20 +473,20 @@ Clarinet.test({
         call.result.expectErr().expectUint(2002);
         // we need to call get-x-given-price
         call = await FWPTest.getXgivenPrice(alexAddress, usdaAddress, Math.round(ONE_8 * 1.1 * 0.95));
-        call.result.expectOk().expectUint(1134994752935);                 
+        call.result.expectOk().expectUint(1134994760770);                 
         result = FWPTest.swapXForY(deployer, alexAddress, usdaAddress, 1240808997564, 0)
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(1240808997564);         
-        position['dy'].expectUint(1324583587477);      
+        position['dy'].expectUint(1324583541334);      
 
         // now pool price implies 1.1*0.95 ~= 1.045
         call = await FWPTest.getPoolDetails(alexAddress, usdaAddress);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(50000000000000 - 2223400500000 + 1240808997564);
-        position['balance-y'].expectUint(50000000000000 + 2326871500000 - 1324583587477);         
+        position['balance-x'].expectUint(50000000000000 - 2223400170216 + 1240808997564);
+        position['balance-y'].expectUint(50000000000000 + 2326871500000 - 1324583541334);         
         
         call = await FWPTest.getYgivenX(alexAddress, usdaAddress, 50000*ONE_8);
-        call.result.expectOk().expectUint(4720912535497);
+        call.result.expectOk().expectUint(4720912115729);
 
         call = await FWPTest.getYgivenX(alexAddress, usdaAddress, 0);
         call.result.expectOk().expectUint(0);
@@ -483,7 +495,7 @@ Clarinet.test({
         call.result.expectErr().expectUint(2001);
 
         call = await FWPTest.getXgivenY(alexAddress, usdaAddress, 50000*ONE_8);
-        call.result.expectOk().expectUint(4376375696698);
+        call.result.expectOk().expectUint(4376375556613);
 
         call = await FWPTest.getXgivenY(alexAddress, usdaAddress, 0);
         call.result.expectOk().expectUint(0);
@@ -491,178 +503,10 @@ Clarinet.test({
         call = await FWPTest.getXgivenY(alexAddress, alexAddress, 0);
         call.result.expectErr().expectUint(2001);
     },
-});      
-
-Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-x-for-y wstx => usda",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent3(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);       
-             
-        result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(100000000);         
-        position['dy'].expectUint(96500000);         
-    },       
 });
 
 Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-y-for-x wstx => usda",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent3(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);                   
-
-        result = FWPTest.swapYForX(deployer, usdaAddress, wstxAddress, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(96500000);         
-        position['dy'].expectUint(100000000);        
-    },       
-}); 
-
-Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-x-for-y usda => wstx",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent3(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);      
-        
-        result = FWPTest.swapXForY(deployer, usdaAddress, wstxAddress, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(100000000);         
-        position['dy'].expectUint(96500000);            
-    },       
-}); 
-
-Clarinet.test({
-    name: "FWP : bridging to fixed-weight-pool swap-y-for-x usda => wstx",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let FWPTestSTX = new FWPTestAgent1(chain, deployer); 
-        let FWPTest = new FWPTestAgent3(chain, deployer);     
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();                 
-
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);    
-        
-        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpstxalexAddress, multisigstxalexAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-
-        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);            
-        
-        result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, ONE_8, 0)
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(96500000);         
-        position['dy'].expectUint(100000000);         
-    },       
-}); 
-
-Clarinet.test({
-    name: "FWP : check start-block and end-block",
+    name: "Simple Weight Pool - ALEX : check start-block and end-block",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

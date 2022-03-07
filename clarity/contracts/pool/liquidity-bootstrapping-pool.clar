@@ -28,11 +28,14 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
 
+(define-private (check-is-owner)
+    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
 ;; data maps and vars
 ;;
 (define-map pools-map
