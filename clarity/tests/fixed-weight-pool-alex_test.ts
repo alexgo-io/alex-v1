@@ -69,7 +69,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, alexAddress, wbtcAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);             
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(alexAddress, wbtcAddress,weightX, weightY);
@@ -218,7 +222,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, alexAddress, wbtcAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                        
 
         // Fee rate Setting Proposal of Multisig
         result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
@@ -327,7 +335,9 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);    
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                 
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
@@ -433,7 +443,9 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);           
+        result.expectOk().expectBool(true);      
+        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                  
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(alexAddress, usdaAddress, weightX, weightY);

@@ -215,3 +215,4 @@
 (map-set approved-flash-loan-users .flash-loan-user-margin-usda-wbtc true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wstx-usda true)
+(map-set approved-flash-loan-users .flash-loan-user-margin-alex-usda true)

@@ -65,7 +65,11 @@ Clarinet.test({
         result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestALEX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);      
+        result = FWPTestALEX.setStartBlock(deployer, alexAddress, usdaAddress, 0);   
+        result.expectOk().expectBool(true);  
+        result = FWPTestALEX.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
+        result.expectOk().expectBool(true);                    
 
         const block = chain.mineBlock(
             [
@@ -113,7 +117,11 @@ Clarinet.test({
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);   
+        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);         
+        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                              
 
         const block = chain.mineBlock(
             [
@@ -164,11 +172,16 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);   
+        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, alexAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);         
+        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                 
         result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestALEX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);              
+        result.expectOk().expectBool(true);         
+        result = FWPTestALEX.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
+        result.expectOk().expectBool(true);                   
 
         const block = chain.mineBlock(
             [

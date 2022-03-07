@@ -390,7 +390,7 @@
                 oracle-enabled: false,
                 oracle-average: u0,
                 oracle-resilient: u0,
-                start-block: u0,
+                start-block: u340282366920938463463374607431768211455,
                 end-block: u340282366920938463463374607431768211455
             })
         )
@@ -432,7 +432,6 @@
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -556,11 +555,12 @@
                 )
                 (sender tx-sender)             
             )
-            (asserts! (<= (div-down dy dx-net-fees) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)       
+            ;; a / b <= c / d == ad <= bc for b, d >=0
+            (asserts! (<= (mul-down dy (mul-down balance-x weight-y)) (mul-down dx-net-fees (mul-down balance-y weight-x))) ERR-INVALID-LIQUIDITY)       
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .age000-governance-token transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
+            (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance .age000-governance-token (- fee fee-rebate))))
 
             ;; post setting
@@ -610,10 +610,11 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (>= (div-down dy-net-fees dx) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)
+            ;; a / b >= c / d == ac >= bc for b, d >= 0
+            (asserts! (>= (mul-down dy-net-fees (mul-down balance-x weight-y)) (mul-down dx (mul-down balance-y weight-x))) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-            (as-contract (try! (contract-call? .alex-vault transfer-ft .age000-governance-token dx sender)))
+            (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft .age000-governance-token dx sender))))
             (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
@@ -868,7 +869,6 @@
         )
     )
 )
-
 
 (define-read-only (get-y-in-given-alex-out (token-y principal) (weight-y uint) (dx uint))
     (let 
@@ -1282,7 +1282,7 @@
 
 ;; @desc get-exp-bound
 ;; @returns (response uint)
-(define-read-only (get-exp-bound)
+(define-private (get-exp-bound)
   (ok MILD_EXPONENT_BOUND)
 )
 
@@ -1291,7 +1291,7 @@
 ;; @params x
 ;; @params y
 ;; @returns (response uint)
-(define-read-only (pow-fixed (x uint) (y uint))
+(define-private (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) ERR_X_OUT_OF_BOUNDS)
@@ -1314,7 +1314,7 @@
 ;; @desc exp-fixed
 ;; @params x
 ;; @returns uint
-(define-read-only (exp-fixed (x int))
+(define-private (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (if (< x 0)
@@ -1331,7 +1331,7 @@
 ;; @desc ln-fixed
 ;; @params a
 ;; @returns uint
-(define-read-only (ln-fixed (a int))
+(define-private (ln-fixed (a int))
   (begin
     (asserts! (> a 0) ERR_OUT_OF_BOUNDS)
     (if (< a iONE_8)
@@ -1353,12 +1353,7 @@
 ;; @params mi-dy
 ;; @returns (response uint)
 (define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
-    (ok
-        (if (is-some (get-pool-exists (contract-of token-x-trait) (contract-of token-y-trait) weight-x weight-y))
-            (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy)))
-            (get dx (try! (swap-y-for-x token-y-trait token-x-trait weight-y weight-x dx min-dy)))
-        )
-    )
+    (ok (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy))))
 )
 
 ;; @desc get-x-y
@@ -1369,12 +1364,7 @@
 ;; @params dy
 ;; @returns (response uint uint)
 (define-read-only (get-helper (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
-    (ok 
-        (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
-            (try! (get-y-given-x token-x token-y weight-x weight-y dx))
-            (try! (get-x-given-y token-y token-x weight-y weight-x dx))
-        )
-    )  
+    (get-y-given-x token-x token-y weight-x weight-y dx)
 )
 
 ;; contract initialisation
