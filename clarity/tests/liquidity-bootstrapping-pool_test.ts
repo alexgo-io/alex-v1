@@ -109,14 +109,14 @@ Clarinet.test({
         // launch not going well, so withdraw liquidity
         result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, 0.5 * ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(48279991022);
+        position['dx'].expectUint(48279991021);
         position['dy'].expectUint(7155555555);
 
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(40137070878);
-        position['balance-x'].expectUint(48279991022);
+        position['balance-x'].expectUint(48279991023);
         position['balance-y'].expectUint(7155555556);        
 
         chain.mineEmptyBlockUntil(998);
@@ -148,21 +148,21 @@ Clarinet.test({
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(40137070878);
-        position['balance-x'].expectUint(47617755146);
+        position['balance-x'].expectUint(47617755147);
         position['balance-y'].expectUint(7255555556);  
 
         // withdraw all remaining liquidity
         result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, ONE_8);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(47617755146);
-        position['dy'].expectUint(7255555556);
+        position['dy'].expectUint(7255555555);
 
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(0);
-        position['balance-x'].expectUint(0);
-        position['balance-y'].expectUint(0);             
+        position['balance-x'].expectUint(1);
+        position['balance-y'].expectUint(1);             
     },
 });
 

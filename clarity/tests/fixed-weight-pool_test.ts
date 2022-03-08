@@ -16,10 +16,10 @@ const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
 const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
-const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50"
+const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50-v1-01"
 const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-50-50"
-const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50"
-const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool"
+const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50-v1-01"
+const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-v1-01"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 const alexReservePoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-reserve-pool"
 
@@ -33,7 +33,7 @@ const wbtcPrice = 50000;
 const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
-    name: "FWP : pool creation, adding values and reducing values",
+    name: "Fixed Weight Pool  : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -66,7 +66,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);    
+        result = FWPTest.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(wstxAddress, wbtcAddress,weightX, weightY);
@@ -127,7 +131,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "FWP : trait check",
+    name: "Fixed Weight Pool  : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>){
         let deployer = accounts.get("deployer")!;
@@ -180,7 +184,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "FWP : fee setting using multisig ",
+    name: "Fixed Weight Pool  : fee setting using multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -215,7 +219,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);       
+        result = FWPTest.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                         
 
         // Fee rate Setting Proposal of Multisig
         result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
@@ -292,7 +300,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "FWP : error testing",
+    name: "Fixed Weight Pool  : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -324,7 +332,9 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectBool(true);     
+        result = FWPTest.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                
         
         // Tx-sender does not have enough balance
         result = FWPTest.addToPosition(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, wbtcQ*wbtcPrice * 1000, wbtcQ*wbtcPrice * 1000);
@@ -407,7 +417,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "FWP : testing get-x-given-price and get-y-given-price",
+    name: "Fixed Weight Pool  : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -430,7 +440,9 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);           
+        result.expectOk().expectBool(true);      
+        result = FWPTest.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
+        result.expectOk().expectBool(true);                  
 
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(wstxAddress, usdaAddress, weightX, weightY);
@@ -492,7 +504,7 @@ Clarinet.test({
         
 
 Clarinet.test({
-    name: "FWP : check start-block and end-block",
+    name: "Fixed Weight Pool  : check start-block and end-block",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

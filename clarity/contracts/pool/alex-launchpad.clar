@@ -24,7 +24,7 @@
 (define-constant ERR-INVALID-CLAIM-PERIOD (err u2042))
 (define-constant ERR-REFUND-NOT-AVAILABLE (err u2043))
 
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_8 u100000000) ;; 8 decimal places
 
 (define-data-var contract-owner principal tx-sender)
 

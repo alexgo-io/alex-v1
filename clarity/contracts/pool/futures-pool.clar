@@ -244,11 +244,11 @@
     )
 )
 
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0
     (/ (* a ONE_8) b)

@@ -4,7 +4,6 @@
 ;; fixed-weight-pool-alex
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;; fixed-weight-pool-alex is anchored to ALEX (and routes other tokens)
-;; ALEX / STX is bridged to fixed-weight-pool (i.e. STX-anchored pool)
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
 
@@ -278,6 +277,18 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+        (get-oracle-resilient-internal token-x token-y weight-x weight-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-resilient-internal .age000-governance-token token-y u50000000 u50000000))
+                (try! (get-oracle-resilient-internal .age000-governance-token token-x u50000000 u50000000))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-resilient-internal (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
     (let
         (
             (pool 
@@ -288,7 +299,7 @@
             )
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-x token-y weight-x weight-y))) 
             (mul-down (get oracle-average pool) (get oracle-resilient pool)))
         )           
     )
@@ -303,6 +314,18 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+        (get-oracle-instant-internal token-x token-y weight-x weight-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-instant-internal .age000-governance-token token-y u50000000 u50000000))
+                (try! (get-oracle-instant-internal .age000-governance-token token-x u50000000 u50000000))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-instant-internal (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
     (begin                
         (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
             (let
@@ -367,7 +390,7 @@
                 oracle-enabled: false,
                 oracle-average: u0,
                 oracle-resilient: u0,
-                start-block: u0,
+                start-block: u340282366920938463463374607431768211455,
                 end-block: u340282366920938463463374607431768211455
             })
         )
@@ -409,7 +432,6 @@
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -533,11 +555,12 @@
                 )
                 (sender tx-sender)             
             )
-            (asserts! (<= (div-down dy dx-net-fees) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)       
+            ;; a / b <= c / d == ad <= bc for b, d >=0
+            (asserts! (<= (mul-down dy (mul-down balance-x weight-y)) (mul-down dx-net-fees (mul-down balance-y weight-x))) ERR-INVALID-LIQUIDITY)       
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .age000-governance-token transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
+            (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance .age000-governance-token (- fee fee-rebate))))
 
             ;; post setting
@@ -587,10 +610,11 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (>= (div-down dy-net-fees dx) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)
+            ;; a / b >= c / d == ac >= bc for b, d >= 0
+            (asserts! (>= (mul-down dy-net-fees (mul-down balance-x weight-y)) (mul-down dx (mul-down balance-y weight-x))) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-            (as-contract (try! (contract-call? .alex-vault transfer-ft .age000-governance-token dx sender)))
+            (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft .age000-governance-token dx sender))))
             (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
@@ -616,22 +640,10 @@
             dx: dx, 
             dy: 
                 (if (is-eq (contract-of token-x-trait) .age000-governance-token)
-                    (if (is-eq (contract-of token-y-trait) .token-wstx)
-                        (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx token-x-trait weight-x dx min-dy)))
-                        (get dy (try! (swap-alex-for-y token-y-trait weight-y dx min-dy)))
-                    )
+                    (get dy (try! (swap-alex-for-y token-y-trait weight-y dx min-dy)))
                     (if (is-eq (contract-of token-y-trait) .age000-governance-token)
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-y-trait weight-y dx min-dy)))
-                            (get dx (try! (swap-y-for-alex token-x-trait weight-x dx min-dy)))
-                        )
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y .age000-governance-token weight-x dx none))) min-dy)))
-                            (if (is-eq (contract-of token-y-trait) .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx .age000-governance-token weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
-                                (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
-                            )
-                        )
+                        (get dx (try! (swap-y-for-alex token-x-trait weight-x dx min-dy)))
+                        (get dy (try! (swap-alex-for-y token-y-trait weight-y (get dx (try! (swap-y-for-alex token-x-trait weight-x dx none))) min-dy)))
                     )
                 )
         }
@@ -651,22 +663,10 @@
         {
             dx:
                 (if (is-eq (contract-of token-x-trait) .age000-governance-token)
-                    (if (is-eq (contract-of token-y-trait) .token-wstx)
-                        (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y token-x-trait weight-x dy min-dx)))
-                        (get dx (try! (swap-y-for-alex token-y-trait weight-y dy min-dx)))
-                    )
+                    (get dx (try! (swap-y-for-alex token-y-trait weight-y dy min-dx)))
                     (if (is-eq (contract-of token-y-trait) .age000-governance-token)
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx token-y-trait weight-y dy min-dx)))
-                            (get dy (try! (swap-alex-for-y token-x-trait weight-x dy min-dx)))
-                        )
-                        (if (is-eq (contract-of token-x-trait) .token-wstx)
-                            (get dx (try! (contract-call? .fixed-weight-pool swap-y-for-wstx .age000-governance-token weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
-                            (if (is-eq (contract-of token-y-trait) .token-wstx)
-                                (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dy (try! (contract-call? .fixed-weight-pool swap-wstx-for-y .age000-governance-token weight-y dy none))) min-dx)))        
-                                (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
-                            )
-                        )
+                        (get dy (try! (swap-alex-for-y token-x-trait weight-x dy min-dx)))
+                        (get dy (try! (swap-alex-for-y token-x-trait weight-x (get dx (try! (swap-y-for-alex token-y-trait weight-y dy none))) min-dx)))
                     )
                 ),
             dy: dy
@@ -817,7 +817,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
+        (contract-call? .weighted-equation-v1-01 get-y-given-x (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
@@ -832,7 +832,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
+        (contract-call? .weighted-equation-v1-01 get-x-given-y (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
@@ -845,22 +845,10 @@
 ;; @returns (response uint uint)
 (define-read-only (get-y-given-x (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
     (if (is-eq token-x .age000-governance-token)
-        (if (is-eq token-y .token-wstx)
-            (contract-call? .fixed-weight-pool get-wstx-given-y token-x weight-x dx)
-            (get-y-given-alex token-y weight-y dx)
-        )
+        (get-y-given-alex token-y weight-y dx)
         (if (is-eq token-y .age000-governance-token)
-            (if (is-eq token-x .token-wstx)
-                (contract-call? .fixed-weight-pool get-y-given-wstx token-y weight-y dx)
-                (get-alex-given-y token-x weight-x dx)
-            )
-            (if (is-eq token-x .token-wstx)
-                (get-y-given-alex token-y weight-y (try! (contract-call? .fixed-weight-pool get-y-given-wstx .age000-governancet-token weight-x dx)))
-                (if (is-eq token-y .token-wstx)
-                    (contract-call? .fixed-weight-pool get-wstx-given-y .age000-governance-token weight-y (try! (get-alex-given-y token-x weight-x dx)))
-                    (get-y-given-alex token-y weight-y (try! (get-alex-given-y token-x weight-x dx)))
-                )
-            )
+            (get-alex-given-y token-x weight-x dx)
+            (get-y-given-alex token-y weight-y (try! (get-alex-given-y token-x weight-x dx)))
         )
     )
 )
@@ -874,26 +862,13 @@
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-y (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dy uint)) 
     (if (is-eq token-x .age000-governance-token)
-        (if (is-eq token-y .token-wstx)
-            (contract-call? .fixed-weight-pool get-y-given-wstx token-x weight-x dy)
-            (get-alex-given-y token-y weight-y dy)
-        )
+        (get-alex-given-y token-y weight-y dy)
         (if (is-eq token-y .age000-governance-token)
-            (if (is-eq token-x .token-wstx)
-                (contract-call? .fixed-weight-pool get-wstx-given-y token-y weight-y dy)
-                (get-y-given-alex token-x weight-x dy)
-            )
-            (if (is-eq token-x .token-wstx)
-                (contract-call? .fixed-weight-pool get-wstx-given-y .age000-governance-token weight-x (try! (get-alex-given-y token-y weight-y dy)))
-                (if (is-eq token-y .token-wstx)
-                    (get-y-given-alex token-x weight-x (try! (contract-call? .fixed-weight-pool get-y-given-wstx .age000-governance-token weight-y dy)))
-                    (get-y-given-alex token-x weight-x (try! (get-alex-given-y token-y weight-y dy)))
-                )
-            )
+            (get-y-given-alex token-x weight-x dy)
+            (get-y-given-alex token-x weight-x (try! (get-alex-given-y token-y weight-y dy)))
         )
     )
 )
-
 
 (define-read-only (get-y-in-given-alex-out (token-y principal) (weight-y uint) (dx uint))
     (let 
@@ -901,7 +876,7 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-in-given-x-out (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
+        (contract-call? .weighted-equation-v1-01 get-y-in-given-x-out (get balance-x pool) (get balance-y pool) weight-x weight-y dx)        
     )
 )
 
@@ -911,50 +886,26 @@
             (weight-x (- ONE_8 weight-y))
             (pool (unwrap! (map-get? pools-data-map { token-x: .age000-governance-token, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-in-given-y-out (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
+        (contract-call? .weighted-equation-v1-01 get-x-in-given-y-out (get balance-x pool) (get balance-y pool) weight-x weight-y dy)
     )
 )
 
 (define-read-only (get-y-in-given-x-out (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
     (if (is-eq token-x .age000-governance-token)
-        (if (is-eq token-y .token-wstx)
-            (contract-call? .fixed-weight-pool get-wstx-in-given-y-out token-x weight-x dx)
-            (get-y-in-given-alex-out token-y weight-y dx)
-        )
+        (get-y-in-given-alex-out token-y weight-y dx)
         (if (is-eq token-y .age000-governance-token)
-            (if (is-eq token-x .token-wstx)
-                (contract-call? .fixed-weight-pool get-y-in-given-wstx-out token-y weight-y dx)
-                (get-alex-in-given-y-out token-x weight-x dx)
-            )
-            (if (is-eq token-x .token-wstx)
-                (get-y-in-given-alex-out token-y weight-y (try! (contract-call? .fixed-weight-pool get-y-in-given-wstx-out .age000-governance-token weight-x dx)))
-                (if (is-eq token-y .token-wstx)
-                    (contract-call? .fixed-weight-pool get-wstx-in-given-y-out .age000-governance-token weight-y (try! (get-alex-in-given-y-out token-x weight-x dx)))
-                    (get-y-in-given-alex-out token-y weight-y (try! (get-alex-in-given-y-out token-x weight-x dx)))
-                )
-            )
+            (get-alex-in-given-y-out token-x weight-x dx)
+            (get-y-in-given-alex-out token-y weight-y (try! (get-alex-in-given-y-out token-x weight-x dx)))
         )
     )
 )
 
 (define-read-only (get-x-in-given-y-out (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dy uint)) 
     (if (is-eq token-x .age000-governance-token)
-        (if (is-eq token-y .token-wstx)
-            (contract-call? .fixed-weight-pool get-y-in-given-wstx-out token-x weight-x dy)
-            (get-alex-in-given-y-out token-y weight-y dy)
-        )
+        (get-alex-in-given-y-out token-y weight-y dy)
         (if (is-eq token-y .age000-governance-token)
-            (if (is-eq token-x .token-wstx)
-                (contract-call? .fixed-weight-pool get-wstx-in-given-y-out token-y weight-y dy)
-                (get-y-in-given-alex-out token-x weight-x dy)
-            )
-            (if (is-eq token-x .token-wstx)
-                (contract-call? .fixed-weight-pool get-wstx-in-given-y-out .age000-governance-token weight-y (try! (get-alex-in-given-y-out token-y weight-y dy)))
-                (if (is-eq token-y .token-wstx)
-                    (get-y-in-given-alex-out token-x weight-x (try! (contract-call? .fixed-weight-pool get-y-in-given-wstx-out .age000-governance-token weight-y dy)))
-                    (get-y-in-given-alex-out token-x weight-x (try! (get-alex-in-given-y-out token-y weight-y dy)))
-                )
-            )
+            (get-y-in-given-alex-out token-x weight-x dy)
+            (get-y-in-given-alex-out token-x weight-x (try! (get-alex-in-given-y-out token-y weight-y dy)))
         )
     )
 )
@@ -971,7 +922,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
+        (contract-call? .weighted-equation-v1-01 get-x-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
     )
 )
 
@@ -987,7 +938,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
+        (contract-call? .weighted-equation-v1-01 get-y-given-price (get balance-x pool) (get balance-y pool) weight-x weight-y price)
     )
 )
 
@@ -1004,7 +955,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-token-given-position (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
+        (contract-call? .weighted-equation-v1-01 get-token-given-position (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 
@@ -1020,7 +971,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-position-given-mint (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
+        (contract-call? .weighted-equation-v1-01 get-position-given-mint (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
     )
 )
 
@@ -1036,7 +987,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-position-given-burn (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
+        (contract-call? .weighted-equation-v1-01 get-position-given-burn (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
     )
 )
 
@@ -1056,7 +1007,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
@@ -1064,7 +1015,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -1080,7 +1031,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (/ (* a ONE_8) b)
@@ -1091,7 +1042,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
+(define-private (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (+ u1 (/ (- (* a ONE_8) u1) b))
@@ -1102,7 +1053,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -1119,7 +1070,7 @@
 ;; @params a
 ;; @param b
 ;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -1331,7 +1282,7 @@
 
 ;; @desc get-exp-bound
 ;; @returns (response uint)
-(define-read-only (get-exp-bound)
+(define-private (get-exp-bound)
   (ok MILD_EXPONENT_BOUND)
 )
 
@@ -1340,7 +1291,7 @@
 ;; @params x
 ;; @params y
 ;; @returns (response uint)
-(define-read-only (pow-fixed (x uint) (y uint))
+(define-private (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) ERR_X_OUT_OF_BOUNDS)
@@ -1363,7 +1314,7 @@
 ;; @desc exp-fixed
 ;; @params x
 ;; @returns uint
-(define-read-only (exp-fixed (x int))
+(define-private (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (if (< x 0)
@@ -1380,7 +1331,7 @@
 ;; @desc ln-fixed
 ;; @params a
 ;; @returns uint
-(define-read-only (ln-fixed (a int))
+(define-private (ln-fixed (a int))
   (begin
     (asserts! (> a 0) ERR_OUT_OF_BOUNDS)
     (if (< a iONE_8)
@@ -1402,12 +1353,7 @@
 ;; @params mi-dy
 ;; @returns (response uint)
 (define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
-    (ok
-        (if (is-some (get-pool-exists (contract-of token-x-trait) (contract-of token-y-trait) weight-x weight-y))
-            (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy)))
-            (get dx (try! (swap-y-for-x token-y-trait token-x-trait weight-y weight-x dx min-dy)))
-        )
-    )
+    (ok (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy))))
 )
 
 ;; @desc get-x-y
@@ -1418,12 +1364,7 @@
 ;; @params dy
 ;; @returns (response uint uint)
 (define-read-only (get-helper (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
-    (ok 
-        (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
-            (try! (get-y-given-x token-x token-y weight-x weight-y dx))
-            (try! (get-x-given-y token-y token-x weight-y weight-x dx))
-        )
-    )  
+    (get-y-given-x token-x token-y weight-x weight-y dx)
 )
 
 ;; contract initialisation
