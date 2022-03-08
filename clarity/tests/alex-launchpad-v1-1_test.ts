@@ -228,6 +228,14 @@ Clarinet.test({
 
     let winners_list: number[] = [];
 
+    const approved_operator = accountC;
+    const third = chain.mineBlock([
+      Tx.contractCall("alex-launchpad-v1-1", "add-approved-operator", 
+        [
+          types.principal(approved_operator.address)
+        ], deployer.address),      
+      ]);
+
     for (let t = 0; t < 500; t += 120) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
@@ -347,7 +355,7 @@ Clarinet.test({
               types.principal(contractPrincipal(deployer, "token-wban")),
               types.principal(contractPrincipal(deployer, "token-wstx")),
             ],
-            deployer.address
+            accountC.address
           ),
         ]);        
         // console.log(claim);
@@ -408,7 +416,7 @@ Clarinet.test({
               types.list(losers_sliced.map(e => { return types.tuple({recipient: types.principal(e.recipient), amount: types.uint(e.amount * parameters["pricePerTicketInFixed"])})})),
               types.principal(contractPrincipal(deployer, "token-wstx")),
             ],
-            deployer.address
+            accountC.address
           ),
         ]);
 
