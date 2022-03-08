@@ -121,7 +121,14 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
 		(asserts! (< block-height (get registration-start-height offering)) err-block-height-not-reached)
-		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-not-authorized)
+		(asserts! 
+			(or 
+				(is-eq (get ido-owner offering) tx-sender) 
+				(is-ok (check-is-approved)) 
+				(is-ok (check-is-owner))
+			) 
+			err-not-authorized
+		)
 		(asserts! (is-eq (contract-of ido-token) (get ido-token-contract offering)) err-invalid-ido-token)
 		(try! (contract-call? ido-token transfer-fixed (* (get ido-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
 		(map-set offerings ido-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
@@ -203,11 +210,10 @@
 		)
 		(asserts! (is-none (map-get? offering-ticket-bounds {ido-id: ido-id, owner: tx-sender})) err-already-registered)
 		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
-		(asserts! (>= block-height (get registration-start-height offering)) err-block-height-not-reached)
-		(asserts! (< block-height (get registration-end-height offering)) err-block-height-not-reached)		
+		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
-		(unwrap! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none) (err u2234))		
-		(as-contract (unwrap! (contract-call? .token-apower burn-fixed apower-to-burn sender) (err u1234)))
+		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
+		(as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set offering-ticket-amounts {ido-id: ido-id, owner: tx-sender} tickets)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
@@ -483,7 +489,7 @@
 
 (define-public (set-contract-owner (owner principal))
 	(begin
-		(asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorized)
+		(try! (check-is-owner))
 		(ok (var-set contract-owner owner))
 	)
 )
