@@ -6,7 +6,7 @@
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-INVALID-BALANCE (err u2008))
 
-(define-fungible-token staked-fwp-wstx-alex-50-50)
+(define-fungible-token staked-fwp-wstx-alex-50-50-v1-01)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
 (define-map token-owned principal (list 200 uint))
@@ -61,7 +61,7 @@
 )
 
 (define-read-only (get-overall-balance (who principal))
-	(ok (ft-get-balance staked-fwp-wstx-alex-50-50 who))
+	(ok (ft-get-balance staked-fwp-wstx-alex-50-50-v1-01 who))
 )
 
 (define-read-only (get-total-supply (token-id uint))
@@ -69,7 +69,7 @@
 )
 
 (define-read-only (get-overall-supply)
-	(ok (ft-get-supply staked-fwp-wstx-alex-50-50))
+	(ok (ft-get-supply staked-fwp-wstx-alex-50-50-v1-01))
 )
 
 (define-read-only (get-decimals (token-id uint))
@@ -87,7 +87,7 @@
 		)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? staked-fwp-wstx-alex-50-50 amount sender recipient))
+		(try! (ft-transfer? staked-fwp-wstx-alex-50-50-v1-01 amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
@@ -102,7 +102,7 @@
 		)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? staked-fwp-wstx-alex-50-50 amount sender recipient))
+		(try! (ft-transfer? staked-fwp-wstx-alex-50-50-v1-01 amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
@@ -113,7 +113,7 @@
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
 		(try! (check-is-approved tx-sender))
-		(try! (ft-mint? staked-fwp-wstx-alex-50-50 amount recipient))
+		(try! (ft-mint? staked-fwp-wstx-alex-50-50-v1-01 amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint_event", token-id: token-id, amount: amount, recipient: recipient})
@@ -124,7 +124,7 @@
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
 		(try! (check-is-approved tx-sender))
-		(try! (ft-burn? staked-fwp-wstx-alex-50-50 amount sender))
+		(try! (ft-burn? staked-fwp-wstx-alex-50-50-v1-01 amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn_event", token-id: token-id, amount: amount, sender: sender})
@@ -155,11 +155,11 @@
 )
 
 (define-read-only (get-overall-supply-fixed)
-	(ok (decimals-to-fixed (ft-get-supply staked-fwp-wstx-alex-50-50)))
+	(ok (decimals-to-fixed (ft-get-supply staked-fwp-wstx-alex-50-50-v1-01)))
 )
 
 (define-read-only (get-overall-balance-fixed (who principal))
-	(ok (decimals-to-fixed (ft-get-balance staked-fwp-wstx-alex-50-50 who)))
+	(ok (decimals-to-fixed (ft-get-balance staked-fwp-wstx-alex-50-50-v1-01 who)))
 )
 
 (define-public (transfer-fixed (token-id uint) (amount uint) (sender principal) (recipient principal))

@@ -426,7 +426,7 @@ Clarinet.test({
 // });  
 
 // Clarinet.test({
-//     name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01 throws error",
+//     name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01-v1-01 throws error",
 
 //     async fn(chain: Chain, accounts: Map<string, Account>) {
 //         let deployer = accounts.get("deployer")!;
@@ -473,7 +473,7 @@ Clarinet.test({
 //        let call:any = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
 //         call.result.expectOk().expectUint(95000000);                
 
-//         // attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool throws error
+//         // attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01 throws error
 //         result = CRPTest.addToPosition(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0.11 * Math.round(wbtcPrice * wbtcQ / ONE_8));
 //         result.expectErr().expectUint(2027);
 //     },    

@@ -239,7 +239,7 @@
                         )
                     )                    
                 )
-                ;; make sure weight-x <= 0.9 so it works with weighted-equation
+                ;; make sure weight-x <= 0.9 so it works with weighted-equation-v1-01
                 (ok (if (< weighted u95000000) weighted u95000000))
             )    
         )
@@ -805,7 +805,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dx)
+        (contract-call? .weighted-equation-v1-01 get-y-given-x (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dx)
     )
 )
 
@@ -820,7 +820,7 @@
 		(
 			(pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
 		)
-		(contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dy)
+		(contract-call? .weighted-equation-v1-01 get-x-given-y (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dy)
 	)
 )
 
@@ -835,7 +835,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (contract-call? .weighted-equation-v1-01 get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -850,7 +850,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (contract-call? .weighted-equation get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (contract-call? .weighted-equation-v1-01 get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -899,7 +899,7 @@
             
                 (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
 
-                (pos-data (unwrap! (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
+                (pos-data (unwrap! (contract-call? .weighted-equation-v1-01 get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
 
                 (dx-weighted (get dx pos-data))
                 (dy-weighted (get dy pos-data))

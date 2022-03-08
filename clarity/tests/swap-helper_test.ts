@@ -12,12 +12,12 @@ const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token"
 const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda-50-50"
 const fwpalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-wbtc-50-50"
-const fwpwstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-alex-50-50"
+const fwpwstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-alex-50-50-v1-01"
 const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
-const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50"
+const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50-v1-01"
 const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda-50-50"
 const multisigalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-wbtc-50-50"
-const multisigwstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-alex-50-50"
+const multisigwstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-alex-50-50-v1-01"
 const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda-50-50"
 const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-wbtc-50-50"
 
@@ -191,7 +191,7 @@ Clarinet.test({
                 Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                
                 Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
                 Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("fixed-weight-pool", "swap-helper", [types.principal(wstxAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", [types.principal(wstxAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts.map(e => { return e.result.expectOk() });

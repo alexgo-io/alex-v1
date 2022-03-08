@@ -442,7 +442,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
             (weight-x (get weight-x-t pool))
         )
-        (contract-call? .weighted-equation get-y-given-x (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dx)        
+        (contract-call? .weighted-equation-v1-01 get-y-given-x (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dx)        
     )
 )
 
@@ -458,7 +458,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
             (weight-x (get weight-x-t pool))
         )
-        (contract-call? .weighted-equation get-x-given-y (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dy)
+        (contract-call? .weighted-equation-v1-01 get-x-given-y (get balance-x pool) (get balance-y pool) weight-x (- ONE_8 weight-x) dy)
     )
 )
 
@@ -477,7 +477,7 @@
             (weight-x (get weight-x-t pool))
             (weight-y (- ONE_8 weight-x))            
         )
-        (contract-call? .weighted-equation get-x-given-price balance-x balance-y weight-x weight-y price)
+        (contract-call? .weighted-equation-v1-01 get-x-given-price balance-x balance-y weight-x weight-y price)
     )
 )
 
@@ -496,7 +496,7 @@
             (weight-x (get weight-x-t pool))
             (weight-y (- ONE_8 weight-x))            
         )
-        (contract-call? .weighted-equation get-y-given-price balance-x balance-y weight-x weight-y price)
+        (contract-call? .weighted-equation-v1-01 get-y-given-price balance-x balance-y weight-x weight-y price)
     )
 )
 
@@ -517,7 +517,7 @@
             (weight-x (get weight-x-t pool))
             (weight-y (- ONE_8 weight-x))       
         )
-        (contract-call? .weighted-equation get-token-given-position balance-x balance-y weight-x weight-y total-supply dx (default-to u340282366920938463463374607431768211455 max-dy))
+        (contract-call? .weighted-equation-v1-01 get-token-given-position balance-x balance-y weight-x weight-y total-supply dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 
@@ -537,7 +537,7 @@
             (weight-x (get weight-x-t pool))
             (weight-y (- ONE_8 weight-x))                         
         )
-        (contract-call? .weighted-equation get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares)
+        (contract-call? .weighted-equation-v1-01 get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares)
     )
 )
 
@@ -557,7 +557,7 @@
             (weight-x (get weight-x-t pool))
             (weight-y (- ONE_8 weight-x))                  
         )
-        (contract-call? .weighted-equation get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)
+        (contract-call? .weighted-equation-v1-01 get-position-given-burn balance-x balance-y weight-x weight-y total-supply shares)
     )
 )
 
