@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 
 ;; simple-equation
-;; simple-equation implements 50:50 weighted-equation (i.e. uniswap)
+;; simple-equation implements 50:50 weighted-equation-v1-01 (i.e. uniswap)
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
 ;; constants

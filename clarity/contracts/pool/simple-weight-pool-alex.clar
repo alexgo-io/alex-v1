@@ -2,7 +2,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; simple-weight-pool-alex
-;; simple-weight-pool implements 50:50 fixed-weight-pool (i.e. uniswap)
+;; simple-weight-pool implements 50:50 fixed-weight-pool-v1-01 (i.e. uniswap)
 ;; simple-weight-pool-alex is anchored to ALEX (and routes other tokens)
 
 (define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places

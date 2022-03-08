@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 
-;; weighted-equation
+;; weighted-equation-v1-01
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
 ;; constants

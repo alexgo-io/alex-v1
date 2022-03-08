@@ -130,7 +130,7 @@ import {
 
     setMaxInRatio(user: Account, ratio: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("weighted-equation", "set-max-in-ratio", [
+        Tx.contractCall("weighted-equation-v1-01", "set-max-in-ratio", [
           types.uint(ratio)
         ], user.address),
       ]);
@@ -139,7 +139,7 @@ import {
 
     setMaxOutRatio(user: Account, ratio: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("weighted-equation", "set-max-out-ratio", [
+        Tx.contractCall("weighted-equation-v1-01", "set-max-out-ratio", [
           types.uint(ratio)
         ], user.address),
       ]);
