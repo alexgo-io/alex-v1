@@ -467,7 +467,8 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/multisig/multisig-fwp-wstx-alex-50-50-v1-01.clar"
 depends_on = [
   "fwp-wstx-alex-50-50-v1-01",
-  "fixed-weight-pool-v1-01"
+  "fixed-weight-pool-v1-01",
+  "trait-multisig-vote"  
 ]
 
 [contracts.fwp-wstx-wbtc-50-50-v1-01]
@@ -478,7 +479,8 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/multisig/multisig-fwp-wstx-wbtc-50-50-v1-01.clar"
 depends_on = [
   "fwp-wstx-wbtc-50-50-v1-01",
-  "fixed-weight-pool-v1-01"
+  "fixed-weight-pool-v1-01",
+  "trait-multisig-vote"  
 ]
 
 [contracts.multisig-fwp-alex-usda-50-50]
@@ -492,7 +494,8 @@ depends_on = [
 path = "contracts/multisig/multisig-fwp-alex-wbtc-50-50.clar"
 depends_on = [
   "fwp-alex-wbtc-50-50",
-  "fixed-weight-pool-alex"
+  "fixed-weight-pool-alex",
+  "trait-multisig-vote"  
 ]
 
 [contracts.fwp-wstx-usda-50-50]
@@ -503,7 +506,8 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/multisig/multisig-fwp-wstx-usda-50-50.clar"
 depends_on = [
   "fwp-wstx-usda-50-50",
-  "fixed-weight-pool-v1-01"
+  "fixed-weight-pool-v1-01",
+  "trait-multisig-vote"  
 ]
 
 [contracts.fwp-alex-usda-50-50]
