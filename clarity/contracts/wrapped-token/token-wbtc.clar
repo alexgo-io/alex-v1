@@ -16,6 +16,7 @@
 (define-constant ERR-MINT-FAILED (err u6002))
 (define-constant ERR-BURN-FAILED (err u6003))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
+(define-constant ERR-NOT-SUPPORTED (err u6004))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -67,7 +68,8 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok u0)
+  ;; least authority Issue D
+  ERR-NOT-SUPPORTED
 )
 
 ;; @desc get-name
@@ -92,8 +94,8 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? .token-xbtc get-balance account)) ONE_8) (pow u10 u8)))
-  ;; (ok (/ (* (try! (contract-call? SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) ONE_8) (pow u10 u8)))
+  (ok (/ (* (unwrap-panic (contract-call? .token-xbtc get-balance account)) (pow-decimals)) (pow u10 u8)))
+  ;; (ok (/ (* (unwrap-panic (contract-call? 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin get-balance account)) (pow-decimals)) (pow u10 u8)))
 )
 
 ;; @desc get-token-uri
@@ -112,7 +114,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) ONE_8) sender recipient memo)
+    (contract-call? .token-xbtc transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
   )
 )
 
@@ -142,7 +144,8 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
+  ;; least authority Issue D
+  ERR-NOT-SUPPORTED
 )
 
 ;; @desc get-balance-fixed

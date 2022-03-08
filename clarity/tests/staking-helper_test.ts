@@ -10,7 +10,7 @@ const reward_cycle_length = 525;
 
 const ONE_8 = 100000000;
 const stakedAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE." + stakeContract;
-const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool";
+const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-v1-01";
 
 class StakingHelper {
     chain: Chain;
@@ -47,23 +47,15 @@ class StakingHelper {
       return block.receipts[0].result;      
     }
 
-    setActivationThreshold(sender: Account, threshold: number){
+    setActivationBlock(sender: Account, token: string, blockheight: number){
       let block = this.chain.mineBlock([
-        Tx.contractCall(reserveContract, "set-activation-threshold", [
-          types.uint(threshold)
+        Tx.contractCall(reserveContract, "set-activation-block", [
+          types.principal(token),
+          types.uint(blockheight)
         ], sender.address),
       ]);
       return block.receipts[0].result;        
     }
-
-    setActivationDelay(sender: Account, delay: number){
-      let block = this.chain.mineBlock([
-        Tx.contractCall(reserveContract, "set-activation-delay", [
-          types.uint(delay)
-        ], sender.address),
-      ]);
-      return block.receipts[0].result;        
-    }    
 
     setRewardCycleLength(sender: Account, length: number){
       let block = this.chain.mineBlock([
@@ -73,16 +65,6 @@ class StakingHelper {
       ]);
       return block.receipts[0].result;        
     }      
-
-    registerUser(sender: Account, token: string){
-      let block = this.chain.mineBlock([
-        Tx.contractCall(reserveContract, "register-user", [
-          types.principal(token),
-          types.none()
-        ], sender.address),
-      ]);
-      return block.receipts[0].result;        
-    }   
     
     stakeTokens(sender: Account, token: string, amount: number, lock_period: number){
       let block = this.chain.mineBlock([
@@ -152,17 +134,13 @@ Clarinet.test({
           ], deployer.address),
         ]);
 
-        let result:any = await StakingTest.setActivationThreshold(deployer, 1);
-        result.expectOk().expectBool(true);
-        result = await StakingTest.setActivationDelay(deployer, 1);
-        result.expectOk().expectBool(true);
-        result = await StakingTest.setRewardCycleLength(deployer, reward_cycle_length);
+        let result:any = await StakingTest.setRewardCycleLength(deployer, reward_cycle_length);
         result.expectOk().expectBool(true);
         result = await StakingTest.addToken(deployer, stakedAddress);
-        result.expectOk().expectBool(true);  
+        result.expectOk().expectBool(true);
+        result = await StakingTest.setActivationBlock(deployer, stakedAddress, 1);
+        result.expectOk().expectBool(true);          
         result = await StakingTest.setCoinbaseAmount(deployer, stakedAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8);
-        result.expectOk().expectBool(true);      
-        result = await StakingTest.registerUser(deployer, stakedAddress);
         result.expectOk().expectBool(true);
 
         result = await StakingTest.stakeTokens(wallet_6, stakedAddress, 100e8, 3);
@@ -190,9 +168,9 @@ Clarinet.test({
         result0['coinbase-amount'].expectUint(ONE_8);      
 
         call = await StakingTest.getFirstStacksBlocksInRewardCycle(stakedAddress, 1);
-        result = call.result.expectUint(8 + reward_cycle_length);
+        result = call.result.expectUint(1 + reward_cycle_length);
         
-        chain.mineEmptyBlockUntil(8 + reward_cycle_length * 2 + 1);
+        chain.mineEmptyBlockUntil(1 + reward_cycle_length * 2 + 1);
 
         call = await StakingTest.getRewardCycle(stakedAddress);
         call.result.expectSome().expectUint(2); 
