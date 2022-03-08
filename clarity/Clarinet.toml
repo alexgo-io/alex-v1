@@ -560,3 +560,15 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 [contracts.token-wban]
 path = "contracts/wrapped-token/token-wban.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-banana" ]
+
+[contracts.fwp-alex-wban]
+path = "contracts/pool-token/fwp-alex-wban.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-alex-wban]
+path = "contracts/multisig/multisig-fwp-alex-wban.clar"
+depends_on = [
+  "fwp-alex-wban",
+  "simple-weight-pool-alex",
+  "trait-multisig-vote"
+]
