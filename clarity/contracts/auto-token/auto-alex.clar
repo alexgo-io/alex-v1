@@ -215,4 +215,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .alex-yield-vault true)
+(map-set approved-contracts .yield-vault-alex true)

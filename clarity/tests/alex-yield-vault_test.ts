@@ -7,7 +7,7 @@ const ONE_8 = 100000000
 
 const alexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token";
 const autoAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.auto-alex";
-const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.alex-yield-vault";
+const alexVaultAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-vault-alex";
 const ACTIVATION_BLOCK = 20;
 const BountyPercentage = 0.001;
 const BountyCap = 10 * ONE_8;
@@ -21,25 +21,25 @@ Clarinet.test({
 
         let block = chain.mineBlock([
             Tx.contractCall(
-                "alex-yield-vault",
+                "yield-vault-alex",
                 "set-contract-owner",
                 [types.principal(wallet_2.address)],
                 notContractOwner.address
             ),
             Tx.contractCall(
-                "alex-yield-vault",
+                "yield-vault-alex",
                 "set-activated",
                 [types.bool(true)],
                 notContractOwner.address
             ),      
             Tx.contractCall(
-                "alex-yield-vault",
+                "yield-vault-alex",
                 "set-claim-and-stake-bounty-in-fixed",
                 [types.uint(0)],
                 notContractOwner.address
             ),                    
             Tx.contractCall(
-                "alex-yield-vault",
+                "yield-vault-alex",
                 "set-claim-and-stake-bounty-max-in-fixed",
                 [types.uint(0)],
                 notContractOwner.address
@@ -145,12 +145,12 @@ Clarinet.test({
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
             wallet_1.address,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             "alex"
         );
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             deployer.address + ".alex-vault",
             "alex"
         );
@@ -175,12 +175,12 @@ Clarinet.test({
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
             wallet_2.address,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             "alex"
         );
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             deployer.address + ".alex-vault",
             "alex"
         );
@@ -227,12 +227,12 @@ Clarinet.test({
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
             wallet_1.address,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             "alex"
         );
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             deployer.address + ".alex-vault",
             "alex"
         );
@@ -287,12 +287,12 @@ Clarinet.test({
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
             wallet_1.address,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             "alex"
         );
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             dx,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             deployer.address + ".alex-vault",
             "alex"
         );
@@ -313,18 +313,18 @@ Clarinet.test({
 
         block.receipts[0].events.expectFungibleTokenMintEvent(
             ONE_8,
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             "alex"
         );        
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             Math.min(BountyCap, ONE_8 * BountyPercentage),
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             wallet_2.address,
             "alex"
         );
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             ONE_8 - Math.min(BountyCap, ONE_8 * BountyPercentage),
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             deployer.address + ".alex-vault",
             "alex"
         );
@@ -391,7 +391,7 @@ Clarinet.test({
         );        
         block.receipts[0].events.expectFungibleTokenTransferEvent(
             Math.min(BountyCap, ONE_8 * BountyPercentage),
-            deployer.address + ".alex-yield-vault",
+            deployer.address + ".yield-vault-alex",
             wallet_1.address,
             "alex"
         );

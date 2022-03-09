@@ -11,7 +11,7 @@ class YieldVault{
     // (define-public (add-to-position (dx uint))
     addToPosition(sender: Account, dx: number){
         return Tx.contractCall(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "add-to-position",
             [
                 types.uint(dx)
@@ -22,7 +22,7 @@ class YieldVault{
 
     claimAndStake(sender: Account, reward_cycle: number){
         return Tx.contractCall(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "claim-and-stake",
             [
                 types.uint(reward_cycle)
@@ -33,7 +33,7 @@ class YieldVault{
 
     reducePosition(sender: Account){
         return Tx.contractCall(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "reduce-position",
             [],
             sender.address
@@ -42,7 +42,7 @@ class YieldVault{
 
     setActivated(sender: Account, activated: boolean){
         return Tx.contractCall(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "set-activated",
             [
                 types.bool(activated)
@@ -53,7 +53,7 @@ class YieldVault{
 
     getNextBase(sender: Account){
         return this.chain.callReadOnlyFn(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "get-next-base",
             [],
             sender.address
@@ -63,7 +63,7 @@ class YieldVault{
     //(define-public (stake-tokens (amount-token uint) (lock-period uint))
     stakeTokens(sender: Account, amount_token: number, lock_period: number){
         return Tx.contractCall(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "stake-tokens",
             [
                 types.uint(amount_token),
@@ -75,7 +75,7 @@ class YieldVault{
     
     claimStakingReward(sender: Account, target_cycle: number){
         return Tx.contractCall(
-            "alex-yield-vault",
+            "yield-vault-alex",
             "claim-staking-reward",
             [
                 types.uint(target_cycle)
