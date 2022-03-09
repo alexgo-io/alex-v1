@@ -518,8 +518,8 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/auto-token/auto-alex.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
 
-[contracts.alex-yield-vault]
-path = "contracts/pool/alex-yield-vault.clar"
+[contracts.yield-vault-alex]
+path = "contracts/pool/yield-vault-alex.clar"
 depends_on = [ "auto-alex", "age000-governance-token", "trait-ownable", "alex-reserve-pool" ]
 
 [contracts.fwp-alex-wbtc-50-50]
