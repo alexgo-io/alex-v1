@@ -433,6 +433,31 @@
 	)
 )
 
+(define-public (transfer-all-to-owner (token-trait <ft-trait>))
+	(let 
+		(
+			(balance (try! (contract-call? token-trait get-balance-fixed (as-contract tx-sender))))
+		)
+		(try! (check-is-owner))
+		(and 
+			(> balance u0) 
+			(as-contract 
+				(try!
+					(contract-call? 
+						token-trait 
+						transfer-fixed 
+				 		balance
+						tx-sender 
+						(var-get contract-owner) 
+						none
+					)
+				)
+			)
+		)
+		(ok true)
+	)
+)
+
 (define-constant lcg-a u134775813)
 (define-constant lcg-c u1)
 (define-constant lcg-m u4294967296)
