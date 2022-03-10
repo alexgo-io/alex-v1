@@ -218,6 +218,68 @@ Clarinet.test({
   },
 });
 
+Clarinet.test({
+  name: "Launchpad: contract-owner can transfer all tokens in emergency",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const [deployer, accountA, accountB, accountC, accountD, accountE, accountF, accountG] = [
+      "deployer", "wallet_1", "wallet_2", "wallet_3", "wallet_4", "wallet_5", "wallet_6", "wallet_7"
+    ].map((wallet) => accounts.get(wallet)!);
+
+      const ticketRecipient = { recipient: accountG, amount: 1 };
+
+      const params: StandardTestParameters = 
+        {
+          ...parameters,
+          idoOwner: accountA,
+          ticketRecipients: [ticketRecipient]
+        };
+        
+      const preparation = prepareStandardTest(chain, params, deployer);
+      preparation.blocks.map((block) =>
+        block.receipts.map(({ result }) => result.expectOk())
+      );
+
+      const { idoId } = preparation;
+      
+      chain.mineEmptyBlockUntil(parameters.registrationStartHeight);
+
+      const block = chain.mineBlock([
+        Tx.contractCall("alex-launchpad-v1-1", "register",
+          [
+            types.uint(idoId),
+            types.uint(ticketRecipient.amount),
+            types.principal(contractPrincipal(deployer, "token-wstx")),
+          ], ticketRecipient.recipient.address),
+        Tx.contractCall("alex-launchpad-v1-1", "transfer-all-to-owner",
+          [
+            types.principal(contractPrincipal(deployer, "token-wstx")),
+          ], ticketRecipient.recipient.address),
+        Tx.contractCall("alex-launchpad-v1-1", "transfer-all-to-owner",
+          [
+            types.principal(contractPrincipal(deployer, "token-wstx")),
+          ], deployer.address),   
+        Tx.contractCall("alex-launchpad-v1-1", "transfer-all-to-owner",
+          [
+            types.principal(contractPrincipal(deployer, "token-wban")),
+          ], deployer.address),                                    
+        ]);
+      block.receipts[0].result.expectOk();
+      block.receipts[1].result.expectErr().expectUint(1000);
+      block.receipts[2].result.expectOk();
+      block.receipts[3].result.expectOk();
+      block.receipts[2].events.expectSTXTransferEvent(
+        parameters["pricePerTicketInFixed"] * 1e6 / ONE_8,
+        deployer.address + ".alex-launchpad-v1-1",
+        deployer.address
+      );
+      block.receipts[3].events.expectFungibleTokenTransferEvent(
+          parameters["idoTokensPerTicket"] * parameters["ticketsForSale"] * 1e6,
+          deployer.address + ".alex-launchpad-v1-1",
+          deployer.address,
+          "banana"
+      );
+    }
+});
 
 Clarinet.test({
   name: "Launchpad: example claim walk test",
