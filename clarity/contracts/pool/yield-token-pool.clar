@@ -900,8 +900,7 @@
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-down ONE_8 t-comp))
-        (bound (unwrap-panic (get-exp-bound)))
-        (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (x-pow (pow-down balance-x t-comp))
         (y-pow (pow-down balance-y t-comp))
         (x-dx-pow (pow-down (+ balance-x dx) t-comp))
@@ -935,8 +934,7 @@
       (          
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-down ONE_8 t-comp))
-        (bound (unwrap-panic (get-exp-bound)))
-        (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (x-pow (pow-down balance-x t-comp))
         (y-pow (pow-down balance-y t-comp))
         (y-dy-pow (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp))
@@ -970,9 +968,7 @@
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-down ONE_8 t-comp))
-        (bound (unwrap-panic (get-exp-bound)))
-        (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
-        (max-exp (unwrap-panic (get-exp-bound)))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
         (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
         (lead-term (pow-down (div-down numer denom) t-comp-num))
@@ -1000,9 +996,7 @@
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-down ONE_8 t-comp))
-        (bound (unwrap-panic (get-exp-bound)))
-        (t-comp-num (if (< t-comp-num-uncapped bound) t-comp-num-uncapped bound))            
-        (max-exp (unwrap-panic (get-exp-bound)))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
         (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
         (lead-term (mul-up balance-x (pow-down (div-down numer denom) t-comp-num)))
@@ -1362,15 +1356,6 @@
    )
     {term: next_term, seriesSum: next_sum, x: x}
  )
-)
-
-;; public functions
-;;
-
-;; @desc get-exp-bound
-;; @returns (response uint)
-(define-private (get-exp-bound)
-  (ok MILD_EXPONENT_BOUND)
 )
 
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
