@@ -2,7 +2,7 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token t-alex)
+(define-fungible-token alex)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -46,19 +46,19 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply t-alex))
+  (ok (ft-get-supply alex))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "t-alex")
+  (ok "alex")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "t-alex")
+  (ok "alex")
 )
 
 ;; @desc get-decimals
@@ -71,7 +71,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance t-alex account))
+  (ok (ft-get-balance alex account))
 )
 
 ;; @desc set-token-uri
@@ -85,7 +85,7 @@
   )
 )
 
-;; @desc get-token-uri 
+;; @desc get-token-uri
 ;; @params token-id
 ;; @returns (response none)
 (define-read-only (get-token-uri)
@@ -94,7 +94,7 @@
 
 ;; @desc transfer
 ;; @restricted sender
-;; @params token-id 
+;; @params token-id
 ;; @params amount
 ;; @params sender
 ;; @params recipient
@@ -102,7 +102,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (ft-transfer? t-alex amount sender recipient))
+    (try! (ft-transfer? alex amount sender recipient))
     (match memo to-print (print to-print) 0x)
     (ok true)
   )
@@ -117,7 +117,7 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-mint? t-alex amount recipient)
+    (ft-mint? alex amount recipient)
   )
 )
 
@@ -130,7 +130,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-burn? t-alex amount sender)
+    (ft-burn? alex amount sender)
   )
 )
 
@@ -149,7 +149,7 @@
   (/ (* amount (pow-decimals)) ONE_8)
 )
 
-;; @desc decimals-to-fixed 
+;; @desc decimals-to-fixed
 ;; @params amount
 ;; @returns uint
 (define-private (decimals-to-fixed (amount uint))
@@ -160,7 +160,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply t-alex)))
+  (ok (decimals-to-fixed (ft-get-supply alex)))
 )
 
 ;; @desc get-balance-fixed
@@ -168,7 +168,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance t-alex account)))
+  (ok (decimals-to-fixed (ft-get-balance alex account)))
 )
 
 ;; @desc transfer-fixed
@@ -199,7 +199,7 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .t-alex-reserve-pool true)
+(map-set approved-contracts .alex-reserve-pool true)
 (map-set approved-contracts .faucet true)
 
 
