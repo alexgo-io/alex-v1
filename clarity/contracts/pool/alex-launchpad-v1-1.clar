@@ -36,8 +36,7 @@
 	registration-end-height: uint,
 	claim-end-height: uint,
 	total-tickets: uint,
-	apower-per-ticket-in-fixed: (list 5 uint),
-	tier-threshold: uint,
+	apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
 	registration-max-tickets: uint
 	}
 )
@@ -77,8 +76,7 @@
 		registration-start-height: uint,
 		registration-end-height: uint,
 		claim-end-height: uint,
-		apower-per-ticket-in-fixed: (list 5 uint),
-		tier-threshold: uint,
+		apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
 		registration-max-tickets: uint
 		})
 	)
@@ -171,20 +169,19 @@
 	(map-get? offering-ticket-amounts {ido-id: ido-id, owner: owner})
 )
 
-(define-private (get-apower-required-iter (apower-per-ticket-in-fixed uint) (prior {remaining-tickets: uint, apower-so-far: uint, tier-threshold: uint, length: uint}))
+(define-private (get-apower-required-iter (bracket {apower-per-ticket-in-fixed: uint, tier-threshold: uint}) (prior {remaining-tickets: uint, apower-so-far: uint, length: uint}))
 	(let
 		( 
 			(tickets-to-process 
-				(if (or (is-eq (get length prior) u1) (< (get remaining-tickets prior) (get tier-threshold prior))) 
+				(if (or (is-eq (get length prior) u1) (< (get remaining-tickets prior) (get tier-threshold bracket))) 
 					(get remaining-tickets prior)
-					(get tier-threshold prior)
+					(get tier-threshold bracket)
 				)
 			)
 		)
 		{ 
 			remaining-tickets: (- (get remaining-tickets prior) tickets-to-process), 
-			apower-so-far: (+ (get apower-so-far prior) (* tickets-to-process apower-per-ticket-in-fixed)), 
-			tier-threshold: (get tier-threshold prior),
+			apower-so-far: (+ (get apower-so-far prior) (* tickets-to-process (get apower-per-ticket-in-fixed bracket))), 
 			length: (- (get length prior) u1)
 		}
 	)	
@@ -196,7 +193,7 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 			(tiers (get apower-per-ticket-in-fixed offering))
 		)
-		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, tier-threshold: (get tier-threshold offering), length: (len tiers)})))
+		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, length: (len tiers)})))
 	)	
 )
 

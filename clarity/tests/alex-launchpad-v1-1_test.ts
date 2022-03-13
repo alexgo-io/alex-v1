@@ -29,8 +29,15 @@ const parameters = {
   registrationStartHeight: 10,
   registrationEndHeight: 20,
   claimEndHeight: 30,
-  apowerPerTicketInFixed: [10000000000, 10000000000, 10000000000, 10000000000, 10000000000],
-  tierThreshold: 10,
+  apowerPerTicketInFixed: 
+    [ 
+      { tierThreshold: 5, apowerPerTicketInFixed: 10 * ONE_8 },
+      { tierThreshold: 10, apowerPerTicketInFixed: 50 * ONE_8 },
+      { tierThreshold: 20, apowerPerTicketInFixed: 100 * ONE_8 },
+      { tierThreshold: 30, apowerPerTicketInFixed: 150 * ONE_8 },
+      { tierThreshold: 40, apowerPerTicketInFixed: 200 * ONE_8 },
+      { tierThreshold: 50, apowerPerTicketInFixed: 250 * ONE_8 }
+    ],
   registrationMaxTickets: 999999999999
 };
 
@@ -59,8 +66,7 @@ Clarinet.test({
           "registration-start-height": types.uint(params.registrationStartHeight),
           "registration-end-height": types.uint(params.registrationEndHeight),
           "claim-end-height": types.uint(params.claimEndHeight),
-          "apower-per-ticket-in-fixed": types.list(params.apowerPerTicketInFixed.map(e => { return types.uint(e) })),
-          "tier-threshold": types.uint(params.tierThreshold),
+          "apower-per-ticket-in-fixed": types.list(params.apowerPerTicketInFixed.map(e => { return types.tuple( { 'apower-per-ticket-in-fixed': types.uint(e.apowerPerTicketInFixed), 'tier-threshold': types.uint(e.tierThreshold) } ) })),
           "registration-max-tickets": types.uint(params.registrationMaxTickets)
         }),
       ], accountA.address),
@@ -95,8 +101,7 @@ Clarinet.test({
             "registration-start-height": types.uint(params.registrationStartHeight),
             "registration-end-height": types.uint(params.registrationEndHeight),
             "claim-end-height": types.uint(params.claimEndHeight),
-            "apower-per-ticket-in-fixed": types.list(params.apowerPerTicketInFixed.map(e => { return types.uint(e) })),
-            "tier-threshold": types.uint(params.tierThreshold),
+            "apower-per-ticket-in-fixed": types.list(params.apowerPerTicketInFixed.map(e => { return types.tuple( { 'apower-per-ticket-in-fixed': types.uint(e.apowerPerTicketInFixed), 'tier-threshold': types.uint(e.tierThreshold) } ) })),
             "registration-max-tickets": types.uint(params.registrationMaxTickets)
           }),
         ], deployer.address),
@@ -361,9 +366,8 @@ Clarinet.test({
           deployer.address + ".alex-launchpad-v1-1"
         );
 
-        // console.log(determineApower(ticketRecipients[i]["amount"], parameters["apowerPerTicketInFixed"], parameters["activationThreshold"]));
         registrations.receipts[i].events.expectFungibleTokenBurnEvent(
-          determineApower(ticketRecipients[i]["amount"], parameters["apowerPerTicketInFixed"], parameters["activationThreshold"]),
+          determineApower(ticketRecipients[i]["amount"], parameters["apowerPerTicketInFixed"]),
           ticketRecipients[i]["recipient"].address,
           "apower"
         );
