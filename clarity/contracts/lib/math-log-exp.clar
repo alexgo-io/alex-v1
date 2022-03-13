@@ -12,7 +12,6 @@
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 8 decimal fixed point numbers.
 (define-constant ONE_8 (pow 10 8))
-(define-constant ONE_10 (pow 10 10))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^8, 
@@ -27,12 +26,14 @@
 ;; Because largest exponent is 69, we start from 64
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
+
 (define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 6235149080811616882910000000, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+{x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
 ))
+
 ;; 8 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 3200000000, a_pre: 7896296018268069516100, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 3200000000, a_pre: 78962960182680695161, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
 {x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
 {x_pre: 800000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
 {x_pre: 400000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
@@ -43,6 +44,7 @@
 {x_pre: 12500000, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
+
 
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
@@ -272,7 +274,7 @@
 ;; @returns (response uint)
 (define-read-only (ln-fixed (a int))
   (begin
-    (asserts! (> a 0) (err ERR-OUT-OF-BOUNDS))
+    (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
     (if (< a ONE_8)
       ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
       ;; If a is less than one, 1/a will be greater than one.
