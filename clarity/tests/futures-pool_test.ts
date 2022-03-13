@@ -7,7 +7,7 @@ const ONE_8 = 100000000
 
 const alexTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token";
 const poolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-alex-50-50-v1-01";
-const stakedTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.staked-fwp-wstx-alex-50-50";
+const stakedTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.staked-fwp-wstx-alex-50-50-v1-01";
 const futuresPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.futures-pool";
 const ACTIVATION_BLOCK = 20
 

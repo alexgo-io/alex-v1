@@ -178,7 +178,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
@@ -186,7 +186,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -200,11 +200,12 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .alex-reserve-pool true)
-(map-set approved-contracts .fixed-weight-pool true) 
-(map-set approved-contracts .fixed-weight-pool-v1-01 true)  
 (map-set approved-tokens .age000-governance-token true)
-(map-set approved-contracts .fixed-weight-pool-v1-01a true)
+(map-set approved-contracts .alex-reserve-pool true)
+(map-set approved-contracts .fixed-weight-pool-v1-01 true) 
+(map-set approved-contracts .fixed-weight-pool-alex true)
+(map-set approved-contracts .simple-weight-pool true)
+(map-set approved-contracts .simple-weight-pool-alex true)
 
 ;; testing only
 (map-set approved-contracts .collateral-rebalancing-pool true)  
@@ -214,3 +215,4 @@
 (map-set approved-flash-loan-users .flash-loan-user-margin-usda-wbtc true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wstx-usda true)
+(map-set approved-flash-loan-users .flash-loan-user-margin-alex-usda true)

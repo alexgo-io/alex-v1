@@ -25,7 +25,7 @@
         )
         (asserts! (is-eq .token-wbtc (contract-of collateral)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-usda .token-wbtc u50000000 u50000000 swapped-token none))
+        (try! (contract-call? .swap-helper swap-helper .token-usda .token-wbtc swapped-token none))
         (print { object: "flash-loan-user-margin-wbtc-usda", action: "execute", data: gross-amount })
         (ok true)
     )

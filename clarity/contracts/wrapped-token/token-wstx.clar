@@ -16,6 +16,8 @@
 (define-constant ERR-MINT-FAILED (err u6002))
 (define-constant ERR-BURN-FAILED (err u6003))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
+(define-constant ERR-NOT-SUPPORTED (err u6004))
+
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -65,7 +67,8 @@
 ;; ---------------------------------------------------------
 
 (define-read-only (get-total-supply)
-  (ok u0)
+  ;; least authority Issue D
+  ERR-NOT-SUPPORTED
 )
 (define-read-only (get-name)
 	(ok (var-get token-name))
@@ -129,7 +132,8 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
+  ;; least authority Issue D
+  ERR-NOT-SUPPORTED
 )
 
 ;; @desc get-balance-fixed

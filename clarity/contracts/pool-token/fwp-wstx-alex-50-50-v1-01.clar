@@ -11,7 +11,7 @@
 
 (define-data-var token-name (string-ascii 32) "STX-ALEX Pool Token Weight 50/50")
 (define-data-var token-symbol (string-ascii 32) "STX-ALEX-50-50")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/fwp-wstx-alex-50-50.json"))
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/fwp-wstx-alex-50-50-v1-01.json"))
 
 (define-data-var token-decimals uint u8)
 
@@ -217,3 +217,4 @@
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .fixed-weight-pool-v1-01 true)
+(map-set approved-contracts .simple-weight-pool true)

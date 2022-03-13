@@ -291,13 +291,13 @@ class FWP_WSTX_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50-v1-01", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_WSTX_USDA_5050 };
@@ -312,17 +312,16 @@ class FWP_ALEX_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50-v1-01", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_ALEX_USDA_5050 };
-
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
   deployer: Account;
@@ -333,13 +332,13 @@ class FWP_WBTC_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50-v1-01", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wbtc-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_WBTC_USDA_5050 };

@@ -80,21 +80,21 @@ Clarinet.test({
                 types.uint(5*ONE_8),
                 types.uint(5*ONE_8)
             ], deployer.address);
-        assertEquals(call.result, "u312499930206"); //
+        assertEquals(call.result, "u312499987498"); //
 
         call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
             [
                 types.uint(5*ONE_8),
                 types.uint(5*ONE_8)
             ], deployer.address);
-        assertEquals(call.result, "u312499955208"); //
+        assertEquals(call.result, "u312500012500"); //
 
         call = chain.callReadOnlyFn("math-fixed-point", "pow-up",
             [
                 types.uint(5000*ONE_8),
                 types.uint(0.5*ONE_8)
             ], deployer.address);
-        assertEquals(call.result, "u7071067955"); //
+        assertEquals(call.result, "u7071068095"); //
 
         // anything ^ 0 = 1
         call = chain.callReadOnlyFn("math-fixed-point", "pow-down",

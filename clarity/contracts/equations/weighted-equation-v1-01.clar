@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 
-;; weighted-equation
+;; weighted-equation-v1-01
 ;; implementation of Balancer WeightedMath (https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/pool-weighted/contracts/WeightedMath.sol)
 
 ;; constants
@@ -296,14 +296,7 @@
         (ok
             (if (is-eq total-supply u0)
                 {token: (unwrap-panic (get-invariant dx dy weight-x weight-y)), dy: dy}
-                (let
-                    (
-                        ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-                        (new-dy (div-down (mul-down balance-y dx) balance-x))
-                        (token (div-down (mul-down total-supply dx) balance-x))
-                    )
-                    {token: token, dy: new-dy}
-                )   
+                {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)} 
             )
         ) 
     )    
@@ -321,16 +314,7 @@
     (begin
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
-        (let
-            (   
-                ;; first calculate what % you need to mint
-                (token-supply (div-down token total-supply))
-                ;; calculate dx as % of balance-x corresponding to % you need to mint
-                (dx (mul-down balance-x token-supply))
-                (dy (mul-down balance-y token-supply))
-            )
-            (ok {dx: dx, dy: dy})
-        )
+        (ok {dx: (div-down (mul-down balance-x token) total-supply), dy: (div-down (mul-down balance-y token) total-supply)})
     )
 )
 
@@ -363,7 +347,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
   (/ (* a b) ONE_8)
 )
 
@@ -371,7 +355,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -387,7 +371,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
   (if (is-eq a u0)
     u0
     (/ (* a ONE_8) b)
@@ -398,7 +382,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
+(define-private (div-up (a uint) (b uint))
   (if (is-eq a u0)
     u0
     (+ u1 (/ (- (* a ONE_8) u1) b))
@@ -409,7 +393,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -426,7 +410,7 @@
 ;; @params a
 ;; @params b
 ;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -636,7 +620,7 @@
 
 ;; @desc get-exp-bound
 ;; @returns (response uint)
-(define-read-only (get-exp-bound)
+(define-private (get-exp-bound)
   (ok MILD_EXPONENT_BOUND)
 )
 
@@ -645,7 +629,7 @@
 ;; @params x
 ;; @params y
 ;; @returns (response uint)
-(define-read-only (pow-fixed (x uint) (y uint))
+(define-private (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) ERR_X_OUT_OF_BOUNDS)
@@ -668,7 +652,7 @@
 ;; @desc exp-fixed
 ;; @params x
 ;; @returns (response uint)
-(define-read-only (exp-fixed (x int))
+(define-private (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
     (if (< x 0)
