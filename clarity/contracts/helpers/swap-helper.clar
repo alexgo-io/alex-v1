@@ -84,6 +84,10 @@
     )
 )
 
+;; @desc swap-helper swaps dx of token-x-trait for at least min-dy of token-y-trait (else, it fails)
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
 (define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (let 
         (
@@ -107,6 +111,10 @@
     )
 )
 
+;; @desc get-helper returns estimated dy when swapping token-x for token-y
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
 (define-read-only (get-helper (token-x principal) (token-y principal) (dx uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
@@ -237,7 +245,7 @@
 ;; @desc route-helper returns required routing as a list for swap from token-x to token-y
 ;; @param token-x
 ;; @param token-y
-;; @returns (response uint uint)
+;; @returns (response (list 4 principal) uint)
 (define-read-only (route-helper (token-x principal) (token-y principal))
     (ok
         (if (is-eq (is-fixed-weight-pool-v1-01 token-x token-y) u2)
