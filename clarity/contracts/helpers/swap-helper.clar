@@ -68,9 +68,15 @@
 
 (define-private (is-from-simple-alex-to-fixed (token-x principal) (token-y principal))
     (if
-        (and
-            (is-eq token-x .age000-governance-token) 
-            (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-y u50000000 u50000000))
+        (or
+            (and
+                (is-eq token-x .age000-governance-token) 
+                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-y u50000000 u50000000))
+            )
+            (and 
+                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
+                (is-eq token-y .token-wstx)
+            )
         )
         u2
         (if
