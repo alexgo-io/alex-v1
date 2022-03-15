@@ -117,7 +117,8 @@ import {
             types.uint(expiry),            
             types.principal(yieldToken),
             types.principal(keyToken),
-            types.uint(dX)
+            types.uint(dX),
+            types.some(types.uint(0))
           ], user.address),
         ]);
         return block.receipts[0].result;        
