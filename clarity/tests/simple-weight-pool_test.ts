@@ -73,21 +73,21 @@ Clarinet.test({
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(wstxAddress, wbtcAddress);
         let position:any = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(500000000000000);
+        position['total-supply'].expectUint(223606778911);
         position['balance-x'].expectUint(wbtcQ*wbtcPrice);
         position['balance-y'].expectUint(wbtcQ);
 
         // Add extra liquidity (1/4 of initial liquidity)
         result = FWPTest.addToPosition(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, wbtcQ*wbtcPrice / 4, wbtcQ / 4);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(Math.round(500000000000000 / 4));
+        position['supply'].expectUint(Math.floor(223606778911 / 4));
         position['dy'].expectUint(wbtcQ / 4);
         position['dx'].expectUint(wbtcQ*wbtcPrice / 4);
 
         // Check pool details and print
         call = await FWPTest.getPoolDetails(wstxAddress, wbtcAddress);
         position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(Math.round(5/4 * 500000000000000));
+        position['total-supply'].expectUint(Math.floor(5/4 * 223606778911));
         position['balance-y'].expectUint(5/4 * wbtcQ);
         position['balance-x'].expectUint(5/4 * wbtcQ*wbtcPrice);
 
@@ -100,7 +100,7 @@ Clarinet.test({
         // Add back some liquidity
         result = FWPTest.addToPosition(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, wbtcQ*wbtcPrice, wbtcQ);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(500000000000000);
+        position['supply'].expectUint(223606778911);
         position['dy'].expectUint(wbtcQ);
         position['dx'].expectUint(wbtcQ*wbtcPrice);        
 
@@ -231,11 +231,11 @@ Clarinet.test({
         chain.mineEmptyBlock(1000);
 
         let ROresult:any = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(25000000000000000000);
+        const balance = Number(ROresult.result.expectOk().replace(/\D/g, ""));
         
         // 90 % of existing tokens are voted for the proposal
-        result = MultiSigTest.voteFor(deployer, fwpwstxusdaAddress, 1, Math.round(25000000000000000000 * 9 / 10))
-        result.expectOk().expectUint(Math.round(25000000000000000000 * 9 / 10))
+        result = MultiSigTest.voteFor(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 9 / 10))
+        result.expectOk().expectUint(Math.floor(balance * 9 / 10))
 
         // Block 1440 mining for ending proposal
         chain.mineEmptyBlock(1440);
@@ -286,13 +286,13 @@ Clarinet.test({
         position['balance-y'].expectUint(50968487394959);
 
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(25000000000000000000 - Math.round(25000000000000000000 * 9 / 10));
+        ROresult.result.expectOk().expectUint(balance - Math.floor(balance * 9 / 10));
 
         result = MultiSigTest.returnVotesToMember(wallet_1, fwpwstxusdaAddress, 1, deployer.address);
         result.expectOk();
 
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(25000000000000000000);        
+        ROresult.result.expectOk().expectUint(balance);        
     },
 });
 
@@ -378,21 +378,21 @@ Clarinet.test({
         result.expectOk().expectUint(1) // First Proposal
     
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(31250000000000000000);
+        const balance = Number(ROresult.result.expectOk().replace(/\D/g, ""));
 
         // Attempt to vote before start 
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(31250000000000000000 * 9 / 10));
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 9 / 10));
         result.expectErr().expectUint(1000); 
         
         // Mine Block
         chain.mineEmptyBlock(1000);
 
         // Not enough balance for voting
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(31250000000000000000 * 12 / 10));
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 12 / 10));
         result.expectErr().expectUint(1); 
 
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(31250000000000000000 * 9 / 10));
-        result.expectOk().expectUint(Math.round(31250000000000000000 * 9 / 10)); 
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 9 / 10));
+        result.expectOk().expectUint(Math.floor(balance * 9 / 10)); 
 
         // Attempt to end proposal before block height
         result = MultiSigTest.endProposal(1)
@@ -449,7 +449,7 @@ Clarinet.test({
         position['balance-y'].expectUint(wbtcQ*wbtcPrice);      
         
         // let's do some arb
-        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.round(ONE_8*1.1));
+        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.floor(ONE_8*1.1));
         call.result.expectOk().expectUint(2440438000000);         
         result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, 2326871500000, 0)
         position = result.expectOk().expectTuple();
@@ -464,10 +464,10 @@ Clarinet.test({
         
         // let's do some arb
         // but calling get-y-given-price throws an error
-        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.round(ONE_8 * 1.1 * 0.95));
+        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.floor(ONE_8 * 1.1 * 0.95));
         call.result.expectErr().expectUint(2002);
         // we need to call get-x-given-price
-        call = await FWPTest.getXgivenPrice(wstxAddress, usdaAddress, Math.round(ONE_8 * 1.1 * 0.95));
+        call = await FWPTest.getXgivenPrice(wstxAddress, usdaAddress, Math.floor(ONE_8 * 1.1 * 0.95));
         call.result.expectOk().expectUint(1134994760770);                 
         result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, 1240808997564, 0)
         position = result.expectOk().expectTuple();

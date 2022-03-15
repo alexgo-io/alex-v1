@@ -18,7 +18,7 @@
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)

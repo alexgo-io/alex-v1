@@ -83,7 +83,7 @@
 ;; @param balance-y; balance of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-invariant (balance-x uint) (balance-y uint))
-  (ok (mul-down balance-x balance-y))
+  (ok (pow-down (mul-down balance-x balance-y) u50000000))
 )
 
 ;; @desc get-y-given-x

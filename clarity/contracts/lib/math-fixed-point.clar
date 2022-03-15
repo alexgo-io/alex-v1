@@ -5,7 +5,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_8 u100000000) ;; 8 decimal places
 
 ;; TODO: this needs to be reviewed/updated
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 

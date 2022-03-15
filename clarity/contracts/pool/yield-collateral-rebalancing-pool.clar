@@ -10,7 +10,7 @@
 
 ;; constants
 ;;
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_8 u100000000) ;; 8 decimal places
 
 (define-constant ERR-INVALID-POOL-ERR (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
