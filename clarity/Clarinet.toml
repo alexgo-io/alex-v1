@@ -125,20 +125,12 @@ depends_on = [
   "alex-vault"
 ]
 
-[contracts.math-big-uint]
-path = "contracts/lib/math-big-uint.clar"
-depends_on = ["math-log-exp-biguint"]
-
 [contracts.math-fixed-point]
 path = "contracts/lib/math-fixed-point.clar"
-depends_on = ["math-log-exp"]
-
-[contracts.math-log-exp]
-path = "contracts/lib/math-log-exp.clar"
 depends_on = []
 
-[contracts.math-log-exp-biguint]
-path = "contracts/lib/math-log-exp-biguint.clar"
+[contracts.math-fixed-point-v2]
+path = "contracts/lib/math-fixed-point-v2.clar"
 depends_on = []
 
 [contracts.multisig-crp-usda-wstx]
