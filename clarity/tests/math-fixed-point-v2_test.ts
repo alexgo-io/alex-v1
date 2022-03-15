@@ -258,12 +258,12 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "div-scientific",
         [
-            types.tuple({x: "1122334455667788", exp: types.int(0)}),
-            types.tuple({x: "1122334455667788", exp: types.int(0)}),
+            types.tuple({x: "1122334455667788", exp: "0"}),
+            types.tuple({x: "1122334455667788", exp: "0"}),
         ], deployer.address);
-        position = call.result.expectTuple()
-        assertEquals(position['x'], "10000000000000000")
-        assertEquals(position['exp'], "-16")
+        position = call.result.expectTuple()   
+        assertEquals(position['x'], "100000000000000000000000000000000")
+        assertEquals(position['exp'], "-32")
         
         call = chain.callReadOnlyFn("math-fixed-point-v2", "div-scientific",
             [
@@ -271,8 +271,8 @@ Clarinet.test({
                 types.tuple({x: "1122334455667788", exp: types.int(-16)}),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['x'], "10000000000000000")
-        assertEquals(position['exp'], "0")
+        assertEquals(position['x'], "100000000000000000000000000000000")
+        assertEquals(position['exp'], "-16")
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "div-scientific",
             [
@@ -280,8 +280,8 @@ Clarinet.test({
                 types.tuple({x: "1122334455667788", exp: types.int(0)}),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['x'], "10000000000000000")
-        assertEquals(position['exp'], "-32")
+        assertEquals(position['x'], "100000000000000000000000000000000")
+        assertEquals(position['exp'], "-48")
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "div-scientific",
             [
@@ -289,8 +289,8 @@ Clarinet.test({
                 types.tuple({x: "1122334455667788", exp: types.int(-16)}),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['x'], "10000000000000000")
-        assertEquals(position['exp'], "-16")
+        assertEquals(position['x'], "100000000000000000000000000000000")
+        assertEquals(position['exp'], "-32")
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "div-scientific",
             [
@@ -298,8 +298,8 @@ Clarinet.test({
                 types.tuple({x: "1122334455667788", exp: types.int(-16)}),
             ], deployer.address);
         position = call.result.expectTuple()
-        assertEquals(position['x'], "10000000000000000")
-        assertEquals(position['exp'], "16")
+        assertEquals(position['x'], "100000000000000000000000000000000")
+        assertEquals(position['exp'], "0")
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "div-scientific",
             [
@@ -323,12 +323,12 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: exp-fixed",
+    name: "math-fixed-point-v2: exp-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
 
         let deployer = accounts.get("deployer")!;
         // 0.0000005
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        let call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 5, exp: -7}),
         ], deployer.address);
@@ -337,7 +337,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         // 0.02
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 2, exp: -2}),
         ], deployer.address);
@@ -346,7 +346,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         //0.1
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 1, exp: -1}),
         ], deployer.address);
@@ -355,7 +355,7 @@ Clarinet.test({
         result['exp'].expectInt(-30);
 
         //0.2
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 2, exp: -1}),
         ], deployer.address);
@@ -364,7 +364,7 @@ Clarinet.test({
         result['exp'].expectInt(-30);
 
         //1
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 1, exp: 0}),
         ], deployer.address);
@@ -373,7 +373,7 @@ Clarinet.test({
         result['exp'].expectInt(-14);
 
         // 4.5
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 45, exp: -1}),
         ], deployer.address);
@@ -382,7 +382,7 @@ Clarinet.test({
         result['exp'].expectInt(-13);
 
         // 51
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 51, exp: 0}),
         ], deployer.address);
@@ -391,7 +391,7 @@ Clarinet.test({
         result['exp'].expectInt(8);
 
         //0
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 0, exp: 0}),
         ], deployer.address);
@@ -400,7 +400,7 @@ Clarinet.test({
         result['exp'].expectInt(-15);
 
         //-1.01
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: -101, exp: -2}),
         ], deployer.address);
@@ -409,7 +409,7 @@ Clarinet.test({
         result['exp'].expectInt(-18);
 
         // -36
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: -36, exp: 0}),
         ], deployer.address);
@@ -418,7 +418,7 @@ Clarinet.test({
         result['exp'].expectInt(-33);
 
         // 52
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-fixed ",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "exp-scientific ",
         [
             types.tuple({x: 52, exp: 0}),
         ], deployer.address);
@@ -478,8 +478,8 @@ Clarinet.test({
             types.tuple({x: types.int(0), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '1000000000000000');
-        result['exp'].expectInt(-15);
+        assertEquals(result['x'], '1');
+        result['exp'].expectInt(0);
 
         // 90 ^ 9
         call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-scientific ",
@@ -494,7 +494,7 @@ Clarinet.test({
         // 123 ^ 8
         call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-scientific ",
         [
-            types.tuple({x: 'u12300000000', exp: -8}),
+            types.tuple({x: '12300000000', exp: -8}),
             types.tuple({x: types.int(8), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
@@ -504,16 +504,16 @@ Clarinet.test({
         // 123 ^ 2.46
         call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-scientific ",
         [
-            types.tuple({x: 'u12300000000', exp: -8}),
-            types.tuple({x: 'u246000000000', exp: -11}),
+            types.tuple({x: '12300000000', exp: -8}),
+            types.tuple({x: '24600000000', exp: -10}),
         ], deployer.address);
         result = call.result.expectErr().expectUint(5012);
 
         // 21 ^ 0.0046
         call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-scientific ",
         [
-            types.tuple({x: 'u210000', exp: -4}),
-            types.tuple({x:  'u46000000000000000', exp: -19}),
+            types.tuple({x: '210000', exp: -4}),
+            types.tuple({x: '46000000000000000', exp: -19}),
         ], deployer.address);
         result = call.result.expectErr().expectUint(5012);
 
@@ -521,7 +521,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-scientific ",
         [
             types.tuple({x: types.int(0), exp: 0}),
-            types.tuple({x:  types.uint(1), exp: 0}),
+            types.tuple({x: types.int(1), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
         assertEquals(result['x'], '233672138547078697');
@@ -647,10 +647,8 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "add-scientific",
             [
-                "320000000000000000",
-                types.int(-4),
-                "1600000000000000",
-                types.int(-15),
+                types.tuple({ x: "320000000000000000", exp: types.int(-4) }),
+                types.tuple({ x: "1600000000000000", exp: types.int(-15) }),
             ], deployer.address
         );
         let result: any = call.result.expectTuple();
@@ -659,10 +657,8 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "add-scientific",
             [
-                "234932806661705911188785462338167591",
-                types.int(-35),
-                "-8088245021529212865977835549028607449",
-                types.int(-34),
+                types.tuple({ x: "234932806661705911188785462338167591", exp: types.int(-35) }),
+                types.tuple({ x: "-8088245021529212865977835549028607449", exp: types.int(-34) }),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -671,10 +667,8 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "add-scientific",
             [
-                "4879050372792131586543547012911498289",
-                types.int(-11),
-                "0",
-                types.int(0),
+                types.tuple({ x: "4879050372792131586543547012911498289", exp: types.int(-11) }),
+                types.tuple({ x: "0", exp: types.int(0) }),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -689,10 +683,8 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "sub-scientific",
             [
-                '1407899272653447767215467463',
-                types.int(-12),
-                '17650706659942525608226366899',
-                types.int(-21),
+                types.tuple({ x: '1407899272653447767215467463', exp: types.int(-12) }),
+                types.tuple({ x: '17650706659942525608226366899', exp: types.int(-21) }),
             ], deployer.address
         );
         let result: any = call.result.expectTuple();
@@ -701,10 +693,8 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "sub-scientific",
             [
-                '28191504282207712212364439220350',
-                types.int(-35),
-                '-12891104957000012549830113619842',
-                types.int(-31),
+                types.tuple({ x: '28191504282207712212364439220350', exp: types.int(-35) }),
+                types.tuple({ x: '-12891104957000012549830113619842', exp: types.int(-31) }),
             ], deployer.address
         );
         result = call.result.expectTuple();
@@ -713,10 +703,8 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("math-fixed-point-v2", "sub-scientific",
             [
-                types.int(0),
-                types.int(0),
-                '4879050372792131586543547012911498289',
-                types.int(-18),
+                types.tuple({ x: types.int(0), exp: types.int(0) }),
+                types.tuple({ x: '4879050372792131586543547012911498289', exp: types.int(-18) }),
             ], deployer.address
         );
         result = call.result.expectTuple();

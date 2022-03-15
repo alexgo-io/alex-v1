@@ -173,7 +173,7 @@
 (define-private (pow-priv (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (let
         (
-            (logx-times-y (mul-scientific-with-lost-precision (ln-priv {x: (get x n1), exp: (get exp n1)}) {x: (get x n2), exp: (get exp n2)}))
+            (logx-times-y (mul-scientific-with-lost-precision (ln-priv n1) n2))
         )
         (asserts! (and (greater-than-equal-to logx-times-y MIN-NATURAL-EXPONENT) (greater-than-equal-to MAX-NATURAL-EXPONENT logx-times-y)) ERR-INVALID-EXPONENT)
         (exp-scientific logx-times-y)
@@ -231,7 +231,7 @@
 ;; this function should take uint as parameter for digits to check the max range
 (define-read-only (pow-scientific (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (begin   
-        (asserts! (and (> (get x n1) 0) (> (get x n2) 0)) ERR-NOT-POSITIVE)
+        (asserts! (and (>= (get x n1) 0) (>= (get x n2) 0)) ERR-NOT-POSITIVE)
         ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
         (asserts! (not (greater-than-equal-to (scale-down-with-lost-precision n1) UPPER-BASE-BOUND-SCALE-DOWN)) ERR-X-OUT-OF-BOUNDS)
         (asserts! (< (get x n1) MANTISSA-LIMIT) ERR-X-OUT-OF-BOUNDS-MANTISSA)
