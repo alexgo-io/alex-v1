@@ -425,7 +425,7 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.weighted-equation-v1-01]
 path = "contracts/equations/weighted-equation-v1-01.clar"
-depends_on = [ ]
+depends_on = [ "math-fixed-point" ]
 
 [contracts.fixed-weight-pool-v1-01]
 path = "contracts/pool/fixed-weight-pool-v1-01.clar"
@@ -524,7 +524,7 @@ depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool",
 
 [contracts.simple-equation]
 path = "contracts/equations/simple-equation.clar"
-depends_on = [ ]
+depends_on = [ "math-fixed-point" ]
 
 [contracts.simple-weight-pool-alex]
 path = "contracts/pool/simple-weight-pool-alex.clar"
