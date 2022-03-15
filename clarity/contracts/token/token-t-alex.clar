@@ -134,7 +134,7 @@
   )
 )
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 ;; @desc pow-decimals
 ;; @returns uint

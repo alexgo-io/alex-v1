@@ -1,7 +1,7 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 (define-constant ERR-EXPIRY-IS-NONE (err u2027))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 

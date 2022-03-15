@@ -5,7 +5,7 @@
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
 ;; fixed-weight-pool-alex is anchored to ALEX (and routes other tokens)
 
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_8 u100000000) ;; 8 decimal places
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))

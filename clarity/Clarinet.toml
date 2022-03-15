@@ -191,7 +191,7 @@ depends_on = ["trait-sip-010", "trait-flash-loan-user"]
 
 [contracts.yield-token-equation]
 path = "contracts/equations/yield-token-equation.clar"
-depends_on = [ ]
+depends_on = [ "math-fixed-point" ]
 
 [contracts.yield-token-pool]
 path = "contracts/pool/yield-token-pool.clar"
