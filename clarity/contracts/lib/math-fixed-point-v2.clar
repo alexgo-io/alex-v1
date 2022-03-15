@@ -1,3 +1,56 @@
+;; math-fixed-point
+;; Fixed Point Math
+
+;; public functions
+;;
+
+;; @desc mul-down
+;; @params a 
+;; @params b
+;; @returns uint
+(define-read-only (mul-down (a uint) (b uint))
+    (mul-fixed a b)
+)
+
+;; @desc mul-up
+;; @params a 
+;; @params b
+;; @returns uint
+(define-read-only (mul-up (a uint) (b uint))
+    (mul-fixed-up a b)
+)
+
+;; @desc div-down
+;; @params a 
+;; @params b
+;; @returns uint
+(define-read-only (div-down (a uint) (b uint))
+    (div-fixed a b)
+)
+
+;; @desc div-up
+;; @params a 
+;; @params b
+;; @returns uint
+(define-read-only (div-up (a uint) (b uint))
+    (div-fixed-up a b)
+)
+
+;; @desc pow-down
+;; @params a 
+;; @params b
+;; @returns uint
+(define-read-only (pow-down (a uint) (b uint))    
+    (pow-fixed a b)
+)
+
+;; @desc pow-up
+;; @params a 
+;; @params b
+;; @returns uint
+(define-read-only (pow-up (a uint) (b uint))
+    (pow-fixed-up a b)
+)
 
 ;; math-log-exp
 ;; Exponentiation and logarithm functions for 16 decimal fixed point numbers (both base and exponent/argument).
@@ -23,14 +76,14 @@
 (define-constant MIN-NATURAL-EXPONENT {x: -36, exp: 0})
 
 (define-constant MILD-EXPONENT-BOUND (pow u2 u126))
-(define-constant UPPER-BASE-BOUND {x: u17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
-(define-constant UPPER-BASE-BOUND-SCALE-DOWN {x: u1701411834604692317316, exp: 17})
-(define-constant LOWER-EXPONENT-BOUND {x: u85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
-(define-constant LOWER-EXPONENT-BOUND-SCALE-DOWN {x: u8507059173023461586584, exp: 16})
+(define-constant UPPER-BASE-BOUND {x: 17014118346046923173168730371588410572, exp: 1}) ;; this is 2^126
+(define-constant UPPER-BASE-BOUND-SCALE-DOWN {x: 1701411834604692317316, exp: 17})
+(define-constant LOWER-EXPONENT-BOUND {x: 85070591730234615865843651857942052864, exp: 0}) ;; this is 2^126
+(define-constant LOWER-EXPONENT-BOUND-SCALE-DOWN {x: 8507059173023461586584, exp: 16})
 (define-constant ZERO {x: 0, exp: 0})
 (define-constant ONE {x: 1, exp: 0})
 (define-constant TWO {x: 2, exp: 0})
-(define-constant MANTISSA-LIMIT u100000000000)
+(define-constant MANTISSA-LIMIT 100000000000)
 (define-constant DIGITS-31 9999999999999999999999999999999)
 (define-constant DIGIT-LIST (list u10 u10 u10 u10 u10 u10 u10 u10))
 (define-constant TAYLOR-SERIES-TERMS-6 (list 3 5 7 9 11))
@@ -69,7 +122,6 @@
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
 (define-constant ERR-NOT-POSITIVE (err u5014))
-(define-constant INT-RANGE-EXCEEDED  (err u5015))
 
 (define-private (ln-priv (n {x: int, exp: int}))
     (let
@@ -78,12 +130,12 @@
             (a-sum (fold accumulate-division x-a-list {a: n, sum: ZERO}))
             (out-a-transformed (transform-to-16 (get a a-sum)))
             ;; z calculation
-            (z (division-with-scientific-notation (subtraction-with-scientific-notation out-a-transformed ONE) (addition-with-scientific-notation out-a-transformed ONE)))
-            (z-squared-scaled-down (scale-down-with-lost-precision (multiplication-with-scientific-notation z z)))
+            (z (div-scientific-with-lost-precision (sub-scientific out-a-transformed ONE) (add-scientific out-a-transformed ONE)))
+            (z-squared-scaled-down (scale-down-with-lost-precision (mul-scientific-with-lost-precision z z)))
             ;; taylor series
             (num-sum-zsq (fold rolling-sum-div TAYLOR-SERIES-TERMS-6 {n: z, seriesSum: z, z-squared: z-squared-scaled-down}))
         )
-        (ok (addition-with-scientific-notation (get sum a-sum) (multiplication-with-scientific-notation (scale-down-with-lost-precision (get seriesSum num-sum-zsq)) TWO)))
+        (add-scientific (get sum a-sum) (mul-scientific-with-lost-precision (scale-down-with-lost-precision (get seriesSum num-sum-zsq)) TWO))
     )
 )
 
@@ -95,8 +147,8 @@
         )
         (if (greater-than-equal-to (get a rolling-a-sum) {x: a-pre, exp: a-pre-exp})
             {
-                a: (division-with-scientific-notation-with-precision (get a rolling-a-sum) {x: a-pre, exp:a-pre-exp}),
-                sum: (addition-with-scientific-notation (get sum rolling-a-sum) {x: (get x-pre x-a-pre), exp: (get x-pre-exp x-a-pre)}) 
+                a: (div-scientific (get a rolling-a-sum) {x: a-pre, exp: a-pre-exp}),
+                sum: (add-scientific (get sum rolling-a-sum) {x: (get x-pre x-a-pre), exp: (get x-pre-exp x-a-pre)}) 
             }
             rolling-a-sum
         )
@@ -106,9 +158,9 @@
 (define-private (rolling-sum-div (n int) (rolling {n: {x: int, exp: int}, seriesSum: {x: int, exp: int}, z-squared: {x: int, exp: int}}))
     (let
         (
-            (next-num-scaled-down (scale-down-with-lost-precision (multiplication-with-scientific-notation (get n rolling) (get z-squared rolling))))
-            (next-sum-div (division-with-scientific-notation next-num-scaled-down n 0))
-            (next-sum (addition-with-scientific-notation next-sum-div (get seriesSum rolling)))
+            (next-num-scaled-down (scale-down-with-lost-precision (mul-scientific-with-lost-precision (get n rolling) (get z-squared rolling))))
+            (next-sum-div (div-scientific-with-lost-precision next-num-scaled-down {x: n, exp: 0}))
+            (next-sum (add-scientific next-sum-div (get seriesSum rolling)))
         )
         {n: next-num-scaled-down, seriesSum: next-sum, z-squared: (get z-squared rolling)}
     )
@@ -118,13 +170,13 @@
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
 ;; Reverts if ln(x) * y is smaller than `MIN-NATURAL-EXPONENT`, or larger than `MAX-NATURAL-EXPONENT`.
-(define-private (pow-priv (n1 {x: uint, exp: int}) (n2 {x: uint, exp: int}))
+(define-private (pow-priv (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (let
         (
-            (logx-times-y (multiplication-with-scientific-notation (unwrap-panic (ln-priv {x: (to-int (get x n1)), exp: (get exp n1)})) {x: (to-int (get x n2)), exp: (get exp n2)}))
+            (logx-times-y (mul-scientific-with-lost-precision (ln-priv {x: (get x n1), exp: (get exp n1)}) {x: (get x n2), exp: (get exp n2)}))
         )
         (asserts! (and (greater-than-equal-to logx-times-y MIN-NATURAL-EXPONENT) (greater-than-equal-to MAX-NATURAL-EXPONENT logx-times-y)) ERR-INVALID-EXPONENT)
-        (exp-fixed logx-times-y)
+        (exp-scientific logx-times-y)
     )
 )
 
@@ -135,16 +187,14 @@
             ;; For each x-n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
             ;; it and compute the accumulated product.
             (x-product (fold accumulate-product x-a-list {x: n, product: ONE}))
-            (transformed-product )
             (x-out (get x x-product))
-            (seriesSum (addition-with-scientific-notation ONE (transform-to-16 x-out)))
+            (seriesSum (add-scientific ONE (transform-to-16 x-out)))
             (term-sum-x (fold rolling-div-sum TAYLOR-SERIES-TERMS-12 {term: x-out, seriesSum: seriesSum, x: x-out}))
-            (sum )
-            (r (multiplication-with-scientific-notation-with-precision (transform-to-16 (get product x-product)) (get seriesSum term-sum-x)))
+            (r (mul-scientific (transform-to-16 (get product x-product)) (get seriesSum term-sum-x)))
         )
-        (if (greater-than-equal-to (get x n) (get exp n) 1 0)
+        (if (greater-than-equal-to n ONE)
             (scale-down-with-lost-precision r)
-         r
+            r
         )
     )
 )
@@ -157,14 +207,12 @@
             (a-pre (get a-pre x-a-pre))
             (a-pre-exp (get a-pre-exp x-a-pre))
             (rolling-x (get x rolling-x-p))
-            (rolling-x-a (get x rolling-x))
-            (rolling-x-exp (get exp rolling-x))
             (rolling-product (get product rolling-x-p))
         )
-        (if (greater-than-equal-to rolling-x-a rolling-x-exp x-pre x-pre-exp)
+        (if (greater-than-equal-to rolling-x {x: x-pre, exp: x-pre-exp})
             {
-                x: (subtraction-with-scientific-notation rolling-x-a rolling-x-exp x-pre x-pre-exp),
-                product: (multiplication-with-scientific-notation-with-precision (get x rolling-product) (get exp rolling-product) a-pre a-pre-exp)
+                x: (sub-scientific rolling-x {x: x-pre, exp: x-pre-exp}),
+                product: (mul-scientific rolling-product {x: a-pre, exp: a-pre-exp})
             }
             {x: rolling-x, product: rolling-product}
         )
@@ -172,106 +220,73 @@
 )
 
 (define-private (rolling-div-sum (n int) (rolling {term: {x: int, exp: int}, seriesSum: {x: int, exp: int}, x: {x: int, exp: int}}))
-  (let
-    (
-      (x (get x rolling))
-      (rolling-term (get term rolling))
-      (rolling-sum (get seriesSum rolling))
-      (next-term-transformed (transform-to-16 (multiplication-with-scientific-notation (get x rolling-term) (get exp rolling-term) (get x x) (get exp x))))
-      (next-term-div-transformed (transform-to-16 (division-with-scientific-notation (get x next-term-transformed) (get exp next-term-transformed) n 0)))
-      (next-sum (addition-with-scientific-notation (get x rolling-sum) (get exp rolling-sum) (get x next-term-div-transformed) (get exp next-term-div-transformed)))
-   )
-    {term: next-term-div-transformed, seriesSum: next-sum, x: x}
- )
+    (let
+        (
+            (next-term-div-transformed (transform-to-16 (div-scientific-with-lost-precision (transform-to-16 (mul-scientific-with-lost-precision (get term rolling) (get x rolling))) {x: n, exp: 0})))
+        )
+        {term: next-term-div-transformed, seriesSum: (add-scientific (get seriesSum rolling) next-term-div-transformed), x: (get x rolling)}
+    )
 )
 
 ;; this function should take uint as parameter for digits to check the max range
-(define-read-only (pow-fixed (n1 {x: uint, exp: int}) (n2 {x: uint, exp: int}))
-  (let
-    (
-        (mantissa-x (get x n1))
-        (mantissa-y (get x n2))
-        (x-scaled-down (scale-down-with-lost-precision-uint n1))
-        (y-scaled-down (scale-down-with-lost-precision-uint n2))
-    )
-    
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (not (greater-than-equal-to-uint (get x x-scaled-down) (get exp x-scaled-down) (get x UPPER-BASE-BOUND-SCALE-DOWN) (get exp UPPER-BASE-BOUND-SCALE-DOWN))) ERR-X-OUT-OF-BOUNDS)
-    (asserts! (< mantissa-x MANTISSA-LIMIT) ERR-X-OUT-OF-BOUNDS-MANTISSA)
-    (asserts! (<= (get exp n1) 23) ERR-X-OUT-OF-BOUNDS-EXP) ;; because transformations fail after 25
+(define-read-only (pow-scientific (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+    (begin   
+        (asserts! (and (> (get x n1) 0) (> (get x n2) 0)) ERR-NOT-POSITIVE)
+        ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
+        (asserts! (not (greater-than-equal-to (scale-down-with-lost-precision n1) UPPER-BASE-BOUND-SCALE-DOWN)) ERR-X-OUT-OF-BOUNDS)
+        (asserts! (< (get x n1) MANTISSA-LIMIT) ERR-X-OUT-OF-BOUNDS-MANTISSA)
+        (asserts! (<= (get exp n1) 23) ERR-X-OUT-OF-BOUNDS-EXP) ;; because transformations fail after 25
 
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (not (greater-than-equal-to-uint (get x y-scaled-down) (get exp y-scaled-down) (get x LOWER-EXPONENT-BOUND-SCALE-DOWN) (get exp LOWER-EXPONENT-BOUND-SCALE-DOWN))) ERR-Y-OUT-OF-BOUNDS)
-    (asserts! (< mantissa-y MANTISSA-LIMIT) ERR-Y-OUT-OF-BOUNDS-MANTISSA)
-    (asserts! (<= (get exp n2) 23) ERR-Y-OUT-OF-BOUNDS-EXP) ;; because transformations fail after 25
+        ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
+        (asserts! (not (greater-than-equal-to (scale-down-with-lost-precision n2) LOWER-EXPONENT-BOUND-SCALE-DOWN)) ERR-Y-OUT-OF-BOUNDS)
+        (asserts! (< (get x n2) MANTISSA-LIMIT) ERR-Y-OUT-OF-BOUNDS-MANTISSA)
+        (asserts! (<= (get exp n2) 23) ERR-Y-OUT-OF-BOUNDS-EXP) ;; because transformations fail after 25
 
-    (if (is-eq mantissa-y u0) 
-      (ok ONE)
-      (if (is-eq mantissa-x u0) 
-        (ok ZERO)
-        (pow-priv n1 n2)
-      )
+        (if (is-eq (get x n2) 0) 
+            (ok ONE)
+            (if (is-eq (get x n1) 0) 
+                (ok ZERO)
+                (pow-priv n1 n2)
+            )
+        )
     )
-  )
 )
 
 ;; Natural exponentiation (e^x) with signed 16 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN-NATURAL-EXPONENT, or larger than `MAX-NATURAL-EXPONENT`.
-(define-read-only (exp-fixed (n {x: int, exp: int}))
+(define-read-only (exp-scientific (n {x: int, exp: int}))
     (let 
         (
             (x (get x n))
             (exp (get exp n))
         )   
-        (asserts! (and (greater-than-equal-to x exp (get x MIN-NATURAL-EXPONENT) (get exp MIN-NATURAL-EXPONENT))
-        (greater-than-equal-to (get x MAX-NATURAL-EXPONENT) (get exp MAX-NATURAL-EXPONENT) x exp)) ERR-INVALID-EXPONENT)
-        (if (greater-than-equal-to x exp 0 0)
+        (asserts! (and (greater-than-equal-to n MIN-NATURAL-EXPONENT) (greater-than-equal-to MAX-NATURAL-EXPONENT n)) ERR-INVALID-EXPONENT)
+        (if (greater-than-equal-to n ZERO)
             (ok (exp-pos n))
             ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
             ;; fits in the signed 128 bit range (as it is larger than MIN-NATURAL-EXPONENT).
             ;; Fixed point division requires multiplying by SIGNED-ONE-16.
-            (let
-                (
-                    (exponent-result (exp-pos (multiplication-with-scientific-notation x exp -1 0)))
-                    (transformed-result (transform-to-16 exponent-result))
-                )
-                (ok (division-with-scientific-notation-with-precision 1 0  (get x transformed-result) (get exp transformed-result)))
-            )
+            (ok (div-scientific ONE (transform-to-16 (exp-pos (mul-scientific-with-lost-precision n {x: -1, exp: 0})))))
         )
     )
 )
 
 ;; ;; Logarithm (log(n, b), with signed 16 decimal fixed point base and argument.
-(define-read-only (log-fixed (n {x: int, exp: int}) (b {x: int, exp: int}))
-  ;; This performs a simple base change: log(n, b) = ln(n) / ln(b).
-  (let
-    (
-      (logBase (unwrap-panic (ln-priv b)))
-      (logArg (unwrap-panic (ln-priv n)))
-   )
-   (division-with-scientific-notation (get x logArg) (get exp logArg) (get x logBase) (get exp logBase))
- )
+(define-read-only (log-scientific (n {x: int, exp: int}) (b {x: int, exp: int}))
+    ;; This performs a simple base change: log(n, b) = ln(n) / ln(b).
+    (div-scientific-with-lost-precision (ln-priv n) (ln-priv b))
 )
 
 ;; Natural logarithm (ln(a)) with signed 16 decimal fixed point argument.
-(define-read-only (ln-fixed (n {x: int, exp: int}))
-    (let 
-        (
-            (x (get x n))
-            (exp (get exp n))
-        )
-        (asserts! (> x 0) ERR-OUT-OF-BOUNDS)
-        (if (greater-than-equal-to x exp 1 0)
-            (ln-priv n)
+(define-read-only (ln-scientific (n {x: int, exp: int}))
+    (begin 
+        (asserts! (> (get x n) 0) ERR-OUT-OF-BOUNDS)
+        (if (greater-than-equal-to n ONE)
+            (ok (ln-priv n))
             ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
             ;; If a is less than one, 1/a will be greater than one.
             ;; Fixed point division requires multiplying by ONE-8.
-            (let
-                (
-                    (ln (unwrap-panic (ln-priv (division-with-scientific-notation 1 0 x exp))))
-                )
-                (ok (subtraction-with-scientific-notation 0 0 (get x ln) (get exp ln)))
-            )
+            (ok (sub-scientific ZERO (ln-priv (div-scientific-with-lost-precision ONE n))))
         )
     )
 )
@@ -284,12 +299,12 @@
     (/ a SIGNED-ONE-16)
 )
 
-(define-read-only (scale-up-with-scientific-notation (n {x: int, exp: int}))
-    (multiplication-with-scientific-notation (get x n) (get exp n) 1 16)
+(define-read-only (scale-up-scientific (n {x: int, exp: int}))
+    (mul-scientific-with-lost-precision n {x: 1, exp: 16})
 )
 
-(define-read-only (scale-down-with-scientific-notation (n {x: int, exp: int}))
-    (division-with-scientific-notation (get x n) (get exp n) 1 16)
+(define-read-only (scale-down-scientific (n {x: int, exp: int}))
+    (div-scientific-with-lost-precision n {x: 1, exp: 16})
 )
 
 (define-read-only (scale-down-with-lost-precision (n {x: int, exp: int}))
@@ -299,17 +314,6 @@
     }    
 )
 
-(define-read-only (scale-down-with-lost-precision-uint (n {x: uint, exp: int}))
-    { 
-        x: (/ (get x n) UNSIGNED-ONE-16), 
-        exp: (+ (get exp n) 16)
-    }
-)
-
-(define-read-only (greater-than-equal-to-uint (n1 {x: uint, exp: int}) (n2 {x: uint, exp: int}))
-    (greater-than-equal-to {x: (to-int (get x n1)), exp: (get exp n1)} {x: (to-int (get x n2)), exp: (get exp n2)})
-)
-
 (define-read-only (greater-than-equal-to (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (if (> (get exp n1) (get exp n2))
         (>= (transform-get-x (get x n1) (get exp n1) (get exp n2)) (get x n2))
@@ -317,63 +321,60 @@
     )        
 )
 
-(define-read-only (addition-with-scientific-notation (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+(define-read-only (add-scientific (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (if (> (get exp n1) (get exp n2))
         {x: (+ (transform-get-x (get x n1) (get exp n1) (get exp n2)) (get x n2)), exp: (get exp n2) }
         {x: (+ (transform-get-x (get x n2) (get exp n2) (get exp n1)) (get x n1)), exp: (get exp n1) }
     )
 )
 
-(define-read-only (subtraction-with-scientific-notation (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+(define-read-only (sub-scientific (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (if (> (get exp n1) (get exp n2))
         {x: (- (transform-get-x (get x n1) (get exp n1) (get exp n2)) (get x n2)), exp: (get exp n2) }
         {x: (- (get x n1) (transform-get-x (get x n2) (get exp n2) (get exp n1))), exp: (get exp n1) }
     )
 )
 
-(define-read-only (division-with-scientific-notation (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+(define-read-only (div-scientific-with-lost-precision (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     {
         x: (/ (scale-up (get x n1)) (get x n2)), 
         exp: (+ (- (get exp n1) (get exp n2)) -16)
     }
 )
 
-(define-read-only (multiplication-with-scientific-notation (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+(define-read-only (mul-scientific-with-lost-precision (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     {   
         x: (* (get x n1) (get x n2)), 
         exp: (+ (get exp n1) (get exp n2))
     }
 )
 
-(define-private (division-with-scientific-notation-with-precision-priv (n1 {x: int, exp: int}) (n2 {x: int, exp: int}) (base-exp int)) 
+(define-private (div-scientific-with-precision-priv (n1 {x: int, exp: int}) (n2 {x: int, exp: int}) (base-exp int)) 
      (let
         (
             (division (/ (get x n1) (get x n2)))
             (division-exponent (+ (- (get exp n1) (get exp n2)) base-exp))
-            (factor (- (get x n1) (* division (get x n2))))
-
-            (remainder (/ (* SIGNED-ONE-16 factor) (get x n2)))
-            
+            (remainder (/ (* SIGNED-ONE-16 (- (get x n1) (* division (get x n2)))) (get x n2)))
             (remainder-exponent (+ division-exponent -16))
         )
-        (addition-with-scientific-notation division division-exponent remainder remainder-exponent)
+        (add-scientific {x: division, exp: division-exponent} {x: remainder, exp: remainder-exponent})
     )
 )
 
-(define-read-only (division-with-scientific-notation-with-precision (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+(define-read-only (div-scientific (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (if (> (get x n1) (get x n2)) 
-        (division-with-scientific-notation-with-precision-priv (get x n1) (get exp n1) (get x n2) (get exp n2) 0)
-        (division-with-scientific-notation-with-precision-priv (scale-up (get x n1)) (get exp n1) (get x n2) (get exp n2) -16)
+        (div-scientific-with-precision-priv n1 n2 0)
+        (div-scientific-with-precision-priv {x: (scale-up (get x n1)), exp: (get exp n1)} n2 -16)
     )
 )
 
-;; multiplication-with-scientific-notation-with-precision
+;; mul-scientific-with-precision
 ;; this function truncates the mantissa of numbers to 16 digits 
 ;; and then multiply the numbers
 ;; 10000000000000000 ^ 3 * 9999999999999999999999 ^ 5 --> 1000000000000000 ^ 4 * 9999999999999999 ^ 11
 ;; {x: 1000000000000000 * 9999999999999999, exp: 4 + 11 }
 ;; {x: 9999999999999999999999, exp: 15}
-(define-read-only (multiplication-with-scientific-notation-with-precision (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
+(define-read-only (mul-scientific (n1 {x: int, exp: int}) (n2 {x: int, exp: int}))
     (let
         (
             (a-count (digit-count (get x n1)))
@@ -523,9 +524,50 @@
     )
 )
 
-(define-read-only (pow-from-fixed-to-fixed (n1 uint) (n2 uint))
-    (transform-to-fixed (try! (pow-fixed (transform-from-fixed n1) (transform-from-fixed n2))))
+(define-read-only (pow-fixed (n1 uint) (n2 uint))
+    (from-scientific-to-fixed (try! (pow-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
+
+(define-read-only (pow-fixed-up (n1 uint) (n2 uint))
+    (from-scientific-to-fixed-up (try! (pow-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
+)
+
+(define-read-only (log-fixed (n1 uint) (n2 uint))
+    (from-scientific-to-fixed (log-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
+(define-read-only (ln-fixed (n uint))
+    (from-scientific-to-fixed (try! (ln-scientific (from-fixed-to-scientific n))))
+)
+
+(define-read-only (exp-fixed (n uint))
+    (from-scientific-to-fixed (try! (exp-scientific (from-fixed-to-scientific n))))
+)
+
+(define-read-only (add-fixed (n1 uint) (n2 uint))
+    (from-scientific-to-fixed (add-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
+(define-read-only (sub-fixed (n1 uint) (n2 uint))
+    (from-scientific-to-fixed (sub-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
+(define-read-only (mul-fixed (n1 uint) (n2 uint))
+    (from-scientific-to-fixed (mul-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
+(define-read-only (mul-fixed-up (n1 uint) (n2 uint))
+    (from-scientific-to-fixed-up (mul-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
+(define-read-only (div-fixed (n1 uint) (n2 uint))
+    (from-scientific-to-fixed (div-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
+(define-read-only (div-fixed-up (n1 uint) (n2 uint))
+    (from-scientific-to-fixed-up (div-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+)
+
 
 (define-private (count-zero (a uint) (result (tuple (input uint) (continue bool) (zero int))))
     (let 
@@ -545,27 +587,42 @@
 )
 
 ;; transform 8-digit fixed-point notation to 8 decimal scientific notation
-(define-read-only (transform-from-fixed (n uint))
+(define-read-only (from-fixed-to-scientific (n uint))
     (let 
         (
             (transformed-input (fold count-zero DIGIT-LIST {input: n, continue: true, zero: 0}))
             (exp (- (get zero transformed-input) 8))
         )
-        {x: (get input transformed-input), exp: exp}
+        {x: (to-int (get input transformed-input)), exp: exp}
     )  
 )
 
 ;; transform scientific notation to 8-digit fixed-point notation
-(define-read-only (transform-to-fixed (n {x: int, exp: int}))
+(define-read-only (from-scientific-to-fixed (n {x: int, exp: int}))
     (let 
         (
             (x (get x n))
             (new-exp (+ 8 (get exp n)))
         )
-        ;; (asserts! (< result DIGITS-31) INT-RANGE-EXCEEDED)
+        (asserts! (> x 0) ERR-NOT-POSITIVE)
         (if (>= new-exp 0)
-            (ok (* x (pow 10 new-exp)))
-            (ok (/ x (pow 10 (* -1 new-exp))))
+            (ok (to-uint (* x (pow 10 new-exp))))
+            (ok (to-uint (/ x (pow 10 (* -1 new-exp)))))
+        )
+    )  
+)
+
+;; transform scientific notation to 8-digit fixed-point notation
+(define-read-only (from-scientific-to-fixed-up (n {x: int, exp: int}))
+    (let 
+        (
+            (x (get x n))
+            (new-exp (+ 8 (get exp n)))
+        )
+        (asserts! (> x 0) ERR-NOT-POSITIVE)
+        (if (>= new-exp 0)
+            (ok (to-uint (* x (pow 10 new-exp))))
+            (ok (to-uint (+ 1 (/ (- x 1) (pow 10 (* -1 new-exp))))))
         )
     )  
 )
