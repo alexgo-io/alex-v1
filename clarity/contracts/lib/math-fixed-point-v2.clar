@@ -525,47 +525,47 @@
 )
 
 (define-read-only (pow-fixed (n1 uint) (n2 uint))
-    (from-scientific-to-fixed (try! (pow-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
+    (unwrap-panic (from-scientific-to-fixed (unwrap-panic (pow-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))))
 )
 
 (define-read-only (pow-fixed-up (n1 uint) (n2 uint))
-    (from-scientific-to-fixed-up (try! (pow-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
+    (unwrap-panic (from-scientific-to-fixed-up (unwrap-panic (pow-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))))
 )
 
 (define-read-only (log-fixed (n1 uint) (n2 uint))
-    (from-scientific-to-fixed (log-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed (log-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 (define-read-only (ln-fixed (n uint))
-    (from-scientific-to-fixed (try! (ln-scientific (from-fixed-to-scientific n))))
+    (unwrap-panic (from-scientific-to-fixed (unwrap-panic (ln-scientific (from-fixed-to-scientific n)))))
 )
 
 (define-read-only (exp-fixed (n uint))
-    (from-scientific-to-fixed (try! (exp-scientific (from-fixed-to-scientific n))))
+    (unwrap-panic (from-scientific-to-fixed (unwrap-panic (exp-scientific (from-fixed-to-scientific n)))))
 )
 
 (define-read-only (add-fixed (n1 uint) (n2 uint))
-    (from-scientific-to-fixed (add-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed (add-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 (define-read-only (sub-fixed (n1 uint) (n2 uint))
-    (from-scientific-to-fixed (sub-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed (sub-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 (define-read-only (mul-fixed (n1 uint) (n2 uint))
-    (from-scientific-to-fixed (mul-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed (mul-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 (define-read-only (mul-fixed-up (n1 uint) (n2 uint))
-    (from-scientific-to-fixed-up (mul-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed-up (mul-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 (define-read-only (div-fixed (n1 uint) (n2 uint))
-    (from-scientific-to-fixed (div-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed (div-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 (define-read-only (div-fixed-up (n1 uint) (n2 uint))
-    (from-scientific-to-fixed-up (div-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2)))
+    (unwrap-panic (from-scientific-to-fixed-up (div-scientific (from-fixed-to-scientific n1) (from-fixed-to-scientific n2))))
 )
 
 

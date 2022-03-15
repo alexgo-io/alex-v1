@@ -513,7 +513,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-scientific ",
         [
             types.tuple({x: '210000', exp: -4}),
-            types.tuple({x: '46000000000000000', exp: -19}),
+            types.tuple({x: '46000000000', exp: -13}),
         ], deployer.address);
         result = call.result.expectErr().expectUint(5012);
 
@@ -524,8 +524,8 @@ Clarinet.test({
             types.tuple({x: types.int(1), exp: 0}),
         ], deployer.address);
         result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '233672138547078697');
-        result['exp'].expectInt(-19);
+        assertEquals(result['x'], '0');
+        result['exp'].expectInt(0);
 
     },
 });
@@ -714,242 +714,10 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: transform",
+    name: "math-fixed-point-v2: log-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "transform",
-            [
-                types.int(11114936106354),
-                types.int(-8),
-                types.int(-13)
-            ], deployer.address
-        );
-        let result: any = call.result.expectTuple();
-        result['x'].expectInt(1111493610635400000);
-        result['exp'].expectInt(-13);
-
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform",
-            [
-                '829487965402890273820142',
-                types.int(-5),
-                types.int(-5)
-            ], deployer.address
-        );
-        result = call.result.expectTuple();
-        assertEquals(result['x'], '829487965402890273820142');
-        result['exp'].expectInt(-5);
-    },
-});
-
-Clarinet.test({
-    name: "math-fixed-point-v2: transform-to-16",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-to-16",
-            [
-                types.tuple({ x: 323335364641518960, exp: -22 }),
-            ], deployer.address
-        );
-        let result: any = call.result.expectTuple();
-        result['x'].expectInt(323335364641);
-        result['exp'].expectInt(-16);
-
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-to-16",
-            [
-                types.tuple({ x: 8131151895812, exp: -15 }),
-            ], deployer.address
-        );
-        result = call.result.expectTuple();
-        result['x'].expectInt(8131151895812);
-        result['exp'].expectInt(-15);
-    },
-});
-
-Clarinet.test({
-    name: "math-fixed-point-v2: pow-fixed",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-
-        let deployer = accounts.get("deployer")!;
-
-        // 0.0000005^0.6
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(50000000), exp: -14}),
-            types.tuple({x: types.int(6), exp: -1}),
-        ], deployer.address);
-        let result: any = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '104994678204640105');
-        result['exp'].expectInt(-18);
-
-        // 0.02^0.08
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(2), exp: -2}),
-            types.tuple({x: types.int(8), exp: -2}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '7662321819045797');
-        result['exp'].expectInt(-16);
-
-        //0.1^1
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(1), exp: -1}),
-            types.tuple({x: types.int(1), exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '102817675584246604');
-        result['exp'].expectInt(-18);
-
-        // 81^0
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(81), exp: 0}),
-            types.tuple({x: types.int(0), exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '1');
-        result['exp'].expectInt(0);
-
-        // 90 ^ 9
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(9), exp: 1}),
-            types.tuple({x: types.int(9), exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '387420489000000');
-        result['exp'].expectInt(3);
-
-        // 123 ^ 8
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u12300000000', exp: -8}),
-            types.tuple({x: types.int(8), exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '523890944282627');
-        result['exp'].expectInt(2);
-
-        // 21000 ^ 0.2
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u21000', exp: 0}),
-            types.tuple({x:  'u2', exp: -1}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '731886706417574');
-        result['exp'].expectInt(-14);
-
-        // 21320 ^ 2
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u21320', exp: 0}),
-            types.tuple({x:  'u2', exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '454542400000000');
-        result['exp'].expectInt(-6);
-
-        // 50^ 10
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u5', exp: 1}),
-            types.tuple({x:  'u10', exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '976562499999999');
-        result['exp'].expectInt(2);
-
-        //0 ^ 1
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(0), exp: 0}),
-            types.tuple({x:  types.uint(1), exp: 0}),
-        ], deployer.address);
-        result = call.result.expectOk().expectTuple();
-        assertEquals(result['x'], '0');
-        result['exp'].expectInt(0);
-
-        // 10^100
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: types.int(10), exp: 0}),
-            types.tuple({x: types.int(10), exp: 1}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(5012);
- 
-        // 123 ^ 2.46
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u12300000000', exp: -8}),
-            types.tuple({x: 'u24600000000', exp: -10}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(5012);
-
-        // 99999999999e23 ^  99999999999e23
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u99999999999', exp: 23}),
-            types.tuple({x: 'u99999999999', exp: 23}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(5012);
-
-        // 10000000000000e23 ^  5
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u10000000000000', exp: 23}),
-            types.tuple({x: 'u5', exp: 0}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(50091);
-
-        // 10000000e24 ^ 5
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u10000000', exp: 24}),
-            types.tuple({x: 'u5', exp: 0}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(50092);
-
-        // 1000000000e23  ^ 0.5
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u1000000000', exp: 23}),
-            types.tuple({x: 'u500000000000', exp: -12}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(50101);
-
-        // 1000000000e23 ^ 5e-14
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u1000000000', exp: 23}),
-            types.tuple({x: 'u50000000000', exp: 24}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(50102);
-
-        // 170141183460469231731687303715884105720 ^  1
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u17014118346046923173168730371588410572', exp: 1}),
-            types.tuple({x: 'u1', exp: 0}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(5009);
-
-        // 1 ^ 85070591730234615865843651857942052864
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-fixed",
-        [
-            types.tuple({x: 'u1', exp: 0}),
-            types.tuple({x: 'u85070591730234615865843651857942052864', exp: 0}),
-        ], deployer.address);
-        result = call.result.expectErr().expectUint(5010);
-    },
-});
-
-Clarinet.test({
-    name: "math-fixed-point-v2: log-fixed",
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "log-fixed",
+        let call = chain.callReadOnlyFn("math-fixed-point-v2", "log-scientific",
             [
                 types.tuple({ x: 20, exp: 0 }),
                 types.tuple({ x: 10, exp: 0 }),
@@ -959,7 +727,7 @@ Clarinet.test({
         assertEquals(result['x'],'13010299956639815');
         result['exp'].expectInt(-16);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "log-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "log-scientific",
             [
                 types.tuple({ x: 2, exp: 5 }),
                 types.tuple({ x: 4, exp: 0 }),
@@ -969,7 +737,7 @@ Clarinet.test({
         assertEquals(result['x'],'88048202372184036');
         result['exp'].expectInt(-16);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "log-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "log-scientific",
             [
                 types.tuple({ x: 2, exp: 5 }),
                 types.tuple({ x: 4, exp: -1 }),
@@ -979,7 +747,7 @@ Clarinet.test({
         assertEquals(result['x'],'-133212225707184803');
         result['exp'].expectInt(-16);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "log-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "log-scientific",
         [
             types.tuple({ x: 2, exp: 5 }),
             types.tuple({ x: 30, exp: 0 }),
@@ -993,72 +761,159 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: transform-from-fixed",
+    name: "math-fixed-point-v2: from-fixed-to-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-from-fixed",
+        let call = chain.callReadOnlyFn("math-fixed-point-v2", "from-fixed-to-scientific",
             [ types.uint(200000000)], 
             deployer.address
         );
         let result: any = call.result.expectTuple();
-        assertEquals(result['x'], types.uint(2));
+        assertEquals(result['x'], types.int(2));
         result['exp'].expectInt(0);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-from-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "from-fixed-to-scientific",
             [types.uint(600000000000)], 
             deployer.address
         );
         result = call.result.expectTuple();
-        assertEquals(result['x'], types.uint(6000));
+        assertEquals(result['x'], types.int(6000));
         result['exp'].expectInt(0);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-from-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "from-fixed-to-scientific",
             [types.uint(7500000)], 
             deployer.address
         );
         result = call.result.expectTuple();
-        assertEquals(result['x'], types.uint(75));
+        assertEquals(result['x'], types.int(75));
         result['exp'].expectInt(-3);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-from-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "from-fixed-to-scientific",
             ['u923489231482391971'],
             deployer.address
         );
         result = call.result.expectTuple();
-        assertEquals(result['x'], 'u923489231482391971');
+        assertEquals(result['x'], '923489231482391971');
         result['exp'].expectInt(-8);
 
     },
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: transform-to-fixed",
+    name: "math-fixed-point-v2: from-scientific-to-fixed",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
-        let call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-to-fixed",
+        let call = chain.callReadOnlyFn("math-fixed-point-v2", "from-scientific-to-fixed",
             [types.tuple({ x: 2, exp: 5 })], 
             deployer.address
         );
-        let result: any = call.result.expectOk().expectInt(20000000000000);
+        let result: any = call.result.expectOk().expectUint(20000000000000);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-to-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "from-scientific-to-fixed",
             [types.tuple({ x: 4, exp: -7  })], 
             deployer.address
         );
-        result = call.result.expectOk().expectInt(40);
+        result = call.result.expectOk().expectUint(40);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-to-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "from-scientific-to-fixed",
             [types.tuple({ x: -85, exp: 0  })],  
             deployer.address
         );
-        result = call.result.expectOk().expectInt(-8500000000);
+        result = call.result.expectErr().expectUint(5014);
 
-        call = chain.callReadOnlyFn("math-fixed-point-v2", "transform-to-fixed",
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "from-scientific-to-fixed",
             [types.tuple({ x: 12381273897412123, exp: 9 })], 
             deployer.address
         );
         result = call.result.expectOk();
-        assertEquals(result, '1238127389741212400000000000000000');
+        assertEquals(result, 'u1238127389741212400000000000000000');
 
+    },
+});
+
+Clarinet.test({
+    name: "math-fixed-point-v2: mul-up mul-down",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+
+        let call = chain.callReadOnlyFn("math-fixed-point-v2", "mul-down",
+            [
+                types.uint(500000*ONE_8),
+                types.uint(5*ONE_8),
+            ], deployer.address);
+        call.result.expectUint(2500000*ONE_8)
+            
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "mul-up",
+            [
+                types.uint(500000*ONE_8),
+                types.uint(5*ONE_8),
+            ], deployer.address);
+        call.result.expectUint(2500000*ONE_8)
+
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "mul-up",
+        [
+            types.uint(5*ONE_8),
+            types.uint(0.5*ONE_8),
+        ], deployer.address);
+        call.result.expectUint(2.5*ONE_8)
+        },
+    });
+    
+Clarinet.test({
+    name: "math-fixed-point-v2: pow-up and pow-down",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        
+        let deployer = accounts.get("deployer")!;
+
+        let call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-down",
+            [
+                types.uint(5*ONE_8),
+                types.uint(5*ONE_8)
+            ], deployer.address);
+        assertEquals(call.result, "u312499999999"); // v1: u312499930206
+
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-up",
+            [
+                types.uint(5*ONE_8),
+                types.uint(5*ONE_8)
+            ], deployer.address);
+        assertEquals(call.result, "u312500000000"); // v1: u312499955208
+
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-up",
+            [
+                types.uint(5000*ONE_8),
+                types.uint(0.5*ONE_8)
+            ], deployer.address);
+        assertEquals(call.result, "u7071067812"); // v1: u7071067955
+
+        // anything ^ 0 = 1
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-down",
+            [
+                types.uint(1000000*ONE_8),
+                types.uint(0)
+            ], deployer.address);
+        call.result.expectUint(100000000); // v1: 99999995
+
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-up",
+            [
+                types.uint(1000000*ONE_8),
+                types.uint(0)
+            ], deployer.address);
+        call.result.expectUint(100000000); // v1: 100000005     
+        
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-down",
+            [
+                types.uint(1000000*ONE_8),
+                types.uint(1)
+            ], deployer.address);
+        call.result.expectUint(100000013); // v1: 100000007
+        
+        call = chain.callReadOnlyFn("math-fixed-point-v2", "pow-up",
+            [
+                types.uint(1000000*ONE_8),
+                types.uint(1)
+            ], deployer.address);
+        call.result.expectUint(100000014); // v1: 100000019
     },
 });
