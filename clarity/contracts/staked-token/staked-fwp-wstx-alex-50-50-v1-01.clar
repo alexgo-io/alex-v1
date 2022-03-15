@@ -132,7 +132,7 @@
 	)
 )
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 (define-private (pow-decimals)
   	(pow u10 (unwrap-panic (get-decimals u0)))
