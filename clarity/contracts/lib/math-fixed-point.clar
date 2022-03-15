@@ -311,12 +311,6 @@
 ;; public functions
 ;;
 
-;; @desc get-exp-bound
-;; @returns (response uint)
-(define-read-only (get-exp-bound)
-  (ok MILD_EXPONENT_BOUND)
-)
-
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
 ;; @desc pow-fixed
 ;; @params x
