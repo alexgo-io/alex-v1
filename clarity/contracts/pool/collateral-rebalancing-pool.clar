@@ -1346,7 +1346,7 @@
         )
         (try! (contract-call? .swap-helper swap-helper token-trait collateral-trait swapped-token none))
         ;; return the loan + fee
-        (try! (contract-call? token-trait transfer-fixed dx-with-fee sender .alex-vault none))
+        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
         (ok dx-with-fee)
     )
 )
