@@ -33,6 +33,8 @@
 		;; helper functions for fixed notation
 		(transfer-fixed (uint uint principal principal) (response bool uint))
 		(transfer-memo-fixed (uint uint principal principal (buff 34)) (response bool uint))
+		(transfer-many-fixed ((list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})) (response bool uint))
+		(transfer-many-memo-fixed ((list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})) (response bool uint))				
     	(get-balance-fixed (uint principal) (response uint uint))
     	(get-total-supply-fixed (uint) (response uint uint))
 		(get-total-supply-fixed (uint) (response uint uint))
