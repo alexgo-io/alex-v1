@@ -93,5 +93,6 @@ export function extractParameters(parametersResponse: string) {
 		maxStepSize: parseInt(tuple["max-step-size"].substring(1)),
 		walkPosition: parseInt(tuple["walk-position"].substring(1)),
 		ticketsForSale: parseInt(tuple["total-tickets"].substring(1)),
+		activationThreshold: parseInt(tuple["activation-threshold"].substring(1))
 	};
 }

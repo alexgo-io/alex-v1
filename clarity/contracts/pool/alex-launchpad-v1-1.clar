@@ -236,7 +236,7 @@
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-initial-walk-position (get registration-end-height offering) max-step-size)))
 		)
-		(ok {max-step-size: max-step-size, walk-position: walk-position, total-tickets: (get total-tickets offering)})
+		(ok {max-step-size: max-step-size, walk-position: walk-position, total-tickets: (get total-tickets offering), activation-threshold: (get activation-threshold offering)})
 	)
 )
 
@@ -266,7 +266,7 @@
 		)
  		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
-		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-block-height-not-reached)		
+		(asserts! (>= block-height (get registration-end-height offering)) err-block-height-not-reached)		
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
 		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-activation-threshold-not-reached)
 
@@ -313,8 +313,13 @@
 ;; Calculate the maximum upper bound allowed to be refunded. It is either set to the maximum IDO bound
 ;; in case all tickets have been won, or to the last walk position in case the claim walk is still
 ;; in progress. Participants whose upper bound is larger than this value cannot yet get a refund.
-(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint) (registration-end-height uint) )
-	(if (is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
+(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint) (registration-end-height uint) (activation-threshold uint))
+	(if 
+		(or 
+			;; either we sold all, or we failed
+			(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
+			(> activation-threshold (get-total-tickets-registered ido-id))
+		)
 		(ok (* total-tickets-register walk-resolution))
 		(get-last-claim-walk-position ido-id registration-end-height (calculate-max-step-size total-tickets-register total-tickets))
 	)
@@ -345,6 +350,7 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
+		(asserts! (>= block-height (get registration-end-height offering)) err-block-height-not-reached)
 		(asserts!
 			(or
 				(>= block-height (+ (get claim-end-height offering) claim-grace-period))
@@ -361,7 +367,7 @@
 				(ok 
 					{
 						ido-id: ido-id,
-						upper-bound: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering))),
+						upper-bound: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering) (get activation-threshold offering))),
 						price-per-ticket: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					}
 				)
@@ -403,7 +409,7 @@
 			(fold refund-optimal-iter input
 				{
 					i: ido-id,
-					u: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering))),
+					u: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering) (get activation-threshold offering))),
 					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					s: true
 				}))
