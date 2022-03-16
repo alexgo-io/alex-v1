@@ -1324,3 +1324,29 @@
    )
  )
 )
+
+(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
+    (let
+        (
+            (sender tx-sender)
+            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
+            (gross-dx
+                (div-down  
+                    (mul-up 
+                        dx 
+                        (try! (contract-call? .yield-token-pool get-price expiry (contract-of yield-token-trait))) 
+                    )
+                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))
+                )
+            )
+            (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
+        )
+        (try! (contract-call? .swap-helper swap-helper token-trait collateral-trait swapped-token none))
+        ;; return the loan + fee
+        (try! (contract-call? token-trait transfer-fixed dx-with-fee sender .alex-vault none))
+        (ok dx-with-fee)
+    )
+)
