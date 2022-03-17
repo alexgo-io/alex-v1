@@ -419,6 +419,10 @@ depends_on = [ "yield-wstx", "key-wstx-wbtc", "collateral-rebalancing-pool" ]
 path = "contracts/key-token/key-wstx-wbtc.clar"
 depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
+[contracts.key-wstx-alex]
+path = "contracts/key-token/key-wstx-wbtc.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
 [contracts.token-t-alex]
 path = "contracts/token/token-t-alex.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
@@ -490,14 +494,14 @@ depends_on = [
   "trait-multisig-vote"  
 ]
 
-[contracts.fwp-wstx-usda-50-50]
-path = "contracts/pool-token/fwp-wstx-usda-50-50.clar"
+[contracts.fwp-wstx-usda-50-50-v1-01]
+path = "contracts/pool-token/fwp-wstx-usda-50-50-v1-01.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
 
-[contracts.multisig-fwp-wstx-usda-50-50]
-path = "contracts/multisig/multisig-fwp-wstx-usda-50-50.clar"
+[contracts.multisig-fwp-wstx-usda-50-50-v1-01]
+path = "contracts/multisig/multisig-fwp-wstx-usda-50-50-v1-01.clar"
 depends_on = [
-  "fwp-wstx-usda-50-50",
+  "fwp-wstx-usda-50-50-v1-01",
   "fixed-weight-pool-v1-01",
   "trait-multisig-vote"  
 ]
@@ -587,7 +591,7 @@ depends_on = [
 [contracts.multisig-fwp-wstx-usda-simple]
 path = "contracts/multisig/multisig-fwp-wstx-usda-simple.clar"
 depends_on = [
-  "fwp-wstx-usda-50-50",
+  "fwp-wstx-usda-50-50-v1-01",
   "simple-weight-pool",
   "trait-multisig-vote"
 ]
@@ -609,3 +613,29 @@ depends_on = [
   "swap-helper",
   "token-usda"  
 ]
+
+[contracts.multisig-crp-wbtc-alex]
+path = "contracts/multisig/multisig-crp-wbtc-alex.clar"
+depends_on = [
+  "yield-wbtc",
+  "key-wbtc-alex",
+  "collateral-rebalancing-pool",
+  "trait-multisig-vote"
+]
+
+[contracts.multisig-crp-wbtc-wban]
+path = "contracts/multisig/multisig-crp-wbtc-wban.clar"
+depends_on = [
+  "yield-wbtc",
+  "key-wbtc-wban",
+  "collateral-rebalancing-pool",
+  "trait-multisig-vote"
+]
+
+[contracts.key-wbtc-alex]
+path = "contracts/key-token/key-wbtc-alex.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.key-wbtc-wban]
+path = "contracts/key-token/key-wbtc-wban.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]

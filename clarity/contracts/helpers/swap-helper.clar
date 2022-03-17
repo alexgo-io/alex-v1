@@ -102,14 +102,14 @@
         )        
         (ok 
             (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0) 
-                (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper token-x-trait token-y-trait u50000000 u50000000 dx min-dy))                        
+                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y token-x-trait token-y-trait u50000000 u50000000 dx min-dy)))
                 (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                    (try! (contract-call? .simple-weight-pool-alex swap-helper token-x-trait token-y-trait dx min-dy))        
+                    (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy)))
                     (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
                         (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                            (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper token-x-trait .age000-governance-token u50000000 u50000000 dx none)) min-dy))) 
-                        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .age000-governance-token token-y-trait u50000000 u50000000 
-                            (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy))
+                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y token-x-trait .age000-governance-token u50000000 u50000000 dx none))) min-dy))) 
+                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y .age000-governance-token token-y-trait u50000000 u50000000 
+                            (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))
                     )
                 )
             )
