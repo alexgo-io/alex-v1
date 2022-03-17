@@ -1595,15 +1595,24 @@
     (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
 )
 
-(define-map total-supply principal uint)
+(define-map auto-supply principal uint)
+(define-map key-supply principal uint)
 (define-map bounty-in-fixed principal uint)
 (define-map bounty-max-in-fixed principal uint)
 
+(define-read-only (get-auto-supply-or-default (key-token principal))
+    (default u0 (map-get? auto-supply principal))
+)
+(define-read-only (get-key-supply-or-default (key-token principal))
+    (default u0 (map-get? key-supply principal))
+)
+
 (define-public (add-to-perpetual (key-token-trait <sft-trait>) (dx uint))
-  (let
-    (
-      (new-supply 
-        (if (is-some (map-get? total-supply (contract-of key-token-trait)))
+    (let
+        (
+            (new-supply 
+        (match (map-get? total-supply (contract-of key-token-trait))
+            value 
           dx ;; initial position
           (div-down (mul-down (var-get total-supply) dx) (try! (get-next-base)))
         )
