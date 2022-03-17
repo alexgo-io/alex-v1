@@ -1326,70 +1326,6 @@
  )
 )
 
-(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
-    (let
-        (
-            (sender tx-sender)
-            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
-            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
-            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
-            (gross-dx
-                (div-down  
-                    (mul-up 
-                        dx 
-                        (try! (contract-call? .yield-token-pool get-price expiry (contract-of yield-token-trait))) 
-                    )
-                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))
-                )
-            )
-            (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
-        )
-        (try! (swap-helper token-trait collateral-trait swapped-token none))
-        ;; return the loan + fee
-        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
-        (ok dx-with-fee)
-    )
-)
-
-(define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
-    (let
-        (
-            (sender tx-sender)
-            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
-            (reduce-data (try! (reduce-position-key token-trait collateral-trait expiry key-token-trait ONE_8)))
-            (dx 
-                (+ 
-                    (get dx reduce-data) 
-                    (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))
-                )               
-            )
-            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
-            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
-            (gross-dx
-                (div-down  
-                    (mul-up 
-                        dx 
-                        (try! (contract-call? .yield-token-pool get-price expiry-to-roll (contract-of yield-token-trait))) 
-                    )
-                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))
-                )
-            )
-            (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
-        )
-        (try! (swap-helper token-trait collateral-trait swapped-token none))
-        ;; return the loan + fee
-        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
-        (ok dx-with-fee)
-    )    
-)
-
-;; test only
-(define-public (test-depth (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
-    (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
-)
-
 (define-private (is-fixed-weight-pool-v1-01 (token-x principal) (token-y principal))
     (if 
         (or  
@@ -1593,4 +1529,124 @@
             )
         )
     )
+)
+
+(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
+    (let
+        (
+            (sender tx-sender)
+            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
+            (gross-dx
+                (div-down  
+                    (mul-up 
+                        dx 
+                        (try! (contract-call? .yield-token-pool get-price expiry (contract-of yield-token-trait))) 
+                    )
+                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))
+                )
+            )
+            (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
+        )
+        (try! (swap-helper token-trait collateral-trait swapped-token none))
+        ;; return the loan + fee
+        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
+        (ok dx-with-fee)
+    )
+)
+
+(define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
+    (let
+        (
+            (sender tx-sender)
+            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+            (reduce-data (try! (reduce-position-key token-trait collateral-trait expiry key-token-trait ONE_8)))
+            (dx 
+                (+ 
+                    (get dx reduce-data) 
+                    (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))
+                )               
+            )
+            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
+            (gross-dx
+                (div-down  
+                    (mul-up 
+                        dx 
+                        (try! (contract-call? .yield-token-pool get-price expiry-to-roll (contract-of yield-token-trait))) 
+                    )
+                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))
+                )
+            )
+            (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
+        )
+        (try! (swap-helper token-trait collateral-trait swapped-token none))
+        ;; return the loan + fee
+        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
+        (ok dx-with-fee)
+    )    
+)
+
+;; test
+(define-public (test-depth (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
+    (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
+)
+
+(define-map total-supply principal uint)
+(define-map bounty-in-fixed principal uint)
+(define-map bounty-max-in-fixed principal uint)
+
+(define-public (add-to-perpetual (key-token-trait <sft-trait>) (dx uint))
+  (let
+    (
+      (new-supply 
+        (if (is-some (map-get? total-supply (contract-of key-token-trait)))
+          dx ;; initial position
+          (div-down (mul-down (var-get total-supply) dx) (try! (get-next-base)))
+        )
+      )
+      (sender tx-sender)
+    )
+    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+    
+    ;; transfer dx to contract to stake for max cycles
+    (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
+    (as-contract (try! (stake-tokens-internal dx u32)))
+        
+    ;; mint pool token and send to tx-sender
+    (var-set total-supply (+ (var-get total-supply) new-supply))
+    (as-contract (try! (contract-call? .auto-alex mint-fixed new-supply sender)))
+    (print { object: "pool", action: "liquidity-added", data: new-supply })
+    (ok true)
+  )
+)
+
+(define-public (reduce-position)
+  (let 
+    (
+      (sender tx-sender)
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+      ;; claim last cycle just in case claim-and-stake has not yet been triggered    
+      (claimed (as-contract (try! (claim-staking-reward-internal (- current-cycle u1)))))
+      (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
+      (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
+    )
+    ;; only if de-activated
+    (asserts! (not (var-get activated)) ERR-ACTIVATED)
+    ;; only if no staking positions
+    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
+    ;; transfer relevant balance to sender
+    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-balance tx-sender sender none)))
+    
+    ;; burn pool token
+    (var-set total-supply (- (var-get total-supply) reduce-supply))
+    (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
+    (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
+    (ok true)
+  ) 
 )
