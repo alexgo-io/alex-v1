@@ -1597,6 +1597,7 @@
 
 (define-map auto-supply principal uint)
 (define-map key-supply principal uint)
+(define-map key-expiry principal uint)
 (define-map bounty-in-fixed principal uint)
 (define-map bounty-max-in-fixed principal uint)
 
@@ -1610,18 +1611,21 @@
 (define-public (add-to-perpetual (key-token-trait <sft-trait>) (dx uint))
     (let
         (
-            (new-supply 
-        (match (map-get? total-supply (contract-of key-token-trait))
-            value 
-          dx ;; initial position
-          (div-down (mul-down (var-get total-supply) dx) (try! (get-next-base)))
+            (key-token (contract-of key-token-trait))
+            (new-auto-supply 
+                (match (map-get? key-supply key-token) 
+                    value (div-down (mul-down (+ value dx) (get-auto-supply-or-default key-token)) value) ;; (key-supply + dx) * auto-supply / key-supply
+                    dx
+                )
+            )
+            (new-key-supply (+ dx (get-key-supply-or-default key-token)))
+            (sender tx-sender)
         )
-      )
-      (sender tx-sender)
-    )
-    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
-    (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-    
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+
+        ;; TODO: require guard
+        (try! (contract-call? key-token-trait expiry dx sender (as-contract tx-sender)))
+        (map-set auto-supply )
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
     (as-contract (try! (stake-tokens-internal dx u32)))
