@@ -1598,8 +1598,6 @@
 ;; (define-read-only (get-reward-cycle (token principal) (stacks-height uint))
 ;; (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
 
-(define-constant ERR-NOT-FOUND (err u12001))
-
 (define-map approved-pair principal principal)
 (define-map auto-supply principal uint)
 (define-map key-supply principal uint)
@@ -1611,7 +1609,7 @@
 (define-read-only (get-expiry (key-token principal))
     (let
         (
-            (underlying (unwrap! (map-get? key-underlying key-token) ERR-NOT-FOUND))
+            (underlying (unwrap! (map-get? key-underlying key-token) ERR-NOT-AUTHORIZED))
             (current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle underlying block-height) ERR-NOT-FOUND))
             (last-height (- (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle underlying (+ current-cycle u1)) u1))
         )
@@ -1638,15 +1636,15 @@
                 )
             )
             (key-to-add (+ dx (get-key-supply-or-default key-token)))
-            (expiry get-expiry key-token)
+            (expiry (unwrap! (map-get? key-expiry key-token) ERR-NOT-AUTHORIZED))
             (sender tx-sender)
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (is-eq (map-get? approved-pair key-token) auto-token) ERR-NOT-AUTHORIZED)
         
         (try! (contract-call? key-token-trait transfer-fixed expiry dx sender .alex-vault))
-        (map-set auto-supply key-token (+ auto-to-add (get-auto-supply-or-default key-token)))
-        (map-set key-supply key-token (+ dx (get-key-supply-or-default key-token)))
+        (map-set auto-supply key-token (+ (get-auto-supply-or-default key-token) auto-to-add))
+        (map-set key-supply key-token (+ (get-key-supply-or-default key-token) dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
         (print { object: "pool", action: "liquidity-added", data: auto-to-add })
         (ok true)
@@ -1658,10 +1656,10 @@
         (
             (key-token (contract-of key-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (total-held (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
+            (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
             (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
             (key-to-reduce (div-down (mul-down (get-key-supply-or-default key-token) auto-to-reduce) (get-auto-supply-or-default key-token)))
-            (expiry get-expiry key-token)
+            (expiry (unwrap! (map-get? key-expiry key-token) ERR-NOT-AUTHORIZED))
             (sender tx-sender)
         )
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
@@ -1679,10 +1677,23 @@
 (define-public (roll-auto (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
     (let 
         (
+            (token (contract-of token-trait))
+            (collateral (contract-of collateral-trait))
             (key-token (contract-of key-token-trait))
-            (auto-token (contract-of auto-token-trait))                        
+            (auto-token (contract-of auto-token-trait))
+            (expiry (unwrap! (map-get? key-expiry key-token) ERR-NOT-AUTHORIZED))
+            (check-expiry (try! (get-expiry key-token)))
         )
+        (asserts! (is-eq (map-get? approved-pair key-token) auto-token) ERR-NOT-AUTHORIZED)
 
+        (if (> check-expiry expiry)
+            (and 
+                (is-err (get-pool-details token collateral expiry)) 
+                (try! (create-pool token-trait collateral-trait check-expiry yield-token-trait key-token-trait )))
+        ;; (define-read-only (get-pool-details (token principal) (collateral principal) (expiry uint))
+        ;; (define-public (create-pool (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint))             
+
+        )
         ;; check if expired
         ;; create pool if not yet exists
         ;; call roll-margin-position
