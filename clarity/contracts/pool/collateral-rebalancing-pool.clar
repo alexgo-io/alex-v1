@@ -1595,12 +1595,30 @@
     (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
 )
 
+;; (define-read-only (get-reward-cycle (token principal) (stacks-height uint))
+;; (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
+
+(define-constant ERR-NOT-FOUND (err u12001))
+
+(define-map approved-pair principal principal)
 (define-map auto-supply principal uint)
 (define-map key-supply principal uint)
+(define-map key-underlying principal principal)
 (define-map key-expiry principal uint)
 (define-map bounty-in-fixed principal uint)
 (define-map bounty-max-in-fixed principal uint)
 
+(define-read-only (get-expiry (key-token principal))
+    (let
+        (
+            (underlying (unwrap! (map-get? key-underlying key-token) ERR-NOT-FOUND))
+            (current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle underlying block-height) ERR-NOT-FOUND))
+            (last-height (- (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle underlying (+ current-cycle u1)) u1))
+        )
+        (map-set key-expiry key-token last-height)
+        (ok last-height)
+    )
+)
 (define-read-only (get-auto-supply-or-default (key-token principal))
     (default u0 (map-get? auto-supply principal))
 )
@@ -1608,58 +1626,65 @@
     (default u0 (map-get? key-supply principal))
 )
 
-(define-public (add-to-perpetual (key-token-trait <sft-trait>) (dx uint))
+(define-public (mint-auto (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let
         (
             (key-token (contract-of key-token-trait))
-            (new-auto-supply 
+            (auto-token (contract-of auto-token-trait))
+            (auto-to-add 
                 (match (map-get? key-supply key-token) 
-                    value (div-down (mul-down (+ value dx) (get-auto-supply-or-default key-token)) value) ;; (key-supply + dx) * auto-supply / key-supply
+                    value (div-down (mul-down dx (get-auto-supply-or-default key-token)) value) ;; dx * auto-supply / key-supply
                     dx
                 )
             )
-            (new-key-supply (+ dx (get-key-supply-or-default key-token)))
+            (key-to-add (+ dx (get-key-supply-or-default key-token)))
+            (expiry get-expiry key-token)
             (sender tx-sender)
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-
-        ;; TODO: require guard
-        (try! (contract-call? key-token-trait expiry dx sender (as-contract tx-sender)))
-        (map-set auto-supply )
-    ;; transfer dx to contract to stake for max cycles
-    (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
-    (as-contract (try! (stake-tokens-internal dx u32)))
+        (asserts! (is-eq (map-get? approved-pair key-token) auto-token) ERR-NOT-AUTHORIZED)
         
-    ;; mint pool token and send to tx-sender
-    (var-set total-supply (+ (var-get total-supply) new-supply))
-    (as-contract (try! (contract-call? .auto-alex mint-fixed new-supply sender)))
-    (print { object: "pool", action: "liquidity-added", data: new-supply })
-    (ok true)
-  )
+        (try! (contract-call? key-token-trait transfer-fixed expiry dx sender .alex-vault))
+        (map-set auto-supply key-token (+ auto-to-add (get-auto-supply-or-default key-token)))
+        (map-set key-supply key-token (+ dx (get-key-supply-or-default key-token)))
+        (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
+        (print { object: "pool", action: "liquidity-added", data: auto-to-add })
+        (ok true)
+    )
 )
 
-(define-public (reduce-position)
-  (let 
-    (
-      (sender tx-sender)
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
-      ;; claim last cycle just in case claim-and-stake has not yet been triggered    
-      (claimed (as-contract (try! (claim-staking-reward-internal (- current-cycle u1)))))
-      (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
-      (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
+(define-public (redeem-auto (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
+    (let 
+        (
+            (key-token (contract-of key-token-trait))
+            (auto-token (contract-of auto-token-trait))
+            (total-held (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
+            (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
+            (key-to-reduce (div-down (mul-down (get-key-supply-or-default key-token) auto-to-reduce) (get-auto-supply-or-default key-token)))
+            (expiry get-expiry key-token)
+            (sender tx-sender)
+        )
+        (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
+        (asserts! (is-eq (map-get? approved-pair key-token) auto-token) ERR-NOT-AUTHORIZED)
+
+        (as-contract (try! (contract-call? .alex-vault transfer-sft key-token expiry key-to-reduce sender)))
+        (map-set auto-supply key-token (- (get-auto-supply-or-default key-token) auto-to-reduce))
+        (map-set key-supply key-token (- (get-key-supply-or-default key-token) key-to-reduce))
+        (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
+        (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })
+        (ok true)
+    )     
+)
+
+(define-public (roll-auto (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
+    (let 
+        (
+            (key-token (contract-of key-token-trait))
+            (auto-token (contract-of auto-token-trait))                        
+        )
+
+        ;; check if expired
+        ;; create pool if not yet exists
+        ;; call roll-margin-position
     )
-    ;; only if de-activated
-    (asserts! (not (var-get activated)) ERR-ACTIVATED)
-    ;; only if no staking positions
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
-    ;; transfer relevant balance to sender
-    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-balance tx-sender sender none)))
-    
-    ;; burn pool token
-    (var-set total-supply (- (var-get total-supply) reduce-supply))
-    (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
-    (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
-    (ok true)
-  ) 
 )
