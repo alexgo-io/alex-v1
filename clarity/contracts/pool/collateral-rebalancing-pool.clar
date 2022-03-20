@@ -1601,83 +1601,117 @@
     (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
 )
 
-(define-map approved-pair principal principal) ;; auto-token => key/yield-token
+(define-map approved-pair principal principal) ;; auto-token => pool token
 (define-map auto-total-supply principal uint) ;; auto-token => supply
-(define-map key-total-supply principal uint) ;; key/yield-token => supply
-(define-map key-underlying principal principal) ;; key/yield-token => token with staking schedule
-(define-map key-expiry principal uint) ;; key/yield-token => expiry
-(define-map bounty-in-fixed principal uint) ;; auto-token => bounty as % of amount
-(define-map bounty-max-in-fixed principal uint) ;; auto-token => bounty cap
+(define-map pool-total-supply principal uint) ;; pool token => supply
+(define-map pool-underlying principal principal) ;; pool token => token with staking schedule
+(define-map pool-expiry principal uint) ;; pool token => expiry
+(define-map bounty-in-fixed principal uint) ;; bounty as % of amount
+(define-map bounty-max-in-fixed principal uint) ;; bounty cap
 
-(define-private (get-expiry (key-token principal))
+(define-private (get-expiry (pool-token principal))
     (let
         (
-            (underlying (unwrap! (map-get? key-underlying key-token) ERR-NOT-AUTHORIZED))
+            (underlying (unwrap! (map-get? pool-underlying pool-token) ERR-NOT-AUTHORIZED))
             (current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle underlying block-height) ERR-NOT-AUTHORIZED))
             (last-height (- (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle underlying (+ current-cycle u1)) u1))
         )
-        (map-set key-expiry key-token last-height)
+        (map-set pool-expiry pool-token last-height)
         (ok last-height)
     )
 )
-(define-read-only (get-auto-supply-or-default (key-token principal))
-    (default-to u0 (map-get? auto-total-supply key-token))
+(define-read-only (get-auto-supply-or-default (pool-token principal))
+    (default-to u0 (map-get? auto-total-supply pool-token))
 )
-(define-read-only (get-key-supply-or-default (key-token principal))
-    (default-to u0 (map-get? key-total-supply key-token))
+(define-read-only (get-pool-supply-or-default (pool-token principal))
+    (default-to u0 (map-get? pool-total-supply pool-token))
 )
 
-(define-public (mint-auto (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
+(define-public (mint-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let
         (
-            (key-token (contract-of key-token-trait))
+            (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
             (auto-to-add 
-                (match (map-get? key-total-supply key-token) 
-                    value (div-down (mul-down dx (get-auto-supply-or-default key-token)) value) ;; dx * auto-total-supply / key-total-supply
+                (match (map-get? pool-total-supply pool-token) 
+                    value (div-down (mul-down dx (get-auto-supply-or-default pool-token)) value) ;; dx * auto-total-supply / pool-total-supply
                     dx
                 )
             )
-            (key-to-add (+ dx (get-key-supply-or-default key-token)))
-            (expiry (unwrap! (map-get? key-expiry key-token) ERR-NOT-AUTHORIZED))
+            (pool-to-add (+ dx (get-pool-supply-or-default pool-token)))
+            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
             (sender tx-sender)
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (is-eq (unwrap! (map-get? approved-pair key-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq (unwrap! (map-get? approved-pair pool-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
         
-        (try! (contract-call? key-token-trait transfer-fixed expiry dx sender .alex-vault))
-        (map-set auto-total-supply key-token (+ (get-auto-supply-or-default key-token) auto-to-add))
-        (map-set key-total-supply key-token (+ (get-key-supply-or-default key-token) dx))
+        (try! (contract-call? pool-token-trait transfer-fixed expiry dx sender .alex-vault))
+        (map-set auto-total-supply pool-token (+ (get-auto-supply-or-default pool-token) auto-to-add))
+        (map-set pool-total-supply pool-token (+ (get-pool-supply-or-default pool-token) dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
-        (print { object: "pool", action: "liquidity-added", data: auto-to-add })
+        (print { object: "pool", action: "pool-added", data: auto-to-add })
         (ok true)
     )
 )
 
-(define-public (redeem-auto (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
+(define-public (redeem-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
     (let 
         (
-            (key-token (contract-of key-token-trait))
+            (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
             (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
             (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-            (key-to-reduce (div-down (mul-down (get-key-supply-or-default key-token) auto-to-reduce) (get-auto-supply-or-default key-token)))
-            (expiry (unwrap! (map-get? key-expiry key-token) ERR-NOT-AUTHORIZED))
+            (pool-to-reduce (div-down (mul-down (get-pool-supply-or-default pool-token) auto-to-reduce) (get-auto-supply-or-default pool-token)))
+            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
             (sender tx-sender)
         )
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
-        (asserts! (is-eq (unwrap! (map-get? approved-pair key-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
+        (asserts! (is-eq (unwrap! (map-get? approved-pair pool-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
 
-        (as-contract (try! (contract-call? .alex-vault transfer-sft key-token-trait expiry key-to-reduce sender)))
-        (map-set auto-total-supply key-token (- (get-auto-supply-or-default key-token) auto-to-reduce))
-        (map-set key-total-supply key-token (- (get-key-supply-or-default key-token) key-to-reduce))
+        (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry pool-to-reduce sender)))
+        (map-set auto-total-supply pool-token (- (get-auto-supply-or-default pool-token) auto-to-reduce))
+        (map-set pool-total-supply pool-token (- (get-pool-supply-or-default pool-token) pool-to-reduce))
         (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
-        (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })
+        (print { object: "pool", action: "pool-removed", data: auto-to-reduce })
         (ok true)
     )     
 )
 
-(define-public (roll-auto (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
+;; roll-auto-pool
+(define-public (roll-auto-pool (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
+    (let 
+        (
+            (token (contract-of token-trait))
+            (collateral (contract-of collateral-trait))
+            (yield-token (contract-of yield-token-trait))
+            (pool-token (contract-of pool-token-trait))
+            (auto-token (contract-of auto-token-trait))
+            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
+            (expiry-to-roll (try! (get-expiry pool-token)))
+        )
+        (asserts! (is-eq (unwrap! (map-get? approved-pair pool-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
+        (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
+
+        (let
+            (
+                (reduce-data (as-contract (try! (contract-call? .yield-token-pool reduce-position expiry yield-token-trait token-trait pool-token-trait ONE_8))))
+                (dy-to-dx (get dy (as-contract (try! (reduce-position-yield token-trait collateral-trait expiry yield-token-trait ONE_8)))))
+                (pool (try! (contract-call? .yield-token-pool get-pool-details expiry yield-token)))
+            )
+            (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
+              (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) (+ (get dx reduce-data) dy-to-dx) u0)))
+              (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait (+ (get dx reduce-data) dy-to-dx) none)))
+            )
+
+            ;; TODO: pay bounty
+
+            (ok true)
+        )
+    )    
+)
+
+;; roll-auto-key
+(define-public (roll-auto-key (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
     (let 
         (
             (token (contract-of token-trait))
@@ -1685,17 +1719,12 @@
             (yield-token (contract-of yield-token-trait))
             (key-token (contract-of key-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (expiry (unwrap! (map-get? key-expiry key-token) ERR-NOT-AUTHORIZED))
+            (expiry (unwrap! (map-get? pool-expiry key-token) ERR-NOT-AUTHORIZED))
             (expiry-to-roll (try! (get-expiry key-token)))
         )
         (asserts! (is-eq (unwrap! (map-get? approved-pair key-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
         (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
-
-        ;; TODO: create yield-token-pool if needed
-        (get-pool-details (expiry uint) (yield-token principal)
-        (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
-            
-        )
+        (asserts! (is-ok (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token)) ERR-NOT-AUTHORIZED)
 
         (let
             (
@@ -1734,7 +1763,37 @@
 
             ;; TODO: pay bounty
 
-            (ok dx-with-fee)            
+            (ok true)            
+        )
+    )    
+)
+
+;; roll-auto-yield
+(define-public (roll-auto-yield (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
+    (let 
+        (
+            (token (contract-of token-trait))
+            (collateral (contract-of collateral-trait))
+            (yield-token (contract-of yield-token-trait))
+            (pool-token (contract-of pool-token-trait))
+            (auto-token (contract-of auto-token-trait))
+            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
+            (expiry-to-roll (try! (get-expiry pool-token)))
+        )
+        (asserts! (is-eq (unwrap! (map-get? approved-pair pool-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
+        (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
+        (asserts! (is-ok (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token)) ERR-NOT-AUTHORIZED)
+        (asserts! (is-ok (get-pool-details token collateral expiry-to-roll)) ERR-NOT-AUTHORIZED)
+
+        (let
+            (
+                (dx (get dy (as-contract (try! (reduce-position-yield token-trait collateral-trait expiry yield-token-trait ONE_8)))))
+            )
+            (as-contract (try! (contract-call? .yield-token-pool swap-x-for-y expiry yield-token-trait token-trait dx none)))
+
+            ;; TODO: pay bounty
+
+            (ok true)
         )
     )    
 )
