@@ -41,6 +41,43 @@
   )
 )
 
+;; @desc add-token 
+;; @params token
+;; @returns (response bool)
+(define-public (add-token (token principal) (dual-token principal))
+  (begin
+    (try! (check-is-owner))
+    (map-set approved-pair token dual-token)
+    (contract-call? .alex-reserve-pool add-token token)
+  )
+)
+
+(define-read-only (get-apower-multiplier-in-fixed-or-default (token principal) (dual-token principal))
+  (contract-call? .alex-reserve-pool get-apower-multiplier-in-fixed-or-default token)
+)
+
+(define-public (set-apower-multiplier-in-fixed (token principal) (dual-token principal) (new-apower-multiplier-in-fixed uint))
+  (begin
+    (try! (check-is-approved-pair token dual-token))
+    (contract-call? .alex-reserve-pool set-apower-multiplier-in-fixed-or-default token new-apower-multiplier-in-fixed)
+  )
+)
+
+;; @desc get-activation-block-or-default 
+;; @params token
+;; @returns uint
+(define-read-only (get-activation-block-or-default (token principal))
+  (default-to u100000000 (map-get? activation-block token))
+)
+
+(define-public (set-activation-block (token principal) (new-activation-block uint))
+  (begin
+    (try! (check-is-owner))
+    (ok (map-set activation-block token new-activation-block))
+  )
+)
+
+
 ;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
