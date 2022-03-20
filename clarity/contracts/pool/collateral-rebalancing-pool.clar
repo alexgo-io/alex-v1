@@ -1601,16 +1601,13 @@
     (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
 )
 
-;; (define-read-only (get-reward-cycle (token principal) (stacks-height uint))
-;; (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
-
-(define-map approved-pair principal principal)
-(define-map auto-total-supply principal uint)
-(define-map key-total-supply principal uint)
-(define-map key-underlying principal principal)
-(define-map key-expiry principal uint)
-(define-map bounty-in-fixed principal uint)
-(define-map bounty-max-in-fixed principal uint)
+(define-map approved-pair principal principal) ;; auto-token => key/yield-token
+(define-map auto-total-supply principal uint) ;; auto-token => supply
+(define-map key-total-supply principal uint) ;; key/yield-token => supply
+(define-map key-underlying principal principal) ;; key/yield-token => token with staking schedule
+(define-map key-expiry principal uint) ;; key/yield-token => expiry
+(define-map bounty-in-fixed principal uint) ;; auto-token => bounty as % of amount
+(define-map bounty-max-in-fixed principal uint) ;; auto-token => bounty cap
 
 (define-private (get-expiry (key-token principal))
     (let
@@ -1695,6 +1692,10 @@
         (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
 
         ;; TODO: create yield-token-pool if needed
+        (get-pool-details (expiry uint) (yield-token principal)
+        (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
+            
+        )
 
         (let
             (
