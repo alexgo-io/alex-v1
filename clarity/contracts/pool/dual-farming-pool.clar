@@ -59,21 +59,54 @@
 ;; @params token-trait; ft-trait
 ;; @params target-cycle
 ;; @returns (response tuple)
-(define-public (claim-staking-reward (token-trait <ft-trait>) (dual-token-trait <transfer-trait>) (target-cycle uint))
+(define-private (claim-staking-reward-by-tx-sender (token-trait <ft-trait>) (dual-token-trait <transfer-trait>) (target-cycle uint))
   (let
     (
       (token (contract-of token-trait))
       (dual-token (contract-of dual-token-trait))
       (sender tx-sender)
       (claimed (try! (contract-call? .alex-reserve-pool claim-staking-reward token-trait target-cycle)))
+      (entitled-dual (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token)))
     )
     (try! (check-is-approved-pair token dual-token))
     (and 
-      (> (get entitled-token claimed) u0) 
-      (> (get-multiplier-in-fixed-or-default token) u0)
-      (as-contract (try! (contract-call? dual-token-trait transfer-fixed (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token)) tx-sender sender)))
+      (> entitled-dual u0)
+      (as-contract (try! (contract-call? dual-token-trait transfer-fixed entitled-dual tx-sender sender)))
     )
-    (ok true)
+    (ok { to-return: (get to-return claimed), entitled-token: (get entitled-token claimed), entitled-dual: entitled-dual })
+  )
+)
+
+(define-public (claim-staking-reward (token <ft-trait>) (dual-token <transfer-trait>) (reward-cycles (list 200 uint)))
+  (ok 
+    (map 
+      claim-staking-reward-by-tx-sender 
+      (list 
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+        token token token token token token token token token token token token token token token token token token token token
+      ) 
+      (list 
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token
+        dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token dual-token        
+      )       
+      reward-cycles      
+    )
   )
 )
 

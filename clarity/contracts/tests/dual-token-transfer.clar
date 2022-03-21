@@ -3,8 +3,8 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant token-decimal u8)
-(define-constant ONE_8 u100000000)
+(define-constant token-decimal (pow u10 u8))
+(define-constant ONE_8 (pow u10 u8))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
