@@ -27,7 +27,7 @@
 )
 
 (define-private (check-is-approved-pair (token principal) (dual-token principal))
-  (ok (asserts! (is-eq dual-token (map-get? approved-pair token)) ERR-NOT-AUTHORIZED))
+  (ok (asserts! (is-eq dual-token (unwrap! (map-get? approved-pair token) ERR-NOT-AUTHORIZED)) ERR-NOT-AUTHORIZED))
 )
 
 (define-read-only (get-multiplier-in-fixed-or-default (token principal))
@@ -52,32 +52,6 @@
   )
 )
 
-(define-read-only (get-apower-multiplier-in-fixed-or-default (token principal) (dual-token principal))
-  (contract-call? .alex-reserve-pool get-apower-multiplier-in-fixed-or-default token)
-)
-
-(define-public (set-apower-multiplier-in-fixed (token principal) (dual-token principal) (new-apower-multiplier-in-fixed uint))
-  (begin
-    (try! (check-is-approved-pair token dual-token))
-    (contract-call? .alex-reserve-pool set-apower-multiplier-in-fixed-or-default token new-apower-multiplier-in-fixed)
-  )
-)
-
-;; @desc get-activation-block-or-default 
-;; @params token
-;; @returns uint
-(define-read-only (get-activation-block-or-default (token principal))
-  (default-to u100000000 (map-get? activation-block token))
-)
-
-(define-public (set-activation-block (token principal) (new-activation-block uint))
-  (begin
-    (try! (check-is-owner))
-    (ok (map-set activation-block token new-activation-block))
-  )
-)
-
-
 ;; STAKING REWARD CLAIMS
 
 ;; calls function to claim staking reward in active logic contract
@@ -88,18 +62,22 @@
 (define-public (claim-staking-reward (token-trait <ft-trait>) (dual-token-trait <transfer-trait>) (target-cycle uint))
   (let
     (
+      (token (contract-of token-trait))
+      (dual-token (contract-of dual-token-trait))
       (sender tx-sender)
-      ;; { to-return: to-return, entitled-token: entitled-token }
-      (claimed (contract-call? .alex-reserve-pool claim-staking-reward-at-cycle token-trait sender block-height target-cycle))      
+      (claimed (try! (contract-call? .alex-reserve-pool claim-staking-reward token-trait target-cycle)))
     )
-    (try! (check-is-approved-pair (contract-of token-trait) (contract-of dual-token-trait)))
+    (try! (check-is-approved-pair token dual-token))
     (and 
       (> (get entitled-token claimed) u0) 
-      (> (get-multiplier-in-fixed-or-default token) u0) 
+      (> (get-multiplier-in-fixed-or-default token) u0)
       (as-contract (try! (contract-call? dual-token-trait transfer-fixed (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token)) tx-sender sender)))
     )
+    (ok true)
   )
 )
+
+(define-constant ONE_8 u100000000)
 
 ;; @desc mul-down
 ;; @params a
@@ -107,17 +85,6 @@
 ;; @returns uint
 (define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
-)
-
-;; @desc div-down
-;; @params a
-;; @params b
-;; @returns uint
-(define-private (div-down (a uint) (b uint))
-  (if (is-eq a u0)
-    u0
-    (/ (* a ONE_8) b)
-  )
 )
 
 ;; contract initialisation

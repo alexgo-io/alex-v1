@@ -203,3 +203,4 @@
 )
 
 (map-set approved-contracts .faucet true)
+(map-set approved-contracts .dual-token-transfer true)
