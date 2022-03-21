@@ -76,7 +76,7 @@ depends_on = [
   "collateral-rebalancing-pool",
   "yield-token-pool",
   "fixed-weight-pool-v1-01",
-  "token-usda",
+  "token-wusda",
   "token-wbtc"
 ]
 
@@ -92,7 +92,7 @@ depends_on = [
   "yield-token-pool",
   "fixed-weight-pool-v1-01",
   "token-wstx",
-  "token-usda"  
+  "token-wusda"  
 ]
 
 [contracts.key-usda-wbtc]
@@ -144,6 +144,10 @@ depends_on = ["ytp-yield-wbtc", "yield-wbtc", "yield-token-pool"]
 [contracts.token-usda]
 path = "contracts/token/token-usda.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.token-wusda]
+path = "contracts/wrapped-token/token-wusda.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-usda" ]
 
 [contracts.token-xbtc]
 path = "contracts/token/token-xbtc.clar"
@@ -475,13 +479,6 @@ depends_on = [
   "trait-multisig-vote"  
 ]
 
-[contracts.multisig-fwp-alex-usda-50-50]
-path = "contracts/multisig/multisig-fwp-alex-usda-50-50.clar"
-depends_on = [
-  "fwp-alex-usda-50-50",
-  "fixed-weight-pool-alex"
-]
-
 [contracts.multisig-fwp-alex-wbtc-50-50]
 path = "contracts/multisig/multisig-fwp-alex-wbtc-50-50.clar"
 depends_on = [
@@ -502,8 +499,8 @@ depends_on = [
   "trait-multisig-vote"  
 ]
 
-[contracts.fwp-alex-usda-50-50]
-path = "contracts/pool-token/fwp-alex-usda-50-50.clar"
+[contracts.fwp-alex-usda]
+path = "contracts/pool-token/fwp-alex-usda.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.auto-alex]
@@ -537,10 +534,10 @@ depends_on = [
   "age000-governance-token",
 ]
 
-[contracts.multisig-fwp-alex-usda-simple]
-path = "contracts/multisig/multisig-fwp-alex-usda-simple.clar"
+[contracts.multisig-fwp-alex-usda]
+path = "contracts/multisig/multisig-fwp-alex-usda.clar"
 depends_on = [
-  "fwp-alex-usda-50-50",
+  "fwp-alex-usda",
   "simple-weight-pool-alex",
   "trait-multisig-vote"
 ]
@@ -584,8 +581,8 @@ depends_on = [
   "token-wstx",
 ]
 
-[contracts.multisig-fwp-wstx-usda-simple]
-path = "contracts/multisig/multisig-fwp-wstx-usda-simple.clar"
+[contracts.multisig-fwp-wstx-usda]
+path = "contracts/multisig/multisig-fwp-wstx-usda.clar"
 depends_on = [
   "fwp-wstx-usda-50-50",
   "simple-weight-pool",
@@ -607,5 +604,5 @@ depends_on = [
   "collateral-rebalancing-pool",
   "yield-token-pool",
   "swap-helper",
-  "token-usda"  
+  "token-wusda"  
 ]
