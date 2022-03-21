@@ -3,7 +3,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { FWPTestAgent4 } from './models/alex-tests-fixed-weight-pool.ts';
-import { MS_FWP_WSTX_USDA_SIMPLE } from './models/alex-tests-multisigs.ts';
+import { MS_FWP_WSTX_USDA } from './models/alex-tests-multisigs.ts';
 import { 
     USDAToken,
     WBTCToken,
@@ -13,11 +13,11 @@ import {
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
-const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
 const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
 const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50-v1-01"
-const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-simple"
+const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda"
 const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50-v1-01"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 
@@ -192,7 +192,7 @@ Clarinet.test({
         let wbtcToken = new WBTCToken(chain, deployer);
         let alexToken = new ALEXToken(chain, deployer);
         let FWPTest = new FWPTestAgent4(chain, deployer);
-        let MultiSigTest = new MS_FWP_WSTX_USDA_SIMPLE(chain, deployer);
+        let MultiSigTest = new MS_FWP_WSTX_USDA(chain, deployer);
         let fwpPoolToken = new FWP_WSTX_USDA_5050(chain, deployer);
 
         // Deployer minting initial tokens        
@@ -303,7 +303,7 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let FWPTest = new FWPTestAgent4(chain, deployer);
-        let MultiSigTest = new MS_FWP_WSTX_USDA_SIMPLE(chain, deployer);
+        let MultiSigTest = new MS_FWP_WSTX_USDA(chain, deployer);
         let fwpPoolToken = new FWP_WSTX_USDA_5050(chain, deployer);
         const feeRateX = 5000000; // 5%
         const feeRateY = 5000000;
