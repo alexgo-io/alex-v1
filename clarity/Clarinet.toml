@@ -609,3 +609,14 @@ depends_on = [
   "swap-helper",
   "token-usda"  
 ]
+[contracts.dual-farming-pool]
+path = "contracts/pool/dual-farming-pool.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve-pool" ]
+
+[contracts.trait-transfer]
+path = "contracts/traits/trait-transfer.clar"
+depends_on = [ ]
+
+[contracts.dual-token-transfer]
+path = "contracts/tests/dual-token-transfer.clar"
+depends_on = [ "trait-transfer", "token-usda" ]
