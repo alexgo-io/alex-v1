@@ -886,7 +886,7 @@ Clarinet.test({
         assertEquals(ticketRecipients[index]["amount"], won + lost);
       }
 
-      maxChunkSize = 1;
+      maxChunkSize = 5;
       for (let index = 0; index < losers.losers.length; index += maxChunkSize) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
         // console.log(losers_sliced);

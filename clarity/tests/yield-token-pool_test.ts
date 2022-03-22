@@ -47,7 +47,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -341,7 +341,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectTuple();        
 
         //if wrong pool token is supplied, then throw an error
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, wrongPooltokenAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
@@ -378,7 +378,7 @@ Clarinet.test({
         
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -466,7 +466,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -584,7 +584,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // Duplicated Pool 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
@@ -694,7 +694,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -755,7 +755,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -786,7 +786,7 @@ Clarinet.test({
         
         // create another ytp
         result = YTPTest.createPool(deployer, anotherExpiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);       
+        result.expectOk().expectTuple();
         // inject some yield-token to pool
         result = YTPTest.swapYForX(deployer, anotherExpiry, yieldwbtcAddress, wbtcAddress, 10 * ONE_8, 0);
         position =result.expectOk().expectTuple();
