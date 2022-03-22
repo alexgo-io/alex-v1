@@ -11,12 +11,24 @@ const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance
 const autoAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.auto-alex";
 const fwpAlexAutoalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-autoalex";
 const multisigFwpAlexAutoalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-autoalex";
+const ytpAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-alex";
+const multisigYtpAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-alex";
+const yieldAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-alex";
+const keyAlexAutoalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-alex-autoalex";
+const multisigCrpAlexAutoalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-crp-alex-autoalex";
+
 const ACTIVATION_BLOCK = 20;
 const BountyPercentage = 0.001;
 const BountyCap = 10 * ONE_8;
 const APOWER_MULTIPLIER = ONE_8;
 
 const liquidity = 100 * ONE_8;
+
+const ltv_0 = 0.5e8;
+const conversion_ltv = 0.9e8;
+const bs_vol = 1e8;
+const moving_average = 0.95e8;
+const token_to_maturity = 0e8;
 
 // Clarinet.test({
 //     name: "YIELD VAULT: Ensure that privileged setters can only be called by contract owner",
@@ -446,19 +458,16 @@ Clarinet.test({
             reservePool.setApowerMultiplierInFixed(deployer, alexAddress, APOWER_MULTIPLIER)   
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
-        const parametersFromChain = chain.callReadOnlyFn(
-            "alex-launchpad-v1-1",
-            "get-offering-walk-parameters",
-            [types.uint(idoId)],
-            deployer.address
-          );
 
-        let expiry chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal])
+        let expiry = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
+        console.log(expiry);
+        
         block = chain.mineBlock([
-            
+            YTPTest.createPool(deployer, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, multisigYtpAlexAddress, liquidity, 0),
+            CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
         ]);
 
-        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);
+        result = ;
         result.expectOk().expectTuple();
 
         //Deployer creating a pool, initial tokens injected to the pool
