@@ -9,7 +9,7 @@
 (define-map approved-contracts principal bool)
 
 (define-data-var token-name (string-ascii 32) "Auto Key-ALEX-AutoALEX")
-(define-data-var token-symbol (string-ascii 10) "auto-key-alex-autoalex")
+(define-data-var token-symbol (string-ascii 32) "auto-key-alex-autoalex")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-key-alex-autoalex.json"))
 
 (define-data-var token-decimals uint u8)

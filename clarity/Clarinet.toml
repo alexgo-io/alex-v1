@@ -639,3 +639,48 @@ depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 [contracts.key-wbtc-wban]
 path = "contracts/key-token/key-wbtc-wban.clar"
 depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.fwp-alex-autoalex]
+path = "contracts/pool-token/fwp-alex-autoalex.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-alex-autoalex]
+path = "contracts/multisig/multisig-fwp-alex-autoalex.clar"
+depends_on = [ "fwp-alex-autoalex", "simple-weight-pool", "trait-multisig-vote" ]
+
+[contracts.multisig-crp-alex-autoalex]
+path = "contracts/multisig/multisig-crp-alex-autoalex.clar"
+depends_on = [
+  "yield-alex",
+  "key-alex-autoalex",
+  "collateral-rebalancing-pool",
+  "trait-multisig-vote"
+]
+
+[contracts.multisig-ytp-alex]
+path = "contracts/multisig/multisig-ytp-alex.clar"
+depends_on = [ "ytp-alex", "yield-alex", "yield-token-pool" ]
+
+[contracts.key-alex-autoalex]
+path = "contracts/key-token/key-alex-autoalex.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.yield-alex]
+path = "contracts/yield-token/yield-alex.clar"
+depends_on = ["trait-ownable", "trait-semi-fungible"]
+
+[contracts.ytp-alex]
+path = "contracts/pool-token/ytp-alex.clar"
+depends_on = ["trait-ownable", "trait-semi-fungible"]
+
+[contracts.auto-ytp-alex]
+path = "contracts/auto-token/auto-ytp-alex.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.auto-yield-alex]
+path = "contracts/auto-token/auto-yield-alex.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.auto-key-alex-autoalex]
+path = "contracts/auto-token/auto-key-alex-autoalex.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
