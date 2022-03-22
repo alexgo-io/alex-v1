@@ -642,3 +642,54 @@ class YIELD_USDA {
 }
 
 export { YIELD_USDA };
+
+class FungibleToken {
+  chain: Chain;
+  deployer: Account;
+  token: string;
+
+  constructor(chain: Chain, deployer: Account, token: string) {
+    this.chain = chain;
+    this.deployer = deployer;
+    this.token = token;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn(this.token, "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+
+  getBalance(account: string) {
+    return this.chain.callReadOnlyFn(this.token, "get-balance", [
+      types.principal(account),
+    ], this.deployer.address);
+  }
+
+  mintFixed(sender: Account, recipient: string, amount : number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall(this.token, "mint-fixed", [
+        types.uint(amount),
+        types.principal(recipient)        
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+  
+  transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall(this.token, "transfer-fixed", [
+          types.uint(amount),
+          types.principal(sender.address),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  totalSupply() {
+    return this.chain.callReadOnlyFn(this.token, "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FungibleToken };

@@ -1609,17 +1609,21 @@
 (define-map bounty-in-fixed principal uint) ;; bounty as % of amount
 (define-map bounty-max-in-fixed principal uint) ;; bounty cap
 
-(define-private (get-expiry (pool-token principal))
+(define-read-only (get-expiry (pool-token principal))
     (let
         (
             (underlying (unwrap! (map-get? pool-underlying pool-token) ERR-NOT-AUTHORIZED))
             (current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle underlying block-height) ERR-NOT-AUTHORIZED))
             (last-height (- (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle underlying (+ current-cycle u1)) u1))
-        )
-        (map-set pool-expiry pool-token last-height)
+        )        
         (ok last-height)
     )
 )
+
+(define-private (set-expiry (pool-token principal))
+    (ok (map-set pool-expiry pool-token (get-expiry pool-token)))
+)
+
 (define-read-only (get-auto-supply-or-default (pool-token principal))
     (default-to u0 (map-get? auto-total-supply pool-token))
 )
@@ -1687,7 +1691,7 @@
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
             (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
-            (expiry-to-roll (try! (get-expiry pool-token)))
+            (expiry-to-roll (try! (set-expiry pool-token)))
         )
         (asserts! (is-eq (unwrap! (map-get? approved-pair pool-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
         (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
@@ -1720,7 +1724,7 @@
             (key-token (contract-of key-token-trait))
             (auto-token (contract-of auto-token-trait))
             (expiry (unwrap! (map-get? pool-expiry key-token) ERR-NOT-AUTHORIZED))
-            (expiry-to-roll (try! (get-expiry key-token)))
+            (expiry-to-roll (try! (set-expiry key-token)))
         )
         (asserts! (is-eq (unwrap! (map-get? approved-pair key-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
         (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
@@ -1778,7 +1782,7 @@
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
             (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
-            (expiry-to-roll (try! (get-expiry pool-token)))
+            (expiry-to-roll (try! (set-expiry pool-token)))
         )
         (asserts! (is-eq (unwrap! (map-get? approved-pair pool-token) ERR-NOT-AUTHORIZED) auto-token) ERR-NOT-AUTHORIZED)
         (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
