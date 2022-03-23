@@ -87,7 +87,31 @@ Clarinet.test({
             Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
                 [types.principal(ytpAlexAddress), types.principal(alexAddress)],
                 deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
+                [types.principal(autoKeyAlexAutoalexAddress), types.principal(keyAlexAutoalexAddress)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
+                [types.principal(keyAlexAutoalexAddress), types.principal(alexAddress)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
+                [types.principal(autoYieldAlexAddress), types.principal(yieldAlexAddress)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
+                [types.principal(yieldAlexAddress), types.principal(alexAddress)],
+                deployer.address
             ),            
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(alexAddress)], deployer.address),
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoAlexAddress)], deployer.address),
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoYtpAlexAddress)], deployer.address),               
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoKeyAlexAutoalexAddress)], deployer.address),                 
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoYieldAlexAddress)], deployer.address),   
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldAlexAddress)], deployer.address),
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpAlexAddress)], deployer.address),
+            Tx.contractCall("alex-vault", "add-approved-token", [types.principal(keyAlexAutoalexAddress)], deployer.address)                    
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });         
 
@@ -99,14 +123,12 @@ Clarinet.test({
         result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
         result.expectOk();
         
-        call = chain.callReadOnlyFn(ytpAlexAddress, "get-balance-fixed", 
-            [
-                types.uint(expiry),
-                types.principal(deployer.address)
-            ], 
-            deployer.address
-        );
+        call = chain.callReadOnlyFn(ytpAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
         const ytpAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));
+        call = chain.callReadOnlyFn(keyAlexAutoalexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
+        const keyAlexAutoalexBalance = Number(call.result.expectOk().replace(/\D/g, ""));        
+        call = chain.callReadOnlyFn(yieldAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
+        const yieldAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));                
 
         block = chain.mineBlock([
             Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
@@ -116,14 +138,90 @@ Clarinet.test({
                     types.uint(ytpAlexBalance)
                 ],
                 deployer.address
-            )
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress),
+                    types.uint(keyAlexAutoalexBalance)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(autoYieldAlexAddress),
+                    types.uint(yieldAlexBalance)
+                ],
+                deployer.address
+            )                         
         ]);
         block.receipts.forEach(e => 
             { 
                 e.result.expectOk();
-                console.log(e.events);
+                // console.log(e.events);
+            }
+        );      
+        
+        chain.mineEmptyBlockUntil(expiry + 1);
+        
+        // (define-public (roll-auto-pool (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))        
+        // (define-public (roll-auto-key (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
+        // (define-public (roll-auto-yield (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (auto-token-trait <ft-trait>))
+        block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-pool",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress)
+                ],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
+                [
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(yieldAlexAddress),
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress)
+                ],
+                deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(autoYieldAlexAddress)
+                ],
+                deployer.address
+            ),     
+        ]);
+        block.receipts.forEach(e => 
+            { 
+                e.result.expectOk();
+                // console.log(e.events);
             }
         );
+
+        // block = chain.mineBlock([
+        //     Tx.contractCall("collateral-rebalancing-pool", "redeem-auto",
+        //         [
+        //             types.principal(ytpAlexAddress),
+        //             types.principal(autoYtpAlexAddress),
+        //             types.uint(ONE_8)
+        //         ],
+        //         deployer.address
+        //     )
+        // ]);
+        // block.receipts.forEach(e => 
+        //     { 
+        //         e.result.expectOk();
+        //         // console.log(e.events);
+        //     }
+        // );                      
     }
 });
 

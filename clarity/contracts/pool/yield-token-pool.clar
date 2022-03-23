@@ -29,6 +29,7 @@
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -48,6 +49,11 @@
 (define-private (check-is-self)
   (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
 )
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
 
 ;; data maps and vars
 (define-map pools-map
@@ -268,7 +274,7 @@
 ;; @returns (response bool uint)
 (define-public (create-pool (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (multisig-vote principal) (dx uint) (dy uint)) 
     (begin
-        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of yield-token-trait), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
         (let
             (
@@ -298,9 +304,9 @@
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
-            (try! (contract-call? .alex-vault add-approved-token yield-token))
-            (try! (contract-call? .alex-vault add-approved-token (contract-of token-trait)))
-            (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
+            ;; (try! (contract-call? .alex-vault add-approved-token yield-token))
+            ;; (try! (contract-call? .alex-vault add-approved-token (contract-of token-trait)))
+            ;; (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
 
             (print { object: "pool", action: "created", data: pool-data })
             (add-to-position expiry yield-token-trait token-trait pool-token-trait dx (some dy))
@@ -1475,3 +1481,5 @@
    )
  )
 )
+
+(map-set approved-contracts .collateral-rebalancing-pool true)
