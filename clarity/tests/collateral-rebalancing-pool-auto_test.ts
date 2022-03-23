@@ -38,7 +38,6 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
-        const wallet_2 = accounts.get("wallet_2")!;
         const reservePool = new ReservePool(chain);
         const CRPTest = new CRPTestAgent1(chain, deployer);
         const FWPTest = new FWPTestAgent3(chain, deployer);
@@ -123,11 +122,16 @@ Clarinet.test({
         result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
         result.expectOk();
         
-        call = chain.callReadOnlyFn(ytpAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
+        result = YTPTest.addToPosition(wallet_1, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, liquidity, Number.MAX_SAFE_INTEGER);
+        result.expectOk();
+        result = CRPTest.addToPosition(wallet_1, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, ONE_8);
+        result.expectOk()
+
+        call = chain.callReadOnlyFn(ytpAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(wallet_1.address)], wallet_1.address);
         const ytpAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));
-        call = chain.callReadOnlyFn(keyAlexAutoalexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
+        call = chain.callReadOnlyFn(keyAlexAutoalexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(wallet_1.address)], wallet_1.address);
         const keyAlexAutoalexBalance = Number(call.result.expectOk().replace(/\D/g, ""));        
-        call = chain.callReadOnlyFn(yieldAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
+        call = chain.callReadOnlyFn(yieldAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(wallet_1.address)], wallet_1.address);
         const yieldAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));                
 
         block = chain.mineBlock([
@@ -137,7 +141,7 @@ Clarinet.test({
                     types.principal(autoYtpAlexAddress),
                     types.uint(ytpAlexBalance)
                 ],
-                deployer.address
+                wallet_1.address
             ),
             Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
                 [
@@ -145,7 +149,7 @@ Clarinet.test({
                     types.principal(autoKeyAlexAutoalexAddress),
                     types.uint(keyAlexAutoalexBalance)
                 ],
-                deployer.address
+                wallet_1.address
             ),
             Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
                 [
@@ -153,7 +157,7 @@ Clarinet.test({
                     types.principal(autoYieldAlexAddress),
                     types.uint(yieldAlexBalance)
                 ],
-                deployer.address
+                wallet_1.address
             )                         
         ]);
         block.receipts.forEach(e => 
@@ -165,9 +169,6 @@ Clarinet.test({
         
         chain.mineEmptyBlockUntil(expiry + 1);
         
-        // (define-public (roll-auto-pool (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))        
-        // (define-public (roll-auto-key (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
-        // (define-public (roll-auto-yield (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (auto-token-trait <ft-trait>))
         block = chain.mineBlock([
             Tx.contractCall("collateral-rebalancing-pool", "roll-auto-pool",
                 [
@@ -178,6 +179,16 @@ Clarinet.test({
                     types.principal(autoYtpAlexAddress)
                 ],
                 deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-pool",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress)
+                ],
+                wallet_1.address
             ),
             Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
                 [
@@ -188,6 +199,16 @@ Clarinet.test({
                     types.principal(autoKeyAlexAutoalexAddress)
                 ],
                 deployer.address
+            ),               
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
+                [
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(yieldAlexAddress),
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress)
+                ],
+                wallet_1.address
             ),            
             Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
                 [
@@ -196,7 +217,7 @@ Clarinet.test({
                     types.principal(autoAlexAddress),
                     types.principal(autoYieldAlexAddress)
                 ],
-                deployer.address
+                wallet_1.address
             ),     
         ]);
         block.receipts.forEach(e => 
