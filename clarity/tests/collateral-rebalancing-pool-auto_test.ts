@@ -124,13 +124,10 @@ Clarinet.test({
         result.expectOk();
         result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
         result.expectOk();
-        
+
         result = YTPTest.addToPosition(wallet_1, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, ONE_8, Number.MAX_SAFE_INTEGER);
         result.expectOk();
         result = CRPTest.addToPosition(wallet_1, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, ONE_8);
-        result.expectOk()
-
-        result = CRPTest.addToPositionAndSwitch(wallet_2, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, ONE_8);
         result.expectOk();
 
         call = chain.callReadOnlyFn(ytpAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(wallet_1.address)], wallet_1.address);
@@ -138,7 +135,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn(keyAlexAutoalexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(wallet_1.address)], wallet_1.address);
         const keyAlexAutoalexBalance = Number(call.result.expectOk().replace(/\D/g, ""));        
         call = chain.callReadOnlyFn(yieldAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(wallet_1.address)], wallet_1.address);
-        const yieldAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));                
+        const yieldAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));           
 
         block = chain.mineBlock([
             Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
@@ -177,14 +174,6 @@ Clarinet.test({
 
         call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry_to_roll = Number(call.result.expectOk().replace(/\D/g, ""));
-        
-        result = YTPTest.createPool(deployer, expiry_to_roll, yieldAlexAddress, alexAddress, ytpAlexAddress, multisigYtpAlexAddress, liquidity, 0);
-        result.expectOk();
-        result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry_to_roll, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
-        result.expectOk();
-
-        result = CRPTest.addToPositionAndSwitch(wallet_2, alexAddress, autoAlexAddress, expiry_to_roll, yieldAlexAddress, keyAlexAutoalexAddress, ONE_8);
-        result.expectOk();        
         
         block = chain.mineBlock([        
             Tx.contractCall("collateral-rebalancing-pool", "roll-auto-pool",

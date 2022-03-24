@@ -1801,16 +1801,20 @@
                 )
                 (gross-dx
                     (div-down  
-                        (mul-up 
-                            dx 
-                            (try! (contract-call? .yield-token-pool get-price expiry-to-roll yield-token)) 
-                        )
+                        dx 
                         (if (is-err (get-pool-details token collateral expiry-to-roll))
                             (get ltv-0 pool)
                             (try! (get-ltv-with-spot token collateral expiry-to-roll spot))
                         )
                     )
                 )
+
+                (loan-proceeds
+                    (get-helper token collateral
+                        (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token 
+                            (get yield-token (try! (get-token-given-position-with-spot token collateral expiry-to-roll spot gross-dx)))))))
+                
+                
                 (loan-amount (- gross-dx dx))
                 (loan-fee (mul-up loan-amount (var-get roll-flash-loan-fee)))
                 (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount tx-sender))))                
