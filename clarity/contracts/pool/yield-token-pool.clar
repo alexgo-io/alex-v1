@@ -329,8 +329,13 @@
             (dx-adjusted (- dx (div-down dx (+ dx (try! (get-x-given-y expiry (contract-of yield-token-trait) dy-act))))))
             (dx-to-buy-dy-adjusted (- dx dx-adjusted))
         )
-        (and (> dy-act u0) (is-ok (swap-x-for-y expiry yield-token-trait token-trait dx-to-buy-dy-adjusted none)))
-        (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
+        (if (> dy-act u0)
+          (begin 
+            (try! (swap-x-for-y expiry yield-token-trait token-trait dx-to-buy-dy-adjusted none))
+            (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
+          )
+          (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
+        )
     )
 )
 

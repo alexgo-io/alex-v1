@@ -125,7 +125,7 @@ Clarinet.test({
         result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
         result.expectOk();
         
-        result = YTPTest.addToPosition(wallet_1, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, liquidity, Number.MAX_SAFE_INTEGER);
+        result = YTPTest.addToPosition(wallet_1, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, ONE_8, Number.MAX_SAFE_INTEGER);
         result.expectOk();
         result = CRPTest.addToPosition(wallet_1, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, ONE_8);
         result.expectOk()
