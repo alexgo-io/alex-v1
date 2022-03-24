@@ -616,4 +616,12 @@ depends_on = [ ]
 
 [contracts.dual-token-transfer]
 path = "contracts/tests/dual-token-transfer.clar"
-depends_on = [ "trait-transfer", "token-usda" ]
+depends_on = [ "trait-transfer", "token-diko" ]
+
+[contracts.token-diko]
+path = "contracts/token/token-diko.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.token-wdiko]
+path = "contracts/wrapped-token/token-wdiko.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]

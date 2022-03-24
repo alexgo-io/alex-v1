@@ -3,7 +3,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant token-decimal (pow u10 u8))
+(define-constant token-decimal (pow u10 u6))
 (define-constant ONE_8 (pow u10 u8))
 
 (define-data-var contract-owner principal tx-sender)
@@ -38,7 +38,7 @@
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal))
     (begin
         (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (as-contract (contract-call? .token-usda mint (fixed-to-decimals amount) recipient))
+        (as-contract (contract-call? .token-diko mint (fixed-to-decimals amount) recipient))
     )
 )
 
