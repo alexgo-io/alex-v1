@@ -5,10 +5,12 @@
 ;; dual-farm-pool
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-NOT-FOUND (err u1003))
 
 (define-data-var contract-owner principal tx-sender)
 
 (define-map approved-pair principal principal)
+(define-map dual-underlying principal principal)
 (define-map multiplier-in-fixed principal uint)
 
 (define-read-only (get-contract-owner)
@@ -41,13 +43,23 @@
   )
 )
 
+(define-read-only (get-dual-token-underlying (token principal))
+  (begin 
+    (match (map-get? approved-pair token)
+      dual-token (ok (unwrap! (map-get? dual-underlying dual-token) ERR-NOT-FOUND))
+      ERR-NOT-FOUND
+    )
+  )
+)
+
 ;; @desc add-token 
 ;; @params token
 ;; @returns (response bool)
-(define-public (add-token (token principal) (dual-token principal))
+(define-public (add-token (token principal) (dual-token principal) (underlying-token principal))
   (begin
     (try! (check-is-owner))
     (map-set approved-pair token dual-token)
+    (map-set dual-underlying dual-token underlying-token)
     (contract-call? .alex-reserve-pool add-token token)
   )
 )

@@ -12,6 +12,7 @@ const reward_cycle_length = 525;
 const ONE_8 = 100000000;
 const stakedAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE." + stakeContract;
 const dualAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.dual-token-transfer";
+const underlyingAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wdiko";
 
 class StakingHelper {
     chain: Chain;
@@ -124,11 +125,12 @@ class StakingHelper {
         return block.receipts[0];
     }
     
-    addTokenDual(sender: Account, token: string, dualToken: string){
+    addTokenDual(sender: Account, token: string, dualToken: string, underlyingToken: string){
       let block = this.chain.mineBlock([
         Tx.contractCall(dualFarmingContract, "add-token", [
           types.principal(token),
           types.principal(dualToken),
+          types.principal(underlyingToken)
         ], sender.address),
       ]);
       return block.receipts[0].result;      
@@ -260,7 +262,7 @@ Clarinet.test({
         ], deployer.address),
       ]);
 
-      let result:any = await StakingTest.addTokenDual(deployer, stakedAddress, dualAddress);
+      let result:any = await StakingTest.addTokenDual(deployer, stakedAddress, dualAddress, underlyingAddress);
       result.expectOk().expectBool(true);
       result = await StakingTest.setMultiplierInFixed(deployer, stakedAddress, ONE_8);
       result.expectOk().expectBool(true);
@@ -289,9 +291,9 @@ Clarinet.test({
       }
 
       block.events.expectFungibleTokenMintEvent(
-        ONE_8,
+        1e6,
         wallet_6.address,
-        "usda"
+        "diko"
       );
       block.events.expectFungibleTokenMintEvent(
         ONE_8,
