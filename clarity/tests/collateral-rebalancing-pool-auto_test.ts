@@ -186,16 +186,16 @@ Clarinet.test({
                 ],
                 wallet_1.address
             ),            
-            // Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
-            //     [
-            //         types.principal(alexAddress),
-            //         types.principal(autoAlexAddress),
-            //         types.principal(yieldAlexAddress),
-            //         types.principal(keyAlexAutoalexAddress),
-            //         types.principal(autoKeyAlexAutoalexAddress)
-            //     ],
-            //     wallet_1.address
-            // ),            
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
+                [
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(yieldAlexAddress),
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress)
+                ],
+                wallet_1.address
+            ),            
             // Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
             //     [
             //         types.principal(yieldAlexAddress),
@@ -209,7 +209,7 @@ Clarinet.test({
         block.receipts.forEach(e => 
             { 
                 e.result.expectOk();
-                // console.log(e.events);
+                console.log(e.result);
             }
         );
 

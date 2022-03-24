@@ -1799,39 +1799,32 @@
                         (if (is-eq (get dy reduce-data) u0) u0 (as-contract (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none))))
                     )               
                 )
-                (gross-dx
-                    (div-down  
-                        dx 
-                        (if (is-err (get-pool-details token collateral expiry-to-roll))
-                            (get ltv-0 pool)
-                            (try! (get-ltv-with-spot token collateral expiry-to-roll spot))
-                        )
+                (ltv 
+                    (if (is-err (get-pool-details token collateral expiry-to-roll)) 
+                        (get ltv-0 pool) 
+                        (try! (get-ltv-with-spot token collateral expiry-to-roll spot))
                     )
                 )
-
-                (loan-proceeds
-                    (get-helper token collateral
-                        (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token 
-                            (get yield-token (try! (get-token-given-position-with-spot token collateral expiry-to-roll spot gross-dx)))))))
-                
-                
-                (loan-amount (- gross-dx dx))
-                (loan-fee (mul-up loan-amount (var-get roll-flash-loan-fee)))
+                (gross-dx (div-down dx ltv))                                
+                (yield-amount (mul-down (try! (get-helper collateral token gross-dx)) ltv))
+                (swapped-amount (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token yield-amount)))
+                (out-amount (try! (get-helper token collateral swapped-amount)))
+                (dx-act (- dx (- (- gross-dx dx) out-amount)))
+                (gross-dx-act (div-down dx-act ltv))
+                (loan-amount (- gross-dx-act dx-act))
                 (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount tx-sender))))                
-                (gross-dx-net-fee (- gross-dx loan-fee))
                 (minted
                     (if (is-err (get-pool-details token collateral expiry-to-roll))
-                        (as-contract (try! (create-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) spot gross-dx-net-fee)))
-                        (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-net-fee)))
+                        (as-contract (try! (create-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) spot gross-dx-act)))
+                        (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-act)))
                     )
                 )                 
                 (swapped-token (as-contract (try! (swap-helper token-trait collateral-trait
                     (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait (get yield-token minted) none)))
                     none)))
                 )
-                (swapped-token-with-fee (+ swapped-token loan-fee))
+                (swapped-token-with-fee (+ swapped-token (- dx dx-act)))
             )
-            (asserts! (>= swapped-token-with-fee loan-amount) ERR-ROLL-FLASH-LOAN-FEE)
 
             ;; return the loan + fee
             (as-contract (try! (contract-call? collateral-trait transfer-fixed swapped-token-with-fee tx-sender .alex-vault none)))
@@ -1841,7 +1834,10 @@
 
             ;; TODO: pay bounty
 
-            (ok (- swapped-token-with-fee loan-amount))            
+            ;; (ok (div-down (- swapped-token-with-fee loan-amount) dx))            
+            ;; (ok (div-down (- (- gross-dx dx) out-amount) (- gross-dx dx)))
+            ;; (ok (try! (contract-call? .yield-token-pool get-price expiry-to-roll yield-token)))
+            (ok yield-amount)
         )
     )    
 )
