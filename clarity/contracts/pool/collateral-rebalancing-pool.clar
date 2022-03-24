@@ -1837,7 +1837,7 @@
             ;; (ok (div-down (- swapped-token-with-fee loan-amount) dx))            
             ;; (ok (div-down (- (- gross-dx dx) out-amount) (- gross-dx dx)))
             ;; (ok (try! (contract-call? .yield-token-pool get-price expiry-to-roll yield-token)))
-            (ok yield-amount)
+            (ok gross-dx)
         )
     )    
 )
