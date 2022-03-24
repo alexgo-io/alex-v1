@@ -1744,7 +1744,7 @@
                 (new-pool-supply 
                     (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
                         (get supply (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) (+ (get dx reduce-data) dy-to-dx) u0))))
-                        (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait (+ (get dx reduce-data) dy-to-dx) none))))
+                        (get supply (as-contract (unwrap! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait (+ (get dx reduce-data) dy-to-dx) none) (err u1234))))
                     )                
                 )
             )
@@ -1759,7 +1759,7 @@
     )    
 )
 
-(define-data-var roll-flash-loan-fee uint u5000000)
+(define-data-var roll-flash-loan-fee uint u10000000)
 (define-read-only (get-roll-flash-loan-fee)
     (ok (var-get roll-flash-loan-fee))
 )
