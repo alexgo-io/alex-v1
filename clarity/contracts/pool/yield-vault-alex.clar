@@ -78,7 +78,7 @@
 (define-private (get-staking-reward (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staking-reward .age000-governance-token (get-user-id) reward-cycle)
 )
-(define-read-only (get-staker-at-cycle (reward-cycle uint))
+(define-private (get-staker-at-cycle (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .age000-governance-token reward-cycle (get-user-id))
 )
 (define-private (get-user-id)
@@ -87,7 +87,7 @@
 (define-private (get-reward-cycle (stack-height uint))
   (contract-call? .alex-reserve-pool get-reward-cycle .age000-governance-token stack-height)
 )
-(define-private (stake-tokens-internal (amount-tokens uint) (lock-period uint))
+(define-private (stake-tokens (amount-tokens uint) (lock-period uint))
   (contract-call? .alex-reserve-pool stake-tokens .age000-governance-token amount-tokens lock-period)
 )
 (define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint))
@@ -144,7 +144,7 @@
     
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .age000-governance-token transfer-fixed dx sender (as-contract tx-sender) none))
-    (as-contract (try! (stake-tokens-internal dx u32)))
+    (as-contract (try! (stake-tokens dx u32)))
         
     ;; mint pool token and send to tx-sender
     (var-set total-supply (+ (var-get total-supply) new-supply))
@@ -172,7 +172,7 @@
       )
     )
     (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
-    (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens-internal (- balance bounty) u32))))
+    (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
     (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     (ok true)
   )
@@ -206,30 +206,6 @@
     (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
     (ok true)
   ) 
-)
-
-(define-public (stake-tokens (amount-token uint) (lock-period uint))
-  (contract-call? .alex-reserve-pool stake-tokens .auto-alex amount-token lock-period)
-)
-
-(define-public (claim-staking-reward (target-cycle uint))
-  (begin
-    (try! (claim-and-stake target-cycle))    
-    (let 
-      (
-        (sender tx-sender)
-        (user-id (unwrap! (contract-call? .alex-reserve-pool get-user-id .auto-alex sender) ERR-USER-ID-NOT-FOUND))
-        (total-staked-this-cycle (contract-call? .alex-reserve-pool get-staking-stats-at-cycle-or-default .auto-alex target-cycle))
-        (user-staked-this-cycle (get amount-staked (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .auto-alex target-cycle user-id)))
-        (total-balance (unwrap! (contract-call? .token-apower get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-        (balance (div-down (mul-down total-balance user-staked-this-cycle) total-staked-this-cycle))      
-      )    
-      (try! (contract-call? .alex-reserve-pool claim-staking-reward .auto-alex target-cycle))
-      (as-contract (try! (contract-call? .token-apower burn-fixed balance tx-sender)))
-      (as-contract (try! (contract-call? .token-apower mint-fixed balance sender)))
-      (ok true)
-    )
-  )
 )
 
 (define-private (mul-down (a uint) (b uint))
