@@ -1759,17 +1759,6 @@
     )    
 )
 
-(define-data-var roll-flash-loan-fee uint u10000000)
-(define-read-only (get-roll-flash-loan-fee)
-    (ok (var-get roll-flash-loan-fee))
-)
-(define-public (set-roll-flash-loan-fee (new-roll-flash-loan-fee uint))
-    (begin 
-        (try! (check-is-owner))
-        (ok (var-set roll-flash-loan-fee new-roll-flash-loan-fee))
-    )
-)
-
 ;; roll-auto-key
 (define-public (roll-auto-key (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
     (let 
@@ -1819,9 +1808,12 @@
                         (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-act)))
                     )
                 )                 
-                (swapped-token (as-contract (try! (swap-helper token-trait collateral-trait
-                    (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait (get yield-token minted) none)))
-                    none)))
+                (swapped-token 
+                    (as-contract 
+                        (try! (swap-helper token-trait collateral-trait
+                            (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait (get yield-token minted) none))) none)
+                        )
+                    )
                 )
                 (swapped-token-with-fee (+ swapped-token (- dx dx-act)))
             )
@@ -1834,10 +1826,7 @@
 
             ;; TODO: pay bounty
 
-            ;; (ok (div-down (- swapped-token-with-fee loan-amount) dx))            
-            ;; (ok (div-down (- (- gross-dx dx) out-amount) (- gross-dx dx)))
-            ;; (ok (try! (contract-call? .yield-token-pool get-price expiry-to-roll yield-token)))
-            (ok gross-dx)
+            (ok (- swapped-token-with-fee loan-amount))
         )
     )    
 )
