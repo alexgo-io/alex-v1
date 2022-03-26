@@ -1561,33 +1561,29 @@
     )
 )
 
-
+;; @desc create a margin (i.e. leverage) position of long collateral short token with margin amount equal to dx
+;; @desc mints a number of key-token-collateral-expiry whose aggregate value equals dx, using flash-loan
 (define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
     (let
         (
             (sender tx-sender)
             (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
-            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
-            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
-            (gross-dx
-                (div-down  
-                    (mul-up 
-                        dx 
-                        (try! (contract-call? .yield-token-pool get-price expiry (contract-of yield-token-trait))) 
-                    )
-                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))
-                )
-            )
+            (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))))
+            (loan-amount (- gross-dx dx))
+            (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
         )
         (try! (swap-helper token-trait collateral-trait swapped-token none))
-        ;; return the loan + fee
-        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
-        (ok dx-with-fee)
+        ;; return the loan + fee        
+        (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
+        (ok loan-amount-with-fee)
     )
 )
 
+;; @desc rolls a margin position of expiry to a new margin position of expiry-to-roll
+;; @desc burns margin position of expiry and mint margin position of expiry-to-roll, using flash-loan
 (define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
     (let
         (
@@ -1600,24 +1596,17 @@
                     (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))
                 )               
             )
-            (dx-with-fee (mul-up dx (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
-            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
-            (gross-dx
-                (div-down  
-                    (mul-up 
-                        dx 
-                        (try! (contract-call? .yield-token-pool get-price expiry-to-roll (contract-of yield-token-trait))) 
-                    )
-                    (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))
-                )
-            )
+            (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
+            (loan-amount (- gross-dx dx))
+            (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
         )
         (try! (swap-helper token-trait collateral-trait swapped-token none))
         ;; return the loan + fee
-        (try! (contract-call? collateral-trait transfer-fixed dx-with-fee sender .alex-vault none))
-        (ok dx-with-fee)
+        (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
+        (ok loan-amount-with-fee)
     )    
 )
 
@@ -1699,6 +1688,7 @@
     (default-to u0 (map-get? pool-total-supply pool-token))
 )
 
+;; @desc mint a number of auto-token based on dx pool-token
 (define-public (mint-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let
         (
@@ -1721,11 +1711,13 @@
         (map-set auto-total-supply pool-token (+ (get-auto-supply-or-default pool-token) auto-to-add))
         (map-set pool-total-supply pool-token (+ (get-pool-supply-or-default pool-token) dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
-        (print { object: "pool", action: "pool-added", data: auto-to-add })
+        (print { object: "pool", action: "liquidity-added", data: auto-to-add })
         (ok true)
     )
 )
 
+;; @desc redeem and burn a number of auto-token based on percentage of tx-sender's holding
+;; @desc returns the underlying pool-token
 (define-public (redeem-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
     (let 
         (
@@ -1744,12 +1736,13 @@
         (map-set auto-total-supply pool-token (- (get-auto-supply-or-default pool-token) auto-to-reduce))
         (map-set pool-total-supply pool-token (- (get-pool-supply-or-default pool-token) pool-to-reduce))
         (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
-        (print { object: "pool", action: "pool-removed", data: auto-to-reduce })
+        (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })
         (ok true)
     )     
 )
 
-;; roll-auto-pool
+;; @desc triggers external event that rolls auto-yield-token-pool-liquidity-token into the next expiry
+;; @desc this can be triggered by anyone, who receives a bounty for the work (but pays tx fee)
 (define-public (roll-auto-pool (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
     (let 
         (
@@ -1804,7 +1797,8 @@
     )    
 )
 
-;; roll-auto-key
+;; @desc triggers external event that rolls auto-key-token into the next expiry
+;; @desc this can be triggered by anyone, who receives a bounty for the work (but pays tx fee)
 (define-public (roll-auto-key (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
     (let 
         (
@@ -1889,7 +1883,8 @@
     )    
 )
 
-;; roll-auto-yield
+;; @desc triggers external event that rolls auto-yield-token into the next expiry
+;; @desc this can be triggered by anyone, who receives a bounty for the work (but pays tx fee)
 (define-public (roll-auto-yield (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (auto-token-trait <ft-trait>))
     (let 
         (
