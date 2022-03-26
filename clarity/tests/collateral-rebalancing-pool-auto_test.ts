@@ -20,10 +20,10 @@ const multisigCrpAlexAutoalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8Q
 const autoYieldAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.auto-yield-alex";
 const autoYtpAlexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.auto-ytp-alex";
 const autoKeyAlexAutoalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.auto-key-alex-autoalex";
+const wrongPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc";
 
 const ACTIVATION_BLOCK = 20;
-const BountyPercentage = 0.001;
-const BountyCap = 10 * ONE_8;
+const FIXED_BOUNTY = 0.01e8;
 const APOWER_MULTIPLIER = ONE_8;
 
 const liquidity = 100 * ONE_8;
@@ -111,6 +111,18 @@ Clarinet.test({
             Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
                 [types.principal(yieldAlexAddress), types.principal(alexAddress)],
                 deployer.address
+            ),    
+            Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
+                [types.principal(autoYtpAlexAddress), types.uint(FIXED_BOUNTY)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
+                [types.principal(autoKeyAlexAutoalexAddress), types.uint(FIXED_BOUNTY)],
+                deployer.address
+            ),                    
+            Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
+                [types.principal(autoYieldAlexAddress), types.uint(FIXED_BOUNTY)],
+                deployer.address
             ),            
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(alexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoAlexAddress)], deployer.address),
@@ -160,7 +172,7 @@ Clarinet.test({
                 wallet_1.address
             )                         
         ]);
-        block.receipts.forEach(e => { e.result.expectErr().expectUint(1001); });        
+        block.receipts.forEach(e => { e.result.expectErr().expectUint(2003); });        
 
         block = chain.mineBlock([
             Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
@@ -197,7 +209,79 @@ Clarinet.test({
             )                         
         ]);
         block.receipts.forEach(e => { e.result.expectErr().expectUint(1001); });
-          
+
+        block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(wrongPoolAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(wrongPoolAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(1)
+                ],
+                deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(wrongPoolAddress),
+                    types.principal(autoKeyAlexAutoalexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(wrongPoolAddress),
+                    types.principal(autoYieldAlexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            )                         
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr().expectUint(1000); });
+
+        block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(alexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(alexAddress),
+                    types.uint(1)
+                ],
+                deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(alexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(alexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            )                         
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr().expectUint(1000); });
+
         
         result = YTPTest.createPool(deployer, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, multisigYtpAlexAddress, liquidity, 0);
         result.expectOk();
