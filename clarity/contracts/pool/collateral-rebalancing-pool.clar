@@ -1598,11 +1598,6 @@
     )    
 )
 
-;; test
-(define-public (test-depth (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
-    (roll-margin-position token-trait collateral-trait expiry yield-token-trait key-token-trait expiry-to-roll)
-)
-
 (define-map approved-pair principal principal) ;; auto-token => pool token
 (define-map auto-total-supply principal uint) ;; auto-token => supply
 (define-map pool-total-supply principal uint) ;; pool token => supply

@@ -1,4 +1,5 @@
 import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
 import { FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
 import { YTPTestAgent1 } from './models/alex-tests-yield-token-pool.ts';
@@ -124,6 +125,79 @@ Clarinet.test({
 
         let call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry = Number(call.result.expectOk().replace(/\D/g, ""));
+
+        block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(0)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(0)
+                ],
+                deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress),
+                    types.uint(0)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(autoYieldAlexAddress),
+                    types.uint(0)
+                ],
+                wallet_1.address
+            )                         
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr().expectUint(1001); });        
+
+        block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(1)
+                ],
+                deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(autoYieldAlexAddress),
+                    types.uint(1)
+                ],
+                wallet_1.address
+            )                         
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr().expectUint(1001); });
+          
         
         result = YTPTest.createPool(deployer, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, multisigYtpAlexAddress, liquidity, 0);
         result.expectOk();
@@ -143,7 +217,43 @@ Clarinet.test({
         const yieldAlexBalance = Number(call.result.expectOk().replace(/\D/g, ""));    
         
         call = chain.callReadOnlyFn(ytpAlexAddress, "get-balance-fixed", [types.uint(expiry), types.principal(deployer.address)], deployer.address);
-        const ytpAlexBalanceD = Number(call.result.expectOk().replace(/\D/g, ""));        
+        const ytpAlexBalanceD = Number(call.result.expectOk().replace(/\D/g, ""));     
+        
+        block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(ytpAlexBalance + 1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(ytpAlexAddress),
+                    types.principal(autoYtpAlexAddress),
+                    types.uint(ytpAlexBalanceD + 1)
+                ],
+                deployer.address
+            ),            
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoKeyAlexAutoalexAddress),
+                    types.uint(keyAlexAutoalexBalance + 1)
+                ],
+                wallet_1.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(autoYieldAlexAddress),
+                    types.uint(yieldAlexBalance + 1)
+                ],
+                wallet_1.address
+            )                         
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr(); });              
 
         block = chain.mineBlock([
             Tx.contractCall("collateral-rebalancing-pool", "mint-auto",
@@ -179,14 +289,12 @@ Clarinet.test({
                 wallet_1.address
             )                         
         ]);
-        block.receipts.forEach(e => 
-            { 
-                e.result.expectOk();
-                // console.log(e.events);
-            }
-        );      
+        block.receipts.forEach(e => { e.result.expectOk(); });      
         
-        chain.mineEmptyBlockUntil(expiry + 1);
+        call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
+        assertEquals(expiry, Number(call.result.expectOk().replace(/\D/g, "")));
+
+        chain.mineEmptyBlockUntil(expiry + 1);    
 
         call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry_to_roll = Number(call.result.expectOk().replace(/\D/g, ""));
@@ -211,16 +319,28 @@ Clarinet.test({
                     types.principal(autoKeyAlexAutoalexAddress)
                 ],
                 wallet_1.address
-            ),            
-            // Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
-            //     [
-            //         types.principal(yieldAlexAddress),
-            //         types.principal(alexAddress),
-            //         types.principal(autoAlexAddress),
-            //         types.principal(autoYieldAlexAddress)
-            //     ],
-            //     wallet_1.address
-            // ),     
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch",
+                [
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.uint(expiry_to_roll), 
+                    types.principal(yieldAlexAddress), 
+                    types.principal(keyAlexAutoalexAddress),
+                    types.uint(ONE_8),
+                    types.some(types.uint(0))
+                ],
+                wallet_2.address
+            ),       
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
+                [
+                    types.principal(yieldAlexAddress),
+                    types.principal(alexAddress),
+                    types.principal(autoAlexAddress),
+                    types.principal(autoYieldAlexAddress)
+                ],
+                wallet_1.address
+            ),               
         ]);
         block.receipts.forEach(e => 
             { 
@@ -229,7 +349,7 @@ Clarinet.test({
             }
         );
 
-        block = chain.mineBlock([
+        block = chain.mineBlock([            
             Tx.contractCall("collateral-rebalancing-pool", "redeem-auto",
                 [
                     types.principal(ytpAlexAddress),
