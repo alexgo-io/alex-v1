@@ -1,7 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
-
 (define-fungible-token fwp-alex-wban)
 
 (define-data-var token-uri (string-utf8 256) u"")
@@ -196,5 +195,7 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .fixed-weight-pool-alex true)
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .simple-weight-pool-alex true)
+(map-set approved-contracts .fixed-weight-pool-alex true)
