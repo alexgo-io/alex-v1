@@ -117,10 +117,6 @@ Clarinet.test({
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);   
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);         
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);                              
 
         const block = chain.mineBlock(
@@ -171,10 +167,6 @@ Clarinet.test({
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);   
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, alexAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);         
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);                 
         result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);

@@ -442,6 +442,17 @@ depends_on = [
   "token-wstx"
 ]
 
+[contracts.fixed-weight-pool-v1-02]
+path = "contracts/pool/fixed-weight-pool-v1-02.clar"
+depends_on = [
+  "alex-vault",
+  "trait-sip-010",
+  "trait-vault",
+  "weighted-equation-v1-01",
+  "alex-reserve-pool",
+  "token-wstx"
+]
+
 [contracts.fixed-weight-pool-alex]
 path = "contracts/pool/fixed-weight-pool-alex.clar"
 depends_on = [
