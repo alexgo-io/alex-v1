@@ -16,9 +16,9 @@
 (define-constant ERR-NO-FEE (err u2005))
 (define-constant ERR-NO-FEE-Y (err u2006))
 (define-constant ERR-INVALID-EXPIRY (err u2009))
-(define-constant ERR-MATH-CALL (err u4003))
 (define-constant ERR-GET-EXPIRY-FAIL-ERR (err u2013))
 (define-constant ERR-DY-BIGGER-THAN-AVAILABLE (err u2016))
+(define-constant ERR-EXPIRY (err u2017))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-TOKEN (err u2026))
@@ -26,8 +26,10 @@
 (define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 (define-constant ERR-INVALID-BALANCE (err u1001))
+(define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -43,6 +45,15 @@
 (define-private (check-is-owner)
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
+
+(define-private (check-is-self)
+  (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
 
 ;; data maps and vars
 (define-map pools-map
@@ -263,7 +274,7 @@
 ;; @returns (response bool uint)
 (define-public (create-pool (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (multisig-vote principal) (dx uint) (dy uint)) 
     (begin
-        (try! (check-is-owner))
+        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of yield-token-trait), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
         (let
             (
@@ -293,13 +304,12 @@
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
-            (try! (contract-call? .alex-vault add-approved-token yield-token))
-            (try! (contract-call? .alex-vault add-approved-token (contract-of token-trait)))
-            (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
+            ;; (try! (contract-call? .alex-vault add-approved-token yield-token))
+            ;; (try! (contract-call? .alex-vault add-approved-token (contract-of token-trait)))
+            ;; (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
 
-            (try! (add-to-position expiry yield-token-trait token-trait pool-token-trait dx (some dy)))            
             (print { object: "pool", action: "created", data: pool-data })
-            (ok true)
+            (add-to-position expiry yield-token-trait token-trait pool-token-trait dx (some dy))
         )
     )
 )
@@ -319,13 +329,18 @@
             (dx-adjusted (- dx (div-down dx (+ dx (try! (get-x-given-y expiry (contract-of yield-token-trait) dy-act))))))
             (dx-to-buy-dy-adjusted (- dx dx-adjusted))
         )
-        (and (> dy-act u0) (is-ok (swap-x-for-y expiry yield-token-trait token-trait dx-to-buy-dy-adjusted none)))
-        (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
+        (if (> dy-act u0)
+          (begin 
+            (try! (swap-x-for-y expiry yield-token-trait token-trait dx-to-buy-dy-adjusted none))
+            (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
+          )
+          (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
+        )
     )
 )
 
 ;; @desc roll-position
-;; @desc roll given liquidity position to another pool
+;; @desc roll given pool position to another pool
 ;; @param yield-token-trait; yield token
 ;; @param token-trait; token
 ;; @param pool-token; pool token representing ownership of the pool
@@ -390,7 +405,7 @@
             ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
             (as-contract (try! (contract-call? pool-token-trait mint-fixed expiry new-supply sender)))
-            (print { object: "pool", action: "liquidity-added", data: pool-updated })
+            (print { object: "pool", action: "pool-added", data: pool-updated })
             (ok {supply: new-supply, balance-token: dx, balance-yield-token: new-dy-act, balance-virtual: new-dy-vir})
         )
     )
@@ -436,7 +451,7 @@
 
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (as-contract (try! (contract-call? pool-token-trait burn-fixed expiry shares sender)))
-            (print { object: "pool", action: "liquidity-removed", data: pool-updated })
+            (print { object: "pool", action: "pool-removed", data: pool-updated })
             (ok {dx: dx, dy: dy-act})
         )    
     )    
@@ -810,7 +825,7 @@
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
 
-;; max in/out as % of liquidity
+;; max in/out as % of pool
 (define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 (define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
 
@@ -1471,3 +1486,5 @@
    )
  )
 )
+
+(map-set approved-contracts .collateral-rebalancing-pool true)

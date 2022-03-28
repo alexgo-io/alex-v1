@@ -329,8 +329,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 set-fee-rate-x .token-wstx .token-usda u50000000 u50000000 new-fee-rate-x)))
-    (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 set-fee-rate-y .token-wstx .token-usda u50000000 u50000000 new-fee-rate-y)))
+    (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 set-fee-rate-x .token-wstx .token-wusda u50000000 u50000000 new-fee-rate-x)))
+    (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 set-fee-rate-y .token-wstx .token-wusda u50000000 u50000000 new-fee-rate-y)))
     (ok true)
   )
 )
