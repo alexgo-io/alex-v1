@@ -11,7 +11,7 @@ const reward_cycle_length = 525;
 
 const ONE_8 = 100000000;
 const stakedAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE." + stakeContract;
-const dualAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.dual-token-transfer";
+const dualAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.dual-farm-diko-helper";
 const underlyingAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wdiko";
 
 class StakingHelper {
@@ -136,7 +136,7 @@ class StakingHelper {
       return block.receipts[0].result;      
     }    
     
-    setMultiplierInFixed(sender: Account, token: string, multiplier: number){
+    setMultiplierInFixedDual(sender: Account, token: string, multiplier: number){
       let block = this.chain.mineBlock([
         Tx.contractCall(dualFarmingContract, "set-multiplier-in-fixed", [
           types.principal(token),
@@ -154,7 +154,13 @@ class StakingHelper {
         ], sender.address),
       ]);
       return block.receipts[0].result;      
-    }      
+    }  
+        
+    getDualTokenUnderlying(token: string) {
+      return this.chain.callReadOnlyFn(dualFarmingContract, "get-dual-token-underlying", [
+        types.principal(token),
+      ], this.deployer.address);
+    }
 }
 
 /**
@@ -247,7 +253,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "dual-farming-pool tests",
+  name: "dual-farming-pool/diko tests",
 
   async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;
@@ -262,9 +268,20 @@ Clarinet.test({
         ], deployer.address),
       ]);
 
-      let result:any = await StakingTest.addTokenDual(deployer, stakedAddress, dualAddress, underlyingAddress);
+      let call:any = await StakingTest.getDualTokenUnderlying(stakedAddress);
+      call.result.expectErr().expectUint(1003);
+      
+      let result:any = await StakingTest.addTokenDual(wallet_6, stakedAddress, dualAddress, underlyingAddress);
+      result.expectErr().expectUint(1000);      
+      result = await StakingTest.addTokenDual(deployer, stakedAddress, dualAddress, underlyingAddress);
       result.expectOk().expectBool(true);
-      result = await StakingTest.setMultiplierInFixed(deployer, stakedAddress, ONE_8);
+
+      call = await StakingTest.getDualTokenUnderlying(stakedAddress);
+      call.result.expectOk();
+      
+      result = await StakingTest.setMultiplierInFixedDual(wallet_6, stakedAddress, ONE_8);
+      result.expectErr().expectUint(1000);
+      result = await StakingTest.setMultiplierInFixedDual(deployer, stakedAddress, ONE_8);
       result.expectOk().expectBool(true);
 
       result = await StakingTest.setRewardCycleLength(deployer, reward_cycle_length);
@@ -273,7 +290,7 @@ Clarinet.test({
       result.expectOk().expectBool(true);          
       result = await StakingTest.setCoinbaseAmount(deployer, stakedAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8);
       result.expectOk().expectBool(true);
-      result = await StakingTest.setApowerMultiplierInFixed(deployer, stakedAddress, 0.5e8);
+      result = await StakingTest.setApowerMultiplierInFixed(deployer, stakedAddress, 0.6e8);
       result.expectOk().expectBool(true);      
 
       result = await StakingTest.stakeTokens(wallet_6, stakedAddress, 100e8, 3);
@@ -301,7 +318,7 @@ Clarinet.test({
         "alex"
       );   
       block.events.expectFungibleTokenMintEvent(
-        0.5e8,
+        0.6e8,
         wallet_6.address,
         "apower"
       );                  
