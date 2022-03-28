@@ -3,23 +3,23 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { FWPTestAgent1, FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
-import { MS_FWP_ALEX_USDA_SIMPLE } from './models/alex-tests-multisigs.ts';
+import { MS_FWP_ALEX_USDA } from './models/alex-tests-multisigs.ts';
 import { 
     USDAToken,
     WBTCToken,
     ALEXToken,
-    FWP_ALEX_USDA_5050,
+    FWP_ALEX_USDA,
   } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
-const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token"
-const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda-50-50"
+const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda"
 const fwpalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-wbtc-50-50"
 const fwpstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-alex-50-50-v1-01"
-const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda-simple"
+const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda"
 const multisigalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-wbtc-50-50"
 const multisigstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-alex-50-50-v1-01"
 const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-alex"
@@ -197,8 +197,8 @@ Clarinet.test({
         let wbtcToken = new WBTCToken(chain, deployer);
         let alexToken = new ALEXToken(chain, deployer);
         let FWPTest = new FWPTestAgent3(chain, deployer);
-        let MultiSigTest = new MS_FWP_ALEX_USDA_SIMPLE(chain, deployer);
-        let fwpPoolToken = new FWP_ALEX_USDA_5050(chain, deployer);
+        let MultiSigTest = new MS_FWP_ALEX_USDA(chain, deployer);
+        let fwpPoolToken = new FWP_ALEX_USDA(chain, deployer);
 
         // Deployer minting initial tokens        
         let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
@@ -308,8 +308,8 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let FWPTest = new FWPTestAgent3(chain, deployer);
-        let MultiSigTest = new MS_FWP_ALEX_USDA_SIMPLE(chain, deployer);
-        let fwpPoolToken = new FWP_ALEX_USDA_5050(chain, deployer);
+        let MultiSigTest = new MS_FWP_ALEX_USDA(chain, deployer);
+        let fwpPoolToken = new FWP_ALEX_USDA(chain, deployer);
         const feeRateX = 5000000; // 5%
         const feeRateY = 5000000;
         let usdaToken = new USDAToken(chain, deployer);

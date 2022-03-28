@@ -24,7 +24,7 @@ import {
 
 const parameters = {
   totalIdoTokens: 40000,
-  idoOwners: undefined,
+  idoOwner: undefined,
   ticketsForSale: 801,
   idoTokensPerTicket: 50,
   pricePerTicketInFixed: 5000000000,
@@ -712,23 +712,23 @@ Clarinet.test({
       const claimEndHeight = registrationEndHeight + 100;
 
       const ticketRecipients = [
-        { recipient: accountA, amount: 1 },
-        { recipient: accountB, amount: 400 },
-        { recipient: accountC, amount: 200 },
-        { recipient: accountD, amount: 5000 },
-        { recipient: accountE, amount: 101 },
-        { recipient: accountF, amount: 10000 },
-        { recipient: accountG, amount: 1 },
+        { recipient: accountA, amount: 10 },
+        { recipient: accountB, amount: 4000 },
+        { recipient: accountC, amount: 2000 },
+        { recipient: accountD, amount: 50000 },
+        { recipient: accountE, amount: 1010 },
+        { recipient: accountF, amount: 100000 },
+        { recipient: accountG, amount: 10 },
       ];
 
       const params: StandardTestParameters = {
         ...parameters,
-        totalIdoTokens: 40000,
+        totalIdoTokens: 50000,
         idoOwner: accountA,
-        ticketsForSale: 801,
-        idoTokensPerTicket: 50,
-        pricePerTicketInFixed: 5000000000,
-        activationThreshold: 1,
+        ticketsForSale: 500,
+        idoTokensPerTicket: 100,
+        pricePerTicketInFixed: 33e8,
+        activationThreshold: 500,
         ticketRecipients: ticketRecipients,
         registrationStartHeight: registrationStartHeight,
         registrationEndHeight: registrationEndHeight,
@@ -758,13 +758,13 @@ Clarinet.test({
           )
         )
       );
+      // console.log(registrations.receipts);
       registrations.receipts.map(({ result }) => result.expectOk());
       assertEquals(registrations.receipts.length, ticketRecipients.length);
       for (let i = 0; i < ticketRecipients.length; i++) {
-        // console.log(registrations.receipts[i].events);
         registrations.receipts[i].events.expectSTXTransferEvent(
           ((ticketRecipients[i]["amount"] *
-            parameters["pricePerTicketInFixed"]) /
+            params["pricePerTicketInFixed"]) /
             ONE_8) *
             1e6,
           ticketRecipients[i]["recipient"].address,
@@ -774,7 +774,7 @@ Clarinet.test({
         registrations.receipts[i].events.expectFungibleTokenBurnEvent(
           determineApower(
             ticketRecipients[i]["amount"],
-            parameters["apowerPerTicketInFixed"]
+            params["apowerPerTicketInFixed"]
           ),
           ticketRecipients[i]["recipient"].address,
           "apower"
@@ -839,7 +839,7 @@ Clarinet.test({
         // console.log(index, claim.receipts[0].result);
         assertEquals(events.length, 1 + winners_sliced.length);
         events.expectSTXTransferEvent(
-          ((parameters["pricePerTicketInFixed"] * winners_sliced.length) /
+          ((params["pricePerTicketInFixed"] * winners_sliced.length) /
             ONE_8) *
             1e6,
           deployer.address + ".alex-launchpad-v1-1",
@@ -847,7 +847,7 @@ Clarinet.test({
         );
         for (let j = 1; j < events.length; j++) {
           events.expectFungibleTokenTransferEvent(
-            parameters["idoTokensPerTicket"] * 1e6,
+            params["idoTokensPerTicket"] * 1e6,
             deployer.address + ".alex-launchpad-v1-1",
             winners_sliced[j - 1],
             "banana"
@@ -901,7 +901,7 @@ Clarinet.test({
                   return types.tuple({
                     recipient: types.principal(e.recipient),
                     amount: types.uint(
-                      e.amount * parameters["pricePerTicketInFixed"]
+                      e.amount * params["pricePerTicketInFixed"]
                     ),
                   });
                 })
@@ -919,7 +919,7 @@ Clarinet.test({
         for (let j = 0; j < events.length; j++) {
           events.expectSTXTransferEvent(
             ((losers_sliced[j]["amount"] *
-              parameters["pricePerTicketInFixed"]) /
+              params["pricePerTicketInFixed"]) /
               ONE_8) *
               1e6,
             deployer.address + ".alex-launchpad-v1-1",

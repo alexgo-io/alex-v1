@@ -75,7 +75,7 @@ class MS_FWP_WSTX_USDA_5050 {
 }
 export { MS_FWP_WSTX_USDA_5050 };
 
-class MS_FWP_ALEX_USDA_5050 {
+class MS_FWP_ALEX_USDA {
   chain: Chain;
   deployer: Account;
 
@@ -87,7 +87,7 @@ class MS_FWP_ALEX_USDA_5050 {
 
   propose(startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-50-50", "propose", [
+          Tx.contractCall("multisig-fwp-alex-usda", "propose", [
             types.uint(startBlockHeight),
             types.utf8(proposeTitle),
             types.utf8(proposeURL),
@@ -100,7 +100,7 @@ class MS_FWP_ALEX_USDA_5050 {
   
   voteFor(contractCaller: Account, token: string, proposalID: number, amount: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-50-50", "vote-for", [
+          Tx.contractCall("multisig-fwp-alex-usda", "vote-for", [
             types.principal(token),
             types.uint(proposalID),
             types.uint(amount)
@@ -111,7 +111,7 @@ class MS_FWP_ALEX_USDA_5050 {
   
   voteAgainst(contractCaller: Account, token: string, proposalID: number, amount: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-50-50", "vote-against", [
+          Tx.contractCall("multisig-fwp-alex-usda", "vote-against", [
             types.principal(token),
             types.uint(proposalID),
             types.uint(amount)
@@ -122,7 +122,7 @@ class MS_FWP_ALEX_USDA_5050 {
 
   endProposal(proposalID: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-50-50", "end-proposal", [
+          Tx.contractCall("multisig-fwp-alex-usda", "end-proposal", [
             types.uint(proposalID),
           ], this.deployer.address),
         ]);
@@ -131,7 +131,7 @@ class MS_FWP_ALEX_USDA_5050 {
 
     returnVotesToMember(contractCaller: Account, token: string, proposalID: number, member: string) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-50-50", "return-votes-to-member", [
+          Tx.contractCall("multisig-fwp-alex-usda", "return-votes-to-member", [
             types.principal(token),
             types.uint(proposalID),
             types.principal(member)
@@ -140,9 +140,8 @@ class MS_FWP_ALEX_USDA_5050 {
         return block.receipts[0].result;
     }    
 }
-export { MS_FWP_ALEX_USDA_5050 };
-
-class MS_FWP_ALEX_USDA_SIMPLE {
+export { MS_FWP_ALEX_USDA };
+class MS_FWP_WSTX_USDA {
   chain: Chain;
   deployer: Account;
 
@@ -154,7 +153,7 @@ class MS_FWP_ALEX_USDA_SIMPLE {
 
   propose(startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-simple", "propose", [
+          Tx.contractCall("multisig-fwp-wstx-usda", "propose", [
             types.uint(startBlockHeight),
             types.utf8(proposeTitle),
             types.utf8(proposeURL),
@@ -167,7 +166,7 @@ class MS_FWP_ALEX_USDA_SIMPLE {
   
   voteFor(contractCaller: Account, token: string, proposalID: number, amount: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-simple", "vote-for", [
+          Tx.contractCall("multisig-fwp-wstx-usda", "vote-for", [
             types.principal(token),
             types.uint(proposalID),
             types.uint(amount)
@@ -178,7 +177,7 @@ class MS_FWP_ALEX_USDA_SIMPLE {
   
   voteAgainst(contractCaller: Account, token: string, proposalID: number, amount: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-simple", "vote-against", [
+          Tx.contractCall("multisig-fwp-wstx-usda", "vote-against", [
             types.principal(token),
             types.uint(proposalID),
             types.uint(amount)
@@ -189,7 +188,7 @@ class MS_FWP_ALEX_USDA_SIMPLE {
 
   endProposal(proposalID: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-simple", "end-proposal", [
+          Tx.contractCall("multisig-fwp-wstx-usda", "end-proposal", [
             types.uint(proposalID),
           ], this.deployer.address),
         ]);
@@ -198,7 +197,7 @@ class MS_FWP_ALEX_USDA_SIMPLE {
 
     returnVotesToMember(contractCaller: Account, token: string, proposalID: number, member: string) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-alex-usda-simple", "return-votes-to-member", [
+          Tx.contractCall("multisig-fwp-wstx-usda", "return-votes-to-member", [
             types.principal(token),
             types.uint(proposalID),
             types.principal(member)
@@ -207,74 +206,7 @@ class MS_FWP_ALEX_USDA_SIMPLE {
         return block.receipts[0].result;
     }    
 }
-export { MS_FWP_ALEX_USDA_SIMPLE };
-
-class MS_FWP_WSTX_USDA_SIMPLE {
-  chain: Chain;
-  deployer: Account;
-
-  constructor(chain: Chain, deployer: Account) {
-    this.chain = chain;
-    this.deployer = deployer;
-    //this.wallet_1 = wallet_1;
-  }
-
-  propose(startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
-      let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-simple", "propose", [
-            types.uint(startBlockHeight),
-            types.utf8(proposeTitle),
-            types.utf8(proposeURL),
-            types.uint(feeRateX),
-            types.uint(feeRateY),
-          ], this.deployer.address),
-        ]);
-        return block.receipts[0].result;
-    }
-  
-  voteFor(contractCaller: Account, token: string, proposalID: number, amount: number) {
-      let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-simple", "vote-for", [
-            types.principal(token),
-            types.uint(proposalID),
-            types.uint(amount)
-          ], contractCaller.address),
-        ]);
-        return block.receipts[0].result;
-    }
-  
-  voteAgainst(contractCaller: Account, token: string, proposalID: number, amount: number) {
-      let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-simple", "vote-against", [
-            types.principal(token),
-            types.uint(proposalID),
-            types.uint(amount)
-          ], contractCaller.address),
-        ]);
-        return block.receipts[0].result;
-    }
-
-  endProposal(proposalID: number) {
-      let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-simple", "end-proposal", [
-            types.uint(proposalID),
-          ], this.deployer.address),
-        ]);
-        return block.receipts[0].result;
-    }
-
-    returnVotesToMember(contractCaller: Account, token: string, proposalID: number, member: string) {
-      let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-simple", "return-votes-to-member", [
-            types.principal(token),
-            types.uint(proposalID),
-            types.principal(member)
-          ], contractCaller.address),
-        ]);
-        return block.receipts[0].result;
-    }    
-}
-export { MS_FWP_WSTX_USDA_SIMPLE };
+export { MS_FWP_WSTX_USDA };
 
 class MS_YTP_YIELD_WBTC {
 chain: Chain;

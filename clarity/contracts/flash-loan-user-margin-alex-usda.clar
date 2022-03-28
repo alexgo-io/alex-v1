@@ -17,15 +17,15 @@
             ;; gross amount = amount * price / ltv
             ;; buff to uint conversion
             (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
-            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .age000-governance-token memo-uint)))
+            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wusda .age000-governance-token memo-uint)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
             (gross-amount (mul-up amount (div-down price ltv)))            
-            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .age000-governance-token memo-uint .yield-usda .key-usda-alex gross-amount))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
+            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wusda .age000-governance-token memo-uint .yield-usda .key-usda-alex gross-amount))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-wusda minted-yield-token none))))
         )
         (asserts! (is-eq .age000-governance-token (contract-of collateral)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .swap-helper swap-helper .token-usda .age000-governance-token swapped-token none))
+        (try! (contract-call? .swap-helper swap-helper .token-wusda .age000-governance-token swapped-token none))
         (print { object: "flash-loan-user-margin-alex-usda", action: "execute", data: gross-amount })
         (ok true)
     )
