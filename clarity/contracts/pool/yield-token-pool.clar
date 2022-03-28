@@ -304,10 +304,6 @@
             (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
             (var-set pool-count pool-id)
 
-            ;; (try! (contract-call? .alex-vault add-approved-token yield-token))
-            ;; (try! (contract-call? .alex-vault add-approved-token (contract-of token-trait)))
-            ;; (try! (contract-call? .alex-vault add-approved-token (contract-of pool-token-trait)))
-
             (print { object: "pool", action: "created", data: pool-data })
             (add-to-position expiry yield-token-trait token-trait pool-token-trait dx (some dy))
         )

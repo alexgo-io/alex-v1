@@ -106,12 +106,12 @@ Clarinet.test({
         result.expectOk().expectBool(true);             
 
         result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, expiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 100*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, expiry, yieldusdaAddress, keyusdawbtcAddress, multisigncrpusdawbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectTuple();        
       
         let call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         let position:any = call.result.expectOk().expectUint(0);
@@ -149,9 +149,9 @@ Clarinet.test({
         result.expectErr().expectUint(2017);
         // but let's set up new pools
         result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, nextExpiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
-        result.expectOk().expectBool(true);    
+        result.expectOk().expectTuple();    
         
         // and now we just expired
         chain.mineEmptyBlockUntil(expiry + 1);
