@@ -31,7 +31,7 @@ const price = 50000;
 const quantity = 10 * ONE_8;
 
 Clarinet.test({
-    name: "swap-helper : ALEX only swap works",
+    name: "swap-helper-v1-01 : ALEX only swap works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -83,7 +83,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "swap-helper : STX only swap works",
+    name: "swap-helper-v1-01 : STX only swap works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -131,7 +131,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "swap-helper : STX-anchored pool <=> ALEX-anchored pool works",
+    name: "swap-helper-v1-01 : STX-anchored pool <=> ALEX-anchored pool works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -187,5 +187,59 @@ Clarinet.test({
             ]
         );
         block.receipts.map(e => { return e.result.expectOk() });
+    },
+});
+
+Clarinet.test({
+    name: "swap-helper : STX-anchored pool <=> ALEX-anchored pool fails",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let FWPTestSTX = new FWPTestAgent1(chain, deployer);
+        let FWPTestALEX = new FWPTestAgent3(chain, deployer);
+        let usdaToken = new USDAToken(chain, deployer);
+        let wbtcToken = new WBTCToken(chain, deployer);
+        let alexToken = new ALEXToken(chain, deployer);
+
+        // Deployer minting initial tokens
+        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        result.expectOk();
+        result = usdaToken.mintFixed(deployer, wallet_1.address, 200000 * ONE_8);
+        result.expectOk();
+        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
+        result.expectOk();
+        result = wbtcToken.mintFixed(deployer, wallet_1.address, 100000 * ONE_8);
+        result.expectOk();
+        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
+        result.expectOk();
+        result = alexToken.mintFixed(deployer, wallet_1.address, 200000 * ONE_8);
+        result.expectOk();      
+        
+        // Deployer creating a pool, initial tokens injected to the pool
+        result = FWPTestSTX.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpwstxalexAddress, multisigwstxalexAddress, quantity * price, quantity * price);
+        result.expectOk().expectBool(true);        
+        result = FWPTestSTX.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, quantity * price, quantity * price);
+        result.expectOk().expectBool(true);        
+        result = FWPTestALEX.createPool(deployer, alexAddress, wbtcAddress, fwpalexwbtcAddress, multisigalexwbtcAddress, quantity * price, quantity);
+        result.expectOk().expectBool(true);
+
+        result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                 
+        result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = FWPTestALEX.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
+        result = FWPTestALEX.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
+        result.expectOk().expectBool(true);                   
+
+        const block = chain.mineBlock(
+            [
+                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+            ]
+        );
+        assertEquals(block.receipts.length, 0);
     },
 });
