@@ -50,7 +50,7 @@ const weightY = 0.5e+8
  */
 
 Clarinet.test({
-    name: "Flash Loan: create margin trade",
+    name: "flash-loan : create margin trade",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -170,7 +170,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Flash Loan: authorisation tests",
+    name: "flash-loan : authorisation tests",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
