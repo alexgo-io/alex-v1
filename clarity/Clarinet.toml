@@ -689,8 +689,8 @@ depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve
 path = "contracts/traits/trait-transfer.clar"
 depends_on = [ ]
 
-[contracts.dual-token-transfer]
-path = "contracts/tests/dual-token-transfer.clar"
+[contracts.dual-farm-diko-helper]
+path = "contracts/helpers/dual-farm-diko-helper.clar"
 depends_on = [ "trait-transfer", "token-diko" ]
 
 [contracts.token-diko]

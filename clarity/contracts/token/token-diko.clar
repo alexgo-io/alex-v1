@@ -202,5 +202,4 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .faucet true)
-(map-set approved-contracts .dual-token-transfer true)
+(map-set approved-contracts .dual-farm-diko-helper true)
