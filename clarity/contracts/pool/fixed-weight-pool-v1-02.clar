@@ -1,11 +1,11 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-;; fixed-weight-pool
+;; fixed-weight-pool-v1-02
 ;; Fixed Weight Pool is an uniswap-like on-chain AMM based on Balancer
-;;
-
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+;; changes from v1-01
+;; - addition of start-block and end-block
+;; - minor tidying up
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))
@@ -66,7 +66,9 @@
     fee-rebate: uint,
     oracle-enabled: bool,
     oracle-average: uint,
-    oracle-resilient: uint
+    oracle-resilient: uint,
+    start-block: uint,
+    end-block: uint    
   }
 )
 
@@ -132,6 +134,54 @@
   )
 )
 
+(define-read-only (get-start-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (ok (get start-block (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-start-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (new-start-block uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL))
+        )
+        (try! (check-is-owner))
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
+                (merge pool {start-block: new-start-block})
+            )
+        )    
+    )
+)
+
+(define-read-only (get-end-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (ok (get end-block (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-end-block (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (new-end-block uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL))
+        )
+        (try! (check-is-owner))
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y } 
+                (merge pool {end-block: new-end-block})
+            )
+        )    
+    )
+)
+
+(define-private (check-pool-status (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y  }) ERR-INVALID-POOL))
+        )
+        (ok (asserts! (and (>= block-height (get start-block pool)) (<= block-height (get end-block pool))) ERR-NOT-AUTHORIZED))
+    )
+)
 ;; @desc get-oracle-enabled
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
@@ -226,29 +276,36 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
-    (begin
-        (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
-            (let
-                (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL))
-                )
-                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
-                       (mul-down (get oracle-average pool) (get oracle-resilient pool))))
+    (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
+        (get-oracle-resilient-internal token-x token-y weight-x weight-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-resilient-internal .token-wstx token-y u50000000 u50000000))
+                (try! (get-oracle-resilient-internal .token-wstx token-x u50000000 u50000000))                
             )
-            (let
-                (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL))
+        )
+    )
+)
+
+(define-private (get-oracle-resilient-internal (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (let
+        (
+            (pool 
+                (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
+                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-x, weight-y: weight-y }) ERR-INVALID-POOL)
+                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL)
                 )
-                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant token-x token-y weight-x weight-y))) 
-                       (mul-down (get oracle-average pool) (div-down ONE_8 (get oracle-resilient pool)))))
             )
-        )            
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-x token-y weight-x weight-y))) 
+            (mul-down (get oracle-average pool) (get oracle-resilient pool)))
+        )           
     )
 )
 
 ;; @desc get-oracle-instant
+;; price of token-x in terms of token-y
 ;; @desc price-oracle that is more up to date but less resilient to manipulation
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
@@ -256,6 +313,18 @@
 ;; @param weight-y; weight of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
+    (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
+        (get-oracle-instant-internal token-x token-y weight-x weight-y)
+        (ok
+            (div-down                
+                (try! (get-oracle-instant-internal .token-wstx token-y u50000000 u50000000))
+                (try! (get-oracle-instant-internal .token-wstx token-x u50000000 u50000000))                
+            )
+        )
+    )
+)
+
+(define-private (get-oracle-instant-internal (token-x principal) (token-y principal) (weight-x uint) (weight-y uint))
     (begin                
         (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
             (let
@@ -267,10 +336,10 @@
             )
             (let
                 (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL))
+                    (pool (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, weight-x: weight-y, weight-y: weight-x }) ERR-INVALID-POOL))
                 )
                 (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (div-down (mul-down (get balance-x pool) weight-y) (mul-down (get balance-y pool) weight-x)))
+                (ok (div-down (mul-down (get balance-x pool) weight-x) (mul-down (get balance-y pool) weight-y)))
             )
         )
     )
@@ -319,7 +388,9 @@
                 fee-rebate: u0,
                 oracle-enabled: false,
                 oracle-average: u0,
-                oracle-resilient: u0
+                oracle-resilient: u0,
+                start-block: u340282366920938463463374607431768211455,
+                end-block: u340282366920938463463374607431768211455                
             })
         )
 
@@ -360,7 +431,6 @@
 (define-public (add-to-position (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (pool-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-
         (let
             (
                 (token-x (contract-of token-x-trait))
@@ -453,6 +523,7 @@
 ;; @returns (ok (tuple))
 (define-public (swap-wstx-for-y (token-y-trait <ft-trait>) (weight-y uint) (dx uint) (min-dy (optional uint)))    
     (begin
+        (try! (check-pool-status .token-wstx (contract-of token-y-trait) (- ONE_8 weight-y) weight-y))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)      
         (let
             (
@@ -483,11 +554,12 @@
                 )
                 (sender tx-sender)             
             )
-            (asserts! (< (div-down dy dx-net-fees) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)       
+            ;; a / b <= c / d == ad <= bc for b, d >=0
+            (asserts! (<= (mul-down dy (mul-down balance-x weight-y)) (mul-down dx-net-fees (mul-down balance-y weight-x) )) ERR-INVALID-LIQUIDITY)       
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .token-wstx transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
-            (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender)))
+            (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance .token-wstx (- fee fee-rebate))))
 
             ;; post setting
@@ -499,13 +571,14 @@
 )
 
 ;; @desc swap-y-for-wstx 
-;; @params token-y-trait; ft-
+;; @params token-y-trait
 ;; @params weight-y 
 ;; @params dy
 ;; @params dx
 ;; @returns (response tuple)
 (define-public (swap-y-for-wstx (token-y-trait <ft-trait>) (weight-y uint) (dy uint) (min-dx (optional uint)))
     (begin
+        (try! (check-pool-status .token-wstx (contract-of token-y-trait) (- ONE_8 weight-y) weight-y))    
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (let
             (
@@ -536,10 +609,11 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (> (div-down dy-net-fees dx) (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y))) ERR-INVALID-LIQUIDITY)
+            ;; a / b >= c / d == ac >= bc for b, d >= 0
+            (asserts! (>= (mul-down dy-net-fees (mul-down balance-x weight-y)) (mul-down dx (mul-down balance-y weight-x))) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-            (as-contract (try! (contract-call? .alex-vault transfer-ft .token-wstx dx sender)))
+            (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft .token-wstx dx sender))))
             (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
@@ -917,12 +991,41 @@
         (contract-call? .weighted-equation-v1-01 get-position-given-burn (get balance-x pool) (get balance-y pool) weight-x weight-y (get total-supply pool) token)
     )
 )
+ 
+;; @desc swap
+;; @params token-x-trait; ft-trait
+;; @params token-y-trait; ft-trait
+;; @params weight-x
+;; @params weight-y
+;; @params dx
+;; @params mi-dy
+;; @returns (response uint)
+(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
+    (ok (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy))))
+)
+
+;; @desc get-x-y
+;; @params token-x-trait; ft-trait
+;; @params token-y-trait; ft-trait
+;; @params weight-x
+;; @params weight-y
+;; @params dy
+;; @returns (response uint uint)
+(define-read-only (get-helper (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
+    (get-y-given-x token-x token-y weight-x weight-y dx)
+)
+
 
 
 ;; math-fixed-point
 ;; Fixed Point Math
 ;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
 
+;; constants
+;;
+(define-constant ONE_8 u100000000) ;; 8 decimal places
+
+;; TODO: this needs to be reviewed/updated
 ;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
 ;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
 ;; (i.e. the last digit of the result may be completely lost to this error).
@@ -931,16 +1034,31 @@
 ;; public functions
 ;;
 
-;; @params a
-;; @param b
+;; @desc scale-up
+;; @params a 
+;; @returns uint
+(define-read-only (scale-up (a uint))
+    (* a ONE_8)
+)
+
+;; @desc scale-down
+;; @params a 
+;; @returns uint
+(define-read-only (scale-down (a uint))
+    (/ a ONE_8)
+)
+
+;; @desc mul-down
+;; @params a 
+;; @params b
 ;; @returns uint
 (define-read-only (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
 ;; @desc mul-up
-;; @params a
-;; @param b
+;; @params a 
+;; @params b
 ;; @returns uint
 (define-read-only (mul-up (a uint) (b uint))
     (let
@@ -955,19 +1073,19 @@
 )
 
 ;; @desc div-down
-;; @params a
-;; @param b
+;; @params a 
+;; @params b
 ;; @returns uint
 (define-read-only (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (/ (* a ONE_8) b)
-    )
+   )
 )
 
 ;; @desc div-up
-;; @params a
-;; @param b
+;; @params a 
+;; @params b
 ;; @returns uint
 (define-read-only (div-up (a uint) (b uint))
     (if (is-eq a u0)
@@ -977,8 +1095,8 @@
 )
 
 ;; @desc pow-down
-;; @params a
-;; @param b
+;; @params a 
+;; @params b
 ;; @returns uint
 (define-read-only (pow-down (a uint) (b uint))    
     (let
@@ -994,8 +1112,8 @@
 )
 
 ;; @desc pow-up
-;; @params a
-;; @param b
+;; @params a 
+;; @params b
 ;; @returns uint
 (define-read-only (pow-up (a uint) (b uint))
     (let
@@ -1019,28 +1137,29 @@
 ;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
 ;; two numbers, and multiply by ONE when dividing them.
 ;; All arguments and return values are 8 decimal fixed point numbers.
-(define-constant iONE_8 (pow 10 8))
-(define-constant ONE_10 (pow 10 10))
+(define-constant UNSIGNED_ONE_8 (pow 10 8))
 
 ;; The domain of natural exponentiation is bound by the word size and number of decimals used.
 ;; The largest possible result is (2^127 - 1) / 10^8, 
 ;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
 ;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
 ;; We use 69.0 and -18.0 to have some safety margin.
-(define-constant MAX_NATURAL_EXPONENT (* 69 iONE_8))
-(define-constant MIN_NATURAL_EXPONENT (* -18 iONE_8))
+(define-constant MAX_NATURAL_EXPONENT (* 69 UNSIGNED_ONE_8))
+(define-constant MIN_NATURAL_EXPONENT (* -18 UNSIGNED_ONE_8))
 
-(define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint iONE_8)))
+(define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint UNSIGNED_ONE_8)))
 
 ;; Because largest exponent is 69, we start from 64
 ;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
 ;; Instead we store them as plain integers, with 0 decimals.
+
 (define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 6235149080811616882910000000, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
+{x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
 ))
+
 ;; 8 decimal constants
 (define-constant x_a_list (list 
-{x_pre: 3200000000, a_pre: 7896296018268069516100, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
+{x_pre: 3200000000, a_pre: 78962960182680695161, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
 {x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
 {x_pre: 800000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
 {x_pre: 400000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
@@ -1052,19 +1171,21 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-(define-constant ERR_X_OUT_OF_BOUNDS (err u5009))
-(define-constant ERR_Y_OUT_OF_BOUNDS (err u5010))
-(define-constant ERR_PRODUCT_OUT_OF_BOUNDS (err u5011))
-(define-constant ERR_INVALID_EXPONENT (err u5012))
-(define-constant ERR_OUT_OF_BOUNDS (err u5013))
+
+(define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
+(define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
+(define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
+(define-constant ERR-INVALID-EXPONENT (err u5012))
+(define-constant ERR-OUT-OF-BOUNDS (err u5013))
 
 ;; private functions
 ;;
 
 ;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+
 ;; @desc ln-priv
 ;; @params a
-;; @returns int
+;; @ returns (response uint)
 (define-private (ln-priv (a int))
   (let
     (
@@ -1072,21 +1193,20 @@
       (a_sum (fold accumulate_division x_a_list {a: (get a a_sum_no_deci), sum: (get sum a_sum_no_deci)}))
       (out_a (get a a_sum))
       (out_sum (get sum a_sum))
-      (z (/ (* (- out_a iONE_8) iONE_8) (+ out_a iONE_8)))
-      (z_squared (/ (* z z) iONE_8))
+      (z (/ (* (- out_a UNSIGNED_ONE_8) UNSIGNED_ONE_8) (+ out_a UNSIGNED_ONE_8)))
+      (z_squared (/ (* z z) UNSIGNED_ONE_8))
       (div_list (list 3 5 7 9 11))
       (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
       (seriesSum (get seriesSum num_sum_zsq))
-      (r (+ out_sum (* seriesSum 2)))
-   )
-    (ok r)
- )
+    )
+    (+ out_sum (* seriesSum 2))
+  )
 )
 
 ;; @desc accumulate_division
-;; @params x_a_pre; tuple
-;; @params rolling_a_sum; tuple
-;; @returns tuple
+;; @params x_a_pre ; tuple(x_pre a_pre use_deci)
+;; @params rolling_a_sum ; tuple (a sum)
+;; @returns uint
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
@@ -1096,8 +1216,8 @@
       (rolling_a (get a rolling_a_sum))
       (rolling_sum (get sum rolling_a_sum))
    )
-    (if (>= rolling_a (if use_deci a_pre (* a_pre iONE_8)))
-      {a: (/ (* rolling_a (if use_deci iONE_8 1)) a_pre), sum: (+ rolling_sum x_pre)}
+    (if (>= rolling_a (if use_deci a_pre (* a_pre UNSIGNED_ONE_8)))
+      {a: (/ (* rolling_a (if use_deci UNSIGNED_ONE_8 1)) a_pre), sum: (+ rolling_sum x_pre)}
       {a: rolling_a, sum: rolling_sum}
    )
  )
@@ -1105,15 +1225,15 @@
 
 ;; @desc rolling_sum_div
 ;; @params n
-;; @params rolling; tuple
-;; @returns tuple
+;; @params rolling ; tuple (num seriesSum z_squared)
+;; @Sreturns tuple
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
   (let
     (
       (rolling_num (get num rolling))
       (rolling_sum (get seriesSum rolling))
       (z_squared (get z_squared rolling))
-      (next_num (/ (* rolling_num z_squared) iONE_8))
+      (next_num (/ (* rolling_num z_squared) UNSIGNED_ONE_8))
       (next_sum (+ rolling_sum (/ next_num n)))
    )
     {num: next_num, seriesSum: next_sum, z_squared: z_squared}
@@ -1124,29 +1244,30 @@
 ;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
 ;; x^y = exp(y * ln(x)).
 ;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
+
 ;; @desc pow-priv
 ;; @params x
 ;; @params y
 ;; @returns (response uint)
-(define-private (pow-priv (x uint) (y uint))
+(define-read-only (pow-priv (x uint) (y uint))
   (let
     (
       (x-int (to-int x))
       (y-int (to-int y))
-      (lnx (unwrap-panic (ln-priv x-int)))
-      (logx-times-y (/ (* lnx y-int) iONE_8))
+      (lnx (ln-priv x-int))
+      (logx-times-y (/ (* lnx y-int) UNSIGNED_ONE_8))
     )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR_PRODUCT_OUT_OF_BOUNDS)
-    (ok (to-uint (unwrap-panic (exp-fixed logx-times-y))))
+    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
+    (ok (to-uint (try! (exp-fixed logx-times-y))))
   )
 )
 
 ;; @desc exp-pos
 ;; @params x
 ;; @returns (response uint)
-(define-private (exp-pos (x int))
+(define-read-only (exp-pos (x int))
   (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
+    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (let
       (
         ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
@@ -1154,22 +1275,22 @@
         (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
         (x_adj (get x x_product_no_deci))
         (firstAN (get product x_product_no_deci))
-        (x_product (fold accumulate_product x_a_list {x: x_adj, product: iONE_8}))
+        (x_product (fold accumulate_product x_a_list {x: x_adj, product: UNSIGNED_ONE_8}))
         (product_out (get product x_product))
         (x_out (get x x_product))
-        (seriesSum (+ iONE_8 x_out))
+        (seriesSum (+ UNSIGNED_ONE_8 x_out))
         (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
         (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
         (sum (get seriesSum term_sum_x))
      )
-      (ok (* (/ (* product_out sum) iONE_8) firstAN))
+      (ok (* (/ (* product_out sum) UNSIGNED_ONE_8) firstAN))
    )
  )
 )
 
 ;; @desc accumulate_product
-;; @params x_a_pre ; tuple
-;; @params rolling_x_p; tuple
+;; @params x_a_pre ; tuple (x_pre a_pre use_deci)
+;; @params rolling_x_p ; tuple (x product)
 ;; @returns tuple
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
@@ -1181,7 +1302,7 @@
       (rolling_product (get product rolling_x_p))
    )
     (if (>= rolling_x x_pre)
-      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) (if use_deci iONE_8 1))}
+      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) (if use_deci UNSIGNED_ONE_8 1))}
       {x: rolling_x, product: rolling_product}
    )
  )
@@ -1189,7 +1310,7 @@
 
 ;; @desc rolling_div_sum
 ;; @params n
-;; @params rolling; tuple
+;; @params rolling ; tuple (term seriesSum x)
 ;; @returns tuple
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
@@ -1197,7 +1318,7 @@
       (rolling_term (get term rolling))
       (rolling_sum (get seriesSum rolling))
       (x (get x rolling))
-      (next_term (/ (/ (* rolling_term x) iONE_8) n))
+      (next_term (/ (/ (* rolling_term x) UNSIGNED_ONE_8) n))
       (next_sum (+ rolling_sum next_term))
    )
     {term: next_term, seriesSum: next_sum, x: x}
@@ -1207,12 +1328,6 @@
 ;; public functions
 ;;
 
-;; @desc get-exp-bound
-;; @returns (response uint)
-(define-read-only (get-exp-bound)
-  (ok MILD_EXPONENT_BOUND)
-)
-
 ;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
 ;; @desc pow-fixed
 ;; @params x
@@ -1221,13 +1336,13 @@
 (define-read-only (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) ERR_X_OUT_OF_BOUNDS)
+    (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
 
     ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) ERR_Y_OUT_OF_BOUNDS)
+    (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
 
     (if (is-eq y u0) 
-      (ok (to-uint iONE_8))
+      (ok (to-uint UNSIGNED_ONE_8))
       (if (is-eq x u0) 
         (ok u0)
         (pow-priv x y)
@@ -1238,82 +1353,55 @@
 
 ;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
 ;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
+
 ;; @desc exp-fixed
 ;; @params x
-;; @returns uint
+;; @returns (response uint)
 (define-read-only (exp-fixed (x int))
   (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR_INVALID_EXPONENT)
+    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (if (< x 0)
       ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
       ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by iONE_8.
-      (ok (/ (* iONE_8 iONE_8) (unwrap-panic (exp-pos (* -1 x)))))
+      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
+      (ok (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) (try! (exp-pos (* -1 x)))))
       (exp-pos x)
     )
   )
 )
 
-;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-;; @desc ln-fixed
-;; @params a
-;; @returns uint
-(define-read-only (ln-fixed (a int))
-  (begin
-    (asserts! (> a 0) ERR_OUT_OF_BOUNDS)
-    (if (< a iONE_8)
-      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-      ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by iONE_8.
-      (ok (- 0 (unwrap-panic (ln-priv (/ (* iONE_8 iONE_8) a)))))
-      (ln-priv a)
+;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
+;; @desc log-fixed
+;; @params arg
+;; @params base
+;; @returns (response uint)
+(define-read-only (log-fixed (arg int) (base int))
+  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
+  (let
+    (
+      (logBase (* (ln-priv base) UNSIGNED_ONE_8))
+      (logArg (* (ln-priv arg) UNSIGNED_ONE_8))
    )
+    (ok (/ (* logArg UNSIGNED_ONE_8) logBase))
  )
 )
- 
-;; @desc swap
-;; @params token-x-trait; ft-trait
-;; @params token-y-trait; ft-trait
-;; @params weight-x
-;; @params weight-y
-;; @params dx
-;; @params mi-dy
-;; @returns (response uint)
-(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (weight-x uint) (weight-y uint) (dx uint) (min-dy (optional uint)))
-    (ok
-        (if (is-eq (contract-of token-x-trait) .token-wstx)
-            (get dy (try! (swap-wstx-for-y token-y-trait weight-y dx min-dy)))
-            (if (is-eq (contract-of token-y-trait) .token-wstx)
-                (get dx (try! (swap-y-for-wstx token-x-trait weight-x dx min-dy)))
-                (if (is-some (get-pool-exists (contract-of token-x-trait) (contract-of token-y-trait) weight-x weight-y))
-                    (get dy (try! (swap-x-for-y token-x-trait token-y-trait weight-x weight-y dx min-dy)))
-                    (get dx (try! (swap-y-for-x token-y-trait token-x-trait weight-y weight-x dx min-dy)))
-                )
-            )
-        )
-    )
-)
 
-;; @desc get-x-y
-;; @params token-x-trait; ft-trait
-;; @params token-y-trait; ft-trait
-;; @params weight-x
-;; @params weight-y
-;; @params dy
-;; @returns (response uint uint)
-(define-read-only (get-helper (token-x principal) (token-y principal) (weight-x uint) (weight-y uint) (dx uint))
-    (ok 
-        (if (is-eq token-x .token-wstx)
-            (try! (get-y-given-wstx token-y weight-y dx))
-            (if (is-eq token-y .token-wstx)
-                (try! (get-wstx-given-y token-x weight-x dx))
-                (if (is-some (get-pool-exists token-x token-y weight-x weight-y))
-                    (try! (get-y-given-x token-x token-y weight-x weight-y dx))
-                    (try! (get-x-given-y token-y token-x weight-y weight-x dx))
-                )
-            )
-        )
-    )  
+;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
+
+;; @desc ln-fixed
+;; @params a
+;; @returns (response uint)
+(define-read-only (ln-fixed (a int))
+  (begin
+    (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
+    (if (< a UNSIGNED_ONE_8)
+      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
+      ;; If a is less than one, 1/a will be greater than one.
+      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
+      (ok (- 0 (ln-priv (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) a))))
+      (ok (ln-priv a))
+   )
+ )
 )
 
 ;; contract initialisation

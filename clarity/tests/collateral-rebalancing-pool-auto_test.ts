@@ -35,7 +35,7 @@ const moving_average = 0.95e8;
 const token_to_maturity = 0e8;
 
 Clarinet.test({
-    name: "AUTO: test",
+    name: "collateral-rebalancing-pool auto : test",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;

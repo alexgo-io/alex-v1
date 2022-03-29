@@ -19,7 +19,7 @@ const TICKET_TRAIT_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lottery-
 const FEE_TO_ADDRESS = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE"
 
 Clarinet.test({
-    name: "ALP : Testing helper functions",
+    name: "alex-launchpad : Testing helper functions",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let ALPTest = new ALEXLaunchpad(chain, deployer);
@@ -33,7 +33,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : pool creation, adding values and reducing values",
+    name: "alex-launchpad : pool creation, adding values and reducing values",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -103,7 +103,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : User Registration",
+    name: "alex-launchpad : User Registration",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -166,7 +166,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : Claim tokens",
+    name: "alex-launchpad : Claim tokens",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -237,7 +237,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "ALP : Registration Started before Add to Position",
+    name: "alex-launchpad : Registration Started before Add to Position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -266,7 +266,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : Claim Ended Error",
+    name: "alex-launchpad : Claim Ended Error",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -305,7 +305,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : Test Token Details",
+    name: "alex-launchpad : Test Token Details",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -353,7 +353,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : Test Subscriber at Token Details",
+    name: "alex-launchpad : Test Subscriber at Token Details",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -405,7 +405,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : Test Refund",
+    name: "alex-launchpad : Test Refund",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
@@ -446,7 +446,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "ALP : Claim tokens by many participants",
+    name: "alex-launchpad : Claim tokens by many participants",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;

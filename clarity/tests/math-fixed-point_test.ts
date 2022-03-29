@@ -11,7 +11,7 @@ const ONE_8 = 100000000
 
 
  Clarinet.test({
-    name: "math-fixed-point: mul-up mul-down",
+    name: "math-fixed-point : mul-up mul-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -42,7 +42,7 @@ const ONE_8 = 100000000
     });
     
 Clarinet.test({
-    name: "math-fixed-point: pow-up and pow-down",
+    name: "math-fixed-point : pow-up and pow-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;

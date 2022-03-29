@@ -58,7 +58,7 @@ const weightX = 0.5e+8
 const weightY = 0.5e+8
 
 Clarinet.test({
-    name: "Margin: create / roll margin - ALEX",
+    name: "collateral-rebalancing-pool margin : create / roll margin - ALEX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -100,17 +100,17 @@ Clarinet.test({
         result.expectOk().expectBool(true);          
         result = FWPTest3.setOracleAverage(deployer, alexAddress, wbanAddress, 0.95e8);
         result.expectOk().expectBool(true);  
-        result = FWPTest3.setStartBlock(deployer, alexAddress, wbanAddress, 0);   
-        result.expectOk().expectBool(true);   
+        result = FWPTest3.setStartBlock(deployer, alexAddress, wbanAddress, 0);
+        result.expectOk().expectBool(true);
         
         result = FWPTest3.createPool(deployer, alexAddress, wbtcAddress, fwpwalexwbtcAddress, multisigalexwbtcAddress, quantity, quantity);
         result.expectOk().expectBool(true);  
         result = FWPTest3.setOracleEnabled(deployer, alexAddress, wbtcAddress);
         result.expectOk().expectBool(true);          
         result = FWPTest3.setOracleAverage(deployer, alexAddress, wbtcAddress, 0.95e8);
-        result.expectOk().expectBool(true);  
-        result = FWPTest3.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
-        result.expectOk().expectBool(true);                        
+        result.expectOk().expectBool(true);   
+        result = FWPTest3.setStartBlock(deployer, alexAddress, wbtcAddress, 0);
+        result.expectOk().expectBool(true);                    
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 500000e+8, 500000e+8);        
         result.expectOk().expectTuple();
@@ -254,7 +254,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Margin: create / roll margin - STX",
+    name: "collateral-rebalancing-pool margin : create / roll margin - STX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -291,16 +291,12 @@ Clarinet.test({
         result.expectOk().expectBool(true);    
         result = FWPTest.setOracleAverage(deployer, wstxAddress, alexAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);    
-        result = FWPTest.setStartBlock(deployer, wstxAddress, alexAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);     
         
         result = FWPTest.createPool(deployer, wstxAddress, usdaAddress, weightX, weightY, fwpwstxusdaAddress, multisigwstxusdaAddress, quantity, quantity);
         result.expectOk().expectBool(true);
         result = FWPTest.setOracleEnabled(deployer, wstxAddress, usdaAddress, weightX, weightY);
         result.expectOk().expectBool(true);    
         result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
-        result.expectOk().expectBool(true);    
-        result = FWPTest.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);                       
 
         result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
@@ -447,7 +443,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "Margin: create / roll margin - STX <=> ALEX",
+    name: "collateral-rebalancing-pool margin : create / roll margin - STX <=> ALEX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -488,8 +484,6 @@ Clarinet.test({
         result = FWPTest.setOracleEnabled(deployer, wstxAddress, alexAddress, weightX, weightY);
         result.expectOk().expectBool(true);    
         result = FWPTest.setOracleAverage(deployer, wstxAddress, alexAddress, weightX, weightY, 0.95e8);
-        result.expectOk().expectBool(true);    
-        result = FWPTest.setStartBlock(deployer, wstxAddress, alexAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);     
         
         result = FWPTest3.createPool(deployer, alexAddress, wbtcAddress, fwpwalexwbtcAddress, multisigalexwbtcAddress, quantity, quantity);

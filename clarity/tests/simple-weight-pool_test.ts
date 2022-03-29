@@ -31,7 +31,7 @@ const wbtcPrice = 50000;
 const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
-    name: "Simple Weight Pool : pool creation, adding values and reducing values",
+    name: "simple-weight-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -129,7 +129,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Simple Weight Pool : trait check",
+    name: "simple-weight-pool : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>){
         let deployer = accounts.get("deployer")!;
@@ -182,7 +182,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "Simple Weight Pool : fee setting using multisig ",
+    name: "simple-weight-pool : fee setting using multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -298,7 +298,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "Simple Weight Pool : error testing",
+    name: "simple-weight-pool : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -415,7 +415,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Simple Weight Pool : testing get-x-given-price and get-y-given-price",
+    name: "simple-weight-pool : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -501,7 +501,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Simple Weight Pool : check start-block and end-block",
+    name: "simple-weight-pool : check start-block and end-block",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

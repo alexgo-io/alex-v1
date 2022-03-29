@@ -100,7 +100,7 @@ class Token {
  */
 
 Clarinet.test({
-    name: "APower Token: send, mint and burn some tokens",
+    name: "token-apower : send, mint and burn some tokens",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

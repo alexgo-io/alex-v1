@@ -73,8 +73,8 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
@@ -117,16 +117,12 @@ Clarinet.test({
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);   
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);         
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, wbtcAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);                              
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
             ]
         );
         block.receipts[0].result.expectOk();
@@ -171,10 +167,6 @@ Clarinet.test({
         result = FWPTestSTX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTestSTX.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);   
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, alexAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);         
-        result = FWPTestSTX.setStartBlock(deployer, wstxAddress, usdaAddress, weightX, weightY, 0);   
         result.expectOk().expectBool(true);                 
         result = FWPTestALEX.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
@@ -185,12 +177,12 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(alexAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(alexAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                                                
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(alexAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(usdaAddress), types.principal(alexAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                                                
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(wbtcAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-01", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
                 Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", [types.principal(wstxAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );

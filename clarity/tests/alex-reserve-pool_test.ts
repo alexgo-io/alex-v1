@@ -7,7 +7,7 @@ const APOWER_MULTIPLIER = 3;
 const token = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token';
 const apower = 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-apower';
 
-describe("STAKING :", () => {
+describe("alex-reserve-pool :", () => {
 
   //////////////////////////////////////////////////
   // REGISTRATION

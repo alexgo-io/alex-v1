@@ -53,7 +53,7 @@ import {
    */
   
   Clarinet.test({
-    name: "CRP : Reduce yield before key tokens (CR-02)",
+    name: "collateral-rebalacing-pool : Reduce yield before key tokens (CR-02)",
   
     async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;

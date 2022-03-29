@@ -446,6 +446,17 @@ depends_on = [
   "token-wstx"
 ]
 
+[contracts.fixed-weight-pool-v1-02]
+path = "contracts/pool/fixed-weight-pool-v1-02.clar"
+depends_on = [
+  "alex-vault",
+  "trait-sip-010",
+  "trait-vault",
+  "weighted-equation-v1-01",
+  "alex-reserve-pool",
+  "token-wstx"
+]
+
 [contracts.fixed-weight-pool-alex]
 path = "contracts/pool/fixed-weight-pool-alex.clar"
 depends_on = [
@@ -521,6 +532,10 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.swap-helper]
 path = "contracts/helpers/swap-helper.clar"
+depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool", "simple-weight-pool-alex" ]
+
+[contracts.swap-helper-v1-01]
+path = "contracts/helpers/swap-helper-v1-01.clar"
 depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool", "simple-weight-pool-alex" ]
 
 [contracts.simple-equation]
