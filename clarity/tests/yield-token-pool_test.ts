@@ -28,7 +28,7 @@ const anotherExpiry = 80875 * ONE_8
  */
 
 Clarinet.test({
-    name: "YTP : pool creation, adding values and reducing values",
+    name: "yield-token-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -330,7 +330,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "YTP : trait check",
+    name: "yield-token-pool : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -377,7 +377,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "YTP : get-x-given-price/yield, get-y-given-price/yield",
+    name: "yield-token-pool : get-x-given-price/yield, get-y-given-price/yield",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -457,7 +457,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "YTP : fee setting using multisig ",
+    name: "yield-token-pool : fee setting using multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -591,7 +591,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "YTP : error test cases ",
+    name: "yield-token-pool : error test cases ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -720,7 +720,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "YTP : buy-and-add-to-position",
+    name: "yield-token-pool : buy-and-add-to-position",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -788,7 +788,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "YTP : roll-position",
+    name: "yield-token-pool : roll-position",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

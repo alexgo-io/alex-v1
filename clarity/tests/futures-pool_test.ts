@@ -12,7 +12,7 @@ const futuresPoolAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.futures-po
 const ACTIVATION_BLOCK = 20
 
 Clarinet.test({
-    name: "STACKING POOL: Ensure that set-contract-owner can only be called by contract owner",
+    name: "futures-pool : Ensure that set-contract-owner can only be called by contract owner",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         var notContractOwner = accounts.get("wallet_1")!;
         var wallet_2 = accounts.get("wallet_2")!;
@@ -31,7 +31,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "STACKING POOL: Ensure that create-pool can only be called by contract owner",
+    name: "futures-pool : Ensure that create-pool can only be called by contract owner",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         var notContractOwner = accounts.get("wallet_1")!;
         var futuresPool = new FuturesPool(chain)
@@ -42,9 +42,9 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that stacking is available when adding to position"
+// name: "futures-pool : Ensure that stacking is available when adding to position"
 Clarinet.test({
-    name: "STACKING POOL: Ensure that stacking is available when adding to position",
+    name: "futures-pool : Ensure that stacking is available when adding to position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const futuresPool = new FuturesPool(chain)
@@ -70,9 +70,9 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that stacking is not in progress when adding to position"
+// name: "futures-pool : Ensure that stacking is not in progress when adding to position"
 Clarinet.test({
-    name: "STACKING POOL: Ensure that stacking is not in progress when adding to position",
+    name: "futures-pool : Ensure that stacking is not in progress when adding to position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const futuresPool = new FuturesPool(chain)
@@ -97,9 +97,9 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that add-to-position works on a valid pool"
+// name: "futures-pool : Ensure that add-to-position works on a valid pool"
 Clarinet.test({
-    name: "STACKING POOL: Ensure that add-to-position works on a valid pool",
+    name: "futures-pool : Ensure that add-to-position works on a valid pool",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_2 = accounts.get("wallet_2")!;
@@ -132,9 +132,9 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that reduce-position is called when stacking is not in progress"
+// name: "futures-pool : Ensure that reduce-position is called when stacking is not in progress"
 Clarinet.test({
-    name: "STACKING POOL: Ensure that reduce-position is called when stacking is not in progress",
+    name: "futures-pool : Ensure that reduce-position is called when stacking is not in progress",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -171,9 +171,9 @@ Clarinet.test({
     }
 })
 
-// name: "STACKING POOL: Ensure that deployer can create-pool, add-to-position and reduce-to-position"
+// name: "futures-pool : Ensure that deployer can create-pool, add-to-position and reduce-to-position"
 Clarinet.test({
-    name: "STACKING POOL: Ensure that deployer can create-pool, add-to-position and reduce-to-position",
+    name: "futures-pool : Ensure that deployer can create-pool, add-to-position and reduce-to-position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -223,7 +223,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "STACKING POOL: Ensure that deployer can create-pool, add-to-position, claim-and-stake, and reduce-to-position",
+    name: "futures-pool : Ensure that deployer can create-pool, add-to-position, claim-and-stake, and reduce-to-position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;

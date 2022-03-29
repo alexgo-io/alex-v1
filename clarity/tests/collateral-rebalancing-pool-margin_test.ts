@@ -58,7 +58,7 @@ const weightX = 0.5e+8
 const weightY = 0.5e+8
 
 Clarinet.test({
-    name: "Margin: create / roll margin - ALEX",
+    name: "collateral-rebalancing-pool margin : create / roll margin - ALEX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -254,7 +254,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Margin: create / roll margin - STX",
+    name: "collateral-rebalancing-pool margin : create / roll margin - STX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -443,7 +443,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "Margin: create / roll margin - STX <=> ALEX",
+    name: "collateral-rebalancing-pool margin : create / roll margin - STX <=> ALEX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

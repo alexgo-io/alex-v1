@@ -48,7 +48,7 @@ const wbtcQ = 100*ONE_8
  */
 
 Clarinet.test({
-    name: "CRP : pool creation, adding values and reducing values",
+    name: "collateral-rebalacing-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -215,7 +215,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : trait check",
+    name: "collateral-rebalacing-pool : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -303,7 +303,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : multiple CRP pools created",
+    name: "collateral-rebalacing-pool : multiple CRP pools created",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -365,7 +365,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01-v1-01 throws error",
+    name: "collateral-rebalacing-pool : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01-v1-01 throws error",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -424,7 +424,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : error testing",
+    name: "collateral-rebalacing-pool : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -506,7 +506,7 @@ Clarinet.test({
 });        
 
 Clarinet.test({
-    name: 'CRP : testing get-x-given-y and get-y-given-x',
+    name: 'collateral-rebalacing-pool : testing get-x-given-y and get-y-given-x',
     async fn (chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
@@ -572,7 +572,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "CRP : fee setting using multisig",
+    name: "collateral-rebalacing-pool : fee setting using multisig",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

@@ -6,7 +6,7 @@ const ONE_16 = 1e16
 const ONE_8 = 1e8
 
 Clarinet.test({
-    name: "math-fixed-point-v2: greater than equal to",
+    name: "math-fixed-point-v2 : greater than equal to",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -29,7 +29,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: ln",
+    name: "math-fixed-point-v2 : ln",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -161,7 +161,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: mul-scientific",
+    name: "math-fixed-point-v2 : mul-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -242,7 +242,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: div-scientific",
+    name: "math-fixed-point-v2 : div-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -323,7 +323,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: exp-scientific",
+    name: "math-fixed-point-v2 : exp-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
 
         let deployer = accounts.get("deployer")!;
@@ -428,7 +428,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: pow-scientific",
+    name: "math-fixed-point-v2 : pow-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
 
         let deployer = accounts.get("deployer")!;
@@ -531,7 +531,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: scale-up",
+    name: "math-fixed-point-v2 : scale-up",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "scale-up",
@@ -558,7 +558,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: scale-down",
+    name: "math-fixed-point-v2 : scale-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "scale-down",
@@ -585,7 +585,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: scale-down-with-lost-precision",
+    name: "math-fixed-point-v2 : scale-down-with-lost-precision",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "scale-down-with-lost-precision",
@@ -609,7 +609,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: scale-down-scientific",
+    name: "math-fixed-point-v2 : scale-down-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "scale-down-scientific",
@@ -642,7 +642,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: add-scientific",
+    name: "math-fixed-point-v2 : add-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "add-scientific",
@@ -678,7 +678,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: sub-scientific",
+    name: "math-fixed-point-v2 : sub-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "sub-scientific",
@@ -714,7 +714,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: log-scientific",
+    name: "math-fixed-point-v2 : log-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "log-scientific",
@@ -761,7 +761,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: from-fixed-to-scientific",
+    name: "math-fixed-point-v2 : from-fixed-to-scientific",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "from-fixed-to-scientific",
@@ -800,7 +800,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: from-scientific-to-fixed",
+    name: "math-fixed-point-v2 : from-scientific-to-fixed",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let call = chain.callReadOnlyFn("math-fixed-point-v2", "from-scientific-to-fixed",
@@ -832,7 +832,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "math-fixed-point-v2: mul-up mul-down",
+    name: "math-fixed-point-v2 : mul-up mul-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;
@@ -861,7 +861,7 @@ Clarinet.test({
     });
     
 Clarinet.test({
-    name: "math-fixed-point-v2: pow-up and pow-down",
+    name: "math-fixed-point-v2 : pow-up and pow-down",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         
         let deployer = accounts.get("deployer")!;

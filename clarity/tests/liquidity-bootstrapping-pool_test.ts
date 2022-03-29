@@ -26,7 +26,7 @@ const usdaQty = Math.round(price0 * alexQty * (ONE_8 - weightX1) / weightX1 / ON
 
 
 Clarinet.test({
-    name: "LBP : pool creation, adding values and reducing values",
+    name: "liquidity-bootstrapping-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -167,7 +167,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "LBP : trait check",
+  name: "liquidity-bootstrapping-pool : trait check",
 
   async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;

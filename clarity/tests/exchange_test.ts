@@ -30,7 +30,7 @@ class Exchange {
  */
 
 Clarinet.test({
-    name: "Exchange: exchange",
+    name: "exchange : exchange",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
