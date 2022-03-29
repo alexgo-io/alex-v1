@@ -68,7 +68,7 @@ class LotteryTicket {
  */
 
 Clarinet.test({
-    name: "Lottery ticket: send and mint some tokens",
+    name: "lottery-ido-alex : send and mint some tokens",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

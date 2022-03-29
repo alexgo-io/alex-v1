@@ -37,28 +37,28 @@
 ;;
 (define-data-var total-supply uint u0)
 (define-data-var activated bool false)
-(define-data-var claim-and-stake-bounty-in-fixed uint u100000) ;; 0.1%
-(define-data-var claim-and-stake-bounty-max-in-fixed uint u1000000000) ;; 10 $ALEX
+(define-data-var bounty-in-fixed uint u100000) ;; 0.1%
+(define-data-var bounty-max-in-fixed uint u1000000000) ;; 10 $ALEX
 
-(define-read-only (get-claim-and-stake-bounty-in-fixed)
-  (ok (var-get claim-and-stake-bounty-in-fixed))
+(define-read-only (get-bounty-in-fixed)
+  (ok (var-get bounty-in-fixed))
 )
 
-(define-public (set-claim-and-stake-bounty-in-fixed (new-claim-and-stake-bounty-in-fixed uint))
+(define-public (set-bounty-in-fixed (new-bounty-in-fixed uint))
   (begin 
     (try! (check-is-owner))
-    (ok (var-set claim-and-stake-bounty-in-fixed new-claim-and-stake-bounty-in-fixed))
+    (ok (var-set bounty-in-fixed new-bounty-in-fixed))
   )
 )
 
-(define-read-only (get-claim-and-stake-bounty-max-in-fixed)
-  (ok (var-get claim-and-stake-bounty-max-in-fixed))
+(define-read-only (get-bounty-max-in-fixed)
+  (ok (var-get bounty-max-in-fixed))
 )
 
-(define-public (set-claim-and-stake-bounty-max-in-fixed (new-claim-and-stake-bounty-max-in-fixed uint))
+(define-public (set-bounty-max-in-fixed (new-bounty-max-in-fixed uint))
   (begin 
     (try! (check-is-owner))
-    (ok (var-set claim-and-stake-bounty-max-in-fixed new-claim-and-stake-bounty-max-in-fixed))
+    (ok (var-set bounty-max-in-fixed new-bounty-max-in-fixed))
   )
 )
 
@@ -165,9 +165,9 @@
       (claimed (as-contract (try! (claim-staking-reward-internal reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty 
-        (if (> (mul-down balance (var-get claim-and-stake-bounty-in-fixed)) (var-get claim-and-stake-bounty-max-in-fixed))
-          (var-get claim-and-stake-bounty-max-in-fixed)
-          (mul-down balance (var-get claim-and-stake-bounty-in-fixed))
+        (if (> (mul-down balance (var-get bounty-in-fixed)) (var-get bounty-max-in-fixed))
+          (var-get bounty-max-in-fixed)
+          (mul-down balance (var-get bounty-in-fixed))
         )
       )
     )

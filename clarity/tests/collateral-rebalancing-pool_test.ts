@@ -48,7 +48,7 @@ const wbtcQ = 100*ONE_8
  */
 
 Clarinet.test({
-    name: "CRP : pool creation, adding values and reducing values",
+    name: "collateral-rebalacing-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -101,11 +101,11 @@ Clarinet.test({
         result.expectOk().expectBool(true);          
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         let call = await CRPTest.getSpot(wbtcAddress, usdaAddress);
         call.result.expectOk();
@@ -215,7 +215,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : trait check",
+    name: "collateral-rebalacing-pool : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -266,7 +266,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);             
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectTuple();        
 
         // non-deployer creating a pool will throw an error
         result = CRPTest.createPool(wallet_1, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
@@ -274,7 +274,7 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);     
+        result.expectOk().expectTuple();     
         
         // supplying a wrong pool-token throws an error
         result = CRPTest.addToPositionAndSwitch(wallet_1, wbtcAddress, usdaAddress, expiry, wrongPooltokenAddress, keywbtcAddress, 5000 * ONE_8);
@@ -303,7 +303,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : multiple CRP pools created",
+    name: "collateral-rebalacing-pool : multiple CRP pools created",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -347,25 +347,25 @@ Clarinet.test({
         result.expectOk().expectBool(true);                 
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         // simulate to half way to expiry
         chain.mineEmptyBlockUntil(expiry / 2)
 
         result = YTPTest.createPool(deployer, expiry79760, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry79760, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);  
+        result.expectOk().expectTuple();    
     },    
 });
 
 Clarinet.test({
-    name: "CRP : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01-v1-01 throws error",
+    name: "collateral-rebalacing-pool : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01-v1-01 throws error",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -412,7 +412,7 @@ Clarinet.test({
 
         let ltv_0_0 = 0.5 * ONE_8;
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 0.2 * Math.round(wbtcPrice * wbtcQ / ONE_8));
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
        let call:any = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
         call.result.expectOk().expectUint(94351067);                
@@ -424,7 +424,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "CRP : error testing",
+    name: "collateral-rebalacing-pool : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -468,11 +468,11 @@ Clarinet.test({
         result.expectOk().expectBool(true);              
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0);
         result.expectErr().expectUint(2003)
@@ -493,9 +493,7 @@ Clarinet.test({
         
         // arbtrageur attepmts to retreive back with zero value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0);        
-        let position:any = result.expectOk().expectTuple();
-        position['dx'].expectUint(0);
-        position['dy'].expectUint(0);
+        let position:any = result.expectErr().expectUint(5000);
 
         // arbitrageur attempts to retreuve back with small value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0.001 * ONE_8);        
@@ -508,7 +506,7 @@ Clarinet.test({
 });        
 
 Clarinet.test({
-    name: 'CRP : testing get-x-given-y and get-y-given-x',
+    name: 'collateral-rebalacing-pool : testing get-x-given-y and get-y-given-x',
     async fn (chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let CRPTest = new CRPTestAgent1(chain, deployer);
@@ -550,7 +548,7 @@ Clarinet.test({
         result.expectOk().expectBool(true);              
 
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8);
         result.expectOk().expectUint(1990);
@@ -574,7 +572,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "CRP : fee setting using multisig",
+    name: "collateral-rebalacing-pool : fee setting using multisig",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -626,11 +624,11 @@ Clarinet.test({
         result.expectOk().expectBool(true);              
 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, wbtcQ / 10, wbtcQ / 10);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 50000 * ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
 
         let ROresult:any = YieldToken.totalSupply(expiry)
         ROresult.result.expectOk().expectUint(48780487);

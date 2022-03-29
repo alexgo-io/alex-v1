@@ -45,7 +45,7 @@ const parameters = {
 };
 
 Clarinet.test({
-  name: "Launchpad: only owner can create pool",
+  name: "alex-launchpad-v1-1 : only owner can create pool",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -114,7 +114,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "Launchpad: only ido-owner/approved-address can add-to-positions",
+  name: "alex-launchpad-v1-1 : only ido-owner/approved-address can add-to-positions",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -230,7 +230,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "Launchpad: registration is allowed only once",
+  name: "alex-launchpad-v1-1 : registration is allowed only once",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -297,7 +297,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "Launchpad: attempt to register more than max fails",
+  name: "alex-launchpad-v1-1 : attempt to register more than max fails",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -354,7 +354,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "Launchpad: contract-owner can transfer all tokens in emergency",
+  name: "alex-launchpad-v1-1 : contract-owner can transfer all tokens in emergency",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -442,7 +442,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "Launchpad: activation-threshold not reached allows orderly refund",
+  name: "alex-launchpad-v1-1 : activation-threshold not reached allows orderly refund",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -672,7 +672,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "Launchpad: example claim walk test",
+  name: "alex-launchpad-v1-1 : example claim walk test",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -886,7 +886,7 @@ Clarinet.test({
         assertEquals(ticketRecipients[index]["amount"], won + lost);
       }
 
-      maxChunkSize = 1;
+      maxChunkSize = 5;
       for (let index = 0; index < losers.losers.length; index += maxChunkSize) {
         let losers_sliced = losers.losers.slice(index, index + maxChunkSize);
         // console.log(losers_sliced);

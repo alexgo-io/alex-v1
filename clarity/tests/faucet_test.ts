@@ -166,7 +166,7 @@ export class MintAlexManyRecord {
  */
 
 Clarinet.test({
-    name: "Faucet: set amounts and send some tokens",
+    name: "faucet : set amounts and send some tokens",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

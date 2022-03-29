@@ -38,6 +38,10 @@
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal))
     (begin
         (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        ;; .token-diko to be replaced by 'SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-alex-dual-yield-v1-1 in prod.
+        ;; see https://github.com/arkadiko-dao/arkadiko/blob/f8b0fc3707af60956431a632ccbb64bd29c0f7e3/clarity/contracts/arkadiko-alex-dual-yield-v1-1.clar
+        ;; multiplier to ALEX reward to be set at pool activation so total DIKO rewarded per cycle == 12.5k for the first 100 cycles
+        ;; see https://github.com/alexgo-io/alex-v1/blob/38b93cbdfa1d0ef11214406904879f59f003aa21/clarity/contracts/pool/dual-farming-pool.clar#L81
         (as-contract (contract-call? .token-diko mint (fixed-to-decimals amount) recipient))
     )
 )

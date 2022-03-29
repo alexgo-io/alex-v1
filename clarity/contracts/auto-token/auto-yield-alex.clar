@@ -2,16 +2,15 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-TRANSFER-FAILED (err u3000))
 
-(define-fungible-token fwp-wstx-wbtc-50-50-v1-01)
+(define-fungible-token auto-yield-alex)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "STX-XBTC Pool Token Weight 50/50")
-(define-data-var token-symbol (string-ascii 32) "STX-XBTC-50-50")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/fwp-wstx-wbtc-50-50-v1-01.json"))
+(define-data-var token-name (string-ascii 32) "Auto yield-ALEX")
+(define-data-var token-symbol (string-ascii 32) "auto-yield-alex")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-yield-alex.json"))
 
 (define-data-var token-decimals uint u8)
 
@@ -78,12 +77,12 @@
 ;; sip010-ft-trait
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (ft-transfer? fwp-wstx-wbtc-50-50-v1-01 amount sender recipient))
-    (match memo to-print (print to-print) 0x)
-    (ok true)
-  )
+    (begin
+        (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+        (try! (ft-transfer? auto-yield-alex amount sender recipient))
+        (match memo to-print (print to-print) 0x)
+        (ok true)
+    )
 )
 
 (define-read-only (get-name)
@@ -99,11 +98,11 @@
 )
 
 (define-read-only (get-balance (who principal))
-	(ok (ft-get-balance fwp-wstx-wbtc-50-50-v1-01 who))
+	(ok (ft-get-balance auto-yield-alex who))
 )
 
 (define-read-only (get-total-supply)
-	(ok (ft-get-supply fwp-wstx-wbtc-50-50-v1-01))
+	(ok (ft-get-supply auto-yield-alex))
 )
 
 (define-read-only (get-token-uri)
@@ -123,7 +122,7 @@
 (define-public (mint (amount uint) (recipient principal))
 	(begin		
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-mint? fwp-wstx-wbtc-50-50-v1-01 amount recipient)
+		(ft-mint? auto-yield-alex amount recipient)
 	)
 )
 
@@ -136,7 +135,7 @@
 (define-public (burn (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-burn? fwp-wstx-wbtc-50-50-v1-01 amount sender)
+		(ft-burn? auto-yield-alex amount sender)
 	)
 )
 
@@ -216,6 +215,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .fixed-weight-pool-v1-01 true)
-(map-set approved-contracts .fixed-weight-pool-v1-02 true)
-(map-set approved-contracts .simple-weight-pool true)
+(map-set approved-contracts .collateral-rebalancing-pool true)
