@@ -31,7 +31,7 @@ const price = 50000;
 const quantity = 10 * ONE_8;
 
 Clarinet.test({
-    name: "Swap-Helper : ALEX only swap works",
+    name: "swap-helper : ALEX only swap works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -83,7 +83,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Swap-Helper : STX only swap works",
+    name: "swap-helper : STX only swap works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -131,7 +131,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Swap-Helper : STX-anchored pool <=> ALEX-anchored pool works",
+    name: "swap-helper : STX-anchored pool <=> ALEX-anchored pool works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
