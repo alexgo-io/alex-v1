@@ -20,7 +20,7 @@ class MS_FWP_WSTX_USDA_5050 {
 
   propose(startBlockHeight: number, proposeTitle: string, proposeURL: string, feeRateX: number, feeRateY: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-50-50", "propose", [
+          Tx.contractCall("multisig-fwp-wstx-usda-50-50-v1-01", "propose", [
             types.uint(startBlockHeight),
             types.utf8(proposeTitle),
             types.utf8(proposeURL),
@@ -33,7 +33,7 @@ class MS_FWP_WSTX_USDA_5050 {
   
   voteFor(contractCaller: Account, token: string, proposalID: number, amount: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-50-50", "vote-for", [
+          Tx.contractCall("multisig-fwp-wstx-usda-50-50-v1-01", "vote-for", [
             types.principal(token),
             types.uint(proposalID),
             types.uint(amount)
@@ -44,7 +44,7 @@ class MS_FWP_WSTX_USDA_5050 {
   
   voteAgainst(contractCaller: Account, token: string, proposalID: number, amount: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-50-50", "vote-against", [
+          Tx.contractCall("multisig-fwp-wstx-usda-50-50-v1-01", "vote-against", [
             types.principal(token),
             types.uint(proposalID),
             types.uint(amount)
@@ -55,7 +55,7 @@ class MS_FWP_WSTX_USDA_5050 {
 
   endProposal(proposalID: number) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-50-50", "end-proposal", [
+          Tx.contractCall("multisig-fwp-wstx-usda-50-50-v1-01", "end-proposal", [
             types.uint(proposalID),
           ], this.deployer.address),
         ]);
@@ -64,7 +64,7 @@ class MS_FWP_WSTX_USDA_5050 {
 
     returnVotesToMember(contractCaller: Account, token: string, proposalID: number, member: string) {
       let block = this.chain.mineBlock([
-          Tx.contractCall("multisig-fwp-wstx-usda-50-50", "return-votes-to-member", [
+          Tx.contractCall("multisig-fwp-wstx-usda-50-50-v1-01", "return-votes-to-member", [
             types.principal(token),
             types.uint(proposalID),
             types.principal(member)

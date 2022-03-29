@@ -142,7 +142,7 @@ import {
         wbtcQ / 10 ,
         wbtcQ / 10,
       );
-      result.expectOk().expectBool(true);
+      result.expectOk().expectTuple();
 
       call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
       position = call.result.expectOk().expectTuple();
@@ -171,7 +171,7 @@ import {
         1 * ONE_8,
         50000 * ONE_8,
       );
-      result.expectOk().expectBool(true);
+      result.expectOk().expectTuple();
 
       // call = await CRPTest.getSpot(wbtcAddress, usdaAddress);
       // call.result.expectOk();

@@ -1,5 +1,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
+
 (define-private (is-fixed-weight-pool-v1-01 (token-x principal) (token-y principal))
     (if 
         (or  
@@ -101,15 +102,32 @@
             (token-y (contract-of token-y-trait))
         )        
         (ok 
-            (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0) 
-                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y token-x-trait token-y-trait u50000000 u50000000 dx min-dy)))
+            (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
+                (if (is-eq token-x .token-wstx)
+                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 dx min-dy)))
+                    (if (is-eq token-y .token-wstx)
+                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx min-dy)))
+                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
+                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) min-dy)))
+                    )
+                )
                 (if (> (is-simple-weight-pool-alex token-x token-y) u0)
                     (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy)))
                     (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                        (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y token-x-trait .age000-governance-token u50000000 u50000000 dx none))) min-dy))) 
-                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-x-for-y .age000-governance-token token-y-trait u50000000 u50000000 
-                            (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))
+                        (if (is-eq token-x .token-wstx)
+                            (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 dx none))) min-dy))) 
+                            (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 
+                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) none))) min-dy)))
+                        )
+                        (if (is-eq token-y .token-wstx)
+                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
+                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))                        
+                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
+                                    (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) none))) min-dy)))
+                        )
                     )
                 )
             )
@@ -120,6 +138,7 @@
 ;; @desc get-helper returns estimated dy when swapping token-x for token-y
 ;; @param token-x
 ;; @param token-y
+;; @param dx
 ;; @returns (response uint uint)
 (define-read-only (get-helper (token-x principal) (token-y principal) (dx uint))
     (ok
@@ -132,6 +151,28 @@
                         (try! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x .age000-governance-token u50000000 u50000000 dx)))) 
                     (try! (contract-call? .fixed-weight-pool-v1-01 get-helper .age000-governance-token token-y u50000000 u50000000 
                         (try! (contract-call? .simple-weight-pool-alex get-alex-given-y token-x dx))))
+                )
+            )
+        )
+    )
+)
+
+;; @desc get-helper returns estimated dx required when swapping token-x for dy of token-y
+;; @param token-x
+;; @param token-y
+;; @param dy
+;; @returns (response uint uint)
+(define-read-only (get-given-helper (token-x principal) (token-y principal) (dy uint))
+    (ok
+        (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
+            (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x token-y u50000000 u50000000 dy))
+            (if (> (is-simple-weight-pool-alex token-x token-y) u0)
+                (try! (contract-call? .simple-weight-pool-alex get-x-given-y token-x token-y dy))
+                (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
+                    (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x .age000-governance-token u50000000 u50000000 
+                        (try! (contract-call? .simple-weight-pool-alex get-alex-given-y token-y dy)))) 
+                    (try! (contract-call? .simple-weight-pool-alex get-y-given-alex token-x
+                        (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y .age000-governance-token token-y u50000000 u50000000 dy))))
                 )
             )
         )

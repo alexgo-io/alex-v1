@@ -18,7 +18,7 @@ const multisigytpyieldwbtc = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.ytp-yield-usda"
 
 const ONE_8 = 100000000
-const expiry = 59760 * ONE_8
+const expiry = 59761 * ONE_8
 const wrongExpiry = 70000 * ONE_8
 const anotherExpiry = 80875 * ONE_8
 
@@ -47,7 +47,16 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
+
+        const block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -175,7 +184,7 @@ Clarinet.test({
         call.result.expectOk().expectUint(1726979);   
         
         // simulate to be on half way to expiry
-        chain.mineEmptyBlockUntil((expiry / ONE_8) / 2)      
+        chain.mineEmptyBlockUntil(Math.floor(expiry / ONE_8 / 2) + 1);
         
         // check t == 0.5
         call = chain.callReadOnlyFn("yield-token-pool", "get-t", 
@@ -339,9 +348,18 @@ Clarinet.test({
         result = YTPTest.createPool(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
         result.expectErr().expectUint(1000);
 
+        const block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });
+
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectTuple();        
 
         //if wrong pool token is supplied, then throw an error
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, wrongPooltokenAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
@@ -378,7 +396,16 @@ Clarinet.test({
         
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
+
+        const block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -466,7 +493,16 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
+
+        const block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -584,11 +620,20 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
+
+        let block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Duplicated Pool 
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectErr().expectUint(2000);
+        result.expectErr().expectUint(2000);   
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -694,7 +739,16 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
+
+        const block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -755,7 +809,16 @@ Clarinet.test({
 
         //Deployer creating a pool, initial tokens injected to the pool
         result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
+
+        let block = chain.mineBlock(
+            [
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(yieldwbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(wbtcAddress)], deployer.address),
+                Tx.contractCall("alex-vault", "add-approved-token", [types.principal(ytpyieldwbtcAddress)], deployer.address),
+            ]
+        );
+        block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Check pool details and print
         let call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
@@ -786,17 +849,18 @@ Clarinet.test({
         
         // create another ytp
         result = YTPTest.createPool(deployer, anotherExpiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 1000*ONE_8, 1000*ONE_8);
-        result.expectOk().expectBool(true);       
+        result.expectOk().expectTuple(); 
+
         // inject some yield-token to pool
         result = YTPTest.swapYForX(deployer, anotherExpiry, yieldwbtcAddress, wbtcAddress, 10 * ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(1003825875);
+        position['dx'].expectUint(1003829746);
         position['dy'].expectUint(10 * ONE_8);     
         
         call = await YTPTest.getPoolDetails(anotherExpiry, yieldwbtcAddress);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(1000*ONE_8);
-        position['balance-token'].expectUint(1000*ONE_8 - 1003825875);
+        position['balance-token'].expectUint(1000*ONE_8 - 1003829746);
         position['balance-yield-token'].expectUint(10 * ONE_8);
         position['balance-virtual'].expectUint(1000*ONE_8);          
         

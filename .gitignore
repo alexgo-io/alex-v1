@@ -3,6 +3,8 @@ clarity/history.txt
 clarity/.vscode
 clarity/coverage.lcov
 
+clarity/.git_tmp_repos
+
 deployContracts-keychain.json
 **/contract-records/
 **/hex-files/
