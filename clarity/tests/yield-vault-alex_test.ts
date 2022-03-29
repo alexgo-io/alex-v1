@@ -12,7 +12,7 @@ const ACTIVATION_BLOCK = 20;
 const BountyFixed = 0.1e8;
 
 Clarinet.test({
-    name: "yield-vault-alex : Ensure that privileged setters can only be called by contract owner",
+    name: "yield-vault-alex : ensure that privileged setters can only be called by contract owner",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         var notContractOwner = accounts.get("wallet_1")!;
         var wallet_2 = accounts.get("wallet_2")!;
@@ -44,7 +44,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "yield-vault-alex : Ensure that contract is activated when adding to position",
+    name: "yield-vault-alex : ensure that contract is activated when adding to position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -73,7 +73,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "yield-vault-alex : Ensure that stacking is available when adding to position",
+    name: "yield-vault-alex : ensure that stacking is available when adding to position",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -103,7 +103,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "yield-vault-alex : Ensure that add-to-position works on a valid pool",
+    name: "yield-vault-alex : ensure that add-to-position works on a valid pool",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -185,7 +185,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "yield-vault-alex : Ensure that claim-and-stake cannot claim future cycles",
+    name: "yield-vault-alex : ensure that claim-and-stake cannot claim future cycles",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -245,7 +245,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "yield-vault-alex : Ensure that claim-and-stake works with a valid cycle",
+    name: "yield-vault-alex : ensure that claim-and-stake works with a valid cycle",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
