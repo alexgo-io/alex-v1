@@ -73,16 +73,25 @@ class YieldVault{
         )
     } 
     
-    claimStakingReward(sender: Account, target_cycle: number){
+    SetBountyInFixed(sender: Account, bounty_in_fixed: number){
         return Tx.contractCall(
             "yield-vault-alex",
-            "claim-staking-reward",
+            "set-bounty-in-fixed",
             [
-                types.uint(target_cycle)
+                types.uint(bounty_in_fixed)
             ],
             sender.address
         )
-    }    
+    }
+    
+    getBountyInFixed(sender: Account){
+        return this.chain.callReadOnlyFn(
+            "yield-vault-alex",
+            "get-bounty-in-fixed",
+            [],
+            sender.address
+        )
+    }     
 }
 
 export { YieldVault }

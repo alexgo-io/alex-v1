@@ -15,6 +15,7 @@
 (define-constant ERR-NOT-ACTIVATED (err u2043))
 (define-constant ERR-ACTIVATED (err u2044))
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
+(define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -37,8 +38,7 @@
 ;;
 (define-data-var total-supply uint u0)
 (define-data-var activated bool false)
-(define-data-var bounty-in-fixed uint u100000) ;; 0.1%
-(define-data-var bounty-max-in-fixed uint u1000000000) ;; 10 $ALEX
+(define-data-var bounty-in-fixed uint u1000000000) ;; 10 ALEX
 
 (define-read-only (get-bounty-in-fixed)
   (ok (var-get bounty-in-fixed))
@@ -48,17 +48,6 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set bounty-in-fixed new-bounty-in-fixed))
-  )
-)
-
-(define-read-only (get-bounty-max-in-fixed)
-  (ok (var-get bounty-max-in-fixed))
-)
-
-(define-public (set-bounty-max-in-fixed (new-bounty-max-in-fixed uint))
-  (begin 
-    (try! (check-is-owner))
-    (ok (var-set bounty-max-in-fixed new-bounty-max-in-fixed))
   )
 )
 
@@ -164,16 +153,16 @@
       ;; claim all that's available to claim for the reward-cycle
       (claimed (as-contract (try! (claim-staking-reward-internal reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (bounty 
-        (if (> (mul-down balance (var-get bounty-in-fixed)) (var-get bounty-max-in-fixed))
-          (var-get bounty-max-in-fixed)
-          (mul-down balance (var-get bounty-in-fixed))
-        )
-      )
+      (bounty (var-get bounty-in-fixed))
     )
     (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
-    (and (var-get activated) (> balance u0) (as-contract (try! (stake-tokens (- balance bounty) u32))))
-    (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
+    (asserts! (> balance bounty) ERR-INSUFFICIENT-BALANCE)
+    (and 
+      (var-get activated) 
+      (as-contract (try! (stake-tokens (- balance bounty) u32)))
+      (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none)))
+    )
+    
     (ok true)
   )
 )
