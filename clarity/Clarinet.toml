@@ -48,7 +48,7 @@ depends_on = [
   "alex-reserve-pool",
   "yield-token-pool",
   "yield-usda",
-  "swap-helper"
+  "swap-helper-v1-01"
 ]
 
 [contracts.yield-collateral-rebalancing-pool]

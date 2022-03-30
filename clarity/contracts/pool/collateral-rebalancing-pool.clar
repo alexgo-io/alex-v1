@@ -130,7 +130,7 @@
 ;; @param expiry; expiry block-height
 ;; @returns (response uint uint)
 (define-read-only (get-spot (token principal) (collateral principal))
-    (ok (try! (oracle-resilient-helper collateral token)))
+    (ok (try! (contract-call? .swap-helper-v1-01 oracle-resilient-helper collateral token)))
 )
 
 (define-read-only (get-pool-value-in-token (token principal) (collateral principal) (expiry uint))
@@ -395,7 +395,7 @@
                 (dx-weighted (mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
 
-                (dy-weighted (try! (swap-helper collateral-trait token-trait dx-to-dy none)))
+                (dy-weighted (try! (contract-call? .swap-helper-v1-01 swap-helper collateral-trait token-trait dx-to-dy none)))
 
                 (pool-updated (merge pool {
                     yield-supply: (+ yield-new-supply yield-supply),                    
@@ -406,7 +406,7 @@
                 (sender tx-sender)
             ) 
 
-            (unwrap! (get-helper token-x token-y (+ dx balance-x (div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
+            (unwrap! (contract-call? .swap-helper-v1-01 get-helper token-x token-y (+ dx balance-x (div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
 
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -451,7 +451,7 @@
                 (bal-x-to-sell 
                     (if (is-eq bal-y-short u0)
                         u0
-                        (try! (get-helper token-y token-x bal-y-short))
+                        (try! (contract-call? .swap-helper-v1-01 get-helper token-y token-x bal-y-short))
                     )
                 )
                 (bal-y-short-act 
@@ -459,7 +459,7 @@
                         u0
                         (begin
                             (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell none)))
+                            (as-contract (try! (contract-call? .swap-helper-v1-01 swap-helper collateral-trait token-trait bal-x-to-sell none)))
                         )
                     )
                 )                
@@ -524,7 +524,7 @@
                 (bal-x-to-sell 
                     (if (is-eq bal-y-short u0)
                         u0
-                        (try! (get-helper token-y token-x bal-y-short))
+                        (try! (contract-call? .swap-helper-v1-01 get-helper token-y token-x bal-y-short))
                     )
                 )
                 (bal-y-short-act 
@@ -532,7 +532,7 @@
                         u0
                         (begin
                             (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell none)))
+                            (as-contract (try! (contract-call? .swap-helper-v1-01 swap-helper collateral-trait token-trait bal-x-to-sell none)))
                         )
                     )
                 )                                 
@@ -875,7 +875,7 @@
 (define-private (get-token-given-position-with-spot (token principal) (collateral principal) (expiry uint) (spot uint) (dx uint))
     (let 
         (
-            (ltv-dy (mul-down (try! (get-ltv-with-spot token collateral expiry spot)) (try! (get-helper collateral token dx))))
+            (ltv-dy (mul-down (try! (get-ltv-with-spot token collateral expiry spot)) (try! (contract-call? .swap-helper-v1-01 get-helper collateral token dx))))
         )
         (asserts! (< block-height expiry) ERR-EXPIRY)
         (ok {yield-token: ltv-dy, key-token: ltv-dy})
@@ -913,7 +913,7 @@
                 (dy-weighted (get dy pos-data))
 
                 ;; always convert to collateral ccy
-                (dy-to-dx (try! (get-helper collateral token dy-weighted)))   
+                (dy-to-dx (try! (contract-call? .swap-helper-v1-01 get-helper collateral token dy-weighted)))   
                 (dx (+ dx-weighted dy-to-dx))
             )
             (ok {dx: dx, dx-weighted: dx-weighted, dy-weighted: dy-weighted})
@@ -1334,296 +1334,6 @@
  )
 )
 
-(define-private (is-fixed-weight-pool-v1-01 (token-x principal) (token-y principal))
-    (if 
-        (or  
-            (and
-                (is-eq token-x .token-wstx)
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-y u50000000 u50000000))
-            )
-            (and
-                (is-eq token-y .token-wstx)
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-x u50000000 u50000000))
-            )
-        )
-        u1
-        (if 
-            (and
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-y u50000000 u50000000))
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-x u50000000 u50000000))
-            )
-            u2
-            u0
-        )    
-    )
-)
-
-(define-private (is-simple-weight-pool-alex (token-x principal) (token-y principal))
-    (if 
-        (or
-            (and
-                (is-eq token-x .age000-governance-token)
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
-            )
-            (and 
-                (is-eq token-y .age000-governance-token)
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
-            )
-        )
-        u1
-        (if 
-            (and 
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
-            )
-            u2
-            u0
-        )
-    )
-)
-
-(define-private (is-from-fixed-to-simple-alex (token-x principal) (token-y principal))
-    (if
-        (and
-            (is-eq token-x .token-wstx) 
-            (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
-        )
-        u2
-        (if
-            (and
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-x u50000000 u50000000))
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-y))
-            )
-            u3
-            u0
-        )
-    )
-)
-
-(define-private (is-from-simple-alex-to-fixed (token-x principal) (token-y principal))
-    (if
-        (or
-            (and
-                (is-eq token-x .age000-governance-token) 
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-y u50000000 u50000000))
-            )
-            (and 
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
-                (is-eq token-y .token-wstx)
-            )
-        )
-        u2
-        (if
-            (and
-                (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists .token-wstx token-y u50000000 u50000000))
-                (is-some (contract-call? .simple-weight-pool-alex get-pool-exists .age000-governance-token token-x))
-            )
-            u3
-            u0
-        )
-    )
-)
-
-;; @desc swap-helper swaps dx of token-x-trait for at least min-dy of token-y-trait (else, it fails)
-;; @param token-x
-;; @param token-y
-;; @returns (response uint uint)
-(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
-    (let 
-        (
-            (token-x (contract-of token-x-trait))
-            (token-y (contract-of token-y-trait))
-        )        
-        (ok 
-            (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
-                (if (is-eq token-x .token-wstx)
-                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 dx min-dy)))
-                    (if (is-eq token-y .token-wstx)
-                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx min-dy)))
-                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
-                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) min-dy)))
-                    )
-                )
-                (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                    (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy)))
-                    (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                        (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 dx none))) min-dy))) 
-                            (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 
-                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) none))) min-dy)))
-                        )
-                        (if (is-eq token-y .token-wstx)
-                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
-                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))                        
-                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
-                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
-                                    (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) none))) min-dy)))
-                        )
-                    )
-                )
-            )
-        )
-    )
-)
-
-;; @desc get-helper returns estimated dy when swapping token-x for token-y
-;; @param token-x
-;; @param token-y
-;; @param dx
-;; @returns (response uint uint)
-(define-read-only (get-helper (token-x principal) (token-y principal) (dx uint))
-    (ok
-        (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
-            (try! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x token-y u50000000 u50000000 dx))
-            (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (try! (contract-call? .simple-weight-pool-alex get-helper token-x token-y dx))
-                (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                    (try! (contract-call? .simple-weight-pool-alex get-y-given-alex token-y 
-                        (try! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x .age000-governance-token u50000000 u50000000 dx)))) 
-                    (try! (contract-call? .fixed-weight-pool-v1-01 get-helper .age000-governance-token token-y u50000000 u50000000 
-                        (try! (contract-call? .simple-weight-pool-alex get-alex-given-y token-x dx))))
-                )
-            )
-        )
-    )
-)
-
-;; @desc get-helper returns estimated dx required when swapping token-x for dy of token-y
-;; @param token-x
-;; @param token-y
-;; @param dy
-;; @returns (response uint uint)
-(define-read-only (get-given-helper (token-x principal) (token-y principal) (dy uint))
-    (ok
-        (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
-            (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x token-y u50000000 u50000000 dy))
-            (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (try! (contract-call? .simple-weight-pool-alex get-x-given-y token-x token-y dy))
-                (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                    (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x .age000-governance-token u50000000 u50000000 
-                        (try! (contract-call? .simple-weight-pool-alex get-alex-given-y token-y dy)))) 
-                    (try! (contract-call? .simple-weight-pool-alex get-y-given-alex token-x
-                        (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y .age000-governance-token token-y u50000000 u50000000 dy))))
-                )
-            )
-        )
-    )
-)
-
-;; @desc oracle-instant-helper returns price of token-x in token-y
-;; @param token-x
-;; @param token-y
-;; @returns (response uint uint)
-(define-read-only (oracle-instant-helper (token-x principal) (token-y principal))
-    (ok
-        (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
-            (try! (fwp-oracle-instant token-x token-y))
-            (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (try! (contract-call? .simple-weight-pool-alex get-oracle-instant token-x token-y))
-                (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                    (div-down 
-                        (try! (contract-call? .simple-weight-pool-alex get-oracle-instant .age000-governance-token token-y))
-                        (try! (fwp-oracle-instant .age000-governance-token token-x))
-                    )
-                    (div-down 
-                        (try! (fwp-oracle-instant .age000-governance-token token-y))
-                        (try! (contract-call? .simple-weight-pool-alex get-oracle-instant .age000-governance-token token-x))                        
-                    )                                        
-                )
-            )
-        )
-    )
-)
-
-(define-private (fwp-oracle-instant (token-x principal) (token-y principal))
-    (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
-        (fwp-oracle-instant-internal token-x token-y)
-        (ok
-            (div-down                
-                (try! (fwp-oracle-instant-internal .token-wstx token-y))
-                (try! (fwp-oracle-instant-internal .token-wstx token-x))                
-            )
-        )
-    )
-)
-
-(define-private (fwp-oracle-instant-internal (token-x principal) (token-y principal))
-    (let 
-        (
-            (exists (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists token-x token-y u50000000 u50000000)))
-            (pool 
-                (if exists
-                    (try! (contract-call? .fixed-weight-pool-v1-01 get-pool-details token-x token-y u50000000 u50000000))
-                    (try! (contract-call? .fixed-weight-pool-v1-01 get-pool-details token-y token-x u50000000 u50000000))
-                )
-            )
-        )
-        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok 
-            (if exists
-                (div-down (get balance-y pool) (get balance-x pool))
-                (div-down (get balance-x pool) (get balance-y pool))
-            )
-        )
-    )
-)
-
-;; @desc oracle-resilient-helper returns moving average price of token-x in token-y
-;; @param token-x
-;; @param token-y
-;; @returns (response uint uint)
-(define-read-only (oracle-resilient-helper (token-x principal) (token-y principal))
-    (ok
-        (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
-            (try! (fwp-oracle-resilient token-x token-y))
-            (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient token-x token-y))
-                (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                    (div-down 
-                        (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient .age000-governance-token token-y))
-                        (try! (fwp-oracle-resilient .age000-governance-token token-x))
-                    )
-                    (div-down 
-                        (try! (fwp-oracle-resilient .age000-governance-token token-y))
-                        (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient .age000-governance-token token-x))                        
-                    )                                        
-                )
-            )
-        )
-    )
-)
-
-(define-private (fwp-oracle-resilient (token-x principal) (token-y principal))
-    (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
-        (fwp-oracle-resilient-internal token-x token-y)
-        (ok
-            (div-down                
-                (try! (fwp-oracle-resilient-internal .token-wstx token-y))
-                (try! (fwp-oracle-resilient-internal .token-wstx token-x))                
-            )
-        )
-    )
-)
-
-(define-private (fwp-oracle-resilient-internal (token-x principal) (token-y principal))
-    (let 
-        (
-            (pool 
-                (if (is-some (contract-call? .fixed-weight-pool-v1-01 get-pool-exists token-x token-y u50000000 u50000000))
-                    (try! (contract-call? .fixed-weight-pool-v1-01 get-pool-details token-x token-y u50000000 u50000000))
-                    (try! (contract-call? .fixed-weight-pool-v1-01 get-pool-details token-y token-x u50000000 u50000000))
-                )
-            )
-        )
-        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (fwp-oracle-instant-internal token-x token-y))) 
-            (mul-down (get oracle-average pool) (get oracle-resilient pool)))
-        )           
-    )
-)
-
 ;; @desc create a margin (i.e. leverage) position of long collateral short token with margin amount equal to dx
 ;; @desc mints a number of key-token-collateral-expiry whose aggregate value equals dx, using flash-loan
 (define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
@@ -1638,7 +1348,7 @@
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
         )
-        (try! (swap-helper token-trait collateral-trait swapped-token none))
+        (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait collateral-trait swapped-token none))
         ;; return the loan + fee        
         (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
         (ok loan-amount-with-fee)
@@ -1656,7 +1366,7 @@
             (dx 
                 (+ 
                     (get dx reduce-data) 
-                    (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))
+                    (if (is-eq (get dy reduce-data) u0) u0 (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait collateral-trait (get dy reduce-data) none)))
                 )               
             )
             (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
@@ -1666,7 +1376,7 @@
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
         )
-        (try! (swap-helper token-trait collateral-trait swapped-token none))
+        (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait collateral-trait swapped-token none))
         ;; return the loan + fee
         (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
         (ok loan-amount-with-fee)
@@ -1832,7 +1542,7 @@
                 (bounty-in-token
                     (if (is-eq token .age000-governance-token)
                         bounty
-                        (try! (get-given-helper token .age000-governance-token bounty))
+                        (try! (contract-call? .swap-helper-v1-01 get-given-helper token .age000-governance-token bounty))
                     )
                 )      
                 (amount-net-bounty (- gross-amount bounty-in-token))
@@ -1851,7 +1561,7 @@
             (if (is-eq token .age000-governance-token)
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-token tx-sender sender none))))
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed 
-                    (try! (swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none)))
+                    (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none)))
                 )
             )
 
@@ -1886,7 +1596,7 @@
                 (dx 
                     (+ 
                         (get dx reduce-data) 
-                        (if (is-eq (get dy reduce-data) u0) u0 (as-contract (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none))))
+                        (if (is-eq (get dy reduce-data) u0) u0 (as-contract (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait collateral-trait (get dy reduce-data) none))))
                     )               
                 )
                 (ltv 
@@ -1896,15 +1606,15 @@
                     )
                 )
                 (gross-dx (div-down dx ltv))                                
-                (yield-amount (mul-down (try! (get-helper collateral token gross-dx)) ltv))
+                (yield-amount (mul-down (try! (contract-call? .swap-helper-v1-01 get-helper collateral token gross-dx)) ltv))
                 (swapped-amount (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token yield-amount)))
-                (out-amount (try! (get-helper token collateral swapped-amount)))
+                (out-amount (try! (contract-call? .swap-helper-v1-01 get-helper token collateral swapped-amount)))
                 (sender tx-sender)                
                 (bounty (unwrap! (map-get? bounty-in-fixed auto-token) ERR-NOT-AUTHORIZED))
                 (bounty-in-collateral
                     (if (is-eq collateral .age000-governance-token)
                         bounty
-                        (try! (get-given-helper collateral .age000-governance-token bounty))
+                        (try! (contract-call? .swap-helper-v1-01 get-given-helper collateral .age000-governance-token bounty))
                     )
                 )                   
                 (dx-act-before-bounty (- dx (- gross-dx dx out-amount)))
@@ -1920,7 +1630,7 @@
                 )                 
                 (swapped-token 
                     (as-contract 
-                        (try! (swap-helper token-trait collateral-trait
+                        (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait collateral-trait
                             (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait (get yield-token minted) none))) none)
                         )
                     )
@@ -1937,7 +1647,7 @@
             (if (is-eq collateral .age000-governance-token)
                 (and (> bounty-in-collateral u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-collateral tx-sender sender none))))
                 (and (> bounty-in-collateral u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed 
-                    (try! (swap-helper collateral-trait .age000-governance-token bounty-in-collateral none)) tx-sender sender none)))
+                    (try! (contract-call? .swap-helper-v1-01 swap-helper collateral-trait .age000-governance-token bounty-in-collateral none)) tx-sender sender none)))
                 )
             )
 
@@ -1973,7 +1683,7 @@
                 (bounty-in-token
                     (if (is-eq token .age000-governance-token)
                         bounty
-                        (try! (get-given-helper token .age000-governance-token bounty))
+                        (try! (contract-call? .swap-helper-v1-01 get-given-helper token .age000-governance-token bounty))
                     )
                 )      
                 (dx-net-bounty (- dx bounty-in-token))                
@@ -1986,7 +1696,7 @@
             (if (is-eq token .age000-governance-token)
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-token tx-sender sender none))))
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed 
-                    (try! (swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none)))
+                    (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none)))
                 )
             )
 
