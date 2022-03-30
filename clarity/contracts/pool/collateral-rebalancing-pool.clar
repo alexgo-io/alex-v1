@@ -7,6 +7,7 @@
 
 ;; constants
 ;;
+(define-constant ONE_8 u100000000)
 
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
@@ -104,10 +105,10 @@
 (define-private (erf (x uint))
     (let
         (
-            (denom3 (+ (+ (+ (+ ONE_8 (mul-down a1 x)) (mul-down a2 (mul-down x x))) (mul-down a3 (mul-down x (mul-down x x)))) (mul-down a4 (mul-down x (mul-down x (mul-down x x))))))
-            (base (mul-down denom3 (mul-down denom3 (mul-down denom3 denom3))))
+            (denom3 (+ (+ (+ (+ ONE_8 (contract-call? .math-fixed-point mul-down a1 x)) (contract-call? .math-fixed-point mul-down a2 (contract-call? .math-fixed-point mul-down x x))) (contract-call? .math-fixed-point mul-down a3 (contract-call? .math-fixed-point mul-down x (contract-call? .math-fixed-point mul-down x x)))) (contract-call? .math-fixed-point mul-down a4 (contract-call? .math-fixed-point mul-down x (contract-call? .math-fixed-point mul-down x (contract-call? .math-fixed-point mul-down x x))))))
+            (base (contract-call? .math-fixed-point mul-down denom3 (contract-call? .math-fixed-point mul-down denom3 (contract-call? .math-fixed-point mul-down denom3 denom3))))
         )
-        (div-down (- base ONE_8) base)
+        (contract-call? .math-fixed-point div-down (- base ONE_8) base)
     )
 )
 
@@ -148,7 +149,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))            
         )
-        (ok (+ (mul-down (get balance-x pool) spot) (get balance-y pool)))
+        (ok (+ (contract-call? .math-fixed-point mul-down (get balance-x pool) spot) (get balance-y pool)))
     )
 )
 
@@ -167,7 +168,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))   
         )
-        (ok (+ (div-down (get balance-y pool) spot) (get balance-x pool)))
+        (ok (+ (contract-call? .math-fixed-point div-down (get balance-y pool) spot) (get balance-x pool)))
     )
 )
 
@@ -189,7 +190,7 @@
         ;; if no liquidity in the pool, return ltv-0
         (if (is-eq (get yield-supply pool) u0)
             (ok (get ltv-0 pool))
-            (ok (div-down (get yield-supply pool) (+ (mul-down (get balance-x pool) spot) (get balance-y pool))))
+            (ok (contract-call? .math-fixed-point div-down (get yield-supply pool) (+ (contract-call? .math-fixed-point mul-down (get balance-x pool) spot) (get balance-y pool))))
         )
     )
 )
@@ -218,28 +219,28 @@
             (let 
                 (
                     ;; assume 10mins per block 
-                    (t (div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))
-                    (t-2 (div-down (* (- expiry block-height) ONE_8) (get token-to-maturity pool)))
+                    (t (contract-call? .math-fixed-point div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))
+                    (t-2 (contract-call? .math-fixed-point div-down (* (- expiry block-height) ONE_8) (get token-to-maturity pool)))
 
                     ;; we calculate d1 first
-                    (spot-term (div-down spot (get strike pool)))
+                    (spot-term (contract-call? .math-fixed-point div-down spot (get strike pool)))
                     (d1 
-                        (div-down 
+                        (contract-call? .math-fixed-point div-down 
                             (+ 
-                                (mul-down t (div-down (mul-down bs-vol bs-vol) u200000000)) 
+                                (contract-call? .math-fixed-point mul-down t (contract-call? .math-fixed-point div-down (contract-call? .math-fixed-point mul-down bs-vol bs-vol) u200000000)) 
                                 (if (> spot-term ONE_8) (- spot-term ONE_8) (- ONE_8 spot-term))
                             )
-                            (mul-down bs-vol (pow-down t u50000000))
+                            (contract-call? .math-fixed-point mul-down bs-vol (contract-call? .math-fixed-point pow-down t u50000000))
                         )
                     )
-                    (erf-term (erf (div-down d1 (pow-down u200000000 u50000000))))
-                    (weight-t (div-down (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u200000000))
+                    (erf-term (erf (contract-call? .math-fixed-point div-down d1 (contract-call? .math-fixed-point pow-down u200000000 u50000000))))
+                    (weight-t (contract-call? .math-fixed-point div-down (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u200000000))
                     (weighted 
                         (+ 
-                            (mul-down (get moving-average pool) (get weight-y pool)) 
-                            (mul-down 
+                            (contract-call? .math-fixed-point mul-down (get moving-average pool) (get weight-y pool)) 
+                            (contract-call? .math-fixed-point mul-down 
                                 (- ONE_8 (get moving-average pool)) 
-                                (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) (- ONE_8 ltv))))
+                                (if (> t-2 ONE_8) weight-t (+ (contract-call? .math-fixed-point mul-down t-2 weight-t) (contract-call? .math-fixed-point mul-down (- ONE_8 t-2) (- ONE_8 ltv))))
                             )
                         )
                     )                    
@@ -291,11 +292,11 @@
                 (token-y (contract-of token-trait))
                     
                 ;; assume 10mins per block 
-                (t (div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))                
+                (t (contract-call? .math-fixed-point div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))                
                 ;; we calculate d1 first (of call on collateral at strike) first                
-                (d1 (div-down (+ (mul-down t (div-down (mul-down bs-vol bs-vol) u200000000)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
-                (erf-term (erf (div-down d1 (pow-down u200000000 u50000000))))
-                (weighted (div-down (+ ONE_8 erf-term) u200000000))
+                (d1 (contract-call? .math-fixed-point div-down (+ (contract-call? .math-fixed-point mul-down t (contract-call? .math-fixed-point div-down (contract-call? .math-fixed-point mul-down bs-vol bs-vol) u200000000)) (- ONE_8 ltv-0)) (contract-call? .math-fixed-point mul-down bs-vol (contract-call? .math-fixed-point pow-down t u50000000))))
+                (erf-term (erf (contract-call? .math-fixed-point div-down d1 (contract-call? .math-fixed-point pow-down u200000000 u50000000))))
+                (weighted (contract-call? .math-fixed-point div-down (+ ONE_8 erf-term) u200000000))
                 (weight-x (if (< weighted u95000000) weighted u95000000))
                 (weight-y (- ONE_8 weight-x))
 
@@ -307,7 +308,7 @@
                     fee-to-address: multisig-vote,
                     yield-token: (contract-of yield-token-trait),
                     key-token: (contract-of key-token-trait),
-                    strike: (mul-down spot ltv-0),
+                    strike: (contract-call? .math-fixed-point mul-down spot ltv-0),
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
@@ -392,7 +393,7 @@
                 (yield-new-supply (get yield-token new-supply))
                 (key-new-supply (get key-token new-supply))
 
-                (dx-weighted (mul-down weight-x dx))
+                (dx-weighted (contract-call? .math-fixed-point mul-down weight-x dx))
                 (dx-to-dy (if (<= dx dx-weighted) u0 (- dx dx-weighted)))
 
                 (dy-weighted (try! (contract-call? .swap-helper-v1-01 swap-helper collateral-trait token-trait dx-to-dy none)))
@@ -406,7 +407,7 @@
                 (sender tx-sender)
             ) 
 
-            (unwrap! (contract-call? .swap-helper-v1-01 get-helper token-x token-y (+ dx balance-x (div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
+            (unwrap! (contract-call? .swap-helper-v1-01 get-helper token-x token-y (+ dx balance-x (contract-call? .math-fixed-point div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
 
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -443,11 +444,11 @@
                 (balance-y (get balance-y pool))
                 (yield-supply (get yield-supply pool))
                 (total-shares (unwrap! (contract-call? yield-token-trait get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
-                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
+                (shares (if (is-eq percent ONE_8) total-shares (contract-call? .math-fixed-point mul-down total-shares percent)))
                 (sender tx-sender)
 
                 ;; if balance-y does not cover yield-supply, swap some balance-x to meet the requirement.
-                (bal-y-short (if (<= yield-supply balance-y) u0 (mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
+                (bal-y-short (if (<= yield-supply balance-y) u0 (contract-call? .math-fixed-point mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
                 (bal-x-to-sell 
                     (if (is-eq bal-y-short u0)
                         u0
@@ -516,11 +517,11 @@
                 (key-supply (get key-supply pool))    
                 (yield-supply (get yield-supply pool))        
                 (total-shares (unwrap! (contract-call? key-token-trait get-balance-fixed expiry tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
-                (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
+                (shares (if (is-eq percent ONE_8) total-shares (contract-call? .math-fixed-point mul-down total-shares percent)))
                 (sender tx-sender)
 
                 ;; if balance-y does not cover yield-supply, swap some balance-x to meet the requirement.
-                (bal-y-short (if (<= yield-supply balance-y) u0 (mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
+                (bal-y-short (if (<= yield-supply balance-y) u0 (contract-call? .math-fixed-point mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
                 (bal-x-to-sell 
                     (if (is-eq bal-y-short u0)
                         u0
@@ -539,9 +540,9 @@
                 (bal-x-short (if (<= bal-x-to-sell balance-x) u0 (- bal-x-to-sell balance-x)))
                 
                 (bal-y-key (if (<= (+ balance-y bal-y-short-act) yield-supply) u0 (- (+ balance-y bal-y-short-act) yield-supply)))
-                (shares-to-key (div-down shares key-supply))
-                (bal-y-to-reduce (mul-down bal-y-key shares-to-key))
-                (bal-x-to-reduce (mul-down (- (+ balance-x bal-x-short) bal-x-to-sell) shares-to-key))
+                (shares-to-key (contract-call? .math-fixed-point div-down shares key-supply))
+                (bal-y-to-reduce (contract-call? .math-fixed-point mul-down bal-y-key shares-to-key))
+                (bal-x-to-reduce (contract-call? .math-fixed-point mul-down (- (+ balance-x bal-x-short) bal-x-to-sell) shares-to-key))
 
                 (pool-updated (merge pool {
                     key-supply: (if (<= key-supply shares) u0 (- key-supply shares)),
@@ -597,8 +598,8 @@
                 (weight-y (- ONE_8 weight-x))            
             
                 ;; fee = dx * fee-rate-x
-                (fee (mul-up dx (get fee-rate-x pool)))
-                (fee-rebate (mul-down fee (get fee-rebate pool)))
+                (fee (contract-call? .math-fixed-point mul-up dx (get fee-rate-x pool)))
+                (fee-rebate (contract-call? .math-fixed-point mul-down fee (get fee-rebate pool)))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (dy (try! (get-y-given-x token-y token-x expiry dx-net-fees)))
 
@@ -655,8 +656,8 @@
                 (weight-y (- ONE_8 weight-x))   
 
                 ;; fee = dy * fee-rate-y
-                (fee (mul-up dy (get fee-rate-y pool)))
-                (fee-rebate (mul-down fee (get fee-rebate pool)))
+                (fee (contract-call? .math-fixed-point mul-up dy (get fee-rate-y pool)))
+                (fee-rebate (contract-call? .math-fixed-point mul-down fee (get fee-rebate pool)))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
                 (dx (try! (get-x-given-y token-y token-x expiry dy-net-fees)))        
 
@@ -875,7 +876,7 @@
 (define-private (get-token-given-position-with-spot (token principal) (collateral principal) (expiry uint) (spot uint) (dx uint))
     (let 
         (
-            (ltv-dy (mul-down (try! (get-ltv-with-spot token collateral expiry spot)) (try! (contract-call? .swap-helper-v1-01 get-helper collateral token dx))))
+            (ltv-dy (contract-call? .math-fixed-point mul-down (try! (get-ltv-with-spot token collateral expiry spot)) (try! (contract-call? .swap-helper-v1-01 get-helper collateral token dx))))
         )
         (asserts! (< block-height expiry) ERR-EXPIRY)
         (ok {yield-token: ltv-dy, key-token: ltv-dy})
@@ -938,400 +939,11 @@
                 (pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
                 (pool-value-in-y (try! (get-pool-value-in-token-with-spot token collateral expiry spot)))
                 (key-value-in-y (if (<= pool-value-in-y (get yield-supply pool)) u0 (- pool-value-in-y (get yield-supply pool))))
-                (shares-to-pool (mul-down (div-down key-value-in-y pool-value-in-y) (div-down shares (get key-supply pool))))
+                (shares-to-pool (contract-call? .math-fixed-point mul-down (contract-call? .math-fixed-point div-down key-value-in-y pool-value-in-y) (contract-call? .math-fixed-point div-down shares (get key-supply pool))))
             )
-            (ok {dx: (mul-down shares-to-pool (get balance-x pool)), dy: (mul-down shares-to-pool (get balance-y pool))})
+            (ok {dx: (contract-call? .math-fixed-point mul-down shares-to-pool (get balance-x pool)), dy: (contract-call? .math-fixed-point mul-down shares-to-pool (get balance-y pool))})
         )
     )
-)
-
-
-
-;; math-fixed-point
-;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-
-;; constants
-;;
-(define-constant ONE_8 u100000000) ;; 8 decimal places
-
-;; TODO: this needs to be reviewed/updated
-;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
-;; (i.e. the last digit of the result may be completely lost to this error).
-(define-constant MAX_POW_RELATIVE_ERROR u4) 
-
-;; public functions
-;;
-
-;; @desc scale-up
-;; @params a 
-;; @returns uint
-(define-read-only (scale-up (a uint))
-    (* a ONE_8)
-)
-
-;; @desc scale-down
-;; @params a 
-;; @returns uint
-(define-read-only (scale-down (a uint))
-    (/ a ONE_8)
-)
-
-;; @desc mul-down
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
-)
-
-;; @desc mul-up
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-       )
-        (if (is-eq product u0)
-            u0
-            (+ u1 (/ (- product u1) ONE_8))
-       )
-   )
-)
-
-;; @desc div-down
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
-    (if (is-eq a u0)
-        u0
-        (/ (* a ONE_8) b)
-   )
-)
-
-;; @desc div-up
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
-    (if (is-eq a u0)
-        u0
-        (+ u1 (/ (- (* a ONE_8) u1) b))
-    )
-)
-
-;; @desc pow-down
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
-        )
-        (if (< raw max-error)
-            u0
-            (- raw max-error)
-        )
-    )
-)
-
-;; @desc pow-up
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
-        )
-        (+ raw max-error)
-    )
-)
-
-;; math-log-exp
-;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
-;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
-;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
-;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
-
-;; constants
-;;
-;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
-;; two numbers, and multiply by ONE when dividing them.
-;; All arguments and return values are 8 decimal fixed point numbers.
-(define-constant UNSIGNED_ONE_8 (pow 10 8))
-
-;; The domain of natural exponentiation is bound by the word size and number of decimals used.
-;; The largest possible result is (2^127 - 1) / 10^8, 
-;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
-;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
-;; We use 69.0 and -18.0 to have some safety margin.
-(define-constant MAX_NATURAL_EXPONENT (* 69 UNSIGNED_ONE_8))
-(define-constant MIN_NATURAL_EXPONENT (* -18 UNSIGNED_ONE_8))
-
-(define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint UNSIGNED_ONE_8)))
-
-;; Because largest exponent is 69, we start from 64
-;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
-;; Instead we store them as plain integers, with 0 decimals.
-
-(define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
-))
-
-;; 8 decimal constants
-(define-constant x_a_list (list 
-{x_pre: 3200000000, a_pre: 78962960182680695161, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
-{x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
-{x_pre: 800000000, a_pre: 298095798704, use_deci: true} ;; x4 = 2^3, a4 = e^(x4)
-{x_pre: 400000000, a_pre: 5459815003, use_deci: true} ;; x5 = 2^2, a5 = e^(x5)
-{x_pre: 200000000, a_pre: 738905610, use_deci: true} ;; x6 = 2^1, a6 = e^(x6)
-{x_pre: 100000000, a_pre: 271828183, use_deci: true} ;; x7 = 2^0, a7 = e^(x7)
-{x_pre: 50000000, a_pre: 164872127, use_deci: true} ;; x8 = 2^-1, a8 = e^(x8)
-{x_pre: 25000000, a_pre: 128402542, use_deci: true} ;; x9 = 2^-2, a9 = e^(x9)
-{x_pre: 12500000, a_pre: 113314845, use_deci: true} ;; x10 = 2^-3, a10 = e^(x10)
-{x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
-))
-
-
-(define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
-(define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
-(define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
-(define-constant ERR-INVALID-EXPONENT (err u5012))
-(define-constant ERR-OUT-OF-BOUNDS (err u5013))
-
-;; private functions
-;;
-
-;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-
-;; @desc ln-priv
-;; @params a
-;; @ returns (response uint)
-(define-private (ln-priv (a int))
-  (let
-    (
-      (a_sum_no_deci (fold accumulate_division x_a_list_no_deci {a: a, sum: 0}))
-      (a_sum (fold accumulate_division x_a_list {a: (get a a_sum_no_deci), sum: (get sum a_sum_no_deci)}))
-      (out_a (get a a_sum))
-      (out_sum (get sum a_sum))
-      (z (/ (* (- out_a UNSIGNED_ONE_8) UNSIGNED_ONE_8) (+ out_a UNSIGNED_ONE_8)))
-      (z_squared (/ (* z z) UNSIGNED_ONE_8))
-      (div_list (list 3 5 7 9 11))
-      (num_sum_zsq (fold rolling_sum_div div_list {num: z, seriesSum: z, z_squared: z_squared}))
-      (seriesSum (get seriesSum num_sum_zsq))
-    )
-    (+ out_sum (* seriesSum 2))
-  )
-)
-
-;; @desc accumulate_division
-;; @params x_a_pre ; tuple(x_pre a_pre use_deci)
-;; @params rolling_a_sum ; tuple (a sum)
-;; @returns uint
-(define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
-  (let
-    (
-      (a_pre (get a_pre x_a_pre))
-      (x_pre (get x_pre x_a_pre))
-      (use_deci (get use_deci x_a_pre))
-      (rolling_a (get a rolling_a_sum))
-      (rolling_sum (get sum rolling_a_sum))
-   )
-    (if (>= rolling_a (if use_deci a_pre (* a_pre UNSIGNED_ONE_8)))
-      {a: (/ (* rolling_a (if use_deci UNSIGNED_ONE_8 1)) a_pre), sum: (+ rolling_sum x_pre)}
-      {a: rolling_a, sum: rolling_sum}
-   )
- )
-)
-
-;; @desc rolling_sum_div
-;; @params n
-;; @params rolling ; tuple (num seriesSum z_squared)
-;; @Sreturns tuple
-(define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
-  (let
-    (
-      (rolling_num (get num rolling))
-      (rolling_sum (get seriesSum rolling))
-      (z_squared (get z_squared rolling))
-      (next_num (/ (* rolling_num z_squared) UNSIGNED_ONE_8))
-      (next_sum (+ rolling_sum (/ next_num n)))
-   )
-    {num: next_num, seriesSum: next_sum, z_squared: z_squared}
- )
-)
-
-;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-
-;; @desc pow-priv
-;; @params x
-;; @params y
-;; @returns (response uint)
-(define-read-only (pow-priv (x uint) (y uint))
-  (let
-    (
-      (x-int (to-int x))
-      (y-int (to-int y))
-      (lnx (ln-priv x-int))
-      (logx-times-y (/ (* lnx y-int) UNSIGNED_ONE_8))
-    )
-    (asserts! (and (<= MIN_NATURAL_EXPONENT logx-times-y) (<= logx-times-y MAX_NATURAL_EXPONENT)) ERR-PRODUCT-OUT-OF-BOUNDS)
-    (ok (to-uint (try! (exp-fixed logx-times-y))))
-  )
-)
-
-;; @desc exp-pos
-;; @params x
-;; @returns (response uint)
-(define-read-only (exp-pos (x int))
-  (begin
-    (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
-    (let
-      (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
-        (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
-        (x_adj (get x x_product_no_deci))
-        (firstAN (get product x_product_no_deci))
-        (x_product (fold accumulate_product x_a_list {x: x_adj, product: UNSIGNED_ONE_8}))
-        (product_out (get product x_product))
-        (x_out (get x x_product))
-        (seriesSum (+ UNSIGNED_ONE_8 x_out))
-        (div_list (list 2 3 4 5 6 7 8 9 10 11 12))
-        (term_sum_x (fold rolling_div_sum div_list {term: x_out, seriesSum: seriesSum, x: x_out}))
-        (sum (get seriesSum term_sum_x))
-     )
-      (ok (* (/ (* product_out sum) UNSIGNED_ONE_8) firstAN))
-   )
- )
-)
-
-;; @desc accumulate_product
-;; @params x_a_pre ; tuple (x_pre a_pre use_deci)
-;; @params rolling_x_p ; tuple (x product)
-;; @returns tuple
-(define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
-  (let
-    (
-      (x_pre (get x_pre x_a_pre))
-      (a_pre (get a_pre x_a_pre))
-      (use_deci (get use_deci x_a_pre))
-      (rolling_x (get x rolling_x_p))
-      (rolling_product (get product rolling_x_p))
-   )
-    (if (>= rolling_x x_pre)
-      {x: (- rolling_x x_pre), product: (/ (* rolling_product a_pre) (if use_deci UNSIGNED_ONE_8 1))}
-      {x: rolling_x, product: rolling_product}
-   )
- )
-)
-
-;; @desc rolling_div_sum
-;; @params n
-;; @params rolling ; tuple (term seriesSum x)
-;; @returns tuple
-(define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
-  (let
-    (
-      (rolling_term (get term rolling))
-      (rolling_sum (get seriesSum rolling))
-      (x (get x rolling))
-      (next_term (/ (/ (* rolling_term x) UNSIGNED_ONE_8) n))
-      (next_sum (+ rolling_sum next_term))
-   )
-    {term: next_term, seriesSum: next_sum, x: x}
- )
-)
-
-;; public functions
-;;
-
-;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
-;; @desc pow-fixed
-;; @params x
-;; @params y
-;; @returns (response uint)
-(define-read-only (pow-fixed (x uint) (y uint))
-  (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
-    (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
-
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
-    (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
-
-    (if (is-eq y u0) 
-      (ok (to-uint UNSIGNED_ONE_8))
-      (if (is-eq x u0) 
-        (ok u0)
-        (pow-priv x y)
-      )
-    )
-  )
-)
-
-;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-
-;; @desc exp-fixed
-;; @params x
-;; @returns (response uint)
-(define-read-only (exp-fixed (x int))
-  (begin
-    (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
-    (if (< x 0)
-      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
-      (ok (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) (try! (exp-pos (* -1 x)))))
-      (exp-pos x)
-    )
-  )
-)
-
-;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-;; @desc log-fixed
-;; @params arg
-;; @params base
-;; @returns (response uint)
-(define-read-only (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
-  (let
-    (
-      (logBase (* (ln-priv base) UNSIGNED_ONE_8))
-      (logArg (* (ln-priv arg) UNSIGNED_ONE_8))
-   )
-    (ok (/ (* logArg UNSIGNED_ONE_8) logBase))
- )
-)
-
-;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-
-;; @desc ln-fixed
-;; @params a
-;; @returns (response uint)
-(define-read-only (ln-fixed (a int))
-  (begin
-    (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
-    (if (< a UNSIGNED_ONE_8)
-      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-      ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
-      (ok (- 0 (ln-priv (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) a))))
-      (ok (ln-priv a))
-   )
- )
 )
 
 ;; @desc create a margin (i.e. leverage) position of long collateral short token with margin amount equal to dx
@@ -1341,9 +953,9 @@
         (
             (sender tx-sender)
             (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
-            (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))))
+            (gross-dx (contract-call? .math-fixed-point div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))))
             (loan-amount (- gross-dx dx))
-            (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loan-amount-with-fee (contract-call? .math-fixed-point mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
@@ -1369,9 +981,9 @@
                     (if (is-eq (get dy reduce-data) u0) u0 (try! (contract-call? .swap-helper-v1-01 swap-helper token-trait collateral-trait (get dy reduce-data) none)))
                 )               
             )
-            (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
+            (gross-dx (contract-call? .math-fixed-point div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
             (loan-amount (- gross-dx dx))
-            (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loan-amount-with-fee (contract-call? .math-fixed-point mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
@@ -1469,7 +1081,7 @@
             (auto-token (contract-of auto-token-trait))
             (auto-to-add 
                 (match (map-get? pool-total-supply pool-token) 
-                    value (div-down (mul-down dx (get-auto-supply-or-default pool-token)) value) ;; dx * auto-total-supply / pool-total-supply
+                    value (contract-call? .math-fixed-point div-down (contract-call? .math-fixed-point mul-down dx (get-auto-supply-or-default pool-token)) value) ;; dx * auto-total-supply / pool-total-supply
                     dx
                 )
             )
@@ -1497,8 +1109,8 @@
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
             (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
-            (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-            (pool-to-reduce (div-down (mul-down (get-pool-supply-or-default pool-token) auto-to-reduce) (get-auto-supply-or-default pool-token)))
+            (auto-to-reduce (if (is-eq percent ONE_8) total-shares (contract-call? .math-fixed-point mul-down total-shares percent)))
+            (pool-to-reduce (contract-call? .math-fixed-point div-down (contract-call? .math-fixed-point mul-down (get-pool-supply-or-default pool-token) auto-to-reduce) (get-auto-supply-or-default pool-token)))
             (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
             (sender tx-sender)
         )
@@ -1605,8 +1217,8 @@
                         (try! (get-ltv-with-spot token collateral expiry-to-roll spot))
                     )
                 )
-                (gross-dx (div-down dx ltv))                                
-                (yield-amount (mul-down (try! (contract-call? .swap-helper-v1-01 get-helper collateral token gross-dx)) ltv))
+                (gross-dx (contract-call? .math-fixed-point div-down dx ltv))                                
+                (yield-amount (contract-call? .math-fixed-point mul-down (try! (contract-call? .swap-helper-v1-01 get-helper collateral token gross-dx)) ltv))
                 (swapped-amount (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token yield-amount)))
                 (out-amount (try! (contract-call? .swap-helper-v1-01 get-helper token collateral swapped-amount)))
                 (sender tx-sender)                
@@ -1619,7 +1231,7 @@
                 )                   
                 (dx-act-before-bounty (- dx (- gross-dx dx out-amount)))
                 (dx-act (- dx-act-before-bounty bounty-in-collateral))
-                (gross-dx-act (div-down dx-act ltv))
+                (gross-dx-act (contract-call? .math-fixed-point div-down dx-act ltv))
                 (loan-amount (- gross-dx-act dx-act))
                 (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount tx-sender))))                
                 (minted
