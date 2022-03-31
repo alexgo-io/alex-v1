@@ -23,11 +23,11 @@ class StakingHelper {
       this.deployer = deployer;
     }
 
-    claimStakingReward(sender: Account, stakedToken: string, reward_cycle: number) {
+    claimStakingReward(sender: Account, stakedToken: string, reward_cycles: Array<number>) {
       let block = this.chain.mineBlock([
-          Tx.contractCall(helperContract, "claim-staking-reward-by-tx-sender", [
+          Tx.contractCall(helperContract, "claim-staking-reward", [
             types.principal(stakedToken),
-            types.uint(reward_cycle),
+            types.list(reward_cycles.map(reward_cycle => { return types.uint(reward_cycle) })),
           ], sender.address),
         ]);
         return block.receipts[0].result;
@@ -225,30 +225,34 @@ Clarinet.test({
         call = await StakingTest.getRewardCycle(stakedAddress);
         call.result.expectSome().expectUint(2); 
         
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 1);
-        let claimed:any = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(ONE_8);
-        claimed['to-return'].expectUint(0);       
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [1]);
+        let claimed:any = result.expectOk().expectList();
+        let output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(ONE_8);
+        output['to-return'].expectUint(0);       
         
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 1);
-        claimed = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(0);
-        claimed['to-return'].expectUint(0);    
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [1]);
+        claimed = result.expectOk().expectList();
+        output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(0);
+        output['to-return'].expectUint(0);        
         
         chain.mineEmptyBlockUntil(8 + reward_cycle_length * 4 + 1);
         
         call = await StakingTest.getRewardCycle(stakedAddress);
         call.result.expectSome().expectUint(4);    
         
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 3);
-        claimed = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(ONE_8);
-        claimed['to-return'].expectUint(100e8);          
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [3]);
+        claimed = result.expectOk().expectList();
+        output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(ONE_8);
+        output['to-return'].expectUint(100e8);          
 
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 3);
-        claimed = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(0);
-        claimed['to-return'].expectUint(0);            
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [3]);
+        claimed = result.expectOk().expectList();
+        output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(0);
+        output['to-return'].expectUint(0);         
     },    
 });
 
