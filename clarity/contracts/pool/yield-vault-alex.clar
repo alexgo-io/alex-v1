@@ -114,18 +114,26 @@
   (ok (mul-down (try! (get-next-base)) (var-get total-supply)))
 )
 
+(define-read-only (get-token-given-position (dx uint))
+  (ok
+    (if (is-eq u0 (var-get total-supply))
+      dx ;; initial position
+      (div-down (mul-down (var-get total-supply) dx) (try! (get-next-base)))
+    )
+  )
+)
+
+(define-read-only (is-cycle-bountiable (reward-cycle uint))
+  (> (as-contract (get-staking-reward reward-cycle)) (var-get bounty-in-fixed))
+)
+
 ;; @desc add to position
 ;; @desc transfers dx to vault, stake them for 32 cycles and mints auto-alex, the number of which is determined as % of total supply / next base
 ;; @param dx the number of $ALEX in 8-digit fixed point notation
 (define-public (add-to-position (dx uint))
   (let
     (
-      (new-supply 
-        (if (is-eq u0 (var-get total-supply))
-          dx ;; initial position
-          (div-down (mul-down (var-get total-supply) dx) (try! (get-next-base)))
-        )
-      )
+      (new-supply (try! (get-token-given-position dx)))
       (sender tx-sender)
     )
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
