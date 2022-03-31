@@ -254,20 +254,13 @@
 ;; @param total-supply; total supply of pool tokens
 ;; @param dx; amount of token added
 ;; @returns (response (tuple uint uint) uint)
-(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint))
+(define-read-only (get-token-given-position (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint) (dy uint))
   (begin
     (asserts! (> dx u0) ERR-NO-LIQUIDITY)
     (ok
       (if (or (is-eq total-supply u0) (is-eq balance-x balance-y)) ;; either at inception or if yield == 0
-        {token: dx, dy: dx}
-        (let
-          (
-            ;; if total-supply > zero, we calculate dy proportional to dx / balance-x
-            (dy (mul-down balance-y (div-down dx balance-x)))
-            (token (mul-down total-supply (div-down dx balance-x)))
-          )
-          {token: token, dy: dy}
-        )
+        {token: dx, dy: dy}
+        {token: (mul-down total-supply (div-down dx balance-x)), dy: (mul-down balance-y (div-down dx balance-x))}
       )            
     )
   )
