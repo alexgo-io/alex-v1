@@ -129,7 +129,7 @@ class Faucet {
     }      
     
     getBalance(token: string, owner: string) {
-        return this.chain.callReadOnlyFn(token, "get-balance", [
+        return this.chain.callReadOnlyFn(token, "get-balance-fixed", [
           types.principal(owner)
         ], this.deployer.address);
     }
@@ -166,7 +166,7 @@ export class MintAlexManyRecord {
  */
 
 Clarinet.test({
-    name: "Faucet: set amounts and send some tokens",
+    name: "faucet : set amounts and send some tokens",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

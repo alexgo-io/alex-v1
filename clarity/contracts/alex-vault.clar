@@ -4,7 +4,7 @@
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
-(define-constant ONE_8 (pow u10 u8)) ;; 8 decimal places
+(define-constant ONE_8 u100000000) ;; 8 decimal places
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-BALANCE (err u1001))
@@ -202,7 +202,8 @@
 ;; (set-contract-owner .executor-dao)
 (map-set approved-tokens .age000-governance-token true)
 (map-set approved-contracts .alex-reserve-pool true)
-(map-set approved-contracts .fixed-weight-pool-v1-01 true) 
+(map-set approved-contracts .fixed-weight-pool-v1-01 true)
+(map-set approved-contracts .fixed-weight-pool-v1-02 true) 
 (map-set approved-contracts .fixed-weight-pool-alex true)
 (map-set approved-contracts .simple-weight-pool true)
 (map-set approved-contracts .simple-weight-pool-alex true)

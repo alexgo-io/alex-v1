@@ -36,8 +36,7 @@
 	registration-end-height: uint,
 	claim-end-height: uint,
 	total-tickets: uint,
-	apower-per-ticket-in-fixed: (list 5 uint),
-	tier-threshold: uint,
+	apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
 	registration-max-tickets: uint
 	}
 )
@@ -77,8 +76,7 @@
 		registration-start-height: uint,
 		registration-end-height: uint,
 		claim-end-height: uint,
-		apower-per-ticket-in-fixed: (list 5 uint),
-		tier-threshold: uint,
+		apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
 		registration-max-tickets: uint
 		})
 	)
@@ -121,7 +119,14 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
 		(asserts! (< block-height (get registration-start-height offering)) err-block-height-not-reached)
-		(asserts! (or (is-eq (get ido-owner offering) tx-sender) (is-ok (check-is-approved)) (is-ok (check-is-owner))) err-not-authorized)
+		(asserts! 
+			(or 
+				(is-eq (get ido-owner offering) tx-sender) 
+				(is-ok (check-is-approved)) 
+				(is-ok (check-is-owner))
+			) 
+			err-not-authorized
+		)
 		(asserts! (is-eq (contract-of ido-token) (get ido-token-contract offering)) err-invalid-ido-token)
 		(try! (contract-call? ido-token transfer-fixed (* (get ido-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
 		(map-set offerings ido-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
@@ -130,7 +135,7 @@
 )
 
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
-	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) u18) u10)
+	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) u15) u10)
 )
 
 (define-private (next-bounds (ido-id uint) (tickets uint))
@@ -164,20 +169,19 @@
 	(map-get? offering-ticket-amounts {ido-id: ido-id, owner: owner})
 )
 
-(define-private (get-apower-required-iter (apower-per-ticket-in-fixed uint) (prior {remaining-tickets: uint, apower-so-far: uint, tier-threshold: uint, length: uint}))
+(define-private (get-apower-required-iter (bracket {apower-per-ticket-in-fixed: uint, tier-threshold: uint}) (prior {remaining-tickets: uint, apower-so-far: uint, length: uint}))
 	(let
 		( 
 			(tickets-to-process 
-				(if (or (is-eq (get length prior) u1) (< (get remaining-tickets prior) (get tier-threshold prior))) 
+				(if (or (is-eq (get length prior) u1) (< (get remaining-tickets prior) (get tier-threshold bracket))) 
 					(get remaining-tickets prior)
-					(get tier-threshold prior)
+					(get tier-threshold bracket)
 				)
 			)
 		)
 		{ 
 			remaining-tickets: (- (get remaining-tickets prior) tickets-to-process), 
-			apower-so-far: (+ (get apower-so-far prior) (* tickets-to-process apower-per-ticket-in-fixed)), 
-			tier-threshold: (get tier-threshold prior),
+			apower-so-far: (+ (get apower-so-far prior) (* tickets-to-process (get apower-per-ticket-in-fixed bracket))), 
 			length: (- (get length prior) u1)
 		}
 	)	
@@ -189,7 +193,7 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 			(tiers (get apower-per-ticket-in-fixed offering))
 		)
-		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, tier-threshold: (get tier-threshold offering), length: (len tiers)})))
+		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, length: (len tiers)})))
 	)	
 )
 
@@ -203,11 +207,10 @@
 		)
 		(asserts! (is-none (map-get? offering-ticket-bounds {ido-id: ido-id, owner: tx-sender})) err-already-registered)
 		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
-		(asserts! (>= block-height (get registration-start-height offering)) err-block-height-not-reached)
-		(asserts! (< block-height (get registration-end-height offering)) err-block-height-not-reached)		
+		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
-		(unwrap! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none) (err u2234))		
-		(as-contract (unwrap! (contract-call? .token-apower burn-fixed apower-to-burn sender) (err u1234)))
+		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
+		(as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender)))
 		(map-set offering-ticket-bounds {ido-id: ido-id, owner: tx-sender} bounds)
 		(map-set offering-ticket-amounts {ido-id: ido-id, owner: tx-sender} tickets)
 		(map-set total-tickets-registered ido-id (+ (get-total-tickets-registered ido-id) tickets))
@@ -233,7 +236,7 @@
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered ido-id) (get total-tickets offering)))
 			(walk-position (try! (get-initial-walk-position (get registration-end-height offering) max-step-size)))
 		)
-		(ok {max-step-size: max-step-size, walk-position: walk-position, total-tickets: (get total-tickets offering)})
+		(ok {max-step-size: max-step-size, walk-position: walk-position, total-tickets: (get total-tickets offering), activation-threshold: (get activation-threshold offering)})
 	)
 )
 
@@ -263,7 +266,7 @@
 		)
  		(asserts! (is-eq (get ido-token-contract offering) ido-token) err-invalid-ido-token)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
-		(asserts! (and (>= block-height (get registration-end-height offering)) (< block-height (get claim-end-height offering))) err-block-height-not-reached)		
+		(asserts! (>= block-height (get registration-end-height offering)) err-block-height-not-reached)		
 		(asserts! (and (< total-won (get total-tickets offering)) (< walk-position (unwrap-panic (map-get? start-indexes ido-id)))) err-no-more-claims)
 		(asserts! (<= (get activation-threshold offering) (get-total-tickets-registered ido-id)) err-activation-threshold-not-reached)
 
@@ -310,8 +313,13 @@
 ;; Calculate the maximum upper bound allowed to be refunded. It is either set to the maximum IDO bound
 ;; in case all tickets have been won, or to the last walk position in case the claim walk is still
 ;; in progress. Participants whose upper bound is larger than this value cannot yet get a refund.
-(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint) (registration-end-height uint) )
-	(if (is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
+(define-private (max-upper-refund-bound (ido-id uint) (total-tickets uint) (total-tickets-register uint) (registration-end-height uint) (activation-threshold uint))
+	(if 
+		(or 
+			;; either we sold all, or we failed
+			(is-eq (default-to u0 (map-get? total-tickets-won ido-id)) total-tickets)
+			(> activation-threshold (get-total-tickets-registered ido-id))
+		)
 		(ok (* total-tickets-register walk-resolution))
 		(get-last-claim-walk-position ido-id registration-end-height (calculate-max-step-size total-tickets-register total-tickets))
 	)
@@ -342,6 +350,7 @@
 			(offering (unwrap! (map-get? offerings ido-id) err-unknown-ido))
 		)
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
+		(asserts! (>= block-height (get registration-end-height offering)) err-block-height-not-reached)
 		(asserts!
 			(or
 				(>= block-height (+ (get claim-end-height offering) claim-grace-period))
@@ -358,7 +367,7 @@
 				(ok 
 					{
 						ido-id: ido-id,
-						upper-bound: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering))),
+						upper-bound: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering) (get activation-threshold offering))),
 						price-per-ticket: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					}
 				)
@@ -400,7 +409,7 @@
 			(fold refund-optimal-iter input
 				{
 					i: ido-id,
-					u: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering))),
+					u: (try! (max-upper-refund-bound ido-id (get total-tickets offering) (get-total-tickets-registered ido-id) (get registration-end-height offering) (get activation-threshold offering))),
 					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings ido-id)) err-unknown-ido),
 					s: true
 				}))
@@ -424,6 +433,31 @@
 			p: (get p p),
 			s: (and (<= (get end b) (get u p)) (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e)))
 		}
+	)
+)
+
+(define-public (transfer-all-to-owner (token-trait <ft-trait>))
+	(let 
+		(
+			(balance (try! (contract-call? token-trait get-balance-fixed (as-contract tx-sender))))
+		)
+		(try! (check-is-owner))
+		(and 
+			(> balance u0) 
+			(as-contract 
+				(try!
+					(contract-call? 
+						token-trait 
+						transfer-fixed 
+				 		balance
+						tx-sender 
+						(var-get contract-owner) 
+						none
+					)
+				)
+			)
+		)
+		(ok true)
 	)
 )
 
@@ -483,7 +517,7 @@
 
 (define-public (set-contract-owner (owner principal))
 	(begin
-		(asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorized)
+		(try! (check-is-owner))
 		(ok (var-set contract-owner owner))
 	)
 )

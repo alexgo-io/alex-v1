@@ -197,7 +197,7 @@
 	)
 )
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 ;; @desc pow-decimals
 ;; @returns uint
@@ -284,6 +284,38 @@
 ;; @returns (response boolean)
 (define-public (burn-fixed (token-id uint) (amount uint) (sender principal))
   	(burn token-id (fixed-to-decimals amount) sender)
+)
+
+(define-private (transfer-many-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer (get token-id item) (get amount item) (get sender item) (get recipient item)) prev-err previous-response)
+)
+
+(define-public (transfer-many (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})))
+	(fold transfer-many-iter transfers (ok true))
+)
+
+(define-private (transfer-many-memo-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer-memo (get token-id item) (get amount item) (get sender item) (get recipient item) (get memo item)) prev-err previous-response)
+)
+
+(define-public (transfer-many-memo (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})))
+	(fold transfer-many-memo-iter transfers (ok true))
+)
+
+(define-private (transfer-many-fixed-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer-fixed (get token-id item) (get amount item) (get sender item) (get recipient item)) prev-err previous-response)
+)
+
+(define-public (transfer-many-fixed (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})))
+	(fold transfer-many-fixed-iter transfers (ok true))
+)
+
+(define-private (transfer-many-memo-fixed-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer-memo-fixed (get token-id item) (get amount item) (get sender item) (get recipient item) (get memo item)) prev-err previous-response)
+)
+
+(define-public (transfer-many-memo-fixed (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})))
+	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
 (map-set approved-contracts .collateral-rebalancing-pool true)

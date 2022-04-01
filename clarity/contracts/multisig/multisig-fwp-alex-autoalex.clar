@@ -8,7 +8,7 @@
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u8003))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -144,7 +144,7 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-  (is-eq token .fwp-alex-usda-50-50)
+  (is-eq token .fwp-alex-autoalex)
 )
 
 
@@ -162,8 +162,8 @@
 (define-public (propose (start-block-height uint) (title (string-utf8 256)) (url (string-utf8 256)) (new-fee-rate-x uint) (new-fee-rate-y uint))
   (let 
     (
-      (proposer-balance (unwrap-panic (contract-call? .fwp-alex-usda-50-50 get-balance tx-sender)))
-      (total-supply (unwrap-panic (contract-call? .fwp-alex-usda-50-50 get-total-supply)))
+      (proposer-balance (unwrap-panic (contract-call? .fwp-alex-autoalex get-balance tx-sender)))
+      (total-supply (unwrap-panic (contract-call? .fwp-alex-autoalex get-total-supply)))
       (proposal-id (+ u1 (var-get proposal-count)))
     )
 
@@ -275,7 +275,7 @@
     (
       (proposal (get-proposal-by-id proposal-id))
       (threshold-percent (var-get threshold))
-      (total-supply (unwrap-panic (contract-call? .fwp-alex-usda-50-50 get-total-supply)))
+      (total-supply (unwrap-panic (contract-call? .fwp-alex-autoalex get-total-supply)))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
     )
@@ -329,8 +329,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (as-contract (try! (contract-call? .simple-weight-pool-alex set-fee-rate-x .age000-governance-token .token-usda new-fee-rate-x)))
-    (as-contract (try! (contract-call? .simple-weight-pool-alex set-fee-rate-y .age000-governance-token .token-usda new-fee-rate-y)))
+    (as-contract (try! (contract-call? .simple-weight-pool-alex set-fee-rate-x .age000-governance-token .auto-alex new-fee-rate-x)))
+    (as-contract (try! (contract-call? .simple-weight-pool-alex set-fee-rate-y .age000-governance-token .auto-alex new-fee-rate-y)))
     (ok true)
   )
 )

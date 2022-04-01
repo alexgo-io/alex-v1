@@ -112,7 +112,7 @@
 
 ;; --- Protocol functions
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 ;; @desc mint
 ;; @restricted ContractOwner/Approved Contract
@@ -217,4 +217,5 @@
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .fixed-weight-pool-v1-01 true)
+(map-set approved-contracts .fixed-weight-pool-v1-02 true)
 (map-set approved-contracts .simple-weight-pool true)

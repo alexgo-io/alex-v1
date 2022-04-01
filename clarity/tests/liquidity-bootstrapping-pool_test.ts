@@ -4,11 +4,11 @@ import { LBPTestAgent } from './models/alex-tests-liquidity-bootstrapping-pool.t
 import { USDAToken, ALEXToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants
-const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token"
 const poolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 const multisigAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-lbp-alex-usda-90-10"
-const wrongPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
+const wrongPoolTokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50-v1-01"
 const projectName = 'projectName';
 
 const ONE_8 = 1e+8;
@@ -26,7 +26,7 @@ const usdaQty = Math.round(price0 * alexQty * (ONE_8 - weightX1) / weightX1 / ON
 
 
 Clarinet.test({
-    name: "LBP : pool creation, adding values and reducing values",
+    name: "liquidity-bootstrapping-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -167,7 +167,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "LBP : trait check",
+  name: "liquidity-bootstrapping-pool : trait check",
 
   async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;

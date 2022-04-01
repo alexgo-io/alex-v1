@@ -3,7 +3,7 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { FWPTestAgent4 } from './models/alex-tests-fixed-weight-pool.ts';
-import { MS_FWP_WSTX_USDA_SIMPLE } from './models/alex-tests-multisigs.ts';
+import { MS_FWP_WSTX_USDA } from './models/alex-tests-multisigs.ts';
 import { 
     USDAToken,
     WBTCToken,
@@ -13,11 +13,11 @@ import {
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
-const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
-const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50"
+const fwpwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-usda-50-50-v1-01"
 const fwpwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-wbtc-50-50-v1-01"
-const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda-simple"
+const multisigwstxusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-usda"
 const multisigwstxwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-wbtc-50-50-v1-01"
 const wrongPooltokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.lbp-alex-usda-90-10"
 
@@ -31,7 +31,7 @@ const wbtcPrice = 50000;
 const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
-    name: "Simple Weight Pool : pool creation, adding values and reducing values",
+    name: "simple-weight-pool : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -73,21 +73,21 @@ Clarinet.test({
         // Check pool details and print
         let call = await FWPTest.getPoolDetails(wstxAddress, wbtcAddress);
         let position:any = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(500000000000000);
+        position['total-supply'].expectUint(223606778911);
         position['balance-x'].expectUint(wbtcQ*wbtcPrice);
         position['balance-y'].expectUint(wbtcQ);
 
         // Add extra liquidity (1/4 of initial liquidity)
         result = FWPTest.addToPosition(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, wbtcQ*wbtcPrice / 4, wbtcQ / 4);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(Math.round(500000000000000 / 4));
+        position['supply'].expectUint(Math.floor(223606778911 / 4));
         position['dy'].expectUint(wbtcQ / 4);
         position['dx'].expectUint(wbtcQ*wbtcPrice / 4);
 
         // Check pool details and print
         call = await FWPTest.getPoolDetails(wstxAddress, wbtcAddress);
         position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(Math.round(5/4 * 500000000000000));
+        position['total-supply'].expectUint(Math.floor(5/4 * 223606778911));
         position['balance-y'].expectUint(5/4 * wbtcQ);
         position['balance-x'].expectUint(5/4 * wbtcQ*wbtcPrice);
 
@@ -100,7 +100,7 @@ Clarinet.test({
         // Add back some liquidity
         result = FWPTest.addToPosition(deployer, wstxAddress, wbtcAddress, fwpwstxwbtcAddress, wbtcQ*wbtcPrice, wbtcQ);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(500000000000000);
+        position['supply'].expectUint(223606778911);
         position['dy'].expectUint(wbtcQ);
         position['dx'].expectUint(wbtcQ*wbtcPrice);        
 
@@ -129,7 +129,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Simple Weight Pool : trait check",
+    name: "simple-weight-pool : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>){
         let deployer = accounts.get("deployer")!;
@@ -182,7 +182,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "Simple Weight Pool : fee setting using multisig ",
+    name: "simple-weight-pool : fee setting using multisig ",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -192,7 +192,7 @@ Clarinet.test({
         let wbtcToken = new WBTCToken(chain, deployer);
         let alexToken = new ALEXToken(chain, deployer);
         let FWPTest = new FWPTestAgent4(chain, deployer);
-        let MultiSigTest = new MS_FWP_WSTX_USDA_SIMPLE(chain, deployer);
+        let MultiSigTest = new MS_FWP_WSTX_USDA(chain, deployer);
         let fwpPoolToken = new FWP_WSTX_USDA_5050(chain, deployer);
 
         // Deployer minting initial tokens        
@@ -231,11 +231,11 @@ Clarinet.test({
         chain.mineEmptyBlock(1000);
 
         let ROresult:any = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(25000000000000000000);
+        const balance = Number(ROresult.result.expectOk().replace(/\D/g, ""));
         
         // 90 % of existing tokens are voted for the proposal
-        result = MultiSigTest.voteFor(deployer, fwpwstxusdaAddress, 1, Math.round(25000000000000000000 * 9 / 10))
-        result.expectOk().expectUint(Math.round(25000000000000000000 * 9 / 10))
+        result = MultiSigTest.voteFor(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 9 / 10))
+        result.expectOk().expectUint(Math.floor(balance * 9 / 10))
 
         // Block 1440 mining for ending proposal
         chain.mineEmptyBlock(1440);
@@ -286,24 +286,24 @@ Clarinet.test({
         position['balance-y'].expectUint(50968487394959);
 
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(25000000000000000000 - Math.round(25000000000000000000 * 9 / 10));
+        ROresult.result.expectOk().expectUint(balance - Math.floor(balance * 9 / 10));
 
         result = MultiSigTest.returnVotesToMember(wallet_1, fwpwstxusdaAddress, 1, deployer.address);
         result.expectOk();
 
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(25000000000000000000);        
+        ROresult.result.expectOk().expectUint(balance);        
     },
 });
 
 
 Clarinet.test({
-    name: "Simple Weight Pool : error testing",
+    name: "simple-weight-pool : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let FWPTest = new FWPTestAgent4(chain, deployer);
-        let MultiSigTest = new MS_FWP_WSTX_USDA_SIMPLE(chain, deployer);
+        let MultiSigTest = new MS_FWP_WSTX_USDA(chain, deployer);
         let fwpPoolToken = new FWP_WSTX_USDA_5050(chain, deployer);
         const feeRateX = 5000000; // 5%
         const feeRateY = 5000000;
@@ -378,21 +378,21 @@ Clarinet.test({
         result.expectOk().expectUint(1) // First Proposal
     
         ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(31250000000000000000);
+        const balance = Number(ROresult.result.expectOk().replace(/\D/g, ""));
 
         // Attempt to vote before start 
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(31250000000000000000 * 9 / 10));
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 9 / 10));
         result.expectErr().expectUint(1000); 
         
         // Mine Block
         chain.mineEmptyBlock(1000);
 
         // Not enough balance for voting
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(31250000000000000000 * 12 / 10));
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 12 / 10));
         result.expectErr().expectUint(1); 
 
-        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.round(31250000000000000000 * 9 / 10));
-        result.expectOk().expectUint(Math.round(31250000000000000000 * 9 / 10)); 
+        result = MultiSigTest.voteAgainst(deployer, fwpwstxusdaAddress, 1, Math.floor(balance * 9 / 10));
+        result.expectOk().expectUint(Math.floor(balance * 9 / 10)); 
 
         // Attempt to end proposal before block height
         result = MultiSigTest.endProposal(1)
@@ -415,7 +415,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Simple Weight Pool : testing get-x-given-price and get-y-given-price",
+    name: "simple-weight-pool : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -449,7 +449,7 @@ Clarinet.test({
         position['balance-y'].expectUint(wbtcQ*wbtcPrice);      
         
         // let's do some arb
-        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.round(ONE_8*1.1));
+        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.floor(ONE_8*1.1));
         call.result.expectOk().expectUint(2440438000000);         
         result = FWPTest.swapYForX(deployer, wstxAddress, usdaAddress, 2326871500000, 0)
         position = result.expectOk().expectTuple();
@@ -464,10 +464,10 @@ Clarinet.test({
         
         // let's do some arb
         // but calling get-y-given-price throws an error
-        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.round(ONE_8 * 1.1 * 0.95));
+        call = await FWPTest.getYgivenPrice(wstxAddress, usdaAddress, Math.floor(ONE_8 * 1.1 * 0.95));
         call.result.expectErr().expectUint(2002);
         // we need to call get-x-given-price
-        call = await FWPTest.getXgivenPrice(wstxAddress, usdaAddress, Math.round(ONE_8 * 1.1 * 0.95));
+        call = await FWPTest.getXgivenPrice(wstxAddress, usdaAddress, Math.floor(ONE_8 * 1.1 * 0.95));
         call.result.expectOk().expectUint(1134994760770);                 
         result = FWPTest.swapXForY(deployer, wstxAddress, usdaAddress, 1240808997564, 0)
         position = result.expectOk().expectTuple();
@@ -501,7 +501,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Simple Weight Pool : check start-block and end-block",
+    name: "simple-weight-pool : check start-block and end-block",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

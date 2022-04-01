@@ -2,7 +2,7 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token fwp-wstx-usda-50-50)
+(define-fungible-token fwp-wstx-usda-50-50-v1-01)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -46,19 +46,19 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply fwp-wstx-usda-50-50))
+  (ok (ft-get-supply fwp-wstx-usda-50-50-v1-01))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "fwp-wstx-usda-50-50")
+  (ok "fwp-wstx-usda-50-50-v1-01")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "fwp-wstx-usda-50-50")
+  (ok "fwp-wstx-usda-50-50-v1-01")
 )
 
 ;; @desc get-decimals
@@ -71,7 +71,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance fwp-wstx-usda-50-50 account))
+  (ok (ft-get-balance fwp-wstx-usda-50-50-v1-01 account))
 )
 
 ;; @desc set-token-uri
@@ -101,7 +101,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (try! (ft-transfer? fwp-wstx-usda-50-50 amount sender recipient))
+    (try! (ft-transfer? fwp-wstx-usda-50-50-v1-01 amount sender recipient))
     (match memo to-print (print to-print) 0x)
     (ok true)
   )
@@ -115,7 +115,7 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-mint? fwp-wstx-usda-50-50 amount recipient)
+    (ft-mint? fwp-wstx-usda-50-50-v1-01 amount recipient)
   )
 )
 
@@ -127,11 +127,11 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-burn? fwp-wstx-usda-50-50 amount sender)
+    (ft-burn? fwp-wstx-usda-50-50-v1-01 amount sender)
   )
 )
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 ;; @desc pow-decimals
 ;; @returns uint
@@ -157,7 +157,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-usda-50-50)))
+  (ok (decimals-to-fixed (ft-get-supply fwp-wstx-usda-50-50-v1-01)))
 )
 
 ;; @desc get-balance-fixed
@@ -165,7 +165,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-usda-50-50 account)))
+  (ok (decimals-to-fixed (ft-get-balance fwp-wstx-usda-50-50-v1-01 account)))
 )
 
 ;; @desc transfer-fixed
@@ -197,4 +197,5 @@
 )
 
 (map-set approved-contracts .fixed-weight-pool-v1-01 true)
+(map-set approved-contracts .fixed-weight-pool-v1-02 true)
 (map-set approved-contracts .simple-weight-pool true)

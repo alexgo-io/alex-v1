@@ -14,7 +14,7 @@ import {
   
   // Deployer Address Constants
   const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc";
-  const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda";
+  const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda";
   const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token";
   const yieldwbtcAddress =
     "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-wbtc";
@@ -27,9 +27,9 @@ import {
   const multisigytpyieldwbtc =
     "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-ytp-yield-wbtc";
   const fwpalexusdaAddress =
-    "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda-50-50";
+    "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda";
   const multisigfwpalexusda =
-    "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda-50-50";
+    "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda";
   
   const fwpalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-wbtc-50-50"
   const multisigalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-wbtc-50-50"
@@ -53,7 +53,7 @@ import {
    */
   
   Clarinet.test({
-    name: "CRP : Reduce yield before key tokens (CR-02)",
+    name: "collateral-rebalacing-pool : Reduce yield before key tokens (CR-02)",
   
     async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;
@@ -142,7 +142,7 @@ import {
         wbtcQ / 10 ,
         wbtcQ / 10,
       );
-      result.expectOk().expectBool(true);
+      result.expectOk().expectTuple();
 
       call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
       position = call.result.expectOk().expectTuple();
@@ -171,7 +171,7 @@ import {
         1 * ONE_8,
         50000 * ONE_8,
       );
-      result.expectOk().expectBool(true);
+      result.expectOk().expectTuple();
 
       // call = await CRPTest.getSpot(wbtcAddress, usdaAddress);
       // call.result.expectOk();

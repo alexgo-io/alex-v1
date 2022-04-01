@@ -8,12 +8,12 @@ import { FLTestAgent1 } from './models/alex-tests-flash-loan.ts';
 import { USDAToken ,WBTCToken, ALEXToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
-const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda"
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token"
-const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda-50-50"
+const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda"
 const fwpalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-wbtc-50-50"
-const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda-50-50"
+const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda"
 const multisigalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-wbtc-50-50"
 const yieldusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.yield-usda"
 const keyusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.key-usda-alex"
@@ -50,7 +50,7 @@ const weightY = 0.5e+8
  */
 
 Clarinet.test({
-    name: "Flash Loan: create margin trade",
+    name: "flash-loan : create margin trade",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -106,12 +106,12 @@ Clarinet.test({
         result.expectOk().expectBool(true);             
 
         result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, expiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 100*ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, expiry, yieldusdaAddress, keyusdawbtcAddress, multisigncrpusdawbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
-        result.expectOk().expectBool(true);        
+        result.expectOk().expectTuple();        
       
         let call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         let position:any = call.result.expectOk().expectUint(0);
@@ -149,9 +149,9 @@ Clarinet.test({
         result.expectErr().expectUint(2017);
         // but let's set up new pools
         result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
-        result.expectOk().expectBool(true);
+        result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, nextExpiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
-        result.expectOk().expectBool(true);    
+        result.expectOk().expectTuple();    
         
         // and now we just expired
         chain.mineEmptyBlockUntil(expiry + 1);
@@ -170,7 +170,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Flash Loan: authorisation tests",
+    name: "flash-loan : authorisation tests",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

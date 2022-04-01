@@ -72,7 +72,7 @@ class USDAToken {
   }
 
   getBalance(account: string) {
-    return this.chain.callReadOnlyFn("token-usda", "get-balance", [
+    return this.chain.callReadOnlyFn("token-usda", "get-balance-fixed", [
       types.principal(account),
     ], this.deployer.address);
   }
@@ -221,6 +221,66 @@ class WBTCToken {
 }
 export { WBTCToken };
 
+class WBANToken {
+  chain: Chain;
+  deployer: Account;
+
+  constructor(chain: Chain, deployer: Account) {
+    this.chain = chain;
+    this.deployer = deployer;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn("token-banana", "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+
+  getBalance(account: string) {
+    return this.chain.callReadOnlyFn("token-banana", "get-balance", [
+      types.principal(account),
+    ], this.deployer.address);
+  }
+
+  // Always need to called by deployer
+  mint(sender: Account, recipient: string, amount : number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("token-banana", "mint", [
+        types.uint(amount),
+        types.principal(recipient)        
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+
+  mintFixed(sender: Account, recipient: string, amount : number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("token-banana", "mint-fixed", [
+        types.uint(amount),
+        types.principal(recipient)        
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+  
+  transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall("token-banana", "transfer-fixed", [
+          types.uint(amount),
+          types.principal(sender.address),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  totalSupply() {
+    return this.chain.callReadOnlyFn("token-banana", "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { WBANToken };
+
 class WSTXToken {
   chain: Chain;
   deployer: Account;
@@ -291,18 +351,18 @@ class FWP_WSTX_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50-v1-01", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-wstx-usda-50-50-v1-01", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
 export { FWP_WSTX_USDA_5050 };
 
-class FWP_ALEX_USDA_5050 {
+class FWP_ALEX_USDA {
   chain: Chain;
   deployer: Account;
 
@@ -312,16 +372,16 @@ class FWP_ALEX_USDA_5050 {
   }
 
   balanceOf(wallet: string) {
-    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50", "get-balance-fixed", [
+    return this.chain.callReadOnlyFn("fwp-alex-usda", "get-balance-fixed", [
       types.principal(wallet),
     ], this.deployer.address);
   }
   
   totalSupply() {
-    return this.chain.callReadOnlyFn("fwp-alex-usda-50-50", "get-total-supply-fixed", [], this.deployer.address);
+    return this.chain.callReadOnlyFn("fwp-alex-usda", "get-total-supply-fixed", [], this.deployer.address);
   }
 }
-export { FWP_ALEX_USDA_5050 };
+export { FWP_ALEX_USDA };
 class FWP_WBTC_USDA_5050 {
   chain: Chain;
   deployer: Account;
@@ -582,3 +642,54 @@ class YIELD_USDA {
 }
 
 export { YIELD_USDA };
+
+class FungibleToken {
+  chain: Chain;
+  deployer: Account;
+  token: string;
+
+  constructor(chain: Chain, deployer: Account, token: string) {
+    this.chain = chain;
+    this.deployer = deployer;
+    this.token = token;
+  }
+
+  balanceOf(wallet: string) {
+    return this.chain.callReadOnlyFn(this.token, "get-balance-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }
+
+  getBalance(account: string) {
+    return this.chain.callReadOnlyFn(this.token, "get-balance", [
+      types.principal(account),
+    ], this.deployer.address);
+  }
+
+  mintFixed(sender: Account, recipient: string, amount : number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall(this.token, "mint-fixed", [
+        types.uint(amount),
+        types.principal(recipient)        
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+  
+  transferToken(sender: Account, amount: number, receiver: string, memo:ArrayBuffer) {
+    let block = this.chain.mineBlock([
+        Tx.contractCall(this.token, "transfer-fixed", [
+          types.uint(amount),
+          types.principal(sender.address),
+          types.principal(receiver),
+          types.some(types.buff(memo))
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;
+  }
+
+  totalSupply() {
+    return this.chain.callReadOnlyFn(this.token, "get-total-supply-fixed", [], this.deployer.address);
+  }
+}
+export { FungibleToken };

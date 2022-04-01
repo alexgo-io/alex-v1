@@ -63,7 +63,7 @@
 ;; @desc get-decimals
 ;; @returns (response uint)
 (define-read-only (get-decimals)
-  (ok u8)
+  (ok u6)
 )
 
 ;; @desc get-balance
@@ -137,7 +137,7 @@
   )
 )
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 ;; @desc pow-decimals
 ;; @returns uint
@@ -203,3 +203,4 @@
 )
 
 (map-set approved-contracts .faucet true)
+(map-set approved-contracts .dual-token-transfer true)

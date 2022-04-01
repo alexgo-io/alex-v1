@@ -10,7 +10,7 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 (define-data-var usda-amount uint u0)
 (define-data-var xbtc-amount uint u0)

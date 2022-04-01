@@ -19,20 +19,19 @@ export type StandardTestParameters = {
 	registrationEndHeight?: number,
 	claimEndHeight?: number,
 	ticketRecipients: TicketAllocation[],
-	apowerPerTicketInFixed: number[],
-	tierThreshold: number,
+	apowerPerTicketInFixed: any[],
 	registrationMaxTickets: number	
 };
 
 export const contractPrincipal = (address: Account | string, contractName: string) => `${(address as Account).address || address}.${contractName}`;
 
-export function determineApower(tickets: number, apowerPerTicketInFixed: number[], tierThredhold: number){
+export function determineApower(tickets: number, apowerPerTicketInFixed: any[]){
 	let apower = 0;
 	let remaining_tickets = tickets;
 	for(let i = 0; i < apowerPerTicketInFixed.length; i++){
-		let tickets_to_process = (remaining_tickets < tierThredhold || i == apowerPerTicketInFixed.length - 1) ? remaining_tickets : tierThredhold;
+		let tickets_to_process = (remaining_tickets < apowerPerTicketInFixed[i]['tierThreshold'] || i == apowerPerTicketInFixed.length - 1) ? remaining_tickets : apowerPerTicketInFixed[i]['tierThreshold'];
 		remaining_tickets -= tickets_to_process;
-		apower += apowerPerTicketInFixed[i] * tickets_to_process;
+		apower += apowerPerTicketInFixed[i]['apowerPerTicketInFixed'] * tickets_to_process;
 	}
 	return apower;
 }
@@ -50,13 +49,12 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		claimEndHeight,
 		ticketRecipients,
 		apowerPerTicketInFixed,
-		tierThreshold,
 		registrationMaxTickets
 	} = parameters;
 	const first = chain.mineBlock([		
 		Tx.contractCall("token-banana", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
 		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-launchpad-v1-1"))], deployer.address),
-		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(determineApower(allocation.amount, apowerPerTicketInFixed, tierThreshold)), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
+		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(determineApower(allocation.amount, apowerPerTicketInFixed)), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
 		Tx.contractCall("alex-launchpad-v1-1", "create-pool", [
 			types.principal(contractPrincipal(deployer, "token-wban")),
 			types.principal(contractPrincipal(deployer, "token-wstx")),
@@ -68,8 +66,7 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 				"registration-start-height": types.uint(registrationStartHeight || 0),
 				"registration-end-height": types.uint(registrationEndHeight || 10),
 				"claim-end-height": types.uint(claimEndHeight || 20),
-				"apower-per-ticket-in-fixed": types.list(apowerPerTicketInFixed.map(e => { return types.uint(e) })),
-				"tier-threshold": types.uint(tierThreshold),
+				"apower-per-ticket-in-fixed": types.list(apowerPerTicketInFixed.map(e => { return types.tuple( { 'apower-per-ticket-in-fixed': types.uint(e.apowerPerTicketInFixed), 'tier-threshold': types.uint(e.tierThreshold) } ) })),
 				"registration-max-tickets": types.uint(registrationMaxTickets)
 			}),
 		], deployer.address),
@@ -96,5 +93,6 @@ export function extractParameters(parametersResponse: string) {
 		maxStepSize: parseInt(tuple["max-step-size"].substring(1)),
 		walkPosition: parseInt(tuple["walk-position"].substring(1)),
 		ticketsForSale: parseInt(tuple["total-tickets"].substring(1)),
+		activationThreshold: parseInt(tuple["activation-threshold"].substring(1))
 	};
 }

@@ -3,23 +3,23 @@ import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarine
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 
 import { FWPTestAgent1, FWPTestAgent2 } from './models/alex-tests-fixed-weight-pool.ts';
-import { MS_FWP_ALEX_USDA_5050 } from './models/alex-tests-multisigs.ts';
+import { MS_FWP_ALEX_USDA } from './models/alex-tests-multisigs.ts';
 import { 
     USDAToken,
     WBTCToken,
     ALEXToken,
-    FWP_ALEX_USDA_5050,
+    FWP_ALEX_USDA,
   } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
-const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-usda"
+const usdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wusda"
 const wstxAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wstx"
 const alexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.age000-governance-token"
-const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda-50-50"
+const fwpalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-usda"
 const fwpalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-alex-wbtc-50-50"
 const fwpstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fwp-wstx-alex-50-50-v1-01"
-const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda-50-50"
+const multisigalexusdaAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-usda"
 const multisigalexwbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-alex-wbtc-50-50"
 const multisigstxalexAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.multisig-fwp-wstx-alex-50-50-v1-01"
 const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-alex"
@@ -36,7 +36,7 @@ const wbtcPrice = 50000;
 const wbtcQ = 10 * ONE_8;
 
 Clarinet.test({
-    name: "Fixed Weight Pool - ALEX : pool creation, adding values and reducing values",
+    name: "fixed-weight-pool-alex : pool creation, adding values and reducing values",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -134,7 +134,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Fixed Weight Pool - ALEX : trait check",
+    name: "fixed-weight-pool-alex : trait check",
 
     async fn(chain: Chain, accounts: Map<string, Account>){
         let deployer = accounts.get("deployer")!;
@@ -187,129 +187,13 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "Fixed Weight Pool - ALEX : fee setting using multisig ",
-
-    async fn(chain: Chain, accounts: Map<string, Account>) {
-        let deployer = accounts.get("deployer")!;
-        let wallet_1 = accounts.get("wallet_1")!;
-        let contractOwner = deployer;
-        let usdaToken = new USDAToken(chain, deployer);
-        let wbtcToken = new WBTCToken(chain, deployer);
-        let alexToken = new ALEXToken(chain, deployer);
-        let FWPTest = new FWPTestAgent2(chain, deployer);
-        let MultiSigTest = new MS_FWP_ALEX_USDA_5050(chain, deployer);
-        let fwpPoolToken = new FWP_ALEX_USDA_5050(chain, deployer);
-
-        // Deployer minting initial tokens        
-        let result = usdaToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000 * ONE_8);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, deployer.address, 100000000 * ONE_8);
-        result.expectOk();  
-
-
-        const feeRateX = 0.1*ONE_8; // 10%
-        const feeRateY = 0.1*ONE_8;
-        const feeRebate = 0.5*ONE_8;
-
-        // Deployer creating a pool, initial tokens injected to the pool
-        result = FWPTest.createPool(deployer, alexAddress, usdaAddress, weightX, weightY, fwpalexusdaAddress, multisigalexusdaAddress, wbtcQ*wbtcPrice, wbtcQ*wbtcPrice);
-        result.expectOk().expectBool(true);
-        result = FWPTest.createPool(deployer, alexAddress, wbtcAddress, weightX, weightY, fwpalexwbtcAddress, multisigalexwbtcAddress, wbtcQ*wbtcPrice, wbtcQ);
-        result.expectOk().expectBool(true);
-
-        result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);
-        result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);     
-        result = FWPTest.setStartBlock(deployer, alexAddress, usdaAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);     
-        result = FWPTest.setStartBlock(deployer, alexAddress, wbtcAddress, weightX, weightY, 0);   
-        result.expectOk().expectBool(true);                        
-
-        // Fee rate Setting Proposal of Multisig
-        result = MultiSigTest.propose(1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
-        result.expectOk().expectUint(1) // First Proposal
-        
-        // Block 1000 mining
-        chain.mineEmptyBlock(1000);
-
-        let ROresult:any = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(49999992342522);
-        
-        // 90 % of existing tokens are voted for the proposal
-        result = MultiSigTest.voteFor(deployer, fwpalexusdaAddress, 1, Math.round(49999992342522 * 9 / 10))
-        result.expectOk().expectUint(Math.round(49999992342522 * 9 / 10))
-
-        // Block 1440 mining for ending proposal
-        chain.mineEmptyBlock(1440);
-
-        // end proposal 
-        result = MultiSigTest.endProposal(1)
-        result.expectOk().expectBool(true) // Success 
-       
-        // Fee set to 10% 
-        result = FWPTest.getFeeX(deployer, alexAddress, usdaAddress, weightX, weightY);
-        result.expectOk().expectUint(0.1*ONE_8)
-        result = FWPTest.getFeeY(deployer, alexAddress, usdaAddress, weightX, weightY);
-        result.expectOk().expectUint(0.1*ONE_8)
-        
-        // deployer (Contract owner) sets rebate rate
-        result = FWPTest.setFeeRebate(contractOwner, alexAddress, usdaAddress, weightX, weightY, feeRebate);
-        result.expectOk().expectBool(true)
-
-        ROresult = FWPTest.getPoolDetails(alexAddress, usdaAddress, weightX, weightY);
-        let position:any = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(50000000000000);
-        position['balance-y'].expectUint(50000000000000);        
-
-        // Swapping 
-        result = FWPTest.swapXForY(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8, 0);
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(ONE_8);    
-        position['dy'].expectUint(3781504000000); 
-
-        ROresult = FWPTest.getPoolDetails(alexAddress, usdaAddress, weightX, weightY);
-        position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(54318177025000);
-        position['balance-y'].expectUint(50000000000000 - 3781504000000); 
-
-        // Swapping 
-        result = FWPTest.swapYForX(deployer, wbtcAddress, usdaAddress, weightX, weightY, ONE_8*wbtcPrice, 0);
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(105448497);    // Corresponding dx value
-        position['dy'].expectUint(ONE_8*wbtcPrice);    // 10% fee charged on alex-usda leg, so you don't see
-        
-        // fee : 0.1 * ONE_8 * wbtcPrice
-        // dx-net-fees : 0.9 * ONE_8 * wbtcPrice
-        // fee-rebate : 0.05 * ONE_8 * wbtcPrice
-
-        ROresult = FWPTest.getPoolDetails(alexAddress, usdaAddress, weightX, weightY);
-        position = ROresult.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(49498800027548); 
-        position['balance-y'].expectUint(50968496000000);
-
-        ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(49999992342522 - Math.round(49999992342522 * 9 / 10));
-
-        result = MultiSigTest.returnVotesToMember(wallet_1, fwpalexusdaAddress, 1, deployer.address);
-        result.expectOk();
-
-        ROresult = fwpPoolToken.balanceOf(deployer.address);
-        ROresult.result.expectOk().expectUint(49999992342522);        
-    },
-});
-
-
-Clarinet.test({
-    name: "Fixed Weight Pool - ALEX : error testing",
+    name: "fixed-weight-pool-alex : error testing",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
         let FWPTest = new FWPTestAgent2(chain, deployer);
-        let MultiSigTest = new MS_FWP_ALEX_USDA_5050(chain, deployer);
-        let fwpPoolToken = new FWP_ALEX_USDA_5050(chain, deployer);
+        let MultiSigTest = new MS_FWP_ALEX_USDA(chain, deployer);
+        let fwpPoolToken = new FWP_ALEX_USDA(chain, deployer);
         const feeRateX = 5000000; // 5%
         const feeRateY = 5000000;
         let usdaToken = new USDAToken(chain, deployer);
@@ -420,7 +304,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "Fixed Weight Pool - ALEX : testing get-x-given-price and get-y-given-price",
+    name: "fixed-weight-pool-alex : testing get-x-given-price and get-y-given-price",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -506,7 +390,7 @@ Clarinet.test({
 });      
 
 Clarinet.test({
-    name: "Fixed Weight Pool - ALEX : check start-block and end-block",
+    name: "fixed-weight-pool-alex : check start-block and end-block",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;

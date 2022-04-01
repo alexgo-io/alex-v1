@@ -111,7 +111,7 @@
 
 ;; --- Protocol functions
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 
 ;; @desc mint
 ;; @restricted ContractOwner/Approved Contract
@@ -215,4 +215,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .alex-yield-vault true)
+(map-set approved-contracts .yield-vault-alex true)

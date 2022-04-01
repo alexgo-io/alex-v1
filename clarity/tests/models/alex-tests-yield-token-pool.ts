@@ -289,7 +289,23 @@ import {
       return block.receipts[0].result;
     }    
 
-
+    setMaxInRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("yield-token-equation", "set-max-in-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+  
+    setMaxOutRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("yield-token-equation", "set-max-out-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }  
   
   }
   

@@ -6,11 +6,13 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 const stakeContract = "age000-governance-token"
 const reserveContract = "alex-reserve-pool";
 const helperContract = "staking-helper";
+const dualFarmingContract = "dual-farming-pool";
 const reward_cycle_length = 525;
 
 const ONE_8 = 100000000;
 const stakedAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE." + stakeContract;
-const fwpAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.fixed-weight-pool-v1-01";
+const dualAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.dual-farm-diko-helper";
+const underlyingAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wdiko";
 
 class StakingHelper {
     chain: Chain;
@@ -21,11 +23,11 @@ class StakingHelper {
       this.deployer = deployer;
     }
 
-    claimStakingReward(sender: Account, stakedToken: string, reward_cycle: number) {
+    claimStakingReward(sender: Account, stakedToken: string, reward_cycles: Array<number>) {
       let block = this.chain.mineBlock([
-          Tx.contractCall(helperContract, "claim-staking-reward-by-tx-sender", [
+          Tx.contractCall(helperContract, "claim-staking-reward", [
             types.principal(stakedToken),
-            types.uint(reward_cycle),
+            types.list(reward_cycles.map(reward_cycle => { return types.uint(reward_cycle) })),
           ], sender.address),
         ]);
         return block.receipts[0].result;
@@ -111,6 +113,54 @@ class StakingHelper {
         types.list(reward_cycles.map(e=>{return types.uint(e)}))
       ], this.deployer.address);
     }
+
+    claimStakingRewardDual(sender: Account, stakedToken: string, dualToken: string, reward_cycles: Array<number>) {
+      let block = this.chain.mineBlock([
+          Tx.contractCall(dualFarmingContract, "claim-staking-reward", [
+            types.principal(stakedToken),
+            types.principal(dualToken),
+            types.list(reward_cycles.map(reward_cycle => { return types.uint(reward_cycle) })),
+          ], sender.address),
+        ]);
+        return block.receipts[0];
+    }
+    
+    addTokenDual(sender: Account, token: string, dualToken: string, underlyingToken: string){
+      let block = this.chain.mineBlock([
+        Tx.contractCall(dualFarmingContract, "add-token", [
+          types.principal(token),
+          types.principal(dualToken),
+          types.principal(underlyingToken)
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;      
+    }    
+    
+    setMultiplierInFixedDual(sender: Account, token: string, multiplier: number){
+      let block = this.chain.mineBlock([
+        Tx.contractCall(dualFarmingContract, "set-multiplier-in-fixed", [
+          types.principal(token),
+          types.uint(multiplier),
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;      
+    }  
+    
+    setApowerMultiplierInFixed(sender: Account, token: string, multiplier: number){
+      let block = this.chain.mineBlock([
+        Tx.contractCall(reserveContract, "set-apower-multiplier-in-fixed", [
+          types.principal(token),
+          types.uint(multiplier),
+        ], sender.address),
+      ]);
+      return block.receipts[0].result;      
+    }  
+        
+    getDualTokenUnderlying(token: string) {
+      return this.chain.callReadOnlyFn(dualFarmingContract, "get-dual-token-underlying", [
+        types.principal(token),
+      ], this.deployer.address);
+    }
 }
 
 /**
@@ -141,7 +191,7 @@ Clarinet.test({
         result = await StakingTest.setActivationBlock(deployer, stakedAddress, 1);
         result.expectOk().expectBool(true);          
         result = await StakingTest.setCoinbaseAmount(deployer, stakedAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8);
-        result.expectOk().expectBool(true);
+        result.expectOk().expectBool(true);        
 
         result = await StakingTest.stakeTokens(wallet_6, stakedAddress, 100e8, 3);
         result.expectOk().expectBool(true);
@@ -175,29 +225,106 @@ Clarinet.test({
         call = await StakingTest.getRewardCycle(stakedAddress);
         call.result.expectSome().expectUint(2); 
         
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 1);
-        let claimed:any = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(ONE_8);
-        claimed['to-return'].expectUint(0);       
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [1]);
+        let claimed:any = result.expectOk().expectList();
+        let output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(ONE_8);
+        output['to-return'].expectUint(0);       
         
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 1);
-        claimed = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(0);
-        claimed['to-return'].expectUint(0);    
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [1]);
+        claimed = result.expectOk().expectList();
+        output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(0);
+        output['to-return'].expectUint(0);        
         
         chain.mineEmptyBlockUntil(8 + reward_cycle_length * 4 + 1);
         
         call = await StakingTest.getRewardCycle(stakedAddress);
         call.result.expectSome().expectUint(4);    
         
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 3);
-        claimed = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(ONE_8);
-        claimed['to-return'].expectUint(100e8);          
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [3]);
+        claimed = result.expectOk().expectList();
+        output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(ONE_8);
+        output['to-return'].expectUint(100e8);          
 
-        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, 3);
-        claimed = result.expectOk().expectTuple();
-        claimed['entitled-token'].expectUint(0);
-        claimed['to-return'].expectUint(0);            
+        result = await StakingTest.claimStakingReward(wallet_6, stakedAddress, [3]);
+        claimed = result.expectOk().expectList();
+        output = claimed[0].expectOk().expectTuple();
+        output['entitled-token'].expectUint(0);
+        output['to-return'].expectUint(0);         
     },    
+});
+
+Clarinet.test({
+  name: "dual-farming-pool/diko tests",
+
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+      let deployer = accounts.get("deployer")!;
+      let wallet_6 = accounts.get("wallet_6")!;
+      let StakingTest = new StakingHelper(chain, deployer);
+
+
+      chain.mineBlock([
+        Tx.contractCall(stakeContract, "mint-fixed", [
+          types.uint(100000e8),
+          types.principal(wallet_6.address)
+        ], deployer.address),
+      ]);
+
+      let call:any = await StakingTest.getDualTokenUnderlying(stakedAddress);
+      call.result.expectErr().expectUint(1003);
+      
+      let result:any = await StakingTest.addTokenDual(wallet_6, stakedAddress, dualAddress, underlyingAddress);
+      result.expectErr().expectUint(1000);      
+      result = await StakingTest.addTokenDual(deployer, stakedAddress, dualAddress, underlyingAddress);
+      result.expectOk().expectBool(true);
+
+      call = await StakingTest.getDualTokenUnderlying(stakedAddress);
+      call.result.expectOk();
+      
+      result = await StakingTest.setMultiplierInFixedDual(wallet_6, stakedAddress, ONE_8);
+      result.expectErr().expectUint(1000);
+      result = await StakingTest.setMultiplierInFixedDual(deployer, stakedAddress, ONE_8);
+      result.expectOk().expectBool(true);
+
+      result = await StakingTest.setRewardCycleLength(deployer, reward_cycle_length);
+      result.expectOk().expectBool(true);      
+      result = await StakingTest.setActivationBlock(deployer, stakedAddress, 1);
+      result.expectOk().expectBool(true);          
+      result = await StakingTest.setCoinbaseAmount(deployer, stakedAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8);
+      result.expectOk().expectBool(true);
+      result = await StakingTest.setApowerMultiplierInFixed(deployer, stakedAddress, 0.6e8);
+      result.expectOk().expectBool(true);      
+
+      result = await StakingTest.stakeTokens(wallet_6, stakedAddress, 100e8, 3);
+      result.expectOk().expectBool(true);
+      
+      chain.mineEmptyBlockUntil(8 + reward_cycle_length * 4 + 1);  
+      
+      let block = await StakingTest.claimStakingRewardDual(wallet_6, stakedAddress, dualAddress, [1,2,3]);
+      let claimed:any = block.result.expectOk().expectList();
+      for(let i = 0; i < 3; i++){
+        const output = claimed[i].expectOk().expectTuple();
+        output['entitled-dual'].expectUint(ONE_8);
+        output['entitled-token'].expectUint(ONE_8);
+        output['to-return'].expectUint(i == 2 ? 100e8 : 0)
+      }
+
+      block.events.expectFungibleTokenMintEvent(
+        1e6,
+        wallet_6.address,
+        "diko"
+      );
+      block.events.expectFungibleTokenMintEvent(
+        ONE_8,
+        wallet_6.address,
+        "alex"
+      );   
+      block.events.expectFungibleTokenMintEvent(
+        0.6e8,
+        wallet_6.address,
+        "apower"
+      );                  
+  },    
 });

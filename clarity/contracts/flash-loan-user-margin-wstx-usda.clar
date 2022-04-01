@@ -1,7 +1,7 @@
 (impl-trait .trait-flash-loan-user.flash-loan-user-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(define-constant ONE_8 (pow u10 u8))
+(define-constant ONE_8 u100000000)
 (define-constant ERR-EXPIRY-IS-NONE (err u2027))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 
@@ -17,15 +17,15 @@
             ;; gross amount = amount * price / ltv
             ;; buff to uint conversion
             (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
-            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-usda .token-wstx memo-uint)))
+            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wusda .token-wstx memo-uint)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-usda)))
             (gross-amount (mul-up amount (div-down price ltv)))            
-            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-usda .token-wstx memo-uint .yield-usda .key-usda-wstx gross-amount))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-usda minted-yield-token none))))
+            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wusda .token-wstx memo-uint .yield-usda .key-usda-wstx gross-amount))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-usda .token-wusda minted-yield-token none))))
         )
         (asserts! (is-eq .token-wstx (contract-of collateral)) ERR-INVALID-TOKEN)
         ;; swap token to collateral so we can return flash-loan
-        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-usda .token-wstx u50000000 u50000000 swapped-token none))
+        (try! (contract-call? .fixed-weight-pool-v1-01 swap-helper .token-wusda .token-wstx u50000000 u50000000 swapped-token none))
         (print { object: "flash-loan-user-margin-wstx-usda", action: "execute", data: gross-amount })
         (ok true)
     )
