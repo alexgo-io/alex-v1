@@ -715,3 +715,7 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 [contracts.token-wdiko]
 path = "contracts/wrapped-token/token-wdiko.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]
+
+[contracts.flash-loan-wstx-to-wbtc]
+path = "contracts/flash-loan-wstx-to-wbtc.clar"
+depends_on = [ "trait-sip-010", "trait-flash-loan-user", "alex-vault", "swap-helper-v1-01" ]
