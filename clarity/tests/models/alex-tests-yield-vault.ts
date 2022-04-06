@@ -3,15 +3,17 @@ import {Clarinet, Tx, Chain, Account, types} from "https://deno.land/x/clarinet@
 
 class YieldVault{
     chain: Chain;
+    contractName: string;
 
-    constructor(chain: Chain) {
+    constructor(chain: Chain, contractName: string) {
         this.chain = chain;
+        this.contractName = contractName;
     }
 
     // (define-public (add-to-position (dx uint))
     addToPosition(sender: Account, dx: number){
         return Tx.contractCall(
-            "yield-vault-alex",
+            this.contractName,
             "add-to-position",
             [
                 types.uint(dx)
@@ -22,7 +24,7 @@ class YieldVault{
 
     claimAndStake(sender: Account, reward_cycle: number){
         return Tx.contractCall(
-            "yield-vault-alex",
+            this.contractName,
             "claim-and-stake",
             [
                 types.uint(reward_cycle)
@@ -33,7 +35,7 @@ class YieldVault{
 
     reducePosition(sender: Account){
         return Tx.contractCall(
-            "yield-vault-alex",
+            this.contractName,
             "reduce-position",
             [],
             sender.address
@@ -42,7 +44,7 @@ class YieldVault{
 
     setActivated(sender: Account, activated: boolean){
         return Tx.contractCall(
-            "yield-vault-alex",
+            this.contractName,
             "set-activated",
             [
                 types.bool(activated)
@@ -53,29 +55,16 @@ class YieldVault{
 
     getNextBase(sender: Account){
         return this.chain.callReadOnlyFn(
-            "yield-vault-alex",
+            this.contractName,
             "get-next-base",
             [],
             sender.address
         )
-    }   
-
-    //(define-public (stake-tokens (amount-token uint) (lock-period uint))
-    stakeTokens(sender: Account, amount_token: number, lock_period: number){
-        return Tx.contractCall(
-            "yield-vault-alex",
-            "stake-tokens",
-            [
-                types.uint(amount_token),
-                types.uint(lock_period)
-            ],
-            sender.address
-        )
-    } 
+    }
     
     SetBountyInFixed(sender: Account, bounty_in_fixed: number){
         return Tx.contractCall(
-            "yield-vault-alex",
+            this.contractName,
             "set-bounty-in-fixed",
             [
                 types.uint(bounty_in_fixed)
@@ -86,7 +75,7 @@ class YieldVault{
     
     getBountyInFixed(sender: Account){
         return this.chain.callReadOnlyFn(
-            "yield-vault-alex",
+            this.contractName,
             "get-bounty-in-fixed",
             [],
             sender.address

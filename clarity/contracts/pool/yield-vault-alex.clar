@@ -79,10 +79,7 @@
 (define-private (stake-tokens (amount-tokens uint) (lock-period uint))
   (contract-call? .alex-reserve-pool stake-tokens .age000-governance-token amount-tokens lock-period)
 )
-(define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle .age000-governance-token reward-cycle)
-)
-(define-private (claim-staking-reward-internal (reward-cycle uint))
+(define-private (claim-staking-reward (reward-cycle uint))
   (contract-call? .alex-reserve-pool claim-staking-reward .age000-governance-token reward-cycle)
 )
 
@@ -159,7 +156,7 @@
     (
       (sender tx-sender)
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (as-contract (try! (claim-staking-reward-internal reward-cycle))))
+      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
     )
@@ -185,7 +182,7 @@
       (sender tx-sender)
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       ;; claim last cycle just in case claim-and-stake has not yet been triggered
-      (claimed (as-contract (try! (claim-staking-reward-internal (- current-cycle u1)))))
+      (claimed (as-contract (try! (claim-staking-reward (- current-cycle u1)))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
@@ -216,4 +213,6 @@
   )
 )
 
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (contract-call? .alex-vault add-approved-token .auto-alex)

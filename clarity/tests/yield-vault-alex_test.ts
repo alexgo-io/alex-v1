@@ -1,7 +1,7 @@
 import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
 import { YieldVault } from "./models/alex-tests-yield-vault.ts";
 import { ReservePool } from "./models/alex-tests-reserve-pool.ts";
-import { ALEXToken } from "./models/alex-tests-tokens.ts";
+import { FungibleToken } from "./models/alex-tests-tokens.ts";
 
 const ONE_8 = 100000000
 
@@ -48,9 +48,9 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
-        const yieldVault = new YieldVault(chain);
+        const yieldVault = new YieldVault(chain, "yield-vault-alex");
         const reservePool = new ReservePool(chain);
-        const alexToken = new ALEXToken(chain, deployer);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
         const dx = 50000 * ONE_8;
 
         let result:any = alexToken.mintFixed(deployer, wallet_1.address, dx);
@@ -77,9 +77,9 @@ Clarinet.test({
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
-        const yieldVault = new YieldVault(chain);
+        const yieldVault = new YieldVault(chain, "yield-vault-alex");
         const reservePool = new ReservePool(chain);
-        const alexToken = new ALEXToken(chain, deployer);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
         const dx = 50000 * ONE_8;
 
         let result:any = alexToken.mintFixed(deployer, wallet_1.address, dx);
@@ -108,9 +108,9 @@ Clarinet.test({
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
         const wallet_2 = accounts.get("wallet_2")!;
-        const yieldVault = new YieldVault(chain);
+        const yieldVault = new YieldVault(chain, "yield-vault-alex");
         const reservePool = new ReservePool(chain);
-        const alexToken = new ALEXToken(chain, deployer);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
         const dx = ONE_8;
 
         let result:any = alexToken.mintFixed(deployer, wallet_1.address, dx);
@@ -190,9 +190,9 @@ Clarinet.test({
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
         const wallet_2 = accounts.get("wallet_2")!;
-        const yieldVault = new YieldVault(chain);
+        const yieldVault = new YieldVault(chain, "yield-vault-alex");
         const reservePool = new ReservePool(chain);
-        const alexToken = new ALEXToken(chain, deployer);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
         const dx = ONE_8;
 
         let result:any = alexToken.mintFixed(deployer, wallet_1.address, dx);
@@ -250,9 +250,9 @@ Clarinet.test({
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
         const wallet_2 = accounts.get("wallet_2")!;
-        const yieldVault = new YieldVault(chain);
+        const yieldVault = new YieldVault(chain, "yield-vault-alex");
         const reservePool = new ReservePool(chain);
-        const alexToken = new ALEXToken(chain, deployer);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
         const dx = ONE_8;
 
         let result:any = alexToken.mintFixed(deployer, wallet_1.address, dx);

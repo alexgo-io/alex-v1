@@ -715,3 +715,11 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 [contracts.token-wdiko]
 path = "contracts/wrapped-token/token-wdiko.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]
+
+[contracts.auto-fwp-wstx-alex]
+path = "contracts/auto-token/auto-fwp-wstx-alex.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.yield-vault-fwp-wstx-alex]
+path = "contracts/pool/yield-vault-fwp-wstx-alex.clar"
+depends_on = [ "auto-fwp-wstx-alex", "age000-governance-token", "fwp-wstx-alex-50-50-v1-01", "trait-ownable", "alex-reserve-pool" ]
