@@ -145,8 +145,10 @@
 (define-read-only (get-token-given-position (dx uint))
   (let 
     (
-      (next-base (try! (get-next-base)))
-      (token (if (is-eq u0 (var-get total-supply)) dx (div-down (mul-down (var-get total-supply) dx) (get principal next-base))))
+      ;; TODO: initialisation division by zero on rewards-required.
+      (empty (is-eq u0 (var-get total-supply)))
+      (next-base (if empty { principal: u0, rewards: } ((try! (get-next-base)))
+      (token (if gensis dx (div-down (mul-down (var-get total-supply) dx) (get principal next-base))))
       (rewards-required (div-down (mul-down (get rewards next-base) token) (var-get total-supply)))
     )
     (ok {token: token, rewards: rewards-required})
@@ -173,8 +175,11 @@
     (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
     (as-contract (try! (stake-tokens dx u32)))
 
-    (try! (contract-call? .age000-governance-token transfer-fixed (get rewards new-supply) sender (as-contract tx-sender) none))
-    (as-contract (try! (stake-alex-tokens (get rewards new-supply) u32)))
+    (and 
+      (> (get rewards new-supply) u0) 
+      (try! (contract-call? .age000-governance-token transfer-fixed (get rewards new-supply) sender (as-contract tx-sender) none))
+      (as-contract (try! (stake-alex-tokens (get rewards new-supply) u32)))
+    )
         
     ;; mint pool token and send to tx-sender
     (var-set total-supply (+ (var-get total-supply) (get token new-supply)))
