@@ -146,7 +146,7 @@
     ;; mint pool token and send to tx-sender
     (var-set total-supply (+ (var-get total-supply) new-supply))
     (as-contract (try! (contract-call? .auto-alex mint-fixed new-supply sender)))
-    (print { object: "pool", action: "liquidity-added", data: new-supply })
+    (print { object: "pool", action: "liquidity-added", data: {new-supply: new-supply, total-supply: (var-get total-supply) }})
     (ok true)
   )
 )
@@ -200,7 +200,7 @@
     ;; burn pool token
     (var-set total-supply (- (var-get total-supply) reduce-supply))
     (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
-    (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
+    (print { object: "pool", action: "liquidity-removed", data: {reduce-supply: reduce-supply, total-supply: (var-get total-supply)}})
     (ok true)
   ) 
 )
