@@ -97,14 +97,10 @@
   (let 
     (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+      (principal (+ (get amount-staked (as-contract (get-staker-at-cycle (+ current-cycle u1)))) (get to-return (as-contract (get-staker-at-cycle current-cycle)))))
+      (rewards (as-contract (get-staking-reward current-cycle)))
     )
-    (ok 
-      (+ 
-        (get amount-staked (as-contract (get-staker-at-cycle (+ current-cycle u1)))) 
-        (get to-return (as-contract (get-staker-at-cycle current-cycle))) 
-        (as-contract (get-staking-reward current-cycle))
-      )
-    )
+    (ok { principal: principal, rewards: rewards })
   )
 )
 
