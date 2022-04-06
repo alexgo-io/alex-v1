@@ -2,4 +2,12 @@
 
 See you at https://docs.alexgo.io if you want to find out more!
 
-![Git-flow-process](https://user-images.githubusercontent.com/34082590/133711572-d9a97582-810e-4273-8421-415b9347c8c6.png)
+Before you run, we use a custom dependency management tool, so please run the following.
+
+```
+> cd <project root>/clarity
+> sh ./scripts/clarinet_manager.sh update alex_dao main
+> sh ./scripts/clarinet_manager.sh install alex_dao
+```
+
+The list of dependencies (not all are required) is available here: https://github.com/alexgo-io/alex-v1/blob/main/clarity/Clarinet.json
