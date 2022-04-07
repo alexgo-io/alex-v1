@@ -145,13 +145,17 @@
 (define-read-only (get-token-given-position (dx uint))
   (let 
     (
-      ;; TODO: initialisation division by zero on rewards-required.
-      (empty (is-eq u0 (var-get total-supply)))
-      (next-base (if empty { principal: u0, rewards: } ((try! (get-next-base)))
-      (token (if gensis dx (div-down (mul-down (var-get total-supply) dx) (get principal next-base))))
-      (rewards-required (div-down (mul-down (get rewards next-base) token) (var-get total-supply)))
+      (next-base (try! (get-next-base)))
     )
-    (ok {token: token, rewards: rewards-required})
+    (ok 
+      (if (is-eq u0 (var-get total-supply))
+        { token: dx, rewards: u0 }
+        { 
+          token: (div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
+          rewards: (div-down (mul-down (get rewards next-base) dx) (get principal next-base))
+        }
+      )
+    )
   )
 )
 
