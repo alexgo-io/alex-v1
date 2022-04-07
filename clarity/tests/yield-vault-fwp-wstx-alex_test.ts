@@ -358,7 +358,6 @@ Clarinet.test({
             deployer.address + ".alex-vault",
             "alex"
         );
-
     }
 })
 
