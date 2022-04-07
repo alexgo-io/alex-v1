@@ -68,6 +68,8 @@ Clarinet.test({
         ]);
         setupBlock.receipts.forEach(e => { e.result.expectOk(); });
 
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+
         const addBlock = chain.mineBlock([
             yieldVault.addToPosition(wallet_1, dx)
         ]);
@@ -98,7 +100,7 @@ Clarinet.test({
             reservePool.setCoinbaseAmount(deployer, fwpTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),            
             yieldVault.setActivated(deployer, true)   
         ]);
-        setupBlock.receipts.forEach(e => { e.result.expectOk(); });
+        setupBlock.receipts.forEach(e => { e.result.expectOk(); });     
 
         const addBlock = chain.mineBlock([
             yieldVault.addToPosition(wallet_1, dx)
@@ -157,191 +159,206 @@ Clarinet.test({
             dx,
             wallet_1.address,
             "auto-fwp-wstx-alex"
+        );     
+        
+        // end of cycle 0
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
+
+        result = fwpToken.mintFixed(deployer, wallet_2.address, dx);
+        result.expectOk();
+        
+        let call:any = chain.callReadOnlyFn(
+            "yield-vault-fwp-wstx-alex",
+            "get-token-given-position",
+            [types.uint(dx)],
+            wallet_2.address
+          );
+
+        result = alexToken.mintFixed(
+            deployer, 
+            wallet_2.address, 
+            Number(call.result.expectOk().expectTuple()['rewards'].replace(/\D/g, ""))
+            );
+
+        block = chain.mineBlock([
+            yieldVault.addToPosition(wallet_2, dx)
+        ]);
+        block.receipts[0].result.expectOk().expectBool(true);
+        // console.log(block.receipts[0].events);
+
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            wallet_2.address,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            "fwp-wstx-alex-50-50-v1-01"
+        );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            deployer.address + ".alex-vault",
+            "fwp-wstx-alex-50-50-v1-01"
+        );
+        block.receipts[0].events.expectFungibleTokenMintEvent(
+            dx,
+            wallet_2.address,
+            "auto-fwp-wstx-alex"
         );
     }
-})        
+})
+
+Clarinet.test({
+    name: "yield-vault-fwp-wstx-alex : ensure that claim-and-stake cannot claim future cycles",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get("deployer")!;
+        const wallet_1 = accounts.get("wallet_1")!;
+        const wallet_2 = accounts.get("wallet_2")!;
+        const yieldVault = new YieldVault(chain, "yield-vault-fwp-wstx-alex");
+        const reservePool = new ReservePool(chain);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
+        const fwpToken = new FungibleToken(chain, deployer, "fwp-wstx-alex-50-50-v1-01");
+        const dx = ONE_8;
+
+        let result:any = fwpToken.mintFixed(deployer, wallet_1.address, dx);
+        result.expectOk();
+
+        let block = chain.mineBlock([
+            reservePool.addToken(deployer, alexTokenAddress),
+            reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
+            reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
+            reservePool.addToken(deployer, fwpTokenAddress),
+            reservePool.setActivationBlock(deployer, fwpTokenAddress, ACTIVATION_BLOCK),
+            reservePool.setCoinbaseAmount(deployer, fwpTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),            
+            yieldVault.setActivated(deployer, true)   
+        ]);
         
-//         // end of cycle 0
-//         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
+        block.receipts.forEach(e => { e.result.expectOk(); });
 
-//         result = alexToken.mintFixed(deployer, wallet_2.address, dx);
-//         result.expectOk();        
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
 
-//         block = chain.mineBlock([
-//             yieldVault.addToPosition(wallet_2, dx)
-//         ]);
-//         block.receipts[0].result.expectOk().expectBool(true);
-//         // console.log(block.receipts[0].events);
+        block = chain.mineBlock([
+            yieldVault.addToPosition(wallet_1, dx)
+        ]);
+        block.receipts[0].result.expectOk().expectBool(true);
+        // console.log(block.receipts[0].events);
 
-//         block.receipts[0].events.expectFungibleTokenTransferEvent(
-//             dx,
-//             wallet_2.address,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             "alex"
-//         );
-//         block.receipts[0].events.expectFungibleTokenTransferEvent(
-//             dx,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             deployer.address + ".alex-vault",
-//             "alex"
-//         );
-//         block.receipts[0].events.expectFungibleTokenMintEvent(
-//             dx / 2,
-//             wallet_2.address,
-//             "auto-alex"
-//         );
-//     }
-// })
-
-// Clarinet.test({
-//     name: "yield-vault-fwp-wstx-alex : ensure that claim-and-stake cannot claim future cycles",
-//     async fn(chain: Chain, accounts: Map<string, Account>) {
-//         const deployer = accounts.get("deployer")!;
-//         const wallet_1 = accounts.get("wallet_1")!;
-//         const wallet_2 = accounts.get("wallet_2")!;
-//         const yieldVault = new YieldVault(chain, "yield-vault-fwp-wstx-alex");
-//         const reservePool = new ReservePool(chain);
-//         const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
-//         const fwpToken = new FungibleToken(chain, deployer, "fwp-wstx-alex-50-50-v1-01");
-//         const dx = ONE_8;
-
-//         let result:any = fwpToken.mintFixed(deployer, wallet_1.address, dx);
-//         result.expectOk();
-
-//         let block = chain.mineBlock([
-//             reservePool.addToken(deployer, alexTokenAddress),
-//             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
-//             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
-//             reservePool.addToken(deployer, fwpTokenAddress),
-//             reservePool.setActivationBlock(deployer, fwpTokenAddress, ACTIVATION_BLOCK),
-//             reservePool.setCoinbaseAmount(deployer, fwpTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),            
-//             yieldVault.setActivated(deployer, true)   
-//         ]);
-//         setupBlock.receipts.forEach(e => { e.result.expectOk(); });
-
-//         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
-
-//         block = chain.mineBlock([
-//             yieldVault.addToPosition(wallet_1, dx)
-//         ]);
-//         block.receipts[0].result.expectOk().expectBool(true);
-//         // console.log(block.receipts[0].events);
-
-//         block.receipts[0].events.expectFungibleTokenTransferEvent(
-//             dx,
-//             wallet_1.address,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             "alex"
-//         );
-//         block.receipts[0].events.expectFungibleTokenTransferEvent(
-//             dx,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             deployer.address + ".alex-vault",
-//             "alex"
-//         );
-//         block.receipts[0].events.expectFungibleTokenMintEvent(
-//             dx,
-//             wallet_1.address,
-//             "auto-alex"
-//         );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            wallet_1.address,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            "fwp-wstx-alex-50-50-v1-01"
+        );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            deployer.address + ".alex-vault",
+            "fwp-wstx-alex-50-50-v1-01"
+        );
+        block.receipts[0].events.expectFungibleTokenMintEvent(
+            dx,
+            wallet_1.address,
+            "auto-fwp-wstx-alex"
+        );
         
-//         // end of cycle 0
-//         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
+        // end of cycle 0
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
 
-//         block = chain.mineBlock([
-//             yieldVault.claimAndStake(wallet_2, 2)
-//         ]);
-//         block.receipts[0].result.expectErr().expectUint(10017); //ERR-REWARD-CYCLE-NOT-COMPLETED
-//     }
-// })
+        block = chain.mineBlock([
+            yieldVault.claimAndStake(wallet_2, 2)
+        ]);
+        block.receipts[0].result.expectErr().expectUint(10017); //ERR-REWARD-CYCLE-NOT-COMPLETED
+    }
+})
 
-// Clarinet.test({
-//     name: "yield-vault-fwp-wstx-alex : ensure that claim-and-stake works with a valid cycle",
-//     async fn(chain: Chain, accounts: Map<string, Account>) {
-//         const deployer = accounts.get("deployer")!;
-//         const wallet_1 = accounts.get("wallet_1")!;
-//         const wallet_2 = accounts.get("wallet_2")!;
-//         const yieldVault = new YieldVault(chain, "yield-vault-fwp-wstx-alex");
-//         const reservePool = new ReservePool(chain);
-//         const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
-//         const fwpToken = new FungibleToken(chain, deployer, "fwp-wstx-alex-50-50-v1-01");
-//         const dx = ONE_8;
+Clarinet.test({
+    name: "yield-vault-fwp-wstx-alex : ensure that claim-and-stake works with a valid cycle",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get("deployer")!;
+        const wallet_1 = accounts.get("wallet_1")!;
+        const wallet_2 = accounts.get("wallet_2")!;
+        const yieldVault = new YieldVault(chain, "yield-vault-fwp-wstx-alex");
+        const reservePool = new ReservePool(chain);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
+        const fwpToken = new FungibleToken(chain, deployer, "fwp-wstx-alex-50-50-v1-01");
+        const dx = ONE_8;
 
-//         let result:any = fwpToken.mintFixed(deployer, wallet_1.address, dx);
-//         result.expectOk();
+        let result:any = fwpToken.mintFixed(deployer, wallet_1.address, dx);
+        result.expectOk();
 
-//         let block = chain.mineBlock([
-//             reservePool.addToken(deployer, alexTokenAddress),
-//             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
-//             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
-//             yieldVault.setActivated(deployer, true),
-//             yieldVault.SetBountyInFixed(deployer, BountyFixed)   
-//         ]);
-//         block.receipts.forEach(e => { e.result.expectOk() });
+        let block = chain.mineBlock([
+            reservePool.addToken(deployer, alexTokenAddress),
+            reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
+            reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
+            reservePool.addToken(deployer, fwpTokenAddress),
+            reservePool.setActivationBlock(deployer, fwpTokenAddress, ACTIVATION_BLOCK),
+            reservePool.setCoinbaseAmount(deployer, fwpTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),                
+            yieldVault.setActivated(deployer, true),
+            yieldVault.SetBountyInFixed(deployer, BountyFixed)   
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
 
-//         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
 
-//         block = chain.mineBlock([
-//             yieldVault.addToPosition(wallet_1, dx)
-//         ]);
-//         block.receipts.forEach(e => { e.result.expectOk() });
+        block = chain.mineBlock([
+            yieldVault.addToPosition(wallet_1, dx)
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
 
-//         block.receipts[0].events.expectFungibleTokenTransferEvent(
-//             dx,
-//             wallet_1.address,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             "alex"
-//         );
-//         block.receipts[0].events.expectFungibleTokenTransferEvent(
-//             dx,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             deployer.address + ".alex-vault",
-//             "alex"
-//         );
-//         block.receipts[0].events.expectFungibleTokenMintEvent(
-//             dx,
-//             wallet_1.address,
-//             "auto-alex"
-//         );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            wallet_1.address,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            "fwp-wstx-alex-50-50-v1-01"
+        );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            deployer.address + ".alex-vault",
+            "fwp-wstx-alex-50-50-v1-01"
+        );
+        block.receipts[0].events.expectFungibleTokenMintEvent(
+            dx,
+            wallet_1.address,
+            "auto-fwp-wstx-alex"
+        );
         
-//         // end of cycle 1
-//         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 1050);
+        // end of cycle 1
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 1050);
 
-//         block = chain.mineBlock([
-//             yieldVault.SetBountyInFixed(deployer, ONE_8),
-//         ]);
-//         block.receipts.forEach(e => { e.result.expectOk() });
+        block = chain.mineBlock([
+            yieldVault.SetBountyInFixed(deployer, ONE_8),
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
 
-//         block = chain.mineBlock([
-//             yieldVault.SetBountyInFixed(wallet_2, BountyFixed),
-//             yieldVault.claimAndStake(wallet_2, 1)
-//         ]);
-//         block.receipts.forEach(e => { e.result.expectErr() });
+        block = chain.mineBlock([
+            yieldVault.SetBountyInFixed(wallet_2, BountyFixed),
+            yieldVault.claimAndStake(wallet_2, 1)
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr() });
 
-//         block = chain.mineBlock([
-//             yieldVault.SetBountyInFixed(deployer, BountyFixed),
-//             yieldVault.claimAndStake(wallet_2, 1)
-//         ]);
-//         block.receipts.forEach(e => { e.result.expectOk() });
+        block = chain.mineBlock([
+            yieldVault.SetBountyInFixed(deployer, BountyFixed),
+            yieldVault.claimAndStake(wallet_2, 1)
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
 
-//         block.receipts[1].events.expectFungibleTokenMintEvent(
-//             ONE_8,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             "alex"
-//         );        
-//         block.receipts[1].events.expectFungibleTokenTransferEvent(
-//             BountyFixed,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             wallet_2.address,
-//             "alex"
-//         );
-//         block.receipts[1].events.expectFungibleTokenTransferEvent(
-//             ONE_8 - BountyFixed,
-//             deployer.address + ".yield-vault-fwp-wstx-alex",
-//             deployer.address + ".alex-vault",
-//             "alex"
-//         );
+        block.receipts[1].events.expectFungibleTokenMintEvent(
+            ONE_8,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            "alex"
+        );        
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            BountyFixed,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            wallet_2.address,
+            "alex"
+        );
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            ONE_8 - BountyFixed,
+            deployer.address + ".yield-vault-fwp-wstx-alex",
+            deployer.address + ".alex-vault",
+            "alex"
+        );
 
-//     }
-// })
+    }
+})
 

@@ -66,7 +66,7 @@ Clarinet.test({
             futuresPool.addToPosition(deployer, poolTokenAddress, startCycle, stakedTokenAddress, dx)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
-        futuresPoolBlock.receipts[1].result.expectErr().expectUint(2027); //ERR-STACKING-NOT-AVAILABLE
+        futuresPoolBlock.receipts[1].result.expectErr().expectUint(10015); //ERR-STACKING-NOT-AVAILABLE
     }
 })
 
@@ -93,7 +93,7 @@ Clarinet.test({
             futuresPool.addToPosition(deployer, poolTokenAddress, 0, stakedTokenAddress, dx)
         ]);
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true)
-        futuresPoolBlock.receipts[1].result.expectErr().expectUint(2018); //ERR-STACKING-IN-PROGRESS
+        futuresPoolBlock.receipts[1].result.expectErr().expectUint(10017); //ERR-STACKING-IN-PROGRESS
     }
 })
 
@@ -167,7 +167,7 @@ Clarinet.test({
         ]);
         
         futuresPoolBlock.receipts[0].result.expectOk().expectBool(true);
-        futuresPoolBlock.receipts[1].result.expectErr().expectUint(2018); //ERR-STACKING-IN-PROGRESS
+        futuresPoolBlock.receipts[1].result.expectErr().expectUint(10017); //ERR-STACKING-IN-PROGRESS
     }
 })
 

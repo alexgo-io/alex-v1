@@ -9,8 +9,8 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-STAKING-IN-PROGRESS (err u2018))
-(define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
+(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
+(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 (define-constant ERR-NOT-ACTIVATED (err u2043))
 (define-constant ERR-ACTIVATED (err u2044))
@@ -201,13 +201,13 @@
     (
       (sender tx-sender)
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
-      (alex-claimed (as-contract (try! (claim-alex-staking-reward reward-cycle))))
+      (claimed (and (> (as-contract (get-user-id)) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))
+      (alex-claimed (and (> (as-contract (get-alex-user-id)) u0) (is-ok (as-contract (claim-alex-staking-reward reward-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
     )
-    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
+    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> alex-balance bounty) ERR-INSUFFICIENT-BALANCE)
     (and 
       (> principal-balance u0)
@@ -244,8 +244,8 @@
     ;; only if de-activated
     (asserts! (not (var-get activated)) ERR-ACTIVATED)
     ;; only if no staking positions
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
+    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) ERR-REWARD-CYCLE-NOT-COMPLETED)
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-alex-balance tx-sender sender none)))
     (as-contract (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed reduce-principal-balance tx-sender sender none)))

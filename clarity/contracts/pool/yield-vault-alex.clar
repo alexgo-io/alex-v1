@@ -9,8 +9,8 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-STAKING-IN-PROGRESS (err u2018))
-(define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
+(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
+(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 (define-constant ERR-NOT-ACTIVATED (err u2043))
 (define-constant ERR-ACTIVATED (err u2044))
@@ -160,7 +160,7 @@
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
     )
-    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
+    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> balance bounty) ERR-INSUFFICIENT-BALANCE)
     (and
       (var-get activated)
@@ -190,7 +190,7 @@
     ;; only if de-activated
     (asserts! (not (var-get activated)) ERR-ACTIVATED)
     ;; only if no staking positions
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
+    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-REWARD-CYCLE-NOT-COMPLETED)
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-balance tx-sender sender none)))
 
