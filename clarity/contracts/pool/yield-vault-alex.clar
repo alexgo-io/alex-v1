@@ -9,8 +9,8 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-STAKING-IN-PROGRESS (err u2018))
-(define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
+(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
+(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 (define-constant ERR-NOT-ACTIVATED (err u2043))
 (define-constant ERR-ACTIVATED (err u2044))
@@ -79,10 +79,7 @@
 (define-private (stake-tokens (amount-tokens uint) (lock-period uint))
   (contract-call? .alex-reserve-pool stake-tokens .age000-governance-token amount-tokens lock-period)
 )
-(define-private (get-first-stacks-block-in-reward-cycle (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle .age000-governance-token reward-cycle)
-)
-(define-private (claim-staking-reward-internal (reward-cycle uint))
+(define-private (claim-staking-reward (reward-cycle uint))
   (contract-call? .alex-reserve-pool claim-staking-reward .age000-governance-token reward-cycle)
 )
 
@@ -134,7 +131,8 @@
   (let
     (
       (new-supply (try! (get-token-given-position dx)))
-      (sender tx-sender)
+      (new-total-supply (+ (var-get total-supply) new-supply))
+      (sender tx-sender)      
     )
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -144,9 +142,9 @@
     (as-contract (try! (stake-tokens dx u32)))
 
     ;; mint pool token and send to tx-sender
-    (var-set total-supply (+ (var-get total-supply) new-supply))
+    (var-set total-supply new-total-supply)
     (as-contract (try! (contract-call? .auto-alex mint-fixed new-supply sender)))
-    (print { object: "pool", action: "liquidity-added", data: new-supply })
+    (print { object: "pool", action: "liquidity-added", data: {new-supply: new-supply, total-supply: new-total-supply }})
     (ok true)
   )
 )
@@ -159,11 +157,11 @@
     (
       (sender tx-sender)
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (as-contract (try! (claim-staking-reward-internal reward-cycle))))
+      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
     )
-    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-STAKING-IN-PROGRESS)
+    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> balance bounty) ERR-INSUFFICIENT-BALANCE)
     (and
       (var-get activated)
@@ -185,22 +183,23 @@
       (sender tx-sender)
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       ;; claim last cycle just in case claim-and-stake has not yet been triggered
-      (claimed (as-contract (try! (claim-staking-reward-internal (- current-cycle u1)))))
+      (claimed (as-contract (try! (claim-staking-reward (- current-cycle u1)))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
+      (reduce-total-supply (- (var-get total-supply) reduce-supply))
     )
     ;; only if de-activated
     (asserts! (not (var-get activated)) ERR-ACTIVATED)
     ;; only if no staking positions
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-STAKING-IN-PROGRESS)
+    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-REWARD-CYCLE-NOT-COMPLETED)
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-balance tx-sender sender none)))
 
     ;; burn pool token
-    (var-set total-supply (- (var-get total-supply) reduce-supply))
+    (var-set total-supply reduce-total-supply)
     (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
-    (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
+    (print { object: "pool", action: "liquidity-removed", data: {reduce-supply: reduce-supply, total-supply: reduce-total-supply}})
     (ok true)
   )
 )
@@ -216,4 +215,6 @@
   )
 )
 
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (contract-call? .alex-vault add-approved-token .auto-alex)
