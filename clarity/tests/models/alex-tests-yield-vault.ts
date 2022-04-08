@@ -3,17 +3,15 @@ import {Clarinet, Tx, Chain, Account, types} from "https://deno.land/x/clarinet@
 
 class YieldVault{
     chain: Chain;
-    contractName: string;
 
-    constructor(chain: Chain, contractName: string) {
+    constructor(chain: Chain) {
         this.chain = chain;
-        this.contractName = contractName;
     }
 
     // (define-public (add-to-position (dx uint))
     addToPosition(sender: Account, dx: number){
         return Tx.contractCall(
-            this.contractName,
+            "yield-vault-alex",
             "add-to-position",
             [
                 types.uint(dx)
@@ -24,7 +22,7 @@ class YieldVault{
 
     claimAndStake(sender: Account, reward_cycle: number){
         return Tx.contractCall(
-            this.contractName,
+            "yield-vault-alex",
             "claim-and-stake",
             [
                 types.uint(reward_cycle)
@@ -35,7 +33,7 @@ class YieldVault{
 
     reducePosition(sender: Account){
         return Tx.contractCall(
-            this.contractName,
+            "yield-vault-alex",
             "reduce-position",
             [],
             sender.address
@@ -44,7 +42,7 @@ class YieldVault{
 
     setActivated(sender: Account, activated: boolean){
         return Tx.contractCall(
-            this.contractName,
+            "yield-vault-alex",
             "set-activated",
             [
                 types.bool(activated)
@@ -55,16 +53,29 @@ class YieldVault{
 
     getNextBase(sender: Account){
         return this.chain.callReadOnlyFn(
-            this.contractName,
+            "yield-vault-alex",
             "get-next-base",
             [],
             sender.address
         )
-    }
+    }   
+
+    //(define-public (stake-tokens (amount-token uint) (lock-period uint))
+    stakeTokens(sender: Account, amount_token: number, lock_period: number){
+        return Tx.contractCall(
+            "yield-vault-alex",
+            "stake-tokens",
+            [
+                types.uint(amount_token),
+                types.uint(lock_period)
+            ],
+            sender.address
+        )
+    } 
     
     SetBountyInFixed(sender: Account, bounty_in_fixed: number){
         return Tx.contractCall(
-            this.contractName,
+            "yield-vault-alex",
             "set-bounty-in-fixed",
             [
                 types.uint(bounty_in_fixed)
@@ -75,7 +86,7 @@ class YieldVault{
     
     getBountyInFixed(sender: Account){
         return this.chain.callReadOnlyFn(
-            this.contractName,
+            "yield-vault-alex",
             "get-bounty-in-fixed",
             [],
             sender.address
@@ -83,105 +94,4 @@ class YieldVault{
     }     
 }
 
-class YieldVaultFarm{
-    chain: Chain;
-
-    constructor(chain: Chain) {
-        this.chain = chain;
-    }
-
-    addToken(sender: Account, token: string){
-        return Tx.contractCall(
-            "yield-vault",
-            "add-token",
-            [
-                types.principal(token)
-            ],
-            sender.address
-        );
-    }
-
-    // (define-public (add-to-position (dx uint))
-    addToPosition(sender: Account, token: string, dx: number){
-        return Tx.contractCall(
-            "yield-vault",
-            "add-to-position",
-            [
-                types.principal(token),
-                types.uint(dx)
-            ],
-            sender.address
-        );
-    }
-
-    claimAndStake(sender: Account, token: string, reward_cycle: number){
-        return Tx.contractCall(
-            "yield-vault",
-            "claim-and-stake",
-            [
-                types.principal(token),
-                types.uint(reward_cycle)
-            ],
-            sender.address
-        )
-    }
-
-    reducePosition(sender: Account, token: string){
-        return Tx.contractCall(
-            "yield-vault",
-            "reduce-position",
-            [
-                types.principal(token),
-            ],
-            sender.address
-        )
-    }
-
-    setActivated(sender: Account, token: string, activated: boolean){
-        return Tx.contractCall(
-            "yield-vault",
-            "set-activated",
-            [
-                types.principal(token),
-                types.bool(activated)
-            ],
-            sender.address
-        )
-    }
-
-    getNextBase(sender: Account, token: string){
-        return this.chain.callReadOnlyFn(
-            "yield-vault",
-            "get-next-base",
-            [
-                types.principal(token),
-            ],
-            sender.address
-        )
-    }
-    
-    SetBountyInFixed(sender: Account, token: string, bounty_in_fixed: number){
-        return Tx.contractCall(
-            "yield-vault",
-            "set-bounty-in-fixed",
-            [
-                types.principal(token),
-                types.uint(bounty_in_fixed)
-            ],
-            sender.address
-        )
-    }
-    
-    getBountyInFixed(sender: Account, token: string){
-        return this.chain.callReadOnlyFn(
-            "yield-vault",
-            "get-bounty-in-fixed",
-            [
-                types.principal(token),
-            ],
-            sender.address
-        )
-    }     
-}
-
-export { YieldVault, YieldVaultFarm }
+export { YieldVault }
