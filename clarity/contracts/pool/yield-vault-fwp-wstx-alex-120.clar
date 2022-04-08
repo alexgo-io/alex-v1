@@ -217,7 +217,7 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
-    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> alex-balance bounty) ERR-INSUFFICIENT-BALANCE)
     (asserts! (> end-cycle current-cycle) ERR-STAKING-NOT-AVAILABLE)
 
@@ -266,7 +266,7 @@
         (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle))))
         (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) 
       )  
-      ERR-REWARD-CYCLE-NOT-COMPLETED
+      (err current-cycle) ;;ERR-REWARD-CYCLE-NOT-COMPLETED
     )
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-alex-balance tx-sender sender none)))

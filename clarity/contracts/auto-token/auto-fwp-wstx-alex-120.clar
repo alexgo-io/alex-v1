@@ -215,4 +215,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .yield-vault-fwp-wstx-alex true)
+(map-set approved-contracts .yield-vault-fwp-wstx-alex-120 true)
