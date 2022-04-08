@@ -1,7 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 
 ;; yield vault - fwp-wstx-alex-50-50-v1-01
-;; start at cycle #20
 ;; end at cycle #120
 
 ;; constants
