@@ -2,7 +2,7 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; yield vault
-;;
+;; DOES NOT WORK DUE TO alex-reserve-pool requiring 1 principal <> user-id
 
 ;; constants
 ;;
