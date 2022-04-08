@@ -131,7 +131,8 @@
   (let
     (
       (new-supply (try! (get-token-given-position dx)))
-      (sender tx-sender)
+      (new-total-supply (+ (var-get total-supply) new-supply))
+      (sender tx-sender)      
     )
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -141,9 +142,9 @@
     (as-contract (try! (stake-tokens dx u32)))
 
     ;; mint pool token and send to tx-sender
-    (var-set total-supply (+ (var-get total-supply) new-supply))
+    (var-set total-supply new-total-supply)
     (as-contract (try! (contract-call? .auto-alex mint-fixed new-supply sender)))
-    (print { object: "pool", action: "liquidity-added", data: {new-supply: new-supply, total-supply: (var-get total-supply) }})
+    (print { object: "pool", action: "liquidity-added", data: {new-supply: new-supply, total-supply: new-total-supply }})
     (ok true)
   )
 )
@@ -186,6 +187,7 @@
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
+      (reduce-total-supply (- (var-get total-supply) reduce-supply))
     )
     ;; only if de-activated
     (asserts! (not (var-get activated)) ERR-ACTIVATED)
@@ -195,9 +197,9 @@
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-balance tx-sender sender none)))
 
     ;; burn pool token
-    (var-set total-supply (- (var-get total-supply) reduce-supply))
+    (var-set total-supply reduce-total-supply)
     (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
-    (print { object: "pool", action: "liquidity-removed", data: {reduce-supply: reduce-supply, total-supply: (var-get total-supply)}})
+    (print { object: "pool", action: "liquidity-removed", data: {reduce-supply: reduce-supply, total-supply: reduce-total-supply}})
     (ok true)
   )
 )
