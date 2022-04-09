@@ -1,11 +1,9 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
-
 ;; futures pool
-;;
+;; DOES NOT WORK DUE TO alex-reserve-pool requiring 1 principal <> user-id
 
 ;; constants
 ;;

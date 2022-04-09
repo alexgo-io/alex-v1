@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 
 ;; yield vault - fwp-wstx-alex-50-50-v1-01
-;;
+;; end at cycle #120
 
 ;; constants
 ;;
@@ -18,6 +18,7 @@
 (define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 
 (define-data-var contract-owner principal tx-sender)
+(define-data-var end-cycle uint u340282366920938463463374607431768211455)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -32,6 +33,17 @@
 
 (define-private (check-is-owner)
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-read-only (get-end-cycle)
+  (var-get end-cycle)
+)
+
+(define-public (set-end-cycle (new-end-cycle uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set end-cycle new-end-cycle))
+  )
 )
 
 ;; data maps and vars
@@ -168,28 +180,36 @@
 ;; @param dx the number of $ALEX in 8-digit fixed point notation
 (define-public (add-to-position (dx uint))
   (let
-    (
-      (new-supply (try! (get-token-given-position dx)))
-      (sender tx-sender)
+    (      
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
+    (asserts! (> (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     
-    ;; transfer dx to contract to stake for max cycles
-    (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
-    (as-contract (try! (stake-tokens dx u32)))
+    (let
+      (
+        (sender tx-sender)
+        (cycles-to-stake (if (> (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
+        (new-supply (try! (get-token-given-position dx)))      
+        (new-total-supply (+ (var-get total-supply) (get token new-supply)))
+      )
+      ;; transfer dx to contract to stake for max cycles
+      (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
+      (as-contract (try! (stake-tokens dx cycles-to-stake)))
 
-    (and 
-      (> (get rewards new-supply) u0) 
-      (try! (contract-call? .age000-governance-token transfer-fixed (get rewards new-supply) sender (as-contract tx-sender) none))
-      (as-contract (try! (stake-alex-tokens (get rewards new-supply) u32)))
-    )
+      (and 
+        (> (get rewards new-supply) u0) 
+        (try! (contract-call? .age000-governance-token transfer-fixed (get rewards new-supply) sender (as-contract tx-sender) none))
+        (as-contract (try! (stake-alex-tokens (get rewards new-supply) cycles-to-stake)))
+      )
         
-    ;; mint pool token and send to tx-sender
-    (var-set total-supply (+ (var-get total-supply) (get token new-supply)))
-    (as-contract (try! (contract-call? .auto-fwp-wstx-alex mint-fixed (get token new-supply) sender)))
-    (print { object: "pool", action: "liquidity-added", data: { new-supply: (get token new-supply), total-supply: (var-get total-supply) }})
-    (ok true)
+      ;; mint pool token and send to tx-sender
+      (var-set total-supply new-total-supply)
+      (as-contract (try! (contract-call? .auto-fwp-wstx-alex mint-fixed (get token new-supply) sender)))
+      (print { object: "pool", action: "liquidity-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
+      (ok true)
+    )
   )
 )
 
@@ -198,28 +218,31 @@
 ;; @param reward-cycle the target cycle to claim (and stake for current cycle + 32 cycles). reward-cycle must be < current cycle.
 (define-public (claim-and-stake (reward-cycle uint))
   (let 
-    (
-      (sender tx-sender)
+    (      
       ;; claim all that's available to claim for the reward-cycle
       (claimed (and (> (as-contract (get-user-id)) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))
       (alex-claimed (and (> (as-contract (get-alex-user-id)) u0) (is-ok (as-contract (claim-alex-staking-reward reward-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
-    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> alex-balance bounty) ERR-INSUFFICIENT-BALANCE)
-    (and 
-      (> principal-balance u0)
-      (as-contract (try! (stake-tokens principal-balance u32)))
-    )
-    (and 
-      (var-get activated)      
-      (as-contract (try! (stake-alex-tokens (- alex-balance bounty) u32)))
-      (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none)))
-    )
+    (asserts! (>= (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
+
+    (let 
+      (
+        (sender tx-sender)
+        (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
+      )
+      (and (> principal-balance u0) (> cycles-to-stake u0) (as-contract (try! (stake-tokens principal-balance cycles-to-stake))))
+      (and (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens (- alex-balance bounty) cycles-to-stake))))
+      (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     
-    (ok true)
+      (ok true)
+    )
   )
 )
 
@@ -233,27 +256,33 @@
       (sender tx-sender)
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       ;; claim last cycle just in case claim-and-stake has not yet been triggered    
-      (claimed (as-contract (try! (claim-staking-reward (- current-cycle u1)))))
-      (alex-claimed (as-contract (try! (claim-alex-staking-reward (- current-cycle u1)))))
+      (claimed (as-contract (try! (claim-staking-reward (var-get end-cycle)))))
+      (alex-claimed (as-contract (try! (claim-alex-staking-reward (var-get end-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (unwrap! (contract-call? .auto-fwp-wstx-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-principal-balance (div-down (mul-down principal-balance reduce-supply) (var-get total-supply)))
       (reduce-alex-balance (div-down (mul-down alex-balance reduce-supply) (var-get total-supply)))
+      (new-total-supply (- (var-get total-supply) reduce-supply))
     )
-    ;; only if de-activated
-    (asserts! (not (var-get activated)) ERR-ACTIVATED)
-    ;; only if no staking positions
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle)))) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    ;; only if beyond end-cycle and no staking positions
+    (asserts! 
+      (and 
+        (> current-cycle (var-get end-cycle))
+        (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle))))
+        (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) 
+      )  
+      ERR-REWARD-CYCLE-NOT-COMPLETED
+    )
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-alex-balance tx-sender sender none)))
     (as-contract (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed reduce-principal-balance tx-sender sender none)))
     
     ;; burn pool token
-    (var-set total-supply (- (var-get total-supply) reduce-supply))
+    (var-set total-supply new-total-supply)
     (as-contract (try! (contract-call? .auto-fwp-wstx-alex burn-fixed reduce-supply sender)))
-    (print { object: "pool", action: "liquidity-removed", data: reduce-supply })
+    (print { object: "pool", action: "liquidity-removed", data: { reduce-supply: reduce-supply, total-supply: new-total-supply }})
     (ok true)
   ) 
 )

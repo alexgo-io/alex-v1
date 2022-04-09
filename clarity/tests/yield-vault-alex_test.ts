@@ -65,6 +65,8 @@ Clarinet.test({
             setupBlock.receipts[i].result.expectOk();
         }
 
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+
         const addBlock = chain.mineBlock([
             yieldVault.addToPosition(wallet_1, dx)
         ]);
@@ -263,7 +265,7 @@ Clarinet.test({
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             yieldVault.setActivated(deployer, true),
-            yieldVault.SetBountyInFixed(deployer, BountyFixed)   
+            yieldVault.setBountyInFixed(deployer, BountyFixed)   
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
@@ -296,18 +298,18 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 1050);
 
         block = chain.mineBlock([
-            yieldVault.SetBountyInFixed(deployer, ONE_8),
+            yieldVault.setBountyInFixed(deployer, ONE_8),
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
         block = chain.mineBlock([
-            yieldVault.SetBountyInFixed(wallet_2, BountyFixed),
+            yieldVault.setBountyInFixed(wallet_2, BountyFixed),
             yieldVault.claimAndStake(wallet_2, 1)
         ]);
         block.receipts.forEach(e => { e.result.expectErr() });
 
         block = chain.mineBlock([
-            yieldVault.SetBountyInFixed(deployer, BountyFixed),
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
             yieldVault.claimAndStake(wallet_2, 1)
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
@@ -332,4 +334,88 @@ Clarinet.test({
 
     }
 })
+
+Clarinet.test({
+    name: "yield-vault-alex : ensure that reduce-position works",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+      const deployer = accounts.get("deployer")!;
+      const wallet_1 = accounts.get("wallet_1")!;
+      const wallet_2 = accounts.get("wallet_2")!;
+      const yieldVault = new YieldVault(chain, "yield-vault-alex");
+      const reservePool = new ReservePool(chain);
+      const alexToken = new FungibleToken(
+        chain,
+        deployer,
+        "age000-governance-token"
+      );
+      const dx = ONE_8;
+      const end_cycle = 120;
+  
+      let result: any = alexToken.mintFixed(deployer, wallet_1.address, dx);
+      result.expectOk();
+  
+      let block = chain.mineBlock([
+        Tx.contractCall(
+          "alex-vault",
+          "add-approved-token",
+          [types.principal(alexTokenAddress)],
+          deployer.address
+        ),
+        reservePool.addToken(deployer, alexTokenAddress),
+        reservePool.setActivationBlock(
+          deployer,
+          alexTokenAddress,
+          ACTIVATION_BLOCK
+        ),
+        reservePool.setCoinbaseAmount(
+          deployer,
+          alexTokenAddress,
+          ONE_8,
+          ONE_8,
+          ONE_8,
+          ONE_8,
+          ONE_8
+        ),
+        yieldVault.setActivated(deployer, true),
+        yieldVault.setBountyInFixed(deployer, 0),
+      ]);
+      block.receipts.forEach((e) => { e.result.expectOk() });
+  
+      block = chain.mineBlock([
+        yieldVault.setEndCycle(wallet_1, end_cycle),
+        yieldVault.setEndCycle(deployer, end_cycle)
+      ]);
+      block.receipts[0].result.expectErr().expectUint(1000);
+      block.receipts[1].result.expectOk();
+  
+      chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+  
+      block = chain.mineBlock([yieldVault.addToPosition(wallet_1, dx)]);
+      block.receipts.forEach((e) => { e.result.expectOk() });
+  
+      for(let cycle = 1; cycle < end_cycle; cycle++){
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (cycle + 1) * 525);   
+        block = chain.mineBlock([yieldVault.claimAndStake(wallet_2, cycle)]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+      }
+      // end of cycle
+      chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (end_cycle + 1) * 525);
+  
+      block = chain.mineBlock([yieldVault.reducePosition(wallet_1)]);
+      // console.log(block.receipts[0].events);
+      block.receipts.forEach(e => { e.result.expectOk() });
+  
+      block.receipts[0].events.expectFungibleTokenTransferEvent(
+        ONE_8 * end_cycle + dx,
+        deployer.address + ".yield-vault-alex",
+        wallet_1.address,
+        "alex"
+      );
+      block.receipts[0].events.expectFungibleTokenBurnEvent(
+        dx,
+        wallet_1.address,
+        "auto-alex"
+      )    
+    },
+  });
 
