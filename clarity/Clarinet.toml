@@ -731,11 +731,3 @@ depends_on = [ "trait-semi-fungible", "trait-ownable" ]
 [contracts.yield-vault]
 path = "contracts/pool/yield-vault.clar"
 depends_on = [ "auto-farm", "age000-governance-token", "trait-ownable", "alex-reserve-pool" ]
-
-[contracts.yield-vault-fwp-wstx-alex-120]
-path = "contracts/pool/yield-vault-fwp-wstx-alex-120.clar"
-depends_on = [ "auto-fwp-wstx-alex-120", "age000-governance-token", "fwp-wstx-alex-50-50-v1-01", "trait-ownable", "alex-reserve-pool" ]
-
-[contracts.auto-fwp-wstx-alex-120]
-path = "contracts/auto-token/auto-fwp-wstx-alex-120.clar"
-depends_on = [ "trait-sip-010", "trait-ownable" ]

@@ -305,7 +305,7 @@ Clarinet.test({
             reservePool.setCoinbaseAmount(deployer, fwpTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),                
             yieldVault.addToken(deployer, fwpTokenAddress),
             yieldVault.setActivated(deployer, fwpTokenAddress, true),
-            yieldVault.SetBountyInFixed(deployer, fwpTokenAddress, BountyFixed)   
+            yieldVault.setBountyInFixed(deployer, fwpTokenAddress, BountyFixed)   
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
@@ -338,20 +338,20 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 1050);
 
         block = chain.mineBlock([
-            yieldVault.SetBountyInFixed(deployer, fwpTokenAddress, ONE_8),
+            yieldVault.setBountyInFixed(deployer, fwpTokenAddress, ONE_8),
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
         block = chain.mineBlock([
             yieldVault.claimAndStake(deployer, alexTokenAddress, 1),
-            yieldVault.SetBountyInFixed(wallet_2, fwpTokenAddress, BountyFixed),
+            yieldVault.setBountyInFixed(wallet_2, fwpTokenAddress, BountyFixed),
             yieldVault.claimAndStake(wallet_2, fwpTokenAddress, 1),
             yieldVault.claimAndStake(wallet_2, alexTokenAddress, 1)
         ]);
         block.receipts.forEach(e => { e.result.expectErr() });
 
         block = chain.mineBlock([
-            yieldVault.SetBountyInFixed(deployer, fwpTokenAddress, BountyFixed),
+            yieldVault.setBountyInFixed(deployer, fwpTokenAddress, BountyFixed),
             yieldVault.claimAndStake(wallet_2, fwpTokenAddress, 1)
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });

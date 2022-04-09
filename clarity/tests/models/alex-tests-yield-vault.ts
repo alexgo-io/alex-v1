@@ -62,7 +62,7 @@ class YieldVault{
         )
     }
     
-    SetBountyInFixed(sender: Account, bounty_in_fixed: number){
+    setBountyInFixed(sender: Account, bounty_in_fixed: number){
         return Tx.contractCall(
             this.contractName,
             "set-bounty-in-fixed",
@@ -80,7 +80,27 @@ class YieldVault{
             [],
             sender.address
         )
-    }     
+    }
+    
+    setEndCycle(sender: Account, end_cycle: number){
+        return Tx.contractCall(
+            this.contractName,
+            "set-end-cycle",
+            [
+                types.uint(end_cycle)
+            ],
+            sender.address
+        )
+    }
+    
+    getEndCycle(sender: Account){
+        return this.chain.callReadOnlyFn(
+            this.contractName,
+            "get-end-cycle",
+            [],
+            sender.address
+        )
+    }       
 }
 
 class YieldVaultFarm{
@@ -160,7 +180,7 @@ class YieldVaultFarm{
         )
     }
     
-    SetBountyInFixed(sender: Account, token: string, bounty_in_fixed: number){
+    setBountyInFixed(sender: Account, token: string, bounty_in_fixed: number){
         return Tx.contractCall(
             "yield-vault",
             "set-bounty-in-fixed",
@@ -181,7 +201,7 @@ class YieldVaultFarm{
             ],
             sender.address
         )
-    }     
+    }    
 }
 
 export { YieldVault, YieldVaultFarm }
