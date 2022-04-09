@@ -166,7 +166,7 @@
     (and
       (var-get activated)
       (as-contract (try! (stake-tokens (- balance bounty) u32)))
-      (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none)))
+      (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     )
 
     (ok true)

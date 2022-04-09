@@ -232,7 +232,7 @@
       )
       (and  
         (as-contract (try! (stake-alex-tokens (- alex-balance bounty) cycles-to-stake)))
-        (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none)))
+        (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
       )
     
       (ok true)
@@ -266,7 +266,7 @@
         (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle))))
         (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) 
       )  
-      (err current-cycle) ;;ERR-REWARD-CYCLE-NOT-COMPLETED
+      ERR-REWARD-CYCLE-NOT-COMPLETED
     )
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-alex-balance tx-sender sender none)))
