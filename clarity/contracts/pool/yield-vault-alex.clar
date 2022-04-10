@@ -202,7 +202,7 @@
 ;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
 ;; @assert contract-owner to set-activated to false before such withdrawal can happen.
 ;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
-(define-public (reduce-position)
+(define-public (reduce-position (reduce-supply uint))
   (let 
     (
       (sender tx-sender)
@@ -210,11 +210,11 @@
       ;; claim last cycle just in case claim-and-stake has not yet been triggered    
       (claimed (as-contract (try! (claim-staking-reward (var-get end-cycle)))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
       (new-total-supply (- (var-get total-supply) reduce-supply))
     )
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (<= reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL)) ERR-INSUFFICIENT-BALANCE)
     ;; only if beyond end-cycle and no staking positions
     (asserts! 
       (and 

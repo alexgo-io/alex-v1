@@ -163,7 +163,7 @@
       (if (is-eq u0 (var-get total-supply))
         { token: dx, rewards: u0 }
         { 
-          token: (div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
+          token: dx, ;;(div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
           rewards: (div-down (mul-down (get rewards next-base) dx) (get principal next-base))
         }
       )
@@ -250,7 +250,7 @@
 ;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
 ;; @assert contract-owner to set-activated to false before such withdrawal can happen.
 ;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
-(define-public (reduce-position)
+(define-public (reduce-position (reduce-supply uint))
   (let 
     (
       (sender tx-sender)
@@ -260,12 +260,12 @@
       (alex-claimed (as-contract (try! (claim-alex-staking-reward (var-get end-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (reduce-supply (unwrap! (contract-call? .auto-fwp-wstx-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-principal-balance (div-down (mul-down principal-balance reduce-supply) (var-get total-supply)))
       (reduce-alex-balance (div-down (mul-down alex-balance reduce-supply) (var-get total-supply)))
       (new-total-supply (- (var-get total-supply) reduce-supply))
-    )
+    )    
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (<= reduce-supply (unwrap! (contract-call? .auto-fwp-wstx-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL)) ERR-INSUFFICIENT-BALANCE)
     ;; only if beyond end-cycle and no staking positions
     (asserts! 
       (and 

@@ -639,7 +639,7 @@ Clarinet.test({
     // end of cycle
     chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (end_cycle + 1) * 525);
 
-    block = chain.mineBlock([yieldVault.reducePosition(wallet_1)]);
+    block = chain.mineBlock([yieldVault.reducePosition(wallet_1, dx)]);
     // console.log(block.receipts[0].events);
     block.receipts.forEach(e => { e.result.expectOk() });
 

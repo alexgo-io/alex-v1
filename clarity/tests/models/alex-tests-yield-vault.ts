@@ -33,11 +33,13 @@ class YieldVault{
         )
     }
 
-    reducePosition(sender: Account){
+    reducePosition(sender: Account, reduce_supply: number){
         return Tx.contractCall(
             this.contractName,
             "reduce-position",
-            [],
+            [
+                types.uint(reduce_supply)
+            ],
             sender.address
         )
     }
