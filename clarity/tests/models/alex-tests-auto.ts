@@ -114,7 +114,7 @@ class YieldVaultFarm{
 
     addToken(sender: Account, token: string){
         return Tx.contractCall(
-            "yield-vault",
+            "auto-farm",
             "add-token",
             [
                 types.principal(token)
@@ -126,7 +126,7 @@ class YieldVaultFarm{
     // (define-public (add-to-position (dx uint))
     addToPosition(sender: Account, token: string, dx: number){
         return Tx.contractCall(
-            "yield-vault",
+            "auto-farm",
             "add-to-position",
             [
                 types.principal(token),
@@ -138,7 +138,7 @@ class YieldVaultFarm{
 
     claimAndStake(sender: Account, token: string, reward_cycle: number){
         return Tx.contractCall(
-            "yield-vault",
+            "auto-farm",
             "claim-and-stake",
             [
                 types.principal(token),
@@ -150,7 +150,7 @@ class YieldVaultFarm{
 
     reducePosition(sender: Account, token: string){
         return Tx.contractCall(
-            "yield-vault",
+            "auto-farm",
             "reduce-position",
             [
                 types.principal(token),
@@ -161,7 +161,7 @@ class YieldVaultFarm{
 
     setActivated(sender: Account, token: string, activated: boolean){
         return Tx.contractCall(
-            "yield-vault",
+            "auto-farm",
             "set-activated",
             [
                 types.principal(token),
@@ -173,7 +173,7 @@ class YieldVaultFarm{
 
     getNextBase(sender: Account, token: string){
         return this.chain.callReadOnlyFn(
-            "yield-vault",
+            "auto-farm",
             "get-next-base",
             [
                 types.principal(token),
@@ -184,7 +184,7 @@ class YieldVaultFarm{
     
     setBountyInFixed(sender: Account, token: string, bounty_in_fixed: number){
         return Tx.contractCall(
-            "yield-vault",
+            "auto-farm",
             "set-bounty-in-fixed",
             [
                 types.principal(token),
@@ -196,7 +196,7 @@ class YieldVaultFarm{
     
     getBountyInFixed(sender: Account, token: string){
         return this.chain.callReadOnlyFn(
-            "yield-vault",
+            "auto-farm",
             "get-bounty-in-fixed",
             [
                 types.principal(token),

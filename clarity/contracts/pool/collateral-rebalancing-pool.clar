@@ -447,11 +447,11 @@
                 (sender tx-sender)
 
                 ;; if balance-y does not cover yield-supply, swap some balance-x to meet the requirement.
-                (bal-y-short (if (<= yield-supply balance-y) u0 (mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
+                (bal-y-short (if (<= yield-supply balance-y) u0 (- yield-supply balance-y)))
                 (bal-x-to-sell 
                     (if (is-eq bal-y-short u0)
                         u0
-                        (try! (get-helper token-y token-x bal-y-short))
+                        (try! (get-helper token-y token-x (mul-down bal-y-short (var-get shortfall-coverage))))
                     )
                 )
                 (bal-y-short-act 
@@ -459,7 +459,7 @@
                         u0
                         (begin
                             (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell none)))
+                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell (some bal-y-short))))
                         )
                     )
                 )                
@@ -520,11 +520,11 @@
                 (sender tx-sender)
 
                 ;; if balance-y does not cover yield-supply, swap some balance-x to meet the requirement.
-                (bal-y-short (if (<= yield-supply balance-y) u0 (mul-down (- yield-supply balance-y) (var-get shortfall-coverage))))
+                (bal-y-short (if (<= yield-supply balance-y) u0 (- yield-supply balance-y)))
                 (bal-x-to-sell 
                     (if (is-eq bal-y-short u0)
                         u0
-                        (try! (get-helper token-y token-x bal-y-short))
+                        (try! (get-helper token-y token-x (mul-down bal-y-short (var-get shortfall-coverage))))
                     )
                 )
                 (bal-y-short-act 
@@ -532,7 +532,7 @@
                         u0
                         (begin
                             (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell none)))
+                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell (some bal-y-short))))
                         )
                     )
                 )                                 
