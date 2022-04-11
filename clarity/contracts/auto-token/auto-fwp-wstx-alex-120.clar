@@ -1,24 +1,18 @@
 (impl-trait .trait-ownable.ownable-trait)
-
-;; yield vault - fwp-wstx-alex-50-50-v1-01
-;; end at cycle #120
-
-;; constants
-;;
-(define-constant ONE_8 u100000000) ;; 8 decimal places
+(impl-trait .trait-sip-010.sip-010-trait)
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
-(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
-(define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
-(define-constant ERR-NOT-ACTIVATED (err u2043))
-(define-constant ERR-ACTIVATED (err u2044))
-(define-constant ERR-USER-ID-NOT-FOUND (err u10003))
-(define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
+
+(define-fungible-token auto-fwp-wstx-alex-120)
 
 (define-data-var contract-owner principal tx-sender)
-(define-data-var end-cycle uint u340282366920938463463374607431768211455)
+(define-map approved-contracts principal bool)
+
+(define-data-var token-name (string-ascii 32) "Auto STX / ALEX Pool 120")
+(define-data-var token-symbol (string-ascii 32) "auto-fwp-wstx-alex-120")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-fwp-wstx-alex-120.json"))
+
+(define-data-var token-decimals uint u8)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -31,9 +25,209 @@
   )
 )
 
+;; --- Authorisation check
+
 (define-private (check-is-owner)
-    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+;; Other
+
+(define-public (set-name (new-name (string-ascii 32)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-name new-name))
+	)
+)
+
+(define-public (set-symbol (new-symbol (string-ascii 32)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-symbol new-symbol))
+	)
+)
+
+(define-public (set-decimals (new-decimals uint))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-decimals new-decimals))
+	)
+)
+
+(define-public (set-token-uri (new-uri (optional (string-utf8 256))))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-uri new-uri))
+	)
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts new-approved-contract true))
+	)
+)
+
+;; --- Public functions
+
+;; sip010-ft-trait
+
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+    (begin
+        (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
+        (try! (ft-transfer? auto-fwp-wstx-alex-120 amount sender recipient))
+        (match memo to-print (print to-print) 0x)
+        (ok true)
+    )
+)
+
+(define-read-only (get-name)
+	(ok (var-get token-name))
+)
+
+(define-read-only (get-symbol)
+	(ok (var-get token-symbol))
+)
+
+(define-read-only (get-decimals)
+	(ok (var-get token-decimals))
+)
+
+(define-read-only (get-balance (who principal))
+	(ok (ft-get-balance auto-fwp-wstx-alex-120 who))
+)
+
+(define-read-only (get-total-supply)
+	(ok (ft-get-supply auto-fwp-wstx-alex-120))
+)
+
+(define-read-only (get-token-uri)
+	(ok (var-get token-uri))
+)
+
+;; --- Protocol functions
+
+(define-constant ONE_8 u100000000)
+
+;; @desc mint
+;; @restricted ContractOwner/Approved Contract
+;; @params token-id
+;; @params amount
+;; @params recipient
+;; @returns (response bool)
+(define-public (mint (amount uint) (recipient principal))
+	(begin		
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ft-mint? auto-fwp-wstx-alex-120 amount recipient)
+	)
+)
+
+;; @desc burn
+;; @restricted ContractOwner/Approved Contract
+;; @params token-id
+;; @params amount
+;; @params sender
+;; @returns (response bool)
+(define-public (burn (amount uint) (sender principal))
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ft-burn? auto-fwp-wstx-alex-120 amount sender)
+	)
+)
+
+;; @desc pow-decimals
+;; @returns uint
+(define-private (pow-decimals)
+  (pow u10 (unwrap-panic (get-decimals)))
+)
+
+;; @desc fixed-to-decimals
+;; @params amount
+;; @returns uint
+(define-read-only (fixed-to-decimals (amount uint))
+  (/ (* amount (pow-decimals)) ONE_8)
+)
+
+;; @desc decimals-to-fixed 
+;; @params amount
+;; @returns uint
+(define-private (decimals-to-fixed (amount uint))
+  (/ (* amount ONE_8) (pow-decimals))
+)
+
+;; @desc get-total-supply-fixed
+;; @params token-id
+;; @returns (response uint)
+(define-read-only (get-total-supply-fixed)
+  (ok (decimals-to-fixed (unwrap-panic (get-total-supply))))
+)
+
+;; @desc get-balance-fixed
+;; @params token-id
+;; @params who
+;; @returns (response uint)
+(define-read-only (get-balance-fixed (account principal))
+  (ok (decimals-to-fixed (unwrap-panic (get-balance account))))
+)
+
+;; @desc transfer-fixed
+;; @params token-id
+;; @params amount
+;; @params sender
+;; @params recipient
+;; @returns (response bool)
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (transfer (fixed-to-decimals amount) sender recipient memo)
+)
+
+;; @desc mint-fixed
+;; @params token-id
+;; @params amount
+;; @params recipient
+;; @returns (response bool)
+(define-public (mint-fixed (amount uint) (recipient principal))
+  (mint (fixed-to-decimals amount) recipient)
+)
+
+;; @desc burn-fixed
+;; @params token-id
+;; @params amount
+;; @params sender
+;; @returns (response bool)
+(define-public (burn-fixed (amount uint) (sender principal))
+  (burn (fixed-to-decimals amount) sender)
+)
+
+(define-private (mint-fixed-many-iter (item {amount: uint, recipient: principal}))
+	(mint-fixed (get amount item) (get recipient item))
+)
+
+(define-public (mint-fixed-many (recipients (list 200 {amount: uint, recipient: principal})))
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(ok (map mint-fixed-many-iter recipients))
+	)
+)
+
+;; yield vault - fwp-wstx-alex-50-50-v1-01
+
+;; constants
+;;
+(define-constant ERR-INVALID-LIQUIDITY (err u2003))
+(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
+(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
+(define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
+(define-constant ERR-NOT-ACTIVATED (err u2043))
+(define-constant ERR-ACTIVATED (err u2044))
+(define-constant ERR-USER-ID-NOT-FOUND (err u10003))
+(define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
+(define-constant ERR-INVALID-PERCENT (err u5000))
+
+(define-data-var end-cycle uint u120)
 
 (define-read-only (get-end-cycle)
   (var-get end-cycle)
@@ -163,7 +357,7 @@
       (if (is-eq u0 (var-get total-supply))
         { token: dx, rewards: u0 }
         { 
-          token: (div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
+          token: dx, ;;(div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
           rewards: (div-down (mul-down (get rewards next-base) dx) (get principal next-base))
         }
       )
@@ -206,7 +400,7 @@
         
       ;; mint pool token and send to tx-sender
       (var-set total-supply new-total-supply)
-      (as-contract (try! (contract-call? .auto-fwp-wstx-alex mint-fixed (get token new-supply) sender)))
+	  (try! (ft-mint? auto-fwp-wstx-alex-120 (fixed-to-decimals (get token new-supply)) sender))
       (print { object: "pool", action: "liquidity-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
       (ok true)
     )
@@ -250,7 +444,7 @@
 ;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
 ;; @assert contract-owner to set-activated to false before such withdrawal can happen.
 ;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
-(define-public (reduce-position)
+(define-public (reduce-position (percent uint))
   (let 
     (
       (sender tx-sender)
@@ -260,12 +454,14 @@
       (alex-claimed (as-contract (try! (claim-alex-staking-reward (var-get end-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (reduce-supply (unwrap! (contract-call? .auto-fwp-wstx-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
+      (sender-balance (unwrap! (get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
+      (reduce-supply (mul-down percent sender-balance))
       (reduce-principal-balance (div-down (mul-down principal-balance reduce-supply) (var-get total-supply)))
       (reduce-alex-balance (div-down (mul-down alex-balance reduce-supply) (var-get total-supply)))
       (new-total-supply (- (var-get total-supply) reduce-supply))
-    )
+    )    
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
     ;; only if beyond end-cycle and no staking positions
     (asserts! 
       (and 
@@ -281,9 +477,9 @@
     
     ;; burn pool token
     (var-set total-supply new-total-supply)
-    (as-contract (try! (contract-call? .auto-fwp-wstx-alex burn-fixed reduce-supply sender)))
+	(try! (ft-burn? auto-fwp-wstx-alex-120 (fixed-to-decimals reduce-supply) sender))
     (print { object: "pool", action: "liquidity-removed", data: { reduce-supply: reduce-supply, total-supply: new-total-supply }})
-    (ok true)
+    (ok { principal: reduce-principal-balance, rewards: reduce-alex-balance })
   ) 
 )
 
@@ -300,4 +496,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(contract-call? .alex-vault add-approved-token .auto-fwp-wstx-alex)
+;; (contract-call? .alex-vault add-approved-token .auto-fwp-wstx-alex-120)
