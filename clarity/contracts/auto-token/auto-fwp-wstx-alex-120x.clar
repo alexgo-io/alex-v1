@@ -233,7 +233,7 @@
 (define-map available-alex principal uint)
 (define-map borrowed-alex principal uint)
 
-(define-data-var shortfall-coverage uint u101000000) ;; 1.01x
+(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -281,7 +281,7 @@
         (map-set borrowed-alex sender (+ alex-borrowed alex-required))
 		(try! (ft-mint? auto-fwp-wstx-alex-120x (fixed-to-decimals (get token vault)) sender))
         (print { object: "pool", action: "position-added", data: (get token vault)})
-        (ok true)
+        (ok { total-alex-borrowed: (+ alex-borrowed alex-required), position: (get token vault) })
     )
 )
 
@@ -310,7 +310,7 @@
 
 	(try! (ft-burn? auto-fwp-wstx-alex-120x (fixed-to-decimals supply) sender))
     (print { object: "pool", action: "position-reduced", data: supply })
-    (ok true)
+    (ok { stx: stx-to-return, alex: alex-to-return })
   )
 )
 

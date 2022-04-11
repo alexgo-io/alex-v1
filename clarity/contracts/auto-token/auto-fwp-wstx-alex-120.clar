@@ -496,4 +496,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-;; (contract-call? .alex-vault add-approved-token .auto-fwp-wstx-alex-120)
+(contract-call? .alex-vault add-approved-token .auto-fwp-wstx-alex-120)
