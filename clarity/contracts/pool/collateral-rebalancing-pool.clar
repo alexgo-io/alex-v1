@@ -52,7 +52,7 @@
   (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-(define-data-var shortfall-coverage uint u101000000) ;; 1.01x
+(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -459,7 +459,7 @@
                         u0
                         (begin
                             (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait bal-x-to-sell tx-sender)))
-                            (as-contract (try! (swap-helper collateral-trait token-trait bal-x-to-sell (some bal-y-short))))
+                            (as-contract (unwrap! (swap-helper collateral-trait token-trait bal-x-to-sell (some bal-y-short)) (err bal-y-short)))
                         )
                     )
                 )                

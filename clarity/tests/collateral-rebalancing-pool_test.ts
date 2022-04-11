@@ -196,8 +196,8 @@ Clarinet.test({
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(2800613086349);
-        position['balance-y'].expectUint(4502084);
+        position['balance-x'].expectUint(2633703244389);
+        position['balance-y'].expectUint(7749295);
         position['yield-supply'].expectUint(4834581);
         position['key-supply'].expectUint(53615068);
     
