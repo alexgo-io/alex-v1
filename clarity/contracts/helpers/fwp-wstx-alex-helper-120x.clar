@@ -70,7 +70,7 @@
       (total-supply (try! (contract-call? .auto-fwp-wstx-alex-120x get-total-supply-fixed)))
       (share (div-down supply total-supply))
     )
-    (as-contract (try! (contract-call? .yield-vault-fwp-wstx-alex reduce-position supply)))
+    (as-contract (try! (contract-call? .yield-vault-fwp-wstx-alex reduce-position share)))
     (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 share)))
     ;; convert required amount of wstx to alex and send alex to foundation
     ;; send the balance to tx-sender

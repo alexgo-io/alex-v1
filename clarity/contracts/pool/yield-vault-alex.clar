@@ -16,6 +16,7 @@
 (define-constant ERR-ACTIVATED (err u2044))
 (define-constant ERR-USER-ID-NOT-FOUND (err u10003))
 (define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
+(define-constant ERR-INVALID-PERCENT (err u5000))
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var end-cycle uint u340282366920938463463374607431768211455)
@@ -202,7 +203,7 @@
 ;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
 ;; @assert contract-owner to set-activated to false before such withdrawal can happen.
 ;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
-(define-public (reduce-position (reduce-supply uint))
+(define-public (reduce-position (percent uint))
   (let 
     (
       (sender tx-sender)
@@ -210,11 +211,13 @@
       ;; claim last cycle just in case claim-and-stake has not yet been triggered    
       (claimed (as-contract (try! (claim-staking-reward (var-get end-cycle)))))
       (balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (sender-balance (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
+      (reduce-supply (mul-down percent sender-balance))
       (reduce-balance (div-down (mul-down balance reduce-supply) (var-get total-supply)))
       (new-total-supply (- (var-get total-supply) reduce-supply))
     )
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
-    (asserts! (<= reduce-supply (unwrap! (contract-call? .auto-alex get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL)) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
     ;; only if beyond end-cycle and no staking positions
     (asserts! 
       (and 
@@ -230,7 +233,7 @@
     (var-set total-supply new-total-supply)
     (as-contract (try! (contract-call? .auto-alex burn-fixed reduce-supply sender)))
     (print { object: "pool", action: "liquidity-removed", data: {reduce-supply: reduce-supply, total-supply: new-total-supply }})
-    (ok true)
+    (ok reduce-balance)
   ) 
 )
 
