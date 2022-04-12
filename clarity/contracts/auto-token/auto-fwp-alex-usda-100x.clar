@@ -5,14 +5,14 @@
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-AVAILABLE-ALEX (err u20000))
 
-(define-fungible-token auto-fwp-wstx-alex-120x)
+(define-fungible-token auto-fwp-alex-usda-100x)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "Auto STX / ALEX Pool 120x")
-(define-data-var token-symbol (string-ascii 32) "auto-fwp-wstx-alex-120x")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-fwp-wstx-alex-120x.json"))
+(define-data-var token-name (string-ascii 32) "Auto usda / ALEX Pool 100x")
+(define-data-var token-symbol (string-ascii 32) "auto-fwp-alex-usda-100x")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-fwp-alex-usda-100x.json"))
 
 (define-data-var token-decimals uint u8)
 (define-data-var transferrable bool false)
@@ -94,7 +94,7 @@
     (begin
 		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
         (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-        (try! (ft-transfer? auto-fwp-wstx-alex-120x amount sender recipient))
+        (try! (ft-transfer? auto-fwp-alex-usda-100x amount sender recipient))
         (match memo to-print (print to-print) 0x)
         (ok true)
     )
@@ -113,11 +113,11 @@
 )
 
 (define-read-only (get-balance (who principal))
-	(ok (ft-get-balance auto-fwp-wstx-alex-120x who))
+	(ok (ft-get-balance auto-fwp-alex-usda-100x who))
 )
 
 (define-read-only (get-total-supply)
-	(ok (ft-get-supply auto-fwp-wstx-alex-120x))
+	(ok (ft-get-supply auto-fwp-alex-usda-100x))
 )
 
 (define-read-only (get-token-uri)
@@ -137,7 +137,7 @@
 (define-public (mint (amount uint) (recipient principal))
 	(begin		
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-mint? auto-fwp-wstx-alex-120x amount recipient)
+		(ft-mint? auto-fwp-alex-usda-100x amount recipient)
 	)
 )
 
@@ -150,7 +150,7 @@
 (define-public (burn (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-burn? auto-fwp-wstx-alex-120x amount sender)
+		(ft-burn? auto-fwp-alex-usda-100x amount sender)
 	)
 )
 
@@ -233,7 +233,7 @@
 (define-map available-alex principal uint)
 (define-map borrowed-alex principal uint)
 
-(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
+(define-data-var shortfall-coverage uint u101000000) ;; 1.01x
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -265,21 +265,21 @@
     (let 
         (
           (sender tx-sender)
-          (pool (try! (contract-call? .fixed-weight-pool-v1-01 get-token-given-position .token-wstx .age000-governance-token u50000000 u50000000 dx none)))
-          (vault (try! (contract-call? .auto-fwp-wstx-alex-120 get-token-given-position (get token pool))))
+          (pool (try! (contract-call? .simple-weight-pool-alex get-token-given-position .age000-governance-token .token-wusda dx none)))
+          (vault (try! (contract-call? .auto-fwp-alex-usda-100 get-token-given-position (get token pool))))
           (alex-required (+ (get dy pool) (get rewards vault)))
           (alex-available (get-available-alex-or-default sender))
           (alex-borrowed (get-borrowed-alex-or-default sender))                        
         )
         (asserts! (>= alex-available alex-required) ERR-AVAILABLE-ALEX)
 
-        (try! (contract-call? .token-wstx transfer-fixed dx sender (as-contract tx-sender) none))
+        (try! (contract-call? .token-wusda transfer-fixed dx sender (as-contract tx-sender) none))
         (as-contract (try! (contract-call? .age000-governance-token mint-fixed alex-required tx-sender)))
-        (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 add-to-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 dx (some (get dy pool)))))
-        (as-contract (try! (contract-call? .auto-fwp-wstx-alex-120 add-to-position (get token pool))))
+        (as-contract (try! (contract-call? .simple-weight-pool-alex add-to-position .age000-governance-token .token-wusda .fwp-alex-usda dx (some (get dy pool)))))
+        (as-contract (try! (contract-call? .auto-fwp-alex-usda-100 add-to-position (get token pool))))
         (map-set available-alex sender (- alex-available alex-required))
         (map-set borrowed-alex sender (+ alex-borrowed alex-required))
-		(try! (ft-mint? auto-fwp-wstx-alex-120x (fixed-to-decimals (get token vault)) sender))
+		    (try! (ft-mint? auto-fwp-alex-usda-100x (fixed-to-decimals (get token vault)) sender))
         (print { object: "pool", action: "position-added", data: (get token vault)})
         (ok { total-alex-borrowed: (+ alex-borrowed alex-required), position: (get token vault) })
     )
@@ -293,24 +293,24 @@
       (supply (unwrap-panic (get-balance-fixed sender)))
       (total-supply (unwrap-panic (get-total-supply-fixed)))
       (share (div-down supply total-supply))
-      (vault-reduced (as-contract (try! (contract-call? .auto-fwp-wstx-alex-120 reduce-position share))))
-      (pool-reduced (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 share))))
+      (vault-reduced (as-contract (try! (contract-call? .auto-fwp-alex-usda-100 reduce-position share))))
+      (pool-reduced (as-contract (try! (contract-call? .simple-weight-pool-alex reduce-position .age000-governance-token .token-wusda .fwp-alex-usda share))))
       (alex-returned (+ (get dy pool-reduced) (get rewards vault-reduced)))
-      (stx-returned (get dx pool-reduced))      
+      (usda-returned (get dx pool-reduced))      
       (alex-to-buy (if (<= alex-borrowed alex-returned) u0 (mul-down (- alex-borrowed alex-returned) (var-get shortfall-coverage))))
-      (stx-to-sell (if (is-eq alex-to-buy u0) u0 (try! (contract-call? .fixed-weight-pool-v1-01 get-wstx-in-given-y-out .age000-governance-token u50000000 alex-to-buy))))
-      (alex-bought (if (is-eq stx-to-sell u0) u0 (get dy (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 stx-to-sell (some (- alex-borrowed alex-returned))))))))
+      (usda-to-sell (if (is-eq alex-to-buy u0) u0 (try! (contract-call? .simple-weight-pool-alex get-y-in-given-alex-out .token-wusda alex-to-buy))))
+      (alex-bought (if (is-eq usda-to-sell u0) u0 (get dy (as-contract (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex .token-wusda usda-to-sell (some (- alex-borrowed alex-returned))))))))
       (alex-to-return (- (+ alex-returned alex-bought) alex-borrowed))
-      (stx-to-return (- stx-returned stx-to-sell))
+      (usda-to-return (- usda-returned usda-to-sell))
     )
     
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-borrowed tx-sender .executor-dao none)))
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-return tx-sender sender none)))
-    (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none)))
+    (as-contract (try! (contract-call? .token-wusda transfer-fixed usda-to-return tx-sender sender none)))
 
-	(try! (ft-burn? auto-fwp-wstx-alex-120x (fixed-to-decimals supply) sender))
+	  (try! (ft-burn? auto-fwp-alex-usda-100x (fixed-to-decimals supply) sender))
     (print { object: "pool", action: "position-reduced", data: supply })
-    (ok { stx: stx-to-return, alex: alex-to-return })
+    (ok { usda: usda-to-return, alex: alex-to-return })
   )
 )
 

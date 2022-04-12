@@ -3,14 +3,14 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
-(define-fungible-token auto-fwp-wstx-alex-120)
+(define-fungible-token auto-fwp-alex-usda-100)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "Auto STX / ALEX Pool 120")
-(define-data-var token-symbol (string-ascii 32) "auto-fwp-wstx-alex-120")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-fwp-wstx-alex-120.json"))
+(define-data-var token-name (string-ascii 32) "Auto STX / ALEX Pool 100")
+(define-data-var token-symbol (string-ascii 32) "auto-fwp-alex-usda-100")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-fwp-alex-usda-100.json"))
 
 (define-data-var token-decimals uint u8)
 
@@ -79,7 +79,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
     (begin
         (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-        (try! (ft-transfer? auto-fwp-wstx-alex-120 amount sender recipient))
+        (try! (ft-transfer? auto-fwp-alex-usda-100 amount sender recipient))
         (match memo to-print (print to-print) 0x)
         (ok true)
     )
@@ -98,11 +98,11 @@
 )
 
 (define-read-only (get-balance (who principal))
-	(ok (ft-get-balance auto-fwp-wstx-alex-120 who))
+	(ok (ft-get-balance auto-fwp-alex-usda-100 who))
 )
 
 (define-read-only (get-total-supply)
-	(ok (ft-get-supply auto-fwp-wstx-alex-120))
+	(ok (ft-get-supply auto-fwp-alex-usda-100))
 )
 
 (define-read-only (get-token-uri)
@@ -122,7 +122,7 @@
 (define-public (mint (amount uint) (recipient principal))
 	(begin		
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-mint? auto-fwp-wstx-alex-120 amount recipient)
+		(ft-mint? auto-fwp-alex-usda-100 amount recipient)
 	)
 )
 
@@ -135,7 +135,7 @@
 (define-public (burn (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(ft-burn? auto-fwp-wstx-alex-120 amount sender)
+		(ft-burn? auto-fwp-alex-usda-100 amount sender)
 	)
 )
 
@@ -227,7 +227,7 @@
 (define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 (define-constant ERR-INVALID-PERCENT (err u5000))
 
-(define-data-var end-cycle uint u120)
+(define-data-var end-cycle uint u100)
 
 (define-read-only (get-end-cycle)
   (var-get end-cycle)
@@ -274,37 +274,37 @@
   (contract-call? .alex-reserve-pool get-staking-reward .age000-governance-token (get-alex-user-id) reward-cycle)
 )
 (define-private (get-staking-reward (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-staking-reward .fwp-wstx-alex-50-50-v1-01 (get-user-id) reward-cycle)
+  (contract-call? .alex-reserve-pool get-staking-reward .fwp-alex-usda (get-user-id) reward-cycle)
 )
 (define-private (get-alex-staker-at-cycle (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .age000-governance-token reward-cycle (get-alex-user-id))
 )
 (define-private (get-staker-at-cycle (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .fwp-wstx-alex-50-50-v1-01 reward-cycle (get-user-id))
+  (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .fwp-alex-usda reward-cycle (get-user-id))
 )
 (define-private (get-alex-user-id)
   (default-to u0 (contract-call? .alex-reserve-pool get-user-id .age000-governance-token tx-sender))
 )
 (define-private (get-user-id)
-  (default-to u0 (contract-call? .alex-reserve-pool get-user-id .fwp-wstx-alex-50-50-v1-01 tx-sender))
+  (default-to u0 (contract-call? .alex-reserve-pool get-user-id .fwp-alex-usda tx-sender))
 )
 (define-private (get-alex-reward-cycle (stack-height uint))
   (contract-call? .alex-reserve-pool get-reward-cycle .age000-governance-token stack-height)
 )
 (define-private (get-reward-cycle (stack-height uint))
-  (contract-call? .alex-reserve-pool get-reward-cycle .fwp-wstx-alex-50-50-v1-01 stack-height)
+  (contract-call? .alex-reserve-pool get-reward-cycle .fwp-alex-usda stack-height)
 )
 (define-private (stake-alex-tokens (amount-tokens uint) (lock-period uint))
   (contract-call? .alex-reserve-pool stake-tokens .age000-governance-token amount-tokens lock-period)
 )
 (define-private (stake-tokens (amount-tokens uint) (lock-period uint))
-  (contract-call? .alex-reserve-pool stake-tokens .fwp-wstx-alex-50-50-v1-01 amount-tokens lock-period)
+  (contract-call? .alex-reserve-pool stake-tokens .fwp-alex-usda amount-tokens lock-period)
 )
 (define-private (claim-alex-staking-reward (reward-cycle uint))
   (contract-call? .alex-reserve-pool claim-staking-reward .age000-governance-token reward-cycle)
 )
 (define-private (claim-staking-reward (reward-cycle uint))
-  (contract-call? .alex-reserve-pool claim-staking-reward .fwp-wstx-alex-50-50-v1-01 reward-cycle)
+  (contract-call? .alex-reserve-pool claim-staking-reward .fwp-alex-usda reward-cycle)
 )
 
 ;; public functions
@@ -389,7 +389,7 @@
         (new-total-supply (+ (var-get total-supply) (get token new-supply)))
       )
       ;; transfer dx to contract to stake for max cycles
-      (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
+      (try! (contract-call? .fwp-alex-usda transfer-fixed dx sender (as-contract tx-sender) none))
       (as-contract (try! (stake-tokens dx cycles-to-stake)))
 
       (and 
@@ -400,7 +400,7 @@
         
       ;; mint pool token and send to tx-sender
       (var-set total-supply new-total-supply)
-	  (try! (ft-mint? auto-fwp-wstx-alex-120 (fixed-to-decimals (get token new-supply)) sender))
+	  (try! (ft-mint? auto-fwp-alex-usda-100 (fixed-to-decimals (get token new-supply)) sender))
       (print { object: "pool", action: "liquidity-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
       (ok true)
     )
@@ -417,7 +417,7 @@
       (claimed (and (> (as-contract (get-user-id)) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))
       (alex-claimed (and (> (as-contract (get-alex-user-id)) u0) (is-ok (as-contract (claim-alex-staking-reward reward-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (principal-balance (unwrap! (contract-call? .fwp-alex-usda get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
@@ -453,7 +453,7 @@
       (claimed (as-contract (try! (claim-staking-reward (var-get end-cycle)))))
       (alex-claimed (as-contract (try! (claim-alex-staking-reward (var-get end-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (principal-balance (unwrap! (contract-call? .fwp-alex-usda get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (sender-balance (unwrap! (get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (mul-down percent sender-balance))
       (reduce-principal-balance (div-down (mul-down principal-balance reduce-supply) (var-get total-supply)))
@@ -473,11 +473,11 @@
     )
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-alex-balance tx-sender sender none)))
-    (as-contract (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed reduce-principal-balance tx-sender sender none)))
+    (as-contract (try! (contract-call? .fwp-alex-usda transfer-fixed reduce-principal-balance tx-sender sender none)))
     
     ;; burn pool token
     (var-set total-supply new-total-supply)
-	(try! (ft-burn? auto-fwp-wstx-alex-120 (fixed-to-decimals reduce-supply) sender))
+	(try! (ft-burn? auto-fwp-alex-usda-100 (fixed-to-decimals reduce-supply) sender))
     (print { object: "pool", action: "liquidity-removed", data: { reduce-supply: reduce-supply, total-supply: new-total-supply }})
     (ok { principal: reduce-principal-balance, rewards: reduce-alex-balance })
   ) 
@@ -496,4 +496,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(contract-call? .alex-vault add-approved-token .auto-fwp-wstx-alex-120)
+(contract-call? .alex-vault add-approved-token .auto-fwp-alex-usda-100)
