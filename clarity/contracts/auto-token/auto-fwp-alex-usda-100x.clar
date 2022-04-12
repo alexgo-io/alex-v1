@@ -79,10 +79,10 @@
 	)
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
+(define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
 		(try! (check-is-owner))
-		(ok (map-set approved-contracts new-approved-contract true))
+		(ok (map-set approved-contracts owner approved))
 	)
 )
 
@@ -233,7 +233,7 @@
 (define-map available-alex principal uint)
 (define-map borrowed-alex principal uint)
 
-(define-data-var shortfall-coverage uint u101000000) ;; 1.01x
+(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))

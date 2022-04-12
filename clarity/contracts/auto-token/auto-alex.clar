@@ -65,10 +65,10 @@
 	)
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
+(define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
 		(try! (check-is-owner))
-		(ok (map-set approved-contracts new-approved-contract true))
+		(ok (map-set approved-contracts owner approved))
 	)
 )
 
@@ -354,8 +354,8 @@
         
       ;; mint pool token and send to tx-sender
       (var-set total-supply new-total-supply)
-	  (try! (ft-mint? auto-alex (fixed-to-decimals new-supply) sender))
-      (print { object: "pool", action: "liquidity-added", data: {new-supply: new-supply, total-supply: new-total-supply }})
+	    (try! (ft-mint? auto-alex (fixed-to-decimals new-supply) sender))
+      (print { object: "pool", action: "position-added", data: {new-supply: new-supply, total-supply: new-total-supply }})
       (ok true)
     )
   )
@@ -391,10 +391,6 @@
   )
 )
 
-;; @desc dissolves the vault and allows auto-alex holders to withdraw $ALEX unstaked from the vault
-;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
-;; @assert contract-owner to set-activated to false before such withdrawal can happen.
-;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
 (define-public (reduce-position (percent uint))
   (let 
     (
@@ -423,8 +419,8 @@
     
     ;; burn pool token
     (var-set total-supply new-total-supply)
-	(try! (ft-burn? auto-alex (fixed-to-decimals reduce-supply) sender))
-    (print { object: "pool", action: "liquidity-removed", data: {reduce-supply: reduce-supply, total-supply: new-total-supply }})
+	  (try! (ft-burn? auto-alex (fixed-to-decimals reduce-supply) sender))
+    (print { object: "pool", action: "position-removed", data: {reduce-supply: reduce-supply, total-supply: new-total-supply }})
     (ok reduce-balance)
   ) 
 )
