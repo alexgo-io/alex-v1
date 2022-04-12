@@ -1,6 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
-(impl-trait .trait-ido-ft.ido-ft-trait)
 
 (define-fungible-token wslm)
 
@@ -205,28 +204,6 @@
 
 (define-public (send-many (recipients (list 200 { to: principal, amount: uint})))
   (fold check-err (map transfer-from-tuple recipients) (ok true))
-)
-
-(define-private (transfer-many-ido-iter (recipient principal) (params {amount: uint, result: (response bool uint)}))
-	(begin
-		(unwrap! (get result params) params)
-		{amount: (get amount params), result: (transfer-fixed (get amount params) contract-caller recipient none)}
-	)
-)
-
-(define-public (transfer-many-ido (amount uint) (recipients (list 200 principal)))
-	(get result (fold transfer-many-ido-iter recipients {amount: amount, result: (ok true)}))
-)
-
-(define-private (transfer-many-amounts-ido-iter (item {recipient: principal, amount: uint}) (result (response bool uint)))
-	(begin
-		(try! result)
-		(transfer-fixed (get amount item) contract-caller (get recipient item) none)
-	)
-)
-
-(define-public (transfer-many-amounts-ido (recipients (list 200 {recipient: principal, amount: uint})))
-	(fold transfer-many-amounts-ido-iter recipients (ok true))
 )
 
 

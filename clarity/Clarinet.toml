@@ -735,3 +735,23 @@ depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "tok
 [contracts.auto-fwp-alex-usda-100x]
 path = "contracts/auto-token/auto-fwp-alex-usda-100x.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "simple-weight-pool-alex", "token-wusda", "age000-governance-token", "executor-dao" ]
+
+[contracts.token-slime]
+path = "contracts/token/token-slime.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wslm]
+path = "contracts/wrapped-token/token-wslm.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-slime"]
+
+[contracts.fwp-alex-wslm]
+path = "contracts/pool-token/fwp-alex-wslm.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-alex-wslm]
+path = "contracts/multisig/multisig-fwp-alex-wslm.clar"
+depends_on = [
+  "fwp-alex-wslm",
+  "simple-weight-pool-alex",
+  "trait-multisig-vote"
+]
