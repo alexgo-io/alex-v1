@@ -79,10 +79,10 @@
 	)
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
+(define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
 		(try! (check-is-owner))
-		(ok (map-set approved-contracts new-approved-contract true))
+		(ok (map-set approved-contracts owner approved))
 	)
 )
 

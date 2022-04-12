@@ -32,12 +32,11 @@
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (try! (check-is-owner))
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
-  )
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
 )
 
 (define-read-only (get-token-owned (owner principal))
@@ -397,7 +396,7 @@
 	(try! (set-balance token-id (+ (get-balance-or-default token-id sender) (get token new-supply)) sender))
 	(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) (get token new-supply)))
 	(print {type: "sft_mint_event", token-id: token-id, amount: (get token new-supply), recipient: sender})	
-    (print { object: "pool", action: "liquidity-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
+    (print { object: "pool", action: "position-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
     (ok true)
   )
 )
@@ -433,10 +432,7 @@
   )
 )
 
-;; @desc dissolves the vault and allows auto-alex holders to withdraw $ALEX unstaked from the vault
-;; @desc burn all auto-alex held by tx-sender and transfer $ALEX due to tx-sender
-;; @assert contract-owner to set-activated to false before such withdrawal can happen.
-;; @assert there are no staking positions (i.e. all $ALEX are unstaked)
+
 (define-public (reduce-position (token-trait <ft-trait>))
   (let 
     (
@@ -470,7 +466,7 @@
 	(try! (set-balance token-id (- (get-balance-or-default token-id sender) reduce-supply) sender))
 	(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) reduce-supply))
 	(print {type: "sft_burn_event", token-id: token-id, amount: reduce-supply, sender: sender})
-    (print { object: "pool", action: "liquidity-removed", data: { reduce-supply: reduce-supply, total-supply: reduce-total-supply }})
+    (print { object: "pool", action: "position-removed", data: { reduce-supply: reduce-supply, total-supply: reduce-total-supply }})
     (ok true)
   ) 
 )
