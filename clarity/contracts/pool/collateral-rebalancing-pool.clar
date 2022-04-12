@@ -419,7 +419,20 @@
             (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
     )
-)    
+)
+
+(define-public (reduce-position-yield-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (percent uint) (expiries (list 10 uint)))
+    (ok
+        (map
+            reduce-position-yield 
+            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
+            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            expiries
+            (list yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait)
+            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
+        )
+    )
+)
 
 ;; @desc burn yield-token
 ;; @param token; borrow token
@@ -489,6 +502,19 @@
 
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
+        )
+    )
+)
+
+(define-public (reduce-position-key-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (key-token-trait <sft-trait>) (percent uint) (expiries (list 10 uint)))
+    (ok
+        (map
+            reduce-position-key 
+            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
+            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            expiries
+            (list key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait)
+            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
         )
     )
 )
