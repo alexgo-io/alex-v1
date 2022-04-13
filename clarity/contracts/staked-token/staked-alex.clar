@@ -29,6 +29,14 @@
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (map-set approved-contracts new-approved-contract true)
+    (ok true)
+  )
+)
+
 (define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
 		(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
