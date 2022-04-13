@@ -281,7 +281,15 @@
   (contract-call? .alex-reserve-pool get-staking-reward .age000-governance-token (get-alex-user-id) reward-cycle)
 )
 (define-private (get-staking-reward (reward-cycle uint))
-  (contract-call? .alex-reserve-pool get-staking-reward .fwp-alex-usda (get-user-id) reward-cycle)
+  (let 
+    (
+      (entitled-alex (contract-call? .alex-reserve-pool get-staking-reward .fwp-alex-usda (get-user-id) reward-cycle))
+    )
+    { 
+      alex: entitled-alex,
+      diko: (mul-down entitled-alex (contract-call? .dual-farming-pool get-multiplier-in-fixed-or-default .fwp-alex-usda))
+    }
+  )
 )
 (define-private (get-alex-staker-at-cycle (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .age000-governance-token reward-cycle (get-alex-user-id))
@@ -311,7 +319,8 @@
   (contract-call? .alex-reserve-pool claim-staking-reward .age000-governance-token reward-cycle)
 )
 (define-private (claim-staking-reward (reward-cycle uint))
-  (contract-call? .alex-reserve-pool claim-staking-reward .fwp-alex-usda reward-cycle)
+  ;; (contract-call? .alex-reserve-pool claim-staking-reward .fwp-alex-usda reward-cycle)
+  (contract-call? .dual-farming-pool claim-staking-reward .fwp-alex-usda .dual-farm-diko-helper (list reward-cycle))
 )
 
 ;; public functions
@@ -331,16 +340,18 @@
           (get to-return (as-contract (get-staker-at-cycle current-cycle)))
         )
       )
-      (rewards 
+      (rewards (as-contract (get-staking-reward current-cycle)))
+      (diko-balance (unwrap! (contract-call? .token-wdiko get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (rewards-alex 
         (+ 
-          (as-contract (get-staking-reward current-cycle))
+          (get alex rewards)
           (get amount-staked (as-contract (get-alex-staker-at-cycle (+ current-cycle u1)))) 
           (get to-return (as-contract (get-alex-staker-at-cycle current-cycle)))
           (as-contract (get-alex-staking-reward current-cycle))
         )
       )
     )
-    (ok { principal: principal, rewards: rewards })
+    (ok { principal: principal, rewards-alex: rewards-alex, rewards-diko: (+ diko-balance (get diko rewards)) })
   )
 )
 
@@ -351,7 +362,13 @@
     (
       (next-base (try! (get-next-base)))
     )
-    (ok { principal: (div-down (get principal next-base) (var-get total-supply)), rewards: (div-down (get rewards next-base) (var-get total-supply)) })
+    (ok 
+      { 
+        principal: (div-down (get principal next-base) (var-get total-supply)), 
+        rewards-alex: (div-down (get rewards-alex next-base) (var-get total-supply)),
+        rewards-diko: (div-down (get rewards-diko next-base) (var-get total-supply))
+      }
+    )
   )  
 )
 
@@ -362,10 +379,11 @@
     )
     (ok 
       (if (is-eq u0 (var-get total-supply))
-        { token: dx, rewards: u0 }
+        { token: dx, rewards-alex: u0, rewards-diko: u0 }
         { 
           token: dx, ;;(div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
-          rewards: (div-down (mul-down (get rewards next-base) dx) (get principal next-base))
+          rewards-alex: (div-down (mul-down (get rewards-alex next-base) dx) (get principal next-base)),
+          rewards-diko: (div-down (mul-down (get rewards-diko next-base) dx) (get principal next-base)),
         }
       )
     )
@@ -373,7 +391,7 @@
 )
 
 (define-read-only (is-cycle-bountiable (reward-cycle uint))
-  (> (as-contract (get-staking-reward reward-cycle)) (var-get bounty-in-fixed))
+  (> (get alex (as-contract (get-staking-reward reward-cycle))) (var-get bounty-in-fixed))
 )
 
 ;; @desc add to position
@@ -400,14 +418,19 @@
       (as-contract (try! (stake-tokens dx cycles-to-stake)))
 
       (and 
-        (> (get rewards new-supply) u0) 
-        (try! (contract-call? .age000-governance-token transfer-fixed (get rewards new-supply) sender (as-contract tx-sender) none))
-        (as-contract (try! (stake-alex-tokens (get rewards new-supply) cycles-to-stake)))
+        (> (get rewards-alex new-supply) u0) 
+        (try! (contract-call? .age000-governance-token transfer-fixed (get rewards-alex new-supply) sender (as-contract tx-sender) none))
+        (as-contract (try! (stake-alex-tokens (get rewards-alex new-supply) cycles-to-stake)))
       )
+
+      (and 
+        (> (get rewards-diko new-supply) u0) 
+        (try! (contract-call? .token-wdiko transfer-fixed (get rewards-diko new-supply) sender (as-contract tx-sender) none))
+      )      
         
       ;; mint pool token and send to tx-sender
       (var-set total-supply new-total-supply)
-	  (try! (ft-mint? auto-fwp-alex-usda (fixed-to-decimals (get token new-supply)) sender))
+	    (try! (ft-mint? auto-fwp-alex-usda (fixed-to-decimals (get token new-supply)) sender))
       (print { object: "pool", action: "position-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
       (ok true)
     )
@@ -454,14 +477,16 @@
       (sender tx-sender)
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       ;; claim last cycle just in case claim-and-stake has not yet been triggered    
-      (claimed (as-contract (try! (claim-staking-reward (var-get end-cycle)))))
+      (claimed (as-contract (unwrap-panic (claim-staking-reward (var-get end-cycle)))))
       (alex-claimed (as-contract (try! (claim-alex-staking-reward (var-get end-cycle)))))
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (diko-balance (unwrap! (contract-call? .token-wdiko get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-alex-usda get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (sender-balance (unwrap! (get-balance-fixed sender) ERR-GET-BALANCE-FIXED-FAIL))
       (reduce-supply (mul-down percent sender-balance))
       (reduce-principal-balance (div-down (mul-down principal-balance reduce-supply) (var-get total-supply)))
       (reduce-alex-balance (div-down (mul-down alex-balance reduce-supply) (var-get total-supply)))
+      (reduce-diko-balance (div-down (mul-down diko-balance reduce-supply) (var-get total-supply)))
       (new-total-supply (- (var-get total-supply) reduce-supply))
     )    
     (asserts! (var-get activated) ERR-NOT-ACTIVATED)
@@ -477,11 +502,12 @@
     )
     ;; transfer relevant balance to sender
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed reduce-alex-balance tx-sender sender none)))
+    (as-contract (try! (contract-call? .token-wdiko transfer-fixed reduce-diko-balance tx-sender sender none)))
     (as-contract (try! (contract-call? .fwp-alex-usda transfer-fixed reduce-principal-balance tx-sender sender none)))
     
     ;; burn pool token
     (var-set total-supply new-total-supply)
-	(try! (ft-burn? auto-fwp-alex-usda (fixed-to-decimals reduce-supply) sender))
+	  (try! (ft-burn? auto-fwp-alex-usda (fixed-to-decimals reduce-supply) sender))
     (print { object: "pool", action: "position-removed", data: { reduce-supply: reduce-supply, total-supply: new-total-supply }})
     (ok { principal: reduce-principal-balance, rewards: reduce-alex-balance })
   ) 

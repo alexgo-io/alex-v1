@@ -728,9 +728,13 @@ depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "fwp
 path = "contracts/auto-token/auto-fwp-wstx-alex-120x.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token", "executor-dao" ]
 
+[contracts.auto-fwp-alex-usda]
+path = "contracts/auto-token/auto-fwp-alex-usda.clar"
+depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "token-wusda", "fwp-alex-usda", "alex-reserve-pool", "dual-farming-pool", "dual-farm-diko-helper", "token-wdiko" ]
+
 [contracts.auto-fwp-alex-usda-100]
 path = "contracts/auto-token/auto-fwp-alex-usda-100.clar"
-depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "token-wusda", "fwp-alex-usda", "alex-reserve-pool" ]
+depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "token-wusda", "fwp-alex-usda", "alex-reserve-pool", "dual-farming-pool", "dual-farm-diko-helper", "token-wdiko" ]
 
 [contracts.auto-fwp-alex-usda-100x]
 path = "contracts/auto-token/auto-fwp-alex-usda-100x.clar"
