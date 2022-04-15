@@ -555,3 +555,6 @@
     (/ (* a ONE_8) b)
   )
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)

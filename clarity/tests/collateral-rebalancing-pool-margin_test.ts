@@ -52,7 +52,7 @@ const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
 const token_to_maturity = 2100;
 
-const quantity = 10e8
+const quantity = 1000e8
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
@@ -215,7 +215,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(expiry + 1);
 
         const blockRoll2 = chain.mineBlock(
-            [
+            [               
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
                     types.principal(wbtcAddress), 

@@ -137,6 +137,19 @@ import {
         return block.receipts[0].result;
       }
 
+      reducePositionYieldMany(user: Account, token: string, collateral: string, yieldToken: string, percent: number, expiries: Array<number>) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-yield-many", [
+            types.principal(token),
+            types.principal(collateral),
+            types.principal(yieldToken),
+            types.uint(percent),
+            types.list(expiries.map(types.uint)),
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }      
+
       reducePositionKey(user: Account, token: string, collateral: string, expiry: number, keyToken: string, percent: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key", [
@@ -149,6 +162,19 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+      reducePositionKeyMany(user: Account, token: string, collateral: string, keyToken: string, percent: number, expiries: Array<number>) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key-many", [
+            types.principal(token),
+            types.principal(collateral),
+            types.principal(keyToken),
+            types.uint(percent),
+            types.list(expiries.map(types.uint))
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }      
   
     swapXForY(user: Account, token: string, collateral: string, expiry: number, dX: number, dy_min: number) {
       let block = this.chain.mineBlock([

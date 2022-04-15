@@ -1,11 +1,9 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
-
 ;; futures pool
-;;
+;; DOES NOT WORK DUE TO alex-reserve-pool requiring 1 principal <> user-id
 
 ;; constants
 ;;
@@ -14,8 +12,8 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
-(define-constant ERR-STAKING-IN-PROGRESS (err u2018))
-(define-constant ERR-STAKING-NOT-AVAILABLE (err u2027))
+(define-constant ERR-REWARD-CYCLE-NOT-COMPLETED (err u10017))
+(define-constant ERR-STAKING-NOT-AVAILABLE (err u10015))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
@@ -134,7 +132,7 @@
         )
         (asserts! (is-eq (get pool-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
         ;; check if staking already started
-        (asserts! (> start-cycle current-cycle) ERR-STAKING-IN-PROGRESS)        
+        (asserts! (> start-cycle current-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)        
 
         ;; transfer dx to contract and send to stake
         (try! (contract-call? staked-token-trait transfer-fixed dx sender (as-contract tx-sender) none))
@@ -163,7 +161,7 @@
         (> current-cycle start-cycle)
         (< current-cycle (+ start-cycle u31))
       ) 
-      ERR-STAKING-IN-PROGRESS
+      ERR-REWARD-CYCLE-NOT-COMPLETED
     )
 
     (as-contract (map claim-staking-reward trait-lists reward-cycles))
@@ -199,7 +197,7 @@
           (recipient tx-sender)
         )
         (asserts! (is-eq (get pool-token pool) (contract-of yield-token-trait)) ERR-INVALID-TOKEN)
-        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle staked-token (+ start-cycle u31)) (contract-call? .alex-reserve-pool get-reward-cycle-length))) ERR-STAKING-IN-PROGRESS)
+        (asserts! (> block-height (+ (get-first-stacks-block-in-reward-cycle staked-token (+ start-cycle u31)) (contract-call? .alex-reserve-pool get-reward-cycle-length))) ERR-REWARD-CYCLE-NOT-COMPLETED)
         
         ;; the first call claims rewards/stakes
         (and 

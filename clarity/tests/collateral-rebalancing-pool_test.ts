@@ -196,14 +196,14 @@ Clarinet.test({
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(2800613086349);
-        position['balance-y'].expectUint(4502084);
+        position['balance-x'].expectUint(2633703244389);
+        position['balance-y'].expectUint(7749295);
         position['yield-supply'].expectUint(4834581);
         position['key-supply'].expectUint(53615068);
     
         // also remove all key tokens
-        result = CRPTest.reducePositionKey(deployer, wbtcAddress, usdaAddress, expiry, keywbtcAddress, ONE_8);        
-        position = result.expectOk().expectTuple();
+        result = CRPTest.reducePositionKeyMany(deployer, wbtcAddress, usdaAddress, keywbtcAddress, ONE_8, [expiry]);        
+        position = result.expectOk();
         
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
@@ -498,6 +498,9 @@ Clarinet.test({
         // arbitrageur attempts to retreuve back with small value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 0.001 * ONE_8);        
         result.expectOk().expectTuple();
+
+        result = CRPTest.reducePositionYieldMany(deployer, wbtcAddress, usdaAddress, yieldwbtcAddress, ONE_8, [expiry]);        
+        result.expectOk();
 
         // arbtrageur attepmts to retreive back with full value
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, 101*ONE_8);        

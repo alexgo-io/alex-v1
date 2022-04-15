@@ -47,7 +47,7 @@
   (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-(define-data-var shortfall-coverage uint u101000000) ;; 1.01x
+(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -273,7 +273,20 @@
             (ok {yield-token: yield-new-supply, key-token: key-new-supply})
         )
     )
-)    
+)
+
+(define-public (reduce-position-yield-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (percent uint) (expiries (list 10 uint)))
+    (ok
+        (map
+            reduce-position-yield 
+            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
+            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            expiries
+            (list yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait)
+            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
+        )
+    )
+)
 
 (define-public (reduce-position-yield (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (percent uint))
     (begin
@@ -309,6 +322,19 @@
             (and (> shares u0) (as-contract (try! (contract-call? yield-token-trait burn-fixed expiry shares sender))))
             (print { object: "pool", action: "liquidity-removed", data: pool-updated })
             (ok {dx: u0, dy: shares})            
+        )
+    )
+)
+
+(define-public (reduce-position-key-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (key-token-trait <sft-trait>) (percent uint) (expiries (list 10 uint)))
+    (ok
+        (map
+            reduce-position-key 
+            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
+            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            expiries
+            (list key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait)
+            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
         )
     )
 )
@@ -1220,3 +1246,6 @@
         )
     )    
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)

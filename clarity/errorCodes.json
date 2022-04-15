@@ -68,8 +68,8 @@
     "comment": "yield token expiry error"
   },
   "2018": {
-    "code": "ERR-STAKING-IN-PROGRESS",
-    "comment": "ERR-STAKING-IN-PROGRESS"
+    "code": "ERR-REWARD-CYCLE-NOT-COMPLETED",
+    "comment": "ERR-REWARD-CYCLE-NOT-COMPLETED"
   },
   "2019": {
     "code": "ERR-LTV-GREATER-THAN-ONE",

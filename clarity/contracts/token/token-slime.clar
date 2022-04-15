@@ -2,7 +2,7 @@
 (impl-trait .trait-sip-010.sip-010-trait)
 
 
-(define-fungible-token xbtc)
+(define-fungible-token slime)
 
 (define-data-var token-uri (string-utf8 256) u"")
 (define-data-var contract-owner principal tx-sender)
@@ -30,14 +30,6 @@
   (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
 )
 
-(define-public (add-approved-contract (new-approved-contract principal))
-  (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
-    (map-set approved-contracts new-approved-contract true)
-    (ok true)
-  )
-)
-
 (define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
 		(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
@@ -52,25 +44,25 @@
 ;; @desc get-total-supply
 ;; @returns (response uint)
 (define-read-only (get-total-supply)
-  (ok (ft-get-supply xbtc))
+  (ok (ft-get-supply slime))
 )
 
 ;; @desc get-name
 ;; @returns (response string-utf8)
 (define-read-only (get-name)
-  (ok "xbtc")
+  (ok "slime")
 )
 
 ;; @desc get-symbol
 ;; @returns (response string-utf8)
 (define-read-only (get-symbol)
-  (ok "xbtc")
+  (ok "slime")
 )
 
 ;; @desc get-decimals
 ;; @returns (response uint)
 (define-read-only (get-decimals)
-   	(ok u8)
+   	(ok u6)
 )
 
 ;; @desc get-balance
@@ -78,7 +70,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (ft-get-balance xbtc account))
+  (ok (ft-get-balance slime account))
 )
 
 ;; @desc set-token-uri
@@ -109,13 +101,9 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (match (ft-transfer? xbtc amount sender recipient)
-      response (begin
-        (print memo)
-        (ok response)
-      )
-      error (err error)
-    )
+    (try! (ft-transfer? slime amount sender recipient))
+    (match memo to-print (print to-print) 0x)
+    (ok true)
   )
 )
 
@@ -128,7 +116,7 @@
 (define-public (mint (amount uint) (recipient principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-mint? xbtc amount recipient)
+    (ft-mint? slime amount recipient)
   )
 )
 
@@ -141,7 +129,7 @@
 (define-public (burn (amount uint) (sender principal))
   (begin
     (try! (check-is-approved tx-sender))
-    (ft-burn? xbtc amount sender)
+    (ft-burn? slime amount sender)
   )
 )
 
@@ -171,7 +159,7 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-total-supply-fixed)
-  (ok (decimals-to-fixed (ft-get-supply xbtc)))
+  (ok (decimals-to-fixed (ft-get-supply slime)))
 )
 
 ;; @desc get-balance-fixed
@@ -179,7 +167,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-balance-fixed (account principal))
-  (ok (decimals-to-fixed (ft-get-balance xbtc account)))
+  (ok (decimals-to-fixed (ft-get-balance slime account)))
 )
 
 ;; @desc transfer-fixed

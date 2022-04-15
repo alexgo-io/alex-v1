@@ -89,7 +89,7 @@
   )
 )
 
-(define-public (claim-staking-reward (token <ft-trait>) (dual-token <transfer-trait>) (reward-cycles (list 200 uint)))
+(define-public (claim-staking-reward (token <ft-trait>) (dual-token <transfer-trait>) (reward-cycles (list 20 uint)))
   (ok 
     (map 
       claim-staking-reward-by-tx-sender 
