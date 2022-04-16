@@ -2,8 +2,6 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
-
-
 ;; yield-token-pool
 (define-constant MAX_T u85000000)
 
