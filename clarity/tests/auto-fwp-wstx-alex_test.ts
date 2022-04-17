@@ -33,8 +33,8 @@ Clarinet.test({
       ),
       Tx.contractCall(
         "auto-fwp-wstx-alex",
-        "set-activated",
-        [types.bool(true)],
+        "set-start-block",
+        [types.uint(0)],
         notContractOwner.address
       ),
       Tx.contractCall(
@@ -168,7 +168,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
     ]);
     setupBlock.receipts.forEach((e) => {
       e.result.expectOk();
@@ -233,7 +233,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
     ]);
     block.receipts.forEach((e) => {
       e.result.expectOk();
@@ -360,7 +360,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
     ]);
 
     block.receipts.forEach((e) => {
@@ -453,7 +453,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
       yieldVault.setBountyInFixed(deployer, BountyFixed),
     ]);
     block.receipts.forEach((e) => {
@@ -590,7 +590,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
       yieldVault.setBountyInFixed(deployer, 0),
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
@@ -749,7 +749,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
       yieldVault.setBountyInFixed(deployer, 0),
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });

@@ -228,6 +228,18 @@
 (define-constant ERR-INVALID-PERCENT (err u5000))
 
 (define-data-var end-cycle uint u120)
+(define-data-var start-block uint u340282366920938463463374607431768211455)
+
+(define-read-only (get-start-block)
+  (var-get start-block)
+)
+
+(define-public (set-start-block (new-start-block uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set start-block new-start-block))
+  )
+)
 
 (define-read-only (get-end-cycle)
   (var-get end-cycle)
@@ -243,7 +255,7 @@
 ;; data maps and vars
 ;;
 (define-data-var total-supply uint u0)
-(define-data-var activated bool false)
+
 (define-data-var bounty-in-fixed uint u1000000000) ;; 10 ALEX
 
 (define-read-only (get-bounty-in-fixed)
@@ -254,17 +266,6 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set bounty-in-fixed new-bounty-in-fixed))
-  )
-)
-
-(define-read-only (get-activated)
-  (ok (var-get activated))
-)
-
-(define-public (set-activated (new-activated bool))
-  (begin
-    (try! (check-is-owner))
-    (ok (var-set activated new-activated))
   )
 )
 
@@ -378,7 +379,7 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
     (asserts! (> (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
-    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     
     (let
@@ -421,7 +422,7 @@
       (bounty (var-get bounty-in-fixed))
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
-    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> alex-balance bounty) ERR-INSUFFICIENT-BALANCE)
     (asserts! (>= (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
@@ -457,7 +458,7 @@
       (reduce-alex-balance (div-down (mul-down alex-balance reduce-supply) (var-get total-supply)))
       (new-total-supply (- (var-get total-supply) reduce-supply))
     )    
-    (asserts! (var-get activated) ERR-NOT-ACTIVATED)
+    (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
     ;; only if beyond end-cycle and no staking positions
     (asserts! 

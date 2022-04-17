@@ -44,12 +44,12 @@ class YieldVault{
         )
     }
 
-    setActivated(sender: Account, activated: boolean){
+    setStartBlock(sender: Account, start_block: number){
         return Tx.contractCall(
             this.contractName,
-            "set-activated",
+            "set-start-block",
             [
-                types.bool(activated)
+                types.uint(start_block)
             ],
             sender.address
         )
@@ -159,13 +159,13 @@ class YieldVaultFarm{
         )
     }
 
-    setActivated(sender: Account, token: string, activated: boolean){
+    setStartBlock(sender: Account, token: string, start_block: boolean){
         return Tx.contractCall(
             "auto-farm",
-            "set-activated",
+            "set-start-block",
             [
                 types.principal(token),
-                types.bool(activated)
+                types.bool(start_block)
             ],
             sender.address
         )
