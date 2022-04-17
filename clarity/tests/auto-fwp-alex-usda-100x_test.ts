@@ -118,7 +118,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),
-      yieldVault.setActivated(deployer, true),
+      yieldVault.setStartBlock(deployer, 0),
       yieldVault.setBountyInFixed(deployer, 0),
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });

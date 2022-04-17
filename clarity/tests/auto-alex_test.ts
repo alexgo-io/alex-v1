@@ -24,8 +24,8 @@ Clarinet.test({
             ),
             Tx.contractCall(
                 "auto-alex",
-                "set-activated",
-                [types.bool(true)],
+                "set-start-block",
+                [types.uint(0)],
                 notContractOwner.address
             ),      
             Tx.contractCall(
@@ -89,7 +89,7 @@ Clarinet.test({
             reservePool.addToken(deployer, alexTokenAddress),
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
-            yieldVault.setActivated(deployer, true)   
+            yieldVault.setStartBlock(deployer, 0)   
         ]);
         for(let i = 0; i < setupBlock.receipts.length; i++){
             setupBlock.receipts[i].result.expectOk();
@@ -120,7 +120,7 @@ Clarinet.test({
             reservePool.addToken(deployer, alexTokenAddress),
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
-            yieldVault.setActivated(deployer, true)   
+            yieldVault.setStartBlock(deployer, 0)      
         ]);
         for(let i = 0; i < block.receipts.length; i++){
             block.receipts[i].result.expectOk();
@@ -202,7 +202,7 @@ Clarinet.test({
             reservePool.addToken(deployer, alexTokenAddress),
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
-            yieldVault.setActivated(deployer, true)   
+            yieldVault.setStartBlock(deployer, 0)      
         ]);
         for(let i = 0; i < block.receipts.length; i++){
             block.receipts[i].result.expectOk();
@@ -262,7 +262,7 @@ Clarinet.test({
             reservePool.addToken(deployer, alexTokenAddress),
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
-            yieldVault.setActivated(deployer, true),
+            yieldVault.setStartBlock(deployer, 0)   ,
             yieldVault.setBountyInFixed(deployer, BountyFixed)   
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
@@ -374,7 +374,7 @@ Clarinet.test({
           ONE_8,
           ONE_8
         ),
-        yieldVault.setActivated(deployer, true),
+        yieldVault.setStartBlock(deployer, 0)   ,
         yieldVault.setBountyInFixed(deployer, 0),
       ]);
       block.receipts.forEach((e) => { e.result.expectOk() });
