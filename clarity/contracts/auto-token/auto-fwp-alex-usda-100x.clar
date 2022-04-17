@@ -79,6 +79,13 @@
 	)
 )
 
+(define-public (add-approved-contract (new-approved-contract principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts new-approved-contract true))
+	)
+)
+
 (define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
 		(try! (check-is-owner))
@@ -267,13 +274,15 @@
           (sender tx-sender)
           (pool (try! (contract-call? .simple-weight-pool-alex get-token-given-position .age000-governance-token .token-wusda dx none)))
           (vault (try! (contract-call? .auto-fwp-alex-usda-100 get-token-given-position (get token pool))))
-          (alex-required (+ (get dy pool) (get rewards vault)))
+          (alex-required (+ (get dy pool) (get rewards-alex vault)))
+          (diko-required (get rewards-diko vault))
           (alex-available (get-available-alex-or-default sender))
           (alex-borrowed (get-borrowed-alex-or-default sender))                        
         )
         (asserts! (>= alex-available alex-required) ERR-AVAILABLE-ALEX)
 
         (try! (contract-call? .token-wusda transfer-fixed dx sender (as-contract tx-sender) none))
+        (and (> diko-required u0) (try! (contract-call? .token-wdiko transfer-fixed diko-required sender (as-contract tx-sender) none)))
         (as-contract (try! (contract-call? .age000-governance-token mint-fixed alex-required tx-sender)))
         (as-contract (try! (contract-call? .simple-weight-pool-alex add-to-position .age000-governance-token .token-wusda .fwp-alex-usda dx (some (get dy pool)))))
         (as-contract (try! (contract-call? .auto-fwp-alex-usda-100 add-to-position (get token pool))))
@@ -295,22 +304,24 @@
       (share (div-down supply total-supply))
       (vault-reduced (as-contract (try! (contract-call? .auto-fwp-alex-usda-100 reduce-position share))))
       (pool-reduced (as-contract (try! (contract-call? .simple-weight-pool-alex reduce-position .age000-governance-token .token-wusda .fwp-alex-usda share))))
-      (alex-returned (+ (get dy pool-reduced) (get rewards vault-reduced)))
+      (alex-returned (+ (get dy pool-reduced) (get rewards-alex vault-reduced)))      
       (usda-returned (get dx pool-reduced))      
       (alex-to-buy (if (<= alex-borrowed alex-returned) u0 (mul-down (- alex-borrowed alex-returned) (var-get shortfall-coverage))))
       (usda-to-sell (if (is-eq alex-to-buy u0) u0 (try! (contract-call? .simple-weight-pool-alex get-y-in-given-alex-out .token-wusda alex-to-buy))))
       (alex-bought (if (is-eq usda-to-sell u0) u0 (get dy (as-contract (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex .token-wusda usda-to-sell (some (- alex-borrowed alex-returned))))))))
       (alex-to-return (- (+ alex-returned alex-bought) alex-borrowed))
-      (usda-to-return (- usda-returned usda-to-sell))
+      (diko-to-return (get rewards-diko vault-reduced))
+      (usda-to-return (- usda-returned usda-to-sell))      
     )
     
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-borrowed tx-sender .executor-dao none)))
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-return tx-sender sender none)))
+    (as-contract (try! (contract-call? .token-wdiko transfer-fixed diko-to-return tx-sender sender none)))
     (as-contract (try! (contract-call? .token-wusda transfer-fixed usda-to-return tx-sender sender none)))
 
 	  (try! (ft-burn? auto-fwp-alex-usda-100x (fixed-to-decimals supply) sender))
     (print { object: "pool", action: "position-reduced", data: supply })
-    (ok { usda: usda-to-return, alex: alex-to-return })
+    (ok { usda: usda-to-return, alex: alex-to-return, diko: diko-to-return })
   )
 )
 

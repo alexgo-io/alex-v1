@@ -83,8 +83,27 @@ Clarinet.test({
         ONE_8,
         ONE_8,
         ONE_8
+      ),      
+      // reservePool.addToken(deployer, fwpTokenAddress),
+      Tx.contractCall(
+        "dual-farming-pool",
+        "add-token",
+        [
+          types.principal(fwpTokenAddress),
+          types.principal(deployer.address + ".dual-farm-diko-helper"),
+          types.principal(deployer.address + ".token-wdiko")
+        ], 
+        deployer.address
       ),
-      reservePool.addToken(deployer, fwpTokenAddress),
+      Tx.contractCall(
+        "dual-farming-pool",
+        "set-multiplier-in-fixed",
+        [
+          types.principal(fwpTokenAddress),
+          types.uint(ONE_8)
+        ],
+        deployer.address
+      ),
       reservePool.setActivationBlock(
         deployer,
         fwpTokenAddress,
