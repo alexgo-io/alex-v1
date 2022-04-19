@@ -272,6 +272,13 @@ Clarinet.test({
         ], deployer.address),
       ]);
 
+      chain.mineBlock([
+        Tx.contractCall(deployer.address + ".token-diko", "mint-fixed", [
+          types.uint(100000e8),
+          types.principal(dualAddress)
+        ], deployer.address),
+      ]);      
+
       let call:any = await StakingTest.getDualTokenUnderlying(stakedAddress);
       call.result.expectErr().expectUint(1003);
       
@@ -311,8 +318,9 @@ Clarinet.test({
         output['to-return'].expectUint(i == 2 ? 100e8 : 0)
       }
 
-      block.events.expectFungibleTokenMintEvent(
+      block.events.expectFungibleTokenTransferEvent(
         1e6,
+        dualAddress,
         wallet_6.address,
         "diko"
       );
@@ -328,3 +336,4 @@ Clarinet.test({
       );                  
   },    
 });
+
