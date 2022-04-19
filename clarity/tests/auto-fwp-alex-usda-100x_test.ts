@@ -36,6 +36,11 @@ Clarinet.test({
       deployer,
       "token-usda"
     );
+    const dikoToken = new FungibleToken(
+      chain,
+      deployer,
+      "token-diko"
+    );    
     const dx = ONE_8;
     const end_cycle = 10;
 
@@ -44,6 +49,8 @@ Clarinet.test({
     result = alexToken.mintFixed(deployer, deployer.address, 1000e8);
     result.expectOk();
     result = usdaToken.mintFixed(deployer, deployer.address, 1000e8);
+    result.expectOk();
+    result = dikoToken.mintFixed(deployer, deployer.address + ".dual-farm-diko-helper", 1000e8);
     result.expectOk();
 
     result = FWPTest.createPool(
