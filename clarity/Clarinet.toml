@@ -699,7 +699,7 @@ depends_on = [ ]
 
 [contracts.dual-farm-diko-helper]
 path = "contracts/helpers/dual-farm-diko-helper.clar"
-depends_on = [ "trait-transfer", "token-diko" ]
+depends_on = [ "trait-transfer", "token-wdiko" ]
 
 [contracts.token-diko]
 path = "contracts/token/token-diko.clar"
@@ -712,6 +712,10 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]
 [contracts.auto-alex]
 path = "contracts/auto-token/auto-alex.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool" ]
+
+[contracts.auto-farm]
+path = "contracts/auto-token/auto-farm.clar"
+depends_on = [ "trait-semi-fungible", "trait-ownable", "age000-governance-token", "trait-ownable", "alex-reserve-pool" ]
 
 [contracts.auto-fwp-wstx-alex]
 path = "contracts/auto-token/auto-fwp-wstx-alex.clar"
