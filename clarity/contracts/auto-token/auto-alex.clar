@@ -369,6 +369,16 @@
   )
 )
 
+;; claims alex for the reward-cycle and mint auto-alex
+(define-public (claim-and-mint (reward-cycle uint))
+  (let 
+    (
+      (claimed (try! (claim-staking-reward reward-cycle)))
+    )
+    (add-to-position (+ (get to-return claimed) (get entitled-token claimed)))
+  )
+)
+
 ;; @desc triggers external event that claims all that's available and stake for another 32 cycles
 ;; @desc this can be triggered by anyone at a fee (at the moment 0.1% of whatever is claimed)
 ;; @param reward-cycle the target cycle to claim (and stake for current cycle + 32 cycles). reward-cycle must be < current cycle.
