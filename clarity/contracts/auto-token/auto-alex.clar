@@ -369,8 +369,11 @@
   )
 )
 
-(define-private (add-to-position-from-claimed (claimed (response (tuple (entitled-token uint) (to-return uint)) uint)))
-  (add-to-position (+ (get to-return (try! claimed)) (get entitled-token (try! claimed))))
+(define-private (sum-claimed (claimed-response (response (tuple (entitled-token uint) (to-return uint)) uint)) (sum-so-far uint))
+  (match claimed-response
+    claimed (+ sum-so-far (get to-return claimed) (get entitled-token claimed))
+    err sum-so-far
+  )
 )
 
 ;; claims alex for the reward-cycles and mint auto-alex
@@ -379,7 +382,7 @@
     (
       (claimed (unwrap-panic (contract-call? .staking-helper claim-staking-reward .age000-governance-token reward-cycles)))
     )
-    (ok (map add-to-position-from-claimed claimed))
+    (add-to-position (fold sum-claimed claimed u0))
   )
 )
 
