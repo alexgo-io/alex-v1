@@ -334,6 +334,80 @@ Clarinet.test({
 })
 
 Clarinet.test({
+    name: "auto-alex : ensure that claim-and-mint works with valid cycles",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get("deployer")!;
+        const wallet_1 = accounts.get("wallet_1")!;
+        const wallet_2 = accounts.get("wallet_2")!;
+        const yieldVault = new YieldVault(chain, "auto-alex");
+        const reservePool = new ReservePool(chain);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
+        const dx = ONE_8;
+
+        let result:any = alexToken.mintFixed(deployer, wallet_1.address, dx);
+        result.expectOk();
+
+        let block = chain.mineBlock([
+            reservePool.addToken(deployer, alexTokenAddress),
+            reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
+            reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
+            yieldVault.setStartBlock(deployer, 0)   ,
+            yieldVault.setBountyInFixed(deployer, BountyFixed)   
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+
+
+        block = chain.mineBlock([
+            Tx.contractCall("alex-reserve-pool", "stake-tokens", 
+                [
+                    types.principal(alexTokenAddress), 
+                    types.uint(dx),
+                    types.uint(32)
+                ],
+                wallet_1.address
+            )
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+        
+        // end of cycle 3
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 2100);
+
+        block = chain.mineBlock([
+            Tx.contractCall("auto-alex", "claim-and-mint", [types.list([types.uint(0)])], wallet_1.address),
+            Tx.contractCall("auto-alex", "claim-and-mint", [types.list([types.uint(1), types.uint(2), types.uint(3)])], wallet_1.address)
+        ]);
+        // console.log(block.receipts[1].events);
+        block.receipts[0].result.expectErr().expectUint(2003);
+        block.receipts[1].result.expectOk();
+
+        block.receipts[1].events.expectFungibleTokenMintEvent(
+            3 * ONE_8,
+            wallet_1.address,
+            "auto-alex"
+        );        
+        block.receipts[1].events.expectFungibleTokenMintEvent(
+            3 * ONE_8,
+            wallet_1.address,
+            "alex"
+        );
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            3 * ONE_8,
+            wallet_1.address,
+            deployer.address + '.auto-alex',
+            "alex"
+        );      
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            3 * ONE_8,
+            deployer.address + '.auto-alex',
+            deployer.address + '.alex-vault',
+            "alex"
+        );          
+    }
+})
+
+Clarinet.test({
     name: "auto-alex : ensure that reduce-position works",
     async fn(chain: Chain, accounts: Map<string, Account>) {
       const deployer = accounts.get("deployer")!;
