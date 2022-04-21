@@ -711,7 +711,7 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]
 
 [contracts.auto-alex]
 path = "contracts/auto-token/auto-alex.clar"
-depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool" ]
+depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool", "staking-helper" ]
 
 [contracts.auto-fwp-wstx-alex]
 path = "contracts/auto-token/auto-fwp-wstx-alex.clar"

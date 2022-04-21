@@ -369,13 +369,17 @@
   )
 )
 
-;; claims alex for the reward-cycle and mint auto-alex
-(define-public (claim-and-mint (reward-cycle uint))
+(define-private (add-to-position-from-claimed (claimed (response (tuple (entitled-token uint) (to-return uint)) uint)))
+  (add-to-position (+ (get to-return (try! claimed)) (get entitled-token (try! claimed))))
+)
+
+;; claims alex for the reward-cycles and mint auto-alex
+(define-public (claim-and-mint (reward-cycles (list 200 uint)))
   (let 
     (
-      (claimed (try! (claim-staking-reward reward-cycle)))
+      (claimed (unwrap-panic (contract-call? .staking-helper claim-staking-reward .age000-governance-token reward-cycles)))
     )
-    (add-to-position (+ (get to-return claimed) (get entitled-token claimed)))
+    (ok (map add-to-position-from-claimed claimed))
   )
 )
 
