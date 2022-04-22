@@ -382,7 +382,8 @@
     (
       (claimed (unwrap-panic (contract-call? .staking-helper claim-staking-reward .age000-governance-token reward-cycles)))
     )
-    (add-to-position (fold sum-claimed claimed u0))
+    (try! (add-to-position (fold sum-claimed claimed u0)))
+    (ok claimed)
   )
 )
 
