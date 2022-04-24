@@ -760,3 +760,23 @@ depends_on = [
 [contracts.farming-helper]
 path = "contracts/helpers/farming-helper.clar"
 depends_on = [ "alex-reserve-pool", "trait-sip-010" ]
+
+[contracts.token-xusd]
+path = "contracts/token/token-xusd.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wxusd]
+path = "contracts/wrapped-token/token-wxusd.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-xusd"]
+
+[contracts.fwp-alex-wxusd]
+path = "contracts/pool-token/fwp-alex-wxusd.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-alex-wxusd]
+path = "contracts/multisig/multisig-fwp-alex-wxusd.clar"
+depends_on = [
+  "fwp-alex-wxusd",
+  "simple-weight-pool-alex",
+  "trait-multisig-vote"
+]
