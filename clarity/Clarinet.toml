@@ -525,11 +525,11 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.swap-helper]
 path = "contracts/helpers/swap-helper.clar"
-depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool", "simple-weight-pool-alex" ]
+depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-alex" ]
 
 [contracts.swap-helper-v1-01]
 path = "contracts/helpers/swap-helper-v1-01.clar"
-depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool", "simple-weight-pool-alex" ]
+depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-alex" ]
 
 [contracts.simple-equation]
 path = "contracts/equations/simple-equation.clar"
@@ -651,7 +651,7 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 
 [contracts.multisig-fwp-alex-autoalex]
 path = "contracts/multisig/multisig-fwp-alex-autoalex.clar"
-depends_on = [ "fwp-alex-autoalex", "simple-weight-pool", "trait-multisig-vote" ]
+depends_on = [ "fwp-alex-autoalex", "simple-weight-pool-alex", "trait-multisig-vote" ]
 
 [contracts.multisig-crp-alex-autoalex]
 path = "contracts/multisig/multisig-crp-alex-autoalex.clar"
