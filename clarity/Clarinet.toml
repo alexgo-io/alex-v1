@@ -780,3 +780,13 @@ depends_on = [
   "simple-weight-pool-alex",
   "trait-multisig-vote"
 ]
+
+[contracts.flash-loan-user-autoalex-to-alex]
+path = "contracts/flash-loan-user-autoalex-to-alex.clar"
+depends_on = [
+  "trait-sip-010",
+  "trait-flash-loan-user",
+  "auto-alex",
+  "age000-governance-token",
+  "swap-helper-v1-01"
+]
