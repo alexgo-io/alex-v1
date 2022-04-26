@@ -5,8 +5,6 @@
 (define-constant ERR-NO-ARB-EXISTS (err u9000))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 
-;;'SP3K8BC0PPEVCV7NZ6QSRWPQ2JE9E5B6N3PA0KBR9
-
 ;; @desc execute
 ;; @params collateral
 ;; @params amount
