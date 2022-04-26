@@ -780,3 +780,43 @@ depends_on = [
   "simple-weight-pool-alex",
   "trait-multisig-vote"
 ]
+
+[contracts.token-mia]
+path = "contracts/token/token-mia.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wmia]
+path = "contracts/wrapped-token/token-wmia.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-mia"]
+
+[contracts.fwp-alex-wmia]
+path = "contracts/pool-token/fwp-alex-wmia.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-alex-wmia]
+path = "contracts/multisig/multisig-fwp-alex-wmia.clar"
+depends_on = [
+  "fwp-alex-wmia",
+  "simple-weight-pool-alex",
+  "trait-multisig-vote"
+]
+
+[contracts.token-nycc]
+path = "contracts/token/token-nycc.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wnycc]
+path = "contracts/wrapped-token/token-wnycc.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-nycc"]
+
+[contracts.fwp-alex-wnycc]
+path = "contracts/pool-token/fwp-alex-wnycc.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-alex-wnycc]
+path = "contracts/multisig/multisig-fwp-alex-wnycc.clar"
+depends_on = [
+  "fwp-alex-wnycc",
+  "simple-weight-pool-alex",
+  "trait-multisig-vote"
+]
