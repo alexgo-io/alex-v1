@@ -820,3 +820,27 @@ depends_on = [
   "simple-weight-pool-alex",
   "trait-multisig-vote"
 ]
+
+[contracts.fwp-wstx-wxusd-50-50-v1-01]
+path = "contracts/pool-token/fwp-wstx-wxusd-50-50-v1-01.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-wstx-wxusd-50-50-v1-01]
+path = "contracts/multisig/multisig-fwp-wstx-wxusd-50-50-v1-01.clar"
+depends_on = [
+  "fwp-wstx-wxusd-50-50-v1-01",
+  "fixed-weight-pool-v1-01",
+  "trait-multisig-vote",
+  "token-wstx",
+  "token-wxusd"
+]
+
+[contracts.flash-loan-user-autoalex-to-alex]
+path = "contracts/flash-loan-user-autoalex-to-alex.clar"
+depends_on = [
+  "trait-sip-010",
+  "trait-flash-loan-user",
+  "auto-alex",
+  "age000-governance-token",
+  "swap-helper-v1-01"
+]
