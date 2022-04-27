@@ -70,7 +70,7 @@
 ;; @desc get-decimals
 ;; @returns (response uint)
 (define-read-only (get-decimals)
-   	(ok u0)
+   	(ok u6) ;;NOTE V2 is expected to have 6 decimals
 )
 
 ;; @desc get-balance
