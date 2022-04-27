@@ -99,7 +99,7 @@
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))	
     (begin
-		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
+		    (asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
         (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
         (try! (ft-transfer? auto-fwp-wstx-alex-120x amount sender recipient))
         (match memo to-print (print to-print) 0x)
@@ -311,7 +311,8 @@
       (stx-to-return (- stx-returned stx-to-sell))
     )
     
-    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-borrowed tx-sender .executor-dao none)))
+    ;; (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-borrowed tx-sender .executor-dao none)))
+    (as-contract (try! (contract-call? .age000-governance-token burn-fixed alex-borrowed tx-sender)))
     (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-return tx-sender sender none)))
     (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none)))
 

@@ -820,10 +820,9 @@ Clarinet.test({
     assertNotEquals(final_position['alex'], 0);
     assertNotEquals(final_position['stx'], 0);
 
-    block.receipts[0].events.expectFungibleTokenTransferEvent(
+    block.receipts[0].events.expectFungibleTokenBurnEvent(
       dx,
       deployer.address + ".auto-fwp-wstx-alex-120x",
-      deployer.address + ".executor-dao",
       "alex"
     );
   },

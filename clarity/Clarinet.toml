@@ -723,7 +723,7 @@ depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "fwp
 
 [contracts.auto-fwp-wstx-alex-120x]
 path = "contracts/auto-token/auto-fwp-wstx-alex-120x.clar"
-depends_on = [ "trait-sip-010", "trait-ownable", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token", "executor-dao" ]
+depends_on = [ "trait-sip-010", "trait-ownable", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token" ]
 
 [contracts.auto-fwp-alex-usda]
 path = "contracts/auto-token/auto-fwp-alex-usda.clar"
@@ -735,7 +735,7 @@ depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "tok
 
 [contracts.auto-fwp-alex-usda-100x]
 path = "contracts/auto-token/auto-fwp-alex-usda-100x.clar"
-depends_on = [ "trait-sip-010", "trait-ownable", "simple-weight-pool-alex", "token-wusda", "age000-governance-token", "executor-dao" ]
+depends_on = [ "trait-sip-010", "trait-ownable", "simple-weight-pool-alex", "token-wusda", "age000-governance-token" ]
 
 [contracts.token-slime]
 path = "contracts/token/token-slime.clar"

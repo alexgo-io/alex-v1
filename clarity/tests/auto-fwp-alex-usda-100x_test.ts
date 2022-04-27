@@ -197,10 +197,9 @@ Clarinet.test({
     assertNotEquals(final_position['usda'], 0);
     console.log(block.receipts[0].events);
 
-    block.receipts[0].events.expectFungibleTokenTransferEvent(
+    block.receipts[0].events.expectFungibleTokenBurnEvent(
       dx,
       deployer.address + ".auto-fwp-alex-usda-100x",
-      deployer.address + ".executor-dao",
       "alex"
     );
   },
