@@ -94,8 +94,8 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? .token-nycc get-balance account)) (pow-decimals)) (pow u10 u0)))
-  ;; (ok (/ (* (unwrap-panic (contract-call? 'SP2H8PY27SEZ03MWRKS5XABZYQN17ETGQS3527SA5.newyorkcitycoin-token get-balance account)) (pow-decimals)) (pow u10 u8)))
+  ;;NOTE V2 is expected to have 6 decimals
+  (ok (/ (* (unwrap-panic (contract-call? .token-nycc get-balance account)) (pow-decimals)) (pow u10 u6)))
 )
 
 ;; @desc get-token-uri
@@ -114,7 +114,8 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? .token-nycc transfer (/ (* amount (pow u10 u0)) (pow-decimals)) sender recipient memo)
+    ;;NOTE V2 is expected to have 6 decimals
+    (contract-call? .token-nycc transfer (/ (* amount (pow u10 u6)) (pow-decimals)) sender recipient memo)
   )
 )
 
