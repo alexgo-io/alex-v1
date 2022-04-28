@@ -81,7 +81,7 @@
     oracle-enabled: bool,
     oracle-average: uint,
     oracle-resilient: uint,
-    token-trait: principal
+    underlying-token: principal
   }
 )
 
@@ -292,7 +292,7 @@
                     oracle-enabled: false,
                     oracle-average: u0,
                     oracle-resilient: u0,
-                    token-trait: (contract-of token-trait)
+                    underlying-token: (contract-of token-trait)
                 })
             )
         
@@ -385,7 +385,7 @@
                 }))
                 (sender tx-sender)
             )
-            (asserts! (and (is-eq (get token-trait pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
+            (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
 
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
@@ -438,7 +438,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (and (is-eq (get token-trait pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
+            (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
 
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy-act u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy-act sender))))
@@ -486,7 +486,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (is-eq (get token-trait pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
+            (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
@@ -536,7 +536,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (is-eq (get token-trait pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
+            (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))

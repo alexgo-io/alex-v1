@@ -32,8 +32,8 @@ const expiry79760 = 79760
 const ltv_0 = 0.5 * ONE_8
 const conversion_ltv = 0.95 * ONE_8
 const bs_vol = 0.8 * ONE_8
-const moving_average = 0 * ONE_8 // for testing only
-const token_to_maturity = 1 * ONE_8 // for testing only
+const moving_average = 90 * ONE_8 // for testing only
+const token_to_maturity = 140 * ONE_8 // for testing only
 
 const wbtcPrice = 50000*ONE_8
 

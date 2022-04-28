@@ -153,7 +153,7 @@
             (ok u100000) ;; move everything to risk-free asset
             (let 
                 (
-                    (t (div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))
+                    (t (div-down (- expiry block-height) u52560))
                     (t-2 (div-down (* (- expiry block-height) ONE_8) (get token-to-maturity pool)))
                     (spot-term (div-down spot (get strike pool)))
                     (d1 
@@ -166,7 +166,7 @@
                     (weight-t (div-down (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u200000000))
                     (weighted 
                         (+ 
-                            (mul-down (get moving-average pool) (get weight-y pool)) 
+                            (mul-down (get moving-average pool) (get weight-x pool)) 
                             (mul-down (- ONE_8 (get moving-average pool)) (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) (- ONE_8 ltv)))))
                         )
                     )                    
