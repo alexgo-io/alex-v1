@@ -818,7 +818,7 @@
     )
 )
 
-(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+(define-private (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (let 
         (
             (token-x (contract-of token-x-trait))
@@ -858,7 +858,7 @@
     )
 )
 
-(define-read-only (get-helper (token-x principal) (token-y principal) (dx uint))
+(define-private (get-helper (token-x principal) (token-y principal) (dx uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x token-y u50000000 u50000000 dx))
@@ -875,7 +875,7 @@
     )
 )
 
-(define-read-only (get-given-helper (token-x principal) (token-y principal) (dy uint))
+(define-private (get-given-helper (token-x principal) (token-y principal) (dy uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x token-y u50000000 u50000000 dy))
@@ -892,7 +892,7 @@
     )
 )
 
-(define-read-only (oracle-instant-helper (token-x principal) (token-y principal))
+(define-private (oracle-instant-helper (token-x principal) (token-y principal))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (fwp-oracle-instant token-x token-y))
@@ -930,7 +930,7 @@
     )
 )
 
-(define-read-only (oracle-resilient-helper (token-x principal) (token-y principal))
+(define-private (oracle-resilient-helper (token-x principal) (token-y principal))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (fwp-oracle-resilient token-x token-y))
