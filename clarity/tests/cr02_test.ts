@@ -187,10 +187,10 @@ import {
       position = call.result.expectOk().expectTuple();
       position["yield-supply"].expectUint(78048780);
       position["key-supply"].expectUint(78048780);
-      position["weight-x"].expectUint(74579458);
-      position["weight-y"].expectUint(ONE_8 - 74579458);
-      position["balance-x"].expectUint(3728972900000);
-      position["balance-y"].expectUint(25260011);
+      position["weight-x"].expectUint(74579456);
+      position["weight-y"].expectUint(ONE_8 - 74579456);
+      position["balance-x"].expectUint(3728972800000);
+      position["balance-y"].expectUint(25260013);
       position["strike"].expectUint(ltv_0 * ONE_8 / wbtcPrice);
       position["ltv-0"].expectUint(ltv_0);
       position["bs-vol"].expectUint(bs_vol);
@@ -230,7 +230,7 @@ import {
       position = call.result.expectOk().expectTuple();
       position["yield-supply"].expectUint(0);
       position["key-supply"].expectUint(78048780);
-      position["balance-x"].expectUint(830908917927);
+      position["balance-x"].expectUint(830908913439);
       position["balance-y"].expectUint(3630401);  
   
       // remove all key tokens for nothing
@@ -243,7 +243,7 @@ import {
         ONE_8,
       );
       position = result.expectOk().expectTuple();
-      position["dx"].expectUint(830908917927);
+      position["dx"].expectUint(830908913439);
       position["dy"].expectUint(3630401);
   
       call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);

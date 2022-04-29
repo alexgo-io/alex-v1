@@ -168,11 +168,11 @@ Clarinet.test({
         call.result.expectOk().expectUint(109742524);
         
         call = await CRPTest.getPoolValueInCollateral(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(5499055617803);
+        call.result.expectOk().expectUint(5498122478076);
         
         // let's check what is the weight to usda (collateral)
         call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(94471431);                     
+        call.result.expectOk().expectUint(85853423);                     
         
         // simulate to expiry
         chain.mineEmptyBlockUntil(expiry) 
@@ -185,7 +185,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(expiry + 1)  
         
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(109761150)
+        call.result.expectOk().expectUint(109742524)
 
         // deployer holds less than total supply because he sold some yield-wbtc for wbtc
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        
@@ -196,10 +196,10 @@ Clarinet.test({
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(2633703244389);
-        position['balance-y'].expectUint(7749295);
-        position['yield-supply'].expectUint(4834581);
-        position['key-supply'].expectUint(53615068);
+        position['balance-x'].expectUint(2635643008708);
+        position['balance-y'].expectUint(7698980);
+        position['yield-supply'].expectUint(53615695 - 48780487);
+        position['key-supply'].expectUint(53615695);
     
         // also remove all key tokens
         result = CRPTest.reducePositionKeyMany(deployer, wbtcAddress, usdaAddress, keywbtcAddress, ONE_8, [expiry]);        
@@ -415,7 +415,7 @@ Clarinet.test({
         result.expectOk().expectTuple();
 
        let call:any = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(94351067);                
+        call.result.expectOk().expectUint(84913568);                
 
         // attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01 throws error
         result = CRPTest.addToPosition(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0.3*Math.round(wbtcPrice * wbtcQ / ONE_8));
