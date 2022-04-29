@@ -1481,6 +1481,4 @@
  )
 )
 
-;; contract initialisation
-;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .collateral-rebalancing-pool true)
