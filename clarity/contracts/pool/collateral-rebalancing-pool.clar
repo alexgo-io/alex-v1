@@ -29,6 +29,8 @@
 (define-constant a3 u97200)
 (define-constant a4 u7810800)
 
+(define-constant two-squared u141421356)
+
 (define-data-var contract-owner principal tx-sender)
 
 (define-read-only (get-contract-owner)
@@ -153,20 +155,20 @@
             (ok u100000) ;; move everything to risk-free asset
             (let 
                 (
-                    (t (div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))
+                    (t (/ (* (- expiry block-height) ONE_8) u52560))
                     (t-2 (div-down (* (- expiry block-height) ONE_8) (get token-to-maturity pool)))
                     (spot-term (div-down spot (get strike pool)))
                     (d1 
                         (div-down 
-                            (+ (mul-down t (div-down (mul-down bs-vol bs-vol) u200000000)) (if (> spot-term ONE_8) (- spot-term ONE_8) (- ONE_8 spot-term)))
+                            (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (if (> spot-term ONE_8) (- spot-term ONE_8) (- ONE_8 spot-term)))
                             (mul-down bs-vol (pow-down t u50000000))
                         )
                     )
-                    (erf-term (erf (div-down d1 (pow-down u200000000 u50000000))))
-                    (weight-t (div-down (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u200000000))
+                    (erf-term (erf (div-down d1 two-squared)))
+                    (weight-t (/ (if (> spot-term ONE_8) (+ ONE_8 erf-term) (if (<= ONE_8 erf-term) u0 (- ONE_8 erf-term))) u2))
                     (weighted 
                         (+ 
-                            (mul-down (get moving-average pool) (get weight-y pool)) 
+                            (mul-down (get moving-average pool) (get weight-x pool)) 
                             (mul-down (- ONE_8 (get moving-average pool)) (if (> t-2 ONE_8) weight-t (+ (mul-down t-2 weight-t) (mul-down (- ONE_8 t-2) (- ONE_8 ltv)))))
                         )
                     )                    
@@ -190,10 +192,10 @@
             (
                 (token-x (contract-of collateral-trait))
                 (token-y (contract-of token-trait))
-                (t (div-down (* (- expiry block-height) ONE_8) (* u52560 ONE_8)))                          
-                (d1 (div-down (+ (mul-down t (div-down (mul-down bs-vol bs-vol) u200000000)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
-                (erf-term (erf (div-down d1 (pow-down u200000000 u50000000))))
-                (weighted (div-down (+ ONE_8 erf-term) u200000000))
+                (t (/ (* (- expiry block-height) ONE_8) u52560))                          
+                (d1 (div-down (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
+                (erf-term (erf (div-down d1 two-squared)))
+                (weighted (/ (+ ONE_8 erf-term) u2))
                 (weight-x (if (< weighted u95000000) weighted u95000000))
                 (weight-y (- ONE_8 weight-x))
                 (pool-data {
@@ -816,7 +818,7 @@
     )
 )
 
-(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+(define-private (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (let 
         (
             (token-x (contract-of token-x-trait))
@@ -856,7 +858,7 @@
     )
 )
 
-(define-read-only (get-helper (token-x principal) (token-y principal) (dx uint))
+(define-private (get-helper (token-x principal) (token-y principal) (dx uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x token-y u50000000 u50000000 dx))
@@ -873,7 +875,7 @@
     )
 )
 
-(define-read-only (get-given-helper (token-x principal) (token-y principal) (dy uint))
+(define-private (get-given-helper (token-x principal) (token-y principal) (dy uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x token-y u50000000 u50000000 dy))
@@ -890,7 +892,7 @@
     )
 )
 
-(define-read-only (oracle-instant-helper (token-x principal) (token-y principal))
+(define-private (oracle-instant-helper (token-x principal) (token-y principal))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (fwp-oracle-instant token-x token-y))
@@ -928,7 +930,7 @@
     )
 )
 
-(define-read-only (oracle-resilient-helper (token-x principal) (token-y principal))
+(define-private (oracle-resilient-helper (token-x principal) (token-y principal))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (fwp-oracle-resilient token-x token-y))

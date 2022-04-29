@@ -81,7 +81,7 @@
     oracle-enabled: bool,
     oracle-average: uint,
     oracle-resilient: uint,
-    token-trait: principal
+    underlying-token: principal
   }
 )
 
@@ -292,7 +292,7 @@
                     oracle-enabled: false,
                     oracle-average: u0,
                     oracle-resilient: u0,
-                    token-trait: (contract-of token-trait)
+                    underlying-token: (contract-of token-trait)
                 })
             )
         
@@ -385,7 +385,7 @@
                 }))
                 (sender tx-sender)
             )
-            (asserts! (and (is-eq (get token-trait pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
+            (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
 
             ;; at least one of dy must be greater than zero            
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
@@ -438,7 +438,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (and (is-eq (get token-trait pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
+            (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
 
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy-act u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy-act sender))))
@@ -486,7 +486,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (is-eq (get token-trait pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
+            (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
@@ -536,7 +536,7 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (is-eq (get token-trait pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
+            (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
 
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
@@ -1114,14 +1114,14 @@
 ;; @desc scale-up
 ;; @params a 
 ;; @returns uint
-(define-read-only (scale-up (a uint))
+(define-private (scale-up (a uint))
     (* a ONE_8)
 )
 
 ;; @desc scale-down
 ;; @params a 
 ;; @returns uint
-(define-read-only (scale-down (a uint))
+(define-private (scale-down (a uint))
     (/ a ONE_8)
 )
 
@@ -1129,7 +1129,7 @@
 ;; @params a 
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
@@ -1137,7 +1137,7 @@
 ;; @params a 
 ;; @params b
 ;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -1153,7 +1153,7 @@
 ;; @params a 
 ;; @params b
 ;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (/ (* a ONE_8) b)
@@ -1164,7 +1164,7 @@
 ;; @params a 
 ;; @params b
 ;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
+(define-private (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (+ u1 (/ (- (* a ONE_8) u1) b))
@@ -1175,7 +1175,7 @@
 ;; @params a 
 ;; @params b
 ;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -1192,7 +1192,7 @@
 ;; @params a 
 ;; @params b
 ;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -1326,7 +1326,7 @@
 ;; @params x
 ;; @params y
 ;; @returns (response uint)
-(define-read-only (pow-priv (x uint) (y uint))
+(define-private (pow-priv (x uint) (y uint))
   (let
     (
       (x-int (to-int x))
@@ -1342,7 +1342,7 @@
 ;; @desc exp-pos
 ;; @params x
 ;; @returns (response uint)
-(define-read-only (exp-pos (x int))
+(define-private (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (let
@@ -1410,7 +1410,7 @@
 ;; @params x
 ;; @params y
 ;; @returns (response uint)
-(define-read-only (pow-fixed (x uint) (y uint))
+(define-private (pow-fixed (x uint) (y uint))
   (begin
     ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
@@ -1434,7 +1434,7 @@
 ;; @desc exp-fixed
 ;; @params x
 ;; @returns (response uint)
-(define-read-only (exp-fixed (x int))
+(define-private (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (if (< x 0)
@@ -1452,7 +1452,7 @@
 ;; @params arg
 ;; @params base
 ;; @returns (response uint)
-(define-read-only (log-fixed (arg int) (base int))
+(define-private (log-fixed (arg int) (base int))
   ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
   (let
     (
@@ -1468,7 +1468,7 @@
 ;; @desc ln-fixed
 ;; @params a
 ;; @returns (response uint)
-(define-read-only (ln-fixed (a int))
+(define-private (ln-fixed (a int))
   (begin
     (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
     (if (< a UNSIGNED_ONE_8)
