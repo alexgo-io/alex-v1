@@ -53,8 +53,9 @@ class LotteryTicket {
 
     addApprovedContract(sender: Account, contract: string) {
       let block = this.chain.mineBlock([
-          Tx.contractCall(ticketAddress, "add-approved-contract", [
-            types.principal(contract)
+          Tx.contractCall(ticketAddress, "set-approved-contract", [
+            types.principal(contract),
+            types.bool(true)
           ], sender.address),
         ]);
         return block.receipts[0].result;

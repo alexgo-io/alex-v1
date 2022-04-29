@@ -38,6 +38,13 @@
   )
 )
 
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+		(ok (map-set approved-contracts owner approved))
+	)
+)
+
 ;; ---------------------------------------------------------
 ;; SIP-10 Functions
 ;; ---------------------------------------------------------
@@ -196,5 +203,6 @@
   (burn (fixed-to-decimals amount) sender)
 )
 
-(map-set approved-contracts .fixed-weight-pool-alex true)
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .simple-weight-pool-alex true)
