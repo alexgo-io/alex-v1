@@ -59,6 +59,14 @@
   (begin (try! (check-is-owner)) (ok (var-set shortfall-coverage new-shortfall-coverage)))
 )
 
+(define-data-var capacity-multiplier uint u100000000) ;; 1x
+(define-read-only (get-capacity-multiplier)
+  (ok (var-get capacity-multiplier))
+)
+(define-public (set-capacity-multiplier (new-capacity-multiplier uint))
+  (begin (try! (check-is-owner)) (ok (var-set capacity-multiplier new-capacity-multiplier)))
+)
+
 ;; data maps and vars
 ;;
 (define-map pools-data-map
@@ -264,8 +272,10 @@
                     balance-y: (+ balance-y dy-weighted)
                 }))
                 (sender tx-sender)
-            ) 
-            (unwrap! (get-helper token-x token-y (+ dx balance-x (div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
+            )
+
+            (unwrap! (get-helper token-x token-y (div-down (+ dx balance-x (div-down balance-y spot)) (var-get capacity-multiplier))) ERR-POOL-AT-CAPACITY)
+
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
