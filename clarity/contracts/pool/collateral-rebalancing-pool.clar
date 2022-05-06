@@ -1038,8 +1038,8 @@
 (define-public (set-pool-underlying (pool-token principal) (token principal))
     (begin 
         (try! (check-is-owner))
-        (map-set pool-expiry pool-token (try! (get-expiry-with-underlying pool-token token)))        
-        (ok (map-set pool-underlying pool-token token))
+        (map-set pool-underlying pool-token token)
+        (ok (map-set pool-expiry pool-token (try! (suggest-expiry pool-token))))
     )
 )
 
@@ -1051,17 +1051,22 @@
 )
 
 (define-read-only (get-expiry (pool-token principal))
-    (get-expiry-with-underlying pool-token (unwrap! (map-get? pool-underlying pool-token) ERR-NOT-AUTHORIZED))
+    (ok (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
+    ;; (get-expiry-with-underlying pool-token (unwrap! (map-get? pool-underlying pool-token) ERR-NOT-AUTHORIZED))
 )
 
-(define-private (get-expiry-with-underlying (pool-token principal) (token principal))
-    (let ((current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle token block-height) ERR-NOT-AUTHORIZED)))        
+(define-read-only (suggest-expiry (pool-token principal))
+    (let 
+        (
+            (token (unwrap! (map-get? pool-underlying pool-token) ERR-NOT-AUTHORIZED))
+            (current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle token block-height) ERR-NOT-AUTHORIZED))
+        )        
         (ok (- (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle token (+ current-cycle u1)) u1))
     )
 )
 
 (define-private (set-expiry (pool-token principal))
-    (let ((last-height (try! (get-expiry pool-token))))
+    (let ((last-height (try! (suggest-expiry pool-token))))
         (map-set pool-expiry pool-token last-height)        
         (ok last-height)
     )

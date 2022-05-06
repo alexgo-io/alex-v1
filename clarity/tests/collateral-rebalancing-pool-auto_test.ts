@@ -135,7 +135,7 @@ Clarinet.test({
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });         
 
-        let call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
+        let call = chain.callReadOnlyFn("collateral-rebalancing-pool", "suggest-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry = Number(call.result.expectOk().replace(/\D/g, ""));
 
         block = chain.mineBlock([
@@ -381,7 +381,7 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(expiry + 1);    
 
-        call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
+        call = chain.callReadOnlyFn("collateral-rebalancing-pool", "suggest-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry_to_roll = Number(call.result.expectOk().replace(/\D/g, ""));
         
         block = chain.mineBlock([
