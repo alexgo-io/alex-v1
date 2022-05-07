@@ -153,13 +153,6 @@ Clarinet.test({
     },    
 });
 
-export class RecipientRatio {
-  constructor(
-    readonly recipient: Account,
-    readonly ratio: number
-  ) {}
-}
-
 Clarinet.test({
   name: "autoalex-apower-helper : mint and burn apower",
 
@@ -172,16 +165,16 @@ Clarinet.test({
 
       // testing mint-fixed-many
       let recipients: Array<Account> = [ accounts.get("wallet_6")!, accounts.get("wallet_8")! ];
-      let ratios: Array<number> = [0.3 * ONE_8, 0.7 * ONE_8];
+      let ratios: Array<number> = [3_000 * ONE_8, 7_000 * ONE_8];
 
-      let recipientRatio: RecipientRatio[] = [];
+      let manyRecords: ManyRecord[] = [];
 
       recipients.forEach((recipient, recipientIdx) => {
-        let record = new RecipientRatio(
+        let record = new ManyRecord(
           recipient,
           ratios[recipientIdx]
         );
-        recipientRatio.push(record);
+        manyRecords.push(record);
       });
       
       // non contract-owner calling mint-alex-many throws an error.
@@ -199,13 +192,12 @@ Clarinet.test({
             ],
             deployer.address
           ),
-          Tx.contractCall(deployer.address + '.autoalex-apower-helper', 'mint-apower', 
+          Tx.contractCall(deployer.address + '.autoalex-apower-helper', 'mint-and-burn-apower', 
             [
-              types.list(recipientRatio.map((record) => { return types.tuple({ recipient: types.principal(record.recipient.address), ratio: types.uint(record.ratio) })}))
+              types.list(manyRecords.map((record) => { return types.tuple({ recipient: types.principal(record.recipient.address), amount: types.uint(record.amount) })}))
             ], 
             wallet_7.address
-          ),
-          Tx.contractCall(deployer.address + '.autoalex-apower-helper', 'burn-apower', [], wallet_7.address)
+          )
         ]
       );      
       block.receipts[1].events.expectFungibleTokenMintEvent(
@@ -218,7 +210,7 @@ Clarinet.test({
         wallet_8.address,
         "apower"
       );  
-      block.receipts[2].events.expectFungibleTokenBurnEvent(
+      block.receipts[1].events.expectFungibleTokenBurnEvent(
         10_000e8,
         deployer.address + '.auto-alex',
         "apower"
