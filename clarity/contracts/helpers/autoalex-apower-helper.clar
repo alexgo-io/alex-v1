@@ -71,6 +71,3 @@
     (/ (* a b) ONE_8)
 )
 
-;; testing only
-(contract-call? .token-apower add-approved-contract .autoalex-apower-helper)
-
