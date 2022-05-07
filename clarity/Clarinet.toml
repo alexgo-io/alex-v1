@@ -844,3 +844,7 @@ depends_on = [
   "age000-governance-token",
   "swap-helper-v1-01"
 ]
+
+[contracts.autoalex-apower-helper]
+path = "contracts/helpers/autoalex-apower-helper.clar"
+depends_on = [ "auto-alex", "token-apower" ]
