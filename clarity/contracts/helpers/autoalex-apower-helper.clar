@@ -40,34 +40,22 @@
 	)
 )
 
-(define-private (set-recipient-amount-iter (recipient {recipient: principal, ratio: uint}) (prior {recipient-amount: (list 200 {recipient: principal, amount: uint}), apower-balance: uint}))
-	{recipient-amount: (unwrap-panic (as-max-len? (append (get recipient-amount prior) {recipient: (get recipient recipient), amount: (mul-down (get apower-balance prior) (get ratio recipient))}) u200)), apower-balance: (get apower-balance prior)}
+(define-private (mint-apower-iter (recipient {recipient: principal, amount: uint}) (prior (response uint uint)))
+  (begin 
+    (as-contract (try! (contract-call? .token-apower mint-fixed (get amount recipient) (get recipient recipient))))
+    (ok (+ (try! prior) (get amount recipient)))
+  )
 )
 
-(define-public (mint-apower (recipients (list 200 {recipient: principal, ratio: uint})))
+(define-public (mint-and-burn-apower (recipients (list 200 {recipient: principal, amount: uint})))
 	(begin 
-		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)		
-		(as-contract 
-      (contract-call? .token-apower mint-fixed-many 
-        (get recipient-amount 
-          (fold set-recipient-amount-iter 
-            recipients 
-            {recipient-amount: (list), apower-balance: (unwrap-panic (contract-call? .token-apower get-balance-fixed .auto-alex))}
-          )
-        )
+		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)	
+    (let 
+      (
+        (minted (try! (fold mint-apower-iter recipients (ok u0))))
       )
-    )
+      (as-contract (contract-call? .token-apower burn-fixed minted .auto-alex))
+    )	
 	)
-)
-
-(define-public (burn-apower)
-	(begin 
-		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
-		(as-contract (contract-call? .token-apower burn-fixed (unwrap-panic (contract-call? .token-apower get-balance-fixed .auto-alex)) .auto-alex))
-	)
-)
-
-(define-private (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
 )
 
