@@ -58,7 +58,7 @@
   (begin (try! (check-is-owner)) (ok (var-set shortfall-coverage new-shortfall-coverage)))
 )
 
-(define-data-var capacity-multiplier uint u500000000) ;; 5x
+(define-data-var capacity-multiplier uint u100000000) ;; 1x
 (define-read-only (get-capacity-multiplier)
   (ok (var-get capacity-multiplier))
 )

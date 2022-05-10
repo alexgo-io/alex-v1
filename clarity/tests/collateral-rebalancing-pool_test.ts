@@ -154,14 +154,14 @@ Clarinet.test({
 
         // pool value increases after adding positions
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(150879046);
+        call.result.expectOk().expectUint(136366705);
         
         call = await CRPTest.getPoolValueInCollateral(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(5498122478076);
+        call.result.expectOk().expectUint(155634772);
         
         // let's check what is the weight to usda (collateral)
         call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(85853423);                     
+        call.result.expectOk().expectUint(85314416);                     
         
         // simulate to expiry
         chain.mineEmptyBlockUntil(expiry) 
@@ -174,21 +174,19 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(expiry + 1)  
         
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(109742524)
+        call.result.expectOk().expectUint(136366705)
 
         // deployer holds less than total supply because he sold some yield-wbtc for wbtc
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(0);
-        position['dy'].expectUint(50000000);
+        position['dy'].expectUint(70000000);
 
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['balance-x'].expectUint(2560294589281);
-        position['balance-y'].expectUint(7943649);
-        position['yield-supply'].expectUint(50000000 + 5002211 - 50000000);
-        position['key-supply'].expectUint(50000000 + 5002211);
+        position['yield-supply'].expectUint(70000000 + 6932600 - 70000000);
+        position['key-supply'].expectUint(70000000 + 6932600);
     
         // also remove all key tokens
         result = CRPTest.reducePositionKeyMany(deployer, wbtcAddress, usdaAddress, keywbtcAddress, ONE_8, [expiry]);        
@@ -354,7 +352,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "collateral-rebalacing-pool : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01-v1-01 throws error",
+    name: "collateral-rebalacing-pool : ERR-POOL-AT-CAPACITY attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01 throws error",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -401,10 +399,7 @@ Clarinet.test({
 
         let ltv_0_0 = 0.5 * ONE_8;
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, wbtcQ);
-        result.expectOk().expectTuple();
-
-       let call:any = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(84913568);                
+        result.expectOk().expectTuple();              
 
         // attempt to add position to exceed MAX_IN/OUT_RATIO of fixed-weight-pool-v1-01 throws error
         result = CRPTest.addToPosition(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, wbtcQ);
@@ -542,8 +537,8 @@ Clarinet.test({
         result = CRPTest.createPool(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, multisigncrpwbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, wbtcQ);
         result.expectOk().expectTuple();
 
-        result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, ONE_8);
-        result.expectOk().expectUint(1990);
+        result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, 0.001 * ONE_8);
+        result.expectOk().expectUint(93873);
 
         result = await CRPTest.getYgivenX(deployer, wbtcAddress, usdaAddress, expiry, 0);
         result.expectOk().expectUint(0);
@@ -552,7 +547,7 @@ Clarinet.test({
         result.expectErr().expectUint(2001);
 
         result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, expiry, 500);
-        result.expectOk().expectUint(24860755);
+        result.expectOk().expectUint(524);
 
         result = await CRPTest.getXgivenY(deployer, wbtcAddress, usdaAddress, expiry, 0);
         result.expectOk().expectUint(0);
@@ -623,15 +618,15 @@ Clarinet.test({
         result.expectOk().expectTuple();
 
         let ROresult:any = YieldToken.totalSupply(expiry)
-        ROresult.result.expectOk().expectUint(50000000);
+        ROresult.result.expectOk().expectUint(70000000);
 
         ROresult = YieldToken.balanceOf(expiry, deployer.address)
-        ROresult.result.expectOk().expectUint(50000000);
+        ROresult.result.expectOk().expectUint(70000000);
 
         ROresult = KeyToken.totalSupply(expiry)
-        ROresult.result.expectOk().expectUint(50000000);
+        ROresult.result.expectOk().expectUint(70000000);
         ROresult = KeyToken.balanceOf(expiry, deployer.address)
-        ROresult.result.expectOk().expectUint(50000000);
+        ROresult.result.expectOk().expectUint(70000000);
 
         // Fee rate Setting Proposal of Multisig
         result = MultiSigTest.propose(deployer, expiry, 1000, " Fee Rate Setting to 10%", " https://docs.alexgo.io", feeRateX, feeRateY)
@@ -640,10 +635,10 @@ Clarinet.test({
         // Block 1000 mining
         chain.mineEmptyBlock(1000);
 
-        result = MultiSigTest.voteFor(deployer, yieldwbtcAddress, 1, Math.round(50000000 * 9 / 10) )
-        result.expectOk().expectUint(Math.round(50000000 * 9 / 10))
-        result = MultiSigTest.voteFor(deployer, keywbtcAddress, 1, Math.round(50000000 * 9 / 10) )
-        result.expectOk().expectUint(Math.round(50000000 * 9 / 10))
+        result = MultiSigTest.voteFor(deployer, yieldwbtcAddress, 1, Math.round(70000000 * 9 / 10) )
+        result.expectOk().expectUint(Math.round(70000000 * 9 / 10))
+        result = MultiSigTest.voteFor(deployer, keywbtcAddress, 1, Math.round(70000000 * 9 / 10) )
+        result.expectOk().expectUint(Math.round(70000000 * 9 / 10))
 
         // Block 1440 mining for ending proposal
         chain.mineEmptyBlockUntil(2441);

@@ -4,7 +4,6 @@ requirements = [ ]
 
 [repl]
 costs_version = 2
-analysis.passes = [ ]
 
 [contracts.alex-reserve-pool]
 path = "contracts/pool/alex-reserve-pool.clar"
