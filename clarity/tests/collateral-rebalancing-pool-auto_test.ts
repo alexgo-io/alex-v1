@@ -26,7 +26,7 @@ const ACTIVATION_BLOCK = 20;
 const FIXED_BOUNTY = 0.01e8;
 const APOWER_MULTIPLIER = ONE_8;
 
-const liquidity = 100 * ONE_8;
+const liquidity = 10 * ONE_8;
 
 const ltv_0 = 0.5e8;
 const conversion_ltv = 0.9e8;
