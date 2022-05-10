@@ -410,27 +410,27 @@ Clarinet.test({
                 ],
                 wallet_1.address
             ),
-            Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch",
-                [
-                    types.principal(alexAddress),
-                    types.principal(autoAlexAddress),
-                    types.uint(expiry_to_roll), 
-                    types.principal(yieldAlexAddress), 
-                    types.principal(keyAlexAutoalexAddress),
-                    types.uint(ONE_8),
-                    types.some(types.uint(0))
-                ],
-                wallet_2.address
-            ),       
-            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
-                [
-                    types.principal(yieldAlexAddress),
-                    types.principal(alexAddress),
-                    types.principal(autoAlexAddress),
-                    types.principal(autoYieldAlexAddress)
-                ],
-                wallet_1.address
-            ),               
+            // Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch",
+            //     [
+            //         types.principal(alexAddress),
+            //         types.principal(autoAlexAddress),
+            //         types.uint(expiry_to_roll), 
+            //         types.principal(yieldAlexAddress), 
+            //         types.principal(keyAlexAutoalexAddress),
+            //         types.uint(ONE_8),
+            //         types.some(types.uint(0))
+            //     ],
+            //     wallet_2.address
+            // ),       
+            // Tx.contractCall("collateral-rebalancing-pool", "roll-auto-yield",
+            //     [
+            //         types.principal(yieldAlexAddress),
+            //         types.principal(alexAddress),
+            //         types.principal(autoAlexAddress),
+            //         types.principal(autoYieldAlexAddress)
+            //     ],
+            //     wallet_1.address
+            // ),               
         ]);
         block.receipts.forEach(e => { e.result.expectOk(); });
 
