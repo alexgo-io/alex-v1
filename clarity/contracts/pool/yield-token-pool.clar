@@ -52,16 +52,6 @@
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-
-;; data maps and vars
-(define-map pools-map
-  { pool-id: uint }
-  {
-    yield-token: principal, ;; yield-token, dy
-    expiry: uint
-  }
-)
-
 (define-map pools-data-map
   {
     yield-token: principal, 
@@ -85,36 +75,21 @@
   }
 )
 
-(define-data-var pool-count uint u0)
-(define-data-var pools-list (list 500 uint) (list))
-
 ;; 4 years based on 52560 blocks per year (i.e. 10 mins per block)
 (define-data-var max-expiry uint u210240)
 
-;; @desc get-max-expiry
-;; @returns uint
 (define-read-only (get-max-expiry)
     (var-get max-expiry)
 )
 
-;; @desc set-max-expiry
-;; @restricted contract-owner
-;; @param new-max-expiry; new max-expiry
-;; @returns (response bool uint)
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
         (try! (check-is-owner))
-        ;; MI-05
         (asserts! (> new-max-expiry block-height) ERR-INVALID-EXPIRY)
         (ok (var-set max-expiry new-max-expiry)) 
     )
 )
 
-;; @desc get-t
-;; @desc get time-to-maturity as a function of max-expiry
-;; @param expiry; when contract expiries
-;; @param listed; when contract was listed
-;; @returns (response uint uint)
 (define-read-only (get-t (expiry uint) (listed uint))
   (begin
     (asserts! (and (> (var-get max-expiry) expiry) (> (var-get max-expiry) block-height)) ERR-INVALID-EXPIRY)
@@ -127,41 +102,11 @@
   )
 )
 
-;; @desc get-pool-count
-;; @returns uint
-(define-read-only (get-pool-count)
-    (var-get pool-count)
-)
-
-;; @desc get-pool-contracts
-;; @param pool-id; pool-id
-;; @returns (response (tutple) uint)
-(define-read-only (get-pool-contracts (pool-id uint))
-    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL))
-)
-
-;; @desc get-pools
-;; @returns map of get-pool-contracts
-(define-read-only (get-pools)
-    (ok (map get-pool-contracts (var-get pools-list)))
-)
-
-;; immunefi-4384
-(define-read-only (get-pools-by-ids (pool-ids (list 26 uint)))
-  (ok (map get-pool-contracts pool-ids))
-)
-
-;; @desc get-pool-details
-;; @param yield-token-trait; yield-token
-;; @returns (response (tuple) uint)
 (define-read-only (get-pool-details (expiry uint) (yield-token principal))
     (ok (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
 )
 
-;; @desc get-yield
 ;; @desc note yield is not annualised
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
 (define-read-only (get-yield (expiry uint) (yield-token principal))
     (let 
         (
@@ -171,9 +116,7 @@
     )
 )
 
-;; @desc get-price
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
+;; @desc yield-token per token
 (define-read-only (get-price (expiry uint) (yield-token principal))
     (let
         (
@@ -183,18 +126,10 @@
     )
 )
 
-;; @desc get-oracle-enabled
-;; @param yield-token-trait; yield-token
-;; @returns (response bool uint)
 (define-read-only (get-oracle-enabled (expiry uint) (yield-token principal))
     (ok (get oracle-enabled (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL)))
 )
 
-;; @desc set-oracle-enabled
-;; @desc oracle can only be enabled
-;; @restricted contract-owner
-;; @param yield-token-trait; yield-token
-;; @returns (response bool uint)
 (define-public (set-oracle-enabled (expiry uint) (yield-token principal))
     (let
         (
@@ -207,18 +142,10 @@
     )    
 )
 
-;; @desc get-oracle-average
-;; @desc returns the moving average used to determine oracle price
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
 (define-read-only (get-oracle-average (expiry uint) (yield-token principal))
     (ok (get oracle-average (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL)))
 )
 
-;; @desc set-oracle-average
-;; @restricted contract-owner
-;; @param yield-token-trait; yield-token
-;; @returns (response bool uint)
 (define-public (set-oracle-average (expiry uint) (yield-token principal) (new-oracle-average uint))
     (let
         (
