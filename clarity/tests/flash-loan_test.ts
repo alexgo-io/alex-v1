@@ -126,17 +126,17 @@ Clarinet.test({
         // Let's borrow 100 alex to lever up
         result = FLTest.flashLoan(wallet_5, loanuserAddress, alexAddress, 1000*ONE_8, expiryBuff);
         result.expectOk();
-        result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, ONE_8, expiryBuff);
+        result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, 0.01 * ONE_8, expiryBuff);
         result.expectOk();        
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(alexAddress, wallet_5.address);
-        position = call.result.expectOk().expectUint(19974881227349);  
+        position = call.result.expectOk().expectUint(19979435135986);  
         call = await FLTest.getBalance(usdaAddress, wallet_5.address);
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(94875072426);
+        position = call.result.expectOk().expectUint(95106006529);
         // but nothing with yield token
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);         
@@ -156,13 +156,13 @@ Clarinet.test({
         // and now we just expired
         chain.mineEmptyBlockUntil(expiry + 1);
         result = FLTest.rollPosition(wallet_5, usdaAddress, alexAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
-        result.expectOk().expectUint(29749230554);
+        result.expectOk().expectUint(20627853222);
 
         // key-usda-alex should be zero, with non-zero positions in key-usda
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(keyusdaAddress, nextExpiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(30540795166);
+        position = call.result.expectOk().expectUint(19639106497);
         // but nothing with yield-usda
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);

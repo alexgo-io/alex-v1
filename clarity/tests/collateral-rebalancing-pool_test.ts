@@ -144,7 +144,7 @@ Clarinet.test({
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0.1 * wbtcQ);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(6932600);
-        position['dx'].expectUint(6913317);
+        position['dx'].expectUint(6913089);
 
         // supply increased
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);

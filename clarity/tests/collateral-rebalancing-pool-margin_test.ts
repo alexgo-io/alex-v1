@@ -144,7 +144,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
@@ -153,7 +154,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -187,7 +189,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
@@ -196,7 +199,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -223,7 +227,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
@@ -232,7 +237,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                          
             ]
         );
@@ -331,7 +337,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdaalexAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
@@ -340,7 +347,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdawstxAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -374,7 +382,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdaalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
@@ -383,7 +392,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdawstxAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -410,7 +420,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdaalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
@@ -419,7 +430,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdawstxAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                       
             ]
         );
@@ -527,7 +539,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxalexAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
@@ -536,7 +549,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxwbtcAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -570,7 +584,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
@@ -579,7 +594,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxwbtcAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -606,7 +622,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
                 [
@@ -615,7 +632,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxwbtcAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                           
             ]
         );
