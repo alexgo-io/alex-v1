@@ -194,6 +194,8 @@ Clarinet.test({
           ),
           Tx.contractCall(deployer.address + '.autoalex-apower-helper', 'mint-and-burn-apower', 
             [
+              types.uint(1),
+              types.uint(1),
               types.list(manyRecords.map((record) => { return types.tuple({ recipient: types.principal(record.recipient.address), amount: types.uint(record.amount) })}))
             ], 
             wallet_7.address
