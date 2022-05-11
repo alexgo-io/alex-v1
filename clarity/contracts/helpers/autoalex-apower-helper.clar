@@ -59,7 +59,7 @@
 (define-public (mint-and-burn-apower (cycle uint) (batch uint) (recipients (list 200 {recipient: principal, amount: uint})))
 	(begin
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
-        (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
+    (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
     (let
       (
         (minted (try! (fold mint-apower-iter recipients (ok u0))))
