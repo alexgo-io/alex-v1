@@ -976,7 +976,7 @@
     )
 )
 
-(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
+(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (min-dy (optional uint)))
     (let
         (
             (sender tx-sender)
@@ -986,7 +986,7 @@
             (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token min-dy))))
         )
         (try! (swap-helper token-trait collateral-trait swapped-token none))      
         (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
@@ -994,7 +994,7 @@
     )
 )
 
-(define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
+(define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint) (min-dx (optional uint)))
     (let
         (
             (sender tx-sender)
@@ -1006,12 +1006,16 @@
             (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token min-dx))))
         )
         (try! (swap-helper token-trait collateral-trait swapped-token none))
         (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
         (ok loan-amount-with-fee)
-    )    
+    )  
+)
+
+(define-public (roll-deposit (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (expiry-to-roll uint) (percent uint) (min-dy (optional uint)))
+    (contract-call? .yield-token-pool swap-x-for-y expiry-to-roll yield-token-trait token-trait (get dy (try! (reduce-position-yield token-trait collateral-trait expiry yield-token-trait percent))) min-dy)
 )
 
 (define-map approved-pair principal principal) ;; auto-token => pool token

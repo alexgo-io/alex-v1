@@ -163,10 +163,6 @@
     )    
 )
 
-;; @desc get-oracle-resilient
-;; @desc price-oracle that is less up to date but more resilient to manipulation
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
 (define-read-only (get-oracle-resilient (expiry uint) (yield-token principal))
     (let
         (
@@ -178,23 +174,10 @@
     )
 )
 
-;; @desc get-oracle-instant
-;; @desc price-oracle that is more up to date but less resilient to manipulation
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
 (define-read-only (get-oracle-instant (expiry uint) (yield-token principal))
     (ok (div-down ONE_8 (try! (get-price expiry yield-token))))
 )
 
-;; @desc create-pool
-;; @restricted contract-owner
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param pool-token; pool token representing ownership of the pool
-;; @param multisig-vote; DAO used by pool token holers
-;; @param dx; amount of token added
-;; @param dy; amount of yield-token added
-;; @returns (response bool uint)
 (define-public (create-pool (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (multisig-vote principal) (dx uint) (dy uint)) 
     (begin
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
@@ -202,7 +185,6 @@
         (let
             (
                 (yield-token (contract-of yield-token-trait))            
-                (pool-id (+ (var-get pool-count) u1))
                 (pool-data {
                     total-supply: u0,
                     balance-token: u0,                
@@ -220,27 +202,13 @@
                     underlying-token: (contract-of token-trait)
                 })
             )
-        
-            (map-set pools-map { pool-id: pool-id } { yield-token: yield-token, expiry: expiry })
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-data)
-        
-            (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
-            (var-set pool-count pool-id)
-
             (print { object: "pool", action: "created", data: pool-data })
             (add-to-position expiry yield-token-trait token-trait pool-token-trait dx (some dy))
         )
     )
 )
 
-;; @desc buy-and-add-to-position
-;; @desc helper function to buy required yield-token before adding position
-;; @desc returns units of pool tokens minted, dx, dy-actual and dy-virtual added
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param pool-token; pool token representing ownership of the pool
-;; @param dx; amount of token added (part of which will be used to buy yield-token)
-;; @returns (response (tuple uint uint uint uint) uint)
 (define-public (buy-and-add-to-position (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (dx uint) (max-dy (optional uint)))
     (let
         (
@@ -258,15 +226,6 @@
     )
 )
 
-;; @desc roll-position
-;; @desc roll given pool position to another pool
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param pool-token; pool token representing ownership of the pool
-;; @param percent; percentage of pool token held to reduce
-;; @param yield-token-trait-to-roll; yield token to roll
-;; @param pool-token-trait-to-roll; pool token representing ownership of the pool to roll to
-;; @returns (response (tuple uint uint) uint)
 (define-public (roll-position 
     (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (percent uint) 
     (expiry-to-roll uint))
@@ -279,16 +238,8 @@
     )
 )
 
-;; @desc add-to-position
-;; @desc returns units of pool tokens minted, dx, dy-actual and dy-virtual added
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param pool-token; pool token representing ownership of the pool
-;; @param dx; amount of token added
-;; @returns (response (tuple uint uint uint uint) uint)
 (define-public (add-to-position (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (dx uint) (max-dy (optional uint)))
     (begin
-        ;; dx must be greater than zero
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (let
             (
@@ -310,18 +261,11 @@
                 }))
                 (sender tx-sender)
             )
-            (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
-
-            ;; at least one of dy must be greater than zero            
+            (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)    
             (asserts! (or (> new-dy-act u0) (> new-dy-vir u0)) ERR-INVALID-LIQUIDITY)
             (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) new-dy-act) ERR-EXCEEDS-MAX-SLIPPAGE)
-
-            ;; send x to vault
             (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
-            ;; send y to vault
             (and (> new-dy-act u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry new-dy-act sender .alex-vault) ERR-TRANSFER-FAILED))
-        
-            ;; mint pool token and send to tx-sender
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)    
             (as-contract (try! (contract-call? pool-token-trait mint-fixed expiry new-supply sender)))
             (print { object: "pool", action: "pool-added", data: pool-updated })
@@ -330,13 +274,6 @@
     )
 )    
 
-;; @desc reduce-position
-;; @desc returns dx and dy-actual due to the position
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param pool-token; pool token representing ownership of the pool
-;; @param percent; percentage of pool token held to reduce
-;; @returns (response (tuple uint uint) uint)
 (define-public (reduce-position (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (percent uint))
     (begin
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
@@ -364,10 +301,8 @@
                 (sender tx-sender)
             )
             (asserts! (and (is-eq (get underlying-token pool) (contract-of token-trait)) (is-eq (get pool-token pool) (contract-of pool-token-trait))) ERR-INVALID-TOKEN)
-
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy-act u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy-act sender))))
-
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (as-contract (try! (contract-call? pool-token-trait burn-fixed expiry shares sender)))
             (print { object: "pool", action: "pool-removed", data: pool-updated })
@@ -376,12 +311,6 @@
     )    
 )
 
-;; @desc swap-x-for-y
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param dx; amount of token to swap
-;; @param min-dy; optional, min amount of yield-token to receive
-;; @returns (response (tuple uint uint) uint)
 (define-public (swap-x-for-y (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -391,15 +320,11 @@
                 (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
-
-                ;; lambda ~= 1 - fee-rate-yield-token * yield
                 (fee-yield (mul-down (try! (get-yield expiry yield-token)) (get fee-rate-yield-token pool)))
                 (dx-net-fees (mul-down dx (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
-
                 (dy (try! (get-y-given-x expiry yield-token dx-net-fees)))
-
                 (pool-updated
                     (merge pool
                         {
@@ -413,12 +338,9 @@
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
-
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy sender))))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance (contract-of token-trait) (- fee fee-rebate))))
-
-            ;; post setting
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
             (ok {dx: dx-net-fees, dy: dy})
@@ -426,12 +348,6 @@
     )
 )
 
-;; @desc swap-y-for-x
-;; @param yield-token-trait; yield token
-;; @param token-trait; token
-;; @param dy; amount of yield token to swap
-;; @param min-dx; optional, min amount of token to receive
-;; @returns (response (tuple uint uint) uint)
 (define-public (swap-y-for-x (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (dy uint) (min-dx (optional uint)))
     (begin
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
@@ -441,15 +357,11 @@
                 (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
-
-                ;; lambda ~= 1 - fee-rate-token * yield
                 (fee-yield (mul-down (try! (get-yield expiry yield-token)) (get fee-rate-token pool)))
                 (dy-net-fees (mul-down dy (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
-
                 (dx (try! (get-x-given-y expiry yield-token dy-net-fees)))
-
                 (pool-updated
                     (merge pool
                         {
@@ -463,12 +375,9 @@
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
-
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance yield-token (- fee fee-rebate))))
-
-            ;; post setting
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-updated)
             (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
             (ok {dx: dx, dy: dy-net-fees})
@@ -476,33 +385,21 @@
     )
 )
 
-;; @desc get-fee-rebate
-;; @param yield-token-trait; yield token
-;; @returns (response uint uint)
 (define-read-only (get-fee-rebate (expiry uint) (yield-token principal))
     (ok (get fee-rebate (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL)))
 )
 
-;; @desc set-fee-rebate
-;; @restricted contract-owner
-;; @param yield-token-trait; yield token
-;; @param fee-rebate; new fee-rebate
-;; @returns (response bool uint)
 (define-public (set-fee-rebate (expiry uint) (yield-token principal) (fee-rebate uint))
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
         (try! (check-is-owner))
-
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rebate: fee-rebate }))
         (ok true)
     )
 )
 
-;; @desc get-fee-rate-yield-token
-;; @param yield-token-trait; yield token
-;; @returns (response uint uint)
 (define-read-only (get-fee-rate-yield-token (expiry uint) (yield-token principal))
     (let 
         (
@@ -512,9 +409,6 @@
     )
 )
 
-;; @desc get-fee-rate-token
-;; @param yield-token-trait; yield token
-;; @returns (response uint uint)
 (define-read-only (get-fee-rate-token (expiry uint) (yield-token principal))
     (let 
         (
@@ -524,44 +418,29 @@
     )
 )
 
-;; @desc set-fee-rate-yield-token
-;; @restricted fee-to-address
-;; @param yield-token-trait; yield token
-;; @param fee-rate-yield-token; new fee-rate-yield-token
-;; @returns (response bool uint)
 (define-public (set-fee-rate-yield-token (expiry uint) (yield-token principal) (fee-rate-yield-token uint))
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
         (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
-
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-yield-token: fee-rate-yield-token }))
         (ok true)
     
     )
 )
 
-;; @desc set-fee-rate-token
-;; @restricted fee-to-address
-;; @param yield-token-trait; yield token
-;; @param fee-rate-token; new fee-rate-token
-;; @returns (response bool uint)
 (define-public (set-fee-rate-token (expiry uint) (yield-token principal) (fee-rate-token uint))
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
         (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
-
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )
 )
 
-;; @desc get-fee-to-address
-;; @param yield-token-trait; yield token
-;; @returns (response principal uint)
 (define-read-only (get-fee-to-address (expiry uint) (yield-token principal))
     (let 
         (
@@ -577,21 +456,14 @@
             (pool (try! (get-pool-details expiry yield-token)))
         )
         (try! (check-is-owner))
-
         (map-set pools-data-map 
-            { 
-                yield-token: yield-token, expiry: expiry
-            }
+            { yield-token: yield-token, expiry: expiry }
             (merge pool { fee-to-address: fee-to-address })
         )
         (ok true)     
     )
 )
 
-;; @desc units of yield token given units of token
-;; @param yield-token-trait; yield token
-;; @param dx; amount of token being added
-;; @returns (response uint uint)
 (define-read-only (get-y-given-x (expiry uint) (yield-token principal) (dx uint))
     (let 
         (
@@ -612,10 +484,6 @@
     )
 )
 
-;; @desc units of token given units of yield token
-;; @param yield-token-trait; yield token
-;; @param dy; amount of yield token being added
-;; @returns (response uint uint)
 (define-read-only (get-x-given-y (expiry uint) (yield-token principal) (dy uint))
     (let 
         (
@@ -636,10 +504,6 @@
     )
 )
 
-;; @desc units of token required for a target price
-;; @param yield-token-trait; yield token
-;; @param price; target price
-;; @returns (response uint uint)
 (define-read-only (get-x-given-price (expiry uint) (yield-token principal) (price uint))
     (let 
         (
@@ -649,10 +513,6 @@
     )
 )
 
-;; @desc units of yield token required for a target price
-;; @param yield-token-trait; yield token
-;; @param price; target price
-;; @returns (response uint uint)
 (define-read-only (get-y-given-price (expiry uint) (yield-token principal) (price uint))
     (let 
         (
@@ -662,10 +522,6 @@
     )
 )
 
-;; @desc units of token required for a target yield
-;; @param yield-token-trait; yield token
-;; @param yield; target yield
-;; @returns (response uint uint)
 (define-read-only (get-x-given-yield (expiry uint) (yield-token principal) (yield uint))
     (let 
         (
@@ -675,10 +531,6 @@
     )
 )
 
-;; @desc units of yield token required for a target yield
-;; @param yield-token-trait; yield token
-;; @param yield; target yield
-;; @returns (response uint uint)
 (define-read-only (get-y-given-yield (expiry uint) (yield-token principal) (yield uint))
     (let 
         (
@@ -688,10 +540,6 @@
     )
 )
 
-;; @desc units of pool token to be minted, together with break-down of yield-token given amount of token being added
-;; @param yield-token-trait; yield token
-;; @param dx; amount of token added
-;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-token-given-position (expiry uint) (yield-token principal) (dx uint))
 
     (let 
@@ -709,12 +557,7 @@
     )
 )
 
-;; @desc units of token, yield-token and yield-token (virtual) required to mint given units of pool-token
-;; @param yield-token-trait; yield token
-;; @param token; units of pool token to be minted
-;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-position-given-mint (expiry uint) (yield-token principal) (token uint))
-
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
@@ -731,10 +574,6 @@
     )
 )
 
-;; @desc units of token, yield-token and yield-token (virtual) to be returned after burning given units of pool-token
-;; @param yield-token-trait; yield token
-;; @param token; units of pool token to be burnt
-;; @returns (response (tuple uint uint uint) uint)
 (define-read-only (get-position-given-burn (expiry uint) (yield-token principal) (token uint))
     
     (let 
@@ -753,51 +592,33 @@
     )
 )
 
-;; yield-token-equation
-;; implementation of Yield Token AMM (https://docs.alexgo.io/whitepaper/automated-market-making-of-alex)
-
-;; constants
-;;
 (define-constant ERR-NO-LIQUIDITY (err u2002))
 (define-constant ERR-MAX-IN-RATIO (err u4001))
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
 
-;; max in/out as % of pool
 (define-data-var MAX-IN-RATIO uint (* u5 (pow u10 u6))) ;; 5%
 (define-data-var MAX-OUT-RATIO uint (* u5 (pow u10 u6))) ;; 5%
 
-;; @desc get-max-in-ratio
-;; @returns uint
 (define-read-only (get-max-in-ratio)
   (var-get MAX-IN-RATIO)
 )
 
-;; @desc set-max-in-ratio
-;; @param new-max-in-ratio; new MAX-IN-RATIO
-;; @returns (response bool uint)
 (define-public (set-max-in-ratio (new-max-in-ratio uint))
   (begin
     (try! (check-is-owner))
-    ;; MI-03
     (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)    
     (var-set MAX-IN-RATIO new-max-in-ratio)
     (ok true)
   )
 )
 
-;; @desc get-max-out-ratio
-;; @returns uint
 (define-read-only (get-max-out-ratio)
   (var-get MAX-OUT-RATIO)
 )
 
-;; @desc set-max-out-ratio
-;; @param new-max-out-ratio; new MAX-OUT-RATIO
-;; @returns (response bool uint)
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
     (try! (check-is-owner))
-    ;; MI-03
     (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)    
     (var-set MAX-OUT-RATIO new-max-out-ratio)
     (ok true)
@@ -859,7 +680,6 @@
         (final-term (pow-up term t-comp-num))
         (dy (if (<= balance-y final-term) u0 (- balance-y final-term)))
       )
-      
       (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
       (ok dy)
     )  
@@ -893,7 +713,6 @@
         (final-term (pow-up term t-comp-num))
         (dx (if (<= balance-x final-term) u0 (- balance-x final-term)))
       )
-
       (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
       (ok dx)
     )  
@@ -927,7 +746,6 @@
         (final-term (pow-down term t-comp-num))
         (dy (if (<= final-term balance-y) u0 (- final-term balance-y)))
       )
-      
       (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
       (ok dy)
     )  
@@ -961,7 +779,6 @@
         (final-term (pow-down term t-comp-num))
         (dx (if (<= final-term balance-x) u0 (- final-term balance-x)))
       )
-
       (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
       (ok dx)
     )  
@@ -1102,51 +919,13 @@
     (get-position-given-mint-internal balance-x balance-y t total-supply token)
 )
 
-
-
-;; math-fixed-point
-;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
-
-;; constants
-;;
 (define-constant ONE_8 u100000000) ;; 8 decimal places
-
-;; TODO: this needs to be reviewed/updated
-;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
-;; (i.e. the last digit of the result may be completely lost to this error).
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
 
-;; public functions
-;;
-
-;; @desc scale-up
-;; @params a 
-;; @returns uint
-(define-private (scale-up (a uint))
-    (* a ONE_8)
-)
-
-;; @desc scale-down
-;; @params a 
-;; @returns uint
-(define-private (scale-down (a uint))
-    (/ a ONE_8)
-)
-
-;; @desc mul-down
-;; @params a 
-;; @params b
-;; @returns uint
 (define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
-;; @desc mul-up
-;; @params a 
-;; @params b
-;; @returns uint
 (define-private (mul-up (a uint) (b uint))
     (let
         (
@@ -1159,10 +938,6 @@
    )
 )
 
-;; @desc div-down
-;; @params a 
-;; @params b
-;; @returns uint
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -1170,10 +945,6 @@
    )
 )
 
-;; @desc div-up
-;; @params a 
-;; @params b
-;; @returns uint
 (define-private (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -1181,10 +952,6 @@
     )
 )
 
-;; @desc pow-down
-;; @params a 
-;; @params b
-;; @returns uint
 (define-private (pow-down (a uint) (b uint))    
     (let
         (
@@ -1198,10 +965,6 @@
     )
 )
 
-;; @desc pow-up
-;; @params a 
-;; @params b
-;; @returns uint
 (define-private (pow-up (a uint) (b uint))
     (let
         (
@@ -1212,39 +975,12 @@
     )
 )
 
-;; math-log-exp
-;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
-;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
-;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
-;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
-
-;; constants
-;;
-;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
-;; two numbers, and multiply by ONE when dividing them.
-;; All arguments and return values are 8 decimal fixed point numbers.
 (define-constant UNSIGNED_ONE_8 (pow 10 8))
-
-;; The domain of natural exponentiation is bound by the word size and number of decimals used.
-;; The largest possible result is (2^127 - 1) / 10^8, 
-;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
-;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
-;; We use 69.0 and -18.0 to have some safety margin.
 (define-constant MAX_NATURAL_EXPONENT (* 69 UNSIGNED_ONE_8))
 (define-constant MIN_NATURAL_EXPONENT (* -18 UNSIGNED_ONE_8))
-
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint UNSIGNED_ONE_8)))
+(define-constant x_a_list_no_deci (list {x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ))
 
-;; Because largest exponent is 69, we start from 64
-;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
-;; Instead we store them as plain integers, with 0 decimals.
-
-(define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
-))
-
-;; 8 decimal constants
 (define-constant x_a_list (list 
 {x_pre: 3200000000, a_pre: 78962960182680695161, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
 {x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
@@ -1258,21 +994,12 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
 
-;; private functions
-;;
-
-;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-
-;; @desc ln-priv
-;; @params a
-;; @ returns (response uint)
 (define-private (ln-priv (a int))
   (let
     (
@@ -1290,10 +1017,6 @@
   )
 )
 
-;; @desc accumulate_division
-;; @params x_a_pre ; tuple(x_pre a_pre use_deci)
-;; @params rolling_a_sum ; tuple (a sum)
-;; @returns uint
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
@@ -1310,10 +1033,6 @@
  )
 )
 
-;; @desc rolling_sum_div
-;; @params n
-;; @params rolling ; tuple (num seriesSum z_squared)
-;; @Sreturns tuple
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
   (let
     (
@@ -1327,15 +1046,6 @@
  )
 )
 
-;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-
-;; @desc pow-priv
-;; @params x
-;; @params y
-;; @returns (response uint)
 (define-private (pow-priv (x uint) (y uint))
   (let
     (
@@ -1349,16 +1059,11 @@
   )
 )
 
-;; @desc exp-pos
-;; @params x
-;; @returns (response uint)
 (define-private (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (let
       (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
         (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
         (x_adj (get x x_product_no_deci))
         (firstAN (get product x_product_no_deci))
@@ -1375,10 +1080,6 @@
  )
 )
 
-;; @desc accumulate_product
-;; @params x_a_pre ; tuple (x_pre a_pre use_deci)
-;; @params rolling_x_p ; tuple (x product)
-;; @returns tuple
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
@@ -1395,10 +1096,6 @@
  )
 )
 
-;; @desc rolling_div_sum
-;; @params n
-;; @params rolling ; tuple (term seriesSum x)
-;; @returns tuple
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
     (
@@ -1412,22 +1109,10 @@
  )
 )
 
-;; public functions
-;;
-
-;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
-;; @desc pow-fixed
-;; @params x
-;; @params y
-;; @returns (response uint)
 (define-private (pow-fixed (x uint) (y uint))
   (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
-
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
     (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
-
     (if (is-eq y u0) 
       (ok (to-uint UNSIGNED_ONE_8))
       (if (is-eq x u0) 
@@ -1438,32 +1123,17 @@
   )
 )
 
-;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-
-;; @desc exp-fixed
-;; @params x
-;; @returns (response uint)
 (define-private (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (if (< x 0)
-      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
       (ok (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) (try! (exp-pos (* -1 x)))))
       (exp-pos x)
     )
   )
 )
 
-;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-;; @desc log-fixed
-;; @params arg
-;; @params base
-;; @returns (response uint)
 (define-private (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
   (let
     (
       (logBase (* (ln-priv base) UNSIGNED_ONE_8))
@@ -1473,18 +1143,10 @@
  )
 )
 
-;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-
-;; @desc ln-fixed
-;; @params a
-;; @returns (response uint)
 (define-private (ln-fixed (a int))
   (begin
     (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
     (if (< a UNSIGNED_ONE_8)
-      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-      ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
       (ok (- 0 (ln-priv (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) a))))
       (ok (ln-priv a))
    )
