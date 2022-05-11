@@ -3,7 +3,7 @@
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 ;; yield-token-pool
-(define-constant MAX_T u85000000)
+(define-constant MAX_T u95000000)
 
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
@@ -679,8 +679,7 @@
 (define-read-only (get-y-in-given-x-out (expiry uint) (yield-token principal) (dx uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-            
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))            
         )
         (get-y-in-given-x-out-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dx)
     )
@@ -781,7 +780,6 @@
         )        
         (ok {token: token, dy-act: dy-act, dy-vir: (if (is-eq token dy) token (if (<= dy dy-act) u0 (- dy dy-act)))})
     )
-
 )
 
 ;; @desc units of token, yield-token and yield-token (virtual) required to mint given units of pool-token
