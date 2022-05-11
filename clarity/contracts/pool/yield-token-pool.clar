@@ -3,7 +3,7 @@
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 ;; yield-token-pool
-(define-constant MAX_T u85000000)
+(define-constant MAX_T u95000000)
 
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
@@ -52,16 +52,6 @@
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-
-;; data maps and vars
-(define-map pools-map
-  { pool-id: uint }
-  {
-    yield-token: principal, ;; yield-token, dy
-    expiry: uint
-  }
-)
-
 (define-map pools-data-map
   {
     yield-token: principal, 
@@ -85,85 +75,38 @@
   }
 )
 
-(define-data-var pool-count uint u0)
-(define-data-var pools-list (list 500 uint) (list))
-
 ;; 4 years based on 52560 blocks per year (i.e. 10 mins per block)
-(define-data-var max-expiry uint (* u210240 ONE_8))
+(define-data-var max-expiry uint u210240)
 
-;; @desc get-max-expiry
-;; @returns uint
 (define-read-only (get-max-expiry)
     (var-get max-expiry)
 )
 
-;; @desc set-max-expiry
-;; @restricted contract-owner
-;; @param new-max-expiry; new max-expiry
-;; @returns (response bool uint)
 (define-public (set-max-expiry (new-max-expiry uint))
     (begin
         (try! (check-is-owner))
-        ;; MI-05
-        (asserts! (> new-max-expiry (* block-height ONE_8)) ERR-INVALID-EXPIRY)
+        (asserts! (> new-max-expiry block-height) ERR-INVALID-EXPIRY)
         (ok (var-set max-expiry new-max-expiry)) 
     )
 )
 
-;; @desc get-t
-;; @desc get time-to-maturity as a function of max-expiry
-;; @param expiry; when contract expiries
-;; @param listed; when contract was listed
-;; @returns (response uint uint)
 (define-read-only (get-t (expiry uint) (listed uint))
-    (begin
-        (asserts! (and (> (var-get max-expiry) expiry) (> (var-get max-expiry) (* block-height ONE_8))) ERR-INVALID-EXPIRY)
-        (let
-            (
-                (t (div-down
-                    (if (< expiry (* block-height ONE_8)) u0 (- expiry (* block-height ONE_8)))
-                    (- (var-get max-expiry) listed)))
-            )
-            (ok (if (< t MAX_T) t MAX_T)) ;; to avoid numerical error
-        )
+  (begin
+    (asserts! (and (> (var-get max-expiry) expiry) (> (var-get max-expiry) block-height)) ERR-INVALID-EXPIRY)
+    (let
+      (
+        (t (div-down (if (< expiry block-height) u0 (- expiry block-height)) (- (var-get max-expiry) listed)))
+      )
+      (ok (if (< t MAX_T) t MAX_T)) ;; to avoid numerical error
     )
+  )
 )
 
-;; @desc get-pool-count
-;; @returns uint
-(define-read-only (get-pool-count)
-    (var-get pool-count)
-)
-
-;; @desc get-pool-contracts
-;; @param pool-id; pool-id
-;; @returns (response (tutple) uint)
-(define-read-only (get-pool-contracts (pool-id uint))
-    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL))
-)
-
-;; @desc get-pools
-;; @returns map of get-pool-contracts
-(define-read-only (get-pools)
-    (ok (map get-pool-contracts (var-get pools-list)))
-)
-
-;; immunefi-4384
-(define-read-only (get-pools-by-ids (pool-ids (list 26 uint)))
-  (ok (map get-pool-contracts pool-ids))
-)
-
-;; @desc get-pool-details
-;; @param yield-token-trait; yield-token
-;; @returns (response (tuple) uint)
 (define-read-only (get-pool-details (expiry uint) (yield-token principal))
     (ok (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
 )
 
-;; @desc get-yield
 ;; @desc note yield is not annualised
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
 (define-read-only (get-yield (expiry uint) (yield-token principal))
     (let 
         (
@@ -173,9 +116,7 @@
     )
 )
 
-;; @desc get-price
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
+;; @desc yield-token per token
 (define-read-only (get-price (expiry uint) (yield-token principal))
     (let
         (
@@ -185,18 +126,10 @@
     )
 )
 
-;; @desc get-oracle-enabled
-;; @param yield-token-trait; yield-token
-;; @returns (response bool uint)
 (define-read-only (get-oracle-enabled (expiry uint) (yield-token principal))
     (ok (get oracle-enabled (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL)))
 )
 
-;; @desc set-oracle-enabled
-;; @desc oracle can only be enabled
-;; @restricted contract-owner
-;; @param yield-token-trait; yield-token
-;; @returns (response bool uint)
 (define-public (set-oracle-enabled (expiry uint) (yield-token principal))
     (let
         (
@@ -209,18 +142,10 @@
     )    
 )
 
-;; @desc get-oracle-average
-;; @desc returns the moving average used to determine oracle price
-;; @param yield-token-trait; yield-token
-;; @returns (response uint uint)
 (define-read-only (get-oracle-average (expiry uint) (yield-token principal))
     (ok (get oracle-average (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL)))
 )
 
-;; @desc set-oracle-average
-;; @restricted contract-owner
-;; @param yield-token-trait; yield-token
-;; @returns (response bool uint)
 (define-public (set-oracle-average (expiry uint) (yield-token principal) (new-oracle-average uint))
     (let
         (
@@ -288,7 +213,7 @@
                     fee-rate-yield-token: u0,
                     fee-rate-token: u0,
                     fee-rebate: u0,
-                    listed: (* block-height ONE_8),
+                    listed: block-height,
                     oracle-enabled: false,
                     oracle-average: u0,
                     oracle-resilient: u0,
@@ -678,17 +603,36 @@
     )
 )
 
+(define-read-only (get-y-in-given-x-out (expiry uint) (yield-token principal) (dx uint))
+    (let 
+        (
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))            
+        )
+        (get-y-in-given-x-out-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dx)
+    )
+)
+
 ;; @desc units of token given units of yield token
 ;; @param yield-token-trait; yield token
 ;; @param dy; amount of yield token being added
 ;; @returns (response uint uint)
 (define-read-only (get-x-given-y (expiry uint) (yield-token principal) (dy uint))
-    
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
         (get-x-given-y-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dy)
+    )
+)
+
+(define-read-only (get-x-in-given-y-out (expiry uint) (yield-token principal) (dy uint))
+    (let 
+        (
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+            (dx (try! (get-x-in-given-y-out-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dy)))
+        )
+        (asserts! (> (get balance-yield-token pool) dy) ERR-DY-BIGGER-THAN-AVAILABLE)
+        (ok dx)        
     )
 )
 
@@ -763,7 +707,6 @@
         )        
         (ok {token: token, dy-act: dy-act, dy-vir: (if (is-eq token dy) token (if (<= dy dy-act) u0 (- dy dy-act)))})
     )
-
 )
 
 ;; @desc units of token, yield-token and yield-token (virtual) required to mint given units of pool-token
@@ -820,8 +763,8 @@
 (define-constant ERR-MAX-OUT-RATIO (err u4002))
 
 ;; max in/out as % of pool
-(define-data-var MAX-IN-RATIO uint (* u30 (pow u10 u6))) ;; 30%
-(define-data-var MAX-OUT-RATIO uint (* u30 (pow u10 u6))) ;; 30%
+(define-data-var MAX-IN-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+(define-data-var MAX-OUT-RATIO uint (* u5 (pow u10 u6))) ;; 5%
 
 ;; @desc get-max-in-ratio
 ;; @returns uint
@@ -889,7 +832,6 @@
     (if (<= price ONE_8) (ok u0) (ok (- price ONE_8)))
   )
 )
-
 ;; @desc d_x = dx
 ;; @desc d_y = dy 
 ;; @desc b_x = balance-x
@@ -909,16 +851,84 @@
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-down ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-        (x-pow (pow-down balance-x t-comp))
-        (y-pow (pow-down balance-y t-comp))
+        (x-pow (pow-up balance-x t-comp))
+        (y-pow (pow-up balance-y t-comp))
         (x-dx-pow (pow-down (+ balance-x dx) t-comp))
         (add-term (+ x-pow y-pow))
         (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
-        (final-term (pow-down term t-comp-num))
+        (final-term (pow-up term t-comp-num))
         (dy (if (<= balance-y final-term) u0 (- balance-y final-term)))
       )
       
       (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+      (ok dy)
+    )  
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc d_x = b_x - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y + d_y) ^ (1 - t)) ^ (1 / (1 - t))
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @param dy; amount of yield-token added
+;; @returns (response uint uint)
+(define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
+  (begin
+    (asserts! (>= balance-y dy) ERR-INVALID-BALANCE)
+    (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+    (let 
+      (          
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (x-pow (pow-up balance-x t-comp))
+        (y-pow (pow-up balance-y t-comp))
+        (y-dy-pow (pow-down (+ balance-y dy) t-comp))
+        (add-term (+ x-pow y-pow))
+        (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
+        (final-term (pow-up term t-comp-num))
+        (dx (if (<= balance-x final-term) u0 (- balance-x final-term)))
+      )
+
+      (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+      (ok dx)
+    )  
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc d_y = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x - d_x) ^ (1 - t)) ^ (1 / (1 - t)) - b_y
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @param dx; amount of token added
+;; @returns (response uint uint)
+(define-private (get-y-in-given-x-out-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))
+  (begin
+    (asserts! (>= balance-x dx) ERR-INVALID-BALANCE)
+    (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)     
+    (let 
+      (
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (x-pow (pow-down balance-x t-comp))
+        (y-pow (pow-down balance-y t-comp))
+        (x-dx-pow (pow-up (if (<= balance-x dx) u0 (- balance-x dx)) t-comp))
+        (add-term (+ x-pow y-pow))
+        (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
+        (final-term (pow-down term t-comp-num))
+        (dy (if (<= final-term balance-y) u0 (- final-term balance-y)))
+      )
+      
+      (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
       (ok dy)
     )  
   )
@@ -934,7 +944,7 @@
 ;; @param t; time-to-maturity
 ;; @param dy; amount of yield-token added
 ;; @returns (response uint uint)
-(define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
+(define-private (get-x-in-given-y-out-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
   (begin
     (asserts! (>= balance-y dy) ERR-INVALID-BALANCE)
     (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
