@@ -92,26 +92,14 @@ Clarinet.test({
                 [types.principal(autoYtpAlexAddress), types.principal(ytpAlexAddress)],
                 deployer.address
             ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
-                [types.principal(ytpAlexAddress), types.principal(alexAddress)],
-                deployer.address
-            ),
             Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
                 [types.principal(autoKeyAlexAutoalexAddress), types.principal(keyAlexAutoalexAddress)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
-                [types.principal(keyAlexAutoalexAddress), types.principal(alexAddress)],
                 deployer.address
             ),
             Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
                 [types.principal(autoYieldAlexAddress), types.principal(yieldAlexAddress)],
                 deployer.address
             ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
-                [types.principal(yieldAlexAddress), types.principal(alexAddress)],
-                deployer.address
-            ),    
             Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
                 [types.principal(autoYtpAlexAddress), types.uint(FIXED_BOUNTY)],
                 deployer.address
@@ -123,7 +111,23 @@ Clarinet.test({
             Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
                 [types.principal(autoYieldAlexAddress), types.uint(FIXED_BOUNTY)],
                 deployer.address
-            ),            
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-expiry-cycle-length",
+                [types.uint(1234)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
+                [types.principal(ytpAlexAddress), types.uint(ACTIVATION_BLOCK)],
+                deployer.address
+            ),    
+            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
+                [types.principal(keyAlexAutoalexAddress), types.uint(ACTIVATION_BLOCK)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
+                [types.principal(yieldAlexAddress), types.uint(ACTIVATION_BLOCK)],
+                deployer.address
+            ),                         
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(alexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoAlexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoYtpAlexAddress)], deployer.address),               
@@ -135,7 +139,7 @@ Clarinet.test({
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });         
 
-        let call = chain.callReadOnlyFn("collateral-rebalancing-pool", "suggest-expiry", [types.principal(ytpAlexAddress)], deployer.address);
+        let call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry = Number(call.result.expectOk().replace(/\D/g, ""));
 
         block = chain.mineBlock([
@@ -381,7 +385,7 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(expiry + 1);    
 
-        call = chain.callReadOnlyFn("collateral-rebalancing-pool", "suggest-expiry", [types.principal(ytpAlexAddress)], deployer.address);
+        call = chain.callReadOnlyFn("collateral-rebalancing-pool", "get-expiry", [types.principal(ytpAlexAddress)], deployer.address);
         const expiry_to_roll = Number(call.result.expectOk().replace(/\D/g, ""));
         
         block = chain.mineBlock([
