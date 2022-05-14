@@ -52,7 +52,7 @@ const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
 const token_to_maturity = 2100;
 
-const quantity = 1000e8
+const quantity = 100e8
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
@@ -112,7 +112,7 @@ Clarinet.test({
         result = FWPTest3.setStartBlock(deployer, alexAddress, wbtcAddress, 0);
         result.expectOk().expectBool(true);                    
 
-        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, quantity, quantity);        
         result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, wbtcAddress, alexAddress, expiry, yieldwbtcAddress, keywbtcalexAddress, multisigncrpwbtcalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
@@ -208,7 +208,7 @@ Clarinet.test({
         blockRoll.receipts[1].result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, nextExpiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, nextExpiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, quantity, quantity);        
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, wbtcAddress, alexAddress, nextExpiry, yieldwbtcAddress, keywbtcalexAddress, multisigncrpwbtcalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectTuple();   
@@ -305,7 +305,7 @@ Clarinet.test({
         result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);                       
 
-        result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, quantity, quantity);        
         result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, expiry, yieldusdaAddress, keyusdaalexAddress, multisigncrpusdaalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
@@ -401,7 +401,7 @@ Clarinet.test({
         blockRoll.receipts[1].result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, quantity, quantity);        
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, nextExpiry, yieldusdaAddress, keyusdaalexAddress, multisigncrpusdaalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectTuple();   
@@ -507,7 +507,7 @@ Clarinet.test({
         result = FWPTest3.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
         result.expectOk().expectBool(true);                        
 
-        result = YTPTest.createPool(deployer, expiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, quantity, quantity);        
         result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, wstxAddress, alexAddress, expiry, yieldwstxAddress, keywstxalexAddress, multisigncrpwstxalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
@@ -603,7 +603,7 @@ Clarinet.test({
         blockRoll.receipts[1].result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, nextExpiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, nextExpiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, quantity, quantity);        
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, wstxAddress, alexAddress, nextExpiry, yieldwstxAddress, keywstxalexAddress, multisigncrpwstxalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectTuple();   
