@@ -688,7 +688,7 @@ Clarinet.test({
         
         // Too small => < max-slippage
         result = YTPTest.swapYForX(deployer, expiry, yieldwbtcAddress, wbtcAddress, 0.00000001 * ONE_8, 0);
-        position =result.expectErr().expectUint(2020);
+        position =result.expectErr().expectUint(2003);
 
         call = await YTPTest.getYield(expiry, yieldwbtcAddress);
         call.result.expectOk().expectUint(5);

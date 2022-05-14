@@ -126,7 +126,7 @@ Clarinet.test({
         // Let's borrow 100 alex to lever up
         result = FLTest.flashLoan(wallet_5, loanuserAddress, alexAddress, 1000*ONE_8, expiryBuff);
         result.expectOk();
-        result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, 0.01 * ONE_8, expiryBuff);
+        result = FLTest.flashLoan(wallet_5, loanuserwbtcAddress, wbtcAddress, 0.1 * ONE_8, expiryBuff);
         result.expectOk();        
 
         // spent ~$231 to buy levered position (0.02 uints)
@@ -156,13 +156,13 @@ Clarinet.test({
         // and now we just expired
         chain.mineEmptyBlockUntil(expiry + 1);
         result = FLTest.rollPosition(wallet_5, usdaAddress, alexAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
-        result.expectOk().expectUint(20627853222);
+        result.expectOk().expectUint(21423308991);
 
         // key-usda-alex should be zero, with non-zero positions in key-usda
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(keyusdaAddress, nextExpiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(19639106497);
+        position = call.result.expectOk().expectUint(20636553934);
         // but nothing with yield-usda
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);

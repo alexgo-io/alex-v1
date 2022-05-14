@@ -144,7 +144,7 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(ONE_8),
+                    types.uint(2 * ONE_8),
                     types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
@@ -154,7 +154,7 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(ONE_8),
+                    types.uint(2 * ONE_8),
                     types.none()
                 ], wallet_5.address),                
             ]
