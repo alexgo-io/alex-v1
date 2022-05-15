@@ -16,7 +16,7 @@
 (define-constant ERR-EXPIRY (err u2017))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
+(define-constant ERR-LTV-TOO-HIGH (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-POOL-AT-CAPACITY (err u2027))
@@ -249,7 +249,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token-y token-x expiry spot))) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token-y token-x expiry spot))) ERR-LTV-TOO-HIGH)
         (asserts! (and (is-eq (get yield-token pool) (contract-of yield-token-trait)) (is-eq (get key-token pool) (contract-of key-token-trait))) ERR-INVALID-TOKEN)
         (let
             (
@@ -423,7 +423,9 @@
                 )
                 (sender tx-sender)
             )
-            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+            ;; a / b <= c / d == ad <= bc for b, d >=0
+            (asserts! (<= (mul-down dy (mul-down balance-x (get weight-y pool))) (mul-down dx-net-fees (mul-down balance-y (get weight-x pool)) )) ERR-INVALID-LIQUIDITY)            
+            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)  
             (unwrap! (contract-call? collateral-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dy sender))))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
@@ -463,6 +465,8 @@
                 )
                 (sender tx-sender)
             )
+            ;; a / b >= c / d == ac >= bc for b, d >= 0
+            (asserts! (>= (mul-down dy-net-fees (mul-down balance-x (get weight-y pool))) (mul-down dx (mul-down balance-y (get weight-x pool)))) ERR-INVALID-LIQUIDITY)            
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
             (unwrap! (contract-call? token-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -520,25 +524,25 @@
 
 (define-read-only (get-y-given-x (token principal) (collateral principal) (expiry uint) (dx uint))
     (let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-        (contract-call? .weighted-equation-v1-01 get-y-given-x (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dx)
+        (get-y-given-x-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dx)
     )
 )
 
 (define-read-only (get-x-given-y (token principal) (collateral principal) (expiry uint) (dy uint))
 	(let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-		(contract-call? .weighted-equation-v1-01 get-x-given-y (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dy)
+		(get-x-given-y-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dy)
 	)
 )
 
 (define-read-only (get-x-given-price (token principal) (collateral principal) (expiry uint) (price uint))
     (let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-        (contract-call? .weighted-equation-v1-01 get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (get-x-given-price-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
 (define-read-only (get-y-given-price (token principal) (collateral principal) (expiry uint) (price uint))
     (let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-        (contract-call? .weighted-equation-v1-01 get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (get-y-given-price-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -569,7 +573,7 @@
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))            
                 (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
-                (pos-data (try! (contract-call? .weighted-equation-v1-01 get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares)))
+                (pos-data (try! (get-position-given-mint-internal balance-x balance-y weight-x weight-y total-supply shares)))
                 (dx-weighted (get dx pos-data))
                 (dy-weighted (get dy pos-data))
                 (dy-to-dx (try! (get-helper collateral token dy-weighted)))   
@@ -596,6 +600,289 @@
             (ok {dx: (mul-down shares-to-pool (get balance-x pool)), dy: (mul-down shares-to-pool (get balance-y pool))})
         )
     )
+)
+
+(define-constant ERR-NO-LIQUIDITY (err u2002))
+(define-constant ERR-WEIGHT-SUM (err u4000))
+(define-constant ERR-MAX-IN-RATIO (err u4001))
+(define-constant ERR-MAX-OUT-RATIO (err u4002))
+
+(define-data-var MAX-IN-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+(define-data-var MAX-OUT-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+
+(define-read-only (get-max-in-ratio)
+  (var-get MAX-IN-RATIO)
+)
+
+(define-public (set-max-in-ratio (new-max-in-ratio uint))
+  (begin
+    (try! (check-is-owner))
+    (asserts! (and (> new-max-in-ratio u0) (< new-max-in-ratio ONE_8)) ERR-MAX-IN-RATIO)
+    (ok (var-set MAX-IN-RATIO new-max-in-ratio))
+  )
+)
+
+(define-read-only (get-max-out-ratio)
+  (var-get MAX-OUT-RATIO)
+)
+
+(define-public (set-max-out-ratio (new-max-out-ratio uint))
+  (begin
+    (try! (check-is-owner))
+    ;; MI-03
+    (asserts! (and (> new-max-out-ratio u0) (< new-max-out-ratio ONE_8)) ERR-MAX-OUT-RATIO)
+    (ok (var-set MAX-OUT-RATIO new-max-out-ratio))
+  )
+)
+
+;; @desc get-invariant
+;; @desc invariant = b_x ^ w_x * b_y ^ w_y 
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @returns (response uint uint)
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (ok (mul-down (pow-down balance-x weight-x) (pow-down balance-y weight-y)))
+    )
+)
+
+;; @desc get-y-given-x
+;; @desc d_y = dy
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x                /      /            b_x             \    (w_x / w_y) \           
+;; @desc d_x = dx          d_y = b_y * |  1 - | ---------------------------  | ^             |          
+;; @desc w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
+;; @desc w_y = weight-y                                                                       
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dx; amount of token-x added
+;; @returns (response uint uint)
+(define-private (get-y-given-x-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (let 
+            (
+                (denominator (+ balance-x dx))
+                (base (div-up balance-x denominator))
+                (uncapped-exponent (div-up weight-x weight-y))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-up base exponent))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (dy (mul-down balance-y complement))
+            )
+            (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+            (ok dy)
+        ) 
+    )    
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /     /            b_y             \    (w_y / w_x)  \          
+;; @desc d_x = dx         d_x = b_x * | 1 - | --------------------------  | ^              |         
+;; @desc w_x = weight-x               \     \       ( b_y + d_y )         /                /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (let 
+            (
+                (denominator (+ balance-y dy))
+                (base (div-up balance-y denominator))
+                (uncapped-exponent (div-up weight-y weight-x))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-up base exponent))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (dx (mul-down balance-x complement))
+            )
+            (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+            (ok dx)
+        )
+    )
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
+;; @desc d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-private (get-x-in-given-y-out-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (let 
+            (
+                (denominator (- balance-y dy))
+                (base (div-down balance-y denominator))
+                (uncapped-exponent (div-down weight-y weight-x))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dx (mul-down balance-x ratio))
+            )
+            (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+            (ok dx)
+        )
+    )
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_x             \    (w_x / w_y)      \          
+;; @desc d_x = dx         d_y = b_y * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_x - d_x )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-private (get-y-in-given-x-out-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (let 
+            (
+                (denominator (- balance-x dx))
+                (base (div-down balance-x denominator))
+                (uncapped-exponent (div-down weight-x weight-y))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dy (mul-down balance-y ratio))
+            )
+            (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+            (ok dy)
+        )
+    )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc w_x = weight-x 
+;; @desc w_y = weight-y
+;; @desc spot = b_y * w_x / b_x / w_y
+;; @desc d_x = b_x * ((spot / price) ^ w_y - 1)
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param price; target price
+;; @returns (response uint uint)
+(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (let
+            (
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
+            )
+            (asserts! (< price spot) ERR-NO-LIQUIDITY)
+            (let 
+                (
+                  (power (pow-down (div-up spot price) weight-y))
+                )
+                (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
+            )
+        )
+    )   
+)
+
+;; @desc follows from get-x-given-price
+;; @desc d_y = b_y * ((price / spot) ^ w_x - 1)
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param price; target price
+;; @returns (response uint uint)
+(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (let
+            (
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
+            )
+            (asserts! (> price spot) ERR-NO-LIQUIDITY)
+            (let 
+                (
+                  (power (pow-down (div-up price spot) weight-x))
+                )
+                (ok (mul-up balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
+            )
+        )
+    )   
+)
+
+;; @desc get-token-given-position
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param dx; amount of token-x added
+;; @param dy; amount of token-y added
+;; @returns (response (tutple uint uint) uint)
+(define-private (get-token-given-position-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (ok
+            (if (is-eq total-supply u0)
+                {token: (unwrap-panic (get-invariant dx dy weight-x weight-y)), dy: dy}
+                {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)} 
+            )
+        ) 
+    )    
+)
+
+;; @desc get-position-given-mint
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token minted
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-position-given-mint-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
+        (ok {dx: (div-down (mul-down balance-x token) total-supply), dy: (div-down (mul-down balance-y token) total-supply)})
+    )
+)
+
+;; @desc get-position-given-burn
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token to be burnt
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-position-given-burn-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    (get-position-given-mint-internal balance-x balance-y weight-x weight-y total-supply token)
 )
 
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
@@ -1109,7 +1396,7 @@
         (
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (auto-to-add (match (map-get? pool-total-supply pool-token) value (div-down (mul-down dx (get-auto-total-supply-or-default pool-token)) value) dx))
+            (auto-to-add (match (map-get? pool-total-supply pool-token) value (div-down (mul-down dx (get-auto-total-supply-or-default auto-token)) value) dx))
             (pool-to-add (+ dx (get-pool-total-supply-or-default pool-token)))
             (expiry (try! (get-expiry pool-token)))
             (sender tx-sender)
@@ -1117,7 +1404,7 @@
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
         (try! (contract-call? pool-token-trait transfer-fixed expiry dx sender .alex-vault))
-        (map-set auto-total-supply pool-token (+ (get-auto-total-supply-or-default pool-token) auto-to-add))
+        (map-set auto-total-supply auto-token (+ (get-auto-total-supply-or-default auto-token) auto-to-add))
         (map-set pool-total-supply pool-token (+ (get-pool-total-supply-or-default pool-token) dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
         (print { object: "pool", action: "liquidity-added", data: auto-to-add })
@@ -1132,14 +1419,14 @@
             (auto-token (contract-of auto-token-trait))
             (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
             (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-            (pool-to-reduce (div-down (mul-down (get-pool-total-supply-or-default pool-token) auto-to-reduce) (get-auto-total-supply-or-default pool-token)))
+            (pool-to-reduce (div-down (mul-down (get-pool-total-supply-or-default pool-token) auto-to-reduce) (get-auto-total-supply-or-default auto-token)))
             (expiry (try! (get-expiry pool-token)))
             (sender tx-sender)
         )
         (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
         (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry pool-to-reduce sender)))
-        (map-set auto-total-supply pool-token (- (get-auto-total-supply-or-default pool-token) auto-to-reduce))
+        (map-set auto-total-supply auto-token (- (get-auto-total-supply-or-default auto-token) auto-to-reduce))
         (map-set pool-total-supply pool-token (- (get-pool-total-supply-or-default pool-token) pool-to-reduce))
         (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
         (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })

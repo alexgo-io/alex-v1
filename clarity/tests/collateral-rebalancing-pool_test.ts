@@ -73,7 +73,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true); 
+        result.expectOk().expectBool(true);      
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);           
 
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);
@@ -107,36 +111,35 @@ Clarinet.test({
         
         let spot = Number((call.result.replace(/\D/g, "")));
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(125258006);
+        call.result.expectOk().expectUint(125258056);
 
-        // ltv-0 is 80%, but injecting liquidity pushes up LTV
         call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(55884651);
+        call.result.expectOk().expectUint(55884629);
 
         // Check pool details and print
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         let position:any = call.result.expectOk().expectTuple();
         position['yield-supply'].expectUint(70000000);
         position['key-supply'].expectUint(70000000);
-        position['weight-x'].expectUint(84416985);
-        position['weight-y'].expectUint(ONE_8 - 84416985);        
-        position['balance-x'].expectUint(118183779);
-        position['balance-y'].expectUint(20536159);
+        position['weight-x'].expectUint(84417049);
+        position['weight-y'].expectUint(ONE_8 - 84417049);        
+        position['balance-x'].expectUint(118183868);
+        position['balance-y'].expectUint(20536080);
         position['strike'].expectUint(ltv_0);
         position['ltv-0'].expectUint(ltv_0);
         position['bs-vol'].expectUint(bs_vol);
         position['conversion-ltv'].expectUint(conversion_ltv);
         position['moving-average'].expectUint(moving_average);
         
-        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.0001 * ONE_8, 0);
-        position = result.expectOk().expectTuple();
-        position['dx'].expectUint(0.0001 * ONE_8);
-        position['dy'].expectUint(9408); 
+        // result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.0001 * ONE_8, 0);
+        // position = result.expectOk().expectTuple();
+        // position['dx'].expectUint(0.0001 * ONE_8);
+        // position['dy'].expectUint(9408); 
 
         call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(85043785);          
+        call.result.expectOk().expectUint(84738487);          
 
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.0002 * ONE_8, 0);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.02 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(20721);
         position['dy'].expectUint(0.0002 * ONE_8);        
@@ -232,7 +235,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);       
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);               
         
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);
@@ -313,7 +320,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);      
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
         
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);
@@ -377,7 +388,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);      
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
         
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);
@@ -431,7 +446,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);      
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
         
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);
@@ -514,7 +533,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);      
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
         
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);
@@ -590,7 +613,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);          
+        result.expectOk().expectBool(true);      
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);         
         
         result = FWPTest.createPool(deployer, alexAddress, usdaAddress, fwpalexusdaAddress, multisigalexusdaAddress, 5 * wbtcQ, 5 * wbtcQ);
         result.expectOk().expectBool(true);

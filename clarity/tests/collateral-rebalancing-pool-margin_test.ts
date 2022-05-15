@@ -92,7 +92,11 @@ Clarinet.test({
         result = FWPTest3.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest3.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);                   
+        result.expectOk().expectBool(true);    
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                           
         
         result = FWPTest3.createPool(deployer, alexAddress, wbanAddress, fwpwalexwbanAddress, multisigalexwbanAddress, quantity, quantity);
         result.expectOk().expectBool(true);  
@@ -289,7 +293,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);               
+        result.expectOk().expectBool(true);    
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                       
         
         result = FWPTest.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpwstxalexAddress, multisigwstxalexAddress, quantity, quantity);
         result.expectOk().expectBool(true);
@@ -489,7 +497,11 @@ Clarinet.test({
         result = FWPTest3.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest3.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);                   
+        result.expectOk().expectBool(true);        
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                       
         
         result = FWPTest.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpwstxalexAddress, multisigwstxalexAddress, quantity, quantity);
         result.expectOk().expectBool(true);
