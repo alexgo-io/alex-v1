@@ -111,7 +111,7 @@
 )
 
 (define-read-only (get-spot (token principal) (collateral principal))
-    (ok (try! (oracle-instant-helper collateral token)))
+    (ok (try! (oracle-resilient-helper collateral token)))
 )
 
 (define-read-only (get-pool-value-in-token (token principal) (collateral principal) (expiry uint))
@@ -629,7 +629,6 @@
 (define-public (set-max-out-ratio (new-max-out-ratio uint))
   (begin
     (try! (check-is-owner))
-    ;; MI-03
     (asserts! (and (> new-max-out-ratio u0) (< new-max-out-ratio ONE_8)) ERR-MAX-OUT-RATIO)
     (ok (var-set MAX-OUT-RATIO new-max-out-ratio))
   )
@@ -677,7 +676,7 @@
                 (dy (mul-down balance-y complement))
             )
             (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-            (ok power)
+            (ok dy)
         ) 
     )    
 )
