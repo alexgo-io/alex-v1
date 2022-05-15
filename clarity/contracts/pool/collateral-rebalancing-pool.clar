@@ -422,9 +422,9 @@
                     )
                 )
                 (sender tx-sender)
-            )
+            )       
             ;; a / b <= c / d == ad <= bc for b, d >=0
-            (asserts! (<= (mul-down dy (mul-down balance-x (get weight-y pool))) (mul-down dx-net-fees (mul-down balance-y (get weight-x pool)) )) ERR-INVALID-LIQUIDITY)            
+            (asserts! (<= (mul-down dy (mul-down balance-x (get weight-y pool))) (mul-down dx-net-fees (mul-down balance-y (get weight-x pool)) )) ERR-INVALID-LIQUIDITY)                        
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)  
             (unwrap! (contract-call? collateral-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dy sender))))
@@ -677,7 +677,7 @@
                 (dy (mul-down balance-y complement))
             )
             (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-            (ok dy)
+            (ok power)
         ) 
     )    
 )
@@ -914,7 +914,13 @@
 )
 
 (define-private (pow-up (a uint) (b uint))
-    (+ u1 (* (unwrap-panic (pow-fixed a b)) (+ u1 MAX_POW_RELATIVE_ERROR)))
+    (let
+        (
+            (raw (unwrap-panic (pow-fixed a b)))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
+        )
+        (+ raw max-error)
+    )
 )
 
 (define-constant UNSIGNED_ONE_8 (pow 10 8))
