@@ -34,13 +34,17 @@
 ;; @restricted Contract-Owner
 ;; @params sender
 ;; @returns (response bool)
-(define-private (check-is-approved (sender principal))
-  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-owner)
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (map-set approved-contracts new-approved-contract true)
     (ok true)
   )
@@ -48,7 +52,7 @@
 
 (define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
-		(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+		(try! (check-is-owner))
 		(ok (map-set approved-contracts owner approved))
 	)
 )
@@ -142,7 +146,7 @@
 		(try! (ft-transfer? yield-alex amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
-		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
+		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
 		(ok true)
 	)
 )
@@ -165,7 +169,7 @@
 		(try! (ft-transfer? yield-alex amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
-		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
+		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
 		(ok true)
 	)
 )
@@ -177,11 +181,11 @@
 ;; @returns (response bool)
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(try! (check-is-approved tx-sender))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(try! (ft-mint? yield-alex amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
-		(print {type: "sft_mint_event", token-id: token-id, amount: amount, recipient: recipient})
+		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
 		(ok true)
 	)
 )
@@ -194,11 +198,11 @@
 ;; @returns (response bool)
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(try! (check-is-approved tx-sender))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(try! (ft-burn? yield-alex amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
-		(print {type: "sft_burn_event", token-id: token-id, amount: amount, sender: sender})
+		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
 		(ok true)
 	)
 )
