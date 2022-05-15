@@ -131,15 +131,15 @@ Clarinet.test({
         position['conversion-ltv'].expectUint(conversion_ltv);
         position['moving-average'].expectUint(moving_average);
         
-        // result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.0001 * ONE_8, 0);
-        // position = result.expectOk().expectTuple();
-        // position['dx'].expectUint(0.0001 * ONE_8);
-        // position['dy'].expectUint(9408); 
+        result = CRPTest.swapXForY(deployer, wbtcAddress, usdaAddress, expiry, 0.0001 * ONE_8, 0);
+        position = result.expectOk().expectTuple();
+        position['dx'].expectUint(0.0001 * ONE_8);
+        position['dy'].expectUint(9408); 
 
         call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
         call.result.expectOk().expectUint(84738487);          
 
-        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.02 * ONE_8, 0);
+        result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.0002 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(20721);
         position['dy'].expectUint(0.0002 * ONE_8);        
