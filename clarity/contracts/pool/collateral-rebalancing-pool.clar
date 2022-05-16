@@ -56,7 +56,7 @@
   (begin (try! (check-is-owner)) (ok (var-set shortfall-coverage new-shortfall-coverage)))
 )
 
-(define-data-var strike-multiplier uint u100000000) ;; 1x
+(define-data-var strike-multiplier uint u50000000) ;; 0.5x
 (define-read-only (get-strike-multiplier)
   (ok (var-get strike-multiplier))
 )

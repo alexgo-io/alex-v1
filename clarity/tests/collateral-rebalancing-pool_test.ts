@@ -125,7 +125,7 @@ Clarinet.test({
         position['weight-y'].expectUint(ONE_8 - 84417049);        
         position['balance-x'].expectUint(118183868);
         position['balance-y'].expectUint(20536080);
-        position['strike'].expectUint(ltv_0);
+        position['strike'].expectUint((ONE_8 + ltv_0) / 2);
         position['ltv-0'].expectUint(ltv_0);
         position['bs-vol'].expectUint(bs_vol);
         position['conversion-ltv'].expectUint(conversion_ltv);
@@ -137,7 +137,7 @@ Clarinet.test({
         position['dy'].expectUint(9408); 
 
         call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(85386871);          
+        call.result.expectOk().expectUint(83892238);          
 
         result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.0002 * ONE_8, 0);
         position = result.expectOk().expectTuple();
