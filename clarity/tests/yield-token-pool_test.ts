@@ -812,14 +812,7 @@ Clarinet.test({
         position['supply'].expectUint(999767000);
         position['balance-token'].expectUint(989899183);
         position['balance-yield-token'].expectUint(9896142);
-        position['balance-virtual'].expectUint(999767008);
-
-        call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
-        position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(1000*ONE_8 + 999767000);
-        position['balance-token'].expectUint(100002837339);
-        position['balance-yield-token'].expectUint(999741874);
-        position['balance-virtual'].expectUint(100999767008);          
+        position['balance-virtual'].expectUint(999767008);        
 
         call = await YTPTest.getYield(expiry, yieldwbtcAddress);
         call.result.expectOk().expectUint(563469); 
