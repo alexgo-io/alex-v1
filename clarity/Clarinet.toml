@@ -48,7 +48,6 @@ depends_on = [
   "yield-token-pool",
   "yield-usda",
   "swap-helper-v1-01",
-  "math-fixed-point"
 ]
 
 [contracts.yield-collateral-rebalancing-pool]

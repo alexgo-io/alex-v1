@@ -67,6 +67,10 @@ Clarinet.test({
         result.expectOk();
         result = YTPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk();
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);            
 
         result = FWPTest.createPool(deployer, alexAddress, autoAlexAddress, fwpAlexAutoalexAddress, multisigFwpAlexAutoalexAddress, liquidity, liquidity);
         result.expectOk();

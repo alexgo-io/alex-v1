@@ -209,20 +209,28 @@
     )
 )
 
-(define-public (buy-and-add-to-position (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (dx uint) (max-dy (optional uint)))
+(define-data-var buy-and-add-buffer uint u101000000) ;; 1.01x
+
+(define-read-only (get-buy-and-add-buffer)
+  (var-get buy-and-add-buffer)
+)
+
+(define-public (set-buy-and-add-buffer (new-buffer uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set buy-and-add-buffer new-buffer))
+  )
+)
+
+(define-public (buy-and-add-to-position (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (dx uint))
     (let
         (
-            (dy-act (get dy-act (try! (get-token-given-position expiry (contract-of yield-token-trait) dx))))
-            (dx-adjusted (- dx (div-down dx (+ dx (try! (get-x-given-y expiry (contract-of yield-token-trait) dy-act))))))
-            (dx-to-buy-dy-adjusted (- dx dx-adjusted))
+            (yield-token (contract-of yield-token-trait))
+            (dy-act (get dy-act (try! (get-token-given-position expiry yield-token dx))))
+            (dx-to-sell (if (is-eq dy-act u0) u0 (mul-down (var-get buy-and-add-buffer) (try! (get-x-in-given-y-out expiry yield-token dy-act)))))
+            (dy (if (is-eq dy-act u0) u0 (get dy (try! (swap-x-for-y expiry yield-token-trait token-trait dx-to-sell none)))))
         )
-        (if (> dy-act u0)
-          (begin 
-            (try! (swap-x-for-y expiry yield-token-trait token-trait dx-to-buy-dy-adjusted none))
-            (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
-          )
-          (add-to-position expiry yield-token-trait token-trait pool-token-trait dx-adjusted max-dy)
-        )
+        (add-to-position expiry yield-token-trait token-trait pool-token-trait (- dx dx-to-sell) (some dy-act))
     )
 )
 
@@ -234,7 +242,7 @@
             (reduce-data (try! (reduce-position expiry yield-token-trait token-trait pool-token-trait percent)))
             (dy-to-dx (get dx (try! (swap-y-for-x expiry yield-token-trait token-trait (get dy reduce-data) none))))
         )
-        (buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait (+ (get dx reduce-data) dy-to-dx) none)
+        (buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait (+ (get dx reduce-data) dy-to-dx))
     )
 )
 
