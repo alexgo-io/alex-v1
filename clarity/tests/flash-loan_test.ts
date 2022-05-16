@@ -131,12 +131,12 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(alexAddress, wallet_5.address);
-        position = call.result.expectOk().expectUint(19979435135986);  
+        position = call.result.expectOk().expectUint(19980013292634);  
         call = await FLTest.getBalance(usdaAddress, wallet_5.address);
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(95106006529);
+        position = call.result.expectOk().expectUint(99754809462);
         // but nothing with yield token
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);         
@@ -156,13 +156,13 @@ Clarinet.test({
         // and now we just expired
         chain.mineEmptyBlockUntil(expiry + 1);
         result = FLTest.rollPosition(wallet_5, usdaAddress, alexAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
-        result.expectOk().expectUint(21423308991);
+        result.expectOk().expectUint(21105219009);
 
         // key-usda-alex should be zero, with non-zero positions in key-usda
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(keyusdaAddress, nextExpiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(20636553934);
+        position = call.result.expectOk().expectUint(20814367936);
         // but nothing with yield-usda
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
