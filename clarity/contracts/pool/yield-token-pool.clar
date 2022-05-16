@@ -209,7 +209,7 @@
     )
 )
 
-(define-data-var buy-and-add-buffer uint u110000000) ;; 1.1x
+(define-data-var buy-and-add-buffer uint u101000000) ;; 1.01x
 
 (define-read-only (get-buy-and-add-buffer)
   (var-get buy-and-add-buffer)

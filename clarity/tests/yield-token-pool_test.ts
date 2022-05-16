@@ -789,19 +789,45 @@ Clarinet.test({
         position['balance-yield-token'].expectUint(10 * ONE_8);
         position['balance-virtual'].expectUint(1000*ONE_8);  
 
+        let listed = Number((position['listed'].replace(/\D/g, "")));        
+
         // make sure wallet_1 does not have any yield-token
         call = chain.callReadOnlyFn(yieldwbtcAddress, "get-balance", 
             [types.uint(expiry), types.principal(wallet_1.address)
             ], wallet_1.address);
         call.result.expectOk().expectUint(0);            
         
+        call = await YTPTest.getYield(expiry, yieldwbtcAddress);
+        call.result.expectOk().expectUint(569271); 
+
+        call = chain.callReadOnlyFn("yield-token-pool", "get-t", 
+        [types.uint(expiry),
+         types.uint(listed)
+        ], deployer.address);
+        call.result.expectOk().expectUint(28422344);
+
         //Add extra liquidity with secondary buying of yield-token
-        result = YTPTest.buyAndAddToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8, Number.MAX_SAFE_INTEGER);
+        result = YTPTest.buyAndAddToPosition(wallet_1, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 10*ONE_8);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(909159000);
-        position['balance-token'].expectUint(900994181);
-        position['balance-yield-token'].expectUint(8186575);
-        position['balance-virtual'].expectUint(909159003);
+        position['supply'].expectUint(999767000);
+        position['balance-token'].expectUint(989899183);
+        position['balance-yield-token'].expectUint(9896142);
+        position['balance-virtual'].expectUint(999767008);
+
+        call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
+        position = call.result.expectOk().expectTuple();
+        position['total-supply'].expectUint(1000*ONE_8 + 999767000);
+        position['balance-token'].expectUint(100002837339);
+        position['balance-yield-token'].expectUint(999741874);
+        position['balance-virtual'].expectUint(100999767008);          
+
+        call = await YTPTest.getYield(expiry, yieldwbtcAddress);
+        call.result.expectOk().expectUint(563469); 
+
+        call = chain.callReadOnlyFn(yieldwbtcAddress, "get-balance", 
+            [types.uint(expiry), types.principal(wallet_1.address)
+            ], wallet_1.address);
+        call.result.expectOk().expectUint(258126);           
     }
 });
 

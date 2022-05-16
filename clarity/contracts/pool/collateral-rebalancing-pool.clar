@@ -159,7 +159,7 @@
             (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
         )
         (if (>= ltv (get conversion-ltv pool))
-            (ok u100000) ;; move everything to risk-free asset
+            (ok u5000000) ;; move everything to risk-free asset
             (let 
                 (
                     (t (/ (* (- expiry block-height) ONE_8) u52560))
