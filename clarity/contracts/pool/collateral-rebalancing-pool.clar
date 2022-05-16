@@ -1396,6 +1396,39 @@
     (default-to u0 (map-get? pool-total-supply pool-token))
 )
 
+(define-public (buy-to-yield-token-pool-and-mint-auto 
+    (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
+    (let 
+        (
+            (added (try! (contract-call? .yield-token-pool buy-and-add-to-position (try! (get-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx)))            
+        )
+        (mint-auto pool-token-trait auto-token-trait (get supply added))
+    )
+)
+
+(define-public (add-to-yield-token-pool-and-mint-auto 
+    (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
+    (let 
+        (
+            (added (try! (contract-call? .yield-token-pool add-to-position (try! (get-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx max-dy)))            
+        )
+        (mint-auto pool-token-trait auto-token-trait (get supply added))
+    )
+)
+
+(define-public (redeem-auto-and-reduce-from-yield-token-pool 
+    (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
+    (let 
+        (
+            (expiry (try! (get-expiry (contract-of pool-token-trait))))
+            (pool-to-reduce (get pool-to-reduce (try! (redeem-auto pool-token-trait auto-token-trait percent))))
+            (pool-token-held (unwrap-panic (contract-call? pool-token-trait get-balance-fixed expiry tx-sender)))
+            (percent-to-reduce (if (is-eq pool-token-held u0) ONE_8 (div-down pool-to-reduce (+ pool-to-reduce pool-token-held))))
+        )
+        (contract-call? .yield-token-pool reduce-position expiry yield-token-trait token-trait pool-token-trait percent-to-reduce)
+    )
+)
+
 (define-public (mint-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let
         (
@@ -1413,7 +1446,7 @@
         (map-set pool-total-supply pool-token (+ (get-pool-total-supply-or-default pool-token) dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
         (print { object: "pool", action: "liquidity-added", data: auto-to-add })
-        (ok true)
+        (ok auto-to-add)
     )
 )
 
@@ -1435,7 +1468,7 @@
         (map-set pool-total-supply pool-token (- (get-pool-total-supply-or-default pool-token) pool-to-reduce))
         (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
         (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })
-        (ok true)
+        (ok {auto-to-reduce: auto-to-reduce, pool-to-reduce: pool-to-reduce})
     )     
 )
 
@@ -1465,7 +1498,7 @@
                 (new-pool-supply 
                     (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
                         (get supply (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) amount-net-bounty u0))))
-                        (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty none))))
+                        (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty))))
                     )                
                 )                
             )
