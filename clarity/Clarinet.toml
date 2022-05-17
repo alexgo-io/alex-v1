@@ -529,6 +529,10 @@ depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-a
 path = "contracts/helpers/swap-helper-v1-01.clar"
 depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-alex" ]
 
+[contracts.swap-helper-v1-02]
+path = "contracts/helpers/swap-helper-v1-02.clar"
+depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-alex" ]
+
 [contracts.simple-equation]
 path = "contracts/equations/simple-equation.clar"
 depends_on = [ "math-fixed-point" ]
