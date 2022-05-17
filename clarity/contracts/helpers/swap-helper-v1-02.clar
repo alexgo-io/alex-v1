@@ -104,50 +104,52 @@
         )        
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)           
             (if (is-eq token-x .token-wstx)
-                (let ((dy (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 dx min-dy)))))
+                (let ((output (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 dx min-dy)))))
                     (map-set fwp-oracle-resilient-map { token-x: token-x, token-y: token-y } (try! (fwp-oracle-resilient-internal token-x token-y)))
-                    (ok dy)
+                    (ok output)
                 )
                 (if (is-eq token-y .token-wstx)
-                    (let ((dx (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx min-dy)))))
+                    (let ((output (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx min-dy)))))
                         (map-set fwp-oracle-resilient-map { token-x: token-y, token-y: token-x } (try! (fwp-oracle-resilient-internal token-y token-x)))
-                        (ok dx)
+                        (ok output)
                     )
-                    (let ((dy (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
+                    (let ((output (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
                                     (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) min-dy)))))
                         (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-x } (try! (fwp-oracle-resilient-internal .token-wstx token-x)))
                         (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-y } (try! (fwp-oracle-resilient-internal .token-wstx token-y)))
-                        (ok dy)
+                        (ok output)
                     )
                 )
             )
             (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy)))
+                (ok (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy))))
                 (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
                     (if (is-eq token-x .token-wstx)
-                                (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 dx none))) min-dy))) 
-                                (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 
-                                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) none))) min-dy)))
-                            )
-                            (if (is-eq token-y .token-wstx)
-                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
-                                    (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))                        
-                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
-                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
-                                        (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) none))) min-dy)))
-                            )
+                        (let ((output (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 dx none))) min-dy)))))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: .age000-governance-token } (try! (fwp-oracle-resilient-internal .token-wstx .age000-governance-token)))
+                            (ok output)
                         )
-                        (if (is-eq token-x .token-wstx)
-                            (map-set fwp-oracle-resilient-map { token-x: token-x, token-y: token-y } (try! (fwp-oracle-resilient-internal token-x token-y)))
-                            (if (is-eq token-y .token-wstx)
-                                (map-set fwp-oracle-resilient-map { token-x: token-y, token-y: token-x } (try! (fwp-oracle-resilient-internal token-y token-x)))
-                                (begin 
-                                    (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-x } (try! (fwp-oracle-resilient-internal .token-wstx token-x)))
-                                    (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-y } (try! (fwp-oracle-resilient-internal .token-wstx token-y)))
-                                )
-                            )
+                        (let ((output (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) none))) min-dy)))))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-x } (try! (fwp-oracle-resilient-internal .token-wstx token-x)))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: .age000-governance-token } (try! (fwp-oracle-resilient-internal .token-wstx .age000-governance-token)))
+                            (ok output)
+                        )
+                    )
+                    (if (is-eq token-y .token-wstx)
+                        (let ((output (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
+                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: .age000-governance-token } (try! (fwp-oracle-resilient-internal .token-wstx .age000-governance-token)))
+                            (ok output)
+                        )
+                        (let ((output (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
+                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) none))) min-dy)))))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-y } (try! (fwp-oracle-resilient-internal .token-wstx token-y)))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: .age000-governance-token } (try! (fwp-oracle-resilient-internal .token-wstx .age000-governance-token)))
+                            (ok output)
                         )
                     )
                 )
