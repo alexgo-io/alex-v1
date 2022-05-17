@@ -1320,6 +1320,7 @@
 (define-map auto-total-supply principal uint) ;; auto-token => supply
 (define-map pool-total-supply principal uint) ;; pool token => supply
 (define-map activation-block principal uint) ;; pool token => activation-block
+(define-map pool-expiry principal uint) ;; pool token => last rolled expiry
 (define-map bounty-in-fixed principal uint) ;; fixed bounty amount (in fixed notation)
 
 (define-data-var expiry-cycle-length uint u1050) ;; number of block-heights per cycle
@@ -1364,7 +1365,7 @@
 )
 
 (define-read-only (get-last-expiry (pool-token principal))
-    (ok (- (try! (get-expiry pool-token)) (var-get expiry-cycle-length)))
+    (ok (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
 )
 
 (define-read-only (get-expiry (pool-token principal))
@@ -1380,7 +1381,8 @@
 (define-public (set-approved-pair (auto-token principal) (pool-token principal))
     (begin 
         (try! (check-is-owner))
-        (ok (map-set approved-pair auto-token pool-token))
+        (map-set approved-pair auto-token pool-token)
+        (ok (map-set pool-expiry pool-token (try! (get-expiry pool-token))))
     )
 )
 
@@ -1442,7 +1444,7 @@
             (auto-token (contract-of auto-token-trait))
             (auto-to-add (match (map-get? pool-total-supply pool-token) value (div-down (mul-down dx (get-auto-total-supply-or-default auto-token)) value) dx))
             (pool-to-add (+ dx (get-pool-total-supply-or-default pool-token)))
-            (expiry (try! (get-expiry pool-token)))
+            (expiry (try! (get-last-expiry pool-token)))
             (sender tx-sender)
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -1464,7 +1466,7 @@
             (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
             (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
             (pool-to-reduce (div-down (mul-down (get-pool-total-supply-or-default pool-token) auto-to-reduce) (get-auto-total-supply-or-default auto-token)))
-            (expiry (try! (get-expiry pool-token)))
+            (expiry (try! (get-last-expiry pool-token)))
             (sender tx-sender)
         )
         (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
@@ -1510,6 +1512,7 @@
             )
             (as-contract (try! (contract-call? pool-token-trait transfer-fixed expiry-to-roll new-pool-supply tx-sender .alex-vault)))
             (map-set pool-total-supply pool-token new-pool-supply)
+            (map-set pool-expiry pool-token expiry-to-roll)
             (if (is-eq token .age000-governance-token)
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-token tx-sender sender none))))
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (try! (swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none))))
@@ -1566,7 +1569,8 @@
             (asserts! (>= swapped-collateral-with-fee loan-amount) ERR-ROLL-FLASH-LOAN-FEE)
             (as-contract (try! (contract-call? collateral-trait transfer-fixed swapped-collateral-with-fee tx-sender .alex-vault none)))
             (as-contract (try! (contract-call? key-token-trait transfer-fixed expiry-to-roll (get key-token minted) tx-sender .alex-vault)))
-            (map-set pool-total-supply key-token (get key-token minted))            
+            (map-set pool-total-supply key-token (get key-token minted))    
+            (map-set pool-expiry key-token expiry-to-roll)        
             (if (is-eq collateral .age000-governance-token)
                 (and (> bounty-in-collateral u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-collateral tx-sender sender none))))
                 (and (> bounty-in-collateral u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (try! (swap-helper collateral-trait .age000-governance-token bounty-in-collateral none)) tx-sender sender none))))
@@ -1601,6 +1605,7 @@
             )            
             (as-contract (try! (contract-call? yield-token-trait transfer-fixed expiry-to-roll new-supply tx-sender .alex-vault)))
             (map-set pool-total-supply yield-token new-supply)
+            (map-set pool-expiry yield-token expiry-to-roll)
             (if (is-eq token .age000-governance-token)
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-token tx-sender sender none))))
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (try! (swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none))))

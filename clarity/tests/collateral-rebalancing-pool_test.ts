@@ -141,30 +141,30 @@ Clarinet.test({
 
         result = CRPTest.swapYForX(deployer, wbtcAddress, usdaAddress, expiry, 0.0002 * ONE_8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(20441);
+        position['dx'].expectUint(21674);
         position['dy'].expectUint(0.0002 * ONE_8);        
 
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, 0.1 * wbtcQ);
         position = result.expectOk().expectTuple();
-        position['dy'].expectUint(7058235);
-        position['dx'].expectUint(7038041);
+        position['dy'].expectUint(7058298);
+        position['dx'].expectUint(7038100);
 
         // supply increased
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(70000000 + 7058235);
-        position['key-supply'].expectUint(70000000 + 7058235)
+        position['yield-supply'].expectUint(70000000 + 7058298);
+        position['key-supply'].expectUint(70000000 + 7058298)
 
         // pool value increases after adding positions
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(150879064);
+        call.result.expectOk().expectUint(150847240);
         
         call = await CRPTest.getPoolValueInCollateral(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(152755028);
+        call.result.expectOk().expectUint(152731396);
         
         // let's check what is the weight to usda (collateral)
         call = await CRPTest.getWeightX(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(85827262);                     
+        call.result.expectOk().expectUint(83635170);                     
         
         // simulate to expiry
         chain.mineEmptyBlockUntil(expiry) 
@@ -177,7 +177,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(expiry + 1)  
         
         call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-        call.result.expectOk().expectUint(150879064)
+        call.result.expectOk().expectUint(150847240)
 
         // deployer holds less than total supply because he sold some yield-wbtc for wbtc
         result = CRPTest.reducePositionYield(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, ONE_8);        
@@ -188,8 +188,8 @@ Clarinet.test({
         // most of yield-token burnt, but key-token remains
         call = await CRPTest.getPoolDetails(wbtcAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['yield-supply'].expectUint(70000000 + 7058235 - 70000000);
-        position['key-supply'].expectUint(70000000 + 7058235);
+        position['yield-supply'].expectUint(70000000 + 7058298 - 70000000);
+        position['key-supply'].expectUint(70000000 + 7058298);
     
         // also remove all key tokens
         result = CRPTest.reducePositionKeyMany(deployer, wbtcAddress, usdaAddress, keywbtcAddress, ONE_8, [expiry]);        
