@@ -191,7 +191,7 @@ import {
       position["weight-y"].expectUint(ONE_8 - 74579456);
       position["balance-x"].expectUint(3728972800000);
       position["balance-y"].expectUint(25260013);
-      position["strike"].expectUint(ltv_0 * ONE_8 / wbtcPrice);
+      position["strike"].expectUint((ONE_8 + ltv_0) * ONE_8 / 2 / wbtcPrice);
       position["ltv-0"].expectUint(ltv_0);
       position["bs-vol"].expectUint(bs_vol);
       position["conversion-ltv"].expectUint(conversion_ltv);

@@ -92,6 +92,22 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);   
         
         block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "set-expiry-cycle-length",
+                [types.uint(1234)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
+                [types.principal(ytpAlexAddress), types.uint(ACTIVATION_BLOCK)],
+                deployer.address
+            ),    
+            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
+                [types.principal(keyAlexAutoalexAddress), types.uint(ACTIVATION_BLOCK)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
+                [types.principal(yieldAlexAddress), types.uint(ACTIVATION_BLOCK)],
+                deployer.address
+            ),              
             Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
                 [types.principal(autoYtpAlexAddress), types.principal(ytpAlexAddress)],
                 deployer.address
@@ -115,23 +131,7 @@ Clarinet.test({
             Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
                 [types.principal(autoYieldAlexAddress), types.uint(FIXED_BOUNTY)],
                 deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-expiry-cycle-length",
-                [types.uint(1234)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
-                [types.principal(ytpAlexAddress), types.uint(ACTIVATION_BLOCK)],
-                deployer.address
-            ),    
-            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
-                [types.principal(keyAlexAutoalexAddress), types.uint(ACTIVATION_BLOCK)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-activation-block",
-                [types.principal(yieldAlexAddress), types.uint(ACTIVATION_BLOCK)],
-                deployer.address
-            ),                         
+            ),                       
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(alexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoAlexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoYtpAlexAddress)], deployer.address),               
