@@ -1493,7 +1493,7 @@
     (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let 
         (
-            (added (try! (contract-call? .yield-token-pool buy-and-add-to-position (try! (get-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx)))            
+            (added (try! (contract-call? .yield-token-pool buy-and-add-to-position (try! (get-last-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx)))            
         )
         (mint-auto pool-token-trait auto-token-trait (get supply added))
     )
@@ -1503,7 +1503,7 @@
     (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
     (let 
         (
-            (added (try! (contract-call? .yield-token-pool add-to-position (try! (get-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx max-dy)))            
+            (added (try! (contract-call? .yield-token-pool add-to-position (try! (get-last-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx max-dy)))            
         )
         (mint-auto pool-token-trait auto-token-trait (get supply added))
     )
@@ -1513,7 +1513,7 @@
     (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
     (let 
         (
-            (expiry (try! (get-expiry (contract-of pool-token-trait))))
+            (expiry (try! (get-last-expiry (contract-of pool-token-trait))))
             (pool-to-reduce (get pool-to-reduce (try! (redeem-auto pool-token-trait auto-token-trait percent))))
             (pool-token-held (unwrap-panic (contract-call? pool-token-trait get-balance-fixed expiry tx-sender)))
             (percent-to-reduce (if (is-eq pool-token-held u0) ONE_8 (div-down pool-to-reduce (+ pool-to-reduce pool-token-held))))
