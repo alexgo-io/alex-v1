@@ -1565,6 +1565,13 @@
     )     
 )
 
+(define-public (roll-auto (pool-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-pool-trait <ft-trait>) (auto-key-trait <ft-trait>))
+    (begin 
+        (try! (roll-auto-pool yield-token-trait token-trait collateral-trait pool-token-trait auto-pool-trait))
+        (roll-auto-key token-trait collateral-trait yield-token-trait key-token-trait auto-key-trait)
+    )
+)
+
 (define-public (roll-auto-pool (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
     (let 
         (

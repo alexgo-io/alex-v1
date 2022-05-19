@@ -398,26 +398,18 @@ Clarinet.test({
                     types.uint(1.1e8)
                 ], deployer.address
             ),        
-            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-pool",
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto",
                 [
-                    types.principal(yieldAlexAddress),
-                    types.principal(alexAddress),
-                    types.principal(autoAlexAddress),
                     types.principal(ytpAlexAddress),
-                    types.principal(autoYtpAlexAddress)
-                ],
-                wallet_1.address
-            ),            
-            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
-                [
                     types.principal(alexAddress),
                     types.principal(autoAlexAddress),
                     types.principal(yieldAlexAddress),
                     types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoYtpAlexAddress),
                     types.principal(autoKeyAlexAutoalexAddress)
                 ],
                 wallet_1.address
-            ),
+            ),            
             Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch",
                 [
                     types.principal(alexAddress),
