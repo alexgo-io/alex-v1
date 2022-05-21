@@ -16,8 +16,8 @@
 (define-data-var contract-owner principal tx-sender)
 
 ;; max in/out as % of liquidity
-(define-data-var MAX-IN-RATIO uint (* u1 (pow u10 u6))) ;; 1%
-(define-data-var MAX-OUT-RATIO uint (* u1 (pow u10 u6))) ;; 1%
+(define-data-var MAX-IN-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+(define-data-var MAX-OUT-RATIO uint (* u5 (pow u10 u6))) ;; 5%
 
 
 ;; @desc get-contract-owner
