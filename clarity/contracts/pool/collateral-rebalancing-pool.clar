@@ -1467,7 +1467,9 @@
     (begin 
         (try! (check-is-owner))
         (map-set approved-pair auto-token pool-token)
-        (ok (map-set pool-expiry pool-token (try! (get-expiry pool-token))))
+        (map-set pool-expiry pool-token (try! (get-expiry pool-token)))
+        (map-delete )
+        (ok )
     )
 )
 
