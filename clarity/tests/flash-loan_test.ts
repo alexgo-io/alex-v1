@@ -108,6 +108,14 @@ Clarinet.test({
         result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
         result.expectOk().expectTuple();
         
+        let block = chain.mineBlock([   
+            Tx.contractCall("collateral-rebalancing-pool", "set-strike-multiplier",
+                [types.uint(0.5e8)],
+                deployer.address
+            ),
+        ])
+        block.receipts.forEach(e => { e.result.expectOk() });    
+
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, expiry, yieldusdaAddress, keyusdaAddress, multisigncrpusdaAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 100*ONE_8);
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, wbtcAddress, expiry, yieldusdaAddress, keyusdawbtcAddress, multisigncrpusdawbtcAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
