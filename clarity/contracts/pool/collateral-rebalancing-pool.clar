@@ -1406,7 +1406,7 @@
 (define-map pool-total-supply principal uint) ;; pool token => supply
 (define-map activation-block principal uint) ;; pool token => activation-block
 (define-map pool-expiry principal uint) ;; pool token => last rolled expiry
-(define-map bounty-in-fixed principal uint) ;; fixed bounty amount (in fixed notation)
+(define-map bounty-in-fixed principal uint) ;; auto token => fixed bounty amount (in fixed notation)
 
 (define-data-var expiry-cycle-length uint u1050) ;; number of block-heights per cycle
 
@@ -1423,13 +1423,6 @@
 
 (define-read-only (get-activation-block-or-default (pool-token principal))
   (default-to u340282366920938463463374607431768211455 (map-get? activation-block pool-token))
-)
-
-(define-public (set-activation-block (pool-token principal) (new-activation-block uint))
-  (begin
-    (try! (check-is-owner))
-    (ok (map-set activation-block pool-token new-activation-block))
-  )
 )
 
 (define-read-only (get-expiry-cycle (pool-token principal) (stacks-height uint))
@@ -1463,10 +1456,14 @@
     (map-get? approved-pair auto-token)
 )
 
-(define-public (set-approved-pair (auto-token principal) (pool-token principal))
+(define-public (set-approved-pair (auto-token principal) (pool-token principal) (new-activation-block uint) (new-bounty-in-fixed uint))
     (begin 
         (try! (check-is-owner))
+        (map-delete auto-total-supply auto-token)
+        (map-delete pool-total-supply pool-token)        
         (map-set approved-pair auto-token pool-token)
+        (map-set activation-block pool-token new-activation-block)
+        (map-set bounty-in-fixed auto-token new-bounty-in-fixed)        
         (ok (map-set pool-expiry pool-token (try! (get-expiry pool-token))))
     )
 )
@@ -1527,16 +1524,25 @@
         (
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (auto-to-add (match (map-get? pool-total-supply pool-token) value (div-down (mul-down dx (get-auto-total-supply-or-default auto-token)) value) dx))
-            (pool-to-add (+ dx (get-pool-total-supply-or-default pool-token)))
+            (auto-supply (get-auto-total-supply-or-default auto-token))
+            (pool-supply (get-pool-total-supply-or-default pool-token))
+            (auto-to-add (if (is-eq pool-supply u0) dx (div-down (mul-down dx auto-supply) pool-supply)))
+            (pool-to-add (+ dx pool-supply))
             (expiry (try! (get-last-expiry pool-token)))
             (sender tx-sender)
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
+        (asserts! 
+            (or 
+                (and (is-eq auto-supply u0) (is-eq pool-supply u0))
+                (and (> auto-supply u0) (> pool-supply u0))
+            )
+            ERR-INVALID-LIQUIDITY
+        )
         (try! (contract-call? pool-token-trait transfer-fixed expiry dx sender .alex-vault))
-        (map-set auto-total-supply auto-token (+ (get-auto-total-supply-or-default auto-token) auto-to-add))
-        (map-set pool-total-supply pool-token (+ (get-pool-total-supply-or-default pool-token) dx))
+        (map-set auto-total-supply auto-token (+ auto-supply auto-to-add))
+        (map-set pool-total-supply pool-token (+ pool-supply dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
         (print { object: "pool", action: "liquidity-added", data: auto-to-add })
         (ok auto-to-add)
@@ -1544,21 +1550,24 @@
 )
 
 (define-public (redeem-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
-    (let 
+    (let
         (
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
+            (auto-supply (get-auto-total-supply-or-default auto-token))
+            (pool-supply (get-pool-total-supply-or-default pool-token))                
             (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
             (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-            (pool-to-reduce (div-down (mul-down (get-pool-total-supply-or-default pool-token) auto-to-reduce) (get-auto-total-supply-or-default auto-token)))
+            (pool-to-reduce (if (is-eq auto-supply u0) u0 (div-down (mul-down pool-supply auto-to-reduce) auto-supply)))
             (expiry (try! (get-last-expiry pool-token)))
             (sender tx-sender)
         )
-        (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
+        (asserts! (and (> auto-supply u0) (> pool-supply u0)) ERR-INVALID-LIQUIDITY)
+        (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
         (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry pool-to-reduce sender)))
-        (map-set auto-total-supply auto-token (- (get-auto-total-supply-or-default auto-token) auto-to-reduce))
-        (map-set pool-total-supply pool-token (- (get-pool-total-supply-or-default pool-token) pool-to-reduce))
+        (map-set auto-total-supply auto-token (- auto-supply auto-to-reduce))
+        (map-set pool-total-supply pool-token (- pool-supply pool-to-reduce))
         (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
         (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })
         (ok {auto-to-reduce: auto-to-reduce, pool-to-reduce: pool-to-reduce})

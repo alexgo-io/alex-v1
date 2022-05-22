@@ -485,7 +485,7 @@
             (dy (try! (get-y-given-x-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dx)))
         )
         (asserts! (> (get balance-yield-token pool) dy) ERR-DY-BIGGER-THAN-AVAILABLE)
-        (ok dy)        
+        (ok (if (< dy dx) dx dy))        
     )
 )
 
@@ -493,8 +493,9 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))            
+            (dy (try! (get-y-in-given-x-out-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dx)))
         )
-        (get-y-in-given-x-out-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dx)
+        (ok (if (< dy dx) dx dy))        
     )
 )
 
@@ -502,8 +503,9 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+            (dx (try! (get-x-given-y-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dy)))
         )
-        (get-x-given-y-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dy)
+        (ok (if (< dy dx) dy dx))        
     )
 )
 
@@ -514,7 +516,7 @@
             (dx (try! (get-x-in-given-y-out-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dy)))
         )
         (asserts! (> (get balance-yield-token pool) dy) ERR-DY-BIGGER-THAN-AVAILABLE)
-        (ok dx)        
+        (ok (if (< dy dx) dy dx))        
     )
 )
 

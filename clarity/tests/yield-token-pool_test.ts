@@ -283,7 +283,7 @@ Clarinet.test({
         result = YTPTest.swapXForY(deployer, expiry, yieldwbtcAddress, wbtcAddress, 19*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(19*ONE_8);
-        position['dy'].expectUint(1899996626);
+        position['dy'].expectUint(1900000000);
 
         // on expiry, the prices are back to parity.
         call = chain.callReadOnlyFn("yield-token-pool", "get-price", 
@@ -305,7 +305,7 @@ Clarinet.test({
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(50000000000 + 103006072500);
         position['balance-token'].expectUint(150440827526);
-        position['balance-yield-token'].expectUint(2603373215);
+        position['balance-yield-token'].expectUint(2603369841);
         position['balance-virtual'].expectUint(153006071749);          
         
         call = chain.callReadOnlyFn(ytpyieldwbtcAddress, "get-balance-fixed", 
@@ -317,14 +317,14 @@ Clarinet.test({
         result = YTPTest.reducePosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, ONE_8);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(150440827526);
-        position['dy'].expectUint(2603372467);        
+        position['dy'].expectUint(2603369299);        
 
         // Check pool details and print
         call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(0);
         position['balance-token'].expectUint(0);
-        position['balance-yield-token'].expectUint(748);
+        position['balance-yield-token'].expectUint(542);
         position['balance-virtual'].expectUint(0);    
     },    
 });
