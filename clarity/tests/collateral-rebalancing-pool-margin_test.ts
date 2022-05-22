@@ -337,7 +337,7 @@ Clarinet.test({
         const usda_balance = Number(call.result.expectOk().replace(/\D/g, ""));            
  
         const block = chain.mineBlock(
-            [
+            [              
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
                     types.principal(usdaAddress), 

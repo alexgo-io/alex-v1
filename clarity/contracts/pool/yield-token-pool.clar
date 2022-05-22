@@ -52,6 +52,13 @@
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
+)
+
 (define-map pools-data-map
   {
     yield-token: principal, 
@@ -329,7 +336,6 @@
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))
-                ;; (t (try! (get-t expiry (get listed pool))))
                 (fee-yield (mul-down (try! (get-yield expiry yield-token)) (get fee-rate-yield-token pool)))
                 (dx-net-fees (mul-down dx (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
@@ -347,7 +353,7 @@
                 (sender tx-sender)                
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            ;; (asserts! (and (> dx-net-fees u0) (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (and (> dx-net-fees u0) (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy sender))))
@@ -368,8 +374,7 @@
                 (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
-                (balance-virtual (get balance-virtual pool))
-                ;; (t (try! (get-t expiry (get listed pool))))                
+                (balance-virtual (get balance-virtual pool))         
                 (fee-yield (mul-down (try! (get-yield expiry yield-token)) (get fee-rate-token pool)))
                 (dy-net-fees (mul-down dy (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
@@ -387,7 +392,7 @@
                 (sender tx-sender)
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            ;; (asserts! (and (> dx u0) (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (and (> dx u0) (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
@@ -408,7 +413,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rebate: fee-rebate }))
         (ok true)
     )
@@ -437,7 +442,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-yield-token: fee-rate-yield-token }))
         (ok true)
     
@@ -449,7 +454,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rate-token: fee-rate-token }))
         (ok true) 
     )

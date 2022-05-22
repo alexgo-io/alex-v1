@@ -92,6 +92,18 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);   
         
         block = chain.mineBlock([
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract",
+                [types.principal(wallet_1.address), types.bool(true)],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract",
+                [types.principal(deployer.address), types.bool(true)],
+                deployer.address
+            ),    
+            Tx.contractCall("collateral-rebalancing-pool", "set-strike-multiplier",
+                [types.uint(0.5e8)],
+                deployer.address
+            ),
             Tx.contractCall("collateral-rebalancing-pool", "set-expiry-cycle-length",
                 [types.uint(1234)],
                 deployer.address
@@ -285,7 +297,7 @@ Clarinet.test({
         result = YTPTest.createPool(deployer, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, multisigYtpAlexAddress, liquidity, 0);
         result.expectOk();
         result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
-        result.expectOk();
+        result.expectOk();        
 
         result = YTPTest.addToPosition(wallet_1, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, ONE_8, Number.MAX_SAFE_INTEGER);
         result.expectOk();

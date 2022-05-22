@@ -423,7 +423,7 @@ path = "contracts/key-token/key-wstx-wbtc.clar"
 depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.key-wstx-alex]
-path = "contracts/key-token/key-wstx-wbtc.clar"
+path = "contracts/key-token/key-wstx-alex.clar"
 depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.token-t-alex]
