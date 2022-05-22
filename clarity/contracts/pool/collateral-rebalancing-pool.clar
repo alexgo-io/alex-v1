@@ -31,6 +31,7 @@
 (define-constant two-squared u141421356)
 
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -46,6 +47,17 @@
 
 (define-private (check-is-self)
   (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
 )
 
 (define-data-var shortfall-coverage uint u110000000) ;; 1.1x
@@ -403,8 +415,9 @@
 
 (define-public (swap-x-for-y (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
+        (try! (check-is-approved))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (<= block-height expiry) ERR-EXPIRY)            
+        (asserts! (<= block-height expiry) ERR-EXPIRY)                    
         (let
             (
                 (token-x (contract-of collateral-trait))
@@ -445,6 +458,7 @@
 
 (define-public (swap-y-for-x (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
+        (try! (check-is-approved))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         (asserts! (<= block-height expiry) ERR-EXPIRY)              
         (let
@@ -1398,6 +1412,21 @@
     )  
 )
 
+(define-public (roll-deposit-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (expiry-to-roll uint) (percent uint) (expiries (list 10 uint)))
+    (ok
+        (map
+            roll-deposit
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
+            expiries
+            (list yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait)
+            (list expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll)
+            (list percent percent percent percent percent percent percent percent percent percent)
+            (list none none none none none none none none none none)
+        )
+    )
+)
+
 (define-public (roll-deposit (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (expiry-to-roll uint) (percent uint) (min-dy (optional uint)))
     (contract-call? .yield-token-pool swap-x-for-y expiry-to-roll yield-token-trait token-trait (get dy (try! (reduce-position-yield token-trait collateral-trait expiry yield-token-trait percent))) min-dy)
 )
@@ -1493,7 +1522,7 @@
         (
             (added (try! (contract-call? .yield-token-pool buy-and-add-to-position (try! (get-last-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx)))            
         )
-        (mint-auto pool-token-trait auto-token-trait (get supply added))
+        (mint-auto-internal pool-token-trait auto-token-trait (get supply added))
     )
 )
 
@@ -1503,7 +1532,20 @@
         (
             (added (try! (contract-call? .yield-token-pool add-to-position (try! (get-last-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx max-dy)))            
         )
-        (mint-auto pool-token-trait auto-token-trait (get supply added))
+        (mint-auto-internal pool-token-trait auto-token-trait (get supply added))
+    )
+)
+
+(define-public (buy-to-key-token-and-mint-auto 
+    (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+    (let 
+        (
+            (expiry (try! (get-last-expiry (contract-of key-token-trait))))
+            (new-supply (try! (add-to-position token-trait collateral-trait expiry yield-token-trait key-token-trait dx)))
+        )
+        (try! (check-is-approved))
+        (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait (get yield-token new-supply) min-dy))
+        (mint-auto-internal key-token-trait auto-token-trait (get key-token new-supply))
     )
 )
 
@@ -1512,7 +1554,7 @@
     (let 
         (
             (expiry (try! (get-last-expiry (contract-of pool-token-trait))))
-            (pool-to-reduce (get pool-to-reduce (try! (redeem-auto pool-token-trait auto-token-trait percent))))
+            (pool-to-reduce (get pool-to-reduce (try! (redeem-auto-internal pool-token-trait auto-token-trait percent))))
             (pool-token-held (unwrap-panic (contract-call? pool-token-trait get-balance-fixed expiry tx-sender)))
             (percent-to-reduce (if (is-eq pool-token-held u0) ONE_8 (div-down pool-to-reduce (+ pool-to-reduce pool-token-held))))
         )
@@ -1521,6 +1563,13 @@
 )
 
 (define-public (mint-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
+    (begin 
+        (try! (check-is-approved))
+        (mint-auto-internal pool-token-trait auto-token-trait dx)
+    )
+)
+
+(define-private (mint-auto-internal (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let
         (
             (pool-token (contract-of pool-token-trait))
@@ -1551,6 +1600,13 @@
 )
 
 (define-public (redeem-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
+    (begin 
+        (try! (check-is-approved))
+        (redeem-auto-internal pool-token-trait auto-token-trait percent)
+    )
+)
+
+(define-private (redeem-auto-internal (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
     (let
         (
             (pool-token (contract-of pool-token-trait))
@@ -1577,6 +1633,7 @@
 
 (define-public (roll-auto (pool-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-pool-trait <ft-trait>) (auto-key-trait <ft-trait>))
     (begin 
+        (try! (check-is-approved))
         (try! (roll-auto-pool yield-token-trait token-trait collateral-trait pool-token-trait auto-pool-trait))
         (roll-auto-key token-trait collateral-trait yield-token-trait key-token-trait auto-key-trait)
     )
@@ -1593,6 +1650,7 @@
             (expiry (try! (get-last-expiry pool-token)))
             (expiry-to-roll (try! (get-expiry pool-token)))
         )
+        (try! (check-is-approved))
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
         (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry (get-pool-total-supply-or-default pool-token) tx-sender)))
         (let
@@ -1635,6 +1693,7 @@
             (expiry (try! (get-last-expiry key-token)))
             (expiry-to-roll (try! (get-expiry key-token)))
         )
+        (try! (check-is-approved))
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) key-token) ERR-NOT-AUTHORIZED)
         (asserts! (is-ok (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token)) ERR-NOT-AUTHORIZED)
         (as-contract (try! (contract-call? .alex-vault transfer-sft key-token-trait expiry (get-pool-total-supply-or-default key-token) tx-sender)))
@@ -1692,6 +1751,7 @@
             (expiry (try! (get-last-expiry yield-token)))
             (expiry-to-roll (try! (get-expiry yield-token)))
         )
+        (try! (check-is-approved))
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) yield-token) ERR-NOT-AUTHORIZED)
         (asserts! (is-ok (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token)) ERR-NOT-AUTHORIZED)
         (asserts! (is-ok (get-pool-details token collateral expiry-to-roll)) ERR-NOT-AUTHORIZED)

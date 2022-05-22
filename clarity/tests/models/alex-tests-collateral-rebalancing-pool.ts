@@ -385,7 +385,17 @@ import {
         ], user.address),
       ]);
       return block.receipts[0].result;
-    }      
+    }
+    
+    setApprovedContract(user: Account, owner: string, approved: boolean) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract", [
+          types.principal(owner),
+          types.bool(approved)
+        ], user.address),        
+      ]);
+      return block.receipts[0].result;
+    }
     
   }
   

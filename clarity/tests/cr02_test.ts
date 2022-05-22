@@ -177,7 +177,7 @@ import {
       // call.result.expectOk();
   
       call = await CRPTest.getPoolValueInToken(wbtcAddress, usdaAddress, expiry);
-      call.result.expectOk().expectUint(99764889);
+      call.result.expectOk().expectUint(99897987);
         
       call = await CRPTest.getLtv(wbtcAddress, usdaAddress, expiry);
       call.result.expectOk().expectUint(80188532);
