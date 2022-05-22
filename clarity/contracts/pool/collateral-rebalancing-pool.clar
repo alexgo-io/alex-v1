@@ -205,8 +205,9 @@
             (
                 (token-x (contract-of collateral-trait))
                 (token-y (contract-of token-trait))
-                (t (/ (* (- expiry block-height) ONE_8) u52560))                          
-                (d1 (div-down (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
+                (t (/ (* (- expiry block-height) ONE_8) u52560))
+                (strike (mul-down spot (+ (mul-down (var-get strike-multiplier) ltv-0) (mul-down (- ONE_8 (var-get strike-multiplier)) ONE_8))))                          
+                (d1 (div-down (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (- ONE_8 strike)) (mul-down bs-vol (pow-down t u50000000))))
                 (erf-term (erf (div-down d1 two-squared)))
                 (weighted (/ (+ ONE_8 erf-term) u2))
                 (weight-x (if (< weighted u95000000) weighted u95000000))
@@ -219,7 +220,7 @@
                     fee-to-address: multisig-vote,
                     yield-token: (contract-of yield-token-trait),
                     key-token: (contract-of key-token-trait),
-                    strike: (mul-down spot (+ (mul-down (var-get strike-multiplier) ltv-0) (mul-down (- ONE_8 (var-get strike-multiplier)) ONE_8))),
+                    strike: strike,
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
