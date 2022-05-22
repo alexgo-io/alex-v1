@@ -218,7 +218,7 @@
                 (token-x (contract-of collateral-trait))
                 (token-y (contract-of token-trait))
                 (t (/ (* (- expiry block-height) ONE_8) u52560))
-                (strike (mul-down spot (+ (mul-down (var-get strike-multiplier) ltv-0) (mul-down (- ONE_8 (var-get strike-multiplier)) ONE_8))))                          
+                (strike (+ (mul-down (var-get strike-multiplier) ltv-0) (mul-down (- ONE_8 (var-get strike-multiplier)) ONE_8)))                          
                 (d1 (div-down (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (- ONE_8 strike)) (mul-down bs-vol (pow-down t u50000000))))
                 (erf-term (erf (div-down d1 two-squared)))
                 (weighted (/ (+ ONE_8 erf-term) u2))
@@ -232,7 +232,7 @@
                     fee-to-address: multisig-vote,
                     yield-token: (contract-of yield-token-trait),
                     key-token: (contract-of key-token-trait),
-                    strike: strike,
+                    strike: (mul-down spot strike),
                     bs-vol: bs-vol,
                     fee-rate-x: u0,
                     fee-rate-y: u0,
@@ -505,7 +505,7 @@
 
 (define-public (set-fee-rebate (token principal) (collateral principal) (expiry uint) (fee-rebate uint))
     (begin 
-        (try! (check-is-owner))
+        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (ok (map-set pools-data-map { token-x: collateral, token-y: token, expiry: expiry } (merge (try! (get-pool-details token collateral expiry)) { fee-rebate: fee-rebate })))
     )
 )
@@ -520,14 +520,14 @@
 
 (define-public (set-fee-rate-x (token principal) (collateral principal) (expiry uint) (fee-rate-x uint))
     (let ((pool (try! (get-pool-details token collateral expiry))))
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (ok (map-set pools-data-map { token-x: collateral, token-y: token, expiry: expiry } (merge pool { fee-rate-x: fee-rate-x })))
     )
 )
 
 (define-public (set-fee-rate-y (token principal) (collateral principal) (expiry uint) (fee-rate-y uint))
     (let ((pool (try! (get-pool-details token collateral expiry))))
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (ok (map-set pools-data-map { token-x: collateral, token-y: token, expiry: expiry } (merge (try! (get-pool-details token collateral expiry)) { fee-rate-y: fee-rate-y })))
     )
 )
@@ -1665,7 +1665,15 @@
                 (pool (try! (contract-call? .yield-token-pool get-pool-details expiry yield-token)))
                 (new-pool-supply 
                     (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
-                        (get supply (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) amount-net-bounty u0))))
+                        (let 
+                            (
+                                (supply (get supply (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) amount-net-bounty u0)))))
+                            )
+                            (as-contract (try! (contract-call? .yield-token-pool set-fee-rebate expiry-to-roll yield-token (get fee-rebate pool))))
+                            (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry-to-roll yield-token (get fee-rate-yield-token pool))))
+                            (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry-to-roll yield-token (get fee-rate-token pool))))
+                            supply
+                        )
                         (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty))))
                     )                
                 )                
@@ -1719,7 +1727,15 @@
                 (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount tx-sender))))                
                 (minted
                     (if (is-err (get-pool-details token collateral expiry-to-roll))
-                        (as-contract (try! (create-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) spot gross-dx-net-fee)))
+                        (let
+                            (
+                                (created (as-contract (try! (create-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) spot gross-dx-net-fee))))
+                            )
+                            (as-contract (try! (set-fee-rebate token collateral expiry-to-roll (get fee-rebate pool))))
+                            (as-contract (try! (set-fee-rate-x token collateral expiry-to-roll (get fee-rate-x pool))))
+                            (as-contract (try! (set-fee-rate-y token collateral expiry-to-roll (get fee-rate-y pool))))
+                            created
+                        )
                         (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-net-fee)))
                     )
                 )                     
