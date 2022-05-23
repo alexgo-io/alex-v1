@@ -129,7 +129,7 @@
 )
 
 (define-read-only (get-spot (token principal) (collateral principal))
-    (ok (try! (oracle-resilient-helper collateral token)))
+    (oracle-resilient-helper collateral token)
 )
 
 (define-read-only (get-pool-value-in-token (token principal) (collateral principal) (expiry uint))
@@ -309,11 +309,11 @@
     (ok
         (map
             reduce-position-yield 
-            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
-            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
             expiries
-            (list yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait)
-            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
+            (list yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait)
+            (list percent percent percent percent percent percent percent percent percent percent)
         )
     )
 )
@@ -360,11 +360,11 @@
     (ok
         (map
             reduce-position-key 
-            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
-            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
             expiries
-            (list key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait)
-            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
+            (list key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait)
+            (list percent percent percent percent percent percent percent percent percent percent)
         )
     )
 )
@@ -1144,7 +1144,7 @@
 ;; @param token-x
 ;; @param token-y
 ;; @returns (response uint uint)
-(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+(define-private (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (let 
         (
             (token-x (contract-of token-x-trait))
