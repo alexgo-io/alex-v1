@@ -712,7 +712,7 @@
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num-uncapped (div-up ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (x-pow (pow-up balance-x t-comp))
         (y-pow (pow-up balance-y t-comp))
@@ -745,7 +745,7 @@
     (let 
       (          
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num-uncapped (div-up ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (x-pow (pow-up balance-x t-comp))
         (y-pow (pow-up balance-y t-comp))
