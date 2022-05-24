@@ -114,22 +114,35 @@
 )
 
 ;; @desc note yield is not annualised
+;; @desc get-yield
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @returns (response uint uint)
 (define-read-only (get-yield (expiry uint) (yield-token principal))
-    (let 
-        (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry}) ERR-INVALID-POOL))
-        )
-        (get-yield-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))))
-    )
+    (ok (- (try! (get-price expiry yield-token)) ONE_8))
 )
 
 ;; @desc yield-token per token
+;; @desc get-price
+;; @desc b_y = balance-yield-token
+;; @desc b_x = balance-token
+;; @desc price = (b_y / b_x) ^ t
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @returns (response uint uint)
 (define-read-only (get-price (expiry uint) (yield-token principal))
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+            (balance-x (get balance-token pool))
+            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
+            (t (try! (get-t expiry (get listed pool))))
+            (price (pow-up (div-down balance-y balance-x) t))
         )      
-        (get-price-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))))
+        (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
+        (ok (if (<= price ONE_8) ONE_8 price))        
     )
 )
 
@@ -336,7 +349,7 @@
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))
-                (fee-yield (mul-down (try! (get-yield expiry yield-token)) (get fee-rate-yield-token pool)))
+                (fee-yield (mul-up (try! (get-yield expiry yield-token)) (get fee-rate-yield-token pool)))
                 (dx-net-fees (mul-down dx (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
@@ -353,7 +366,7 @@
                 (sender tx-sender)                
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            ;; (asserts! (and (> dx-net-fees u0) (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token)))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy sender))))
@@ -375,7 +388,7 @@
                 (balance-token (get balance-token pool))
                 (balance-yield-token (get balance-yield-token pool))
                 (balance-virtual (get balance-virtual pool))         
-                (fee-yield (mul-down (try! (get-yield expiry yield-token)) (get fee-rate-token pool)))
+                (fee-yield (mul-up (try! (get-yield expiry yield-token)) (get fee-rate-token pool)))
                 (dy-net-fees (mul-down dy (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
@@ -392,7 +405,7 @@
                 (sender tx-sender)
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            ;; (asserts! (and (> dx u0) (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token)))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
@@ -525,40 +538,76 @@
     )
 )
 
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc spot = (b_y / b_x) ^ t
+;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-x-given-price (expiry uint) (yield-token principal) (price uint))
+  (begin
+    (asserts! (< price (try! (get-price expiry yield-token))) ERR-NO-LIQUIDITY) 
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+            (balance-x (get balance-token pool))
+            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
+            (t (try! (get-t expiry (get listed pool))))
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
+            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+            (lead-term (pow-down (div-down numer denom) t-comp-num))            
         )
-        (get-x-given-price-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) price)
+        (ok (if (<= lead-term ONE_8) u0 (mul-down balance-x (- lead-term ONE_8))))
     )
+  )
 )
 
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc spot = (b_y / b_x) ^ t
+;; @desc d_y = b_y - b_x * (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t))
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @param price; target price
+;; @returns (response uint uint)
 (define-read-only (get-y-given-price (expiry uint) (yield-token principal) (price uint))
+  (begin
+    (asserts! (> price (try! (get-price expiry yield-token))) ERR-NO-LIQUIDITY) 
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+            (balance-x (get balance-token pool))
+            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
+            (t (try! (get-t expiry (get listed pool))))
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
+            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+            (lead-term (mul-down balance-x (pow-down (div-down numer denom) t-comp-num)))            
         )
-        (get-y-given-price-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) price)
+        (ok (if (<= balance-y lead-term) u0 (- balance-y lead-term)))
     )
+  )
 )
 
 (define-read-only (get-x-given-yield (expiry uint) (yield-token principal) (yield uint))
-    (let 
-        (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-        )
-        (get-x-given-yield-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) yield)
-    )
+  (get-x-given-price expiry yield-token (+ yield ONE_8))
 )
 
 (define-read-only (get-y-given-yield (expiry uint) (yield-token principal) (yield uint))
-    (let 
-        (
-            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-        )
-        (get-y-given-yield-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) yield)
-    )
+  (get-y-given-price expiry yield-token (+ yield ONE_8))
 )
 
 (define-read-only (get-token-given-position (expiry uint) (yield-token principal) (dx uint))
@@ -646,34 +695,6 @@
   )
 )
 
-;; @desc get-price
-;; @desc b_y = balance-yield-token
-;; @desc b_x = balance-token
-;; @desc price = (b_y / b_x) ^ t
-;; @param balance-x; balance of token-x (token)
-;; @param balance-y; balance of token-y (yield-token)
-;; @param t; time-to-maturity
-;; @returns (response uint uint)
-(define-private (get-price-internal (balance-x uint) (balance-y uint) (t uint))
-  (begin
-    (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
-    (ok (pow-up (div-down balance-y balance-x) t))
-  )
-)
-
-;; @desc get-yield
-;; @param balance-x; balance of token-x (token)
-;; @param balance-y; balance of token-y (yield-token)
-;; @param t; time-to-maturity
-;; @returns (response uint uint)
-(define-private (get-yield-internal (balance-x uint) (balance-y uint) (t uint))
-  (let
-    (
-      (price (try! (get-price-internal balance-x balance-y t)))
-    )    
-    (if (<= price ONE_8) (ok u0) (ok (- price ONE_8)))
-  )
-)
 ;; @desc d_x = dx
 ;; @desc d_y = dy 
 ;; @desc b_x = balance-x
@@ -691,7 +712,7 @@
     (let 
       (
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num-uncapped (div-up ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (x-pow (pow-up balance-x t-comp))
         (y-pow (pow-up balance-y t-comp))
@@ -724,7 +745,7 @@
     (let 
       (          
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num-uncapped (div-up ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
         (x-pow (pow-up balance-x t-comp))
         (y-pow (pow-up balance-y t-comp))
@@ -804,82 +825,6 @@
       (ok dx)
     )  
   )
-)
-
-;; @desc d_x = dx
-;; @desc d_y = dy 
-;; @desc b_x = balance-x
-;; @desc b_y = balance-y
-;; @desc spot = (b_y / b_x) ^ t
-;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
-;; @param balance-x; balance of token-x (token)
-;; @param balance-y; balance of token-y (yield-token)
-;; @param t; time-to-maturity
-;; @param price; target price
-;; @returns (response uint uint)
-(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
-  (begin
-    (asserts! (< price (try! (get-price-internal balance-x balance-y t))) ERR-NO-LIQUIDITY) 
-    (let 
-      (
-        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (div-down ONE_8 t-comp))
-        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-        (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
-        (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-        (lead-term (pow-down (div-down numer denom) t-comp-num))
-      )
-      (if (<= lead-term ONE_8) (ok u0) (ok (mul-up balance-x (- lead-term ONE_8))))
-    )
-  )
-)
-
-;; @desc d_x = dx
-;; @desc d_y = dy 
-;; @desc b_x = balance-x
-;; @desc b_y = balance-y
-;; @desc spot = (b_y / b_x) ^ t
-;; @desc d_y = b_y - b_x * (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t))
-;; @param balance-x; balance of token-x (token)
-;; @param balance-y; balance of token-y (yield-token)
-;; @param t; time-to-maturity
-;; @param price; target price
-;; @returns (response uint uint)
-(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
-  (begin
-    (asserts! (> price (try! (get-price-internal balance-x balance-y t))) ERR-NO-LIQUIDITY) 
-    (let 
-      (
-        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-        (t-comp-num-uncapped (div-down ONE_8 t-comp))
-        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-        (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
-        (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-        (lead-term (mul-up balance-x (pow-down (div-down numer denom) t-comp-num)))
-      )
-      (if (<= balance-y lead-term) (ok u0) (ok (- balance-y lead-term)))
-    )
-  )
-)
-
-;; @desc follows from get-x-given-price
-;; @param balance-x; balance of token-x (token)
-;; @param balance-y; balance of token-y (yield-token)
-;; @param t; time-to-maturity
-;; @param yield; target yield
-;; @returns (response uint uint)
-(define-private (get-x-given-yield-internal (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (get-x-given-price-internal balance-x balance-y t (+ ONE_8 yield))
-)
-
-;; @desc follows from get-y-given-price
-;; @param balance-x; balance of token-x (token)
-;; @param balance-y; balance of token-y (yield-token)
-;; @param t; time-to-maturity
-;; @param yield; target yield
-;; @returns (response uint uint)
-(define-private (get-y-given-yield-internal (balance-x uint) (balance-y uint) (t uint) (yield uint))
-  (get-y-given-price-internal balance-x balance-y t (+ ONE_8 yield))
 )
 
 ;; @desc get-token-given-position
