@@ -405,7 +405,7 @@
                 (sender tx-sender)
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            (asserts! (and (> dx u0) (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token)))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
