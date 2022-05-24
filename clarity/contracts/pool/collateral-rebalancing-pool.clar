@@ -427,7 +427,7 @@
                 (balance-y (get balance-y pool))
                 (weight-x (unwrap! (get-weight-x-with-spot token-y token-x expiry (try! (get-spot token-y token-x))) ERR-GET-WEIGHT-FAIL))
                 (weight-y (- ONE_8 weight-x))            
-                (fee (mul-down dx (get fee-rate-x pool)))
+                (fee (mul-up dx (get fee-rate-x pool)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (dy (try! (get-y-given-x token-y token-x expiry dx-net-fees)))
@@ -470,7 +470,7 @@
                 (balance-y (get balance-y pool))
                 (weight-x (unwrap! (get-weight-x-with-spot token-y token-x expiry (try! (get-spot token-y token-x))) ERR-GET-WEIGHT-FAIL))
                 (weight-y (- ONE_8 weight-x))   
-                (fee (mul-down dy (get fee-rate-y pool)))
+                (fee (mul-up dy (get fee-rate-y pool)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
                 (dx (try! (get-x-given-y token-y token-x expiry dy-net-fees)))        
@@ -689,10 +689,10 @@
         (let 
             (
                 (denominator (+ balance-x dx))
-                (base (div-down balance-x denominator))
-                (uncapped-exponent (div-down weight-x weight-y))
+                (base (div-up balance-x denominator))
+                (uncapped-exponent (div-up weight-x weight-y))
                 (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
-                (power (pow-down base exponent))
+                (power (pow-up base exponent))
                 (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
                 (dy (mul-down balance-y complement))
             )
@@ -721,10 +721,10 @@
         (let 
             (
                 (denominator (+ balance-y dy))
-                (base (div-down balance-y denominator))
-                (uncapped-exponent (div-down weight-y weight-x))
+                (base (div-up balance-y denominator))
+                (uncapped-exponent (div-up weight-y weight-x))
                 (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
-                (power (pow-down base exponent))
+                (power (pow-up base exponent))
                 (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
                 (dx (mul-down balance-x complement))
             )
@@ -817,14 +817,14 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-              (spot (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y)))
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
             )
             (asserts! (< price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                  (power (pow-down (div-down spot price) weight-y))
+                  (power (pow-down (div-up spot price) weight-y))
                 )
-                (ok (mul-down balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
+                (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
             )
         )
     )   
@@ -843,14 +843,14 @@
         (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
         (let
             (
-              (spot (div-down (mul-down balance-y weight-x) (mul-down balance-x weight-y)))
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
             )
             (asserts! (> price spot) ERR-NO-LIQUIDITY)
             (let 
                 (
-                  (power (pow-down (div-down price spot) weight-x))
+                  (power (pow-down (div-up price spot) weight-x))
                 )
-                (ok (mul-down balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
+                (ok (mul-up balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
             )
         )
     )   
@@ -911,12 +911,36 @@
     (/ (* a b) ONE_8)
 )
 
+(define-private (mul-up (a uint) (b uint))
+    (if (is-eq (* a b) u0) u0 (+ u1 (/ (- (* a b) u1) ONE_8)))
+)
+
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0) u0 (/ (* a ONE_8) b))
 )
 
+(define-private (div-up (a uint) (b uint))
+    (if (is-eq a u0) u0 (+ u1 (/ (- (* a ONE_8) u1) b)))
+)
+
 (define-private (pow-down (a uint) (b uint))    
-  (unwrap-panic (pow-fixed a b))
+    (let
+        (
+            (raw (unwrap-panic (pow-fixed a b)))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
+        )
+        (if (< raw max-error) u0 (- raw max-error))
+    )
+)
+
+(define-private (pow-up (a uint) (b uint))
+    (let
+        (
+            (raw (unwrap-panic (pow-fixed a b)))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
+        )
+        (+ raw max-error)
+    )
 )
 
 (define-constant UNSIGNED_ONE_8 (pow 10 8))
@@ -1357,7 +1381,7 @@
             (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
             (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry spot))))
             (loan-amount (- gross-dx dx))
-            (loan-amount-with-fee (mul-down loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token min-dy))))
@@ -1377,7 +1401,7 @@
             (dx (+ (get dx reduce-data) (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))))
             (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
             (loan-amount (- gross-dx dx))
-            (loan-amount-with-fee (mul-down loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token min-dx))))

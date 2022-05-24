@@ -120,16 +120,16 @@ Clarinet.test({
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
-        call.result.expectOk().expectUint(0)
+        call.result.expectOk().expectUint(5)
 
         // zero rate environment, so yield-token and token are (almost) at parity.
         call = await YTPTest.getXgivenY(expiry, yieldwbtcAddress, 2*ONE_8);
-        call.result.expectOk().expectUint(199902631)
+        call.result.expectOk().expectUint(199885088)
 
         // sell some yield-token
         result = YTPTest.swapYForX(deployer, expiry, yieldwbtcAddress, wbtcAddress, 2*ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(199902631);
+        position['dx'].expectUint(199885088);
         position['dy'].expectUint(2*ONE_8);
 
         // yield-token now has "actual" balance
@@ -137,7 +137,7 @@ Clarinet.test({
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
         position = call.result.expectOk().expectTuple();
-        position['balance-token'].expectUint(99800097369);
+        position['balance-token'].expectUint(99800114912);
         position['balance-yield-token'].expectUint(2*ONE_8);
         position['balance-virtual'].expectUint(1000*ONE_8);         
             
@@ -145,13 +145,13 @@ Clarinet.test({
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
-        call.result.expectOk().expectUint(113719);
+        call.result.expectOk().expectUint(113720);
 
         // buy back some yield token
         result = YTPTest.swapXForY(deployer, expiry, yieldwbtcAddress, wbtcAddress, ONE_8, 0);
         position = result.expectOk().expectTuple()
         position['dx'].expectUint(ONE_8);
-        position['dy'].expectUint(100103243);        
+        position['dy'].expectUint(100081818);        
 
         // attempt to sell more than max allowed yield token (50% of pool) must throw an error
         result = YTPTest.swapYForX(deployer, expiry, yieldwbtcAddress, wbtcAddress, 501*ONE_8, 0);
@@ -161,20 +161,20 @@ Clarinet.test({
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
         position = call.result.expectOk().expectTuple();
-        position['balance-token'].expectUint(99900097369);
-        position['balance-yield-token'].expectUint(99896757);
+        position['balance-token'].expectUint(99900114912);
+        position['balance-yield-token'].expectUint(99918182);
         position['balance-virtual'].expectUint(1000*ONE_8); 
 
         // after buying back some yield token, yield decreases.
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
-        call.result.expectOk().expectUint(56798);
+        call.result.expectOk().expectUint(56805);
 
         // we sell close to maximum allowed of yield token
         result = YTPTest.swapYForX(deployer, expiry, yieldwbtcAddress, wbtcAddress, 29*ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(2874675845);
+        position['dx'].expectUint(2874651762);
         position['dy'].expectUint(29*ONE_8);                      
 
         // which moves yield substantially into the positive territory.
@@ -197,12 +197,12 @@ Clarinet.test({
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
-        call.result.expectOk().expectUint(852889);
+        call.result.expectOk().expectUint(852891);
         
         // sell some (a lot of) yield-token
         result = YTPTest.swapYForX(deployer, expiry, yieldwbtcAddress, wbtcAddress, 40*ONE_8, 0);
         position =result.expectOk().expectTuple();
-        position['dx'].expectUint(3943825655);
+        position['dx'].expectUint(3943808098);
         position['dy'].expectUint(40*ONE_8);       
             
         // and see how it pushes the yield pretty high
@@ -215,7 +215,7 @@ Clarinet.test({
         result = YTPTest.swapXForY(deployer, expiry, yieldwbtcAddress, wbtcAddress, 40*ONE_8, 0);
         position =result.expectOk().expectTuple();
         position['dx'].expectUint(40*ONE_8);
-        position['dy'].expectUint(4056675010);
+        position['dy'].expectUint(4056656508);
 
         call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
         position = call.result.expectOk().expectTuple();
@@ -229,8 +229,8 @@ Clarinet.test({
         // Remove some liquidlity
         result = YTPTest.reducePosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 0.5*ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(48540797934);
-        position['dy'].expectUint(1471610414);  
+        position['dx'].expectUint(48540827526);
+        position['dy'].expectUint(1471630544);  
         
         call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
         position = call.result.expectOk().expectTuple();
@@ -244,24 +244,24 @@ Clarinet.test({
         call = chain.callReadOnlyFn(yieldwbtcAddress, "get-balance-fixed", 
             [types.uint(expiry), types.principal(deployer.address)
             ], deployer.address);
-        call.result.expectOk().expectUint(998528388667);        
+        call.result.expectOk().expectUint(998528368870);        
 
         // Add back some liquidity
         result = YTPTest.addToPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 1000*ONE_8, Number.MAX_SAFE_INTEGER);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(103006135000);
+        position['supply'].expectUint(103006072500);
         position['balance-token'].expectUint(1000*ONE_8);
-        position['balance-yield-token'].expectUint(3031699080);
-        position['balance-virtual'].expectUint(103006134887);    
+        position['balance-yield-token'].expectUint(3031738711);
+        position['balance-virtual'].expectUint(103006072042);    
         
         call = await YTPTest.getPoolDetails(expiry, yieldwbtcAddress);
         position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(50000000000 + 103006135000);
+        position['total-supply'].expectUint(50000000000 + 103006072500);
         
         call = chain.callReadOnlyFn(ytpyieldwbtcAddress, "get-balance-fixed", 
             [types.uint(expiry), types.principal(deployer.address)
             ], deployer.address);
-        call.result.expectOk().expectUint(50000000000 + 103006135000);
+        call.result.expectOk().expectUint(50000000000 + 103006072500);
 
         // simulate to right before expiry
         chain.mineEmptyBlockUntil(expiry - 1);  
@@ -277,7 +277,7 @@ Clarinet.test({
         call = chain.callReadOnlyFn("yield-token-pool", "get-yield", 
             [types.uint(expiry), types.principal(yieldwbtcAddress)
             ], deployer.address);
-        call.result.expectOk().expectUint(27);    
+        call.result.expectOk().expectUint(33);    
         
         // buy some yield-token
         result = YTPTest.swapXForY(deployer, expiry, yieldwbtcAddress, wbtcAddress, 19*ONE_8, 0);
@@ -443,7 +443,7 @@ Clarinet.test({
         call = await YTPTest.getYgivenYield(expiry, yieldwbtcAddress, 0.005*ONE_8);                  
         call.result.expectErr().expectUint(2002);
         call = await YTPTest.getXgivenYield(expiry, yieldwbtcAddress, 0.005*ONE_8);        
-        call.result.expectOk().expectUint(861028655);      
+        call.result.expectOk().expectUint(861028654);      
         
         result = YTPTest.swapXForY(deployer, expiry, yieldwbtcAddress, wbtcAddress, 861028655, 0);
         position = result.expectOk().expectTuple();
