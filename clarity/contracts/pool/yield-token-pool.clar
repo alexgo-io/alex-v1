@@ -366,7 +366,7 @@
                 (sender tx-sender)                
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            (asserts! (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token)))) ERR-INVALID-LIQUIDITY)
+            (asserts! (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token)))) (err (try! (get-price expiry yield-token))))
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy sender))))
@@ -892,18 +892,6 @@
     (/ (* a b) ONE_8)
 )
 
-(define-private (mul-up (a uint) (b uint))
-    (let
-        (
-            (product (* a b))
-       )
-        (if (is-eq product u0)
-            u0
-            (+ u1 (/ (- product u1) ONE_8))
-       )
-   )
-)
-
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
@@ -911,34 +899,8 @@
    )
 )
 
-(define-private (div-up (a uint) (b uint))
-    (if (is-eq a u0)
-        u0
-        (+ u1 (/ (- (* a ONE_8) u1) b))
-    )
-)
-
-(define-private (pow-down (a uint) (b uint))    
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
-        )
-        (if (< raw max-error)
-            u0
-            (- raw max-error)
-        )
-    )
-)
-
-(define-private (pow-up (a uint) (b uint))
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
-        )
-        (+ raw max-error)
-    )
+(define-private (pow-down (a uint) (b uint))   
+  (unwrap-panic (pow-fixed a b))
 )
 
 (define-constant UNSIGNED_ONE_8 (pow 10 8))

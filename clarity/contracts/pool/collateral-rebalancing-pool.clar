@@ -911,36 +911,12 @@
     (/ (* a b) ONE_8)
 )
 
-(define-private (mul-up (a uint) (b uint))
-    (if (is-eq (* a b) u0) u0 (+ u1 (/ (- (* a b) u1) ONE_8)))
-)
-
 (define-private (div-down (a uint) (b uint))
     (if (is-eq a u0) u0 (/ (* a ONE_8) b))
 )
 
-(define-private (div-up (a uint) (b uint))
-    (if (is-eq a u0) u0 (+ u1 (/ (- (* a ONE_8) u1) b)))
-)
-
 (define-private (pow-down (a uint) (b uint))    
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
-        )
-        (if (< raw max-error) u0 (- raw max-error))
-    )
-)
-
-(define-private (pow-up (a uint) (b uint))
-    (let
-        (
-            (raw (unwrap-panic (pow-fixed a b)))
-            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
-        )
-        (+ raw max-error)
-    )
+  (unwrap-panic (pow-fixed a b))
 )
 
 (define-constant UNSIGNED_ONE_8 (pow 10 8))
