@@ -1672,7 +1672,7 @@
                 (new-pool-supply 
                     (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
                         (get supply (as-contract (try! (contract-call? .yield-token-pool create-and-configure-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) 
-                            (get fee-rebate pool) (get fee-rate-yield-token pool) (get fee-rate-token pool) (get small-threshold pool)
+                            (get fee-rebate pool) (get fee-rate-yield-token pool) (get fee-rate-token pool) (get small-threshold pool) (get min-fee pool)
                             amount-net-bounty u0))))
                         (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty))))
                     )                
