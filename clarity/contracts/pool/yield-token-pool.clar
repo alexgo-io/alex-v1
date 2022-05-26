@@ -78,7 +78,8 @@
     oracle-enabled: bool,
     oracle-average: uint,
     oracle-resilient: uint,
-    underlying-token: principal
+    underlying-token: principal,
+    small-threshold: uint
   }
 )
 
@@ -139,7 +140,21 @@
             (balance-x (get balance-token pool))
             (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
             (t (try! (get-t expiry (get listed pool))))
-            (price (pow-up (div-down balance-y balance-x) t))
+            (price (pow-up (div-up balance-y balance-x) t))
+        )      
+        (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
+        (ok (if (<= price ONE_8) ONE_8 price))        
+    )
+)
+
+(define-read-only (get-price-down (expiry uint) (yield-token principal))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+            (balance-x (get balance-token pool))
+            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
+            (t (try! (get-t expiry (get listed pool))))
+            (price (pow-down (div-down balance-y balance-x) t))
         )      
         (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
         (ok (if (<= price ONE_8) ONE_8 price))        
@@ -198,7 +213,14 @@
     (ok (div-down ONE_8 (try! (get-price expiry yield-token))))
 )
 
-(define-public (create-pool (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (multisig-vote principal) (dx uint) (dy uint)) 
+(define-public (create-pool (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (multisig-vote principal) (dx uint) (dy uint))
+  (create-and-configure-pool expiry yield-token-trait token-trait pool-token-trait multisig-vote u0 u0 u0 u0 dx dy)
+)
+
+(define-public (create-and-configure-pool 
+  (expiry uint) (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (multisig-vote principal) 
+  (fee-rebate uint) (fee-rate-yield-token uint) (fee-rate-token uint) (small-threshold uint)
+  (dx uint) (dy uint))   
     (begin
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (asserts! (is-none (map-get? pools-data-map { yield-token: (contract-of yield-token-trait), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
@@ -212,14 +234,15 @@
                     balance-virtual: u0,
                     fee-to-address: multisig-vote,
                     pool-token: (contract-of pool-token-trait),
-                    fee-rate-yield-token: u0,
-                    fee-rate-token: u0,
-                    fee-rebate: u0,
+                    fee-rate-yield-token: fee-rate-yield-token,
+                    fee-rate-token: fee-rate-token,
+                    fee-rebate: fee-rebate,
                     listed: block-height,
                     oracle-enabled: false,
                     oracle-average: u0,
                     oracle-resilient: u0,
-                    underlying-token: (contract-of token-trait)
+                    underlying-token: (contract-of token-trait),
+                    small-threshold: small-threshold
                 })
             )
             (map-set pools-data-map { yield-token: yield-token, expiry: expiry } pool-data)
@@ -353,7 +376,7 @@
                 (dx-net-fees (mul-down dx (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dx dx-net-fees) u0 (- dx dx-net-fees)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
-                (dy (try! (get-y-given-x expiry yield-token dx-net-fees)))
+                (dy (if (> dx-net-fees (get small-threshold pool)) (try! (get-y-given-x expiry yield-token dx-net-fees)) (mul-down dx-net-fees (try! (get-price-down expiry yield-token)))))
                 (pool-updated
                     (merge pool
                         {
@@ -392,7 +415,7 @@
                 (dy-net-fees (mul-down dy (if (<= ONE_8 fee-yield) u0 (- ONE_8 fee-yield))))
                 (fee (if (<= dy dy-net-fees) u0 (- dy dy-net-fees)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
-                (dx (try! (get-x-given-y expiry yield-token dy-net-fees)))
+                (dx (if (> dy-net-fees (get small-threshold pool)) (try! (get-x-given-y expiry yield-token dy-net-fees)) (div-down dy-net-fees (try! (get-price expiry yield-token)))))
                 (pool-updated
                     (merge pool
                         {
@@ -428,6 +451,21 @@
         )
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { fee-rebate: fee-rebate }))
+        (ok true)
+    )
+)
+
+(define-read-only (get-small-threshold (expiry uint) (yield-token principal))
+    (ok (get small-threshold (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-small-threshold (expiry uint) (yield-token principal) (small-threshold uint))
+    (let 
+        (
+            (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
+        )
+        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
+        (map-set pools-data-map { yield-token: yield-token, expiry: expiry } (merge pool { small-threshold: small-threshold }))
         (ok true)
     )
 )
@@ -714,8 +752,8 @@
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-up ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-        (x-pow (pow-down balance-x t-comp))
-        (y-pow (pow-down balance-y t-comp))
+        (x-pow (pow-up balance-x t-comp))
+        (y-pow (pow-up balance-y t-comp))
         (x-dx-pow (pow-down (+ balance-x dx) t-comp))
         (add-term (+ x-pow y-pow))
         (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
@@ -747,8 +785,8 @@
         (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         (t-comp-num-uncapped (div-up ONE_8 t-comp))
         (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-        (x-pow (pow-down balance-x t-comp))
-        (y-pow (pow-down balance-y t-comp))
+        (x-pow (pow-up balance-x t-comp))
+        (y-pow (pow-up balance-y t-comp))
         (y-dy-pow (pow-down (+ balance-y dy) t-comp))
         (add-term (+ x-pow y-pow))
         (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
