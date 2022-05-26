@@ -205,10 +205,16 @@
 )
 
 (define-public (create-pool (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint)) 
-    (create-pool-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait multisig-vote ltv-0 conversion-ltv bs-vol moving-average token-to-maturity (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
+    (create-and-configure-pool-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait multisig-vote ltv-0 conversion-ltv bs-vol moving-average token-to-maturity u0 u0 u0 (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
 )
 
-(define-private (create-pool-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (spot uint) (dx uint)) 
+(define-public (create-and-configure-pool (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) 
+    (fee-rebate uint) (fee-rate-x uint) (fee-rate-y uint) (dx uint)) 
+    (create-and-configure-pool-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait multisig-vote ltv-0 conversion-ltv bs-vol moving-average token-to-maturity fee-rebate fee-rate-x fee-rate-y (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
+)
+
+(define-private (create-and-configure-pool-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) 
+    (fee-rebate uint) (fee-rate-x uint) (fee-rate-y uint) (spot uint) (dx uint)) 
     (begin
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (asserts! (is-none (map-get? pools-data-map { token-x: (contract-of collateral-trait), token-y: (contract-of token-trait), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
@@ -234,9 +240,9 @@
                     key-token: (contract-of key-token-trait),
                     strike: (mul-down spot strike),
                     bs-vol: bs-vol,
-                    fee-rate-x: u0,
-                    fee-rate-y: u0,
-                    fee-rebate: u0,
+                    fee-rate-x: fee-rate-x,
+                    fee-rate-y: fee-rate-y,
+                    fee-rebate: fee-rebate,
                     ltv-0: ltv-0,
                     weight-x: weight-x,
                     weight-y: weight-y,
@@ -1665,15 +1671,9 @@
                 (pool (try! (contract-call? .yield-token-pool get-pool-details expiry yield-token)))
                 (new-pool-supply 
                     (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
-                        (let 
-                            (
-                                (supply (get supply (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) amount-net-bounty u0)))))
-                            )
-                            (as-contract (try! (contract-call? .yield-token-pool set-fee-rebate expiry-to-roll yield-token (get fee-rebate pool))))
-                            (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry-to-roll yield-token (get fee-rate-yield-token pool))))
-                            (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry-to-roll yield-token (get fee-rate-token pool))))
-                            supply
-                        )
+                        (get supply (as-contract (try! (contract-call? .yield-token-pool create-and-configure-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) 
+                            (get fee-rebate pool) (get fee-rate-yield-token pool) (get fee-rate-token pool) (get small-threshold pool) (get min-fee pool)
+                            amount-net-bounty u0))))
                         (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty))))
                     )                
                 )                
@@ -1727,15 +1727,8 @@
                 (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount tx-sender))))                
                 (minted
                     (if (is-err (get-pool-details token collateral expiry-to-roll))
-                        (let
-                            (
-                                (created (as-contract (try! (create-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) spot gross-dx-net-fee))))
-                            )
-                            (as-contract (try! (set-fee-rebate token collateral expiry-to-roll (get fee-rebate pool))))
-                            (as-contract (try! (set-fee-rate-x token collateral expiry-to-roll (get fee-rate-x pool))))
-                            (as-contract (try! (set-fee-rate-y token collateral expiry-to-roll (get fee-rate-y pool))))
-                            created
-                        )
+                        (as-contract (try! (create-and-configure-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) 
+                                    (get fee-rebate pool) (get fee-rate-x pool) (get fee-rate-y pool) spot gross-dx-net-fee)))
                         (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-net-fee)))
                     )
                 )                     
