@@ -4,6 +4,8 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-AVAILABLE-ALEX (err u20000))
+(define-constant ERR-BLOCK-HEIGHT (err u2043))
+(define-constant ERR-NOT-ENOUGH-ALEX (err u20001))
 
 (define-fungible-token auto-fwp-alex-autoalex-120x)
 
@@ -240,16 +242,28 @@
 (define-map available-alex principal uint)
 (define-map borrowed-alex principal uint)
 
-(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
+(define-data-var start-block uint u340282366920938463463374607431768211455)
+(define-data-var end-block uint u340282366920938463463374607431768211455)
 
-(define-read-only (get-shortfall-coverage)
-  (ok (var-get shortfall-coverage))
+(define-read-only (get-start-block)
+  (var-get start-block)
 )
 
-(define-public (set-shortfall-coverage (new-shortfall-coverage uint))
-  (begin
+(define-public (set-start-block (new-start-block uint))
+  (begin 
     (try! (check-is-owner))
-    (ok (var-set shortfall-coverage new-shortfall-coverage))
+    (ok (var-set start-block new-start-block))
+  )
+)
+
+(define-read-only (get-end-block)
+  (var-get end-block)
+)
+
+(define-public (set-end-block (new-end-block uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set end-block new-end-block))
   )
 )
 
@@ -279,7 +293,8 @@
           (alex-available (get-available-alex-or-default sender))
           (alex-borrowed (get-borrowed-alex-or-default sender))                        
         )
-        (asserts! (>= alex-available dx) ERR-AVAILABLE-ALEX)
+        (asserts! (>= block-height (var-get start-block)) ERR-BLOCK-HEIGHT)
+        (asserts! (>= alex-available dx) ERR-AVAILABLE-ALEX)        
 
         (as-contract (try! (contract-call? .age000-governance-token mint-fixed dx tx-sender)))
         (as-contract (try! (contract-call? .auto-alex add-to-position alex-to-atalex)))
@@ -303,20 +318,27 @@
       (pool (as-contract (try! (contract-call? .simple-weight-pool-alex reduce-position .age000-governance-token .auto-alex .fwp-alex-autoalex share))))  
       (atalex-in-alex (mul-down (try! (contract-call? .auto-alex get-intrinsic)) (get dy pool)))
       (alex-shortfall (if (<= alex-borrowed (get dx pool)) u0 (- alex-borrowed (get dx pool))))
-      (atalex-to-cover (div-down (mul-down (get dy pool) alex-shortfall) atalex-in-alex))
-
-      (alex-to-return (- (+ (get dx pool) alex-shortfall) alex-borrowed))
-      (atalex-to-return (- (get dy pool) atalex-to-cover))
     )
-    
-    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (- alex-borrowed alex-shortfall) tx-sender .executor-dao none)))
-    (and (> atalex-to-cover u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed atalex-to-cover tx-sender .executor-dao none))))
-    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-return tx-sender sender none)))
-    (as-contract (try! (contract-call? .auto-alex transfer-fixed atalex-to-return tx-sender sender none)))
+    (asserts! (> block-height (var-get end-block)) ERR-BLOCK-HEIGHT)
+    (asserts! (> atalex-in-alex alex-shortfall) ERR-NOT-ENOUGH-ALEX)
 
-	  (try! (ft-burn? auto-fwp-alex-autoalex-120x (fixed-to-decimals supply) sender))
-    (print { object: "pool", action: "position-reduced", data: supply })
-    (ok { alex: alex-to-return, atalex-to-return })
+    (let
+      (
+        (alex-to-lender (- alex-borrowed alex-shortfall))
+        (atalex-to-lender (div-down (mul-down (get dy pool) alex-shortfall) atalex-in-alex))
+        (alex-to-borrower (- (get dx pool) alex-to-loender))
+        (atalex-to-borrower (- (get dy pool) atalex-to-lender))
+      )
+    
+      (and (> alex-to-lender u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-lender tx-sender .executor-dao none))))
+      (and (> atalex-to-lender u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed atalext-to-lender tx-sender .executor-dao none))))
+
+      (and (> alex-to-borrower u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-borrower tx-sender sender none))))
+      (and (> atalex-to-borrower u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed atalex-to-borrower tx-sender sender none))))
+
+	    (try! (ft-burn? auto-fwp-alex-autoalex-120x (fixed-to-decimals supply) sender))
+      (print { object: "pool", action: "position-reduced", data: supply })
+      (ok { alex: alex-to-borrower, atalex: atalex-to-borrower })
   )
 )
 
