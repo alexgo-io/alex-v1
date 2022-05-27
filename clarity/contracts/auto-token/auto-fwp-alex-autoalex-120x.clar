@@ -239,11 +239,25 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-map available-alex principal uint)
-(define-map borrowed-alex principal uint)
-
 (define-data-var start-block uint u340282366920938463463374607431768211455)
-(define-data-var end-block uint u340282366920938463463374607431768211455)
+
+(define-map tranche-end-block uint uint)
+
+(define-map available-alex 
+  {
+    borrower: principal,
+    tranche: uint
+  } 
+  uint
+)
+
+(define-map borrowed-alex 
+  {
+    borrower: principal,
+    tranche: uint
+  }
+  uint
+)
 
 (define-read-only (get-start-block)
   (var-get start-block)
