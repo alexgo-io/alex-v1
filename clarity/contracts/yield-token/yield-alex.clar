@@ -9,6 +9,7 @@
 (define-fungible-token yield-alex)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
+(define-map token-owned principal (list 200 uint))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
@@ -55,14 +56,27 @@
 		(ok (map-set approved-contracts owner approved))
 	)
 )
+;; @desc get-token-owned
+;; @params owner
+;; @returns list
+(define-read-only (get-token-owned (owner principal))
+    (default-to (list) (map-get? token-owned owner))
+)
 
 ;; @desc set-balance
 ;; @params token-id
 ;; @params balance
 ;; @params owner
 ;; @returns (response bool)
-(define-private (set-balance (token-id uint) (balance uint) (owner principal))	
-	(map-set token-balances {token-id: token-id, owner: owner} balance)
+(define-private (set-balance (token-id uint) (balance uint) (owner principal))
+    (begin
+		(and 
+			(is-none (index-of (get-token-owned owner) token-id))
+			(map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u200) ERR-TOO-MANY-POOLS))
+		)	
+	    (map-set token-balances {token-id: token-id, owner: owner} balance)
+        (ok true)
+    )
 )
 
 ;; @desc get-balance-or-default
@@ -130,8 +144,8 @@
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
 		(try! (ft-transfer? yield-alex amount sender recipient))
-		(set-balance token-id (- sender-balance amount) sender)
-		(set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient)
+		(try! (set-balance token-id (- sender-balance amount) sender))
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
 		(ok true)
 	)
@@ -153,8 +167,8 @@
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
 		(try! (ft-transfer? yield-alex amount sender recipient))
-		(set-balance token-id (- sender-balance amount) sender)
-		(set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient)
+		(try! (set-balance token-id (- sender-balance amount) sender))
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
 		(ok true)
 	)
@@ -169,7 +183,7 @@
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(try! (ft-mint? yield-alex amount recipient))
-		(set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient)
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
 		(ok true)
@@ -186,7 +200,7 @@
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(try! (ft-burn? yield-alex amount sender))
-		(set-balance token-id (- (get-balance-or-default token-id sender) amount) sender)
+		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
 		(ok true)
@@ -312,6 +326,35 @@
 
 (define-public (transfer-many-memo-fixed (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})))
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
+)
+
+(define-read-only (get-token-balance-owned (owner principal))
+	(map 
+		get-balance
+		(get-token-owned owner)
+		(list 
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+		)
+	)
 )
 
 ;; contract initialisation
