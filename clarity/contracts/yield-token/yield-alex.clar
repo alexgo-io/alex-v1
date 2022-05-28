@@ -25,7 +25,7 @@
 ;; @returns (response bool)
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
@@ -328,5 +328,7 @@
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .collateral-rebalancing-pool true)
 (map-set approved-contracts .yield-collateral-rebalancing-pool true)
