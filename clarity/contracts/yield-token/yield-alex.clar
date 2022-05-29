@@ -14,26 +14,17 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-;; @desc get-contract-owner
-;; @returns (response principal)
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
 )
-;; @desc set-contractowner
-;; @restricted Contract-Owner
-;; @params owner
-;; @returns (response bool)
+
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
 
-;; @desc check-is-approved
-;; @restricted Contract-Owner
-;; @params sender
-;; @returns (response bool)
 (define-private (check-is-approved)
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
@@ -56,18 +47,11 @@
 		(ok (map-set approved-contracts owner approved))
 	)
 )
-;; @desc get-token-owned
-;; @params owner
-;; @returns list
+
 (define-read-only (get-token-owned (owner principal))
     (default-to (list) (map-get? token-owned owner))
 )
 
-;; @desc set-balance
-;; @params token-id
-;; @params balance
-;; @params owner
-;; @returns (response bool)
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
     (begin
 		(and 
@@ -79,10 +63,6 @@
     )
 )
 
-;; @desc get-balance-or-default
-;; @params token-id
-;; @params who
-;; @returns (response uint)
 (define-private (get-balance-or-default (token-id uint) (who principal))
 	(default-to u0 (map-get? token-balances {token-id: token-id, owner: who}))
 )
@@ -191,7 +171,6 @@
 )
 
 ;; @desc burn
-;; @restricted Contract-Owner/Approved Contract
 ;; @params token-id
 ;; @params amount
 ;; @params sender
@@ -328,5 +307,47 @@
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
+(define-private (create-tuple-token-balance (token-id uint) (balance uint))
+	{ token-id: token-id, balance: (decimals-to-fixed balance) }
+)
+
+(define-read-only (get-token-balance-owned-in-fixed (owner principal))
+	(let 
+		(
+			(token-ids (get-token-owned owner))
+			(balances 
+				(map 
+					get-balance-or-default
+					token-ids
+					(list 
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+					)
+				)		
+			)
+		)
+		(map create-tuple-token-balance token-ids balances)
+	)	
+)
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .collateral-rebalancing-pool true)
-(map-set approved-contracts .yield-collateral-rebalancing-pool true)

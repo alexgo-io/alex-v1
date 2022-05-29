@@ -761,7 +761,7 @@ depends_on = [
 
 [contracts.farming-helper]
 path = "contracts/helpers/farming-helper.clar"
-depends_on = [ "alex-reserve-pool", "trait-sip-010" ]
+depends_on = [ "alex-reserve-pool", "staking-helper", "trait-sip-010" ]
 
 [contracts.token-xusd]
 path = "contracts/token/token-xusd.clar"

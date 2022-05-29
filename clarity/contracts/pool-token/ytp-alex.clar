@@ -20,22 +20,22 @@
 
 (define-public (set-contract-owner (owner principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
 
-;; @desc check-is-approved
-;; @restricted Approved-Contracts/Contract-Owner
-;; @params sender
-;; @returns (response boolean)
-(define-private (check-is-approved (sender principal))
-  (ok (asserts! (or (default-to false (map-get? approved-contracts sender)) (is-eq sender (var-get contract-owner))) ERR-NOT-AUTHORIZED))
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-owner)
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+    (try! (check-is-owner))
     (map-set approved-contracts new-approved-contract true)
     (ok true)
   )
@@ -43,23 +43,15 @@
 
 (define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
-		(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+		(try! (check-is-owner))
 		(ok (map-set approved-contracts owner approved))
 	)
 )
 
-;; @desc get-token-owned
-;; @params owner
-;; @returns list
 (define-read-only (get-token-owned (owner principal))
     (default-to (list) (map-get? token-owned owner))
 )
 
-;; @desc set-balance
-;; @params token-id
-;; @params balance
-;; @params owner
-;; @returns (response true)
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
     (begin
 		(and 
@@ -71,10 +63,6 @@
     )
 )
 
-;; @desc get-balance-or-default
-;; @params token-id
-;; @params who
-;; @returns uint
 (define-private (get-balance-or-default (token-id uint) (who principal))
 	(default-to u0 (map-get? token-balances {token-id: token-id, owner: who}))
 )
@@ -122,12 +110,12 @@
 )
 
 ;; @desc transfer
-;; @restricted sender
-;; @params token-id 
+;; @restricted sender ; tx-sender should be sender
+;; @params token-id
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @returns (response boolean)
+;; @returns (response bool)
 (define-public (transfer (token-id uint) (amount uint) (sender principal) (recipient principal))
 	(let
 		(
@@ -143,13 +131,14 @@
 	)
 )
 
-;; @desc transfer-memo 
+;; @desc transfer-memo
+;; @restricted sender ; tx-sender should be sender
 ;; @params token-id
 ;; @params amount
 ;; @params sender
 ;; @params recipient
-;; @params memo ; expiry
-;; @returns (response boolean)
+;; @params memo; expiry
+;; @returns (response bool)
 (define-public (transfer-memo (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)))
 	(let
 		(
@@ -166,14 +155,13 @@
 )
 
 ;; @desc mint
-;; @restricted ContractOwner/Approved Contract
 ;; @params token-id
 ;; @params amount
 ;; @params recipient
-;; @returns (response boolean)
+;; @returns (response bool)
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(try! (check-is-approved tx-sender))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(try! (ft-mint? ytp-alex amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
@@ -183,14 +171,13 @@
 )
 
 ;; @desc burn
-;; @restricted ContractOwner/Approved Contract
 ;; @params token-id
 ;; @params amount
 ;; @params sender
-;; @returns (response boolean)
+;; @returns (response bool)
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(try! (check-is-approved tx-sender))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(try! (ft-burn? ytp-alex amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
@@ -320,4 +307,47 @@
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
+(define-private (create-tuple-token-balance (token-id uint) (balance uint))
+	{ token-id: token-id, balance: (decimals-to-fixed balance) }
+)
+
+(define-read-only (get-token-balance-owned-in-fixed (owner principal))
+	(let 
+		(
+			(token-ids (get-token-owned owner))
+			(balances 
+				(map 
+					get-balance-or-default
+					token-ids
+					(list 
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+					)
+				)		
+			)
+		)
+		(map create-tuple-token-balance token-ids balances)
+	)	
+)
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
 (map-set approved-contracts .yield-token-pool true)
