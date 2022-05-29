@@ -2,13 +2,9 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
-
 import { YTPTestAgent1, } from './models/alex-tests-yield-token-pool.ts';
-
 import { MS_YTP_YIELD_WBTC } from './models/alex-tests-multisigs.ts';
-
-import { USDAToken, WBTCToken, YIELD_WBTC, YTP_YIELD_WBTC } from './models/alex-tests-tokens.ts';
-
+import { USDAToken, WBTCToken, YIELD_WBTC, YTP_YIELD_WBTC, SemiFungibleToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
 const wbtcAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-wbtc"
@@ -904,5 +900,24 @@ Clarinet.test({
         //Add extra liquidity with secondary buying of yield-token
         result = YTPTest.rollPosition(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, 0.5*ONE_8, anotherExpiry);
         position = result.expectOk().expectTuple();     
+    }
+});
+
+Clarinet.test({
+    name: "yield-token : get-token-balance-owned works",
+
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        let deployer = accounts.get("deployer")!;
+        let wallet_1 = accounts.get("wallet_1")!;
+        let YTPTest = new YTPTestAgent1(chain, deployer);
+        let yieldToken = new SemiFungibleToken(chain, deployer, "yield-alex");
+
+        // Deployer minting initial tokens
+        let result = yieldToken.mintFixed(deployer, expiry, 10000 * ONE_8, deployer.address);
+        result.expectOk().expectBool(true);      
+        result = yieldToken.mintFixed(deployer, anotherExpiry, 10000 * ONE_8, deployer.address);
+        result.expectOk().expectBool(true);  
+        console.log(yieldToken.getTokenBalanceOwned(deployer.address));
+        
     }
 });
