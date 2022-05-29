@@ -307,33 +307,45 @@
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
-(define-read-only (get-token-balance-owned (owner principal))
-	(map 
-		get-balance
-		(get-token-owned owner)
-		(list 
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
-			owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+(define-private (create-tuple-token-balance (token-id uint) (balance uint))
+	{ token-id: token-id, balance: (decimals-to-fixed balance) }
+)
+
+(define-read-only (get-token-balance-owned-in-fixed (owner principal))
+	(let 
+		(
+			(token-ids (get-token-owned owner))
+			(balances 
+				(map 
+					get-balance-or-default
+					token-ids
+					(list 
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+					)
+				)		
+			)
 		)
-	)
+		(map create-tuple-token-balance token-ids balances)
+	)	
 )
 
 ;; contract initialisation
