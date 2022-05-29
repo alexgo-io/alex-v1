@@ -344,7 +344,7 @@
 				)		
 			)
 		)
-		(map create-tuple-token-balance token-ids balances)
+		(ok (map create-tuple-token-balance token-ids balances))
 	)	
 )
 
