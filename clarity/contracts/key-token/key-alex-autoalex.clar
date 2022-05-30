@@ -312,10 +312,12 @@
 )
 
 (define-read-only (get-token-balance-owned-in-fixed (owner principal))
-	(let 
-		(
-			(token-ids (get-token-owned owner))
-			(balances 
+	(begin 
+		(match (map-get? token-owned owner)
+			token-ids
+			(map 
+				create-tuple-token-balance 
+				token-ids 
 				(map 
 					get-balance-or-default
 					token-ids
@@ -341,11 +343,11 @@
 						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
 						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
 					)
-				)		
+				)
 			)
+			(list)
 		)
-		(ok (map create-tuple-token-balance token-ids balances))
-	)	
+	)
 )
 
 ;; contract initialisation

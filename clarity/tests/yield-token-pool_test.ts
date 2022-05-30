@@ -911,13 +911,16 @@ Clarinet.test({
         let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
         let yieldToken = new SemiFungibleToken(chain, deployer, "yield-alex");
+        
+        let call = yieldToken.getTokenBalanceOwned(deployer.address);
+        assertEquals(call.result.expectList().length, 0);
 
-        // Deployer minting initial tokens
         let result = yieldToken.mintFixed(deployer, expiry, 10000 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);      
         result = yieldToken.mintFixed(deployer, anotherExpiry, 10000 * ONE_8, deployer.address);
         result.expectOk().expectBool(true);  
-        console.log(yieldToken.getTokenBalanceOwned(deployer.address));
+        call = yieldToken.getTokenBalanceOwned(deployer.address);
+        assertEquals(call.result.expectList().length, 2);
         
     }
 });
