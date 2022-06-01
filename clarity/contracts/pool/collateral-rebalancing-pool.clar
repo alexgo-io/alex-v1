@@ -1398,14 +1398,31 @@
     )
 )
 
-(define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint) (min-dx (optional uint)))
+(define-public (roll-borrow-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint) (expiries (list 10 uint)))
+    (ok 
+        (map 
+            roll-borrow
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
+            expiries
+            (list yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait)
+            (list key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait)
+            (list expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll)
+            (list none none none none none none none none none none)
+        )
+    )
+)
+
+(define-public (roll-borrow (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint) (min-dx (optional uint)))
     (let
         (
+            (token (contract-of token-trait))
+            (collateral (contract-of collateral-trait))
             (sender tx-sender)
-            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+            (spot (try! (get-spot token collateral)))
             (reduce-data (try! (reduce-position-key token-trait collateral-trait expiry key-token-trait ONE_8)))
             (dx (+ (get dx reduce-data) (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))))
-            (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
+            (gross-dx (div-down dx (- ONE_8 (try! (get-ltv-with-spot token collateral expiry-to-roll spot)))))
             (loan-amount (- gross-dx dx))
             (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))

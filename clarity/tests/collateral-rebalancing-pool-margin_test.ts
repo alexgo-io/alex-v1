@@ -181,12 +181,12 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldwbtcAddress, expiry, wallet_5.address);
         call.result.expectOk().expectUint(0);    
 
-        // let's test roll-margin-position
+        // let's test roll-borrow
         chain.mineEmptyBlockUntil(10000);
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
@@ -196,7 +196,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
@@ -224,7 +224,7 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [               
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
@@ -234,7 +234,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
@@ -378,12 +378,11 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         call.result.expectOk().expectUint(0);    
 
-        // let's test roll-margin-position
         chain.mineEmptyBlockUntil(10000);
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
@@ -393,7 +392,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
@@ -421,7 +420,7 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
@@ -431,7 +430,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
@@ -584,12 +583,12 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldwstxAddress, expiry, wallet_5.address);
         call.result.expectOk().expectUint(0);    
 
-        // let's test roll-margin-position
+        // let's test roll-borrow
         chain.mineEmptyBlockUntil(10000);
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
@@ -599,7 +598,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),
@@ -627,7 +626,7 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
@@ -637,7 +636,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),
