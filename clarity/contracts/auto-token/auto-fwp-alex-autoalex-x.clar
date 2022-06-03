@@ -2,6 +2,7 @@
 (impl-trait .trait-semi-fungible.semi-fungible-trait)
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
+(define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-INVALID-BALANCE (err u1001))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-AVAILABLE-ALEX (err u20000))
@@ -11,6 +12,7 @@
 (define-fungible-token auto-fwp-alex-autoalex-x)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
+(define-map token-owned principal (list 200 uint))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
@@ -79,6 +81,9 @@
 		(ok (map-set approved-contracts owner approved))
 	)
 )
+(define-read-only (get-token-owned (owner principal))
+    (default-to (list) (map-get? token-owned owner))
+)
 
 ;; @desc set-balance
 ;; @params token-id
@@ -86,7 +91,14 @@
 ;; @params owner
 ;; @returns (response bool)
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
-  (map-set token-balances {token-id: token-id, owner: owner} balance)
+    (begin
+		(and 
+			(is-none (index-of (get-token-owned owner) token-id))
+			(map-set token-owned owner (unwrap! (as-max-len? (append (get-token-owned owner) token-id) u200) ERR-TOO-MANY-POOLS))
+		)	
+	    (map-set token-balances {token-id: token-id, owner: owner} balance)
+        (ok true)
+    )
 )
 
 ;; @desc get-balance-or-default
@@ -155,8 +167,8 @@
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
 		(try! (ft-transfer? auto-fwp-alex-autoalex-x amount sender recipient))
-		(set-balance token-id (- sender-balance amount) sender)
-		(set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient)
+		(try! (set-balance token-id (- sender-balance amount) sender))
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
 		(ok true)
 	)
@@ -179,8 +191,8 @@
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
 		(try! (ft-transfer? auto-fwp-alex-autoalex-x amount sender recipient))
-		(set-balance token-id (- sender-balance amount) sender)
-		(set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient)
+		(try! (set-balance token-id (- sender-balance amount) sender))
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
 		(ok true)
 	)
@@ -195,7 +207,7 @@
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
 		(try! (ft-mint? auto-fwp-alex-autoalex-x amount recipient))
-		(set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient)
+		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
 		(ok true)
@@ -212,7 +224,7 @@
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
 		(try! (ft-burn? auto-fwp-alex-autoalex-x amount sender))
-		(set-balance token-id (- (get-balance-or-default token-id sender) amount) sender)
+		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
 		(ok true)
@@ -306,6 +318,81 @@
 ;; @returns (response boolean)
 (define-public (burn-fixed (token-id uint) (amount uint) (sender principal))
   	(burn token-id (fixed-to-decimals amount) sender)
+)
+
+(define-private (transfer-many-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer (get token-id item) (get amount item) (get sender item) (get recipient item)) prev-err previous-response)
+)
+
+(define-public (transfer-many (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})))
+	(fold transfer-many-iter transfers (ok true))
+)
+
+(define-private (transfer-many-memo-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer-memo (get token-id item) (get amount item) (get sender item) (get recipient item) (get memo item)) prev-err previous-response)
+)
+
+(define-public (transfer-many-memo (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})))
+	(fold transfer-many-memo-iter transfers (ok true))
+)
+
+(define-private (transfer-many-fixed-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer-fixed (get token-id item) (get amount item) (get sender item) (get recipient item)) prev-err previous-response)
+)
+
+(define-public (transfer-many-fixed (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal})))
+	(fold transfer-many-fixed-iter transfers (ok true))
+)
+
+(define-private (transfer-many-memo-fixed-iter (item {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)}) (previous-response (response bool uint)))
+	(match previous-response prev-ok (transfer-memo-fixed (get token-id item) (get amount item) (get sender item) (get recipient item) (get memo item)) prev-err previous-response)
+)
+
+(define-public (transfer-many-memo-fixed (transfers (list 200 {token-id: uint, amount: uint, sender: principal, recipient: principal, memo: (buff 34)})))
+	(fold transfer-many-memo-fixed-iter transfers (ok true))
+)
+
+(define-private (create-tuple-token-balance (token-id uint) (balance uint))
+	{ token-id: token-id, balance: (decimals-to-fixed balance) }
+)
+
+(define-read-only (get-token-balance-owned-in-fixed (owner principal))
+	(begin 
+		(match (map-get? token-owned owner)
+			token-ids
+			(map 
+				create-tuple-token-balance 
+				token-ids 
+				(map 
+					get-balance-or-default
+					token-ids
+					(list 
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+						owner	owner	owner	owner	owner	owner	owner	owner	owner	owner
+					)
+				)
+			)
+			(list)
+		)
+	)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
