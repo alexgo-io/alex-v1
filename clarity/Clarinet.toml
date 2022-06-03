@@ -850,3 +850,7 @@ depends_on = [
 [contracts.autoalex-apower-helper]
 path = "contracts/helpers/autoalex-apower-helper.clar"
 depends_on = [ "auto-alex", "token-apower" ]
+
+[contracts.auto-fwp-alex-autoalex-x]
+path = "contracts/auto-token/auto-fwp-alex-autoalex-x.clar"
+depends_on = [ "trait-semi-fungible", "trait-ownable", "simple-weight-pool-alex", "auto-alex", "age000-governance-token", "fwp-alex-autoalex" ]
