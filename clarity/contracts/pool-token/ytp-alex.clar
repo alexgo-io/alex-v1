@@ -1,10 +1,11 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible.semi-fungible-trait)
+(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
 
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-INVALID-BALANCE (err u1001))
+(define-constant ERR-TRANSFER-FAILED (err u3000))
 
 (define-fungible-token ytp-alex)
 (define-map token-balances {token-id: uint, owner: principal} uint)
@@ -13,6 +14,24 @@
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
+
+(define-data-var token-name (string-ascii 32) "ytp-alex")
+(define-data-var token-symbol (string-ascii 32) "ytp-alex")
+(define-data-var token-uri (optional (string-ascii 256)) (some "https://cdn.alexlab.co/metadata/token-ytp-alex.json"))
+
+(define-data-var token-decimals uint u8)
+(define-data-var transferrable bool true)
+
+(define-read-only (get-transferrable)
+	(ok (var-get transferrable))
+)
+
+(define-public (set-transferrable (new-transferrable bool))
+	(begin 
+		(try! (check-is-owner))
+		(ok (var-set transferrable new-transferrable))
+	)
+)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -99,14 +118,14 @@
 ;; @params token-id
 ;; @returns (response uint)
 (define-read-only (get-decimals (token-id uint))
-	(ok u8)
+	(ok (var-get token-decimals))
 )
 
 ;; @desc get-token-uri 
 ;; @params token-id
 ;; @returns (response none)
 (define-read-only (get-token-uri (token-id uint))
-	(ok none)
+	(ok (var-get token-uri))
 )
 
 ;; @desc transfer
@@ -121,6 +140,7 @@
 		(
 			(sender-balance (get-balance-or-default token-id sender))
 		)
+		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
 		(try! (ft-transfer? ytp-alex amount sender recipient))
@@ -144,6 +164,7 @@
 		(
 			(sender-balance (get-balance-or-default token-id sender))
 		)
+		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
 		(try! (ft-transfer? ytp-alex amount sender recipient))

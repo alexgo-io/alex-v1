@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
 
 ;; yield-token-pool
 (define-constant MAX_T u95000000)
@@ -148,7 +148,7 @@
         (
           (price (pow-up (div-up balance-y balance-x) t))
         )      
-        (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
+        ;; (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
         (ok (if (<= price ONE_8) ONE_8 price))        
     )
 )
@@ -167,7 +167,7 @@
         (
           (price (pow-down (div-up balance-y balance-x) t))
         )      
-        (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
+        ;; (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
         (ok (if (<= price ONE_8) ONE_8 price))        
     )
 )
