@@ -139,7 +139,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )      
-        (get-price-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))))
+        (ok (get-price-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool)))))
     )
 )
 
@@ -147,9 +147,8 @@
     (let
         (
           (price (pow-up (div-up balance-y balance-x) t))
-        )      
-        ;; (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
-        (ok (if (<= price ONE_8) ONE_8 price))        
+        )
+        (if (<= price ONE_8) ONE_8 price)
     )
 )
 
@@ -158,7 +157,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
         )      
-        (get-price-down-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))))
+        (ok (get-price-down-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool)))))
     )
 )
 
@@ -166,9 +165,8 @@
     (let
         (
           (price (pow-down (div-up balance-y balance-x) t))
-        )      
-        ;; (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
-        (ok (if (<= price ONE_8) ONE_8 price))        
+        )
+        (if (<= price ONE_8) ONE_8 price)
     )
 )
 
@@ -401,7 +399,7 @@
                 (sender tx-sender)                
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            (asserts! (<= dy (mul-down dx-net-fees (try! (get-price-internal balance-token (+ balance-yield-token balance-virtual) (try! (get-t expiry (get listed pool))))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (<= dy (mul-down dx-net-fees (get-price-internal balance-token (+ balance-yield-token balance-virtual) (try! (get-t expiry (get listed pool)))))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy sender))))
@@ -440,7 +438,7 @@
                 (sender tx-sender)
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            (asserts! (>= dy-net-fees (mul-down dx (try! (get-price-internal balance-token (+ balance-yield-token balance-virtual) (try! (get-t expiry (get listed pool))))))) ERR-INVALID-LIQUIDITY)
+            (asserts! (>= dy-net-fees (mul-down dx (get-price-internal balance-token (+ balance-yield-token balance-virtual) (try! (get-t expiry (get listed pool)))))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
@@ -571,7 +569,7 @@
             (dy
               (if (> dx (get small-threshold pool))
                 (try! (get-y-given-x-internal balance-x balance-y t dx))
-                (mul-down dx (try! (get-price-internal balance-x balance-y t)))
+                (mul-down dx (get-price-internal balance-x balance-y t))
               )
             )     
         )
@@ -600,7 +598,7 @@
             (dx
               (if (> dy (get small-threshold pool))
                 (try! (get-x-given-y-internal balance-x balance-y t dy))
-                (div-down dy (try! (get-price-internal balance-x balance-y t)))
+                (div-down dy (get-price-internal balance-x balance-y t))
               )
             )
         )
