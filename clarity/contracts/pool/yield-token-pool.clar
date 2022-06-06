@@ -138,13 +138,17 @@
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-            (balance-x (get balance-token pool))
-            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
-            (t (try! (get-t expiry (get listed pool))))
-            (price (pow-up (div-up balance-y balance-x) t))
         )      
-        ;; (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
-        (ok (if (<= price ONE_8) ONE_8 price))        
+        (ok (get-price-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool)))))
+    )
+)
+
+(define-private (get-price-internal (balance-x uint) (balance-y uint) (t uint))
+    (let
+        (
+          (price (pow-up (div-up balance-y balance-x) t))
+        )
+        (if (<= price ONE_8) ONE_8 price)
     )
 )
 
@@ -152,13 +156,17 @@
     (let
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-            (balance-x (get balance-token pool))
-            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
-            (t (try! (get-t expiry (get listed pool))))
-            (price (pow-down (div-down balance-y balance-x) t))
         )      
-        ;; (asserts! (>= balance-y balance-x) ERR-INVALID-BALANCE)      
-        (ok (if (<= price ONE_8) ONE_8 price))        
+        (ok (get-price-down-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool)))))
+    )
+)
+
+(define-private (get-price-down-internal (balance-x uint) (balance-y uint) (t uint))
+    (let
+        (
+          (price (pow-down (div-up balance-y balance-x) t))
+        )
+        (if (<= price ONE_8) ONE_8 price)
     )
 )
 
@@ -378,7 +386,7 @@
                 (fee (if (< (mul-down dx fee-yield) (get min-fee pool)) (get min-fee pool) (mul-down dx fee-yield)))
                 (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
-                (dy (if (> dx-net-fees (get small-threshold pool)) (try! (get-y-given-x expiry yield-token dx-net-fees)) (mul-down dx-net-fees (try! (get-price-down expiry yield-token)))))
+                (dy (try! (get-y-given-x expiry yield-token dx-net-fees)))
                 (pool-updated
                     (merge pool
                         {
@@ -391,7 +399,7 @@
                 (sender tx-sender)                
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            (asserts! (<= dy (mul-down dx-net-fees (try! (get-price expiry yield-token)))) ERR-INVALID-LIQUIDITY)
+            (asserts! (<= dy (mul-down dx-net-fees (get-price-internal balance-token (+ balance-yield-token balance-virtual) (try! (get-t expiry (get listed pool)))))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (unwrap! (contract-call? token-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED))
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry dy sender))))
@@ -417,7 +425,7 @@
                 (fee (if (< (mul-down dy fee-yield) (get min-fee pool)) (get min-fee pool) (mul-down dy fee-yield)))
                 (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
                 (fee-rebate (mul-down fee (get fee-rebate pool)))
-                (dx (if (> dy-net-fees (get small-threshold pool)) (try! (get-x-given-y expiry yield-token dy-net-fees)) (div-down dy-net-fees (try! (get-price expiry yield-token)))))
+                (dx (try! (get-x-given-y expiry yield-token dy-net-fees)))
                 (pool-updated
                     (merge pool
                         {
@@ -430,7 +438,7 @@
                 (sender tx-sender)
             )
             (asserts! (is-eq (get underlying-token pool) (contract-of token-trait)) ERR-INVALID-TOKEN)
-            (asserts! (>= dy-net-fees (mul-down dx (try! (get-price expiry yield-token)))) ERR-INVALID-LIQUIDITY)
+            (asserts! (>= dy-net-fees (mul-down dx (get-price-internal balance-token (+ balance-yield-token balance-virtual) (try! (get-t expiry (get listed pool)))))) ERR-INVALID-LIQUIDITY)
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dx sender))))
             (and (> dy u0) (unwrap! (contract-call? yield-token-trait transfer-fixed expiry dy sender .alex-vault) ERR-TRANSFER-FAILED))
@@ -555,7 +563,15 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-            (dy (try! (get-y-given-x-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dx)))
+            (balance-x (get balance-token pool))
+            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
+            (t (try! (get-t expiry (get listed pool))))
+            (dy
+              (if (> dx (get small-threshold pool))
+                (try! (get-y-given-x-internal balance-x balance-y t dx))
+                (mul-down dx (get-price-internal balance-x balance-y t))
+              )
+            )     
         )
         (asserts! (> (get balance-yield-token pool) dy) ERR-DY-BIGGER-THAN-AVAILABLE)
         (ok (if (< dy dx) dx dy))        
@@ -576,7 +592,15 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { yield-token: yield-token, expiry: expiry }) ERR-INVALID-POOL))
-            (dx (try! (get-x-given-y-internal (get balance-token pool) (+ (get balance-yield-token pool) (get balance-virtual pool)) (try! (get-t expiry (get listed pool))) dy)))
+            (balance-x (get balance-token pool))
+            (balance-y (+ (get balance-yield-token pool) (get balance-virtual pool)))
+            (t (try! (get-t expiry (get listed pool))))
+            (dx
+              (if (> dy (get small-threshold pool))
+                (try! (get-x-given-y-internal balance-x balance-y t dy))
+                (div-down dy (get-price-internal balance-x balance-y t))
+              )
+            )
         )
         (ok (if (< dy dx) dy dx))        
     )
