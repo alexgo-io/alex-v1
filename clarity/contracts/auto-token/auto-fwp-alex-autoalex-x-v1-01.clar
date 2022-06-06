@@ -399,6 +399,8 @@
 
 (define-data-var start-block uint u340282366920938463463374607431768211455)
 
+(define-data-var add-multiplier uint u101000000) ;; 1.01x
+
 (define-map tranche-end-block uint uint)
 
 (define-map available-alex 
@@ -425,6 +427,17 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set start-block new-start-block))
+  )
+)
+
+(define-read-only (get-add-multiplier)
+  (var-get add-multiplier)
+)
+
+(define-public (set-add-multiplier (new-add-multiplier uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set add-multiplier new-add-multiplier))
   )
 )
 
@@ -459,8 +472,8 @@
         (
           (sender tx-sender)
           (pool (try! (contract-call? .simple-weight-pool-alex get-token-given-position .age000-governance-token .auto-alex dx none)))
-          (atalex-in-alex (mul-up (try! (contract-call? .auto-alex get-intrinsic)) (get dy pool)))          
-          (alex-to-atalex (div-up (mul-up dx atalex-in-alex) (+ dx atalex-in-alex)))
+          (atalex-in-alex (mul-down (try! (contract-call? .auto-alex get-intrinsic)) (get dy pool)))          
+          (alex-to-atalex (div-down (mul-down dx atalex-in-alex) (+ dx atalex-in-alex)))
           (atalex-amount (try! (contract-call? .auto-alex get-token-given-position alex-to-atalex)))
           (alex-available (get-available-alex-or-default sender tranche))
           (alex-borrowed (get-borrowed-alex-or-default sender tranche))                        
@@ -470,7 +483,7 @@
 
         (as-contract (try! (contract-call? .age000-governance-token mint-fixed dx tx-sender)))
         (as-contract (try! (contract-call? .auto-alex add-to-position alex-to-atalex)))
-        (as-contract (try! (contract-call? .simple-weight-pool-alex add-to-position .age000-governance-token .auto-alex .fwp-alex-autoalex (- dx alex-to-atalex) (some atalex-amount))))
+        (as-contract (try! (contract-call? .simple-weight-pool-alex add-to-position .age000-governance-token .auto-alex .fwp-alex-autoalex (- dx (mul-down (var-get add-multiplier) alex-to-atalex)) (some atalex-amount))))
         (map-set available-alex { borrower: sender, tranche: tranche } (- alex-available dx))
         (map-set borrowed-alex { borrower: sender, tranche: tranche } (+ alex-borrowed dx))
 		(as-contract (try! (mint-fixed tranche (get token pool) sender)))
