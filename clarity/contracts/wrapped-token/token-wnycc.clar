@@ -3,8 +3,8 @@
 
 (define-fungible-token wnycc)
 
-(define-data-var token-name (string-ascii 32) "Wrapped NYCC")
-(define-data-var token-symbol (string-ascii 10) "NYCC")
+(define-data-var token-name (string-ascii 32) "Wrapped NYC")
+(define-data-var token-symbol (string-ascii 10) "NYC")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-wnycc.json"))
 
 (define-data-var token-decimals uint u8)
