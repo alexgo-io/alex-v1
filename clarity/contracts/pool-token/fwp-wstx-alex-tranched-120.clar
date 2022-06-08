@@ -13,6 +13,7 @@
 (define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 (define-constant ERR-INVALID-PERCENT (err u5000))
 (define-constant ERR-ALREADY-PROCESSED (err u1409))
+(define-constant ERR-DISTRIBUTION-IN-PROGRESS (err u1410))
 
 (define-constant ONE_8 u100000000)
 
@@ -75,6 +76,10 @@
 
 (define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
+(define-data-var distribution-in-progress bool false)
+(define-data-var distributable-atalex uint u0)
+(define-data-var distributed-atalex uint u0)
+
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
 )
@@ -107,6 +112,14 @@
 
 (define-read-only (get-borrowed-alex)
   (var-get borrowed-alex)
+)
+
+(define-read-only (get-distributable-atalex)
+  (var-get distributable-atalex)
+)
+
+(define-read-only (get-distributed-atalex)
+  (var-get distributed-atalex)
 )
 
 (define-data-var bounty-in-fixed uint u1000000000) ;; 10 ALEX
@@ -177,7 +190,8 @@
         (asserts! (> (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
         (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)        
-        (asserts! (>= alex-available alex) ERR-AVAILABLE-ALEX)        
+        (asserts! (>= alex-available alex) ERR-AVAILABLE-ALEX)     
+        (asserts! (not (var-get distribution-in-progress)) ERR-DISTRIBUTION-IN-PROGRESS)   
 
         (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
         (as-contract (try! (stake-tokens dx cycles-to-stake)))
@@ -189,7 +203,7 @@
         (map-set user-stx sender (+ (get-user-stx-or-default sender) stx))
         (var-set total-balance (+ (var-get total-balance) dx))
         (var-set total-stx (+ (var-get total-stx) stx))
-        (print { object: "pool", action: "position-added", data: dx})
+        (print { object: "pool", action: "position-added", data: dx })
         (ok { dx: stx, dy: alex })
     )
 )
@@ -197,42 +211,39 @@
 (define-public (claim-and-stake (reward-cycle uint))
   (let 
     (      
-      ;; claim all that's available to claim for the reward-cycle
-      (claimed (and (> (as-contract (get-user-id)) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))      
-      (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-      (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
+      (sender tx-sender)
+      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
+      (alex-claimed (as-contract (try! (claim-alex-staking-reward reward-cycle))))
+      (principal-to-stake (get to-return claimed))
+      (alex-to-distribute (/ (get entitled-token claimed) u2))
+      (atalex-to-distribute (try! (contract-call? .auto-alex get-token-given-position alex-to-distribute)))
+      (alex-to-stake (- (+ (get entitled-token claimed) (get to-return alex-claimed) (get entitled-token alex-claimed)) alex-to-distribute))       
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))      
+      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
       (bounty (var-get bounty-in-fixed))
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (> alex-balance bounty) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (> alex-to-distribute bounty) ERR-INSUFFICIENT-BALANCE)
     (asserts! (>= (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
-
-    (let 
-      (
-        (sender tx-sender)
-        (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
-      )
-      (and (> principal-balance u0) (> cycles-to-stake u0) (as-contract (try! (stake-tokens principal-balance cycles-to-stake))))
-      ;; this needs to be done carefully
-      ;; (alex-claimed (and (> (as-contract (get-alex-user-id)) u0) (is-ok (as-contract (claim-alex-staking-reward reward-cycle)))))
-      ;; (and (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens (/ (- alex-balance bounty) u2) cycles-to-stake))))
-      (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     
-      (ok true)
-    )
+    (and (> principal-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-tokens principal-to-stake cycles-to-stake))))
+    (and (> alex-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens alex-to-stake cycles-to-stake))))
+    (as-contract (try! (contract-call? .auto-alex add-to-position alex-to-distribute)))
+    (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
+    (var-set distributable-atalex (- (+ (var-get distributable-atalex) atalex-to-distribute) bounty))
+    (ok true)
   )
 )
 
-(define-private (distribute-iter (recipient principal) (prior (response { balance: uint, sum: uint } uint)))
+
+(define-private (distribute-iter (recipient principal) (prior (response uint uint)))
   (let 
-    (      
-      (prior-unwrapped (try! prior))
-      (shares (div-down (mul-down (get balance prior-unwrapped) (get-user-balance-or-default recipient)) (var-get total-balance)))
+    (
+      (shares (div-down (mul-down (var-get distributable-atalex) (get-user-balance-or-default recipient)) (var-get total-balance)))
     )
-    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed shares tx-sender recipient none)))
-    (ok { balance: (get balance prior-unwrapped), sum: (+ (get sum prior-unwrapped) shares) })
+    (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
+    (ok (+ (try! prior) shares))
   )
 )
 
@@ -243,45 +254,85 @@
   )
 )
 
-(define-public (distribute (cycle uint) (batch uint) (recipients (list 200 principal)))
-	(let 
-    (
-      (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
-    )  
+(define-public (set-distribution-in-progress (new-bool bool))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set distribution-in-progress new-bool))
+  )
+)
+
+(define-public (set-distributable-atalex (new-amount uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set distributable-atalex new-amount))
+  )
+)
+
+(define-public (set-distributed-atalex (new-amount uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set distributed-atalex new-amount))
+  )
+)
+
+(define-public (distribute (cycle uint) (batch uint) (recipients (list 200 principal)) (last-batch bool))
+	(begin
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
     (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
     (let
       (
-        (distributed (try! (fold distribute-iter recipients (ok { balance: alex-balance, sum: u0 }))))
+        (distributed (try! (fold distribute-iter recipients (ok u0))))
       )
-      (map-set processed-batches { cycle: cycle, batch: batch } true)
-      (ok (get sum distributed))
+      (var-set distribution-in-progress (not last-batch))
+      (map-set processed-batches { cycle: cycle, batch: batch } true)            
+      (var-set distributed-atalex (+ (var-get distributed-atalex) distributed))
+
+      ;; last batch triggers update of distributable-atalex and distributed-atalex
+      (and last-batch (var-set distributable-atalex (- (var-get distributable-atalex) (var-get distributed-atalex))) (var-set distributed-atalex u0))
+
+      (ok distributed)
     )
 	)
 )
+
 
 (define-public (reduce-position)
   (let 
     (
       (sender tx-sender)
-      (share (div-down (get-user-balance-or-default sender) (var-get total-balance)))
-      (pool-reduced (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 share))))
+      (percent (div-down (get-user-balance-or-default sender) (var-get total-balance)))
+      (alex-balance (mul-down percent (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL)))
+      (pool-reduced (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 percent))))
       (stx-reduced (get dx pool-reduced))
       (alex-reduced (get dy pool-reduced))
-      (stx-to-return (get-user-stx-or-default sender))            
-      (stx-to-buy (if (<= stx-to-return stx-reduced) u0 (mul-down (- stx-to-return stx-reduced) (var-get shortfall-coverage))))
-      ;; alex-to-sell has to be capped to alex-reduced + alex balance
-      (alex-to-sell (if (is-eq stx-to-buy u0) u0 (try! (contract-call? .fixed-weight-pool-v1-01 get-y-in-given-wstx-out .age000-governance-token u50000000 stx-to-buy))))
-      (stx-bought (if (is-eq alex-to-sell u0) u0 (get dx (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 alex-to-sell (some (- stx-to-return stx-reduced))))))))
-      (alex-residual (- alex-reduced alex-to-sell))
-      (stx-residual (- (+ stx-reduced stx-to-buy) stx-to-return))
+      (stx-promised (get-user-stx-or-default sender))            
+      (stx-to-buy (if (<= stx-promised stx-reduced) u0 (mul-down (- stx-promised stx-reduced) (var-get shortfall-coverage))))
+      (alex-available (+ alex-reduced alex-balance))
+      (alex-to-sell-uncapped (if (is-eq stx-to-buy u0) u0 (try! (contract-call? .fixed-weight-pool-v1-01 get-y-in-given-wstx-out .age000-governance-token u50000000 stx-to-buy))))      
+      (alex-to-sell (if (<= alex-to-sell-uncapped alex-available) alex-to-sell-uncapped alex-available))
+      (stx-bought (if (is-eq alex-to-sell u0) u0 (get dx (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 alex-to-sell none))))))
+      (stx-available (+ stx-reduced stx-bought))
+      (stx-to-return (if (<= stx-available stx-promised) stx-available stx-promised))
+      (alex-residual (- alex-available alex-to-sell))
+      (stx-residual (- stx-available stx-to-return))
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
+    (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
+    ;; only if beyond end-cycle (by 1 more cycle to give time for claim/distribute) and no staking positions
+    (asserts! 
+      (and 
+        (> current-cycle (+ (var-get end-cycle) u1))
+        (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle))))
+        (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) 
+      )  
+      ERR-REWARD-CYCLE-NOT-COMPLETED
+    )    
     
     (map-set user-balance sender u0)
     (map-set user-stx sender u0)
-    (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none)))    
-    (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none)))    
-    (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none)))
+    (and (> stx-to-return u0) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
+    (and (> stx-residual u0) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
+    (and (> alex-residual u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none))))
     (print { object: "pool", action: "position-reduced", data: stx-to-return })
     (ok { dx: stx-reduced, dy: alex-reduced })
   )
