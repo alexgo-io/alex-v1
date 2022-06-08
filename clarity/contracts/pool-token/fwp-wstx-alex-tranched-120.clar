@@ -181,7 +181,7 @@
 
         (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
         (as-contract (try! (stake-tokens dx cycles-to-stake)))
-        (try! (contract-call? .age000-governance-token mint-fixed alex tx-sender))
+        (as-contract (try! (contract-call? .age000-governance-token mint-fixed alex sender)))
         (try! (contract-call? .auto-alex add-to-position alex))
         (var-set available-alex (- alex-available alex))
         (var-set borrowed-alex (+ alex-borrowed alex))
@@ -198,8 +198,7 @@
   (let 
     (      
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (and (> (as-contract (get-user-id)) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))
-      (alex-claimed (and (> (as-contract (get-alex-user-id)) u0) (is-ok (as-contract (claim-alex-staking-reward reward-cycle)))))
+      (claimed (and (> (as-contract (get-user-id)) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))      
       (alex-balance (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (principal-balance (unwrap! (contract-call? .fwp-wstx-alex-50-50-v1-01 get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL))
       (bounty (var-get bounty-in-fixed))
@@ -216,7 +215,9 @@
         (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
       )
       (and (> principal-balance u0) (> cycles-to-stake u0) (as-contract (try! (stake-tokens principal-balance cycles-to-stake))))
-      (and (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens (/ (- alex-balance bounty) u2) cycles-to-stake))))
+      ;; this needs to be done carefully
+      ;; (alex-claimed (and (> (as-contract (get-alex-user-id)) u0) (is-ok (as-contract (claim-alex-staking-reward reward-cycle)))))
+      ;; (and (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens (/ (- alex-balance bounty) u2) cycles-to-stake))))
       (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
     
       (ok true)
@@ -269,6 +270,7 @@
       (alex-reduced (get dy pool-reduced))
       (stx-to-return (get-user-stx-or-default sender))            
       (stx-to-buy (if (<= stx-to-return stx-reduced) u0 (mul-down (- stx-to-return stx-reduced) (var-get shortfall-coverage))))
+      ;; alex-to-sell has to be capped to alex-reduced + alex balance
       (alex-to-sell (if (is-eq stx-to-buy u0) u0 (try! (contract-call? .fixed-weight-pool-v1-01 get-y-in-given-wstx-out .age000-governance-token u50000000 stx-to-buy))))
       (stx-bought (if (is-eq alex-to-sell u0) u0 (get dx (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 alex-to-sell (some (- stx-to-return stx-reduced))))))))
       (alex-residual (- alex-reduced alex-to-sell))
