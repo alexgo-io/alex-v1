@@ -882,3 +882,7 @@ depends_on = [
   "token-wstx",
   "token-wnycc"
 ]
+
+[contracts.swap-helper-v1-03]
+path = "contracts/helpers/swap-helper-v1-03.clar"
+depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-alex" ]

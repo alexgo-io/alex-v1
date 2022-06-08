@@ -31,7 +31,7 @@ const price = 50000;
 const quantity = 10 * ONE_8;
 
 Clarinet.test({
-    name: "swap-helper-v1-02 : ALEX only swap works",
+    name: "swap-helper-v1-03 : ALEX only swap works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -69,12 +69,20 @@ Clarinet.test({
         result = FWPTestALEX.setStartBlock(deployer, alexAddress, usdaAddress, 0);   
         result.expectOk().expectBool(true);  
         result = FWPTestALEX.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
-        result.expectOk().expectBool(true);                    
+        result.expectOk().expectBool(true);   
+        result = FWPTestALEX.setOracleEnabled(deployer, alexAddress, usdaAddress);
+        result.expectOk().expectBool(true);
+        result = FWPTestALEX.setOracleAverage(deployer, alexAddress, usdaAddress, 0.95e8);
+        result.expectOk().expectBool(true);   
+        result = FWPTestALEX.setOracleEnabled(deployer, alexAddress, wbtcAddress);
+        result.expectOk().expectBool(true);
+        result = FWPTestALEX.setOracleAverage(deployer, alexAddress, wbtcAddress, 0.95e8);
+        result.expectOk().expectBool(true);                             
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
         block.receipts[0].result.expectOk();
@@ -83,7 +91,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "swap-helper-v1-02 : STX only swap works",
+    name: "swap-helper-v1-03 : STX only swap works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -129,8 +137,8 @@ Clarinet.test({
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
             ]
         );
         block.receipts[0].result.expectOk();
@@ -139,7 +147,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "swap-helper-v1-02 : STX-anchored pool <=> ALEX-anchored pool works",
+    name: "swap-helper-v1-03 : STX-anchored pool <=> ALEX-anchored pool works",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -189,16 +197,20 @@ Clarinet.test({
         result = FWPTestALEX.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);         
         result = FWPTestALEX.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
-        result.expectOk().expectBool(true);                   
+        result.expectOk().expectBool(true);
+        result = FWPTestALEX.setOracleEnabled(deployer, alexAddress, wbtcAddress);
+        result.expectOk().expectBool(true);
+        result = FWPTestALEX.setOracleAverage(deployer, alexAddress, wbtcAddress, 0.95e8);
+        result.expectOk().expectBool(true);                            
 
         const block = chain.mineBlock(
             [
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(alexAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(usdaAddress), types.principal(alexAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                                                
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(wbtcAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
-                Tx.contractCall("swap-helper-v1-02", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(alexAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(usdaAddress), types.principal(alexAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                                                
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(wstxAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(wbtcAddress), types.principal(wstxAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),                
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(usdaAddress), types.principal(wbtcAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
+                Tx.contractCall("swap-helper-v1-03", "swap-helper", [types.principal(wbtcAddress), types.principal(usdaAddress), types.uint(ONE_8), types.some(types.uint(0))], deployer.address),
                 Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", [types.principal(wstxAddress), types.principal(alexAddress), types.uint(weightX), types.uint(weightY), types.uint(ONE_8), types.some(types.uint(0))], deployer.address)
             ]
         );
