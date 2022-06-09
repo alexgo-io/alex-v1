@@ -68,7 +68,7 @@ Clarinet.test({
       "token-wstx"
     );
     const dx = ONE_8;
-    const end_cycle = 10;
+    const end_cycle = 120;
 
     let result: any = stxToken.transferToken(deployer, dx, wallet_1.address, new ArrayBuffer(1));
     result.expectOk();

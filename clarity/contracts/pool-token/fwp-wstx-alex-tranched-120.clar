@@ -352,8 +352,8 @@
     
       (map-set user-balance sender u0)
       (map-set user-stx sender u0)
-      (and (> stx-to-return u0) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
-      (and (> stx-residual u10) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
+      (and (> stx-to-return u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
+      (and (> stx-residual u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
       (and (> alex-residual u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none))))
       (print { object: "pool", action: "position-reduced", data: stx-to-return })
       (ok { dx: stx-reduced, dy: alex-reduced })
