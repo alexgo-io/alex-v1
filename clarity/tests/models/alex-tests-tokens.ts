@@ -733,5 +733,6 @@ class SemiFungibleToken {
     ]);
     return block.receipts[0].result;
   }
+
 }
 export { SemiFungibleToken };
