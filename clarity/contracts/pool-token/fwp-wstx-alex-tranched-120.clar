@@ -79,6 +79,7 @@
 (define-data-var distribution-in-progress bool false)
 (define-data-var distributable-atalex uint u0)
 (define-data-var distributed-atalex uint u0)
+(define-map user-distributed principal bool)
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -97,6 +98,10 @@
 
 (define-read-only (get-user-stx-or-default (user principal))
     (default-to u0 (map-get? user-stx user))
+)
+
+(define-read-only (get-user-distributed-or-default (user principal))
+  (default-to false (map-get? user-distributed user))
 )
 
 (define-public (set-available-alex (new-amount uint))
@@ -242,8 +247,16 @@
     (
       (shares (div-down (mul-down (var-get distributable-atalex) (get-user-balance-or-default recipient)) (var-get total-balance)))
     )
-    (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
-    (ok (+ (try! prior) shares))
+    (if (and (var-get distribution-in-progress (get-user-distributed-or-default recipient)
+      (ok (try! prior))
+      (begin 
+        (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
+        (map-set user-distributed recipient true)
+        (ok (+ (try! prior) shares))
+      )
+    )
+    
+    
   )
 )
 
