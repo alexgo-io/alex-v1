@@ -855,6 +855,38 @@ depends_on = [ "auto-alex", "token-apower" ]
 path = "contracts/auto-token/auto-fwp-alex-autoalex-x-v1-01.clar"
 depends_on = [ "trait-semi-fungible-v1-01", "trait-ownable", "simple-weight-pool-alex", "auto-alex", "age000-governance-token", "fwp-alex-autoalex" ]
 
+[contracts.fwp-wstx-wmia-50-50-v1-01]
+path = "contracts/pool-token/fwp-wstx-wmia-50-50-v1-01.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-wstx-wmia-50-50-v1-01]
+path = "contracts/multisig/multisig-fwp-wstx-wmia-50-50-v1-01.clar"
+depends_on = [
+  "fwp-wstx-wmia-50-50-v1-01",
+  "fixed-weight-pool-v1-01",
+  "trait-multisig-vote",
+  "token-wstx",
+  "token-wmia"
+]
+
+[contracts.fwp-wstx-wnycc-50-50-v1-01]
+path = "contracts/pool-token/fwp-wstx-wnycc-50-50-v1-01.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.multisig-fwp-wstx-wnycc-50-50-v1-01]
+path = "contracts/multisig/multisig-fwp-wstx-wnycc-50-50-v1-01.clar"
+depends_on = [
+  "fwp-wstx-wnycc-50-50-v1-01",
+  "fixed-weight-pool-v1-01",
+  "trait-multisig-vote",
+  "token-wstx",
+  "token-wnycc"
+]
+
+[contracts.swap-helper-v1-03]
+path = "contracts/helpers/swap-helper-v1-03.clar"
+depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-alex" ]
+
 [contracts.fwp-wstx-alex-tranched-120]
 path = "contracts/pool-token/fwp-wstx-alex-tranched-120.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "fwp-wstx-alex-50-50-v1-01", "alex-reserve-pool", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token" ]
