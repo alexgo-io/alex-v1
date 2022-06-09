@@ -76,10 +76,10 @@
 
 (define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
-(define-data-var distribution-in-progress bool false)
 (define-data-var distributable-atalex uint u0)
 (define-data-var distributed-atalex uint u0)
-(define-map user-distributed principal bool)
+(define-map distributed uint bool)
+(define-map user-distributed { user: principal, cycle: uint } bool)
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -100,8 +100,12 @@
     (default-to u0 (map-get? user-stx user))
 )
 
-(define-read-only (get-user-distributed-or-default (user principal))
-  (default-to false (map-get? user-distributed user))
+(define-read-only (get-user-distributed-or-default (user principal) (cycle uint))
+  (default-to false (map-get? user-distributed { user: user, cycle: cycle }))
+)
+
+(define-read-only (get-distributed-or-default (cycle uint))
+  (default-to false (map-get? distributed cycle))
 )
 
 (define-public (set-available-alex (new-amount uint))
@@ -125,6 +129,14 @@
 
 (define-read-only (get-distributed-atalex)
   (var-get distributed-atalex)
+)
+
+(define-read-only (get-total-balance)
+  (var-get total-balance)
+)
+
+(define-read-only (get-total-stx)
+  (var-get total-stx)
 )
 
 (define-data-var bounty-in-fixed uint u1000000000) ;; 10 ALEX
@@ -196,7 +208,7 @@
         (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)        
         (asserts! (>= alex-available alex) ERR-AVAILABLE-ALEX)     
-        (asserts! (not (var-get distribution-in-progress)) ERR-DISTRIBUTION-IN-PROGRESS)   
+        (asserts! (get-distributed-or-default (- current-cycle u1)) ERR-DISTRIBUTION-IN-PROGRESS)   
 
         (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
         (as-contract (try! (stake-tokens dx cycles-to-stake)))
@@ -217,15 +229,14 @@
   (let 
     (      
       (sender tx-sender)
+      (bounty (var-get bounty-in-fixed))
       (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
       (alex-claimed (as-contract (try! (claim-alex-staking-reward reward-cycle))))
       (principal-to-stake (get to-return claimed))
       (alex-to-distribute (/ (get entitled-token claimed) u2))
-      (atalex-to-distribute (try! (contract-call? .auto-alex get-token-given-position alex-to-distribute)))
       (alex-to-stake (- (+ (get entitled-token claimed) (get to-return alex-claimed) (get entitled-token alex-claimed)) alex-to-distribute))       
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))      
-      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
-      (bounty (var-get bounty-in-fixed))
+      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))      
     )
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
@@ -234,29 +245,33 @@
     
     (and (> principal-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-tokens principal-to-stake cycles-to-stake))))
     (and (> alex-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens alex-to-stake cycles-to-stake))))
-    (as-contract (try! (contract-call? .auto-alex add-to-position alex-to-distribute)))
+    (as-contract (try! (contract-call? .auto-alex add-to-position (- alex-to-distribute bounty))))
     (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
-    (var-set distributable-atalex (- (+ (var-get distributable-atalex) atalex-to-distribute) bounty))
+    (var-set distributable-atalex (+ (var-get distributable-atalex) (try! (contract-call? .auto-alex get-token-given-position (- alex-to-distribute bounty)))))
     (ok true)
   )
 )
 
 
-(define-private (distribute-iter (recipient principal) (prior (response uint uint)))
+(define-private (distribute-iter (recipient principal) (prior (response { cycle: uint, atalex: uint, balance: uint, sum: uint } uint)))
   (let 
     (
-      (shares (div-down (mul-down (var-get distributable-atalex) (get-user-balance-or-default recipient)) (var-get total-balance)))
+      (prior-unwrapped (try! prior))
+      (cycle (get cycle prior-unwrapped))
+      (sum (get sum prior-unwrapped))
+      (atalex (get atalex prior-unwrapped))
+      (balance (get balance prior-unwrapped))
+      (shares (div-down (mul-down atalex (get-user-balance-or-default recipient)) balance))
     )
-    (if (and (var-get distribution-in-progress (get-user-distributed-or-default recipient)
-      (ok (try! prior))
+    (if (get-user-distributed-or-default recipient cycle)
+      ;; if the user already received distribution, then skip
+      (ok { cycle: cycle, atalex: atalex, balance: balance, sum: sum })
       (begin 
         (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
-        (map-set user-distributed recipient true)
-        (ok (+ (try! prior) shares))
+        (map-set user-distributed { user: recipient, cycle: cycle } true)
+        (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
       )
     )
-    
-    
   )
 )
 
@@ -267,10 +282,10 @@
   )
 )
 
-(define-public (set-distribution-in-progress (new-bool bool))
+(define-public (set-distributed (cycle uint) (new-bool bool))
   (begin 
     (try! (check-is-owner))
-    (ok (var-set distribution-in-progress new-bool))
+    (ok (map-set distributed cycle new-bool))
   )
 )
 
@@ -294,20 +309,22 @@
     (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
     (let
       (
-        (distributed (try! (fold distribute-iter recipients (ok u0))))
+        (output (try! (fold distribute-iter recipients (ok { cycle: cycle, atalex:  (var-get distributable-atalex), balance:  (var-get total-balance), sum: u0 }))))
       )
-      (var-set distribution-in-progress (not last-batch))
+      (map-set distributed cycle last-batch)
       (map-set processed-batches { cycle: cycle, batch: batch } true)            
-      (var-set distributed-atalex (+ (var-get distributed-atalex) distributed))
-
+      (var-set distributed-atalex (+ (var-get distributed-atalex) (get sum output)))
       ;; last batch triggers update of distributable-atalex and distributed-atalex
-      (and last-batch (var-set distributable-atalex (- (var-get distributable-atalex) (var-get distributed-atalex))) (var-set distributed-atalex u0))
+      (and 
+        last-batch 
+        (var-set distributable-atalex (- (var-get distributable-atalex) (var-get distributed-atalex))) 
+        (var-set distributed-atalex u0)
+      )
 
-      (ok distributed)
+      (ok (get sum output))
     )
 	)
 )
-
 
 (define-public (reduce-position)
   (let 
@@ -331,15 +348,8 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
-    ;; only if beyond end-cycle (by 1 more cycle to give time for claim/distribute) and no staking positions
-    (asserts! 
-      (and 
-        (> current-cycle (+ (var-get end-cycle) u1))
-        (is-eq u0 (get amount-staked (as-contract (get-staker-at-cycle current-cycle))))
-        (is-eq u0 (get amount-staked (as-contract (get-alex-staker-at-cycle current-cycle)))) 
-      )  
-      ERR-REWARD-CYCLE-NOT-COMPLETED
-    )    
+    (asserts! (> current-cycle (var-get end-cycle)) ERR-REWARD-CYCLE-NOT-COMPLETED)    
+    (asserts! (get-distributed-or-default (var-get end-cycle)) ERR-DISTRIBUTION-IN-PROGRESS)
     
     (map-set user-balance sender u0)
     (map-set user-stx sender u0)
