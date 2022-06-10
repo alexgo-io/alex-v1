@@ -263,6 +263,10 @@
     )
 )
 
+(define-read-only (is-cycle-bountiable (reward-cycle uint))
+  (> (/ (as-contract (get-staking-reward reward-cycle)) u2) (var-get bounty-in-fixed))
+)
+
 (define-public (claim-and-stake (reward-cycle uint))
   (let 
     (      
