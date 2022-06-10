@@ -19,6 +19,7 @@
 
 (define-data-var end-cycle uint u120)
 (define-data-var start-block uint u340282366920938463463374607431768211455)
+(define-data-var open-to-all bool false)
 
 (define-read-only (get-start-block)
   (var-get start-block)
@@ -39,6 +40,17 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set end-cycle new-end-cycle))
+  )
+)
+
+(define-read-only (get-open-to-all)
+  (var-get open-to-all)
+)
+
+(define-public (set-open-to-all (new-open-to-all bool))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set open-to-all new-open-to-all))
   )
 )
 
@@ -191,7 +203,24 @@
   (contract-call? .alex-reserve-pool claim-staking-reward .fwp-wstx-alex-50-50-v1-01 reward-cycle)
 )
 
+(define-public (claim-and-add-to-position (reward-cycle uint))
+  (let 
+    (
+      (claimed (try! (claim-staking-reward reward-cycle)))
+    )
+    (try! (add-to-position-internal (get to-return claimed)))
+    (contract-call? .auto-alex add-to-position (get entitled-token claimed))
+  )
+)
+
 (define-public (add-to-position (dx uint))
+  (begin 
+    (asserts! (var-get open-to-all) ERR-NOT-ACTIVATED)
+    (add-to-position-internal dx)
+  )
+)
+
+(define-private (add-to-position-internal (dx uint))
     (let 
         (
           (sender tx-sender)
