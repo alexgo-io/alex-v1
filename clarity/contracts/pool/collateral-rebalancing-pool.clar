@@ -1840,7 +1840,6 @@
                 (swapped-collateral (as-contract (try! (swap-helper token-trait collateral-trait swapped-token none))))                
                 (swapped-collateral-with-buffer (+ swapped-collateral buffer))
             )
-            ;; (asserts! (>= swapped-collateral-with-buffer loan-amount) ERR-ROLL-FLASH-LOAN-FEE)
             (as-contract (try! (contract-call? collateral-trait transfer-fixed loan-amount tx-sender .alex-vault none)))
             (as-contract (try! (contract-call? key-token-trait transfer-fixed expiry-to-roll (get key-token minted) tx-sender .alex-vault)))
             (map-set pool-total-supply key-token (get key-token minted))    

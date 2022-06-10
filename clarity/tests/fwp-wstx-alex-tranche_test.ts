@@ -144,7 +144,6 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-start-block", [types.uint(0)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-end-cycle", [types.uint(end_cycle)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-distributed", [types.uint(0), types.bool(true)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-available-alex", [types.uint(2000e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-open-to-all", [types.bool(true)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address)
@@ -161,7 +160,7 @@ Clarinet.test({
             Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address)
           ]
         )
-        block.receipts[0].result.expectErr().expectUint(1410);
+        block.receipts[0].result.expectOk();
       }
 
       block = chain.mineBlock(
@@ -171,30 +170,19 @@ Clarinet.test({
             [
               types.uint(cycle - 1),
               types.uint(0),
-              types.list([types.principal(deployer.address)]),
-              types.bool(false)
+              types.list([types.principal(deployer.address)])
             ],
             deployer.address),
             Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
             [
               types.uint(cycle - 1),
               types.uint(1),
-              types.list([types.principal(deployer.address)]),
-              types.bool(true)
+              types.list([types.principal(deployer.address)])
             ],
             deployer.address)          
         ]
       )
-      block.receipts.forEach((e) => { e.result.expectOk() });     
-      
-      if (cycle < end_cycle) {
-        block = chain.mineBlock(
-          [
-            Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address)
-          ]
-        )
-        block.receipts[0].result.expectOk();
-      }      
+      block.receipts.forEach((e) => { e.result.expectOk() });         
     }
 
     block = chain.mineBlock(
