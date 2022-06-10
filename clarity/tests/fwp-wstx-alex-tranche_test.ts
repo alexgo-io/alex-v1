@@ -70,11 +70,13 @@ Clarinet.test({
     const dx = ONE_8;
     const end_cycle = 10;
 
-    let result: any = stxToken.transferToken(deployer, dx, wallet_1.address, new ArrayBuffer(1));
+    let result: any = stxToken.transferToken(deployer, 1000e8, wallet_1.address, new ArrayBuffer(1));
     result.expectOk();
     
     result = alexToken.mintFixed(deployer, deployer.address, 1000e8);
     result.expectOk();
+    result = alexToken.mintFixed(deployer, wallet_1.address, 1000e8);
+    result.expectOk();    
 
     result = FWPTest.createPool(
       deployer, 
@@ -87,12 +89,7 @@ Clarinet.test({
       1000e8,
       1000e8
     );
-    result.expectOk().expectBool(true);
-
-    result = FWPTest.setMaxInRatio(deployer, 0.3e8);
-    result.expectOk().expectBool(true);
-    result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-    result.expectOk().expectBool(true);       
+    result.expectOk().expectBool(true);     
 
     let block = chain.mineBlock([
       Tx.contractCall(
@@ -130,7 +127,21 @@ Clarinet.test({
         ONE_8,
         ONE_8,
         ONE_8
-      ),      
+      ),   
+      Tx.contractCall(
+        "fixed-weight-pool-v1-01",
+        "add-to-position",
+        [
+          types.principal(deployer.address + ".token-wstx"),
+          types.principal(deployer.address + ".age000-governance-token"),
+          types.uint(0.5e8),
+          types.uint(0.5e8),
+          types.principal(fwpTokenAddress),
+          types.uint(1000e8),
+          types.some(types.uint(1000e8))
+        ],
+        wallet_1.address
+      )   
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
 
@@ -146,7 +157,8 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-available-alex", [types.uint(2000e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-open-to-all", [types.bool(true)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address)
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], wallet_1.address)
       ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
 
@@ -155,9 +167,10 @@ Clarinet.test({
       chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525 * cycle);
 
       if (cycle < end_cycle) {
+        const address = (cycle % 2 == 1) ? wallet_1.address : deployer.address;
         block = chain.mineBlock(
           [
-            Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address)
+            Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], address)
           ]
         )
         block.receipts[0].result.expectOk();
@@ -170,10 +183,10 @@ Clarinet.test({
             [
               types.uint(cycle - 1),
               types.uint(0),
-              types.list([types.principal(deployer.address)])
+              types.list([types.principal(deployer.address), types.principal(wallet_1.address)])
             ],
             deployer.address),
-            Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
+          Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
             [
               types.uint(cycle - 1),
               types.uint(1),

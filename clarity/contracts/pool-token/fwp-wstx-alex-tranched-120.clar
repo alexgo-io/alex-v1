@@ -346,7 +346,7 @@
     (asserts! 
       (and 
         (> (get-distributable-per-cycle-or-default (var-get end-cycle)) u0)
-        (is-eq (get-distributable-per-cycle-or-default (var-get end-cycle)) (get-distributed-per-cycle-or-default (var-get end-cycle)))
+        (is-eq (/ (get-distributable-per-cycle-or-default (var-get end-cycle)) ONE_8) (/ (get-distributed-per-cycle-or-default (var-get end-cycle)) ONE_8))
       ) 
       ERR-DISTRIBUTION-IN-PROGRESS
     )  
