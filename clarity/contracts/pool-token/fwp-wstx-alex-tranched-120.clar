@@ -198,6 +198,28 @@
   (contract-call? .alex-reserve-pool claim-staking-reward .fwp-wstx-alex-50-50-v1-01 reward-cycle)
 )
 
+(define-private (claim-staking-reward-iter (reward-cycle uint) (prior { entitled-token: uint, to-return: uint }))
+  (let 
+    (
+      (claimed (try! (claim-staking-reward reward-cycle)))
+    )
+    { 
+      entitled-token: (+ (get entitled-token claimed) (get entitled-token prior)),
+      to-return: (+ (get to-return claimed) (get to-return prior))   
+    }
+  )
+)
+
+(define-public (claim-and-add-to-position-many (reward-cycles (list 200 uint)))
+  (let 
+    (
+      (claimed (fold claim-staking-reward-iter reward-cycles { entitled-token: u0, to-return: u0 }))
+    )
+    (try! (add-to-position-internal (get to-return claimed)))
+    (contract-call? .auto-alex add-to-position (get entitled-token claimed))    
+  )
+)
+
 (define-public (claim-and-add-to-position (reward-cycle uint))
   (let 
     (
@@ -278,7 +300,7 @@
       (alex-to-distribute (/ (get entitled-token claimed) u2))
       (alex-to-stake (- (+ (get entitled-token claimed) (get to-return alex-claimed) (get entitled-token alex-claimed)) alex-to-distribute))       
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))      
-      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (if (< (var-get end-cycle) current-cycle) u0 (- (var-get end-cycle) current-cycle))))      
+      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (if (<= (var-get end-cycle) current-cycle) u0 (- (var-get end-cycle) current-cycle))))      
     )
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
