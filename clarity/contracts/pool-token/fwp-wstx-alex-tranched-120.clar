@@ -373,7 +373,9 @@
     (let 
       (
         (sender tx-sender)
-        (percent (div-down (get-user-balance-per-cycle-or-default sender (var-get end-cycle)) (get-total-balance-per-cycle-or-default (var-get end-cycle))))
+        (user-balance (get-user-balance-per-cycle-or-default sender (var-get end-cycle)))
+        (total-balance (get-total-balance-per-cycle-or-default (var-get end-cycle)))
+        (percent (div-down user-balance total-balance))
         (alex-balance (mul-down percent (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL)))
         (pool-reduced (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 percent))))
         (stx-reduced (get dx pool-reduced))
@@ -389,13 +391,16 @@
         (alex-residual (- alex-available alex-to-sell))
         (stx-residual (- stx-available stx-to-return))
       )
-    
-      (map-set user-balance-per-cycle { user: sender, cycle: (var-get end-cycle) } u0)
+          
+      (map-set user-balance-per-cycle { user: sender, cycle: (var-get end-cycle) } u0)      
+      (map-set total-balance-per-cycle (var-get end-cycle) (- total-balance user-balance))
+      (var-set total-stx (- (var-get total-stx) stx-promised))
       (map-set user-stx sender u0)
+      
       (and (> stx-to-return u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
       (and (> stx-residual u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
       (and (> alex-residual u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none))))
-      (print { object: "pool", action: "position-reduced", data: { dx: stx-reduced, dy: alex-reduced } })
+      (print { object: "pool", action: "position-reduced", data: { dx: stx-reduced, dy: stx-promised, x: (var-get total-stx) } })
       (ok { stx-to-return: stx-to-return, stx-residual: stx-residual, alex-residual: alex-residual })
     )
   )
