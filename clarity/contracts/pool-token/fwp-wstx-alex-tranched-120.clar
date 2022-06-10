@@ -198,22 +198,20 @@
   (contract-call? .alex-reserve-pool claim-staking-reward .fwp-wstx-alex-50-50-v1-01 reward-cycle)
 )
 
-(define-private (claim-staking-reward-iter (reward-cycle uint) (prior { entitled-token: uint, to-return: uint }))
+(define-private (claim-staking-reward-iter (reward-cycle uint) (prior (response { entitled-token: uint, to-return: uint } uint)))
   (let 
     (
+      (prior-unwrapped (try! prior))
       (claimed (try! (claim-staking-reward reward-cycle)))
     )
-    { 
-      entitled-token: (+ (get entitled-token claimed) (get entitled-token prior)),
-      to-return: (+ (get to-return claimed) (get to-return prior))   
-    }
+    (ok { entitled-token: (+ (get entitled-token claimed) (get entitled-token prior-unwrapped)), to-return: (+ (get to-return claimed) (get to-return prior-unwrapped)) })
   )
 )
 
 (define-public (claim-and-add-to-position-many (reward-cycles (list 200 uint)))
   (let 
     (
-      (claimed (fold claim-staking-reward-iter reward-cycles { entitled-token: u0, to-return: u0 }))
+      (claimed (try! (fold claim-staking-reward-iter reward-cycles (ok { entitled-token: u0, to-return: u0 }))))
     )
     (try! (add-to-position-internal (get to-return claimed)))
     (contract-call? .auto-alex add-to-position (get entitled-token claimed))    
