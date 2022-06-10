@@ -68,7 +68,7 @@ Clarinet.test({
       "token-wstx"
     );
     const dx = ONE_8;
-    const end_cycle = 10;
+    const end_cycle = 32;
 
     let result: any = stxToken.transferToken(deployer, 1000e8, wallet_1.address, new ArrayBuffer(1));
     result.expectOk();
@@ -167,7 +167,7 @@ Clarinet.test({
       chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525 * cycle);
 
       if (cycle < end_cycle) {
-        const address = (cycle % 2 == 1) ? wallet_1.address : deployer.address;
+        const address = (cycle % 3 == 1) ? wallet_1.address : deployer.address;
         block = chain.mineBlock(
           [
             Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], address)
@@ -200,11 +200,13 @@ Clarinet.test({
 
     block = chain.mineBlock(
       [
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], deployer.address)
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], wallet_1.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], deployer.address),        
       ]
     )
     block.receipts.forEach((e) => { e.result.expectOk() });
     console.log(block.receipts[0].events);
+    console.log(block.receipts[1].events);
 
   },
 });
