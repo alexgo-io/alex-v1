@@ -146,6 +146,7 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-distributed", [types.uint(0), types.bool(true)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-available-alex", [types.uint(2000e8)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-open-to-all", [types.bool(true)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address)
       ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
