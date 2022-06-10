@@ -77,11 +77,10 @@
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-(define-map user-balance principal uint)
 (define-map user-balance-per-cycle { user: principal, cycle: uint } uint)
-(define-map user-stx principal uint)
+(define-map total-balance-per-cycle uint uint)
 
-(define-data-var total-balance uint u0)
+(define-map user-stx principal uint)
 (define-data-var total-stx uint u0)
 
 (define-data-var available-alex uint u0)
@@ -89,10 +88,9 @@
 
 (define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 
-(define-data-var distributable-atalex uint u0)
-(define-data-var distributed-atalex uint u0)
-(define-map distributed uint bool)
-(define-map user-distributed { user: principal, cycle: uint } bool)
+(define-map distributable-per-cycle uint uint)
+(define-map distributed-per-cycle uint uint)
+(define-map user-distributed-per-cycle { user: principal, cycle: uint } bool)
 
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
@@ -105,24 +103,28 @@
   )
 )
 
-(define-read-only (get-user-balance-or-default (user principal))
-    (default-to u0 (map-get? user-balance user))
+(define-read-only (get-user-balance-per-cycle-or-default (user principal) (cycle uint))
+  (default-to u0 (map-get? user-balance-per-cycle { user: user, cycle: cycle }))
 )
 
-(define-read-only (get-user-balance-per-cycle-or-default (user principal) (cycle uint))
-  (default-to (get-user-balance-or-default user) (map-get? user-balance-per-cycle { user: user, cycle: cycle }))
+(define-read-only (get-total-balance-per-cycle-or-default (cycle uint))
+  (default-to u0 (map-get? total-balance-per-cycle cycle))
+)
+
+(define-read-only (get-user-distributed-per-cycle-or-default (user principal) (cycle uint))
+  (default-to false (map-get? user-distributed-per-cycle { user: user, cycle: cycle }))
+)
+
+(define-read-only (get-distributable-per-cycle-or-default (cycle uint))
+  (default-to u0 (map-get? distributable-per-cycle cycle))
+)
+
+(define-read-only (get-distributed-per-cycle-or-default (cycle uint))
+  (default-to u0 (map-get? distributed-per-cycle cycle))
 )
 
 (define-read-only (get-user-stx-or-default (user principal))
     (default-to u0 (map-get? user-stx user))
-)
-
-(define-read-only (get-user-distributed-or-default (user principal) (cycle uint))
-  (default-to false (map-get? user-distributed { user: user, cycle: cycle }))
-)
-
-(define-read-only (get-distributed-or-default (cycle uint))
-  (default-to false (map-get? distributed cycle))
 )
 
 (define-public (set-available-alex (new-amount uint))
@@ -138,18 +140,6 @@
 
 (define-read-only (get-borrowed-alex)
   (var-get borrowed-alex)
-)
-
-(define-read-only (get-distributable-atalex)
-  (var-get distributable-atalex)
-)
-
-(define-read-only (get-distributed-atalex)
-  (var-get distributed-atalex)
-)
-
-(define-read-only (get-total-balance)
-  (var-get total-balance)
 )
 
 (define-read-only (get-total-stx)
@@ -225,6 +215,14 @@
   )
 )
 
+(define-private (update-balance-iter (cycle uint) (prior { user: principal, balance: uint, total-balance: uint }))
+  (begin 
+    (map-set user-balance-per-cycle { user: (get user prior), cycle: cycle } (get balance prior))
+    (map-set total-balance-per-cycle cycle (get total-balance prior))
+    prior
+  )
+)
+
 (define-private (add-to-position-internal (dx uint))
     (let 
         (
@@ -241,8 +239,7 @@
         (asserts! (> (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
         (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)        
-        (asserts! (>= alex-available alex) ERR-AVAILABLE-ALEX)     
-        (asserts! (get-distributed-or-default (- current-cycle u1)) ERR-DISTRIBUTION-IN-PROGRESS)   
+        (asserts! (>= alex-available alex) ERR-AVAILABLE-ALEX)
 
         (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
         (as-contract (try! (stake-tokens dx cycles-to-stake)))
@@ -250,10 +247,16 @@
         (try! (contract-call? .auto-alex add-to-position alex))
         (var-set available-alex (- alex-available alex))
         (var-set borrowed-alex (+ alex-borrowed alex))
-        (map-set user-balance sender (+ (get-user-balance-or-default sender) dx))
-        (map-set user-balance-per-cycle { user: sender, cycle: current-cycle } (+ (get-user-balance-or-default sender) dx))
+        (fold 
+          update-balance-iter 
+          (get-reward-cycle-indexes (+ current-cycle u1))
+          { 
+            user: sender, 
+            balance: (+ (get-user-balance-per-cycle-or-default sender (+ current-cycle u1)) dx),
+            total-balance: (+ (get-total-balance-per-cycle-or-default (+ current-cycle u1)) dx)
+          }
+        )
         (map-set user-stx sender (+ (get-user-stx-or-default sender) stx))
-        (var-set total-balance (+ (var-get total-balance) dx))
         (var-set total-stx (+ (var-get total-stx) stx))
         (print { object: "pool", action: "position-added", data: dx })
         (ok { dx: stx, dy: alex })
@@ -281,7 +284,7 @@
     (and (> alex-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens alex-to-stake cycles-to-stake))))
     (as-contract (try! (contract-call? .auto-alex add-to-position (- alex-to-distribute bounty))))
     (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
-    (var-set distributable-atalex (+ (var-get distributable-atalex) (try! (contract-call? .auto-alex get-token-given-position (- alex-to-distribute bounty)))))
+    (map-set distributable-per-cycle reward-cycle (try! (contract-call? .auto-alex get-token-given-position (- alex-to-distribute bounty))))
     (ok true)
   )
 )
@@ -295,14 +298,14 @@
       (sum (get sum prior-unwrapped))
       (atalex (get atalex prior-unwrapped))
       (balance (get balance prior-unwrapped))
-      (shares (div-down (mul-down atalex (get-user-balance-or-default recipient)) balance))
+      (shares (div-down (mul-down atalex (get-user-balance-per-cycle-or-default recipient cycle)) balance))
     )
-    (if (get-user-distributed-or-default recipient cycle)
+    (if (get-user-distributed-per-cycle-or-default recipient cycle)
       ;; if the user already received distribution, then skip
       (ok { cycle: cycle, atalex: atalex, balance: balance, sum: sum })
       (begin 
         (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
-        (map-set user-distributed { user: recipient, cycle: cycle } true)
+        (map-set user-distributed-per-cycle { user: recipient, cycle: cycle } true)
         (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
       )
     )
@@ -316,44 +319,16 @@
   )
 )
 
-(define-public (set-distributed (cycle uint) (new-bool bool))
-  (begin 
-    (try! (check-is-owner))
-    (ok (map-set distributed cycle new-bool))
-  )
-)
-
-(define-public (set-distributable-atalex (new-amount uint))
-  (begin 
-    (try! (check-is-owner))
-    (ok (var-set distributable-atalex new-amount))
-  )
-)
-
-(define-public (set-distributed-atalex (new-amount uint))
-  (begin 
-    (try! (check-is-owner))
-    (ok (var-set distributed-atalex new-amount))
-  )
-)
-
-(define-public (distribute (cycle uint) (batch uint) (recipients (list 200 principal)) (last-batch bool))
+(define-public (distribute (cycle uint) (batch uint) (recipients (list 200 principal)))
 	(begin
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
     (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
     (let
       (
-        (output (try! (fold distribute-iter recipients (ok { cycle: cycle, atalex:  (var-get distributable-atalex), balance:  (var-get total-balance), sum: u0 }))))
+        (output (try! (fold distribute-iter recipients (ok { cycle: cycle, atalex:  (get-distributable-per-cycle-or-default cycle), balance:  (get-total-balance-per-cycle-or-default cycle), sum: u0 }))))
       )
-      (map-set distributed cycle last-batch)
       (map-set processed-batches { cycle: cycle, batch: batch } true)            
-      (var-set distributed-atalex (+ (var-get distributed-atalex) (get sum output)))
-      ;; last batch triggers update of distributable-atalex and distributed-atalex
-      (and 
-        last-batch 
-        (var-set distributable-atalex (- (var-get distributable-atalex) (var-get distributed-atalex))) 
-        (var-set distributed-atalex u0)
-      )
+      (map-set distributed-per-cycle cycle (+ (get-distributed-per-cycle-or-default cycle) (get sum output)))
 
       (ok (get sum output))
     )
@@ -364,11 +339,17 @@
   (begin
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) (var-get end-cycle)) ERR-REWARD-CYCLE-NOT-COMPLETED)    
-    (asserts! (get-distributed-or-default (var-get end-cycle)) ERR-DISTRIBUTION-IN-PROGRESS)  
+    (asserts! 
+      (and 
+        (> (get-distributable-per-cycle-or-default (var-get end-cycle)) u0)
+        (is-eq (get-distributable-per-cycle-or-default (var-get end-cycle)) (get-distributed-per-cycle-or-default (var-get end-cycle)))
+      ) 
+      ERR-DISTRIBUTION-IN-PROGRESS
+    )  
     (let 
       (
         (sender tx-sender)
-        (percent (div-down (get-user-balance-or-default sender) (var-get total-balance)))
+        (percent (div-down (get-user-balance-per-cycle-or-default sender (var-get end-cycle)) (get-total-balance-per-cycle-or-default (var-get end-cycle))))
         (alex-balance (mul-down percent (unwrap! (contract-call? .age000-governance-token get-balance-fixed (as-contract tx-sender)) ERR-GET-BALANCE-FIXED-FAIL)))
         (pool-reduced (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 percent))))
         (stx-reduced (get dx pool-reduced))
@@ -385,7 +366,7 @@
         (stx-residual (- stx-available stx-to-return))
       )
     
-      (map-set user-balance sender u0)
+      (map-set user-balance-per-cycle { user: sender, cycle: (var-get end-cycle) } u0)
       (map-set user-stx sender u0)
       (and (> stx-to-return u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
       (and (> stx-residual u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
@@ -405,6 +386,13 @@
   (if (is-eq a u0)
     u0
     (/ (* a ONE_8) b)
+  )
+)
+
+(define-private (get-reward-cycle-indexes (cycle uint))
+  (if (is-eq cycle u0)
+    (list u0 u1)
+    (list u1)
   )
 )
 
