@@ -78,6 +78,7 @@
 )
 
 (define-map user-balance principal uint)
+(define-map user-balance-per-cycle { user: principal, cycle: uint } uint)
 (define-map user-stx principal uint)
 
 (define-data-var total-balance uint u0)
@@ -106,6 +107,10 @@
 
 (define-read-only (get-user-balance-or-default (user principal))
     (default-to u0 (map-get? user-balance user))
+)
+
+(define-read-only (get-user-balance-per-cycle-or-default (user principal) (cycle uint))
+  (default-to (get-user-balance-or-default user) (map-get? user-balance-per-cycle { user: user, cycle: cycle }))
 )
 
 (define-read-only (get-user-stx-or-default (user principal))
@@ -246,6 +251,7 @@
         (var-set available-alex (- alex-available alex))
         (var-set borrowed-alex (+ alex-borrowed alex))
         (map-set user-balance sender (+ (get-user-balance-or-default sender) dx))
+        (map-set user-balance-per-cycle { user: sender, cycle: current-cycle } (+ (get-user-balance-or-default sender) dx))
         (map-set user-stx sender (+ (get-user-stx-or-default sender) stx))
         (var-set total-balance (+ (var-get total-balance) dx))
         (var-set total-stx (+ (var-get total-stx) stx))
