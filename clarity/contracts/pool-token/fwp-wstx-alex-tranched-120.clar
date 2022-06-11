@@ -216,7 +216,7 @@
     )
     (try! (add-to-position-internal (get to-return total-claimed)))
     (try! (contract-call? .auto-alex add-to-position (get entitled-token total-claimed)))
-    (ok total-claimed)
+    (ok claimed)
   )
 )
 
