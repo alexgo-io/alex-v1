@@ -400,8 +400,8 @@
       (var-set total-stx (- (var-get total-stx) stx-promised))
       (map-set user-stx sender u0)
       
-      (and (> stx-to-return u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
-      (and (> stx-residual u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
+      (and (> stx-to-return u1000) (as-contract (try! (contract-call? .token-wstx transfer-fixed (* (/ stx-to-return u1000) u1000) tx-sender sender none))))
+      (and (> stx-residual u1000) (as-contract (try! (contract-call? .token-wstx transfer-fixed (* (/ stx-residual u1000) u1000) tx-sender (var-get contract-owner) none))))
       (and (> alex-residual u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none))))
       (print { object: "pool", action: "position-reduced", data: { dx: stx-reduced, dy: alex-reduced } })
       (ok { stx-to-return: stx-to-return, stx-residual: stx-residual, alex-residual: alex-residual })
