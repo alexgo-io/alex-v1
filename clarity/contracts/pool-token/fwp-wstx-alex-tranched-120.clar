@@ -13,7 +13,7 @@
 (define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 (define-constant ERR-INVALID-PERCENT (err u5000))
 (define-constant ERR-ALREADY-PROCESSED (err u1409))
-(define-constant ERR-DISTRIBUTION-IN-PROGRESS (err u1410))
+(define-constant ERR-DISTRIBUTION (err u1410))
 
 (define-constant ONE_8 u100000000)
 
@@ -347,6 +347,7 @@
 	(begin
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
     (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
+    (asserts! (> (get-distributable-per-cycle-or-default cycle) u0) ERR-DISTRIBUTION)
     (let
       (
         (output (try! (fold distribute-iter recipients (ok { cycle: cycle, atalex:  (get-distributable-per-cycle-or-default cycle), balance:  (get-total-balance-per-cycle-or-default cycle), sum: u0 }))))
@@ -368,7 +369,7 @@
         (> (get-distributable-per-cycle-or-default (var-get end-cycle)) u0)
         (is-eq (/ (get-distributable-per-cycle-or-default (var-get end-cycle)) ONE_8) (/ (get-distributed-per-cycle-or-default (var-get end-cycle)) ONE_8))
       ) 
-      ERR-DISTRIBUTION-IN-PROGRESS
+      ERR-DISTRIBUTION
     )  
     (let 
       (

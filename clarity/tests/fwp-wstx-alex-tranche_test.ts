@@ -55,6 +55,9 @@ Clarinet.test({
     const deployer = accounts.get("deployer")!;
     const wallet_1 = accounts.get("wallet_1")!;
     const wallet_2 = accounts.get("wallet_2")!;
+    const wallet_3 = accounts.get("wallet_3")!;
+    const wallet_4 = accounts.get("wallet_4")!;
+    const wallet_5 = accounts.get("wallet_5")!;
     const reservePool = new ReservePool(chain);
     const FWPTest = new FWPTestAgent1(chain, deployer);
     const alexToken = new FungibleToken(
@@ -68,15 +71,49 @@ Clarinet.test({
       "token-wstx"
     );
     const dx = ONE_8;
-    const end_cycle = 32;
 
-    let result: any = stxToken.transferToken(deployer, 1000e8, wallet_1.address, new ArrayBuffer(1));
+    const participants = 
+      [
+        wallet_1.address,
+        wallet_2.address,
+        wallet_3.address,
+        wallet_4.address,
+        wallet_5.address
+      ];
+
+    let call: any = await chain.callReadOnlyFn("fwp-wstx-alex-tranched-120", "get-end-cycle", [], deployer.address);
+    const end_cycle = Number(call.result.replace(/\D/g, ""));
+
+    let result = alexToken.mintFixed(deployer, deployer.address, 1000e8);
     result.expectOk();
-    
-    result = alexToken.mintFixed(deployer, deployer.address, 1000e8);
-    result.expectOk();
-    result = alexToken.mintFixed(deployer, wallet_1.address, 1000e8);
-    result.expectOk();    
+
+    let positions_to_add: any = [];
+    let cofarm_to_add: any = [];
+    let cofarm_to_reduce: any = [];
+    participants.forEach(e => { 
+      result = stxToken.transferToken(deployer, 1000e8, e, new ArrayBuffer(1)); 
+      result.expectOk();
+      result = alexToken.mintFixed(deployer, e, 1000e8);
+      result.expectOk();    
+      positions_to_add.push(
+        Tx.contractCall(
+          "fixed-weight-pool-v1-01",
+          "add-to-position",
+          [
+            types.principal(deployer.address + ".token-wstx"),
+            types.principal(deployer.address + ".age000-governance-token"),
+            types.uint(0.5e8),
+            types.uint(0.5e8),
+            types.principal(fwpTokenAddress),
+            types.uint(1000e8),
+            types.some(types.uint(1000e8))
+          ],
+          e
+        )
+      );
+      cofarm_to_add.push(Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], e));
+      cofarm_to_reduce.push(Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], e));
+    })
 
     result = FWPTest.createPool(
       deployer, 
@@ -128,20 +165,7 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),   
-      Tx.contractCall(
-        "fixed-weight-pool-v1-01",
-        "add-to-position",
-        [
-          types.principal(deployer.address + ".token-wstx"),
-          types.principal(deployer.address + ".age000-governance-token"),
-          types.uint(0.5e8),
-          types.uint(0.5e8),
-          types.principal(fwpTokenAddress),
-          types.uint(1000e8),
-          types.some(types.uint(1000e8))
-        ],
-        wallet_1.address
-      )   
+      ...positions_to_add   
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
 
@@ -157,17 +181,33 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-available-alex", [types.uint(2000e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-120", "set-open-to-all", [types.bool(true)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], wallet_1.address)
+        ...cofarm_to_add
       ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
+
+    // pass the second cycle
+    chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525 * 2);
+    block = chain.mineBlock(
+      [
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "claim-and-stake", [types.uint(1)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
+          [
+            types.uint(1),
+            types.uint(0),
+            types.list([types.principal(deployer.address), types.principal(wallet_1.address)])
+          ],
+          deployer.address)       
+      ]
+    )
+    block.receipts[0].result.expectErr().expectUint(2045); // rewards is zero
+    block.receipts[1].result.expectErr().expectUint(1410); // nothing to distribute
 
     // first claim eligible at cycle 3 for cycle 2
     for( let cycle = 3; cycle <= (end_cycle + 1); cycle++ ){
       chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525 * cycle);
 
       if (cycle < end_cycle) {
-        const address = (cycle % 3 == 1) ? wallet_1.address : deployer.address;
+        const address = participants[cycle % participants.length];
         block = chain.mineBlock(
           [
             Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], address)
@@ -183,14 +223,14 @@ Clarinet.test({
             [
               types.uint(cycle - 1),
               types.uint(0),
-              types.list([types.principal(deployer.address), types.principal(wallet_1.address)])
+              types.list(participants.map(e => { types.principal(e) }))
             ],
             deployer.address),
           Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
             [
               types.uint(cycle - 1),
               types.uint(1),
-              types.list([types.principal(deployer.address)])
+              types.list([types.principal(wallet_1.address)])
             ],
             deployer.address)          
         ]
@@ -198,15 +238,10 @@ Clarinet.test({
       block.receipts.forEach((e) => { e.result.expectOk() });         
     }
 
-    block = chain.mineBlock(
-      [
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], wallet_1.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], deployer.address),        
-      ]
-    )
+    block = chain.mineBlock(cofarm_to_reduce);
     block.receipts.forEach((e) => { e.result.expectOk() });
     console.log(block.receipts[0].events);
-    console.log(block.receipts[1].events);
+    console.log(block.receipts[block.receipts.length - 1].events);
 
   },
 });
