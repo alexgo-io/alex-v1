@@ -84,7 +84,7 @@ Clarinet.test({
     let call: any = await chain.callReadOnlyFn("fwp-wstx-alex-tranched-120", "get-end-cycle", [], deployer.address);
     const end_cycle = Number(call.result.replace(/\D/g, ""));
 
-    let result = alexToken.mintFixed(deployer, deployer.address, 1000e8);
+    let result = alexToken.mintFixed(deployer, deployer.address, 10_000e8);
     result.expectOk();
 
     let positions_to_add: any = [];
@@ -127,6 +127,11 @@ Clarinet.test({
       1000e8
     );
     result.expectOk().expectBool(true);     
+
+    result = FWPTest.setMaxInRatio(deployer, 0.3e8);
+    result.expectOk().expectBool(true);
+    result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
+    result.expectOk().expectBool(true);   
 
     let block = chain.mineBlock([
       Tx.contractCall(
@@ -206,7 +211,7 @@ Clarinet.test({
     for( let cycle = 3; cycle <= (end_cycle + 1); cycle++ ){
       chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525 * cycle);
 
-      if (cycle < end_cycle) {
+      if (cycle < end_cycle) {        
         const address = participants[cycle % participants.length];
         block = chain.mineBlock(
           [
@@ -237,6 +242,55 @@ Clarinet.test({
       )
       block.receipts.forEach((e) => { e.result.expectOk() });         
     }
+
+    block = chain.mineBlock([
+      Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", 
+        [
+          types.principal(deployer.address + ".age000-governance-token"),
+          types.principal(deployer.address + ".token-wstx"),
+          types.uint(0.5e8),
+          types.uint(0.5e8),
+          types.uint(6 * 299e8),
+          types.none()
+        ], deployer.address),                   
+        Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", 
+        [
+          types.principal(deployer.address + ".age000-governance-token"),
+          types.principal(deployer.address + ".token-wstx"),
+          types.uint(0.5e8),
+          types.uint(0.5e8),
+          types.uint(6 * 299e8),
+          types.none()
+        ], deployer.address),                   
+        Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", 
+        [
+          types.principal(deployer.address + ".age000-governance-token"),
+          types.principal(deployer.address + ".token-wstx"),
+          types.uint(0.5e8),
+          types.uint(0.5e8),
+          types.uint(6 * 299e8),
+          types.none()
+        ], deployer.address),       
+        Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", 
+        [
+          types.principal(deployer.address + ".age000-governance-token"),
+          types.principal(deployer.address + ".token-wstx"),
+          types.uint(0.5e8),
+          types.uint(0.5e8),
+          types.uint(6 * 299e8),
+          types.none()
+        ], deployer.address),  
+        Tx.contractCall("fixed-weight-pool-v1-01", "swap-helper", 
+        [
+          types.principal(deployer.address + ".age000-governance-token"),
+          types.principal(deployer.address + ".token-wstx"),
+          types.uint(0.5e8),
+          types.uint(0.5e8),
+          types.uint(6 * 299e8),
+          types.none()
+        ], deployer.address),                                              
+    ]);
+    block.receipts.forEach((e) => { e.result.expectOk() });
 
     block = chain.mineBlock(cofarm_to_reduce);
     block.receipts.forEach((e) => { e.result.expectOk() });
