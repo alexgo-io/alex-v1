@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible.semi-fungible-trait)
+(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
 
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -35,6 +35,13 @@
     (map-set approved-contracts new-approved-contract true)
     (ok true)
   )
+)
+
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+		(ok (map-set approved-contracts owner approved))
+	)
 )
 
 (define-read-only (get-token-owned (owner principal))
@@ -90,7 +97,7 @@
 		(try! (ft-transfer? staked-fwp-wstx-alex-50-50-v1-01 amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
-		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
+		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
 		(ok true)
 	)
 )
@@ -105,7 +112,7 @@
 		(try! (ft-transfer? staked-fwp-wstx-alex-50-50-v1-01 amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
-		(print {type: "sft_transfer_event", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
+		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
 		(ok true)
 	)
 )
@@ -116,7 +123,7 @@
 		(try! (ft-mint? staked-fwp-wstx-alex-50-50-v1-01 amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
-		(print {type: "sft_mint_event", token-id: token-id, amount: amount, recipient: recipient})
+		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
 		(ok true)
 	)
 )
@@ -127,7 +134,7 @@
 		(try! (ft-burn? staked-fwp-wstx-alex-50-50-v1-01 amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
-		(print {type: "sft_burn_event", token-id: token-id, amount: amount, sender: sender})
+		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
 		(ok true)
 	)
 )

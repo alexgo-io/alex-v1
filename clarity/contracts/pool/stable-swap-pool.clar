@@ -33,15 +33,6 @@
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
-;; data maps and vars
-(define-map pools-map
-  { pool-id: uint }
-  {
-    token-x: principal,
-    token-y: principal,
-    factor: uint
-  }
-)
 
 (define-map pools-data-map
   {
@@ -64,33 +55,6 @@
     start-block: uint,
     end-block: uint
   }
-)
-
-(define-data-var pool-count uint u0)
-(define-data-var pools-list (list 500 uint) (list))
-
-;; @desc get-pool-count
-;; @returns uint
-(define-read-only (get-pool-count)
-    (var-get pool-count)
-)
-
-;; @desc get-pool-contracts
-;; @param pool-id; pool-id
-;; @returns (response (tutple) uint)
-(define-read-only (get-pool-contracts (pool-id uint))
-    (ok (unwrap! (map-get? pools-map {pool-id: pool-id}) ERR-INVALID-POOL))
-)
-
-;; @desc get-pools
-;; @returns map of get-pool-contracts
-(define-read-only (get-pools)
-    (ok (map get-pool-contracts (var-get pools-list)))
-)
-
-;; immunefi-4384
-(define-read-only (get-pools-by-ids (pool-ids (list 26 uint)))
-  (ok (map get-pool-contracts pool-ids))
 )
 
 ;; @desc get-pool-details
@@ -270,16 +234,14 @@
 (define-private (get-oracle-resilient-internal (token-x principal) (token-y principal) (factor uint))
     (let
         (
-            (pool 
-                (if (is-some (get-pool-exists token-x token-y factor))
-                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)
-                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, factor: factor }) ERR-INVALID-POOL)
-                )
-            )
+            (exists (is-some (get-pool-exists token-x token-y factor)))
+            (token-from (if exists token-x token-y))
+            (token-to (if exists token-y token-x))
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-from, token-y: token-to, factor: factor }) ERR-INVALID-POOL))
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-x token-y factor))) 
-            (mul-down (get oracle-average pool) (get oracle-resilient pool)))
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-from token-to factor))) 
+            (mul-down (get oracle-average pool) (if exists (get oracle-resilient pool) (div-down ONE_8 (get oracle-resilient pool)))))
         )           
     )
 )
@@ -352,7 +314,6 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool-id (+ (var-get pool-count) u1))
             (pool-data {
                 total-supply: u0,
                 balance-x: u0,
@@ -379,12 +340,7 @@
             )
             ERR-POOL-ALREADY-EXISTS
         )             
-
-        (map-set pools-map { pool-id: pool-id } { token-x: token-x, token-y: token-y, factor: factor })
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-data)
-        
-        (var-set pools-list (unwrap! (as-max-len? (append (var-get pools-list) pool-id) u500) ERR-TOO-MANY-POOLS))
-        (var-set pool-count pool-id)
         
         (try! (fold check-err (map add-approved-token-to-vault (list token-x token-y (contract-of pool-token-trait))) (ok true)))
 

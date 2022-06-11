@@ -693,3 +693,46 @@ class FungibleToken {
   }
 }
 export { FungibleToken };
+
+class SemiFungibleToken {
+  chain: Chain;
+  deployer: Account;
+  token: string;
+
+  constructor(chain: Chain, deployer: Account, token: string) {
+    this.chain = chain;
+    this.deployer = deployer;
+    this.token = token;
+  }
+
+  balanceOf(expiry: number, wallet: string) {
+    return this.chain.callReadOnlyFn(this.token, "get-balance-fixed", [
+      types.uint(expiry), types.principal(wallet),
+    ], this.deployer.address);
+  }
+
+  getTokenBalanceOwned(wallet: string) {
+    return this.chain.callReadOnlyFn(this.token, "get-token-balance-owned-in-fixed", [
+      types.principal(wallet),
+    ], this.deployer.address);
+  }  
+  
+  totalSupply(expiry: number) {
+    return this.chain.callReadOnlyFn(this.token, "get-total-supply-fixed", [
+      types.uint(expiry)
+    ], this.deployer.address);
+  }
+  
+  mintFixed(sender: Account, expiry: number, amount: number, recipient: string) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall(this.token, "mint-fixed", [
+        types.uint(expiry),
+        types.uint(amount),
+        types.principal(recipient)
+      ], sender.address),
+    ]);
+    return block.receipts[0].result;
+  }
+
+}
+export { SemiFungibleToken };

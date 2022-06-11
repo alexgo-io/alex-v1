@@ -137,6 +137,19 @@ import {
         return block.receipts[0].result;
       }
 
+      reducePositionYieldMany(user: Account, token: string, collateral: string, yieldToken: string, percent: number, expiries: Array<number>) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-yield-many", [
+            types.principal(token),
+            types.principal(collateral),
+            types.principal(yieldToken),
+            types.uint(percent),
+            types.list(expiries.map(types.uint)),
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }      
+
       reducePositionKey(user: Account, token: string, collateral: string, expiry: number, keyToken: string, percent: number) {
         let block = this.chain.mineBlock([
           Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key", [
@@ -149,6 +162,19 @@ import {
         ]);
         return block.receipts[0].result;
       }
+
+      reducePositionKeyMany(user: Account, token: string, collateral: string, keyToken: string, percent: number, expiries: Array<number>) {
+        let block = this.chain.mineBlock([
+          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key-many", [
+            types.principal(token),
+            types.principal(collateral),
+            types.principal(keyToken),
+            types.uint(percent),
+            types.list(expiries.map(types.uint))
+          ], user.address),
+        ]);
+        return block.receipts[0].result;
+      }      
   
     swapXForY(user: Account, token: string, collateral: string, expiry: number, dX: number, dy_min: number) {
       let block = this.chain.mineBlock([
@@ -341,6 +367,34 @@ import {
         types.principal(collateral),
         types.uint(expiry)
       ], this.deployer.address);
+    }
+
+    setMaxInRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-max-in-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }        
+  
+    setMaxOutRatio(user: Account, ratio: number) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-max-out-ratio", [
+          types.uint(ratio)
+        ], user.address),
+      ]);
+      return block.receipts[0].result;
+    }
+    
+    setApprovedContract(user: Account, owner: string, approved: boolean) {
+      let block = this.chain.mineBlock([
+        Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract", [
+          types.principal(owner),
+          types.bool(approved)
+        ], user.address),        
+      ]);
+      return block.receipts[0].result;
     }
     
   }

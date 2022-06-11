@@ -73,6 +73,13 @@
 	)
 )
 
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
+)
+
 ;; --- Public functions
 
 ;; sip010-ft-trait

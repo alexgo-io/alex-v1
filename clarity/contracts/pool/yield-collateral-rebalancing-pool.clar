@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
 
 
 
