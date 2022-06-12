@@ -69,6 +69,20 @@
   )
 )
 
+(define-public (add-approved-contract (new-approved-contract principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts new-approved-contract true))
+	)
+)
+
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
+)
+
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
@@ -328,7 +342,7 @@
       ;; if the user already received distribution, then skip
       (ok { cycle: cycle, atalex: atalex, balance: balance, sum: sum })
       (begin 
-        (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
+        (and (> shares u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none))))
         (map-set user-distributed-per-cycle { user: recipient, cycle: cycle } true)
         (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
       )
