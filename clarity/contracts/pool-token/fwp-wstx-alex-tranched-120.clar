@@ -26,7 +26,7 @@
 )
 
 (define-public (set-start-block (new-start-block uint))
-  (begin 
+  (begin
     (try! (check-is-owner))
     (ok (var-set start-block new-start-block))
   )
@@ -37,7 +37,7 @@
 )
 
 (define-public (set-end-cycle (new-end-cycle uint))
-  (begin 
+  (begin
     (try! (check-is-owner))
     (ok (var-set end-cycle new-end-cycle))
   )
@@ -48,7 +48,7 @@
 )
 
 (define-public (set-open-to-all (new-open-to-all bool))
-  (begin 
+  (begin
     (try! (check-is-owner))
     (ok (var-set open-to-all new-open-to-all))
   )
@@ -75,6 +75,13 @@
 
 (define-private (check-is-approved)
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+  (begin
+    (try! (check-is-owner))
+    (ok (map-set approved-contracts new-approved-contract true))
+  )
 )
 
 (define-map user-balance-per-cycle { user: principal, cycle: uint } uint)
@@ -128,7 +135,7 @@
 )
 
 (define-public (set-available-alex (new-amount uint))
-    (begin 
+    (begin
         (try! (check-is-owner))
         (ok (var-set available-alex new-amount))
     )
@@ -153,7 +160,7 @@
 )
 
 (define-public (set-bounty-in-fixed (new-bounty-in-fixed uint))
-  (begin 
+  (begin
     (try! (check-is-owner))
     (ok (var-set bounty-in-fixed new-bounty-in-fixed))
   )
@@ -200,16 +207,16 @@
 
 (define-private (sum-claimed (claimed-response (response { entitled-token: uint, to-return: uint } uint)) (prior-response (response { entitled-token: uint, to-return: uint } uint)))
   (let
-    ( 
+    (
       (claimed (try! claimed-response))
       (prior (try! prior-response))
     )
     (ok { entitled-token: (+ (get entitled-token claimed) (get entitled-token prior)), to-return: (+ (get to-return claimed) (get to-return prior)) })
-  )  
+  )
 )
 
 (define-public (claim-and-add-to-position-many (reward-cycles (list 50 uint)))
-  (let 
+  (let
     (
       (claimed (map claim-staking-reward reward-cycles))
       (total-claimed (try! (fold sum-claimed claimed (ok { entitled-token: u0, to-return: u0 }))))
@@ -221,7 +228,7 @@
 )
 
 (define-public (claim-and-add-to-position (reward-cycle uint))
-  (let 
+  (let
     (
       (claimed (try! (claim-staking-reward reward-cycle)))
     )
@@ -231,14 +238,14 @@
 )
 
 (define-public (add-to-position (dx uint))
-  (begin 
+  (begin
     (asserts! (var-get open-to-all) ERR-NOT-ACTIVATED)
     (add-to-position-internal dx)
   )
 )
 
 (define-private (update-balance-iter (cycle uint) (prior { user: principal, balance: uint, total-balance: uint }))
-  (begin 
+  (begin
     (map-set user-balance-per-cycle { user: (get user prior), cycle: cycle } (get balance prior))
     (map-set total-balance-per-cycle cycle (get total-balance prior))
     prior
@@ -246,7 +253,7 @@
 )
 
 (define-private (add-to-position-internal (dx uint))
-    (let 
+    (let
         (
           (sender tx-sender)
           (positions (try! (contract-call? .fixed-weight-pool-v1-01 get-position-given-burn .token-wstx .age000-governance-token u50000000 u50000000 dx)))
@@ -254,13 +261,13 @@
           (alex (get dy positions))
           (atalex-to-return (try! (contract-call? .auto-alex get-token-given-position alex)))
           (alex-available (get-available-alex))
-          (alex-borrowed (get-borrowed-alex))      
+          (alex-borrowed (get-borrowed-alex))
           (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
-          (cycles-to-stake (if (> (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))                            
+          (cycles-to-stake (if (> (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
         )
         (asserts! (> (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
         (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
-        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)        
+        (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (>= alex-available alex) ERR-AVAILABLE-ALEX)
 
         (try! (contract-call? .fwp-wstx-alex-50-50-v1-01 transfer-fixed dx sender (as-contract tx-sender) none))
@@ -269,11 +276,11 @@
         (try! (contract-call? .auto-alex add-to-position alex))
         (var-set available-alex (- alex-available alex))
         (var-set borrowed-alex (+ alex-borrowed alex))
-        (fold 
-          update-balance-iter 
+        (fold
+          update-balance-iter
           (get-reward-cycle-indexes (+ current-cycle u1))
-          { 
-            user: sender, 
+          {
+            user: sender,
             balance: (+ (get-user-balance-per-cycle-or-default sender (+ current-cycle u1)) dx),
             total-balance: (+ (get-total-balance-per-cycle-or-default (+ current-cycle u1)) dx)
           }
@@ -290,22 +297,22 @@
 )
 
 (define-public (claim-and-stake (reward-cycle uint))
-  (let 
-    (      
+  (let
+    (
       (sender tx-sender)
       (bounty (var-get bounty-in-fixed))
       (claimed (if (is-eq (as-contract (get-user-id)) u0) { to-return: u0, entitled-token: u0 } (as-contract (try! (claim-staking-reward reward-cycle)))))
       (alex-claimed (if (is-eq (as-contract (get-alex-user-id)) u0) { to-return: u0, entitled-token: u0 } (as-contract (try! (claim-alex-staking-reward reward-cycle)))))
       (principal-to-stake (get to-return claimed))
       (alex-to-distribute (/ (get entitled-token claimed) u2))
-      (alex-to-stake (- (+ (get entitled-token claimed) (get to-return alex-claimed) (get entitled-token alex-claimed)) alex-to-distribute))       
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))      
-      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (if (<= (var-get end-cycle) current-cycle) u0 (- (var-get end-cycle) current-cycle))))      
+      (alex-to-stake (- (+ (get entitled-token claimed) (get to-return alex-claimed) (get entitled-token alex-claimed)) alex-to-distribute))
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+      (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (if (<= (var-get end-cycle) current-cycle) u0 (- (var-get end-cycle) current-cycle))))
     )
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (> alex-to-distribute bounty) ERR-INSUFFICIENT-BALANCE)
-    
+
     (and (> principal-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-tokens principal-to-stake cycles-to-stake))))
     (and (> alex-to-stake u0) (> cycles-to-stake u0) (as-contract (try! (stake-alex-tokens alex-to-stake cycles-to-stake))))
     (as-contract (try! (contract-call? .auto-alex add-to-position (- alex-to-distribute bounty))))
@@ -317,7 +324,7 @@
 
 
 (define-private (distribute-iter (recipient principal) (prior (response { cycle: uint, atalex: uint, balance: uint, sum: uint } uint)))
-  (let 
+  (let
     (
       (prior-unwrapped (try! prior))
       (cycle (get cycle prior-unwrapped))
@@ -329,7 +336,7 @@
     (if (get-user-distributed-per-cycle-or-default recipient cycle)
       ;; if the user already received distribution, then skip
       (ok { cycle: cycle, atalex: atalex, balance: balance, sum: sum })
-      (begin 
+      (begin
         (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
         (map-set user-distributed-per-cycle { user: recipient, cycle: cycle } true)
         (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
@@ -354,7 +361,7 @@
       (
         (output (try! (fold distribute-iter recipients (ok { cycle: cycle, atalex:  (get-distributable-per-cycle-or-default cycle), balance:  (get-total-balance-per-cycle-or-default cycle), sum: u0 }))))
       )
-      (map-set processed-batches { cycle: cycle, batch: batch } true)            
+      (map-set processed-batches { cycle: cycle, batch: batch } true)
       (map-set distributed-per-cycle cycle (+ (get-distributed-per-cycle-or-default cycle) (get sum output)))
 
       (ok (get sum output))
@@ -365,15 +372,15 @@
 (define-public (reduce-position)
   (begin
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)
-    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) (var-get end-cycle)) ERR-REWARD-CYCLE-NOT-COMPLETED)    
-    (asserts! 
-      (and 
+    (asserts! (> (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE) (var-get end-cycle)) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts!
+      (and
         (> (get-distributable-per-cycle-or-default (var-get end-cycle)) u0)
         (is-eq (/ (get-distributable-per-cycle-or-default (var-get end-cycle)) ONE_8) (/ (get-distributed-per-cycle-or-default (var-get end-cycle)) ONE_8))
-      ) 
+      )
       ERR-DISTRIBUTION
-    )  
-    (let 
+    )
+    (let
       (
         (sender tx-sender)
         (user-balance (get-user-balance-per-cycle-or-default sender (var-get end-cycle)))
@@ -383,10 +390,10 @@
         (pool-reduced (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 reduce-position .token-wstx .age000-governance-token u50000000 u50000000 .fwp-wstx-alex-50-50-v1-01 percent))))
         (stx-reduced (get dx pool-reduced))
         (alex-reduced (get dy pool-reduced))
-        (stx-promised (get-user-stx-or-default sender))            
+        (stx-promised (get-user-stx-or-default sender))
         (stx-to-buy (if (<= stx-promised stx-reduced) u0 (mul-down (- stx-promised stx-reduced) (var-get shortfall-coverage))))
         (alex-available (+ alex-reduced alex-balance))
-        (alex-to-sell-uncapped (if (is-eq stx-to-buy u0) u0 (try! (contract-call? .fixed-weight-pool-v1-01 get-y-in-given-wstx-out .age000-governance-token u50000000 stx-to-buy))))      
+        (alex-to-sell-uncapped (if (is-eq stx-to-buy u0) u0 (try! (contract-call? .fixed-weight-pool-v1-01 get-y-in-given-wstx-out .age000-governance-token u50000000 stx-to-buy))))
         (alex-to-sell (if (<= alex-to-sell-uncapped alex-available) alex-to-sell-uncapped alex-available))
         (stx-bought (if (is-eq alex-to-sell u0) u0 (get dx (as-contract (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 alex-to-sell none))))))
         (stx-available (+ stx-reduced stx-bought))
@@ -394,12 +401,12 @@
         (alex-residual (- alex-available alex-to-sell))
         (stx-residual (- stx-available stx-to-return))
       )
-          
-      (map-set user-balance-per-cycle { user: sender, cycle: (var-get end-cycle) } u0)      
+
+      (map-set user-balance-per-cycle { user: sender, cycle: (var-get end-cycle) } u0)
       (map-set total-balance-per-cycle (var-get end-cycle) (- total-balance user-balance))
       (var-set total-stx (- (var-get total-stx) stx-promised))
       (map-set user-stx sender u0)
-      
+
       (and (> stx-to-return u1000) (as-contract (try! (contract-call? .token-wstx transfer-fixed (* (/ stx-to-return u1000) u1000) tx-sender sender none))))
       (and (> stx-residual u1000) (as-contract (try! (contract-call? .token-wstx transfer-fixed (* (/ stx-residual u1000) u1000) tx-sender (var-get contract-owner) none))))
       (and (> alex-residual u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none))))
@@ -424,8 +431,8 @@
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
 
 (define-private (get-reward-cycle-indexes (cycle uint))
-  (map 
-    + 
+  (map
+    +
     REWARD-CYCLE-INDEXES
     (list
       cycle	cycle	cycle	cycle	cycle	cycle	cycle	cycle	cycle	cycle
