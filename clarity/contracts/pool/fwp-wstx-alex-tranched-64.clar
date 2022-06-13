@@ -17,8 +17,8 @@
 
 (define-constant ONE_8 u100000000)
 
-(define-data-var end-cycle uint u340282366920938463463374607431768211455)
-(define-data-var start-block uint u340282366920938463463374607431768211455)
+(define-data-var end-cycle uint u64)
+(define-data-var start-block uint u63926)
 (define-data-var open-to-all bool false)
 
 (define-read-only (get-start-block)
