@@ -18,26 +18,26 @@ const ACTIVATION_BLOCK = 20;
 const BountyFixed = 0.1e8;
 
 Clarinet.test({
-  name: "fwp-wstx-alex-tranched-120 : ensure that privileged setters can only be called by contract owner",
+  name: "fwp-wstx-alex-tranched-x : ensure that privileged setters can only be called by contract owner",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     var notContractOwner = accounts.get("wallet_1")!;
     var wallet_2 = accounts.get("wallet_2")!;
 
     let block = chain.mineBlock([
       Tx.contractCall(
-        "fwp-wstx-alex-tranched-120",
+        "fwp-wstx-alex-tranched-x",
         "set-contract-owner",
         [types.principal(wallet_2.address)],
         notContractOwner.address
       ),
       Tx.contractCall(
-        "fwp-wstx-alex-tranched-120",
+        "fwp-wstx-alex-tranched-x",
         "set-start-block",
         [types.uint(0)],
         notContractOwner.address
       ),
       Tx.contractCall(
-        "fwp-wstx-alex-tranched-120",
+        "fwp-wstx-alex-tranched-x",
         "set-bounty-in-fixed",
         [types.uint(0)],
         notContractOwner.address
@@ -50,7 +50,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "fwp-wstx-alex-tranched-120 : ensure base line works",
+  name: "fwp-wstx-alex-tranched-x : ensure base line works",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const deployer = accounts.get("deployer")!;
     const wallet_1 = accounts.get("wallet_1")!;
@@ -71,6 +71,7 @@ Clarinet.test({
       "token-wstx"
     );
     const dx = ONE_8;
+    const end_cycle = 32;
 
     const participants = 
       [
@@ -80,9 +81,6 @@ Clarinet.test({
         wallet_4.address,
         wallet_5.address
       ];
-
-    let call: any = await chain.callReadOnlyFn("fwp-wstx-alex-tranched-120", "get-end-cycle", [], deployer.address);
-    const end_cycle = Number(call.result.replace(/\D/g, ""));
 
     let result = alexToken.mintFixed(deployer, deployer.address, 10_000e8);
     result.expectOk();
@@ -111,8 +109,8 @@ Clarinet.test({
           e
         )
       );
-      cofarm_to_add.push(Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], e));
-      cofarm_to_reduce.push(Tx.contractCall("fwp-wstx-alex-tranched-120", "reduce-position", [], e));
+      cofarm_to_add.push(Tx.contractCall("fwp-wstx-alex-tranched-x", "add-to-position", [types.uint(dx)], e));
+      cofarm_to_reduce.push(Tx.contractCall("fwp-wstx-alex-tranched-x", "reduce-position", [], e));
     })
 
     result = FWPTest.createPool(
@@ -181,11 +179,11 @@ Clarinet.test({
     block = chain.mineBlock(
       [
         Tx.contractCall("auto-alex", "set-start-block", [types.uint(0)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-start-block", [types.uint(0)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-end-cycle", [types.uint(end_cycle)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-available-alex", [types.uint(2000e8)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "set-open-to-all", [types.bool(true)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "set-start-block", [types.uint(0)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "set-end-cycle", [types.uint(end_cycle)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "set-available-alex", [types.uint(2000e8)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "set-open-to-all", [types.bool(true)], deployer.address),
         ...cofarm_to_add
       ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
@@ -194,8 +192,8 @@ Clarinet.test({
     chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525 * 2);
     block = chain.mineBlock(
       [
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "claim-and-stake", [types.uint(1)], deployer.address),
-        Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "claim-and-stake", [types.uint(1)], deployer.address),
+        Tx.contractCall("fwp-wstx-alex-tranched-x", "distribute", 
           [
             types.uint(1),
             types.uint(0),
@@ -215,7 +213,7 @@ Clarinet.test({
         const address = participants[cycle % participants.length];
         block = chain.mineBlock(
           [
-            Tx.contractCall("fwp-wstx-alex-tranched-120", "add-to-position", [types.uint(dx)], address)
+            Tx.contractCall("fwp-wstx-alex-tranched-x", "add-to-position", [types.uint(dx)], address)
           ]
         )
         block.receipts[0].result.expectOk();
@@ -223,15 +221,15 @@ Clarinet.test({
 
       block = chain.mineBlock(
         [
-          Tx.contractCall("fwp-wstx-alex-tranched-120", "claim-and-stake", [types.uint(cycle - 1)], deployer.address),
-          Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
+          Tx.contractCall("fwp-wstx-alex-tranched-x", "claim-and-stake", [types.uint(cycle - 1)], deployer.address),
+          Tx.contractCall("fwp-wstx-alex-tranched-x", "distribute", 
             [
               types.uint(cycle - 1),
               types.uint(0),
               types.list(participants.map(e => { types.principal(e) }))
             ],
             deployer.address),
-          Tx.contractCall("fwp-wstx-alex-tranched-120", "distribute", 
+          Tx.contractCall("fwp-wstx-alex-tranched-x", "distribute", 
             [
               types.uint(cycle - 1),
               types.uint(1),
