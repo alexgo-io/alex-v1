@@ -286,7 +286,7 @@
         (as-contract (try! (contract-call? .auto-fwp-wstx-alex-120 add-to-position (get token pool))))
         (map-set available-alex sender (- alex-available alex-required))
         (map-set borrowed-alex sender (+ alex-borrowed alex-required))
-		(try! (ft-mint? auto-fwp-wstx-alex-120x (fixed-to-decimals (get token vault)) sender))
+		    (try! (ft-mint? auto-fwp-wstx-alex-120x (fixed-to-decimals (get token vault)) sender))
         (print { object: "pool", action: "position-added", data: (get token vault)})
         (ok { total-alex-borrowed: (+ alex-borrowed alex-required), position: (get token vault) })
     )

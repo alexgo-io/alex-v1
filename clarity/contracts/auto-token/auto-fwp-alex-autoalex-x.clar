@@ -1,13 +1,15 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
 
-
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-INVALID-BALANCE (err u1001))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
+(define-constant ERR-AVAILABLE-ALEX (err u20000))
+(define-constant ERR-BLOCK-HEIGHT (err u2043))
+(define-constant ERR-NOT-ENOUGH-ALEX (err u20001))
 
-(define-fungible-token yield-alex)
+(define-fungible-token auto-fwp-alex-autoalex-x)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
 (define-map token-owned principal (list 200 uint))
@@ -15,12 +17,12 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "yield-alex")
-(define-data-var token-symbol (string-ascii 32) "yield-alex")
-(define-data-var token-uri (optional (string-ascii 256)) (some "https://cdn.alexlab.co/metadata/token-yield-alex.json"))
+(define-data-var token-name (string-ascii 32) "Auto ALEX / autoALEX Pool X")
+(define-data-var token-symbol (string-ascii 32) "auto-fwp-alex-autoalex-x")
+(define-data-var token-uri (optional (string-ascii 256)) (some "https://cdn.alexlab.co/metadata/token-auto-fwp-alex-autoalex-x.json"))
 
 (define-data-var token-decimals uint u8)
-(define-data-var transferrable bool true)
+(define-data-var transferrable bool false)
 
 (define-read-only (get-transferrable)
 	(ok (var-get transferrable))
@@ -33,10 +35,15 @@
 	)
 )
 
+;; @desc get-contract-owner
+;; @returns (response principal)
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
 )
-
+;; @desc set-contractowner
+;; @restricted contract-owner
+;; @params owner
+;; @returns (response bool)
 (define-public (set-contract-owner (owner principal))
   (begin
     (try! (check-is-owner))
@@ -44,12 +51,20 @@
   )
 )
 
+;; @desc check-is-approved
+;; @restricted contract-owner
+;; @params sender
+;; @returns (response bool)
 (define-private (check-is-approved)
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
 (define-private (check-is-owner)
 	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
+)
+
+(define-private (check-is-self)
+  (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
@@ -66,11 +81,15 @@
 		(ok (map-set approved-contracts owner approved))
 	)
 )
-
 (define-read-only (get-token-owned (owner principal))
     (default-to (list) (map-get? token-owned owner))
 )
 
+;; @desc set-balance
+;; @params token-id
+;; @params balance
+;; @params owner
+;; @returns (response bool)
 (define-private (set-balance (token-id uint) (balance uint) (owner principal))
     (begin
 		(and 
@@ -82,6 +101,10 @@
     )
 )
 
+;; @desc get-balance-or-default
+;; @params token-id
+;; @params who
+;; @returns (response uint)
 (define-private (get-balance-or-default (token-id uint) (who principal))
 	(default-to u0 (map-get? token-balances {token-id: token-id, owner: who}))
 )
@@ -98,7 +121,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-overall-balance (who principal))
-	(ok (ft-get-balance yield-alex who))
+	(ok (ft-get-balance auto-fwp-alex-autoalex-x who))
 )
 
 ;; @desc get-total-supply
@@ -111,7 +134,7 @@
 ;; @desc get-overall-supply
 ;; @returns (response uint)
 (define-read-only (get-overall-supply)
-	(ok (ft-get-supply yield-alex))
+	(ok (ft-get-supply auto-fwp-alex-autoalex-x))
 )
 
 ;; @desc get-decimals
@@ -140,10 +163,10 @@
 		(
 			(sender-balance (get-balance-or-default token-id sender))
 		)
-		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
+    (asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? yield-alex amount sender recipient))
+		(try! (ft-transfer? auto-fwp-alex-autoalex-x amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
@@ -164,10 +187,10 @@
 		(
 			(sender-balance (get-balance-or-default token-id sender))
 		)
-    	(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)		
+    (asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? yield-alex amount sender recipient))
+		(try! (ft-transfer? auto-fwp-alex-autoalex-x amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
@@ -182,8 +205,8 @@
 ;; @returns (response bool)
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
-		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(try! (ft-mint? yield-alex amount recipient))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
+		(try! (ft-mint? auto-fwp-alex-autoalex-x amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
@@ -192,14 +215,15 @@
 )
 
 ;; @desc burn
+;; @restricted contract-owner/Approved Contract
 ;; @params token-id
 ;; @params amount
 ;; @params sender
 ;; @returns (response bool)
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
-		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(try! (ft-burn? yield-alex amount sender))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
+		(try! (ft-burn? auto-fwp-alex-autoalex-x amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
@@ -247,14 +271,14 @@
 ;; @desc get-overall-supply-fixed
 ;; @returns (response uint)
 (define-read-only (get-overall-supply-fixed)
-	(ok (decimals-to-fixed (ft-get-supply yield-alex)))
+	(ok (decimals-to-fixed (ft-get-supply auto-fwp-alex-autoalex-x)))
 )
 
 ;; @desc get-overall-balance-fixed
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-overall-balance-fixed (who principal))
-	(ok (decimals-to-fixed (ft-get-balance yield-alex who)))
+	(ok (decimals-to-fixed (ft-get-balance auto-fwp-alex-autoalex-x who)))
 )
 
 ;; @desc transfer-fixed
@@ -371,6 +395,136 @@
 	)
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-data-var start-block uint u340282366920938463463374607431768211455)
+
+(define-map tranche-end-block uint uint)
+
+(define-map available-alex 
+  {
+    borrower: principal,
+    tranche: uint
+  } 
+  uint
+)
+
+(define-map borrowed-alex 
+  {
+    borrower: principal,
+    tranche: uint
+  }
+  uint
+)
+
+(define-read-only (get-start-block)
+  (var-get start-block)
+)
+
+(define-public (set-start-block (new-start-block uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set start-block new-start-block))
+  )
+)
+
+(define-public (set-tranche-end-block (tranche uint) (new-end-block uint))
+    (begin 
+        (try! (check-is-owner))
+        (ok (map-set tranche-end-block tranche new-end-block))
+    )
+)
+
+(define-read-only (get-tranche-end-block-or-default (tranche uint))
+    (default-to u340282366920938463463374607431768211455 (map-get? tranche-end-block tranche))
+)
+
+(define-public (set-available-alex (user principal) (tranche uint) (new-amount uint))
+    (begin 
+        (try! (check-is-owner))
+        (ok (map-set available-alex { borrower: user, tranche: tranche } new-amount))
+    )
+)
+
+(define-read-only (get-available-alex-or-default (user principal) (tranche uint))
+    (default-to u0 (map-get? available-alex { borrower: user, tranche: tranche }))
+)
+
+(define-read-only (get-borrowed-alex-or-default (user principal) (tranche uint))
+  (default-to u0 (map-get? borrowed-alex { borrower: user, tranche: tranche }))
+)
+
+(define-public (add-to-position (tranche uint) (dx uint))
+    (let 
+        (
+          (sender tx-sender)
+          (pool (try! (contract-call? .simple-weight-pool-alex get-token-given-position .age000-governance-token .auto-alex dx none)))
+          (atalex-in-alex (mul-down (try! (contract-call? .auto-alex get-intrinsic)) (get dy pool)))          
+          (alex-to-atalex (div-down (mul-down dx atalex-in-alex) (+ dx atalex-in-alex)))
+          (atalex-amount (try! (contract-call? .auto-alex get-token-given-position alex-to-atalex)))
+          (alex-available (get-available-alex-or-default sender tranche))
+          (alex-borrowed (get-borrowed-alex-or-default sender tranche))                        
+        )
+        (asserts! (>= block-height (var-get start-block)) ERR-BLOCK-HEIGHT)
+        (asserts! (>= alex-available dx) ERR-AVAILABLE-ALEX)        
+
+        (as-contract (try! (contract-call? .age000-governance-token mint-fixed dx tx-sender)))
+        (as-contract (try! (contract-call? .auto-alex add-to-position alex-to-atalex)))
+        (as-contract (try! (contract-call? .simple-weight-pool-alex add-to-position .age000-governance-token .auto-alex .fwp-alex-autoalex (- dx alex-to-atalex) (some atalex-amount))))
+        (map-set available-alex { borrower: sender, tranche: tranche } (- alex-available dx))
+        (map-set borrowed-alex { borrower: sender, tranche: tranche } (+ alex-borrowed dx))
+		    (as-contract (try! (mint-fixed tranche (get token pool) sender)))
+        (print { object: "pool", action: "position-added", data: (get token pool)})
+        (ok { total-alex-borrowed: (+ alex-borrowed dx), position: (get token pool) })
+    )
+)
+
+(define-public (reduce-position (tranche uint))
+  (let 
+    (
+      (sender tx-sender)
+      (alex-borrowed (get-borrowed-alex-or-default sender tranche))
+      (supply (unwrap-panic (get-balance-fixed tranche sender)))
+      (total-supply (unwrap-panic (get-overall-supply-fixed)))
+      (share (div-down supply total-supply))
+      (pool (as-contract (try! (contract-call? .simple-weight-pool-alex reduce-position .age000-governance-token .auto-alex .fwp-alex-autoalex share))))  
+      (atalex-in-alex (mul-down (try! (contract-call? .auto-alex get-intrinsic)) (get dy pool)))
+      (alex-shortfall (if (<= alex-borrowed (get dx pool)) u0 (- alex-borrowed (get dx pool))))
+    )
+    (asserts! (> block-height (get-tranche-end-block-or-default tranche)) ERR-BLOCK-HEIGHT)
+    (asserts! (>= atalex-in-alex alex-shortfall) ERR-NOT-ENOUGH-ALEX)
+
+    (let
+      (
+        (alex-to-lender (- alex-borrowed alex-shortfall))
+        (atalex-to-lender (div-down (mul-down (get dy pool) alex-shortfall) atalex-in-alex))
+        (alex-to-borrower (- (get dx pool) alex-to-lender))
+        (atalex-to-borrower (- (get dy pool) atalex-to-lender))
+      )
+    
+      (and (> alex-to-lender u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-lender tx-sender .executor-dao none))))
+      (and (> atalex-to-lender u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed atalex-to-lender tx-sender .executor-dao none))))
+
+      (and (> alex-to-borrower u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-to-borrower tx-sender sender none))))
+      (and (> atalex-to-borrower u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed atalex-to-borrower tx-sender sender none))))
+
+	    (as-contract (try! (burn-fixed tranche supply sender)))
+      (print { object: "pool", action: "position-reduced", data: supply })
+      (ok { alex: alex-to-borrower, atalex: atalex-to-borrower })
+    )
+  )
+)
+
+(define-private (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+(define-private (div-down (a uint) (b uint))
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
+)
+
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .collateral-rebalancing-pool true)

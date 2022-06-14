@@ -6,14 +6,12 @@ import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 const ONE_8 = 100000000
 
 const tokenAddress = "ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-apower"
-
 export class ManyRecord {
   constructor(
     readonly recipient: Account,
     readonly amount: number
   ) {}
 }
-
 class Token {
     chain: Chain;
     deployer: Account;
@@ -94,11 +92,6 @@ class Token {
 
 }
 
-/**
- * lottery ticket test cases
- * 
- */
-
 Clarinet.test({
     name: "token-apower : send, mint and burn some tokens",
 
@@ -158,4 +151,71 @@ Clarinet.test({
         result = await TokenTest.getBalance('token-apower', wallet_6.address);
         result.result.expectOk().expectUint(0);
     },    
+});
+
+Clarinet.test({
+  name: "autoalex-apower-helper : mint and burn apower",
+
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+      let deployer = accounts.get("deployer")!;
+      let wallet_6 = accounts.get("wallet_6")!;
+      let wallet_7 = accounts.get("wallet_7")!;
+      let wallet_8 = accounts.get("wallet_8")!;
+      let TokenTest = new Token(chain, deployer);
+
+      // testing mint-fixed-many
+      let recipients: Array<Account> = [ accounts.get("wallet_6")!, accounts.get("wallet_8")! ];
+      let ratios: Array<number> = [3_000 * ONE_8, 7_000 * ONE_8];
+
+      let manyRecords: ManyRecord[] = [];
+
+      recipients.forEach((recipient, recipientIdx) => {
+        let record = new ManyRecord(
+          recipient,
+          ratios[recipientIdx]
+        );
+        manyRecords.push(record);
+      });
+      
+      // non contract-owner calling mint-alex-many throws an error.
+      let result:any = await TokenTest.mintFixed(deployer, 10_000e8, deployer.address + '.auto-alex');
+      result.expectOk();
+      result = await TokenTest.addApprovedContract(deployer, deployer.address + '.autoalex-apower-helper');
+      result.expectOk();
+
+      let block:any = chain.mineBlock(
+        [
+          Tx.contractCall(deployer.address + '.autoalex-apower-helper', 'set-approved-contract',
+            [
+              types.principal(wallet_7.address),
+              types.bool(true)
+            ],
+            deployer.address
+          ),
+          Tx.contractCall(deployer.address + '.autoalex-apower-helper', 'mint-and-burn-apower', 
+            [
+              types.uint(1),
+              types.uint(1),
+              types.list(manyRecords.map((record) => { return types.tuple({ recipient: types.principal(record.recipient.address), amount: types.uint(record.amount) })}))
+            ], 
+            wallet_7.address
+          )
+        ]
+      );      
+      block.receipts[1].events.expectFungibleTokenMintEvent(
+        3_000e8,
+        wallet_6.address,
+        "apower"
+      );   
+      block.receipts[1].events.expectFungibleTokenMintEvent(
+        7_000e8,
+        wallet_8.address,
+        "apower"
+      );  
+      block.receipts[1].events.expectFungibleTokenBurnEvent(
+        10_000e8,
+        deployer.address + '.auto-alex',
+        "apower"
+      );              
+  },    
 });

@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
 
 ;; collateral-rebalancing-pool
 ;;
@@ -12,12 +12,11 @@
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-INVALID-PERCENT (err u5000))
-(define-constant ERR-WEIGHTED-EQUATION-CALL (err u2009))
 (define-constant ERR-GET-WEIGHT-FAIL (err u2012))
 (define-constant ERR-EXPIRY (err u2017))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-LTV-GREATER-THAN-ONE (err u2019))
+(define-constant ERR-LTV-TOO-HIGH (err u2019))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-POOL-AT-CAPACITY (err u2027))
@@ -32,6 +31,7 @@
 (define-constant two-squared u141421356)
 
 (define-data-var contract-owner principal tx-sender)
+(define-map approved-contracts principal bool)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -49,14 +49,39 @@
   (ok (asserts! (is-eq tx-sender (as-contract tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
+(define-private (check-is-approved)
+  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
+)
 
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
+)
+
+(define-data-var shortfall-coverage uint u110000000) ;; 1.1x
 (define-read-only (get-shortfall-coverage)
   (ok (var-get shortfall-coverage))
 )
-
 (define-public (set-shortfall-coverage (new-shortfall-coverage uint))
   (begin (try! (check-is-owner)) (ok (var-set shortfall-coverage new-shortfall-coverage)))
+)
+
+(define-data-var strike-multiplier uint u25000000) ;; 0.25x
+(define-read-only (get-strike-multiplier)
+  (ok (var-get strike-multiplier))
+)
+(define-public (set-strike-multiplier (new-strike-multiplier uint))
+  (begin (try! (check-is-owner)) (ok (var-set strike-multiplier new-strike-multiplier)))
+)
+
+(define-data-var capacity-multiplier uint u100000000) ;; 1x
+(define-read-only (get-capacity-multiplier)
+  (ok (var-get capacity-multiplier))
+)
+(define-public (set-capacity-multiplier (new-capacity-multiplier uint))
+  (begin (try! (check-is-owner)) (ok (var-set capacity-multiplier new-capacity-multiplier)))
 )
 
 ;; data maps and vars
@@ -103,8 +128,9 @@
     (ok (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL))
 )
 
+;; token per collateral
 (define-read-only (get-spot (token principal) (collateral principal))
-    (ok (try! (oracle-resilient-helper collateral token)))
+    (oracle-resilient-helper collateral token)
 )
 
 (define-read-only (get-pool-value-in-token (token principal) (collateral principal) (expiry uint))
@@ -152,7 +178,7 @@
             (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
         )
         (if (>= ltv (get conversion-ltv pool))
-            (ok u100000) ;; move everything to risk-free asset
+            (ok u5000000) ;; move everything to risk-free asset
             (let 
                 (
                     (t (/ (* (- expiry block-height) ONE_8) u52560))
@@ -180,10 +206,16 @@
 )
 
 (define-public (create-pool (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (dx uint)) 
-    (create-pool-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait multisig-vote ltv-0 conversion-ltv bs-vol moving-average token-to-maturity (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
+    (create-and-configure-pool-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait multisig-vote ltv-0 conversion-ltv bs-vol moving-average token-to-maturity u0 u0 u0 (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
 )
 
-(define-private (create-pool-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) (spot uint) (dx uint)) 
+(define-public (create-and-configure-pool (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) 
+    (fee-rebate uint) (fee-rate-x uint) (fee-rate-y uint) (dx uint)) 
+    (create-and-configure-pool-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait multisig-vote ltv-0 conversion-ltv bs-vol moving-average token-to-maturity fee-rebate fee-rate-x fee-rate-y (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))) dx)
+)
+
+(define-private (create-and-configure-pool-with-spot (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (multisig-vote principal) (ltv-0 uint) (conversion-ltv uint) (bs-vol uint) (moving-average uint) (token-to-maturity uint) 
+    (fee-rebate uint) (fee-rate-x uint) (fee-rate-y uint) (spot uint) (dx uint)) 
     (begin
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (asserts! (is-none (map-get? pools-data-map { token-x: (contract-of collateral-trait), token-y: (contract-of token-trait), expiry: expiry })) ERR-POOL-ALREADY-EXISTS)
@@ -192,8 +224,9 @@
             (
                 (token-x (contract-of collateral-trait))
                 (token-y (contract-of token-trait))
-                (t (/ (* (- expiry block-height) ONE_8) u52560))                          
-                (d1 (div-down (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (- ONE_8 ltv-0)) (mul-down bs-vol (pow-down t u50000000))))
+                (t (/ (* (- expiry block-height) ONE_8) u52560))
+                (strike (+ (mul-down (var-get strike-multiplier) ltv-0) (mul-down (- ONE_8 (var-get strike-multiplier)) ONE_8)))                          
+                (d1 (div-down (+ (mul-down t (/ (mul-down bs-vol bs-vol) u2)) (- ONE_8 strike)) (mul-down bs-vol (pow-down t u50000000))))
                 (erf-term (erf (div-down d1 two-squared)))
                 (weighted (/ (+ ONE_8 erf-term) u2))
                 (weight-x (if (< weighted u95000000) weighted u95000000))
@@ -206,11 +239,11 @@
                     fee-to-address: multisig-vote,
                     yield-token: (contract-of yield-token-trait),
                     key-token: (contract-of key-token-trait),
-                    strike: (mul-down spot ltv-0),
+                    strike: (mul-down spot strike),
                     bs-vol: bs-vol,
-                    fee-rate-x: u0,
-                    fee-rate-y: u0,
-                    fee-rebate: u0,
+                    fee-rate-x: fee-rate-x,
+                    fee-rate-y: fee-rate-y,
+                    fee-rebate: fee-rebate,
                     ltv-0: ltv-0,
                     weight-x: weight-x,
                     weight-y: weight-y,
@@ -242,7 +275,7 @@
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry }) ERR-INVALID-POOL))
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token-y token-x expiry spot))) ERR-LTV-GREATER-THAN-ONE)
+        (asserts! (>= (get conversion-ltv pool) (try! (get-ltv-with-spot token-y token-x expiry spot))) ERR-LTV-TOO-HIGH)
         (asserts! (and (is-eq (get yield-token pool) (contract-of yield-token-trait)) (is-eq (get key-token pool) (contract-of key-token-trait))) ERR-INVALID-TOKEN)
         (let
             (
@@ -264,8 +297,10 @@
                     balance-y: (+ balance-y dy-weighted)
                 }))
                 (sender tx-sender)
-            ) 
-            (unwrap! (get-helper token-x token-y (+ dx balance-x (div-down balance-y spot))) ERR-POOL-AT-CAPACITY)
+            )
+
+            (unwrap! (get-helper token-x token-y (div-down (+ dx balance-x (div-down balance-y spot)) (var-get capacity-multiplier))) ERR-POOL-AT-CAPACITY)
+
             (unwrap! (contract-call? collateral-trait transfer-fixed dx-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (unwrap! (contract-call? token-trait transfer-fixed dy-weighted sender .alex-vault none) ERR-TRANSFER-FAILED)
             (map-set pools-data-map { token-x: token-x, token-y: token-y, expiry: expiry } pool-updated)
@@ -281,11 +316,11 @@
     (ok
         (map
             reduce-position-yield 
-            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
-            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
             expiries
-            (list yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait	yield-token-trait)
-            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
+            (list yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait)
+            (list percent percent percent percent percent percent percent percent percent percent)
         )
     )
 )
@@ -332,11 +367,11 @@
     (ok
         (map
             reduce-position-key 
-            (list token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait)
-            (list collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait	collateral-trait)
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
             expiries
-            (list key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait	key-token-trait)
-            (list percent	percent	percent	percent	percent	percent	percent	percent	percent	percent)
+            (list key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait)
+            (list percent percent percent percent percent percent percent percent percent percent)
         )
     )
 )
@@ -387,8 +422,9 @@
 
 (define-public (swap-x-for-y (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dx uint) (min-dy (optional uint)))
     (begin
+        (try! (check-is-approved))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (<= block-height expiry) ERR-EXPIRY)            
+        (asserts! (<= block-height expiry) ERR-EXPIRY)                    
         (let
             (
                 (token-x (contract-of collateral-trait))
@@ -413,8 +449,10 @@
                     )
                 )
                 (sender tx-sender)
-            )
-            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
+            )       
+            ;; a / b <= c / d == ad <= bc for b, d >=0
+            (asserts! (<= (mul-down dy (mul-down balance-x (get weight-y pool))) (mul-down dx-net-fees (mul-down balance-y (get weight-x pool)) )) ERR-INVALID-LIQUIDITY)                        
+            (asserts! (< (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)  
             (unwrap! (contract-call? collateral-trait transfer-fixed dx tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
             (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait dy sender))))
             (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
@@ -427,6 +465,7 @@
 
 (define-public (swap-y-for-x (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (dy uint) (min-dx (optional uint)))
     (begin
+        (try! (check-is-approved))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)    
         (asserts! (<= block-height expiry) ERR-EXPIRY)              
         (let
@@ -454,6 +493,8 @@
                 )
                 (sender tx-sender)
             )
+            ;; a / b >= c / d == ac >= bc for b, d >= 0
+            (asserts! (>= (mul-down dy-net-fees (mul-down balance-x (get weight-y pool))) (mul-down dx (mul-down balance-y (get weight-x pool)))) ERR-INVALID-LIQUIDITY)            
             (asserts! (< (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait dx sender))))
             (unwrap! (contract-call? token-trait transfer-fixed dy tx-sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -471,7 +512,7 @@
 
 (define-public (set-fee-rebate (token principal) (collateral principal) (expiry uint) (fee-rebate uint))
     (begin 
-        (try! (check-is-owner))
+        (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (ok (map-set pools-data-map { token-x: collateral, token-y: token, expiry: expiry } (merge (try! (get-pool-details token collateral expiry)) { fee-rebate: fee-rebate })))
     )
 )
@@ -486,14 +527,14 @@
 
 (define-public (set-fee-rate-x (token principal) (collateral principal) (expiry uint) (fee-rate-x uint))
     (let ((pool (try! (get-pool-details token collateral expiry))))
-        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (ok (map-set pools-data-map { token-x: collateral, token-y: token, expiry: expiry } (merge pool { fee-rate-x: fee-rate-x })))
     )
 )
 
 (define-public (set-fee-rate-y (token principal) (collateral principal) (expiry uint) (fee-rate-y uint))
     (let ((pool (try! (get-pool-details token collateral expiry))))
-        (asserts! (is-eq tx-sender (get fee-to-address pool)) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner)) (is-ok (check-is-self))) ERR-NOT-AUTHORIZED)
         (ok (map-set pools-data-map { token-x: collateral, token-y: token, expiry: expiry } (merge (try! (get-pool-details token collateral expiry)) { fee-rate-y: fee-rate-y })))
     )
 )
@@ -511,25 +552,25 @@
 
 (define-read-only (get-y-given-x (token principal) (collateral principal) (expiry uint) (dx uint))
     (let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-        (contract-call? .weighted-equation-v1-01 get-y-given-x (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dx)
+        (get-y-given-x-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dx)
     )
 )
 
 (define-read-only (get-x-given-y (token principal) (collateral principal) (expiry uint) (dy uint))
 	(let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-		(contract-call? .weighted-equation-v1-01 get-x-given-y (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dy)
+		(get-x-given-y-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) dy)
 	)
 )
 
 (define-read-only (get-x-given-price (token principal) (collateral principal) (expiry uint) (price uint))
     (let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-        (contract-call? .weighted-equation-v1-01 get-x-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (get-x-given-price-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
 (define-read-only (get-y-given-price (token principal) (collateral principal) (expiry uint) (price uint))
     (let ((pool (unwrap! (map-get? pools-data-map { token-x: collateral, token-y: token, expiry: expiry }) ERR-INVALID-POOL)))
-        (contract-call? .weighted-equation-v1-01 get-y-given-price (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
+        (get-y-given-price-internal (get balance-x pool) (get balance-y pool) (get weight-x pool) (get weight-y pool) price)
     )
 )
 
@@ -538,7 +579,7 @@
 )
 
 (define-private (get-token-given-position-with-spot (token principal) (collateral principal) (expiry uint) (spot uint) (dx uint))
-    (let ((ltv-dy (mul-down (try! (get-ltv-with-spot token collateral expiry spot)) (try! (get-helper collateral token dx)))))
+    (let ((ltv-dy (mul-down (try! (get-ltv-with-spot token collateral expiry spot)) (mul-down spot dx))))
         (asserts! (< block-height expiry) ERR-EXPIRY)
         (ok {yield-token: ltv-dy, key-token: ltv-dy})
     )
@@ -560,7 +601,7 @@
                 (weight-x (get weight-x pool))
                 (weight-y (get weight-y pool))            
                 (ltv (try! (get-ltv-with-spot token collateral expiry spot)))
-                (pos-data (unwrap! (contract-call? .weighted-equation-v1-01 get-position-given-mint balance-x balance-y weight-x weight-y total-supply shares) ERR-WEIGHTED-EQUATION-CALL))
+                (pos-data (try! (get-position-given-mint-internal balance-x balance-y weight-x weight-y total-supply shares)))
                 (dx-weighted (get dx pos-data))
                 (dy-weighted (get dy pos-data))
                 (dy-to-dx (try! (get-helper collateral token dy-weighted)))   
@@ -587,6 +628,288 @@
             (ok {dx: (mul-down shares-to-pool (get balance-x pool)), dy: (mul-down shares-to-pool (get balance-y pool))})
         )
     )
+)
+
+(define-constant ERR-NO-LIQUIDITY (err u2002))
+(define-constant ERR-WEIGHT-SUM (err u4000))
+(define-constant ERR-MAX-IN-RATIO (err u4001))
+(define-constant ERR-MAX-OUT-RATIO (err u4002))
+
+(define-data-var MAX-IN-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+(define-data-var MAX-OUT-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+
+(define-read-only (get-max-in-ratio)
+  (var-get MAX-IN-RATIO)
+)
+
+(define-public (set-max-in-ratio (new-max-in-ratio uint))
+  (begin
+    (try! (check-is-owner))
+    (asserts! (and (> new-max-in-ratio u0) (< new-max-in-ratio ONE_8)) ERR-MAX-IN-RATIO)
+    (ok (var-set MAX-IN-RATIO new-max-in-ratio))
+  )
+)
+
+(define-read-only (get-max-out-ratio)
+  (var-get MAX-OUT-RATIO)
+)
+
+(define-public (set-max-out-ratio (new-max-out-ratio uint))
+  (begin
+    (try! (check-is-owner))
+    (asserts! (and (> new-max-out-ratio u0) (< new-max-out-ratio ONE_8)) ERR-MAX-OUT-RATIO)
+    (ok (var-set MAX-OUT-RATIO new-max-out-ratio))
+  )
+)
+
+;; @desc get-invariant
+;; @desc invariant = b_x ^ w_x * b_y ^ w_y 
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @returns (response uint uint)
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (ok (mul-down (pow-down balance-x weight-x) (pow-down balance-y weight-y)))
+    )
+)
+
+;; @desc get-y-given-x
+;; @desc d_y = dy
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x                /      /            b_x             \    (w_x / w_y) \           
+;; @desc d_x = dx          d_y = b_y * |  1 - | ---------------------------  | ^             |          
+;; @desc w_x = weight-x                 \      \       ( b_x + d_x )        /                /           
+;; @desc w_y = weight-y                                                                       
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dx; amount of token-x added
+;; @returns (response uint uint)
+(define-private (get-y-given-x-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (let 
+            (
+                (denominator (+ balance-x dx))
+                (base (div-up balance-x denominator))
+                (uncapped-exponent (div-up weight-x weight-y))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-up base exponent))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (dy (mul-down balance-y complement))
+            )
+            (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+            (ok dy)
+        ) 
+    )    
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /     /            b_y             \    (w_y / w_x)  \          
+;; @desc d_x = dx         d_x = b_x * | 1 - | --------------------------  | ^              |         
+;; @desc w_x = weight-x               \     \       ( b_y + d_y )         /                /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (let 
+            (
+                (denominator (+ balance-y dy))
+                (base (div-up balance-y denominator))
+                (uncapped-exponent (div-up weight-y weight-x))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-up base exponent))
+                (complement (if (<= ONE_8 power) u0 (- ONE_8 power)))
+                (dx (mul-down balance-x complement))
+            )
+            (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+            (ok dx)
+        )
+    )
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_y             \    (w_y / w_x)      \          
+;; @desc d_x = dx         d_x = b_x * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_y - d_y )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-private (get-x-in-given-y-out-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (let 
+            (
+                (denominator (- balance-y dy))
+                (base (div-down balance-y denominator))
+                (uncapped-exponent (div-down weight-y weight-x))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dx (mul-down balance-x ratio))
+            )
+            (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+            (ok dx)
+        )
+    )
+)
+
+;; @desc d_y = dy                                                                            
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x              /  /            b_x             \    (w_x / w_y)      \          
+;; @desc d_x = dx         d_y = b_y * |  | --------------------------  | ^             - 1  |         
+;; @desc w_x = weight-x               \  \       ( b_x - d_x )         /                    /          
+;; @desc w_y = weight-y                                                           
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param dy; amount of token-y added
+;; @returns (response uint uint)
+(define-private (get-y-in-given-x-out-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (dx uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (let 
+            (
+                (denominator (- balance-x dx))
+                (base (div-down balance-x denominator))
+                (uncapped-exponent (div-down weight-x weight-y))
+                (exponent (if (< uncapped-exponent MILD_EXPONENT_BOUND) uncapped-exponent MILD_EXPONENT_BOUND))
+                (power (pow-down base exponent))
+                (ratio (if (<= power ONE_8) u0 (- power ONE_8)))
+                (dy (mul-down balance-y ratio))
+            )
+            (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+            (ok dy)
+        )
+    )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc w_x = weight-x 
+;; @desc w_y = weight-y
+;; @desc spot = b_y * w_x / b_x / w_y
+;; @desc d_x = b_x * ((spot / price) ^ w_y - 1)
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param price; target price
+;; @returns (response uint uint)
+(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (let
+            (
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
+            )
+            (asserts! (< price spot) ERR-NO-LIQUIDITY)
+            (let 
+                (
+                  (power (pow-down (div-up spot price) weight-y))
+                )
+                (ok (mul-up balance-x (if (<= power ONE_8) u0 (- power ONE_8))))
+            )
+        )
+    )   
+)
+
+;; @desc follows from get-x-given-price
+;; @desc d_y = b_y * ((price / spot) ^ w_x - 1)
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param price; target price
+;; @returns (response uint uint)
+(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (price uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (let
+            (
+              (spot (div-down (mul-down balance-y weight-x) (mul-up balance-x weight-y)))
+            )
+            (asserts! (> price spot) ERR-NO-LIQUIDITY)
+            (let 
+                (
+                  (power (pow-down (div-up price spot) weight-x))
+                )
+                (ok (mul-up balance-y (if (<= power ONE_8) u0 (- power ONE_8))))
+            )
+        )
+    )   
+)
+
+;; @desc get-token-given-position
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param dx; amount of token-x added
+;; @param dy; amount of token-y added
+;; @returns (response (tutple uint uint) uint)
+(define-private (get-token-given-position-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (dx uint) (dy uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (ok
+            (if (is-eq total-supply u0)
+                {token: (unwrap-panic (get-invariant dx dy weight-x weight-y)), dy: dy}
+                {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)} 
+            )
+        ) 
+    )    
+)
+
+;; @desc get-position-given-mint
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token minted
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-position-given-mint-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    (begin
+        (asserts! (is-eq (+ weight-x weight-y) ONE_8) ERR-WEIGHT-SUM)
+        (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
+        (ok {dx: (div-down (mul-down balance-x token) total-supply), dy: (div-down (mul-down balance-y token) total-supply)})
+    )
+)
+
+;; @desc get-position-given-burn
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param weight-x; weight of token-x
+;; @param weight-y; weight of token-y
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token to be burnt
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-position-given-burn-internal (balance-x uint) (balance-y uint) (weight-x uint) (weight-y uint) (total-supply uint) (token uint))
+    (get-position-given-mint-internal balance-x balance-y weight-x weight-y total-supply token)
 )
 
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
@@ -618,7 +941,13 @@
 )
 
 (define-private (pow-up (a uint) (b uint))
-    (+ u1 (* (unwrap-panic (pow-fixed a b)) (+ u1 MAX_POW_RELATIVE_ERROR)))
+    (let
+        (
+            (raw (unwrap-panic (pow-fixed a b)))
+            (max-error (+ u1 (mul-up raw MAX_POW_RELATIVE_ERROR)))
+        )
+        (+ raw max-error)
+    )
 )
 
 (define-constant UNSIGNED_ONE_8 (pow 10 8))
@@ -818,38 +1147,77 @@
     )
 )
 
-(define-private (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+;; @desc swap-helper swaps dx of token-x-trait for at least min-dy of token-y-trait (else, it fails)
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
+(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (let 
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
         )        
-        (ok 
-            (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
-                (if (is-eq token-x .token-wstx)
-                    (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 dx min-dy)))
-                    (if (is-eq token-y .token-wstx)
-                        (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx min-dy)))
-                        (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
-                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) min-dy)))
+        (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)           
+            (if (is-eq token-x .token-wstx)
+                (let ((output (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 dx min-dy)))))
+                    (map-set fwp-oracle-resilient-map { token-x: token-x, token-y: token-y } (try! (fwp-oracle-resilient-internal token-x token-y)))
+                    (ok output)
+                )
+                (if (is-eq token-y .token-wstx)
+                    (let ((output (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx min-dy)))))
+                        (map-set fwp-oracle-resilient-map { token-x: token-x, token-y: token-y } (try! (fwp-oracle-resilient-internal token-x token-y)))
+                        (ok output)
+                    )
+                    (let ((output (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
+                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) min-dy)))))
+                        (map-set fwp-oracle-resilient-map { token-x: token-x, token-y: .token-wstx } (try! (fwp-oracle-resilient-internal token-x .token-wstx)))
+                        (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-y } (try! (fwp-oracle-resilient-internal .token-wstx token-y)))
+                        (ok output)
                     )
                 )
-                (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                    (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy)))
-                    (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                        (if (is-eq token-x .token-wstx)
-                            (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 dx none))) min-dy))) 
-                            (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
-                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 
-                                    (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) none))) min-dy)))
+            )
+            (if (> (is-simple-weight-pool-alex token-x token-y) u0)
+                (begin
+                    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+                        (map-set simple-oracle-resilient-map { token-x: token-x, token-y: token-y } (try! (simple-oracle-resilient-internal token-x token-y)))
+                        (begin 
+                            (map-set simple-oracle-resilient-map { token-x: token-x, token-y: .age000-governance-token } (try! (simple-oracle-resilient-internal token-x .age000-governance-token)))
+                            (map-set simple-oracle-resilient-map { token-x: .age000-governance-token, token-y: token-y  } (try! (simple-oracle-resilient-internal .age000-governance-token token-y)))
                         )
-                        (if (is-eq token-y .token-wstx)
-                            (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
-                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))                        
-                            (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
+                    )
+                    (ok (get dy (try! (contract-call? .simple-weight-pool-alex swap-x-for-y token-x-trait token-y-trait dx min-dy))))
+                )
+                (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
+                    (if (is-eq token-x .token-wstx)
+                        (let ((output (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 dx none))) min-dy)))))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: .age000-governance-token } (try! (fwp-oracle-resilient-internal .token-wstx .age000-governance-token)))
+                            (map-set simple-oracle-resilient-map { token-x: .age000-governance-token, token-y: token-y } (try! (simple-oracle-resilient-internal .age000-governance-token token-y)))
+                            (ok output)
+                        )
+                        (let ((output (get dy (try! (contract-call? .simple-weight-pool-alex swap-alex-for-y token-y-trait 
+                                (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y .age000-governance-token u50000000 
+                                (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx token-x-trait u50000000 dx none))) none))) min-dy)))))
+                            (map-set fwp-oracle-resilient-map { token-x: token-x, token-y: .token-wstx } (try! (fwp-oracle-resilient-internal token-x .token-wstx)))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: .age000-governance-token } (try! (fwp-oracle-resilient-internal .token-wstx .age000-governance-token)))
+                            (map-set simple-oracle-resilient-map { token-x: .age000-governance-token, token-y: token-y } (try! (simple-oracle-resilient-internal .age000-governance-token token-y)))
+                            (ok output)
+                        )
+                    )
+                    (if (is-eq token-y .token-wstx)
+                        (let ((output (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
+                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) min-dy)))))
+                            (map-set simple-oracle-resilient-map { token-x: token-x, token-y: .age000-governance-token } (try! (simple-oracle-resilient-internal token-x .age000-governance-token)))
+                            (map-set fwp-oracle-resilient-map { token-x: .age000-governance-token, token-y: .token-wstx } (try! (fwp-oracle-resilient-internal .age000-governance-token .token-wstx)))
+                            (ok output)
+                        )
+                        (let ((output (get dy (try! (contract-call? .fixed-weight-pool-v1-01 swap-wstx-for-y token-y-trait u50000000 
                                 (get dx (try! (contract-call? .fixed-weight-pool-v1-01 swap-y-for-wstx .age000-governance-token u50000000 
-                                    (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) none))) min-dy)))
+                                (get dx (try! (contract-call? .simple-weight-pool-alex swap-y-for-alex token-x-trait dx none))) none))) min-dy)))))
+                            (map-set simple-oracle-resilient-map { token-x: token-x, token-y: .age000-governance-token } (try! (simple-oracle-resilient-internal token-x .age000-governance-token)))
+                            (map-set fwp-oracle-resilient-map { token-x: .age000-governance-token, token-y: .token-wstx } (try! (fwp-oracle-resilient-internal .age000-governance-token .token-wstx)))
+                            (map-set fwp-oracle-resilient-map { token-x: .token-wstx, token-y: token-y } (try! (fwp-oracle-resilient-internal .token-wstx token-y)))                            
+                            (ok output)
                         )
                     )
                 )
@@ -858,7 +1226,12 @@
     )
 )
 
-(define-private (get-helper (token-x principal) (token-y principal) (dx uint))
+;; @desc get-helper returns estimated dy when swapping token-x for token-y
+;; @param token-x
+;; @param token-y
+;; @param dx
+;; @returns (response uint uint)
+(define-read-only (get-helper (token-x principal) (token-y principal) (dx uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (contract-call? .fixed-weight-pool-v1-01 get-helper token-x token-y u50000000 u50000000 dx))
@@ -875,7 +1248,12 @@
     )
 )
 
-(define-private (get-given-helper (token-x principal) (token-y principal) (dy uint))
+;; @desc get-helper returns estimated dx required when swapping token-x for dy of token-y
+;; @param token-x
+;; @param token-y
+;; @param dy
+;; @returns (response uint uint)
+(define-read-only (get-given-helper (token-x principal) (token-y principal) (dy uint))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (contract-call? .fixed-weight-pool-v1-01 get-x-given-y token-x token-y u50000000 u50000000 dy))
@@ -892,15 +1270,25 @@
     )
 )
 
-(define-private (oracle-instant-helper (token-x principal) (token-y principal))
+;; @desc oracle-instant-helper returns price of token-x in token-y
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
+(define-read-only (oracle-instant-helper (token-x principal) (token-y principal))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (fwp-oracle-instant token-x token-y))
             (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (try! (contract-call? .simple-weight-pool-alex get-oracle-instant token-x token-y))
+                (try! (simple-oracle-instant token-x token-y))
                 (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                    (div-down (try! (contract-call? .simple-weight-pool-alex get-oracle-instant .age000-governance-token token-y)) (try! (fwp-oracle-instant .age000-governance-token token-x)))
-                    (div-down (try! (fwp-oracle-instant .age000-governance-token token-y)) (try! (contract-call? .simple-weight-pool-alex get-oracle-instant .age000-governance-token token-x)))                                        
+                    (div-down 
+                        (try! (simple-oracle-instant .age000-governance-token token-y))
+                        (try! (fwp-oracle-instant .age000-governance-token token-x))
+                    )
+                    (div-down 
+                        (try! (fwp-oracle-instant .age000-governance-token token-y))
+                        (try! (simple-oracle-instant .age000-governance-token token-x))
+                    )                                        
                 )
             )
         )
@@ -910,7 +1298,12 @@
 (define-private (fwp-oracle-instant (token-x principal) (token-y principal))
     (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
         (fwp-oracle-instant-internal token-x token-y)
-        (ok (div-down (try! (fwp-oracle-instant-internal .token-wstx token-y)) (try! (fwp-oracle-instant-internal .token-wstx token-x))))
+        (ok
+            (div-down                
+                (try! (fwp-oracle-instant-internal .token-wstx token-y))
+                (try! (fwp-oracle-instant-internal .token-wstx token-x))                
+            )
+        )
     )
 )
 
@@ -926,19 +1319,82 @@
             )
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (if exists (div-down (get balance-y pool) (get balance-x pool)) (div-down (get balance-x pool) (get balance-y pool))))
+        (ok 
+            (if exists
+                (div-down (get balance-y pool) (get balance-x pool))
+                (div-down (get balance-x pool) (get balance-y pool))
+            )
+        )
     )
 )
 
-(define-private (oracle-resilient-helper (token-x principal) (token-y principal))
+(define-private (simple-oracle-instant (token-x principal) (token-y principal))
+    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+        (simple-oracle-instant-internal token-x token-y)
+        (ok
+            (div-down                
+                (try! (simple-oracle-instant-internal .age000-governance-token token-y))
+                (try! (simple-oracle-instant-internal .age000-governance-token token-x))                
+            )
+        )
+    )
+)
+
+(define-private (simple-oracle-instant-internal (token-x principal) (token-y principal))
+    (let 
+        (
+            (exists (is-some (contract-call? .simple-weight-pool-alex get-pool-exists token-x token-y)))
+            (pool 
+                (if exists
+                    (try! (contract-call? .simple-weight-pool-alex get-pool-details token-x token-y))
+                    (try! (contract-call? .simple-weight-pool-alex get-pool-details token-y token-x))
+                )
+            )
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (ok 
+            (if exists
+                (div-down (get balance-y pool) (get balance-x pool))
+                (div-down (get balance-x pool) (get balance-y pool))
+            )
+        )
+    )
+)
+
+(define-map fwp-oracle-resilient-map 
+    {
+        token-x: principal,
+        token-y: principal
+    }
+    uint
+)
+(define-map simple-oracle-resilient-map
+    {
+        token-x: principal,
+        token-y: principal
+    }
+    uint
+)
+
+;; @desc oracle-resilient-helper returns moving average price of token-x in token-y
+;; @param token-x
+;; @param token-y
+;; @returns (response uint uint)
+(define-read-only (oracle-resilient-helper (token-x principal) (token-y principal))
     (ok
         (if (> (is-fixed-weight-pool-v1-01 token-x token-y) u0)
             (try! (fwp-oracle-resilient token-x token-y))
             (if (> (is-simple-weight-pool-alex token-x token-y) u0)
-                (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient token-x token-y))
+                (try! (simple-oracle-resilient token-x token-y))
                 (if (> (is-from-fixed-to-simple-alex token-x token-y) u0)
-                    (div-down (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient .age000-governance-token token-y)) (try! (fwp-oracle-resilient .age000-governance-token token-x)))
-                    (div-down (try! (fwp-oracle-resilient .age000-governance-token token-y)) (try! (contract-call? .simple-weight-pool-alex get-oracle-resilient .age000-governance-token token-x)))                                        
+                    (div-down 
+                        (try! (simple-oracle-resilient .age000-governance-token token-y))
+                        (try! (fwp-oracle-resilient .age000-governance-token token-x))
+                    )
+                    (div-down 
+                        (try! (fwp-oracle-resilient .age000-governance-token token-y))
+                        (try! (simple-oracle-resilient .age000-governance-token token-x))
+                    )                                        
                 )
             )
         )
@@ -948,7 +1404,12 @@
 (define-private (fwp-oracle-resilient (token-x principal) (token-y principal))
     (if (or (is-eq token-x .token-wstx) (is-eq token-y .token-wstx))
         (fwp-oracle-resilient-internal token-x token-y)
-        (ok (div-down (try! (fwp-oracle-resilient-internal .token-wstx token-y)) (try! (fwp-oracle-resilient-internal .token-wstx token-x))))
+        (ok
+            (div-down                
+                (try! (fwp-oracle-resilient-internal .token-wstx token-y))
+                (try! (fwp-oracle-resilient-internal .token-wstx token-x))                
+            )
+        )
     )
 )
 
@@ -963,11 +1424,50 @@
             )
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (fwp-oracle-instant-internal token-x token-y))) (mul-down (get oracle-average pool) (get oracle-resilient pool))))           
+        (match (map-get? fwp-oracle-resilient-map { token-x: token-x, token-y: token-y })
+            value
+            (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (fwp-oracle-instant-internal token-x token-y))) 
+                (mul-down (get oracle-average pool) value))
+            )
+            (fwp-oracle-instant-internal token-x token-y)
+        )           
     )
 )
 
-(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint))
+(define-private (simple-oracle-resilient (token-x principal) (token-y principal))
+    (if (or (is-eq token-x .age000-governance-token) (is-eq token-y .age000-governance-token))
+        (simple-oracle-resilient-internal token-x token-y)
+        (ok
+            (div-down                
+                (try! (simple-oracle-resilient-internal .age000-governance-token token-y))
+                (try! (simple-oracle-resilient-internal .age000-governance-token token-x))                
+            )
+        )
+    )
+)
+
+(define-private (simple-oracle-resilient-internal (token-x principal) (token-y principal))
+    (let 
+        (
+            (pool 
+                (if (is-some (contract-call? .simple-weight-pool-alex get-pool-exists token-x token-y))
+                    (try! (contract-call? .simple-weight-pool-alex get-pool-details token-x token-y))
+                    (try! (contract-call? .simple-weight-pool-alex get-pool-details token-y token-x))
+                )
+            )
+        )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (match (map-get? simple-oracle-resilient-map { token-x: token-x, token-y: token-y })
+            value
+            (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (simple-oracle-instant-internal token-x token-y))) 
+                (mul-down (get oracle-average pool) value))
+            )
+            (simple-oracle-instant-internal token-x token-y)
+        )           
+    )
+)
+
+(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (min-dy (optional uint)))
     (let
         (
             (sender tx-sender)
@@ -977,7 +1477,7 @@
             (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry yield-token-trait key-token-trait spot gross-dx))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token none))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token min-dy))))
         )
         (try! (swap-helper token-trait collateral-trait swapped-token none))      
         (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
@@ -985,46 +1485,133 @@
     )
 )
 
-(define-public (roll-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint))
+(define-public (roll-borrow-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint) (expiries (list 10 uint)))
+    (ok 
+        (map 
+            roll-borrow
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
+            expiries
+            (list yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait)
+            (list key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait key-token-trait)
+            (list expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll)
+            (list none none none none none none none none none none)
+        )
+    )
+)
+
+(define-public (roll-borrow (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (expiry-to-roll uint) (min-dx (optional uint)))
     (let
         (
+            (token (contract-of token-trait))
+            (collateral (contract-of collateral-trait))
             (sender tx-sender)
-            (spot (try! (get-spot (contract-of token-trait) (contract-of collateral-trait))))
+            (spot (try! (get-spot token collateral)))
             (reduce-data (try! (reduce-position-key token-trait collateral-trait expiry key-token-trait ONE_8)))
             (dx (+ (get dx reduce-data) (if (is-eq (get dy reduce-data) u0) u0 (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))))
-            (gross-dx (div-down dx (try! (get-ltv-with-spot (contract-of token-trait) (contract-of collateral-trait) expiry-to-roll spot))))
+            (gross-dx (div-down dx (- ONE_8 (try! (get-ltv-with-spot token collateral expiry-to-roll spot)))))
             (loan-amount (- gross-dx dx))
             (loan-amount-with-fee (mul-up loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
             (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
             (minted-yield-token (get yield-token (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx))))
-            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token none))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait minted-yield-token min-dx))))
         )
         (try! (swap-helper token-trait collateral-trait swapped-token none))
         (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
         (ok loan-amount-with-fee)
-    )    
+    )  
+)
+
+(define-public (roll-deposit-many (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (expiry-to-roll uint) (percent uint) (expiries (list 10 uint)))
+    (ok
+        (map
+            roll-deposit
+            (list token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait token-trait)
+            (list collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait collateral-trait)
+            expiries
+            (list yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait yield-token-trait)
+            (list expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll expiry-to-roll)
+            (list percent percent percent percent percent percent percent percent percent percent)
+            (list none none none none none none none none none none)
+        )
+    )
+)
+
+(define-public (roll-deposit (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (expiry-to-roll uint) (percent uint) (min-dy (optional uint)))
+    (contract-call? .yield-token-pool swap-x-for-y expiry-to-roll yield-token-trait token-trait (get dy (try! (reduce-position-yield token-trait collateral-trait expiry yield-token-trait percent))) min-dy)
 )
 
 (define-map approved-pair principal principal) ;; auto-token => pool token
 (define-map auto-total-supply principal uint) ;; auto-token => supply
 (define-map pool-total-supply principal uint) ;; pool token => supply
-(define-map pool-underlying principal principal) ;; pool token => token with staking schedule
-(define-map pool-expiry principal uint) ;; pool token => expiry
-(define-map bounty-in-fixed principal uint) ;; fixed bounty amount (in fixed notation)
+(define-map activation-block principal uint) ;; pool token => activation-block
+(define-map pool-expiry principal uint) ;; pool token => last rolled expiry
+(define-map bounty-in-fixed principal uint) ;; auto token => fixed bounty amount (in fixed notation)
+
+(define-data-var expiry-cycle-length uint u1050) ;; number of block-heights per cycle
+
+(define-read-only (get-expiry-cycle-length)
+  (var-get expiry-cycle-length)
+)
+
+(define-public (set-expiry-cycle-length (new-expiry-cycle-length uint))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set expiry-cycle-length new-expiry-cycle-length))
+  )
+)
+
+(define-read-only (get-activation-block-or-default (pool-token principal))
+  (default-to u340282366920938463463374607431768211455 (map-get? activation-block pool-token))
+)
+
+(define-read-only (get-expiry-cycle (pool-token principal) (stacks-height uint))
+  (let
+    (
+      (first-staking-block (get-activation-block-or-default pool-token))
+      (rcLen (var-get expiry-cycle-length))
+    )
+    (if (>= stacks-height first-staking-block)
+      (some (/ (- stacks-height first-staking-block) rcLen))
+      none
+    )
+  )
+)
+
+(define-read-only (get-first-stacks-block-in-expiry-cycle (pool-token principal) (expiry-cycle uint))
+  (+ (get-activation-block-or-default pool-token) (* (var-get expiry-cycle-length) expiry-cycle))
+)
+
+(define-read-only (get-last-expiry (pool-token principal))
+    (ok (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
+)
+
+(define-read-only (get-expiry (pool-token principal))
+    (let ((current-cycle (unwrap! (get-expiry-cycle pool-token block-height) ERR-NOT-AUTHORIZED)))        
+        (ok (- (get-first-stacks-block-in-expiry-cycle pool-token (+ current-cycle u1)) u1))
+    )
+)
 
 (define-read-only (get-approved-pair (auto-token principal))
     (map-get? approved-pair auto-token)
 )
-(define-public (set-approved-pair (auto-token principal) (pool-token principal))
+
+(define-public (set-approved-pair (auto-token principal) (pool-token principal) (new-activation-block uint) (new-bounty-in-fixed uint))
     (begin 
         (try! (check-is-owner))
-        (ok (map-set approved-pair auto-token pool-token))
+        (map-delete auto-total-supply auto-token)
+        (map-delete pool-total-supply pool-token)        
+        (map-set approved-pair auto-token pool-token)
+        (map-set activation-block pool-token new-activation-block)
+        (map-set bounty-in-fixed auto-token new-bounty-in-fixed)        
+        (ok (map-set pool-expiry pool-token (try! (get-expiry pool-token))))
     )
 )
 
-(define-read-only (get-bounty-in-fixed (auto-token principal))
-    (map-get? bounty-in-fixed auto-token)
+(define-read-only (get-bounty-in-fixed-or-default (auto-token principal))
+    (default-to u0 (map-get? bounty-in-fixed auto-token))
 )
+
 (define-public (set-bounty-in-fixed (auto-token principal) (new-bounty-in-fixed uint))
     (begin 
         (try! (check-is-owner))
@@ -1032,89 +1619,134 @@
     )
 )
 
-(define-read-only (get-pool-underlying (pool-token principal))
-    (map-get? pool-underlying pool-token)
+(define-read-only (get-auto-total-supply-or-default (auto-token principal))
+    (default-to u0 (map-get? auto-total-supply auto-token))
 )
-(define-public (set-pool-underlying (pool-token principal) (token principal))
-    (begin 
-        (try! (check-is-owner))
-        (map-set pool-expiry pool-token (try! (get-expiry-with-underlying pool-token token)))        
-        (ok (map-set pool-underlying pool-token token))
-    )
-)
-
-(define-read-only (get-auto-total-supply (auto-token principal))
-    (map-get? auto-total-supply auto-token)
-)
-(define-read-only (get-pool-total-supply (pool-token principal))
-    (map-get? pool-total-supply pool-token)
-)
-
-(define-read-only (get-expiry (pool-token principal))
-    (get-expiry-with-underlying pool-token (unwrap! (map-get? pool-underlying pool-token) ERR-NOT-AUTHORIZED))
-)
-
-(define-private (get-expiry-with-underlying (pool-token principal) (token principal))
-    (let ((current-cycle (unwrap! (contract-call? .alex-reserve-pool get-reward-cycle token block-height) ERR-NOT-AUTHORIZED)))        
-        (ok (- (contract-call? .alex-reserve-pool get-first-stacks-block-in-reward-cycle token (+ current-cycle u1)) u1))
-    )
-)
-
-(define-private (set-expiry (pool-token principal))
-    (let ((last-height (try! (get-expiry pool-token))))
-        (map-set pool-expiry pool-token last-height)        
-        (ok last-height)
-    )
-)
-
-(define-read-only (get-auto-supply-or-default (pool-token principal))
-    (default-to u0 (map-get? auto-total-supply pool-token))
-)
-(define-read-only (get-pool-supply-or-default (pool-token principal))
+(define-read-only (get-pool-total-supply-or-default (pool-token principal))
     (default-to u0 (map-get? pool-total-supply pool-token))
 )
 
+(define-public (buy-to-yield-token-pool-and-mint-auto 
+    (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
+    (let 
+        (
+            (added (try! (contract-call? .yield-token-pool buy-and-add-to-position (try! (get-last-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx)))            
+        )
+        (mint-auto-internal pool-token-trait auto-token-trait (get supply added))
+    )
+)
+
+(define-public (add-to-yield-token-pool-and-mint-auto 
+    (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint) (max-dy (optional uint)))
+    (let 
+        (
+            (added (try! (contract-call? .yield-token-pool add-to-position (try! (get-last-expiry (contract-of pool-token-trait))) yield-token-trait token-trait pool-token-trait dx max-dy)))            
+        )
+        (mint-auto-internal pool-token-trait auto-token-trait (get supply added))
+    )
+)
+
+(define-public (buy-to-key-token-and-mint-auto 
+    (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+    (let 
+        (
+            (expiry (try! (get-last-expiry (contract-of key-token-trait))))
+            (new-supply (try! (add-to-position token-trait collateral-trait expiry yield-token-trait key-token-trait dx)))
+        )
+        (try! (check-is-approved))
+        (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait (get yield-token new-supply) min-dy))
+        (mint-auto-internal key-token-trait auto-token-trait (get key-token new-supply))
+    )
+)
+
+(define-public (redeem-auto-and-reduce-from-yield-token-pool 
+    (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
+    (let 
+        (
+            (expiry (try! (get-last-expiry (contract-of pool-token-trait))))
+            (pool-to-reduce (get pool-to-reduce (try! (redeem-auto-internal pool-token-trait auto-token-trait percent))))
+            (pool-token-held (unwrap-panic (contract-call? pool-token-trait get-balance-fixed expiry tx-sender)))
+            (percent-to-reduce (if (is-eq pool-token-held u0) ONE_8 (div-down pool-to-reduce (+ pool-to-reduce pool-token-held))))
+        )
+        (contract-call? .yield-token-pool reduce-position expiry yield-token-trait token-trait pool-token-trait percent-to-reduce)
+    )
+)
+
 (define-public (mint-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
+    (begin 
+        (try! (check-is-approved))
+        (mint-auto-internal pool-token-trait auto-token-trait dx)
+    )
+)
+
+(define-private (mint-auto-internal (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (dx uint))
     (let
         (
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (auto-to-add (match (map-get? pool-total-supply pool-token) value (div-down (mul-down dx (get-auto-supply-or-default pool-token)) value) dx))
-            (pool-to-add (+ dx (get-pool-supply-or-default pool-token)))
-            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
+            (auto-supply (get-auto-total-supply-or-default auto-token))
+            (pool-supply (get-pool-total-supply-or-default pool-token))
+            (auto-to-add (if (is-eq pool-supply u0) dx (div-down (mul-down dx auto-supply) pool-supply)))
+            (pool-to-add (+ dx pool-supply))
+            (expiry (try! (get-last-expiry pool-token)))
             (sender tx-sender)
         )
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
+        (asserts! 
+            (or 
+                (and (is-eq auto-supply u0) (is-eq pool-supply u0))
+                (and (> auto-supply u0) (> pool-supply u0))
+            )
+            ERR-INVALID-LIQUIDITY
+        )
         (try! (contract-call? pool-token-trait transfer-fixed expiry dx sender .alex-vault))
-        (map-set auto-total-supply pool-token (+ (get-auto-supply-or-default pool-token) auto-to-add))
-        (map-set pool-total-supply pool-token (+ (get-pool-supply-or-default pool-token) dx))
+        (map-set auto-total-supply auto-token (+ auto-supply auto-to-add))
+        (map-set pool-total-supply pool-token (+ pool-supply dx))
         (as-contract (try! (contract-call? auto-token-trait mint-fixed auto-to-add sender)))
         (print { object: "pool", action: "liquidity-added", data: auto-to-add })
-        (ok true)
+        (ok auto-to-add)
     )
 )
 
 (define-public (redeem-auto (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
-    (let 
+    (begin 
+        (try! (check-is-approved))
+        (redeem-auto-internal pool-token-trait auto-token-trait percent)
+    )
+)
+
+(define-private (redeem-auto-internal (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>) (percent uint))
+    (let
         (
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
+            (auto-supply (get-auto-total-supply-or-default auto-token))
+            (pool-supply (get-pool-total-supply-or-default pool-token))                
             (total-shares (unwrap! (contract-call? auto-token-trait get-balance-fixed tx-sender) ERR-GET-BALANCE-FIXED-FAIL))
             (auto-to-reduce (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
-            (pool-to-reduce (div-down (mul-down (get-pool-supply-or-default pool-token) auto-to-reduce) (get-auto-supply-or-default pool-token)))
-            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
+            (pool-to-reduce (if (is-eq auto-supply u0) u0 (div-down (mul-down pool-supply auto-to-reduce) auto-supply)))
+            (expiry (try! (get-last-expiry pool-token)))
             (sender tx-sender)
         )
-        (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
+        (asserts! (and (> auto-supply u0) (> pool-supply u0)) ERR-INVALID-LIQUIDITY)
+        (asserts! (and (<= percent ONE_8) (> percent u0)) ERR-INVALID-PERCENT)
         (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry pool-to-reduce sender)))
-        (map-set auto-total-supply pool-token (- (get-auto-supply-or-default pool-token) auto-to-reduce))
-        (map-set pool-total-supply pool-token (- (get-pool-supply-or-default pool-token) pool-to-reduce))
+        (map-set auto-total-supply auto-token (- auto-supply auto-to-reduce))
+        (map-set pool-total-supply pool-token (- pool-supply pool-to-reduce))
         (as-contract (try! (contract-call? auto-token-trait burn-fixed auto-to-reduce sender)))
         (print { object: "pool", action: "liquidity-removed", data: auto-to-reduce })
-        (ok true)
+        (ok {auto-to-reduce: auto-to-reduce, pool-to-reduce: pool-to-reduce})
     )     
+)
+
+(define-public (roll-auto (pool-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (auto-pool-trait <ft-trait>) (auto-key-trait <ft-trait>))
+    (begin 
+        (try! (check-is-approved))
+        (try! (roll-auto-pool yield-token-trait token-trait collateral-trait pool-token-trait auto-pool-trait))
+        (roll-auto-key token-trait collateral-trait yield-token-trait key-token-trait auto-key-trait)
+    )
 )
 
 (define-public (roll-auto-pool (yield-token-trait <sft-trait>) (token-trait <ft-trait>) (collateral-trait <ft-trait>) (pool-token-trait <sft-trait>) (auto-token-trait <ft-trait>))
@@ -1125,12 +1757,12 @@
             (yield-token (contract-of yield-token-trait))
             (pool-token (contract-of pool-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (expiry (unwrap! (map-get? pool-expiry pool-token) ERR-NOT-AUTHORIZED))
-            (expiry-to-roll (try! (set-expiry pool-token)))
+            (expiry (try! (get-last-expiry pool-token)))
+            (expiry-to-roll (try! (get-expiry pool-token)))
         )
+        (try! (check-is-approved))
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) pool-token) ERR-NOT-AUTHORIZED)
-        (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
-        (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry (get-pool-supply-or-default pool-token) tx-sender)))
+        (as-contract (try! (contract-call? .alex-vault transfer-sft pool-token-trait expiry (get-pool-total-supply-or-default pool-token) tx-sender)))
         (let
             (
                 (reduce-data (as-contract (try! (contract-call? .yield-token-pool reduce-position expiry yield-token-trait token-trait pool-token-trait ONE_8))))
@@ -1143,13 +1775,16 @@
                 (pool (try! (contract-call? .yield-token-pool get-pool-details expiry yield-token)))
                 (new-pool-supply 
                     (if (is-err (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token))
-                        (get supply (as-contract (try! (contract-call? .yield-token-pool create-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) amount-net-bounty u0))))
-                        (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty none))))
+                        (get supply (as-contract (try! (contract-call? .yield-token-pool create-and-configure-pool expiry-to-roll yield-token-trait token-trait pool-token-trait (get fee-to-address pool) 
+                            (get fee-rebate pool) (get fee-rate-yield-token pool) (get fee-rate-token pool) (get small-threshold pool) (get min-fee pool)
+                            amount-net-bounty u0))))
+                        (get supply (as-contract (try! (contract-call? .yield-token-pool buy-and-add-to-position expiry-to-roll yield-token-trait token-trait pool-token-trait amount-net-bounty))))
                     )                
                 )                
             )
             (as-contract (try! (contract-call? pool-token-trait transfer-fixed expiry-to-roll new-pool-supply tx-sender .alex-vault)))
             (map-set pool-total-supply pool-token new-pool-supply)
+            (map-set pool-expiry pool-token expiry-to-roll)
             (if (is-eq token .age000-governance-token)
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-token tx-sender sender none))))
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (try! (swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none))))
@@ -1167,49 +1802,53 @@
             (yield-token (contract-of yield-token-trait))
             (key-token (contract-of key-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (expiry (unwrap! (map-get? pool-expiry key-token) ERR-NOT-AUTHORIZED))
-            (expiry-to-roll (try! (set-expiry key-token)))
+            (expiry (try! (get-last-expiry key-token)))
+            (expiry-to-roll (try! (get-expiry key-token)))
         )
+        (try! (check-is-approved))
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) key-token) ERR-NOT-AUTHORIZED)
-        (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
         (asserts! (is-ok (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token)) ERR-NOT-AUTHORIZED)
-        (as-contract (try! (contract-call? .alex-vault transfer-sft key-token-trait expiry (get-pool-supply-or-default key-token) tx-sender)))
+        (as-contract (try! (contract-call? .alex-vault transfer-sft key-token-trait expiry (get-pool-total-supply-or-default key-token) tx-sender)))
         (let
             (
                 (pool (try! (get-pool-details token collateral expiry)))
                 (spot (try! (get-spot token collateral)))
                 (reduce-data (as-contract (try! (reduce-position-key token-trait collateral-trait expiry key-token-trait ONE_8))))
-                (dx (+ (get dx reduce-data) (if (is-eq (get dy reduce-data) u0) u0 (as-contract (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none)))))               )
-                (ltv (if (is-err (get-pool-details token collateral expiry-to-roll)) (get ltv-0 pool) (try! (get-ltv-with-spot token collateral expiry-to-roll spot))))
-                (gross-dx (div-down dx ltv))                                
-                (yield-amount (mul-down (try! (get-helper collateral token gross-dx)) ltv))
-                (swapped-amount (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token yield-amount)))
-                (out-amount (try! (get-helper token collateral swapped-amount)))
                 (sender tx-sender)                
                 (bounty (unwrap! (map-get? bounty-in-fixed auto-token) ERR-NOT-AUTHORIZED))
-                (bounty-in-collateral (if (is-eq collateral .age000-governance-token) bounty (try! (get-given-helper collateral .age000-governance-token bounty))))                   
-                (dx-act-before-bounty (- dx (- gross-dx dx out-amount)))
-                (dx-act (- dx-act-before-bounty bounty-in-collateral))
-                (gross-dx-act (div-down dx-act ltv))
-                (loan-amount (- gross-dx-act dx-act))
+                (bounty-in-collateral (if (is-eq collateral .age000-governance-token) bounty (try! (get-given-helper collateral .age000-governance-token bounty))))
+                (dx-before-bounty (+ (get dx reduce-data) (if (is-eq (get dy reduce-data) u0) u0 (as-contract (try! (swap-helper token-trait collateral-trait (get dy reduce-data) none))))))
+                (dx (- dx-before-bounty bounty-in-collateral))
+                (ltv (if (is-err (get-pool-details token collateral expiry-to-roll)) (get ltv-0 pool) (try! (get-ltv-with-spot token collateral expiry-to-roll spot))))
+                (gross-dx (div-down dx (- ONE_8 ltv)))
+                (yield-amount (mul-down (mul-down gross-dx spot) ltv))
+                (swapped-amount (try! (contract-call? .yield-token-pool get-x-given-y expiry-to-roll yield-token yield-amount)))
+                (out-amount (try! (get-helper token collateral swapped-amount)))
+                (buffer (if (>= (+ dx out-amount) gross-dx) u0 (- gross-dx dx out-amount)))
+                (dx-net-buffer (- dx buffer))
+                (gross-dx-net-buffer (div-down dx-net-buffer (- ONE_8 ltv)))
+                (loan-amount (- gross-dx-net-buffer dx-net-buffer))
                 (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount tx-sender))))                
                 (minted
                     (if (is-err (get-pool-details token collateral expiry-to-roll))
-                        (as-contract (try! (create-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) spot gross-dx-act)))
-                        (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-act)))
+                        (as-contract (try! (create-and-configure-pool-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait (get fee-to-address pool) (get ltv-0 pool) (get conversion-ltv pool) (get bs-vol pool) (get moving-average pool) (get token-to-maturity pool) 
+                                    (get fee-rebate pool) (get fee-rate-x pool) (get fee-rate-y pool) spot gross-dx-net-buffer)))
+                        (as-contract (try! (add-to-position-with-spot token-trait collateral-trait expiry-to-roll yield-token-trait key-token-trait spot gross-dx-net-buffer)))
                     )
-                )                 
-                (swapped-token (as-contract (try! (swap-helper token-trait collateral-trait (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait (get yield-token minted) none))) none))))
-                (swapped-token-with-fee (+ swapped-token (- dx dx-act-before-bounty)))
+                )                     
+                (swapped-token (get dx (as-contract (try! (contract-call? .yield-token-pool swap-y-for-x expiry-to-roll yield-token-trait token-trait (get yield-token minted) none)))))                
+                (swapped-collateral (as-contract (try! (swap-helper token-trait collateral-trait swapped-token none))))                
+                (swapped-collateral-with-buffer (+ swapped-collateral buffer))
             )
-            (as-contract (try! (contract-call? collateral-trait transfer-fixed swapped-token-with-fee tx-sender .alex-vault none)))
+            (as-contract (try! (contract-call? collateral-trait transfer-fixed loan-amount tx-sender .alex-vault none)))
             (as-contract (try! (contract-call? key-token-trait transfer-fixed expiry-to-roll (get key-token minted) tx-sender .alex-vault)))
-            (map-set pool-total-supply key-token (get key-token minted))            
+            (map-set pool-total-supply key-token (get key-token minted))    
+            (map-set pool-expiry key-token expiry-to-roll)        
             (if (is-eq collateral .age000-governance-token)
                 (and (> bounty-in-collateral u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-collateral tx-sender sender none))))
                 (and (> bounty-in-collateral u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (try! (swap-helper collateral-trait .age000-governance-token bounty-in-collateral none)) tx-sender sender none))))
             )
-            (ok (- swapped-token-with-fee loan-amount))
+            (ok { loaned: loan-amount, returned: swapped-collateral-with-buffer })
         )
     )    
 )
@@ -1221,14 +1860,14 @@
             (collateral (contract-of collateral-trait))
             (yield-token (contract-of yield-token-trait))
             (auto-token (contract-of auto-token-trait))
-            (expiry (unwrap! (map-get? pool-expiry yield-token) ERR-NOT-AUTHORIZED))
-            (expiry-to-roll (try! (set-expiry yield-token)))
+            (expiry (try! (get-last-expiry yield-token)))
+            (expiry-to-roll (try! (get-expiry yield-token)))
         )
+        (try! (check-is-approved))
         (asserts! (is-eq (unwrap! (map-get? approved-pair auto-token) ERR-NOT-AUTHORIZED) yield-token) ERR-NOT-AUTHORIZED)
-        (asserts! (> expiry-to-roll expiry) ERR-EXPIRY)
         (asserts! (is-ok (contract-call? .yield-token-pool get-pool-details expiry-to-roll yield-token)) ERR-NOT-AUTHORIZED)
         (asserts! (is-ok (get-pool-details token collateral expiry-to-roll)) ERR-NOT-AUTHORIZED)
-        (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry (get-pool-supply-or-default yield-token) tx-sender)))
+        (as-contract (try! (contract-call? .alex-vault transfer-sft yield-token-trait expiry (get-pool-total-supply-or-default yield-token) tx-sender)))
         (let
             (
                 (dx (get dy (as-contract (try! (reduce-position-yield token-trait collateral-trait expiry yield-token-trait ONE_8)))))
@@ -1240,6 +1879,7 @@
             )            
             (as-contract (try! (contract-call? yield-token-trait transfer-fixed expiry-to-roll new-supply tx-sender .alex-vault)))
             (map-set pool-total-supply yield-token new-supply)
+            (map-set pool-expiry yield-token expiry-to-roll)
             (if (is-eq token .age000-governance-token)
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty-in-token tx-sender sender none))))
                 (and (> bounty-in-token u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed (try! (swap-helper token-trait .age000-governance-token bounty-in-token none)) tx-sender sender none))))
@@ -1248,3 +1888,6 @@
         )
     )    
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)

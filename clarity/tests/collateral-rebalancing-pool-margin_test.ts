@@ -52,7 +52,7 @@ const bs_vol = 0.8e+8
 const moving_average = 0.95e+8
 const token_to_maturity = 2100;
 
-const quantity = 1000e8
+const quantity = 100e8
 
 const weightX = 0.5e+8
 const weightY = 0.5e+8
@@ -92,7 +92,11 @@ Clarinet.test({
         result = FWPTest3.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest3.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);                   
+        result.expectOk().expectBool(true);    
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                           
         
         result = FWPTest3.createPool(deployer, alexAddress, wbanAddress, fwpwalexwbanAddress, multisigalexwbanAddress, quantity, quantity);
         result.expectOk().expectBool(true);  
@@ -112,7 +116,7 @@ Clarinet.test({
         result = FWPTest3.setStartBlock(deployer, alexAddress, wbtcAddress, 0);
         result.expectOk().expectBool(true);                    
 
-        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, quantity, quantity);        
         result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, wbtcAddress, alexAddress, expiry, yieldwbtcAddress, keywbtcalexAddress, multisigncrpwbtcalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
@@ -144,7 +148,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(ONE_8)
+                    types.uint(2 * ONE_8),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
@@ -153,7 +158,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(ONE_8)
+                    types.uint(2 * ONE_8),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -175,28 +181,30 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldwbtcAddress, expiry, wallet_5.address);
         call.result.expectOk().expectUint(0);    
 
-        // let's test roll-margin-position
+        // let's test roll-borrow
         chain.mineEmptyBlockUntil(10000);
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -204,7 +212,7 @@ Clarinet.test({
         blockRoll.receipts[1].result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, nextExpiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, nextExpiry, yieldwbtcAddress, wbtcAddress, ytpyieldwbtcAddress, multisigytpyieldwbtc, quantity, quantity);        
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, wbtcAddress, alexAddress, nextExpiry, yieldwbtcAddress, keywbtcalexAddress, multisigncrpwbtcalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectTuple();   
@@ -216,23 +224,25 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [               
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
                     types.uint(expiry),
                     types.principal(yieldwbtcAddress),
                     types.principal(keywbtcwbanAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                          
             ]
         );
@@ -283,7 +293,11 @@ Clarinet.test({
         result = FWPTest.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);               
+        result.expectOk().expectBool(true);    
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                       
         
         result = FWPTest.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpwstxalexAddress, multisigwstxalexAddress, quantity, quantity);
         result.expectOk().expectBool(true);
@@ -299,7 +313,7 @@ Clarinet.test({
         result = FWPTest.setOracleAverage(deployer, wstxAddress, usdaAddress, weightX, weightY, 0.95e8);
         result.expectOk().expectBool(true);                       
 
-        result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, quantity, quantity);        
         result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, expiry, yieldusdaAddress, keyusdaalexAddress, multisigncrpusdaalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
@@ -323,7 +337,7 @@ Clarinet.test({
         const usda_balance = Number(call.result.expectOk().replace(/\D/g, ""));            
  
         const block = chain.mineBlock(
-            [
+            [              
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
                     types.principal(usdaAddress), 
@@ -331,7 +345,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdaalexAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
@@ -340,7 +355,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdawstxAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -362,28 +378,29 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         call.result.expectOk().expectUint(0);    
 
-        // let's test roll-margin-position
         chain.mineEmptyBlockUntil(10000);
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdaalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdawstxAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -391,7 +408,7 @@ Clarinet.test({
         blockRoll.receipts[1].result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, nextExpiry, yieldusdaAddress, usdaAddress, ytpyieldusdaAddress, multisigytpyieldusda, quantity, quantity);        
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, usdaAddress, alexAddress, nextExpiry, yieldusdaAddress, keyusdaalexAddress, multisigncrpusdaalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectTuple();   
@@ -403,23 +420,25 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdaalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
                     types.uint(expiry),
                     types.principal(yieldusdaAddress),
                     types.principal(keyusdawstxAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                       
             ]
         );
@@ -477,7 +496,11 @@ Clarinet.test({
         result = FWPTest3.setMaxInRatio(deployer, 0.3e8);
         result.expectOk().expectBool(true);
         result = FWPTest3.setMaxOutRatio(deployer, 0.3e8);
-        result.expectOk().expectBool(true);                   
+        result.expectOk().expectBool(true);        
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);                       
         
         result = FWPTest.createPool(deployer, wstxAddress, alexAddress, weightX, weightY, fwpwstxalexAddress, multisigwstxalexAddress, quantity, quantity);
         result.expectOk().expectBool(true);
@@ -495,7 +518,7 @@ Clarinet.test({
         result = FWPTest3.setStartBlock(deployer, alexAddress, wbtcAddress, 0);   
         result.expectOk().expectBool(true);                        
 
-        result = YTPTest.createPool(deployer, expiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, expiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, quantity, quantity);        
         result.expectOk().expectTuple();
         
         result = CRPTest.createPool(deployer, wstxAddress, alexAddress, expiry, yieldwstxAddress, keywstxalexAddress, multisigncrpwstxalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
@@ -527,7 +550,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxalexAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),
                 Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
                 [
@@ -536,7 +560,8 @@ Clarinet.test({
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxwbtcAddress),
-                    types.uint(ONE_8)
+                    types.uint(ONE_8),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -558,28 +583,30 @@ Clarinet.test({
         call = await FLTest.getBalanceSFT(yieldwstxAddress, expiry, wallet_5.address);
         call.result.expectOk().expectUint(0);    
 
-        // let's test roll-margin-position
+        // let's test roll-borrow
         chain.mineEmptyBlockUntil(10000);
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxwbtcAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                
             ]
         );
@@ -587,7 +614,7 @@ Clarinet.test({
         blockRoll.receipts[1].result.expectErr().expectUint(2017);
 
         // but let's set up new pools
-        result = YTPTest.createPool(deployer, nextExpiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, 500000e+8, 500000e+8);        
+        result = YTPTest.createPool(deployer, nextExpiry, yieldwstxAddress, wstxAddress, ytpyieldwstxAddress, multisigytpyieldwstx, quantity, quantity);        
         result.expectOk().expectTuple();
         result = CRPTest.createPool(deployer, wstxAddress, alexAddress, nextExpiry, yieldwstxAddress, keywstxalexAddress, multisigncrpwstxalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, 1e+8);
         result.expectOk().expectTuple();   
@@ -599,23 +626,25 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxalexAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),
                     types.uint(expiry),
                     types.principal(yieldwstxAddress),
                     types.principal(keywstxwbtcAddress),
-                    types.uint(nextExpiry)
+                    types.uint(nextExpiry),
+                    types.none()
                 ], wallet_5.address),                           
             ]
         );

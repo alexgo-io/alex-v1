@@ -26,7 +26,7 @@ const ACTIVATION_BLOCK = 20;
 const FIXED_BOUNTY = 0.01e8;
 const APOWER_MULTIPLIER = ONE_8;
 
-const liquidity = 100 * ONE_8;
+const liquidity = 10 * ONE_8;
 
 const ltv_0 = 0.5e8;
 const conversion_ltv = 0.9e8;
@@ -67,6 +67,10 @@ Clarinet.test({
         result.expectOk();
         result = YTPTest.setMaxOutRatio(deployer, 0.3e8);
         result.expectOk();
+        result = CRPTest.setMaxInRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);
+        result = CRPTest.setMaxOutRatio(deployer, 0.3e8);
+        result.expectOk().expectBool(true);            
 
         result = FWPTest.createPool(deployer, alexAddress, autoAlexAddress, fwpAlexAutoalexAddress, multisigFwpAlexAutoalexAddress, liquidity, liquidity);
         result.expectOk();
@@ -88,42 +92,49 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);   
         
         block = chain.mineBlock([
-            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
-                [types.principal(autoYtpAlexAddress), types.principal(ytpAlexAddress)],
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract",
+                [types.principal(wallet_1.address), types.bool(true)],
                 deployer.address
             ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
-                [types.principal(ytpAlexAddress), types.principal(alexAddress)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
-                [types.principal(autoKeyAlexAutoalexAddress), types.principal(keyAlexAutoalexAddress)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
-                [types.principal(keyAlexAutoalexAddress), types.principal(alexAddress)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
-                [types.principal(autoYieldAlexAddress), types.principal(yieldAlexAddress)],
-                deployer.address
-            ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-pool-underlying",
-                [types.principal(yieldAlexAddress), types.principal(alexAddress)],
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract",
+                [types.principal(deployer.address), types.bool(true)],
                 deployer.address
             ),    
-            Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
-                [types.principal(autoYtpAlexAddress), types.uint(FIXED_BOUNTY)],
+            Tx.contractCall("collateral-rebalancing-pool", "set-strike-multiplier",
+                [types.uint(0.5e8)],
                 deployer.address
             ),
-            Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
-                [types.principal(autoKeyAlexAutoalexAddress), types.uint(FIXED_BOUNTY)],
+            Tx.contractCall("collateral-rebalancing-pool", "set-expiry-cycle-length",
+                [types.uint(1234)],
                 deployer.address
-            ),                    
-            Tx.contractCall("collateral-rebalancing-pool", "set-bounty-in-fixed",
-                [types.principal(autoYieldAlexAddress), types.uint(FIXED_BOUNTY)],
+            ),           
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
+                [
+                    types.principal(autoYtpAlexAddress), 
+                    types.principal(ytpAlexAddress),
+                    types.uint(ACTIVATION_BLOCK),
+                    types.uint(FIXED_BOUNTY)
+                ],
                 deployer.address
-            ),            
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
+                [
+                    types.principal(autoKeyAlexAutoalexAddress), 
+                    types.principal(keyAlexAutoalexAddress),
+                    types.uint(ACTIVATION_BLOCK),
+                    types.uint(FIXED_BOUNTY)                    
+                ],
+                deployer.address
+            ),
+            Tx.contractCall("collateral-rebalancing-pool", "set-approved-pair",
+                [
+                    types.principal(autoYieldAlexAddress), 
+                    types.principal(yieldAlexAddress),
+                    types.uint(ACTIVATION_BLOCK),
+                    types.uint(FIXED_BOUNTY)                    
+                ],
+                deployer.address
+            ),                     
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(alexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoAlexAddress)], deployer.address),
             Tx.contractCall("alex-vault", "add-approved-token", [types.principal(autoYtpAlexAddress)], deployer.address),               
@@ -286,7 +297,7 @@ Clarinet.test({
         result = YTPTest.createPool(deployer, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, multisigYtpAlexAddress, liquidity, 0);
         result.expectOk();
         result = CRPTest.createPool(deployer, alexAddress, autoAlexAddress, expiry, yieldAlexAddress, keyAlexAutoalexAddress, multisigCrpAlexAutoalexAddress, ltv_0, conversion_ltv, bs_vol, moving_average, token_to_maturity, ONE_8);
-        result.expectOk();
+        result.expectOk();        
 
         result = YTPTest.addToPosition(wallet_1, expiry, yieldAlexAddress, alexAddress, ytpAlexAddress, ONE_8, Number.MAX_SAFE_INTEGER);
         result.expectOk();
@@ -390,26 +401,18 @@ Clarinet.test({
                     types.uint(1.1e8)
                 ], deployer.address
             ),        
-            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-pool",
+            Tx.contractCall("collateral-rebalancing-pool", "roll-auto",
                 [
-                    types.principal(yieldAlexAddress),
-                    types.principal(alexAddress),
-                    types.principal(autoAlexAddress),
                     types.principal(ytpAlexAddress),
-                    types.principal(autoYtpAlexAddress)
-                ],
-                wallet_1.address
-            ),            
-            Tx.contractCall("collateral-rebalancing-pool", "roll-auto-key",
-                [
                     types.principal(alexAddress),
                     types.principal(autoAlexAddress),
                     types.principal(yieldAlexAddress),
                     types.principal(keyAlexAutoalexAddress),
+                    types.principal(autoYtpAlexAddress),
                     types.principal(autoKeyAlexAutoalexAddress)
                 ],
                 wallet_1.address
-            ),
+            ),            
             Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch",
                 [
                     types.principal(alexAddress),
@@ -433,6 +436,7 @@ Clarinet.test({
             ),               
         ]);
         block.receipts.forEach(e => { e.result.expectOk(); });
+        console.log(block.receipts[2].result);
 
         block = chain.mineBlock([            
             Tx.contractCall("collateral-rebalancing-pool", "redeem-auto",
