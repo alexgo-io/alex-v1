@@ -33,8 +33,8 @@
 	registration-end-height: uint,
 	claim-end-height: uint,
 	total-tickets: uint,
-	registration-max-tickets: uint,
-	round-percent: (list 3 uint)
+	round-percent: (list 3 uint),
+	round-draw-heights: (list 3 uint)
 	}
 )
 
@@ -211,8 +211,8 @@
 	)
 )
 
-(define-read-only (get-initial-walk-position (registration-end-height uint) (max-step-size uint))
-	(ok (lcg-next (try! (get-vrf-uint (+ registration-end-height u1))) max-step-size))
+(define-read-only (get-initial-walk-position (draw-height uint) (max-step-size uint))
+	(ok (lcg-next (try! (get-vrf-uint draw-height)) max-step-size))
 )
 
 (define-read-only (get-last-claim-walk-position (lottery-id uint) (registration-end-height uint) (max-step-size uint))
@@ -368,64 +368,6 @@
 		)
 		(fold transfer-many-amounts-iter input payment-token)
 		(ok true)
-	)
-)
-
-
-;; if lottery-token implements <lottery-ft-trait>, we can process claim/refund much more efficiently
-
-(define-public (claim-optimal (lottery-id uint) (input (list 200 principal)) (lottery-token <lottery-ft-trait>) (payment-token <ft-trait>))
-	(let
-		(
-			(lottery-tokens-per-ticket (* ONE_8 (try! (claim-process lottery-id input (contract-of lottery-token) payment-token))))
-		)
-		(as-contract (contract-call? lottery-token transfer-many-lottery lottery-tokens-per-ticket input))
-	)
-)
-
-(define-public (refund-optimal (lottery-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token <lottery-ft-trait>))
-	(let 
-		(
-			(offering (unwrap! (map-get? offerings lottery-id) err-unknown-lottery))
-		)
-		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)
-		(asserts!
-			(or
-				(>= block-height (+ (get claim-end-height offering) claim-grace-period))
-				(is-eq (get lottery-owner offering) tx-sender)
-				(is-ok (check-is-owner))
-				(is-ok (check-is-approved))
-			)
-			err-not-authorized
-		)		
-		(asserts! (get s
-			(fold refund-optimal-iter input
-				{
-					i: lottery-id,
-					u: (try! (max-upper-refund-bound lottery-id (get total-tickets offering) (get-total-tickets-registered lottery-id) (get registration-end-height offering) (get activation-threshold offering))),
-					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings lottery-id)) err-unknown-lottery),
-					s: true
-				}))
-			err-invalid-sequence
-		)
-		(as-contract (contract-call? payment-token transfer-many-amounts-lottery input))
-	)
-)
-
-(define-private (refund-optimal-iter (e {recipient: principal, amount: uint}) (p {i: uint, u: uint, p: uint, s: bool}))
-	(let
-		(
-			(k {lottery-id: (get i p), owner: (get recipient e)})
-			(b (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})))
-		)
-		(asserts! (get s p) p)
-		(map-delete offering-ticket-bounds k)
-		{
-			i: (get i p),
-			u: (get u p),
-			p: (get p p),
-			s: (and (<= (get end b) (get u p)) (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e)))
-		}
 	)
 )
 
