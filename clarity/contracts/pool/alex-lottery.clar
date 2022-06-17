@@ -20,6 +20,10 @@
 
 (define-data-var lottery-id-nonce uint u0)
 
+(define-data-var apower-per-bonus uint (* u50 ONE_8))
+(define-data-var bonus-thresholds (list 5 uint) (list u5 u15 u25 u35 u45))
+(define-data-var bonus-max (list 5 uint) (list u1 u3 u6 u10 u15))
+
 (define-map lottery
 	uint
 	{
@@ -110,9 +114,6 @@
 	(ok (unwrap! (map-get? ticket-bounds {lottery-id: lottery-id, owner: owner}) err-invalid-input))
 )
 
-(define-data-var apower-per-bonus uint (* u50 ONE_8))
-(define-data-var bonus-thresholds (list 5 uint) (list u5 u15 u25 u35 u45))
-(define-data-var bonus-max (list 5 uint) (list u1 u3 u6 u10 u15))
 (define-read-only (get-bonus-thresholds-or-default (index uint))
 	(default-to u0 (element-at (var-get bonus-thresholds) index))
 )
