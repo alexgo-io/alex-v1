@@ -1,5 +1,4 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait lottery-ft-trait .trait-lottery-ft.lottery-ft-trait)
 
 (define-constant err-unknown-lottery (err u2045))
 (define-constant err-block-height-not-reached (err u2042))
@@ -28,13 +27,15 @@
 	{
 	lottery-token-contract: principal,
 	lottery-tokens-per-ticket: uint,
-	activation-threshold: uint,
 	registration-start-height: uint,
 	registration-end-height: uint,
-	claim-end-height: uint,
-	total-tickets: uint,
-	round-percent: (list 3 uint),
-	round-draw-heights: (list 3 uint)
+	rounds:
+		{
+			id: uint,
+			draw-height: uint,
+			percent: uint,
+			total-tickets: uint
+		}
 	}
 )
 
@@ -43,15 +44,19 @@
 (define-map start-indexes uint uint)
 
 (define-map offering-ticket-bounds
-	uint
+	{ido-id: uint, owner: principal}
 	{start: uint, end: uint}
 )
 
-(define-map offering-ticket-amounts uint uint)
+(define-map offering-ticket-amounts
+	{ido-id: uint, owner: principal}
+	uint
+)
+
 (define-map total-tickets-won uint uint)
 
 (define-map tickets-won
-	{lottery-id: uint, round: uint}
+	{lottery-id: uint, round: uint, owner: principal}
 	uint
 )
 
@@ -62,15 +67,12 @@
 	(payment-token <ft-trait>)
 	(offering
 		{
-		lottery-owner: principal,
+		lottery-token-contract: principal,
 		lottery-tokens-per-ticket: uint,
-		price-per-ticket-in-fixed: uint,
-		activation-threshold: uint,
 		registration-start-height: uint,
 		registration-end-height: uint,
-		claim-end-height: uint,
-		apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
-		registration-max-tickets: uint
+		round-percent: (list 3 uint),
+		round-draw-heights: (list 3 uint)
 		})
 	)
 	(let 
@@ -82,14 +84,12 @@
 			(and
 				(< block-height (get registration-start-height offering))
 				(< (get registration-start-height offering) (get registration-end-height offering))
-				(< (get registration-end-height offering) (get claim-end-height offering))
 			)
 			err-invalid-lottery-setting
 		)
 		(map-set offerings lottery-id (merge offering
 			{
 				lottery-token-contract: (contract-of lottery-token),
-				payment-token-contract: (contract-of payment-token),
 				total-tickets: u0
 			})
 		)
@@ -104,27 +104,6 @@
 
 (define-read-only (get-lottery (lottery-id uint))
 	(ok (map-get? offerings lottery-id))
-)
-
-(define-public (add-to-position (lottery-id uint) (tickets uint) (lottery-token <ft-trait>))
-	(let
-		(
-			(offering (unwrap! (map-get? offerings lottery-id) err-unknown-lottery))
-		)
-		(asserts! (< block-height (get registration-start-height offering)) err-block-height-not-reached)
-		(asserts! 
-			(or 
-				(is-eq (get lottery-owner offering) tx-sender) 
-				(is-ok (check-is-approved)) 
-				(is-ok (check-is-owner))
-			) 
-			err-not-authorized
-		)
-		(asserts! (is-eq (contract-of lottery-token) (get lottery-token-contract offering)) err-invalid-lottery-token)
-		(try! (contract-call? lottery-token transfer-fixed (* (get lottery-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
-		(map-set offerings lottery-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
-		(ok true)
-	)
 )
 
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
@@ -162,44 +141,14 @@
 	(map-get? offering-ticket-amounts {lottery-id: lottery-id, owner: owner})
 )
 
-(define-private (get-apower-required-iter (bracket {apower-per-ticket-in-fixed: uint, tier-threshold: uint}) (prior {remaining-tickets: uint, apower-so-far: uint, length: uint}))
-	(let
-		( 
-			(tickets-to-process 
-				(if (or (is-eq (get length prior) u1) (< (get remaining-tickets prior) (get tier-threshold bracket))) 
-					(get remaining-tickets prior)
-					(get tier-threshold bracket)
-				)
-			)
-		)
-		{ 
-			remaining-tickets: (- (get remaining-tickets prior) tickets-to-process), 
-			apower-so-far: (+ (get apower-so-far prior) (* tickets-to-process (get apower-per-ticket-in-fixed bracket))), 
-			length: (- (get length prior) u1)
-		}
-	)	
-)
-
-(define-read-only (get-apower-required-in-fixed (lottery-id uint) (tickets uint))
-	(let 
-		(
-			(offering (unwrap! (map-get? offerings lottery-id) err-unknown-lottery))
-			(tiers (get apower-per-ticket-in-fixed offering))
-		)
-		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, length: (len tiers)})))
-	)	
-)
-
-(define-public (register (lottery-id uint) (tickets uint) (payment-token <ft-trait>))
+(define-public (register (lottery-id uint) (tickets uint) (lottery-token <ft-trait>))
 	(let
 		(
 			(offering (unwrap! (map-get? offerings lottery-id) err-unknown-lottery))
-			(apower-to-burn (try! (get-apower-required-in-fixed lottery-id tickets)))
 			(bounds (next-bounds lottery-id tickets))
 			(sender tx-sender)
 		)
 		(asserts! (is-none (map-get? offering-ticket-bounds {lottery-id: lottery-id, owner: tx-sender})) err-already-registered)
-		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
 		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
 		(asserts! (is-eq (get payment-token-contract offering) (contract-of payment-token)) err-invalid-payment-token)		
 		(try! (contract-call? payment-token transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
@@ -215,14 +164,14 @@
 	(ok (lcg-next (try! (get-vrf-uint draw-height)) max-step-size))
 )
 
-(define-read-only (get-last-claim-walk-position (lottery-id uint) (registration-end-height uint) (max-step-size uint))
+(define-read-only (get-last-claim-walk-position (lottery-id uint) (draw-height uint) (max-step-size uint))
 	(match (map-get? claim-walk-positions lottery-id)
 		position (ok position)
-		(get-initial-walk-position registration-end-height max-step-size)
+		(get-initial-walk-position draw-height max-step-size)
 	)
 )
 
-(define-read-only (get-offering-walk-parameters (lottery-id uint))
+(define-read-only (get-offering-walk-parameters (lottery-id uint) (lottery-round uint))
 	(let
 		(
 			(offering (unwrap! (map-get? offerings lottery-id) err-unknown-lottery))
@@ -281,6 +230,7 @@
 
 (define-public (claim (lottery-id uint) (input (list 200 principal)) (lottery-token <ft-trait>) (payment-token <ft-trait>))
 	(begin
+		;; claim process 
 		(var-set tm-amount (* ONE_8 (try! (claim-process lottery-id input (contract-of lottery-token) payment-token))))
 		(fold transfer-many-iter input lottery-token)
 		(ok true)
