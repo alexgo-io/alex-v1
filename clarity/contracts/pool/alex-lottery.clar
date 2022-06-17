@@ -24,7 +24,7 @@
 	uint
 	{
 		token: principal,
-		tokens-per-ticket: uint,
+		tokens-per-ticket-in-fixed: uint,
 		registration-start-height: uint,
 		registration-end-height: uint,
 	}
@@ -44,12 +44,12 @@
 
 (define-map start-indexes uint uint)
 
-(define-map offering-ticket-bounds
+(define-map ticket-bounds
 	{lottery-id: uint, owner: principal}
 	{start: uint, end: uint}
 )
 
-(define-public (create-pool (token-trait <ft-trait>) (offering { tokens-per-ticket: uint, registration-start-height: uint, registration-end-height: uint }))
+(define-public (create-pool (token-trait <ft-trait>) (offering { tokens-per-ticket-in-fixed: uint, registration-start-height: uint, registration-end-height: uint }))
 	(let 
 		(
 			(lottery-id (var-get lottery-id-nonce))
@@ -106,21 +106,75 @@
 	(default-to u0 (map-get? total-tickets-registered lottery-id))
 )
 
-(define-read-only (get-offering-ticket-bounds-or-fail (lottery-id uint) (owner principal))
-	(ok (unwrap! (map-get? offering-ticket-bounds {lottery-id: lottery-id, owner: owner}) err-invalid-input))
+(define-read-only (get-ticket-bounds-or-fail (lottery-id uint) (owner principal))
+	(ok (unwrap! (map-get? ticket-bounds {lottery-id: lottery-id, owner: owner}) err-invalid-input))
 )
 
-(define-public (register (lottery-id uint) (tickets uint) (token-trait <ft-trait>))
+(define-data-var apower-per-bonus uint (* u50 ONE_8))
+(define-data-var bonus-thresholds (list 5 uint) (list u5 u15 u25 u35 u45))
+(define-data-var bonus-max (list 5 uint) (list u1 u3 u6 u10 u15))
+(define-read-only (get-bonus-thresholds-or-default (index uint))
+	(default-to u0 (element-at (var-get bonus-thresholds) index))
+)
+(define-read-only (get-bonus-max-or-default (index uint))
+	(default-to u0 (element-at (var-get bonus-max) index))
+)
+(define-read-only (get-apower-per-bonus)
+	(var-get apower-per-bonus)
+)
+(define-public (set-apower-per-bonus (new-amount uint))
+	(begin 
+		(try! (check-is-owner))
+		(ok (var-set apower-per-bonus new-amount))
+	)
+)
+(define-public (set-bonus-thresholds (new-thresholds (list 5 uint)))
+	(begin 
+		(try! (check-is-owner))
+		(ok (var-set bonus-thresholds new-thresholds))
+	)
+)
+(define-public (set-bonus-max (new-max (list 5 uint)))
+	(begin 
+		(try! (check-is-owner))
+		(ok (var-set bonus-max new-max))
+	)
+)
+
+(define-read-only (get-max-bonus-for-tickets (tickets uint))
+	(if (>= tickets (get-bonus-thresholds-or-default u4))
+		(get-bonus-max-or-default u4)
+		(if (>= tickets (get-bonus-thresholds-or-default u3))
+			(get-bonus-max-or-default u3)
+			(if (>= tickets (get-bonus-thresholds-or-default u2))
+				(get-bonus-max-or-default u2)
+				(if (>= tickets (get-bonus-thresholds-or-default u1))
+					(get-bonus-max-or-default u1)
+					(if (>= tickets (get-bonus-thresholds-or-default u0))
+						(get-bonus-max-or-default u0)
+						u0
+					)
+				)
+			)
+		)
+	)
+)
+
+(define-public (register (lottery-id uint) (tickets uint) (token-trait <ft-trait>) (bonus-tickets uint))
 	(let
 		(
-			(offering (unwrap! (map-get? lottery lottery-id) err-unknown-lottery))
+			(l (unwrap! (map-get? lottery lottery-id) err-unknown-lottery))
 			(bounds (next-bounds lottery-id tickets))
+			(sender tx-sender)
 		)
-		(asserts! (is-none (map-get? offering-ticket-bounds {lottery-id: lottery-id, owner: tx-sender})) err-already-registered)
-		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
-		(asserts! (is-eq (get token offering) (contract-of token-trait)) err-invalid-lottery-token)		
-		(try! (contract-call? token-trait transfer-fixed (* (get tokens-per-ticket offering) tickets) tx-sender (as-contract tx-sender) none))
-		(map-set offering-ticket-bounds {lottery-id: lottery-id, owner: tx-sender} bounds)
+		(asserts! (is-none (map-get? ticket-bounds {lottery-id: lottery-id, owner: sender})) err-already-registered)
+		(asserts! (and (>= block-height (get registration-start-height l)) (< block-height (get registration-end-height l))) err-block-height-not-reached)	
+		(asserts! (is-eq (get token l) (contract-of token-trait)) err-invalid-lottery-token)		
+		(asserts! (<= bonus-tickets (get-max-bonus-for-tickets tickets)) err-invalid-input)
+
+		(try! (contract-call? token-trait transfer-fixed (* (get tokens-per-ticket-in-fixed l) (+ tickets bonus-tickets)) sender (as-contract tx-sender) none))
+		(and (> bonus-tickets u0) (as-contract (try! (contract-call? .token-apower burn-fixed (* (var-get apower-per-bonus) bonus-tickets) sender))))
+		(map-set ticket-bounds {lottery-id: lottery-id, owner: sender} bounds)
 		(map-set total-tickets-registered lottery-id (+ (get-total-tickets-registered-or-default lottery-id) tickets))
 		(ok bounds)
 	)
@@ -142,7 +196,7 @@
 		(
 			(p (try! prior))
 			(k {lottery-id: (get lottery-id p), owner: owner})
-			(bounds (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get bounds p) (unwrap! (map-get? offering-ticket-bounds k) err-invalid-input)))
+			(bounds (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get bounds p) (unwrap! (map-get? ticket-bounds k) err-invalid-input)))
 			(new-walk-position (+ (* (+ u1 (/ (get walk-position p) walk-resolution)) walk-resolution) (lcg-next (get walk-position p) (get max-step-size p))))
 		)
 		(asserts! (and (>= (get walk-position p) (get start bounds)) (< (get walk-position p) (get end bounds))) err-invalid-sequence)
@@ -157,7 +211,7 @@
 			(l (unwrap! (map-get? lottery lottery-id) err-unknown-lottery))
 			(r (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) err-unknown-lottery-round))
 			(tickets-registered (get-total-tickets-registered-or-default lottery-id))
-			(payout-gross (mul-down (mul-down (get percent r) tickets-registered) (get tokens-per-ticket l)))
+			(payout-gross (mul-down (mul-down (get percent r) tickets-registered) (get tokens-per-ticket-in-fixed l)))
 			(payout-net (mul-down payout-gross (get payout-rate r)))
 			(max-step-size (calculate-max-step-size tickets-registered (get total-tickets r)))			
 			(walk-position (lcg-next (try! (get-vrf-uint (get draw-height r))) max-step-size))
