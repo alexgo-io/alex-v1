@@ -64,15 +64,19 @@
 
 (define-public (create-pool
 	(lottery-token <ft-trait>)
-	(payment-token <ft-trait>)
 	(offering
 		{
 		lottery-token-contract: principal,
 		lottery-tokens-per-ticket: uint,
 		registration-start-height: uint,
 		registration-end-height: uint,
-		round-percent: (list 3 uint),
-		round-draw-heights: (list 3 uint)
+		rounds:
+			{
+				id: uint,
+				draw-height: uint,
+				percent: uint,
+				total-tickets: uint
+			}
 		})
 	)
 	(let 
@@ -129,8 +133,8 @@
 	(default-to u0 (map-get? total-tickets-won lottery-id))
 )
 
-(define-read-only (get-tickets-won (lottery-id uint) (owner principal))
-	(default-to u0 (map-get? tickets-won {lottery-id: lottery-id, owner: owner}))
+(define-read-only (get-tickets-won (lottery-id uint) (round uint) (owner principal))
+	(default-to u0 (map-get? tickets-won {lottery-id: lottery-id, round: round, owner: owner}))
 )
 
 (define-read-only (get-offering-ticket-bounds (lottery-id uint) (owner principal))
