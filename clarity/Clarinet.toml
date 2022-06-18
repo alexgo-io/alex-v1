@@ -890,3 +890,7 @@ depends_on = [ "trait-sip-010", "fixed-weight-pool-v1-01", "simple-weight-pool-a
 [contracts.fwp-wstx-alex-tranched-64]
 path = "contracts/pool/fwp-wstx-alex-tranched-64.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "fwp-wstx-alex-50-50-v1-01", "alex-reserve-pool", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token" ]
+
+[contracts.alex-lottery]
+path = "contracts/pool/alex-lottery.clar"
+depends_on = ["trait-sip-010"]
