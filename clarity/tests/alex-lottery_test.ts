@@ -60,7 +60,7 @@ Clarinet.test({
       ),
     ]);
 
-    for (let t = 0; t < 1; t += 120) {
+    for (let t = 0; t < 500; t += 120) {
       const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
 
@@ -78,6 +78,7 @@ Clarinet.test({
         ...parameters,
         registrationStartHeight: registrationStartHeight,
         registrationEndHeight: registrationEndHeight,
+        ticketRecipients: ticketRecipients,
       };
 
       const preparation = prepareStandardTest(chain, params, deployer);
@@ -111,7 +112,7 @@ Clarinet.test({
         registrations.receipts[i].events.expectFungibleTokenTransferEvent(          
           ticketRecipients[i]["amount"] * params["tokensPerTicketInFixed"],
           ticketRecipients[i]["recipient"].address,
-          deployer.address + ".lottery",
+          deployer.address + ".alex-lottery",
           "alex"
         );
       }
@@ -120,12 +121,13 @@ Clarinet.test({
         extractBounds(receipt.result)
       );
 
-      chain.mineEmptyBlockUntil(registrationEndHeight + 2);
+      for(let k = 0; k < 3; k++){
+      chain.mineEmptyBlockUntil(registrationEndHeight + k + 2);
 
       const parametersFromChain = chain.callReadOnlyFn(
         "alex-lottery",
-        "get-offering-walk-parameters",
-        [types.uint(lotteryId), types.uint(1)],
+        "get-lottery-walk-parameters",
+        [types.uint(lotteryId), types.uint(k + 1)],
         deployer.address
       );
 
@@ -139,41 +141,45 @@ Clarinet.test({
           ...bounds[index],
         })
       );
-
-      // console.log(idoParameters);
-      // console.log(idoParticipants);
-
-      // console.log("determining winners...");
       const winners = determineWinners(lotteryParameters, lotteryParticipants);
-      // console.log(winners);
-     const claim = chain.mineBlock([
+      const claim = chain.mineBlock([
           Tx.contractCall(
             "alex-lottery",
             "claim",
             [
               types.uint(lotteryId),
-              types.uint(1),
+              types.uint(k + 1),
               types.list(winners.winners.map(types.principal)),
               types.principal(contractPrincipal(deployer, "age000-governance-token")),
             ],
             accountC.address
           ),
         ]);
-        // console.log(claim);
-        // console.log(t, claim.receipts[0].result.expectOk(), winners.winners.length);
-        let events = claim.receipts[0].events;
-        // console.log(index, claim.receipts[0].result);
+        const events = claim.receipts[0].events;
+        const output: any = claim.receipts[0].result.expectOk().expectTuple();
+        const gross = Number(output['gross'].toString().substring(1));
+        const tax = Number(output['tax'].toString().substring(1));
+        const payout = Number(output['payout'].toString().substring(1));
+
         winners_list.push(winners.winners.length);
         assertEquals(events.length, 1 + winners.winners.length);
-        console.log(events);
-        // for (let j = 1; j < events.length; j++) {
-        //   events.expectFungibleTokenTransferEvent(
-        //     params["idoTokensPerTicket"] * 1e6,
-        //     deployer.address + ".alex-launchpad-v1-1",
-        //     winners_sliced[j - 1],
-        //     "banana"
-        //   );
-        // }
+        // console.log(events);
+
+        events.expectFungibleTokenTransferEvent(
+          tax,
+          deployer.address + ".alex-lottery",
+          deployer.address,
+          "alex"
+        );
+        for (let j = 0; j < events.length - 1; j++) {
+          events.expectFungibleTokenTransferEvent(
+            payout,
+            deployer.address + ".alex-lottery",
+            winners.winners[j],
+            "alex"
+          );
+        }
+      }
       }
     console.log(
       "min: ",

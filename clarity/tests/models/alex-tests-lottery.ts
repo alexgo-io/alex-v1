@@ -12,6 +12,7 @@ export type StandardTestParameters = {
 	tokensPerTicketInFixed: number,
 	registrationStartHeight: number,
 	registrationEndHeight: number,
+	ticketRecipients: TicketAllocation[],
 };
 
 export const contractPrincipal = (address: Account | string, contractName: string) => `${(address as Account).address || address}.${contractName}`;
@@ -21,9 +22,11 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		tokensPerTicketInFixed,
 		registrationStartHeight,
 		registrationEndHeight,
+		ticketRecipients,
 	} = parameters;
 	const first = chain.mineBlock([		
 		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-lottery"))], deployer.address),
+		...ticketRecipients.map(allocation => Tx.contractCall("age000-governance-token", "mint-fixed", [types.uint(allocation.amount * tokensPerTicketInFixed), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
 		Tx.contractCall("alex-lottery", "create-pool", [
 			types.principal(contractPrincipal(deployer, "age000-governance-token")),
 			types.tuple({

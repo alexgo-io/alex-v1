@@ -80,7 +80,7 @@
 )
 
 (define-private (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
-	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) u15) u10)
+	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) u10) u10)
 )
 
 (define-private (next-bounds (lottery-id uint) (tickets uint))
@@ -226,7 +226,7 @@
 		(as-contract (try! (contract-call? token-trait transfer-fixed (- payout-gross payout-net) tx-sender (var-get contract-owner) none)))
 		(fold transfer-many-iter winners token-trait)
 
-		(ok true)
+		(ok { gross: payout-gross, net: payout-net, tax: (- payout-gross payout-net), payout: (var-get tm-amount) })
 	)
 )
 
