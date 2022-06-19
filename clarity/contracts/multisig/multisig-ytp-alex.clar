@@ -1,5 +1,5 @@
 (impl-trait .trait-multisig-vote.multisig-vote-sft-trait)
-(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 
@@ -154,7 +154,7 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (is-eq token .ytp-alex)
+    (is-eq token .ytp-alex-v1)
 )
 
 ;; Start a proposal
@@ -177,8 +177,8 @@
     (new-fee-rate-yield-token uint)
   )
   (let (
-    (proposer-balance (unwrap-panic (contract-call? .ytp-alex get-balance-fixed expiry tx-sender)))
-    (total-supply (unwrap-panic (contract-call? .ytp-alex get-total-supply-fixed expiry)))
+    (proposer-balance (unwrap-panic (contract-call? .ytp-alex-v1 get-balance-fixed expiry tx-sender)))
+    (total-supply (unwrap-panic (contract-call? .ytp-alex-v1 get-total-supply-fixed expiry)))
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
@@ -289,7 +289,7 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-supply (unwrap-panic (contract-call? .ytp-alex get-total-supply-fixed expiry)))
+      (total-supply (unwrap-panic (contract-call? .ytp-alex-v1 get-total-supply-fixed expiry)))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
     )

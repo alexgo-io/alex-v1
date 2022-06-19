@@ -1,5 +1,5 @@
 (impl-trait .trait-multisig-vote.multisig-vote-sft-trait)
-(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 
@@ -154,7 +154,7 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (or (is-eq token .yield-alex) (is-eq token .key-alex-autoalex))
+    (or (is-eq token .yield-alex-v1) (is-eq token .key-alex-autoalex-v1))
 )
 
 
@@ -180,11 +180,11 @@
   )
   (let 
     (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-alex get-balance-fixed expiry tx-sender)))
-      (proposer-key-balance (unwrap-panic (contract-call? .key-alex-autoalex get-balance-fixed expiry tx-sender)))
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-alex-v1 get-balance-fixed expiry tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-alex-autoalex-v1 get-balance-fixed expiry tx-sender)))
       (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-alex get-total-supply-fixed expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-alex-autoalex get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-alex-v1 get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-alex-autoalex-v1 get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (proposal-id (+ u1 (var-get proposal-count)))
     )
@@ -298,8 +298,8 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-alex get-total-supply-fixed expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-alex-autoalex get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-alex-v1 get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-alex-autoalex-v1 get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
