@@ -1,6 +1,6 @@
 (impl-trait .trait-multisig-vote.multisig-vote-sft-trait)
 (impl-trait .trait-ownable.ownable-trait)
-(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 

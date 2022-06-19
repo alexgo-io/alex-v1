@@ -910,7 +910,7 @@ Clarinet.test({
         let deployer = accounts.get("deployer")!;
         let wallet_1 = accounts.get("wallet_1")!;
         let YTPTest = new YTPTestAgent1(chain, deployer);
-        let yieldToken = new SemiFungibleToken(chain, deployer, "yield-alex");
+        let yieldToken = new SemiFungibleToken(chain, deployer, "yield-alex-v1");
         
         let call = yieldToken.getTokenBalanceOwned(deployer.address);
         assertEquals(call.result.expectList().length, 0);

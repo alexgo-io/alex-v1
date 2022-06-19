@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(impl-trait .trait-semi-fungible.semi-fungible-trait)
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOO-MANY-POOLS (err u2004))
@@ -19,7 +19,7 @@
 
 (define-data-var token-name (string-ascii 32) "Auto ALEX / autoALEX Pool X")
 (define-data-var token-symbol (string-ascii 32) "auto-fwp-alex-autoalex-x")
-(define-data-var token-uri (optional (string-ascii 256)) (some "https://cdn.alexlab.co/metadata/token-auto-fwp-alex-autoalex-x.json"))
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-auto-fwp-alex-autoalex-x.json"))
 
 (define-data-var token-decimals uint u8)
 (define-data-var transferrable bool false)

@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(impl-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -7,7 +7,7 @@
 (define-constant ERR-INVALID-BALANCE (err u1001))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 
-(define-fungible-token key-alex-autoalex)
+(define-fungible-token yield-alex-v1)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
 (define-map token-owned principal (list 200 uint))
@@ -15,9 +15,9 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "key-alex-autoalex")
-(define-data-var token-symbol (string-ascii 32) "key-alex-autoalex")
-(define-data-var token-uri (optional (string-ascii 256)) (some "https://cdn.alexlab.co/metadata/token-key-alex-autoalex.json"))
+(define-data-var token-name (string-ascii 32) "yield-alex-v1")
+(define-data-var token-symbol (string-ascii 32) "yield-alex-v1")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-yield-alex.json"))
 
 (define-data-var token-decimals uint u8)
 (define-data-var transferrable bool true)
@@ -98,7 +98,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-overall-balance (who principal))
-	(ok (ft-get-balance key-alex-autoalex who))
+	(ok (ft-get-balance yield-alex-v1 who))
 )
 
 ;; @desc get-total-supply
@@ -111,7 +111,7 @@
 ;; @desc get-overall-supply
 ;; @returns (response uint)
 (define-read-only (get-overall-supply)
-	(ok (ft-get-supply key-alex-autoalex))
+	(ok (ft-get-supply yield-alex-v1))
 )
 
 ;; @desc get-decimals
@@ -121,7 +121,7 @@
   	(ok (var-get token-decimals))
 )
 
-;; @desc get-token-uri 
+;; @desc get-token-uri
 ;; @params token-id
 ;; @returns (response none)
 (define-read-only (get-token-uri (token-id uint))
@@ -143,7 +143,7 @@
 		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? key-alex-autoalex amount sender recipient))
+		(try! (ft-transfer? yield-alex-v1 amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
@@ -164,10 +164,10 @@
 		(
 			(sender-balance (get-balance-or-default token-id sender))
 		)
-		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)		
+    	(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)		
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? key-alex-autoalex amount sender recipient))
+		(try! (ft-transfer? yield-alex-v1 amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
@@ -183,7 +183,7 @@
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(try! (ft-mint? key-alex-autoalex amount recipient))
+		(try! (ft-mint? yield-alex-v1 amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
@@ -199,7 +199,7 @@
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(try! (ft-burn? key-alex-autoalex amount sender))
+		(try! (ft-burn? yield-alex-v1 amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
@@ -247,14 +247,14 @@
 ;; @desc get-overall-supply-fixed
 ;; @returns (response uint)
 (define-read-only (get-overall-supply-fixed)
-	(ok (decimals-to-fixed (ft-get-supply key-alex-autoalex)))
+	(ok (decimals-to-fixed (ft-get-supply yield-alex-v1)))
 )
 
 ;; @desc get-overall-balance-fixed
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-overall-balance-fixed (who principal))
-	(ok (decimals-to-fixed (ft-get-balance key-alex-autoalex who)))
+	(ok (decimals-to-fixed (ft-get-balance yield-alex-v1 who)))
 )
 
 ;; @desc transfer-fixed

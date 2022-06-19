@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(impl-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
