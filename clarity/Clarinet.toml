@@ -38,8 +38,8 @@ depends_on = [
   "trait-semi-fungible"
 ]
 
-[contracts.collateral-rebalancing-pool]
-path = "contracts/pool/collateral-rebalancing-pool.clar"
+[contracts.collateral-rebalancing-pool-v1]
+path = "contracts/pool/collateral-rebalancing-pool-v1.clar"
 depends_on = [
   "trait-sip-010",
   "trait-ownable",
@@ -47,19 +47,7 @@ depends_on = [
   "alex-vault",
   "alex-reserve-pool",
   "yield-token-pool",
-  "fixed-weight-pool-v1-01",
-  "simple-weight-pool-alex"
-]
-
-[contracts.yield-collateral-rebalancing-pool]
-path = "contracts/pool/yield-collateral-rebalancing-pool.clar"
-depends_on = [
-  "trait-sip-010",
-  "trait-vault",
-  "weighted-equation-v1-01",
-  "fixed-weight-pool-v1-01",
-  "alex-reserve-pool",
-  "yield-token-pool"
+  "swap-helper-v1-03"
 ]
 
 [contracts.faucet]
@@ -73,7 +61,7 @@ depends_on = [
   "trait-flash-loan-user",
   "yield-wbtc",
   "key-wbtc-usda",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "yield-token-pool",
   "fixed-weight-pool-v1-01",
   "token-wusda",
@@ -88,7 +76,7 @@ depends_on = [
   "token-wstx",
   "yield-usda",
   "key-usda-wstx",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "yield-token-pool",
   "fixed-weight-pool-v1-01",
   "token-wstx",
@@ -120,7 +108,7 @@ path = "contracts/helpers/margin-helper.clar"
 depends_on = [
   "trait-sip-010",
   "trait-flash-loan-user",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "swap-helper",
   "alex-vault"
 ]
@@ -135,7 +123,7 @@ depends_on = []
 
 [contracts.multisig-crp-usda-wstx]
 path = "contracts/multisig/multisig-crp-usda-wstx.clar"
-depends_on = ["yield-usda", "key-usda-wstx", "collateral-rebalancing-pool", "trait-multisig-vote"]
+depends_on = ["yield-usda", "key-usda-wstx", "collateral-rebalancing-pool-v1", "trait-multisig-vote"]
 
 [contracts.multisig-ytp-yield-wbtc]
 path = "contracts/multisig/multisig-ytp-yield-wbtc.clar"
@@ -234,7 +222,7 @@ path = "contracts/multisig/multisig-crp-usda-wbtc.clar"
 depends_on = [
   "yield-usda",
   "key-usda-wbtc",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "trait-semi-fungible",
   "trait-multisig-vote"
 ]
@@ -244,7 +232,7 @@ path = "contracts/multisig/multisig-crp-wbtc-wbtc.clar"
 depends_on = [
   "yield-wbtc",
   "key-wbtc-wbtc",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "trait-semi-fungible",
   "trait-multisig-vote"
 ]
@@ -254,7 +242,7 @@ path = "contracts/multisig/multisig-crp-wbtc-usda.clar"
 depends_on = [
   "yield-wbtc",
   "key-wbtc-usda",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "trait-multisig-vote"
 ]
 
@@ -306,7 +294,7 @@ depends_on = [
   "token-wbtc",
   "yield-usda",
   "key-usda-wbtc",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "yield-token-pool",
   "swap-helper",
   "multisig-ytp-yield-wbtc",
@@ -394,7 +382,7 @@ depends_on = [
   "token-wbtc",
   "yield-wstx",
   "key-wstx-wbtc",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "yield-token-pool",
   "fixed-weight-pool-v1-01",
   "multisig-ytp-yield-wbtc",
@@ -415,7 +403,7 @@ depends_on = [ "trait-ownable", "trait-semi-fungible" ]
 
 [contracts.multisig-crp-wstx-wbtc]
 path = "contracts/multisig/multisig-crp-wstx-wbtc.clar"
-depends_on = [ "yield-wstx", "key-wstx-wbtc", "collateral-rebalancing-pool", "trait-multisig-vote" ]
+depends_on = [ "yield-wstx", "key-wstx-wbtc", "collateral-rebalancing-pool-v1", "trait-multisig-vote" ]
 
 [contracts.key-wstx-wbtc]
 path = "contracts/key-token/key-wstx-wbtc.clar"
@@ -614,7 +602,7 @@ depends_on = [
   "age000-governance-token",
   "yield-usda",
   "key-usda-alex",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "yield-token-pool",
   "swap-helper",
   "token-wusda"  
@@ -625,7 +613,7 @@ path = "contracts/multisig/multisig-crp-wbtc-alex.clar"
 depends_on = [
   "yield-wbtc",
   "key-wbtc-alex",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "trait-multisig-vote"
 ]
 
@@ -634,7 +622,7 @@ path = "contracts/multisig/multisig-crp-wbtc-wban.clar"
 depends_on = [
   "yield-wbtc",
   "key-wbtc-wban",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "trait-multisig-vote"
 ]
 
@@ -654,12 +642,12 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/multisig/multisig-fwp-alex-autoalex.clar"
 depends_on = [ "fwp-alex-autoalex", "simple-weight-pool-alex", "trait-multisig-vote" ]
 
-[contracts.multisig-crp-alex-autoalex]
-path = "contracts/multisig/multisig-crp-alex-autoalex.clar"
+[contracts.multisig-crp-alex-autoalex-v1]
+path = "contracts/multisig/multisig-crp-alex-autoalex-v1.clar"
 depends_on = [
   "yield-alex-v1",
   "key-alex-autoalex-v1",
-  "collateral-rebalancing-pool",
+  "collateral-rebalancing-pool-v1",
   "trait-multisig-vote"
 ]
 

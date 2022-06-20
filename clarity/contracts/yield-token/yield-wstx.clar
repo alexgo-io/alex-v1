@@ -324,5 +324,5 @@
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
-(map-set approved-contracts .collateral-rebalancing-pool true)
-(map-set approved-contracts .yield-collateral-rebalancing-pool true)
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)
+(map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)
