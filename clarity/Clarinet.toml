@@ -325,10 +325,6 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 path = "contracts/tests/flash-loan-user-unauthorised.clar"
 depends_on = [ "trait-flash-loan-user" ]
 
-[contracts.faucet-helper]
-path = "contracts/helpers/faucet-helper.clar"
-depends_on = [ "faucet" ]
-
 [contracts.exchange]
 path = "contracts/exchange.clar"
 depends_on = [ "trait-ownable", "age000-governance-token" ]

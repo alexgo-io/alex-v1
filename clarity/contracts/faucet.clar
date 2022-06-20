@@ -1,21 +1,22 @@
 (impl-trait .trait-ownable.ownable-trait)
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; faucet
 
 ;; errors
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-EXCEEDS-MAX-USE (err u9000))
+(define-constant ERR-UNKNOWN-TOKEN (err u1001))
 
 (define-constant ONE_8 u100000000)
-(define-constant STX-AMOUNT ONE_8)
-(define-constant ALEX-AMOUNT ONE_8)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
 (define-map users principal uint)
 (define-data-var max-use uint u1)
+
+(define-map token-amounts principal uint)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -43,7 +44,18 @@
   (default-to u0 (map-get? users user))
 )
 
-(define-public (get-some-tokens (recipient principal))
+(define-read-only (get-token-amount-or-fail (token principal))
+  (ok (unwrap! (map-get? token-amounts token) ERR-UNKNOWN-TOKEN))
+)
+
+(define-public (set-token-amount (token principal) (amount uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (map-set token-amounts token amount))
+  )
+)
+
+(define-public (get-some-token (recipient principal) (token-trait <ft-trait>))
     (begin
         (try! (check-is-approved))
         (match (map-get? users recipient)
@@ -54,14 +66,44 @@
             )
             (map-set users recipient u1)
         )
-        (as-contract (try! (contract-call? .token-wstx transfer STX-AMOUNT tx-sender recipient none)))
-        (as-contract (try! (contract-call? .age000-governance-token transfer ALEX-AMOUNT tx-sender recipient none)))
-        (ok true)
+        (as-contract (contract-call? token-trait transfer-fixed (try! (get-token-amount-or-fail (contract-of token-trait))) tx-sender recipient none))
     )
 )
 
-(define-public (get-some-tokens-many (recipients (list 200 principal)))
-    (ok (map get-some-tokens recipients))
+(define-private (get-some-token-iter (recipient principal) (token-traits (list 200 <ft-trait>)))
+  (begin 
+    (map 
+      get-some-token 
+      (list 
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient
+        recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient	recipient      
+      )
+      token-traits
+    )
+    token-traits
+  )
+)
+
+(define-public (get-some-tokens-many (recipients (list 200 principal)) (token-traits (list 200 <ft-trait>)))
+    (ok (fold get-some-token-iter recipients token-traits))
 )
 
 (define-private (check-is-owner)
