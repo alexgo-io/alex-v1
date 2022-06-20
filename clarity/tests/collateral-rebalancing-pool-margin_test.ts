@@ -58,7 +58,7 @@ const weightX = 0.5e+8
 const weightY = 0.5e+8
 
 Clarinet.test({
-    name: "collateral-rebalancing-pool margin : create / roll margin - ALEX",
+    name: "collateral-rebalancing-pool-v1 margin : create / roll margin - ALEX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -141,7 +141,7 @@ Clarinet.test({
  
         const block = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "create-margin-position", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
@@ -151,7 +151,7 @@ Clarinet.test({
                     types.uint(2 * ONE_8),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "create-margin-position", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
@@ -186,7 +186,7 @@ Clarinet.test({
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
@@ -196,7 +196,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
@@ -224,7 +224,7 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [               
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(alexAddress),
@@ -234,7 +234,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wbtcAddress), 
                     types.principal(wbanAddress),
@@ -264,7 +264,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-    name: "collateral-rebalancing-pool margin : create / roll margin - STX",
+    name: "collateral-rebalancing-pool-v1 margin : create / roll margin - STX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -338,7 +338,7 @@ Clarinet.test({
  
         const block = chain.mineBlock(
             [              
-                Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "create-margin-position", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
@@ -348,7 +348,7 @@ Clarinet.test({
                     types.uint(ONE_8),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "create-margin-position", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
@@ -382,7 +382,7 @@ Clarinet.test({
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
@@ -392,7 +392,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
@@ -420,7 +420,7 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(alexAddress),
@@ -430,7 +430,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(usdaAddress), 
                     types.principal(wstxAddress),
@@ -462,7 +462,7 @@ Clarinet.test({
 
 
 Clarinet.test({
-    name: "collateral-rebalancing-pool margin : create / roll margin - STX <=> ALEX",
+    name: "collateral-rebalancing-pool-v1 margin : create / roll margin - STX <=> ALEX",
 
     async fn(chain: Chain, accounts: Map<string, Account>) {
         let deployer = accounts.get("deployer")!;
@@ -543,7 +543,7 @@ Clarinet.test({
  
         const block = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "create-margin-position", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
@@ -553,7 +553,7 @@ Clarinet.test({
                     types.uint(ONE_8),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "create-margin-position", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "create-margin-position", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),
@@ -588,7 +588,7 @@ Clarinet.test({
         // // trying to roll before maturity throws error
         const blockRoll = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
@@ -598,7 +598,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),
@@ -626,7 +626,7 @@ Clarinet.test({
 
         const blockRoll2 = chain.mineBlock(
             [
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(alexAddress),
@@ -636,7 +636,7 @@ Clarinet.test({
                     types.uint(nextExpiry),
                     types.none()
                 ], wallet_5.address),
-                Tx.contractCall("collateral-rebalancing-pool", "roll-borrow", 
+                Tx.contractCall("collateral-rebalancing-pool-v1", "roll-borrow", 
                 [
                     types.principal(wstxAddress), 
                     types.principal(wbtcAddress),

@@ -109,7 +109,7 @@ Clarinet.test({
         result.expectOk().expectTuple();
         
         // let block = chain.mineBlock([   
-        //     Tx.contractCall("collateral-rebalancing-pool", "set-strike-multiplier",
+        //     Tx.contractCall("collateral-rebalancing-pool-v1", "set-strike-multiplier",
         //         [types.uint(0.5e8)],
         //         deployer.address
         //     ),

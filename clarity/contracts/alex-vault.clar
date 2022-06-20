@@ -209,10 +209,10 @@
 (map-set approved-contracts .simple-weight-pool-alex true)
 
 ;; testing only
-(map-set approved-contracts .collateral-rebalancing-pool true)  
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)  
 (map-set approved-contracts .liquidity-bootstrapping-pool true)  
 (map-set approved-contracts .yield-token-pool true)  
-(map-set approved-contracts .yield-collateral-rebalancing-pool true)
+(map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-usda-wbtc true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wstx-usda true)

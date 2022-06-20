@@ -362,8 +362,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-wbtc .token-alex expiry new-fee-rate-x)))
-    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-wbtc .token-alex expiry new-fee-rate-y)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-x .token-wbtc .token-alex expiry new-fee-rate-x)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-y .token-wbtc .token-alex expiry new-fee-rate-y)))
     
     (ok true)
   )

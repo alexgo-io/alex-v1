@@ -490,7 +490,7 @@ Clarinet.test({
         result.expectErr().expectUint(2003)
 
         result = CRPTest.addToPositionAndSwitch(deployer, wbtcAddress, usdaAddress, expiry, yieldwbtcAddress, keywbtcAddress, ONE_8 * ONE_8);
-        result.expectErr().expectUint(4002)
+        result.expectErr().expectUint(2027)
 
         result = CRPTest.swapXForY(wallet_1, wbtcAddress, usdaAddress, expiry, 0, 0);
         result.expectErr().expectUint(1000);

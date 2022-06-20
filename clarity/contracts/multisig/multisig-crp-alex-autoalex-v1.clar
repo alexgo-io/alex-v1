@@ -9,7 +9,6 @@
 ;; A proposal will just update the DAO with new contracts.
 
 ;; Voting can be done by locking up the corresponding pool token. 
-;; This prototype is for ayusda-usda pool token. 
 ;; Common Trait and for each pool, implementation is required. 
 ;; 
 
@@ -87,24 +86,25 @@
 (define-map tokens-by-member { proposal-id: uint, member: principal, token: principal, expiry: uint } { amount: uint })
 
 ;; Get all proposals in detail
+
 ;; @desc get-proposals
-;; @returns (response optional (tuple))
+;; @returns (response uint)
 (define-read-only (get-proposals)
   (ok (map get-proposal-by-id (var-get proposal-ids)))
 )
 
 ;; Get all proposal ID in list
 ;; @desc get-proposal-ids
-;; @returns (ok list)
+;; @returns (response uint)
 (define-read-only (get-proposal-ids)
   (ok (var-get proposal-ids))
 )
 
 ;; Get votes for a member on proposal
-;; @desc get-votes-by-member-by-id
+;; @desc get-votes-by-member-by-id 
 ;; @params proposal-id
-;; @params member
-;; @returns (optional (tuple))
+;; @params member 
+;; @returns (response (optional(tuple)))
 (define-read-only (get-votes-by-member-by-id (proposal-id uint) (member principal))
   (default-to 
     { vote-count: u0 }
@@ -114,10 +114,10 @@
 
 ;; @desc get-tokens-by-member-by-id 
 ;; @params proposal-id
-;; @params member 
-;; @params token; sft-trait
-;; @params expiry 
-;; @returns (optional (tuple))
+;; @params member
+;; @params token;sft-trait
+;; @params expiry
+;; @returns (response (optional(tuple)))
 (define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <sft-trait>) (expiry uint))
   (default-to 
     { amount: u0 }
@@ -126,9 +126,9 @@
 )
 
 ;; Get proposal
-;; @desc get-proposal-by-id
+;; @desc get-proposal-by-id 
 ;; @params proposal-id
-;; @returns (optional (tuple))
+;; @returns (response (optional (tuple)))
 (define-read-only (get-proposal-by-id (proposal-id uint))
   (default-to
     {
@@ -154,21 +154,22 @@
 ;; @params token; sft-trait
 ;; @returns bool
 (define-read-only (is-token-accepted (token principal))
-    (or (is-eq token .yield-wbtc) (is-eq token .key-wbtc-wbtc))
+    (or (is-eq token .yield-alex-v1) (is-eq token .key-alex-autoalex-v1))
 )
 
 
 ;; Start a proposal
 ;; Requires 10% of the supply in your wallet
 ;; Default voting period is 10 days (144 * 10 blocks)
+
 ;; @desc propose
-;; @params expiry
+;; @params expiry 
 ;; @params start-block-height
 ;; @params title
 ;; @params url 
 ;; @params new-fee-rate-x
 ;; @params new-fee-rate-y
-;; @returns uint
+;; @returns (response uint)
 (define-public (propose  
     (expiry uint)  
     (start-block-height uint)
@@ -179,11 +180,11 @@
   )
   (let 
     (
-      (proposer-yield-balance (unwrap-panic (contract-call? .yield-wbtc get-balance-fixed expiry tx-sender)))
-      (proposer-key-balance (unwrap-panic (contract-call? .key-wbtc-wbtc get-balance-fixed expiry tx-sender)))
+      (proposer-yield-balance (unwrap-panic (contract-call? .yield-alex-v1 get-balance-fixed expiry tx-sender)))
+      (proposer-key-balance (unwrap-panic (contract-call? .key-alex-autoalex-v1 get-balance-fixed expiry tx-sender)))
       (proposer-balance (+ proposer-yield-balance proposer-key-balance))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc get-total-supply-fixed expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-wbtc-wbtc get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-alex-v1 get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-alex-autoalex-v1 get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (proposal-id (+ u1 (var-get proposal-count)))
     )
@@ -214,9 +215,9 @@
   )
 )
 
-;; @desc vote-for 
+;; @desc vote-for
 ;; @params token; sft-trait
-;; @params proposal-id uint
+;; @params proposal-id
 ;; @params amount
 ;; @returns (response uint)
 (define-public (vote-for (token <sft-trait>) (proposal-id uint) (amount uint))
@@ -254,9 +255,9 @@
 
 ;; @desc vote-against 
 ;; @params token;sft-trait
-;; @params proposal-id 
+;; @params proposal-id
 ;; @params amount 
-;; @returns (response uint)
+;; @returne (response uint)
 (define-public (vote-against (token <sft-trait>) (proposal-id uint) (amount uint))
   (let (
     (proposal (get-proposal-by-id proposal-id))
@@ -297,8 +298,8 @@
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
       (threshold-percent (var-get threshold))
-      (total-yield-supply (unwrap-panic (contract-call? .yield-wbtc get-total-supply-fixed expiry)))
-      (total-key-supply (unwrap-panic (contract-call? .key-wbtc-wbtc get-total-supply-fixed expiry)))
+      (total-yield-supply (unwrap-panic (contract-call? .yield-alex-v1 get-total-supply-fixed expiry)))
+      (total-key-supply (unwrap-panic (contract-call? .key-alex-autoalex-v1 get-total-supply-fixed expiry)))
       (total-supply (+ total-yield-supply total-key-supply))
       (threshold-count (mul-up total-supply threshold-percent))
       (yes-votes (get yes-votes proposal))
@@ -319,10 +320,10 @@
 
 ;; Return votes to voter(member)
 ;; This function needs to be called for all members
-;; @desc return-votes-to-member 
+;; @desc return-votes-to-member
 ;; @params token; sft-trait
-;; @params proposal-id
-;; @params member
+;; @params proposal-id 
+;; @params member 
 ;; @returns (response bool)
 (define-public (return-votes-to-member (token <sft-trait>) (proposal-id uint) (member principal))
   (let 
@@ -355,8 +356,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-x .token-wbtc .token-wbtc expiry new-fee-rate-x)))
-    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-y .token-wbtc .token-wbtc expiry new-fee-rate-y)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-x .age000-governance-token .auto-alex expiry new-fee-rate-x)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-y .age000-governance-token .auto-alex expiry new-fee-rate-y)))
     
     (ok true)
   )
