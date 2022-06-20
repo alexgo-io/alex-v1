@@ -47,6 +47,10 @@ depends_on = [
   "alex-vault",
   "alex-reserve-pool",
   "yield-token-pool",
+  "age000-governance-token",
+  "token-wstx",
+  "fixed-weight-pool-v1-01",
+  "simple-weight-pool-alex"
 ]
 
 [contracts.yield-collateral-rebalancing-pool]
@@ -90,7 +94,7 @@ depends_on = [
   "yield-token-pool",
   "fixed-weight-pool-v1-01",
   "token-wstx",
-  "token-wusda"  
+  "token-wusda"
 ]
 
 [contracts.key-usda-wbtc]
@@ -206,7 +210,7 @@ depends_on = [
   "trait-sip-010",
   "trait-semi-fungible",
   "alex-reserve-pool",
-  "alex-vault",  
+  "alex-vault",
 ]
 
 [contracts.lbp-alex-usda-90-10]
@@ -477,7 +481,7 @@ path = "contracts/multisig/multisig-fwp-wstx-alex-50-50-v1-01.clar"
 depends_on = [
   "fwp-wstx-alex-50-50-v1-01",
   "fixed-weight-pool-v1-01",
-  "trait-multisig-vote"  
+  "trait-multisig-vote"
 ]
 
 [contracts.fwp-wstx-wbtc-50-50-v1-01]
@@ -489,7 +493,7 @@ path = "contracts/multisig/multisig-fwp-wstx-wbtc-50-50-v1-01.clar"
 depends_on = [
   "fwp-wstx-wbtc-50-50-v1-01",
   "fixed-weight-pool-v1-01",
-  "trait-multisig-vote"  
+  "trait-multisig-vote"
 ]
 
 [contracts.multisig-fwp-alex-wbtc-50-50]
@@ -497,7 +501,7 @@ path = "contracts/multisig/multisig-fwp-alex-wbtc-50-50.clar"
 depends_on = [
   "fwp-alex-wbtc-50-50",
   "fixed-weight-pool-alex",
-  "trait-multisig-vote"  
+  "trait-multisig-vote"
 ]
 
 [contracts.fwp-wstx-usda-50-50-v1-01]
@@ -509,7 +513,7 @@ path = "contracts/multisig/multisig-fwp-wstx-usda-50-50-v1-01.clar"
 depends_on = [
   "fwp-wstx-usda-50-50-v1-01",
   "fixed-weight-pool-v1-01",
-  "trait-multisig-vote"  
+  "trait-multisig-vote"
 ]
 
 [contracts.fwp-alex-usda]
@@ -617,7 +621,7 @@ depends_on = [
   "collateral-rebalancing-pool",
   "yield-token-pool",
   "swap-helper",
-  "token-wusda"  
+  "token-wusda"
 ]
 
 [contracts.multisig-crp-wbtc-alex]
