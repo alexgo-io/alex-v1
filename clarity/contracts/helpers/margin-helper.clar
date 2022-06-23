@@ -4,6 +4,23 @@
 
 (define-constant ONE_8 u100000000)
 
+(define-public (create-margin-position (token-trait <ft-trait>) (collateral-trait <ft-trait>) (expiry uint) (yield-token-trait <sft-trait>) (key-token-trait <sft-trait>) (dx uint) (min-dy (optional uint)))
+    (let
+        (
+            (sender tx-sender)
+            (gross-dx (div-down dx (- ONE_8 (try! (contract-call? .collateral-rebalancing-pool-v1 get-ltv (contract-of token-trait) (contract-of collateral-trait) expiry)))))
+            (loan-amount (- gross-dx dx))
+            (loan-amount-with-fee (mul-down loan-amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
+            (loaned (as-contract (try! (contract-call? .alex-vault transfer-ft collateral-trait loan-amount sender))))
+            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool-v1 add-to-position token-trait collateral-trait expiry yield-token-trait key-token-trait gross-dx))))
+            (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x expiry yield-token-trait token-trait minted-yield-token min-dy))))
+        )
+        (try! (contract-call? .swap-helper-v1-03 swap-helper token-trait collateral-trait swapped-token none))      
+        (try! (contract-call? collateral-trait transfer-fixed loan-amount-with-fee sender .alex-vault none))
+        (ok loan-amount-with-fee)
+    )
+)
+
 ;; @desc roll-position
 ;; @param token; ft-trait
 ;; @param collateral; ft-trait
@@ -88,16 +105,10 @@
     )
 )
 
-;; @desc val-append
-;; @params vmod
-;; @returns some or none
 (define-private (val-append (vmod uint))
     (unwrap-panic (as-max-len? (concat (unwrap-panic (element-at BUFF-TO-BYTE vmod)) (var-get out-buf)) u16))
 )
 
-;; @desc mod-256
-;; @params vmod
-;; @returns uint
 (define-private (mod-256 (vmod bool))
     (let 
         (
@@ -113,4 +124,15 @@
             mod-val
         )
     )
+)
+
+(define-private (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+(define-private (div-down (a uint) (b uint))
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )

@@ -562,11 +562,26 @@ Clarinet.test({
                     types.principal(keywstxwbtcAddress),
                     types.uint(ONE_8),
                     types.none()
-                ], wallet_5.address),                
+                ], wallet_5.address),     
+                Tx.contractCall("alex-vault", "add-approved-contract",
+                [
+                    types.principal(deployer.address + ".margin-helper")
+                ], deployer.address),
+                Tx.contractCall("margin-helper", "create-margin-position", 
+                [
+                    types.principal(wstxAddress), 
+                    types.principal(wbtcAddress),
+                    types.uint(expiry),
+                    types.principal(yieldwstxAddress),
+                    types.principal(keywstxwbtcAddress),
+                    types.uint(ONE_8),
+                    types.none()
+                ], wallet_5.address),                             
             ]
         );
         block.receipts[0].result.expectOk();        
         block.receipts[1].result.expectOk();          
+        block.receipts[2].result.expectOk();
         
         call = await FLTest.getBalance(alexAddress, wallet_5.address);
         assertEquals(true, alex_balance > Number(call.result.expectOk().replace(/\D/g, "")));
