@@ -20,7 +20,7 @@
 
 (define-data-var lottery-id-nonce uint u0)
 
-(define-data-var apower-per-bonus uint (* u50 ONE_8))
+(define-data-var apower-per-bonus-in-fixed uint (* u50 ONE_8))
 (define-data-var bonus-thresholds (list 5 uint) (list u5 u15 u25 u35 u45))
 (define-data-var bonus-max (list 5 uint) (list u1 u3 u6 u10 u15))
 
@@ -45,6 +45,7 @@
 )
 
 (define-map total-tickets-registered uint uint)
+(define-map total-bonus-tickets-registered uint uint)
 
 (define-map start-indexes uint uint)
 
@@ -110,6 +111,10 @@
 	(default-to u0 (map-get? total-tickets-registered lottery-id))
 )
 
+(define-read-only (get-total-bonus-tickets-registered-or-default (lottery-id uint))
+	(default-to u0 (map-get? total-bonus-tickets-registered lottery-id))
+)
+
 (define-read-only (get-ticket-bounds-or-fail (lottery-id uint) (owner principal))
 	(ok (unwrap! (map-get? ticket-bounds {lottery-id: lottery-id, owner: owner}) ERR-INVALID-INPUT))
 )
@@ -120,13 +125,13 @@
 (define-read-only (get-bonus-max-or-default (index uint))
 	(default-to u0 (element-at (var-get bonus-max) index))
 )
-(define-read-only (get-apower-per-bonus)
-	(var-get apower-per-bonus)
+(define-read-only (get-apower-per-bonus-in-fixed)
+	(var-get apower-per-bonus-in-fixed)
 )
-(define-public (set-apower-per-bonus (new-amount uint))
+(define-public (set-apower-per-bonus-in-fixed (new-amount uint))
 	(begin 
 		(try! (check-is-owner))
-		(ok (var-set apower-per-bonus new-amount))
+		(ok (var-set apower-per-bonus-in-fixed new-amount))
 	)
 )
 (define-public (set-bonus-thresholds (new-thresholds (list 5 uint)))
@@ -161,6 +166,24 @@
 	)
 )
 
+(define-read-only (get-total-pot-in-fixed (lottery-id uint))
+	(ok 
+		(* 
+			(get-total-tickets-registered-or-default lottery-id) 
+			(get tokens-per-ticket-in-fixed (try! (get-lottery-or-fail lottery-id)))
+		)
+	)
+)
+
+(define-read-only (get-total-bonus-in-fixed (lottery-id uint))
+	(ok
+		(*
+			(get-total-bonus-tickets-registered-or-default lottery-id)
+			(var-get apower-per-bonus-in-fixed)
+		)
+	)
+)
+
 (define-public (register (lottery-id uint) (tickets uint) (token-trait <ft-trait>) (bonus-tickets uint))
 	(let
 		(
@@ -174,9 +197,10 @@
 		(asserts! (<= bonus-tickets (get-max-bonus-for-tickets tickets)) ERR-INVALID-INPUT)
 
 		(try! (contract-call? token-trait transfer-fixed (* (get tokens-per-ticket-in-fixed l) (+ tickets bonus-tickets)) sender (as-contract tx-sender) none))
-		(and (> bonus-tickets u0) (as-contract (try! (contract-call? .token-apower burn-fixed (* (var-get apower-per-bonus) bonus-tickets) sender))))
+		(and (> bonus-tickets u0) (as-contract (try! (contract-call? .token-apower burn-fixed (* (var-get apower-per-bonus-in-fixed) bonus-tickets) sender))))		
 		(map-set ticket-bounds {lottery-id: lottery-id, owner: sender} bounds)
 		(map-set total-tickets-registered lottery-id (+ (get-total-tickets-registered-or-default lottery-id) tickets))
+		(map-set total-bonus-tickets-registered lottery-id (+ (get-total-bonus-tickets-registered-or-default lottery-id) bonus-tickets))
 		(ok bounds)
 	)
 )
