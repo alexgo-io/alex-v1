@@ -1,4 +1,4 @@
-import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
 import { FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
@@ -81,15 +81,15 @@ Clarinet.test({
         result = FWPTest.setOracleAverage(deployer, alexAddress, autoAlexAddress, 0.95e8);
         result.expectOk();
 
+        // chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);        
+
         let block = chain.mineBlock([
             reservePool.addToken(deployer, alexAddress),
             reservePool.setActivationBlock(deployer, alexAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             reservePool.setApowerMultiplierInFixed(deployer, alexAddress, APOWER_MULTIPLIER),          
         ]);
-        block.receipts.forEach(e => { e.result.expectOk() }); 
-
-        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);   
+        block.receipts.forEach(e => { e.result.expectOk() });    
         
         block = chain.mineBlock([
             Tx.contractCall("collateral-rebalancing-pool-v1", "set-approved-contract",

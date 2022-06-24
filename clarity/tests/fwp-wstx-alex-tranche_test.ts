@@ -4,7 +4,7 @@ import {
   Chain,
   Account,
   types,
-} from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 import { ReservePool } from "./models/alex-tests-reserve-pool.ts";
 import { FungibleToken } from "./models/alex-tests-tokens.ts";
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
