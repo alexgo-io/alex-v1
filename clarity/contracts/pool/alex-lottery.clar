@@ -1,14 +1,14 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-(define-constant err-unknown-lottery (err u2045))
-(define-constant err-unknown-lottery-round (err u2047))
-(define-constant err-block-height-not-reached (err u2042))
-(define-constant err-invalid-sequence (err u2046))
-(define-constant err-invalid-lottery-token (err u2026))
-(define-constant err-invalid-lottery-setting (err u110))
-(define-constant err-invalid-input (err u2048))
-(define-constant err-already-registered (err u10001))
-(define-constant err-not-authorized (err u1000))
+(define-constant ERR-UNKNOWN-LOTTERY (err u2045))
+(define-constant ERR-UNKNOWN-LOTTERY-ROUND (err u2047))
+(define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u2042))
+(define-constant ERR-INVALID-SEQUENCE (err u2046))
+(define-constant ERR-INVALID-LOTTERY-TOKEN (err u2026))
+(define-constant ERR-INVALID-LOTTERY-SETTING (err u110))
+(define-constant ERR-INVALID-INPUT (err u2048))
+(define-constant ERR-ALREADY-REGISTERED (err u10001))
+(define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant walk-resolution u100000)
 (define-constant claim-grace-period u144)
@@ -59,13 +59,13 @@
 		(
 			(lottery-id (var-get lottery-id-nonce))
 		)
-		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) err-not-authorized)
+		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
 		(asserts!
 			(and
 				(< block-height (get registration-start-height offering))
 				(< (get registration-start-height offering) (get registration-end-height offering))
 			)
-			err-invalid-lottery-setting
+			ERR-INVALID-LOTTERY-SETTING
 		)
 		(map-set lottery lottery-id (merge offering { token: (contract-of token-trait) }))
 		(var-set lottery-id-nonce (+ lottery-id u1))
@@ -75,7 +75,7 @@
 
 (define-public (set-lottery-round (lottery-id uint) (round uint) (draw-height uint) (percent uint) (total-tickets uint) (payout-rate uint))
 	(begin 
-		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) err-not-authorized)
+		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
 		(ok (map-set lottery-rounds { lottery-id: lottery-id, round: round } { draw-height: draw-height, percent: percent, total-tickets: total-tickets, payout-rate: payout-rate }))
 	)
 )
@@ -100,11 +100,11 @@
 )
 
 (define-read-only (get-lottery-or-fail (lottery-id uint))
-	(ok (unwrap! (map-get? lottery lottery-id) err-unknown-lottery))
+	(ok (unwrap! (map-get? lottery lottery-id) ERR-INVALID-INPUT))
 )
 
 (define-read-only (get-lottery-round-or-fail (lottery-id uint) (round uint))
-	(ok (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) err-invalid-input))
+	(ok (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) ERR-INVALID-INPUT))
 )
 
 (define-read-only (get-total-tickets-registered-or-default (lottery-id uint))
@@ -116,7 +116,7 @@
 )
 
 (define-read-only (get-ticket-bounds-or-fail (lottery-id uint) (owner principal))
-	(ok (unwrap! (map-get? ticket-bounds {lottery-id: lottery-id, owner: owner}) err-invalid-input))
+	(ok (unwrap! (map-get? ticket-bounds {lottery-id: lottery-id, owner: owner}) ERR-INVALID-INPUT))
 )
 
 (define-read-only (get-bonus-thresholds-or-default (index uint))
@@ -187,14 +187,14 @@
 (define-public (register (lottery-id uint) (tickets uint) (token-trait <ft-trait>) (bonus-tickets uint))
 	(let
 		(
-			(l (unwrap! (map-get? lottery lottery-id) err-unknown-lottery))
+			(l (unwrap! (map-get? lottery lottery-id) ERR-UNKNOWN-LOTTERY))
 			(bounds (next-bounds lottery-id tickets))
 			(sender tx-sender)
 		)
-		(asserts! (is-none (map-get? ticket-bounds {lottery-id: lottery-id, owner: sender})) err-already-registered)
-		(asserts! (and (>= block-height (get registration-start-height l)) (< block-height (get registration-end-height l))) err-block-height-not-reached)	
-		(asserts! (is-eq (get token l) (contract-of token-trait)) err-invalid-lottery-token)		
-		(asserts! (<= bonus-tickets (get-max-bonus-for-tickets tickets)) err-invalid-input)
+		(asserts! (is-none (map-get? ticket-bounds {lottery-id: lottery-id, owner: sender})) ERR-ALREADY-REGISTERED)
+		(asserts! (and (>= block-height (get registration-start-height l)) (< block-height (get registration-end-height l))) ERR-BLOCK-HEIGHT-NOT-REACHED)	
+		(asserts! (is-eq (get token l) (contract-of token-trait)) ERR-INVALID-LOTTERY-TOKEN)		
+		(asserts! (<= bonus-tickets (get-max-bonus-for-tickets tickets)) ERR-INVALID-INPUT)
 
 		(try! (contract-call? token-trait transfer-fixed (* (get tokens-per-ticket-in-fixed l) (+ tickets bonus-tickets)) sender (as-contract tx-sender) none))
 		(and (> bonus-tickets u0) (as-contract (try! (contract-call? .token-apower burn-fixed (* (var-get apower-per-bonus-in-fixed) bonus-tickets) sender))))		
@@ -208,7 +208,7 @@
 (define-read-only (get-lottery-walk-parameters (lottery-id uint) (round uint))
 	(let
 		(
-			(rounds (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) err-unknown-lottery-round))
+			(rounds (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) ERR-UNKNOWN-LOTTERY-ROUND))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered-or-default lottery-id) (get total-tickets rounds)))
 			(walk-position (lcg-next (try! (get-vrf-uint (get draw-height rounds))) max-step-size))
 		)
@@ -221,10 +221,10 @@
 		(
 			(p (try! prior))
 			(k {lottery-id: (get lottery-id p), owner: owner})
-			(bounds (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get bounds p) (unwrap! (map-get? ticket-bounds k) err-invalid-input)))
+			(bounds (if (and (is-some (get owner p)) (is-eq (unwrap-panic (get owner p)) owner)) (get bounds p) (unwrap! (map-get? ticket-bounds k) ERR-INVALID-INPUT)))
 			(new-walk-position (+ (* (+ u1 (/ (get walk-position p) walk-resolution)) walk-resolution) (lcg-next (get walk-position p) (get max-step-size p))))
 		)
-		(asserts! (and (>= (get walk-position p) (get start bounds)) (< (get walk-position p) (get end bounds))) err-invalid-sequence)
+		(asserts! (and (>= (get walk-position p) (get start bounds)) (< (get walk-position p) (get end bounds))) ERR-INVALID-SEQUENCE)
 		(ok (merge p { owner: (some owner), bounds: bounds, walk-position: new-walk-position }))
 	)
 )
@@ -233,8 +233,8 @@
 (define-public (claim (lottery-id uint) (round uint) (winners (list 200 principal)) (token-trait <ft-trait>))
 	(let 
 		(
-			(l (unwrap! (map-get? lottery lottery-id) err-unknown-lottery))
-			(r (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) err-unknown-lottery-round))
+			(l (unwrap! (map-get? lottery lottery-id) ERR-UNKNOWN-LOTTERY))
+			(r (unwrap! (map-get? lottery-rounds { lottery-id: lottery-id, round: round }) ERR-UNKNOWN-LOTTERY-ROUND))
 			(tickets-registered (get-total-tickets-registered-or-default lottery-id))
 			(payout-gross (mul-down (mul-down (get percent r) tickets-registered) (get tokens-per-ticket-in-fixed l)))
 			(payout-net (mul-down payout-gross (get payout-rate r)))
@@ -242,9 +242,9 @@
 			(walk-position (lcg-next (try! (get-vrf-uint (get draw-height r))) max-step-size))
 			(result (try! (fold verify-winner-iter winners (ok {owner: none, lottery-id: lottery-id, bounds: {start: u0, end: u0}, walk-position: walk-position, max-step-size: max-step-size}))))			
 		)
-		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) err-not-authorized)
-		(asserts! (is-eq (get token l) (contract-of token-trait)) err-invalid-lottery-token)
-		(asserts! (>= block-height (get registration-end-height l)) err-block-height-not-reached)
+		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
+		(asserts! (is-eq (get token l) (contract-of token-trait)) ERR-INVALID-LOTTERY-TOKEN)
+		(asserts! (>= block-height (get registration-end-height l)) ERR-BLOCK-HEIGHT-NOT-REACHED)
 
 		(var-set tm-amount (/ payout-net (len winners)))
 		(as-contract (try! (contract-call? token-trait transfer-fixed (- payout-gross payout-net) tx-sender (var-get contract-owner) none)))
@@ -283,7 +283,7 @@
 )
 
 (define-read-only (get-vrf-uint (height uint))
-	(ok (buff-to-uint64 (unwrap! (get-block-info? vrf-seed height) err-block-height-not-reached)))
+	(ok (buff-to-uint64 (unwrap! (get-block-info? vrf-seed height) ERR-BLOCK-HEIGHT-NOT-REACHED)))
 )
 
 (define-constant byte-list
@@ -336,11 +336,11 @@
 )
 
 (define-private (check-is-owner)
-	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorized))
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 (define-private (check-is-approved)
-	(ok (asserts! (default-to false (map-get? approved-operators tx-sender)) err-not-authorized))
+	(ok (asserts! (default-to false (map-get? approved-operators tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
 (define-public (add-approved-operator (new-approved-operator principal))
