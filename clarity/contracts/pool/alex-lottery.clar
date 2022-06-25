@@ -42,7 +42,7 @@
 		percent: uint,
 		total-tickets: uint,
 		payout-rate: uint,
-		claimed: bool
+		play: bool
 	}	
 )
 
@@ -78,12 +78,12 @@
 (define-public (set-lottery-round (lottery-id uint) (round uint) (draw-height uint) (percent uint) (total-tickets uint) (payout-rate uint))
 	(begin 
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
-		(ok (map-set lottery-rounds { lottery-id: lottery-id, round: round } { draw-height: draw-height, percent: percent, total-tickets: total-tickets, payout-rate: payout-rate, claimed: false }))
+		(ok (map-set lottery-rounds { lottery-id: lottery-id, round: round } { draw-height: draw-height, percent: percent, total-tickets: total-tickets, payout-rate: payout-rate, play: true }))
 	)
 )
 
 (define-read-only (is-lottery-round-claimable (lottery-id uint) (round uint))
-	(ok (not (get claimed (try! (get-lottery-round-or-fail lottery-id round)))))
+	(ok (get play (try! (get-lottery-round-or-fail lottery-id round))))
 )
 
 (define-private (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
@@ -251,12 +251,12 @@
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
 		(asserts! (is-eq (get token l) (contract-of token-trait)) ERR-INVALID-LOTTERY-TOKEN)
 		(asserts! (>= block-height (get registration-end-height l)) ERR-BLOCK-HEIGHT-NOT-REACHED)
-		(asserts! (not (get claimed r)) ERR-LOTTERY-ROUND-ALREADY-CLAIMED)
+		(asserts! (get play r) ERR-LOTTERY-ROUND-ALREADY-CLAIMED)
 
 		(var-set tm-amount (/ payout-net (len winners)))
 		(as-contract (try! (contract-call? token-trait transfer-fixed (- payout-gross payout-net) tx-sender (var-get contract-owner) none)))
 		(fold transfer-many-iter winners token-trait)
-		(map-set lottery-rounds { lottery-id: lottery-id, round: round } (merge r { claimed: true }))
+		(map-set lottery-rounds { lottery-id: lottery-id, round: round } (merge r { play: false }))
 
 		(ok { gross: payout-gross, net: payout-net, tax: (- payout-gross payout-net), payout: (var-get tm-amount) })
 	)
