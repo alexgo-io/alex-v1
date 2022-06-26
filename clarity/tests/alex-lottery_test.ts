@@ -58,7 +58,20 @@ Clarinet.test({
         [types.principal(approved_operator.address)],
         deployer.address
       ),
+      Tx.contractCall(
+        "token-apower",
+        "add-approved-contract",
+        [types.principal(contractPrincipal(deployer, "alex-lottery"))],
+        deployer.address
+      ),
+      // Tx.contractCall(
+      //   "age000-governance-token",
+      //   "edg-add-approved-contract",
+      //   [types.principal(contractPrincipal(deployer, "alex-lottery"))],
+      //   deployer.address
+      // ),      
     ]);
+    third.receipts.map(({ result }) => result.expectOk());
 
     for (let t = 0; t < 500; t += 120) {
       const registrationStartHeight = 10 + t;

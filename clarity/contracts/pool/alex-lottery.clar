@@ -194,7 +194,7 @@
 	(let
 		(
 			(l (unwrap! (map-get? lottery lottery-id) ERR-UNKNOWN-LOTTERY))
-			(bounds (next-bounds lottery-id tickets))
+			(bounds (next-bounds lottery-id (+ tickets bonus-tickets)))
 			(sender tx-sender)
 		)
 		(asserts! (is-none (map-get? ticket-bounds {lottery-id: lottery-id, owner: sender})) ERR-ALREADY-REGISTERED)
@@ -202,10 +202,15 @@
 		(asserts! (is-eq (get token l) (contract-of token-trait)) ERR-INVALID-LOTTERY-TOKEN)		
 		(asserts! (<= bonus-tickets (get-max-bonus-for-tickets tickets)) ERR-INVALID-INPUT)
 
-		(try! (contract-call? token-trait transfer-fixed (* (get tokens-per-ticket-in-fixed l) (+ tickets bonus-tickets)) sender (as-contract tx-sender) none))
-		(and (> bonus-tickets u0) (as-contract (try! (contract-call? .token-apower burn-fixed (* (var-get apower-per-bonus-in-fixed) bonus-tickets) sender))))		
+		(try! (contract-call? token-trait transfer-fixed (* (get tokens-per-ticket-in-fixed l) tickets) sender (as-contract tx-sender) none))
+		(and 
+			(> bonus-tickets u0) 
+			(as-contract (try! (contract-call? .token-apower burn-fixed (* (var-get apower-per-bonus-in-fixed) bonus-tickets) sender)))
+			(as-contract (try! (contract-call? token-trait mint-fixed (* (get tokens-per-ticket-in-fixed l) bonus-tickets) tx-sender)))
+		)
+
 		(map-set ticket-bounds {lottery-id: lottery-id, owner: sender} bounds)
-		(map-set total-tickets-registered lottery-id (+ (get-total-tickets-registered-or-default lottery-id) tickets))
+		(map-set total-tickets-registered lottery-id (+ (get-total-tickets-registered-or-default lottery-id) (+ tickets bonus-tickets)))
 		(map-set total-bonus-tickets-registered lottery-id (+ (get-total-bonus-tickets-registered-or-default lottery-id) bonus-tickets))
 		(ok bounds)
 	)
