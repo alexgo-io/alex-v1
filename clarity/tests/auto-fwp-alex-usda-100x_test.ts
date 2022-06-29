@@ -9,7 +9,7 @@ import { YieldVault } from "./models/alex-tests-auto.ts";
 import { ReservePool } from "./models/alex-tests-reserve-pool.ts";
 import { FungibleToken } from "./models/alex-tests-tokens.ts";
 import { FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
-import { assertNotEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import { assertNotEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
 
 const ONE_8 = 100000000;
 

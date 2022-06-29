@@ -1,7 +1,7 @@
 
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.31.1/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import { assertEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
 
 const stakeContract = "age000-governance-token"
 const reserveContract = "alex-reserve-pool";
