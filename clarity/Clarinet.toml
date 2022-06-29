@@ -699,6 +699,17 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 path = "contracts/wrapped-token/token-wdiko.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]
 
+[contracts.stable-swap-pool]
+path = "contracts/pool/stable-swap-pool.clar"
+depends_on = [
+  "alex-vault",
+  "trait-sip-010",
+  "trait-vault",
+  "yield-token-equation",
+  "alex-reserve-pool",
+  "token-wxusd",
+]
+
 [contracts.auto-alex]
 path = "contracts/auto-token/auto-alex.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool", "staking-helper" ]
