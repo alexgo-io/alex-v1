@@ -882,3 +882,7 @@ depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "fwp
 [contracts.alex-lottery]
 path = "contracts/pool/alex-lottery.clar"
 depends_on = ["trait-sip-010"]
+
+[contracts.roll-auto-helper-1]
+path = "contracts/helpers/roll-auto-helper-1.clar"
+depends_on = ["swap-helper-v1-03", "age000-governance-token", "auto-alex", "collateral-rebalancing-pool-v1", "ytp-alex-v1", "yield-alex-v1", "key-alex-autoalex-v1", "auto-ytp-alex", "auto-key-alex-autoalex" ]
