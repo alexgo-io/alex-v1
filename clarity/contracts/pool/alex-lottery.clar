@@ -64,7 +64,7 @@
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
 		(asserts!
 			(and
-				(< block-height (get registration-start-height offering))
+				(< block-height (get registration-end-height offering))
 				(< (get registration-start-height offering) (get registration-end-height offering))
 			)
 			ERR-INVALID-LOTTERY-SETTING
