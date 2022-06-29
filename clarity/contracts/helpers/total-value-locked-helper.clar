@@ -1,50 +1,54 @@
-(impl-trait .trait-ownable.ownable-trait)
-(use-trait ft-trait .trait-sip-010.sip-010-trait)
-
-(define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-INVALID-TOKEN (err u2026))
-
-(define-data-var contract-owner principal tx-sender)
-(define-map approved-tokens principal bool)
-
-(define-read-only (get-contract-owner)
-  (ok (var-get contract-owner))
-)
-
-(define-public (set-contract-owner (owner principal))
-  (begin
-    (try! (check-is-owner)) 
-    (ok (var-set contract-owner owner))
-  )
-)
-
-(define-private (check-is-owner)
-  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
-)
-
-(define-private (check-is-approved-token (token principal))
-  (ok (asserts! (default-to false (map-get? approved-tokens token)) ERR-NOT-AUTHORIZED))
-)
-
-(define-public (set-approved-token (token principal) (approved bool))
-  (begin 
-    (try! (check-is-owner)) 
-    (ok (map-set approved-tokens token approved))
-  )
-)
-
-(define-public (get-total-value-locked (token-trait <ft-trait>))
-    (let 
-        (
-            (token (contract-of token-trait))
-            (staked (contract-call? .alex-reserve-pool get-balance token))
-            (balance (try! (contract-call? token-trait get-total-supply-fixed)))
-        )
-        (try! (check-is-approved-token token))
-        (ok { pool_token: token, total_supply: balance, reserved_balance: staked })
+(define-read-only (get-total-value-locked)
+    (list 
+      {
+        token: .fwp-wstx-alex-50-50-v1-01,
+        total_supply: (unwrap-panic (contract-call? .fwp-wstx-alex-50-50-v1-01 get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-wstx-alex-50-50-v1-01)
+      }
+      {
+        token: .fwp-wstx-wbtc-50-50-v1-01,
+        total_supply: (unwrap-panic (contract-call? .fwp-wstx-wbtc-50-50-v1-01 get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-wstx-wbtc-50-50-v1-01)
+      }
+      {
+        token: .fwp-alex-usda,
+        total_supply: (unwrap-panic (contract-call? .fwp-alex-usda get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-alex-usda)
+      }
+      {
+        token: .fwp-alex-wslm,
+        total_supply: (unwrap-panic (contract-call? .fwp-alex-wslm get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-alex-wslm)
+      }
+      {
+        token: .fwp-wstx-wxusd-50-50-v1-01,
+        total_supply: (unwrap-panic (contract-call? .fwp-wstx-wxusd-50-50-v1-01 get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-wstx-wxusd-50-50-v1-01)
+      }
+      {
+        token: .fwp-wstx-wnycc-50-50-v1-01,
+        total_supply: (unwrap-panic (contract-call? .fwp-wstx-wnycc-50-50-v1-01 get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-wstx-wnycc-50-50-v1-01)
+      }
+      {
+        token: .ytp-alex-v1,
+        total_supply: (unwrap-panic (contract-call? .ytp-alex-v1 get-overall-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .ytp-alex-v1)
+      }
+      {
+        token: .fwp-alex-wban,
+        total_supply: (unwrap-panic (contract-call? .fwp-alex-wban get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-alex-wban)
+      }
+      {
+        token: .fwp-alex-autoalex,
+        total_supply: (unwrap-panic (contract-call? .fwp-alex-autoalex get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-alex-autoalex)
+      }
+      {
+        token: .fwp-wstx-wmia-50-50-v1-01,
+        total_supply: (unwrap-panic (contract-call? .fwp-wstx-wmia-50-50-v1-01 get-total-supply-fixed)),
+        reserved_balnce: (contract-call? .alex-reserve-pool get-balance .fwp-wstx-wmia-50-50-v1-01)
+      }                                                
     )
-)
-
-(define-public (get-total-value-locked-many (token-traits (list 200 <ft-trait>)))
-    (map get-total-value-locked token-traits)
 )
