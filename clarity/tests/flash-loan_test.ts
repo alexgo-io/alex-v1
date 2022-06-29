@@ -1,5 +1,5 @@
-import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.31.1/index.ts';
+import { assertEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
 
 import { CRPTestAgent1 } from './models/alex-tests-collateral-rebalancing-pool.ts';
 import { FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
@@ -139,12 +139,12 @@ Clarinet.test({
 
         // spent ~$231 to buy levered position (0.02 uints)
         call = await FLTest.getBalance(alexAddress, wallet_5.address);
-        position = call.result.expectOk().expectUint(19981930096832);  
+        position = call.result.expectOk().expectUint(19981926742609);  
         call = await FLTest.getBalance(usdaAddress, wallet_5.address);
         position = call.result.expectOk().expectUint(0);            
         // should see change in key token
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(99668828712);
+        position = call.result.expectOk().expectUint(99668821801);
         // but nothing with yield token
         call = await FLTest.getBalanceSFT(yieldusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);         
@@ -164,13 +164,13 @@ Clarinet.test({
         // and now we just expired
         chain.mineEmptyBlockUntil(expiry + 1);
         result = FLTest.rollPosition(wallet_5, usdaAddress, alexAddress, keyusdaAddress, loanuserAddress, expiry, nextExpiry);
-        result.expectOk().expectUint(18977316964);
+        result.expectOk().expectUint(18977142351);
 
         // key-usda-alex should be zero, with non-zero positions in key-usda
         call = await FLTest.getBalanceSFT(keyusdaAddress, expiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
         call = await FLTest.getBalanceSFT(keyusdaAddress, nextExpiry, wallet_5.address);
-        position = call.result.expectOk().expectUint(18728614381);
+        position = call.result.expectOk().expectUint(18728435011);
         // but nothing with yield-usda
         call = await FLTest.getBalanceSFT(yieldusdaAddress, nextExpiry, wallet_5.address);
         position = call.result.expectOk().expectUint(0);
