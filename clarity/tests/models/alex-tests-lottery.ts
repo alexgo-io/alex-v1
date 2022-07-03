@@ -28,12 +28,10 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-lottery"))], deployer.address),
 		...ticketRecipients.map(allocation => Tx.contractCall("age000-governance-token", "mint-fixed", [types.uint(allocation.amount * tokensPerTicketInFixed), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
 		Tx.contractCall("alex-lottery", "create-pool", [			
-			types.tuple({
-				"token": types.principal(contractPrincipal(deployer, "age000-governance-token")),
-				"tokens-per-ticket-in-fixed": types.uint(tokensPerTicketInFixed),
-				"registration-start-height": types.uint(registrationStartHeight),
-				"registration-end-height": types.uint(registrationEndHeight),
-			}),
+			types.principal(contractPrincipal(deployer, "age000-governance-token")),
+			types.uint(tokensPerTicketInFixed),
+			types.uint(registrationStartHeight),
+			types.uint(registrationEndHeight),
 		], deployer.address),
 	]);
 	const lotteryId = parseInt(first.receipts[first.receipts.length - 1].result.expectOk().toString().substring(1));
