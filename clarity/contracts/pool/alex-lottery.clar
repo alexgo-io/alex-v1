@@ -238,7 +238,7 @@
 			(lotto (try! (get-lottery-or-fail lottery-id)))
 			(round (try! (get-lottery-round-or-fail lottery-id round-id)))
 			(tickets-registered (get-total-tickets-registered-or-default lottery-id))
-			(payout-gross (mul-down (mul-down (get percent round) tickets-registered) (get tokens-per-ticket-in-fixed lotto)))
+			(payout-gross (mul-down (* (get percent round) tickets-registered) (get tokens-per-ticket-in-fixed lotto)))
 			(payout-net (mul-down payout-gross (get payout-rate round)))
 			(max-step-size (calculate-max-step-size tickets-registered (get total-tickets round)))			
 			(walk-position (lcg-next (try! (get-vrf-uint (get draw-height round))) max-step-size))
