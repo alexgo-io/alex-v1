@@ -890,3 +890,12 @@ depends_on = ["swap-helper-v1-03", "age000-governance-token", "auto-alex", "coll
 [contracts.total-value-locked-helper]
 path = "contracts/helpers/total-value-locked-helper.clar"
 depends_on = ["trait-sip-010", "alex-reserve-pool"]
+
+[contracts.redeem-auto-helper]
+path = "contracts/helpers/redeem-auto-helper.clar"
+depends_on = [
+  "trait-sip-010",
+  "trait-semi-fungible",
+  "collateral-rebalancing-pool-v1",
+  "yield-token-pool"
+]
