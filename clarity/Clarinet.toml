@@ -893,9 +893,4 @@ depends_on = ["trait-sip-010", "alex-reserve-pool"]
 
 [contracts.redeem-auto-helper]
 path = "contracts/helpers/redeem-auto-helper.clar"
-depends_on = [
-  "trait-sip-010",
-  "trait-semi-fungible",
-  "collateral-rebalancing-pool-v1",
-  "yield-token-pool"
-]
+depends_on = []
