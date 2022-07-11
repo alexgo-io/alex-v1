@@ -9,7 +9,7 @@
 
 (define-fungible-token key-xusd-xbtc)
 (define-map token-balances {token-id: uint, owner: principal} uint)
-(define-map token-supplies uint uint)a
+(define-map token-supplies uint uint)
 (define-map token-owned principal (list 200 uint))
 
 (define-data-var contract-owner principal tx-sender)

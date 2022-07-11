@@ -894,3 +894,40 @@ depends_on = ["trait-sip-010", "alex-reserve-pool"]
 [contracts.redeem-auto-helper]
 path = "contracts/helpers/redeem-auto-helper.clar"
 depends_on = []
+
+[contracts.multisig-crp-xusd-xbtc]
+path = "contracts/multisig/multisig-crp-xusd-xbtc.clar"
+depends_on = [
+  "yield-xusd",
+  "key-xusd-xbtc",
+  "collateral-rebalancing-pool-v1",
+  "trait-multisig-vote"
+]
+
+[contracts.multisig-ytp-xusd]
+path = "contracts/multisig/multisig-ytp-xusd.clar"
+depends_on = [ "ytp-xusd", "yield-xusd", "yield-token-pool", "trait-multisig-vote" ]
+
+[contracts.key-xusd-xbtc]
+path = "contracts/key-token/key-xusd-xbtc.clar"
+depends_on = [ "trait-ownable", "trait-semi-fungible" ]
+
+[contracts.yield-xusd]
+path = "contracts/yield-token/yield-xusd.clar"
+depends_on = ["trait-ownable", "trait-semi-fungible"]
+
+[contracts.ytp-xusd]
+path = "contracts/pool-token/ytp-xusd.clar"
+depends_on = ["trait-ownable", "trait-semi-fungible"]
+
+[contracts.auto-ytp-xusd]
+path = "contracts/auto-token/auto-ytp-xusd.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.auto-yield-xusd]
+path = "contracts/auto-token/auto-yield-xusd.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.auto-key-xusd-xbtc]
+path = "contracts/auto-token/auto-key-xusd-xbtc.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
