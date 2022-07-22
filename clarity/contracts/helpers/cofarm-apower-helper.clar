@@ -72,8 +72,11 @@
             (alex (if (is-eq shares u0) u0 (try! (contract-call? .auto-alex get-token-given-position shares))))
             (apower (if (is-eq alex u0) u0 (mul-down alex (contract-call? .alex-reserve-pool get-apower-multiplier-in-fixed-or-default .fwp-wstx-alex-50-50-v1-01))))
         ) 
-        (and (> apower u0) (as-contract (try! (contract-call? .token-apower mint-fixed apower recipient))))
-        ;; TODO: burn apower
+        (and 
+            (> apower u0) 
+            (as-contract (try! (contract-call? .token-apower mint-fixed apower recipient)))
+            (as-contract (try! (contract-call? .token-apower burn-fixed apower tx-sender)))
+        )
         (map-set user-distributed-per-cycle { user: recipient, cycle: cycle } true)
         (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
       )
