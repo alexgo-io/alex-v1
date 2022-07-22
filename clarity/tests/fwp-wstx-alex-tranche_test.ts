@@ -228,7 +228,16 @@ Clarinet.test({
 
       block = chain.mineBlock(
         [
-          Tx.contractCall("fwp-wstx-alex-tranched-64", "claim-and-stake", [types.uint(cycle - 1)], deployer.address),
+          Tx.contractCall("fwp-wstx-alex-tranched-64", "claim-and-stake", [types.uint(cycle - 1)], deployer.address),                   
+        ]
+      );
+      block.receipts.forEach((e) => { e.result.expectOk() }); 
+      
+      // let call: any = chain.callReadOnlyFn("fwp-wstx-alex-tranched-64", "get-distributable-per-cycle-or-default", [types.uint(cycle - 1)], deployer.address);
+      // console.log(call);
+
+      block = chain.mineBlock(
+        [
           Tx.contractCall("fwp-wstx-alex-tranched-64", "distribute", 
             [
               types.uint(cycle - 1),
@@ -253,7 +262,7 @@ Clarinet.test({
         ]
       )
       block.receipts.forEach((e) => { e.result.expectOk() });   
-      console.log(block.receipts[block.receipts.length - 1].events);      
+      // console.log(block.receipts[block.receipts.length - 3].events);      
     }
 
     block = chain.mineBlock([
@@ -307,8 +316,8 @@ Clarinet.test({
 
     block = chain.mineBlock(cofarm_to_reduce);
     block.receipts.forEach((e) => { e.result.expectOk() });
-    // console.log(block.receipts[0].events);
-    // console.log(block.receipts[block.receipts.length - 1].events);
+    console.log(block.receipts[0].events);
+    console.log(block.receipts[block.receipts.length - 1].events);
 
   },
 });
