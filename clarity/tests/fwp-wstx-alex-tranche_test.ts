@@ -189,7 +189,7 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-available-alex", [types.uint(2000e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-open-to-all", [types.bool(true)], deployer.address),
-        Tx.contractCall("token-apower", "add-approved-contract", [types.principal(wallet_1.address)], deployer.address),
+        Tx.contractCall("token-apower", "add-approved-contract", [types.principal(deployer.address + '.cofarm-apower-helper')], deployer.address),
         Tx.contractCall("cofarm-apower-helper", "add-approved-contract", [types.principal(wallet_1.address)], deployer.address),
         ...cofarm_to_add
       ]);
@@ -252,7 +252,8 @@ Clarinet.test({
             wallet_1.address)                      
         ]
       )
-      block.receipts.forEach((e) => { e.result.expectOk() });         
+      block.receipts.forEach((e) => { e.result.expectOk() });   
+      console.log(block.receipts[block.receipts.length - 1].events);      
     }
 
     block = chain.mineBlock([
@@ -306,8 +307,8 @@ Clarinet.test({
 
     block = chain.mineBlock(cofarm_to_reduce);
     block.receipts.forEach((e) => { e.result.expectOk() });
-    console.log(block.receipts[0].events);
-    console.log(block.receipts[block.receipts.length - 1].events);
+    // console.log(block.receipts[0].events);
+    // console.log(block.receipts[block.receipts.length - 1].events);
 
   },
 });
