@@ -152,7 +152,7 @@ Clarinet.test({
         ONE_8,
         ONE_8,
         ONE_8
-      ),
+      ),      
       reservePool.addToken(deployer, fwpTokenAddress),
       reservePool.setActivationBlock(
         deployer,
@@ -168,6 +168,11 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),   
+      reservePool.setApowerMultiplierInFixed(
+        deployer,
+        fwpTokenAddress,
+        0.5e8
+      ),
       ...positions_to_add   
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
@@ -184,6 +189,8 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-available-alex", [types.uint(2000e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-open-to-all", [types.bool(true)], deployer.address),
+        Tx.contractCall("token-apower", "add-approved-contract", [types.principal(wallet_1.address)], deployer.address),
+        Tx.contractCall("cofarm-apower-helper", "add-approved-contract", [types.principal(wallet_1.address)], deployer.address),
         ...cofarm_to_add
       ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
@@ -235,7 +242,14 @@ Clarinet.test({
               types.uint(1),
               types.list([types.principal(wallet_1.address)])
             ],
-            deployer.address)          
+            deployer.address),
+          Tx.contractCall("cofarm-apower-helper", "distribute-apower-only", 
+            [
+              types.uint(cycle - 1),
+              types.uint(0),
+              types.list(participants.map(e => { types.principal(e) }))
+            ],
+            wallet_1.address)                      
         ]
       )
       block.receipts.forEach((e) => { e.result.expectOk() });         
