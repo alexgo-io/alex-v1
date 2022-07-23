@@ -935,3 +935,7 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 [contracts.cofarm-apower-helper]
 path = "contracts/helpers/cofarm-apower-helper.clar"
 depends_on = [ "trait-ownable", "fwp-wstx-alex-tranched-64", "alex-reserve-pool", "auto-alex", "token-apower" ]
+
+[contracts.lottery-claim-helper]
+path = "contracts/helpers/lottery-claim-helper.clar"
+depends_on = [ "trait-ownable", "alex-lottery" ]
