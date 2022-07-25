@@ -75,7 +75,7 @@
         (and 
             (> apower u0) 
             (as-contract (try! (contract-call? .token-apower mint-fixed apower recipient)))
-            (as-contract (try! (contract-call? .token-apower burn-fixed apower tx-sender)))
+            (as-contract (try! (contract-call? .token-apower burn-fixed apower .fwp-wstx-alex-tranched-64)))
         )
         (map-set user-distributed-per-cycle { user: recipient, cycle: cycle } true)
         (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
