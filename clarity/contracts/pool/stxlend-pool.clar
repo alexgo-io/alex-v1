@@ -60,6 +60,7 @@
     )
 )
 
+;; (tuple (hashbytes 0xfcec7445c8c394238ee3dc8d9fc746c0e97bd9b9) (version 0x01))
 (define-public (delegate-stx (pool-trait <pool-trait>) (amount-ustx uint) (delegate-to principal) (until-burn-ht (optional uint))
               (pool-pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1)))))
               (user-pox-addr (tuple (hashbytes (buff 20)) (version (buff 1))))
@@ -67,7 +68,7 @@
     (begin 
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
         (asserts! (is-eq (contract-of pool-trait) (var-get approved-pool)) ERR-STACKING-POOL)
-        (contract-call? pool-trait delegate-stx )
+        (contract-call? pool-trait delegate-stx  )
         (ok true)
     )
 
