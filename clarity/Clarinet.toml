@@ -939,3 +939,11 @@ depends_on = [ "trait-ownable", "fwp-wstx-alex-tranched-64", "alex-reserve-pool"
 [contracts.lottery-claim-helper]
 path = "contracts/helpers/lottery-claim-helper.clar"
 depends_on = [ "trait-ownable", "alex-lottery" ]
+
+[contracts.trait-stacking-pool]
+path = "contracts/traits/trait-stacking-pool.clar"
+depends_on = []
+
+[contracts.stxlend-pool]
+path = "contracts/pool/stxlend-pool.clar"
+depends_on = [ "trait-ownable", "trait-stacking-pool" ]
