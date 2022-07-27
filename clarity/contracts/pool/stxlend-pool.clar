@@ -3,11 +3,23 @@
 (use-trait pool-trait .trait-stacking-pool.staking-pool-trait)
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-STACKING-POOL (err u1001))
+(define-constant ERR-STACKING-POOL (err u21001))
+(define-constant ERR-ZERO-COMMITTED (err u21002))
+
+(define-constant ONE_8 u100000000)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 (define-data-var approved-pool principal tx-sender)
+
+(define-data-var lock-period uint u6)
+(define-data-var leverage uint u10)
+
+(define-map total-lend-committed-per-cycle uint uint)
+(define-map total-borrow-commited-per-cycle uint uint)
+
+(define-map lend-commited-per-cycle uint { lender: principal, commited: uint })
+(define-map borrow-commited-per-cycle uint { borrower: principal, commited: uint })
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -42,34 +54,54 @@
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-(define-public (disallow-contract-caller (caller principal))
+(define-read-only (get-max-lend-rate-in-fixed)
+  (- (div-down (* ONE_8 (var-get leverage)) (* ONE_8 (- (var-get leverage) u1))) ONE_8)
+)
+
+(define-read-only (get-lock-period)
+  (var-get lock-period)
+)
+
+(define-public (set-lock-period (new-lock-period uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set lock-period new-lock-period))
+  )
+)
+
+(define-read-only (get-approved-pool)
+    (var-get approved-pool)
+)
+
+(define-public (set-approved-pool (pool principal))
     (begin 
         (try! (check-is-owner))
-        (var-set approved-pool tx-sender)
-        ;; (contract-call? 'SP000000000000000000002Q6VF78.pox disallow-contract-caller caller)
-        (ok true)
+        ;; (contract-call? 'SP000000000000000000002Q6VF78.pox disallow-contract-caller (var-get approved-pool))        
+        ;; (contract-call? 'SP000000000000000000002Q6VF78.pox allow-contract-caller pool none)
+        (ok (var-set approved-pool pool))
     )
 )
 
-(define-public (allow-contract-caller (caller principal) (until-burn-ht (optional uint)))
-    (begin 
-        (try! (check-is-owner))
-        (var-set approved-pool caller)
-        ;; (contract-call? 'SP000000000000000000002Q6VF78.pox allow-contract-caller caller until-burn-ht)
-        (ok true)
-    )
-)
 
-;; (tuple (hashbytes 0xfcec7445c8c394238ee3dc8d9fc746c0e97bd9b9) (version 0x01))
-(define-public (delegate-stx (pool-trait <pool-trait>) (amount-ustx uint) (delegate-to principal) (until-burn-ht (optional uint))
-              (pool-pox-addr (optional (tuple (hashbytes (buff 20)) (version (buff 1)))))
-              (user-pox-addr (tuple (hashbytes (buff 20)) (version (buff 1))))
-              (lock-period uint))
+;; SPXVRSEH2BKSXAEJ00F1BY562P45D5ERPSKR4Q33.xverse-pool-v2
+;; assume rewards paid to Stacks address
+(define-public (delegate-stx (approved-pool-trait <pool-trait>) (cycle uint))
     (begin 
         (asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
-        (asserts! (is-eq (contract-of pool-trait) (var-get approved-pool)) ERR-STACKING-POOL)
-        (contract-call? pool-trait delegate-stx  )
+        (asserts! (is-eq (contract-of approved-pool-trait) (var-get approved-pool)) ERR-STACKING-POOL)
+        (asserts! (and (> (map-get? cycle total-lend-committed-per-cycle) u0) (> (map-get? cycle total-borrow-committed-per-cycle) u0)) ERR-ZERO-COMMITTED)
+        ;; (contract-call? approved-pool-trait delegate-stx  )
         (ok true)
     )
+)
 
+(define-private (mul-down (a uint) (b uint))
+    (/ (* a b) ONE_8)
+)
+
+(define-private (div-down (a uint) (b uint))
+  (if (is-eq a u0)
+    u0
+    (/ (* a ONE_8) b)
+  )
 )
