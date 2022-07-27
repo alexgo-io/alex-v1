@@ -14,10 +14,10 @@
 
 (define-data-var lock-period uint u6)
 (define-data-var leverage uint u10)
-(define-data-var cap-ref-rate-in-fixed uint u0)
+(define-data-var cap-ref-rewards-in-fixed uint u0)
 
-(define-data-var min-ref-rate-in-fixed uint u1400000) ;; 1.4% abs
-(define-data-var max-ref-rate-in-fixed uint u1800000) ;; 1.8% abs
+(define-data-var min-ref-rewards-in-fixed uint u1400000) ;; 1.4% abs
+(define-data-var max-ref-rewards-in-fixed uint u1800000) ;; 1.8% abs
 
 (define-map total-lend-committed-in-fixed-per-cycle uint uint)
 (define-map total-borrow-commited-in-fixed-per-cycle uint uint)
@@ -69,12 +69,12 @@
     (try! (check-is-owner))
     (asserts! (> new-leverage u1) ERR-INVALID-LEVERAGE)
     (var-set leverage new-leverage)
-    (ok (var-set cap-ref-rate-in-fixed (- (div-down (* ONE_8 new-leverage) (* ONE_8 (- new-leverage u1))) ONE_8)))
+    (ok (var-set cap-ref-rewards-in-fixed (- (div-down (* ONE_8 new-leverage) (* ONE_8 (- new-leverage u1))) ONE_8)))
   )
 )
 
-(define-read-only (get-cap-ref-rate-in-fixed)
-  (var-get cap-ref-rate-in-fixed)
+(define-read-only (get-cap-ref-rewards-in-fixed)
+  (var-get cap-ref-rewards-in-fixed)
 )
 
 (define-read-only (get-lock-period)
@@ -130,6 +130,15 @@
   (burn-height-to-reward-cycle burn-block-height)
 )
 
+(define-read-only (get-rewards-for-lender-per-cycle (cycle uint))
+  (let 
+    (
+      (mid-rewards (/ (+ (var-get max-ref-rewards-in-fixed) (var-get min-ref-rewards-in-fixed)) u2))
+      (mul-down (get-lend-borrow-ratio cycle) mid-rewards)
+    )     
+  )
+)
+
 (define-read-only (is-pool-open)
   (> (- (reward-cycle-to-burn-height current-pox-reward-cycle) (var-get pool-close-length)) burn-block-height)
 )
@@ -169,6 +178,14 @@
     (asserts! (> current-pox-reward-cycle cycle) ERR-REFUND-NOT-AVAILABLE)    
     (asserts! (< (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) ERR-REFUND-NOT-AVAILABLE)
     (as-contract (contract-call? .token-wstx transfer-fixed (mul-down (get-borrow-commited-in-fixed-per-cycle-or-default borrower cycle) (- ONE_8 (div-down (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))))) tx-sender borrower none))
+  )
+)
+
+(define-public (pay-rewards-to-lender (lender principal))
+  (begin 
+    (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender lender) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+    (asserts! (not (is-pool-open)) ERR-POOL-NOT-AVAILABLE)
+
   )
 )
 
