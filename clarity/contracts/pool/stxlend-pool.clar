@@ -14,12 +14,18 @@
 
 (define-data-var lock-period uint u6)
 (define-data-var leverage uint u10)
+(define-data-var cap-ref-rate-in-fixed uint u0)
 
-(define-map total-lend-committed-per-cycle uint uint)
-(define-map total-borrow-commited-per-cycle uint uint)
+(define-data-var min-ref-rate-in-fixed uint u1400000) ;; 1.4% abs
+(define-data-var max-ref-rate-in-fixed uint u1800000) ;; 1.8% abs
 
-(define-map lend-commited-per-cycle uint { lender: principal, commited: uint })
-(define-map borrow-commited-per-cycle uint { borrower: principal, commited: uint })
+(define-map total-lend-committed-in-fixed-per-cycle uint uint)
+(define-map total-borrow-commited-in-fixed-per-cycle uint uint)
+
+(define-map lend-commited-in-fixed-per-cycle { lender: principal, cycle: uint } uint)
+(define-map borrow-commited-in-fixed { borrower: principal, cycle: uint } uint)
+
+(define-data-var pool-close-length uint u144)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -54,8 +60,21 @@
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED))
 )
 
-(define-read-only (get-max-lend-rate-in-fixed)
-  (- (div-down (* ONE_8 (var-get leverage)) (* ONE_8 (- (var-get leverage) u1))) ONE_8)
+(define-read-only (get-leverage)
+  (var-get leverage)
+)
+
+(define-public (set-leverage (new-leverage uint))
+  (begin 
+    (try! (check-is-owner))
+    (asserts! (> new-leverage u1) ERR-INVALID-LEVERAGE)
+    (var-set leverage new-leverage)
+    (ok (var-set cap-ref-rate-in-fixed (- (div-down (* ONE_8 new-leverage) (* ONE_8 (- new-leverage u1))) ONE_8)))
+  )
+)
+
+(define-read-only (get-cap-ref-rate-in-fixed)
+  (var-get cap-ref-rate-in-fixed)
 )
 
 (define-read-only (get-lock-period)
@@ -66,6 +85,90 @@
   (begin 
     (try! (check-is-owner))
     (ok (var-set lock-period new-lock-period))
+  )
+)
+
+(define-read-only (get-total-lend-committed-in-fixed-per-cycle-or-default (cycle uint))
+  (default-to u340282366920938463463374607431768211455 (map-get? total-lend-commited-in-fixed-per-cycle cycle))
+)
+
+(define-read-only (get-total-borrow-committed-in-fixed-per-cycle-or-default (cycle uint))
+  (default-to u340282366920938463463374607431768211455 (map-get? total-borrow-commited-in-fixed-per-cycle cycle))
+)
+
+(define-read-only (get-lend-committed-in-fixed-per-cycle-or-default (lender principal) (cycle uint))
+  (default-to u0 (map-get? lend-committed-in-fixed-per-cycle { lender: lender, cycle: cycle }))
+)
+
+(define-read-only (get-borrow-committed-in-fixed-per-cycle-or-default (borrower principal) (cycle uint))
+  (default-to u0 (map-get? borrow-committed-in-fixed-per-cycle { borrower: borrower, cycle: cycle }))
+)
+
+(define-read-only (get-lend-borrow-ratio-in-fixed (cycle uint))
+  (mul-down (get-total-lend-commited-in-fixed-per-cycle-or-default cycle) (get-total-borrow-commited-in-fixed-per-cycle-or-default cycle))
+)
+
+(define-read-only (burn-height-to-reward-cycle (height uint))
+  (let 
+    (
+      (pox-info (unwrap-panic (contract-call? 'SP000000000000000000002Q6VF78.pox get-pox-info)))
+    )
+    (/ (- height (get first-burnchain-block-height pox-info)) (get reward-cycle-length pox-info))
+  )
+)
+
+(define-read-only (reward-cycle-to-burn-height (cycle uint))
+  (let 
+    (
+      (pox-info (unwrap-panic (contract-call? 'SP000000000000000000002Q6VF78.pox get-pox-info)))
+    )
+    (+ (get first-burnchain-block-height pox-info) (* cycle (get reward-cycle-length pox-info)))
+  )
+)
+
+(define-read-only (current-pox-reward-cycle)
+  (burn-height-to-reward-cycle burn-block-height)
+)
+
+(define-read-only (is-pool-open)
+  (> (- (reward-cycle-to-burn-height current-pox-reward-cycle) (var-get pool-close-length)) burn-block-height)
+)
+
+(define-public (register-lender-for-next-cycle (amount-in-fixed uint))
+  (begin 
+    (asserts! (is-pool-open) ERR-POOL-NOT-AVAILABLE)
+    (asserts! (is-eq u0 (get-lend-committed-in-fixed-per-cycle-or-default tx-sender (+ current-pox-reward-cycle u1))) ERR-ALREADY-RESIGERED)
+    (try! (contract-call? .token-wstx transfer-fixed amount-in-fixed tx-sender (as-contract tx-sender) none))
+    (map-set lend-committed-in-fixed-per-cycle { lender: tx-sender, cycle: (+ current-pox-reward-cycle u1) } amount-in-fixed)
+    (ok { lender: tx-sender, cycle: (+ current-pox-reward-cycle u1), amount-in-fixed: amount-in-fixed })
+  )
+)
+
+(define-public (register-borrower-for-next-cycle (amount-in-fixed uint))
+  (begin 
+    (asserts! (is-pool-open) ERR-POOL-NOT-AVAILABLE)
+    (asserts! (is-eq u0 (get-borrower-committed-in-fixed-per-cycle-or-default tx-sender (+ current-pox-reward-cycle u1))) ERR-ALREADY-RESIGERED)
+    (try! (contract-call? .token-wstx transfer-fixed amount-in-fixed tx-sender (as-contract tx-sender) none))
+    (map-set borrow-committed-in-fixed-per-cycle { borrower: tx-sender, cycle: (+ current-pox-reward-cycle u1) } amount-in-fixed)
+    (ok { borrower: tx-sender, cycle: (+ current-pox-reward-cycle u1), amount-in-fixed: amount-in-fixed })
+  )
+)
+
+(define-public (refund-lender (lender principal) (cycle uint))
+  (begin 
+    (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender lender) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+    (asserts! (> current-pox-reward-cycle cycle) ERR-REFUND-NOT-AVAILABLE)    
+    (asserts! (> (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) ERR-REFUND-NOT-AVAILABLE)
+    (as-contract (contract-call? .token-wstx transfer-fixed (mul-down (get-lend-commited-in-fixed-per-cycle-or-default lender cycle) (- ONE_8 (div-down (* ONE_8 (var-get leverage)) (get-lend-borrow-ratio-in-fixed cycle)))) tx-sender lender none))
+  )
+)
+
+(define-public (refund-borrower (borrower principal) (cycle uint))
+  (begin 
+    (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender borrower) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+    (asserts! (> current-pox-reward-cycle cycle) ERR-REFUND-NOT-AVAILABLE)    
+    (asserts! (< (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) ERR-REFUND-NOT-AVAILABLE)
+    (as-contract (contract-call? .token-wstx transfer-fixed (mul-down (get-borrow-commited-in-fixed-per-cycle-or-default borrower cycle) (- ONE_8 (div-down (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))))) tx-sender borrower none))
   )
 )
 
