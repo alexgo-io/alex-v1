@@ -14,10 +14,10 @@
 
 (define-data-var lock-period uint u6)
 (define-data-var leverage uint u10)
-(define-data-var cap-ref-rewards-in-fixed uint u0)
+(define-data-var cap-rewards-percent-in-fixed uint u0)
 
-(define-data-var min-ref-rewards-in-fixed uint u1400000) ;; 1.4% abs
-(define-data-var max-ref-rewards-in-fixed uint u1800000) ;; 1.8% abs
+(define-data-var min-rewards-percent-in-fixed uint u1400000) ;; 1.4% abs
+(define-data-var max-rewards-percent-in-fixed uint u1800000) ;; 1.8% abs
 
 (define-map total-lend-committed-in-fixed-per-cycle uint uint)
 (define-map total-borrow-commited-in-fixed-per-cycle uint uint)
@@ -69,12 +69,12 @@
     (try! (check-is-owner))
     (asserts! (> new-leverage u1) ERR-INVALID-LEVERAGE)
     (var-set leverage new-leverage)
-    (ok (var-set cap-ref-rewards-in-fixed (- (div-down (* ONE_8 new-leverage) (* ONE_8 (- new-leverage u1))) ONE_8)))
+    (ok (var-set cap-rewards-percent-in-fixed (- (div-down (* ONE_8 new-leverage) (* ONE_8 (- new-leverage u1))) ONE_8)))
   )
 )
 
-(define-read-only (get-cap-ref-rewards-in-fixed)
-  (var-get cap-ref-rewards-in-fixed)
+(define-read-only (get-cap-rewards-percent-in-fixed)
+  (var-get cap-rewards-percent-in-fixed)
 )
 
 (define-read-only (get-lock-period)
@@ -130,12 +130,19 @@
   (burn-height-to-reward-cycle burn-block-height)
 )
 
-(define-read-only (get-rewards-for-lender-per-cycle (cycle uint))
+(define-read-only (get-rewards-percent-lender (cycle uint))
   (let 
     (
-      (mid-rewards (/ (+ (var-get max-ref-rewards-in-fixed) (var-get min-ref-rewards-in-fixed)) u2))
-      (mul-down (get-lend-borrow-ratio cycle) mid-rewards)
-    )     
+      (mid (/ (+ (var-get max-rewards-percent-in-fixed) (var-get min-rewards-percent-in-fixed)) u2))
+      (raw (mul-down (get-lend-borrow-ratio cycle) mid))
+    )
+    (if (< raw (var-get min-rewards-percent-in-fixed))
+      (var-get min-rewards-percent-in-fixed)
+      (if (> raw (var-get max-rewards-percent-in-fixed))
+        (var-get max-rewards-percent-in-fixed)
+        raw
+      )
+    )
   )
 )
 
@@ -163,29 +170,70 @@
   )
 )
 
+(define-read-only (refund-percent-lender (cycle uint))
+  (if (> (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) 
+    (- ONE_8 (div-down (* ONE_8 (var-get leverage)) (get-lend-borrow-ratio-in-fixed cycle)))
+    u0
+  )
+)
+
+(define-read-only (refund-percent-borrower (cycle uint))
+  (if (< (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) 
+    (- ONE_8 (div-down (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))))
+    u0
+  )
+)
+
 (define-public (refund-lender (lender principal) (cycle uint))
-  (begin 
+  (let 
+    (
+      (refund-amount (mul-down (get-lend-commited-in-fixed-per-cycle-or-default lender cycle) (refund-percent-lender cycle)))
+    ) 
     (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender lender) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
     (asserts! (> current-pox-reward-cycle cycle) ERR-REFUND-NOT-AVAILABLE)    
-    (asserts! (> (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) ERR-REFUND-NOT-AVAILABLE)
-    (as-contract (contract-call? .token-wstx transfer-fixed (mul-down (get-lend-commited-in-fixed-per-cycle-or-default lender cycle) (- ONE_8 (div-down (* ONE_8 (var-get leverage)) (get-lend-borrow-ratio-in-fixed cycle)))) tx-sender lender none))
+    (and (> refund-amount u0) (as-contract (try! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender lender none))))
+    (ok refund-amount)
   )
 )
 
 (define-public (refund-borrower (borrower principal) (cycle uint))
-  (begin 
+  (let 
+    (
+      (refund-amount (mul-down (get-borrow-commited-in-fixed-per-cycle-or-default borrower cycle) (refund-percent-borrower cycle)))
+    ) 
     (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender borrower) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
     (asserts! (> current-pox-reward-cycle cycle) ERR-REFUND-NOT-AVAILABLE)    
-    (asserts! (< (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))) ERR-REFUND-NOT-AVAILABLE)
-    (as-contract (contract-call? .token-wstx transfer-fixed (mul-down (get-borrow-commited-in-fixed-per-cycle-or-default borrower cycle) (- ONE_8 (div-down (get-lend-borrow-ratio-in-fixed cycle) (* ONE_8 (var-get leverage))))) tx-sender borrower none))
+    (and (> refund-amount u0) (as-contract (try! (contract-call? .token-wstx transfer-fixed refund-amount tx-sender borrower none))))
+    (ok refund-amount)
   )
 )
 
-(define-public (pay-rewards-to-lender (lender principal))
-  (begin 
+(define-public (pay-rewards-to-lender (lender principal) (cycle uint))
+  (let 
+    (
+      (rewards-percent (get-rewards-percent-lender cycle))
+      (refund-percent (refund-lender-percent cycle))
+      (rewards-amount (mul-down rewards-percent (mul-down (- ONE_8 refund-percent) (get-lend-committed-in-fixed-per-cycle-or-default lender cycle))))
+    ) 
     (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender lender) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
     (asserts! (not (is-pool-open)) ERR-POOL-NOT-AVAILABLE)
+    (and (> rewards-amount u0) (as-contract (try! (contract-call? .token-wstx transfer-fixed rewards-amount tx-sender lender none))))
+    (ok rewards-amount)
+  )
+)
 
+(define-public (claim-lender (lender principal) (cycle uint))
+  (begin 
+    (asserts! (> current-pox-reward-cycle cycle) ERR-REFUND-NOT-AVAILABLE)
+    (as-contract (contract-call? .token-wstx transfer-fixed (get-lend-committed-in-fixed-per-cycle-or-default lender cycle) tx-sender lender none))
+  )
+)
+
+(define-public (claim-borrower (borrower principal) (cycle uint))
+  (begin 
+    ;; calculate what's due to borrower after paying out lenders
+    ;; pay out borrower proportionally
+    (ok true)
   )
 )
 
