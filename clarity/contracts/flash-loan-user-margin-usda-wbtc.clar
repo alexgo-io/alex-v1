@@ -17,10 +17,10 @@
             ;; gross amount = amount * price / ltv
             ;; buff to uint conversion
             (memo-uint (buff-to-uint (unwrap! memo ERR-EXPIRY-IS-NONE)))
-            (ltv (try! (contract-call? .collateral-rebalancing-pool get-ltv .token-wbtc .token-wusda memo-uint)))
+            (ltv (try! (contract-call? .collateral-rebalancing-pool-v1 get-ltv .token-wbtc .token-wusda memo-uint)))
             (price (try! (contract-call? .yield-token-pool get-price memo-uint .yield-wbtc)))
             (gross-amount (mul-up amount (div-down price ltv)))
-            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool add-to-position .token-wbtc .token-wusda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))
+            (minted-yield-token (get yield-token (try! (contract-call? .collateral-rebalancing-pool-v1 add-to-position .token-wbtc .token-wusda memo-uint .yield-wbtc .key-wbtc-usda gross-amount))))
             (swapped-token (get dx (try! (contract-call? .yield-token-pool swap-y-for-x memo-uint .yield-wbtc .token-wbtc minted-yield-token none))))
         )
         (asserts! (is-eq .token-wusda (contract-of collateral)) ERR-INVALID-TOKEN)

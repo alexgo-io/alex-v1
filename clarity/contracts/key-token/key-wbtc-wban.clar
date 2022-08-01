@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(impl-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -320,5 +320,5 @@
 	(fold transfer-many-memo-fixed-iter transfers (ok true))
 )
 
-(map-set approved-contracts .collateral-rebalancing-pool true)
-(map-set approved-contracts .yield-collateral-rebalancing-pool true)
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)
+(map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)

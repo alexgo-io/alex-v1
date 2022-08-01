@@ -1,6 +1,6 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 ;; yield-token-pool
 (define-constant MAX_T u95000000)
@@ -1200,4 +1200,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .collateral-rebalancing-pool true)
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)

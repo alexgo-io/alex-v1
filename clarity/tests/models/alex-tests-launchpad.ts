@@ -4,7 +4,7 @@ import {
     Tx,
     ReadOnlyFn,
     types,
-} from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 
 class ALEXLaunchpad {
     chain: Chain;

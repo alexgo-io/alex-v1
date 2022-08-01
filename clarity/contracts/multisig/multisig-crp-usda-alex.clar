@@ -1,5 +1,5 @@
 (impl-trait .trait-multisig-vote.multisig-vote-sft-trait)
-(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 
@@ -357,8 +357,8 @@
       (new-fee-rate-y (get new-fee-rate-y proposal))
     ) 
   
-    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-x .token-usda .token-wbtc expiry new-fee-rate-x)))
-    (as-contract (try! (contract-call? .collateral-rebalancing-pool set-fee-rate-y .token-usda .token-wbtc expiry new-fee-rate-y)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-x .token-usda .token-wbtc expiry new-fee-rate-x)))
+    (as-contract (try! (contract-call? .collateral-rebalancing-pool-v1 set-fee-rate-y .token-usda .token-wbtc expiry new-fee-rate-y)))
     
     (ok true)
   )

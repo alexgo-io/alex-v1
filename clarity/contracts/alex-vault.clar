@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-vault.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait sft-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 (use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 u100000000) ;; 8 decimal places
@@ -209,10 +209,10 @@
 (map-set approved-contracts .simple-weight-pool-alex true)
 
 ;; testing only
-(map-set approved-contracts .collateral-rebalancing-pool true)  
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)  
 (map-set approved-contracts .liquidity-bootstrapping-pool true)  
 (map-set approved-contracts .yield-token-pool true)  
-(map-set approved-contracts .yield-collateral-rebalancing-pool true)
+(map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-usda-wbtc true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wstx-usda true)

@@ -1,5 +1,5 @@
 (impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-semi-fungible-v1-01.semi-fungible-trait)
+(impl-trait .trait-semi-fungible.semi-fungible-trait)
 
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -352,4 +352,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .collateral-rebalancing-pool true)
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)

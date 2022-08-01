@@ -1,5 +1,5 @@
 
-import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.14.0/index.ts';
+import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.31.1/index.ts';
 import { LBPTestAgent } from './models/alex-tests-liquidity-bootstrapping-pool.ts';
 import { USDAToken, ALEXToken } from './models/alex-tests-tokens.ts';
 
@@ -72,7 +72,7 @@ Clarinet.test({
         // swap triggers change in weight
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['weight-x-t'].expectUint(89758795);       
+        position['weight-x-t'].expectUint(89757332);       
 
         // half time passed
         chain.mineEmptyBlockUntil(500);
@@ -80,43 +80,43 @@ Clarinet.test({
         // no swaps, so weight shouldn't have changed.
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['weight-x-t'].expectUint(89758795);          
+        position['weight-x-t'].expectUint(89757332);          
         
         // buy some alex so it doesn't fall below min-price.
         result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, 30 * ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(30 * ONE_8);
-        position['dx'].expectUint(2666521248);
+        position['dx'].expectUint(2666940831);
         
         // after swap, weight now halves.
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['weight-x-t'].expectUint(50201006);          
+        position['weight-x-t'].expectUint(50444895);          
 
         // implied price is now 0.14679128195479
         result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(ONE_8);
-        position['dx'].expectUint(673999708);
+        position['dx'].expectUint(667476317);
 
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(80274141756);
-        position['balance-x'].expectUint(96559982044);
+        position['balance-x'].expectUint(96566085852);
         position['balance-y'].expectUint(14311111111);         
         
         // launch not going well, so withdraw liquidity
         result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, 0.5 * ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(48279991021);
+        position['dx'].expectUint(48283042925);
         position['dy'].expectUint(7155555555);
 
         // Check pool details and print
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(40137070878);
-        position['balance-x'].expectUint(48279991023);
+        position['balance-x'].expectUint(48283042927);
         position['balance-y'].expectUint(7155555556);        
 
         chain.mineEmptyBlockUntil(998);
@@ -126,12 +126,12 @@ Clarinet.test({
         result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
         position = result.expectOk().expectTuple();
         position['dy'].expectUint(ONE_8);
-        position['dx'].expectUint(662235876);     
+        position['dx'].expectUint(655905342);     
         
         // and weight now is at min.
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
-        position['weight-x-t'].expectUint(10160805);     
+        position['weight-x-t'].expectUint(10161780);     
 
         // resulting in alex price falling below min-price, throwing error
         result = LBPTest.swapYForX(deployer, alexAddress, usdaAddress, expiry, ONE_8, 0);
@@ -148,13 +148,13 @@ Clarinet.test({
         call = await LBPTest.getPoolDetails(alexAddress, usdaAddress, expiry);
         position = call.result.expectOk().expectTuple();
         position['total-supply'].expectUint(40137070878);
-        position['balance-x'].expectUint(47617755147);
+        position['balance-x'].expectUint(47627137585);
         position['balance-y'].expectUint(7255555556);  
 
         // withdraw all remaining liquidity
         result = LBPTest.reducePosition(deployer, alexAddress, usdaAddress, expiry, poolTokenAddress, ONE_8);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(47617755146);
+        position['dx'].expectUint(47627137584);
         position['dy'].expectUint(7255555555);
 
         // Check pool details and print

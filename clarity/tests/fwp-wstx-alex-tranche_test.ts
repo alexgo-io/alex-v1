@@ -4,11 +4,11 @@ import {
   Chain,
   Account,
   types,
-} from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 import { ReservePool } from "./models/alex-tests-reserve-pool.ts";
 import { FungibleToken } from "./models/alex-tests-tokens.ts";
 import { FWPTestAgent1 } from './models/alex-tests-fixed-weight-pool.ts';
-import { assertNotEquals } from 'https://deno.land/std@0.90.0/testing/asserts.ts';
+import { assertNotEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
 
 const ONE_8 = 100000000;
 
@@ -152,7 +152,7 @@ Clarinet.test({
         ONE_8,
         ONE_8,
         ONE_8
-      ),
+      ),      
       reservePool.addToken(deployer, fwpTokenAddress),
       reservePool.setActivationBlock(
         deployer,
@@ -168,6 +168,11 @@ Clarinet.test({
         ONE_8,
         ONE_8
       ),   
+      reservePool.setApowerMultiplierInFixed(
+        deployer,
+        fwpTokenAddress,
+        0.5e8
+      ),
       ...positions_to_add   
     ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
@@ -184,6 +189,8 @@ Clarinet.test({
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-bounty-in-fixed", [types.uint(0e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-available-alex", [types.uint(2000e8)], deployer.address),
         Tx.contractCall("fwp-wstx-alex-tranched-64", "set-open-to-all", [types.bool(true)], deployer.address),
+        Tx.contractCall("token-apower", "add-approved-contract", [types.principal(deployer.address + '.cofarm-apower-helper')], deployer.address),
+        Tx.contractCall("cofarm-apower-helper", "add-approved-contract", [types.principal(wallet_1.address)], deployer.address),
         ...cofarm_to_add
       ]);
     block.receipts.forEach((e) => { e.result.expectOk() });
@@ -221,7 +228,16 @@ Clarinet.test({
 
       block = chain.mineBlock(
         [
-          Tx.contractCall("fwp-wstx-alex-tranched-64", "claim-and-stake", [types.uint(cycle - 1)], deployer.address),
+          Tx.contractCall("fwp-wstx-alex-tranched-64", "claim-and-stake", [types.uint(cycle - 1)], deployer.address),                   
+        ]
+      );
+      block.receipts.forEach((e) => { e.result.expectOk() }); 
+      
+      // let call: any = chain.callReadOnlyFn("fwp-wstx-alex-tranched-64", "get-distributable-per-cycle-or-default", [types.uint(cycle - 1)], deployer.address);
+      // console.log(call);
+
+      block = chain.mineBlock(
+        [
           Tx.contractCall("fwp-wstx-alex-tranched-64", "distribute", 
             [
               types.uint(cycle - 1),
@@ -235,10 +251,18 @@ Clarinet.test({
               types.uint(1),
               types.list([types.principal(wallet_1.address)])
             ],
-            deployer.address)          
+            deployer.address),
+          Tx.contractCall("cofarm-apower-helper", "distribute-apower-only", 
+            [
+              types.uint(cycle - 1),
+              types.uint(0),
+              types.list(participants.map(e => { types.principal(e) }))
+            ],
+            wallet_1.address)                      
         ]
       )
-      block.receipts.forEach((e) => { e.result.expectOk() });         
+      block.receipts.forEach((e) => { e.result.expectOk() });   
+      // console.log(block.receipts[block.receipts.length - 3].events);      
     }
 
     block = chain.mineBlock([
