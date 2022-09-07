@@ -4,10 +4,19 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOKEN-NOT-AUTHORIZED (err u1001))
 (define-constant ERR-RECIPIENT-NOT-AUTHORIZED (err u1002))
+(define-constant ERR-CHAIN-NOT-AUTHORIZED (err u1003))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-tokens principal bool)
 (define-map approved-recipients principal bool)
+(define-data-var chain-nonce uint u0)
+(define-map approved-chains uint { name: (string-utf8 256), approved: bool, buff-length: uint })
+
+(define-read-only (get-approved-chain-or-fail (chain-id uint))
+  (ok (unwrap! (map-get? approved-chains chain-id) ERR-CHAIN-NOT-AUTHORIZED))
+)
+
+(define-public (set-approved-chain (chain-details { name: (string-utf8 256), approved: bool, buff-length: uint })))
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
