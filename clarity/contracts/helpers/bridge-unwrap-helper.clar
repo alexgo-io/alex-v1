@@ -16,7 +16,13 @@
   (ok (unwrap! (map-get? approved-chains chain-id) ERR-CHAIN-NOT-AUTHORIZED))
 )
 
-(define-public (set-approved-chain (chain-details { name: (string-utf8 256), approved: bool, buff-length: uint })))
+(define-public (set-approved-chain (chain-details { name: (string-utf8 256), approved: bool, buff-length: uint }))
+  (begin 
+    (try! (check-is-owner))
+    ;; increment chain-nonce by 1
+    (ok (map-set approved-chains (+ (var-get chain-nonce) u1)) chain-details))
+  )
+)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
