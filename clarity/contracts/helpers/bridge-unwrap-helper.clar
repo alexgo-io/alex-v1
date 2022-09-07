@@ -10,17 +10,20 @@
 (define-map approved-tokens principal bool)
 (define-map approved-recipients principal bool)
 (define-data-var chain-nonce uint u0)
-(define-map approved-chains uint { name: (string-utf8 256), approved: bool, buff-length: uint })
+(define-map approved-chains uint { name: (string-utf8 256), buff-length: uint })
 
 (define-read-only (get-approved-chain-or-fail (chain-id uint))
   (ok (unwrap! (map-get? approved-chains chain-id) ERR-CHAIN-NOT-AUTHORIZED))
 )
 
-(define-public (set-approved-chain (chain-details { name: (string-utf8 256), approved: bool, buff-length: uint }))
-  (begin 
+(define-public (set-approved-chain (chain-details { name: (string-utf8 256), buff-length: uint }))
+  (let 
+    (
+      (chain-id (+ (var-get chain-nonce) u1))
+    ) 
     (try! (check-is-owner))
-    ;; increment chain-nonce by 1
-    (ok (map-set approved-chains (+ (var-get chain-nonce) u1)) chain-details))
+    (var-set chain-nonce chain-id)
+    (ok (map-set approved-chains chain-id chain-details))
   )
 )
 
@@ -61,13 +64,37 @@
   (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
 )
 
-(define-public (transfer-to-settle (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (to-settle (buff 40)))
-    (begin 
-        (try! (check-is-approved-token (contract-of token-trait)))
-        (try! (check-is-approved-recipient recipient))
-        (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
-        (ok to-settle)
+(define-public (transfer-to-settle (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
+    (let 
+      (
+        (chain-details (try! (get-approved-chain-or-fail chain-id)))
+      ) 
+      (try! (check-is-approved-token (contract-of token-trait)))
+      (try! (check-is-approved-recipient recipient))
+      (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
+      (ok { chain: (get name chain-details), settle-address: (buff-slice settle-address u0 (get buff-length chain-details)) })
     )
+)
+
+(define-private (buff-slice-iterator (byte (buff 1)) (state {accumulator: (buff 256), index: uint, start: uint, end: uint}))
+	(let
+		(
+			(start (get start state))
+			(end (get end state))
+			(index (get index state))
+			(accumulator (get accumulator state))
+		)
+		{
+			start: start,
+			end: end,
+			accumulator: (if (and (>= index start) (< index end)) (unwrap-panic (as-max-len? (concat accumulator byte) u256)) accumulator),
+			index: (+ index u1)
+		}
+	)
+)
+
+(define-read-only (buff-slice (bytes (buff 256)) (start uint) (end uint))
+	(get accumulator (fold buff-slice-iterator bytes {accumulator: 0x, index: u0, start: start, end: end}))
 )
 
 ;; contract initialisation
