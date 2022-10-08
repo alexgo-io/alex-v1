@@ -65,16 +65,17 @@
 
 (define-private (get-tokens-iter (token-trait <ft-trait>) (address principal) (height uint))
     (let 
-        (token (contract-of token-trait))
-        ;; (amount (try! (get-token-schedule-or-fail token address height)))
+        (
+            (token (contract-of token-trait))
+            (amount (try! (get-token-schedule-or-fail token address height)))
+        )
+        (asserts! (> block-height height) ERR-BLOCK-HEIGHT-NOT-REACHED)
+        (map-set token-schedule { token: token, address: address, block-height: height } u0)
+        (as-contract (try! (contract-call? token-trait mint-fixed amount address)))
+        (ok { token: token, address: address, block-height: height, amount: amount })
     )
-    ;; (asserts! (> block-height height) ERR-BLOCK-HEIGHT-NOT-REACHED)
-    ;; (map-set token-schedule { token: token, address: address, block-height: height } u0)
-    ;; (as-contract (try! (contract-call? token-trait mint-fixed amount address)))
-    ;; (ok { token: token, address: address, block-height: height, amount: amount })
-    (ok true)
 )
 
-(define-public (get-tokens (token principal) (height uint))
-    (get-tokens-iter { token: token, address: tx-sender, block-height height})
+(define-public (get-tokens (token-trait <ft-trait>) (height uint))
+    (get-tokens-iter token-trait tx-sender height)
 )
