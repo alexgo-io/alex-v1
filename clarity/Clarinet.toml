@@ -949,4 +949,8 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-wxusd-tokensoft]
 path = "contracts/wrapped-token/token-wxusd-tokensoft.clar"
-depends_on = [ "trait-ownable", "trait-sip-010"]
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-lock]
+path = "contracts/helpers/token-lock.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]

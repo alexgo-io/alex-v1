@@ -4,6 +4,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOKEN-NOT-AUTHORIZED (err u1001))
 (define-constant ERR-SCHEDULE-NOT-FOUND (err u1002))
+(define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u1003))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-tokens principal bool)
@@ -60,4 +61,20 @@
 
 (define-read-only (get-token-schedule-or-fail (token principal) (address principal) (height uint))
     (ok (unwrap! (map-get? token-schedule { token: token, address: address, block-height: height }) ERR-SCHEDULE-NOT-FOUND))
+)
+
+(define-private (get-tokens-iter (token-trait <ft-trait>) (address principal) (height uint))
+    (let 
+        (token (contract-of token-trait))
+        ;; (amount (try! (get-token-schedule-or-fail token address height)))
+    )
+    ;; (asserts! (> block-height height) ERR-BLOCK-HEIGHT-NOT-REACHED)
+    ;; (map-set token-schedule { token: token, address: address, block-height: height } u0)
+    ;; (as-contract (try! (contract-call? token-trait mint-fixed amount address)))
+    ;; (ok { token: token, address: address, block-height: height, amount: amount })
+    (ok true)
+)
+
+(define-public (get-tokens (token principal) (height uint))
+    (get-tokens-iter { token: token, address: tx-sender, block-height height})
 )
