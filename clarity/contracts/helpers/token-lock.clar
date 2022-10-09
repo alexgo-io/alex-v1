@@ -5,9 +5,12 @@
 (define-constant ERR-TOKEN-NOT-AUTHORIZED (err u1001))
 (define-constant ERR-SCHEDULE-NOT-FOUND (err u1002))
 (define-constant ERR-BLOCK-HEIGHT-NOT-REACHED (err u1003))
+(define-constant ERR-WORKER-NOT-AUTHORIZED (err u1004))
 
 (define-data-var contract-owner principal tx-sender)
+(define-map tokens-to-vest principal uint)
 (define-map approved-tokens principal bool)
+(define-map approved-workers principal bool)
 (define-map token-schedule 
     {
         token: principal,
@@ -43,11 +46,27 @@
   (ok (asserts! (default-to false (map-get? approved-tokens token)) ERR-TOKEN-NOT-AUTHORIZED))
 )
 
+(define-public (set-approved-worker (worker principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-workers worker approved))
+	)
+)
+
+(define-private (check-is-approved-worker (worker principal))
+  (ok (asserts! (default-to false (map-get? approved-workers worker)) ERR-WORKER-NOT-AUTHORIZED))
+)
+
+(define-read-only (get-tokens-to-vest-or-default (token principal))
+    (default-to u0 (map-get? tokens-to-vest token))
+)
+
 (define-public (set-token-schedule (token principal) (address principal) (height uint) (amount uint))
     (begin 
         (try! (check-is-owner))
         (try! (check-is-approved-token token))
-        (ok (map-set token-schedule { token: token, address: address, block-height: height } amount))    
+        (map-set token-schedule { token: token, address: address, block-height: height } amount)
+        (ok (map-set tokens-to-vest token (+ (get-tokens-to-vest-or-default token) amount)))    
     )
 )
 
@@ -71,11 +90,27 @@
         )
         (asserts! (> block-height height) ERR-BLOCK-HEIGHT-NOT-REACHED)
         (map-set token-schedule { token: token, address: address, block-height: height } u0)
-        (as-contract (try! (contract-call? token-trait mint-fixed amount address)))
+        (map-set tokens-to-vest token (- (get-tokens-to-vest-or-default token) amount))
+        (as-contract (try! (contract-call? token-trait transfer-fixed amount tx-sender address none)))
         (ok { token: token, address: address, block-height: height, amount: amount })
     )
 )
 
 (define-public (get-tokens (token-trait <ft-trait>) (height uint))
     (get-tokens-iter token-trait tx-sender height)
+)
+
+(define-public (get-tokens-many (token-traits (list 200 <ft-trait>)) (heights (list 200 uint)))
+    (ok (map get-tokens token-traits heights))
+)
+
+(define-public (get-tokens-on-behalf (token-trait <ft-trait>) (address principal) (height uint))
+    (begin 
+        (try! (check-is-approved-worker tx-sender))
+        (get-tokens-iter token-trait address height)
+    )
+)
+
+(define-public (get-tokens-on-behalf-many (token-traits (list 200 <ft-trait>)) (addresses (list 200 principal)) (heights (list 200 uint)))
+    (ok (map get-tokens-on-behalf token-traits addresses heights))
 )
