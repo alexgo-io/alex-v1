@@ -5,10 +5,12 @@
 (define-constant ERR-TOKEN-NOT-AUTHORIZED (err u1001))
 (define-constant ERR-RECIPIENT-NOT-AUTHORIZED (err u1002))
 (define-constant ERR-CHAIN-NOT-AUTHORIZED (err u1003))
+(define-constant ERR-WRAPPER-NOT-AUTHORIZED (err u1004))
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-tokens principal bool)
 (define-map approved-recipients principal bool)
+(define-map approved-wrappers principal bool)
 (define-data-var chain-nonce uint u0)
 (define-map approved-chains uint { name: (string-utf8 256), buff-length: uint })
 
@@ -64,16 +66,27 @@
   (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
 )
 
-(define-public (transfer-to-settle (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
-    (let 
-      (
-        (chain-details (try! (get-approved-chain-or-fail chain-id)))
-      ) 
-      (try! (check-is-approved-token (contract-of token-trait)))
-      (try! (check-is-approved-recipient recipient))
-      (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
-      (ok { chain: (get name chain-details), settle-address: (buff-slice settle-address u0 (get buff-length chain-details)) })
+(define-public (transfer-to-wrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
+  (let 
+    (
+      (chain-details (try! (get-approved-chain-or-fail chain-id)))
+    ) 
+    (try! (check-is-approved-token (contract-of token-trait)))
+    (try! (check-is-approved-recipient recipient))
+    (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
+    (ok { chain: (get name chain-details), settle-address: (buff-slice settle-address u0 (get buff-length chain-details)) })
+  )
+)
+
+(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (tx-id (buff 256)))
+  (let 
+    (
+      (chain-details (try! (get-approved-chain-or-fail chain-id)))
     )
+    (try! (check-is-approved-token (contract-of token-trait)))
+    (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
+    (ok { chain: (get name chain-details), tx-id: tx-id })
+  )
 )
 
 (define-private (buff-slice-iterator (byte (buff 1)) (state {accumulator: (buff 256), index: uint, start: uint, end: uint}))
