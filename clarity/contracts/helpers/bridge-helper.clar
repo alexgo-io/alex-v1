@@ -66,7 +66,7 @@
   (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
 )
 
-(define-public (transfer-to-wrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
+(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
   (let 
     (
       (chain-details (try! (get-approved-chain-or-fail chain-id)))
@@ -78,7 +78,7 @@
   )
 )
 
-(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (tx-id (buff 256)))
+(define-public (transfer-to-wrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (tx-id (buff 256)))
   (let 
     (
       (chain-details (try! (get-approved-chain-or-fail chain-id)))
