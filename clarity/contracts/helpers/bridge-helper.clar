@@ -79,11 +79,11 @@
 )
 
 (define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (tx-id (buff 256)))
-  (begin 
+  (let 
     (
       (chain-details (try! (get-approved-chain-or-fail chain-id)))
     )
-    (try! (check-is-approve-token (contract-of token-trait)))
+    (try! (check-is-approved-token (contract-of token-trait)))
     (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
     (ok { chain: (get name chain-details), tx-id: tx-id })
   )

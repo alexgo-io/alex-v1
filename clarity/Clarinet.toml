@@ -943,8 +943,8 @@ depends_on = [ "trait-ownable", "fwp-wstx-alex-tranched-64", "alex-reserve-pool"
 path = "contracts/helpers/lottery-claim-helper.clar"
 depends_on = [ "trait-ownable", "alex-lottery" ]
 
-[contracts.bridge-unwrap-helper]
-path = "contracts/helpers/bridge-unwrap-helper.clar"
+[contracts.bridge-helper]
+path = "contracts/helpers/bridge-helper.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-wxusd-tokensoft]
