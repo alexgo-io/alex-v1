@@ -11,13 +11,10 @@
 (define-map tokens-to-vest principal uint)
 (define-map approved-tokens principal bool)
 (define-map approved-workers principal bool)
-(define-map token-schedule 
-    {
-        token: principal,
-        address: principal,
-        block-height: uint
-    }
-    uint
+
+(define-map vesting-schedule 
+    {recipient: principal, token: principal, vesting-id: uint} 
+    {amount: uint, vesting-timestamp: uint}
 )
 
 (define-read-only (get-contract-owner)
@@ -61,7 +58,7 @@
     (default-to u0 (map-get? tokens-to-vest token))
 )
 
-(define-public (set-token-schedule (token principal) (address principal) (height uint) (amount uint))
+(define-public (set-vesting-schedule (token principal) (address principal) (height uint) (amount uint))
     (begin 
         (try! (check-is-owner))
         (try! (check-is-approved-token token))
