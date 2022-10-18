@@ -1,3 +1,5 @@
+;; TODO: re-implement it as AGE so DAO can transfer from its own balance
+
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
@@ -58,46 +60,47 @@
     (default-to u0 (map-get? tokens-to-vest token))
 )
 
-(define-public (set-vesting-schedule (token principal) (address principal) (height uint) (amount uint))
+(define-public (set-vesting-schedule (token principal) (address principal) (vesting-id uint) (vesting-timestamp uint) (amount uint))
     (begin 
         (try! (check-is-owner))
         (try! (check-is-approved-token token))
-        (map-set token-schedule { token: token, address: address, block-height: height } amount)
+        (map-set vesting-schedule { token: token, address: address, vesting-id: vesting-id } { amount: amount, vesting-timestamp: vesting-timestamp })
         (ok (map-set tokens-to-vest token (+ (get-tokens-to-vest-or-default token) amount)))    
     )
 )
 
-(define-private (set-token-schedule-iter (item { token: principal, address: principal, block-height: uint, amount: uint }))
-    (set-token-schedule (get token item) (get address item) (get block-height item) (get amount item))
+(define-private (set-vesting-schedule-iter (item { token: principal, address: principal, vesting-id: uint, vesting-timestamp: uint, amount: uint }))
+    (set-token-schedule (get token item) (get address item) (get vesting-id item) (get vesting-timestamp item) (get amount item))
 )
 
-(define-public (set-token-schedule-many (items (list 200 { token: principal, address: principal, block-height: uint, amount: uint })))
+(define-public (set-vesting-schedule-many (items (list 200 { token: principal, address: principal, vesting-id: uint, vesting-timestamp: uint, amount: uint })))
     (ok (map set-token-schedule-iter items))
 )
 
-(define-read-only (get-token-schedule-or-fail (token principal) (address principal) (height uint))
-    (ok (unwrap! (map-get? token-schedule { token: token, address: address, block-height: height }) ERR-SCHEDULE-NOT-FOUND))
+(define-read-only (get-vesting-schedule-or-fail (token principal) (address principal) (vesting-id uint))
+    (ok (unwrap! (map-get? vesting-schedule { token: token, address: address, vesting-id: vesting-id }) ERR-SCHEDULE-NOT-FOUND))
 )
 
-(define-private (get-tokens-iter (token-trait <ft-trait>) (address principal) (height uint))
+(define-private (get-tokens-iter (token-trait <ft-trait>) (address principal) (vesting-id uint))
     (let 
         (
             (token (contract-of token-trait))
-            (amount (try! (get-token-schedule-or-fail token address height)))
+            (schedule (try! (get-vesting-schedule-or-fail token address vesting-id)))
         )
-        (asserts! (> block-height height) ERR-BLOCK-HEIGHT-NOT-REACHED)
-        (map-set token-schedule { token: token, address: address, block-height: height } u0)
-        (map-set tokens-to-vest token (- (get-tokens-to-vest-or-default token) amount))
-        (as-contract (try! (contract-call? token-trait transfer-fixed amount tx-sender address none)))
-        (ok { token: token, address: address, block-height: height, amount: amount })
+        (asserts! (> (unwrap-panic (get-block-info? time (- block-height u1))) (get vesting-timestamp schedule)) ERR-BLOCK-HEIGHT-NOT-REACHED)
+        (map-set vesting-schedule { token: token, address: address, vesting-id: vesting-id } { vesting-timestamp: (get vesting-timestamp schedule), amount: u0 })
+        (map-set tokens-to-vest token (- (get-tokens-to-vest-or-default token) (get amount schedule)))
+        ;; TODO: see above
+        (as-contract (try! (contract-call? token-trait transfer-fixed (get amount schedule) tx-sender address none)))
+        (ok (get amount schedule))
     )
 )
 
-(define-public (get-tokens (token-trait <ft-trait>) (height uint))
-    (get-tokens-iter token-trait tx-sender height)
+(define-public (get-tokens (token-trait <ft-trait>) (vesting-id uint))
+    (get-tokens-iter token-trait tx-sender vesting-id)
 )
 
-(define-public (get-tokens-many (token-trait <ft-trait>) (heights (list 200 uint)))
+(define-public (get-tokens-many (token-trait <ft-trait>) (vesting-ids (list 200 uint)))
     (ok 
         (map 
             get-tokens 
@@ -123,19 +126,19 @@
                 token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait
                 token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait
             )        
-            heights
+            vesting-ids
         )
     )
 )
 
-(define-public (get-tokens-on-behalf (token-trait <ft-trait>) (address principal) (height uint))
+(define-public (get-tokens-on-behalf (token-trait <ft-trait>) (address principal) (vesting-id uint))
     (begin 
         (try! (check-is-approved-worker tx-sender))
-        (get-tokens-iter token-trait address height)
+        (get-tokens-iter token-trait address vesting-id)
     )
 )
 
-(define-public (get-tokens-on-behalf-many (token-trait <ft-trait>) (addresses (list 200 principal)) (heights (list 200 uint)))
+(define-public (get-tokens-on-behalf-many (token-trait <ft-trait>) (addresses (list 200 principal)) (vesting-ids (list 200 uint)))
     (ok 
         (map 
             get-tokens-on-behalf 
@@ -162,7 +165,10 @@
                 token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait	token-trait
             )  
             addresses 
-            heights
+            vesting-ids
         )
     )
 )
+
+;; contract initialisation
+;; (set-contract-owner .executor-dao)
