@@ -4,7 +4,7 @@ import {
     Clarinet,
     Tx,
     types,
-  } from "https://deno.land/x/clarinet@v0.14.0/index.ts";
+  } from "https://deno.land/x/clarinet@v0.31.1/index.ts";
   
   class CRPTestAgent1 {
     chain: Chain;
@@ -16,7 +16,7 @@ import {
     }
 
     getPoolDetails(token: string, collateral: string, expiry: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-details", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-pool-details", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
@@ -25,7 +25,7 @@ import {
 
     // getPoolValueInToken(token: string, collateral: string, expiry: number, spot: number) {
       getPoolValueInToken(token: string, collateral: string, expiry: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-token", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-pool-value-in-token", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
@@ -34,7 +34,7 @@ import {
 
     // getPoolValueInCollateral(token: string, collateral: string, expiry: number, spot: number) {
       getPoolValueInCollateral(token: string, collateral: string, expiry: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-pool-value-in-collateral", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-pool-value-in-collateral", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
@@ -43,7 +43,7 @@ import {
     
     // getWeightX(token: string, collateral: string, expiry: number, strike: number, bs_vol: number, spot: number) {
     getWeightX(token: string, collateral: string, expiry: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-weight-x", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-weight-x", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry),
@@ -51,7 +51,7 @@ import {
     }
 
     getSpot(token: string, collateral: string){
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-spot", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-spot", [
         types.principal(token),
         types.principal(collateral)
       ], this.deployer.address);
@@ -59,7 +59,7 @@ import {
 
     // getLtv(token: string, collateral: string, expiry: number, spot: number){
       getLtv(token: string, collateral: string, expiry: number){
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-ltv", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-ltv", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
@@ -67,7 +67,7 @@ import {
     }
 
     getTokenGivenPosition(token: string, collateral: string, expiry: number, dx: number){
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-token-given-position", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-token-given-position", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry),
@@ -77,7 +77,7 @@ import {
   
     createPool(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken: string, multiSig: string, ltv_0: number, conversion_ltv: number, bs_vol: number, moving_average: number, token_to_maturity: number, dX: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "create-pool", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "create-pool", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -97,7 +97,7 @@ import {
   
     addToPosition(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken:string, dX: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "add-to-position", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "add-to-position", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry),            
@@ -111,7 +111,7 @@ import {
 
       addToPositionAndSwitch(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, keyToken: string, dX: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "add-to-position-and-switch", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "add-to-position-and-switch", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry),            
@@ -126,7 +126,7 @@ import {
   
       reducePositionYield(user: Account, token: string, collateral: string, expiry: number, yieldToken: string, percent: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-yield", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "reduce-position-yield", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry),
@@ -139,7 +139,7 @@ import {
 
       reducePositionYieldMany(user: Account, token: string, collateral: string, yieldToken: string, percent: number, expiries: Array<number>) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-yield-many", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "reduce-position-yield-many", [
             types.principal(token),
             types.principal(collateral),
             types.principal(yieldToken),
@@ -152,7 +152,7 @@ import {
 
       reducePositionKey(user: Account, token: string, collateral: string, expiry: number, keyToken: string, percent: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "reduce-position-key", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry),
@@ -165,7 +165,7 @@ import {
 
       reducePositionKeyMany(user: Account, token: string, collateral: string, keyToken: string, percent: number, expiries: Array<number>) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "reduce-position-key-many", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "reduce-position-key-many", [
             types.principal(token),
             types.principal(collateral),
             types.principal(keyToken),
@@ -178,7 +178,7 @@ import {
   
     swapXForY(user: Account, token: string, collateral: string, expiry: number, dX: number, dy_min: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "swap-x-for-y", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "swap-x-for-y", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -191,7 +191,7 @@ import {
   
     swapYForX(user: Account, token: string, collateral: string, expiry: number, dY: number, min_dx: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "swap-y-for-x", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "swap-y-for-x", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry),
@@ -204,7 +204,7 @@ import {
   
     getYgivenX(user: Account, token: string, collateral: string, expiry: number, dX: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "get-y-given-x", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "get-y-given-x", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -216,7 +216,7 @@ import {
     
     getXgivenY(user: Account, token: string, collateral: string, expiry: number, dY: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "get-x-given-y", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "get-x-given-y", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry),
@@ -228,7 +228,7 @@ import {
 
     getBalances(user: Account, token: string, collateral: string, expiry: number) {
         let block = this.chain.mineBlock([
-          Tx.contractCall("collateral-rebalancing-pool", "get-balances", [
+          Tx.contractCall("collateral-rebalancing-pool-v1", "get-balances", [
             types.principal(token),
             types.principal(collateral),
             types.uint(expiry)
@@ -239,7 +239,7 @@ import {
   
     getFeetoAddress(user: Account, token: string, collateral: string, expiry: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "get-fee-to-address", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "get-fee-to-address", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry)
@@ -250,7 +250,7 @@ import {
 
     setFeeRateX(user: Account, token: string, collateral: string, expiry: number, feerate:number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-fee-rate-x", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "set-fee-rate-x", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -262,7 +262,7 @@ import {
   
     setFeeRateY(user: Account, token: string, collateral: string, expiry: number, feerate:number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-fee-rate-y", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "set-fee-rate-y", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -274,7 +274,7 @@ import {
 
     getFeeRateX(user: Account, token: string, collateral: string, expiry: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "get-fee-rate-x", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "get-fee-rate-x", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry)
@@ -285,7 +285,7 @@ import {
 
     getFeeRateY(user: Account, token: string, collateral: string, expiry: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "get-fee-rate-y", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "get-fee-rate-y", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry)
@@ -295,7 +295,7 @@ import {
     }
 
     getPositionGivenBurnKey(token: string, collateral: string, expiry: number, shares: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-position-given-burn-key", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-position-given-burn-key", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry),
@@ -332,7 +332,7 @@ import {
     }
 
     getXgivenPrice(token: string, collateral: string, expiry: number, price: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-x-given-price", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-x-given-price", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -341,7 +341,7 @@ import {
     }    
 
     getYgivenPrice(token: string, collateral: string, expiry: number, price: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-y-given-price", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-y-given-price", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry),
@@ -351,7 +351,7 @@ import {
 
     setFeeRebate(user: Account, token: string, collateral: string, expiry: number, rebate : number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-fee-rebate", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "set-fee-rebate", [
           types.principal(token),
           types.principal(collateral),
           types.uint(expiry),
@@ -362,7 +362,7 @@ import {
     }
 
     getFeeRebate(token: string, collateral: string, expiry: number) {
-      return this.chain.callReadOnlyFn("collateral-rebalancing-pool", "get-fee-rebate", [
+      return this.chain.callReadOnlyFn("collateral-rebalancing-pool-v1", "get-fee-rebate", [
         types.principal(token),
         types.principal(collateral),
         types.uint(expiry)
@@ -371,7 +371,7 @@ import {
 
     setMaxInRatio(user: Account, ratio: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-max-in-ratio", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "set-max-in-ratio", [
           types.uint(ratio)
         ], user.address),
       ]);
@@ -380,7 +380,7 @@ import {
   
     setMaxOutRatio(user: Account, ratio: number) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-max-out-ratio", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "set-max-out-ratio", [
           types.uint(ratio)
         ], user.address),
       ]);
@@ -389,7 +389,7 @@ import {
     
     setApprovedContract(user: Account, owner: string, approved: boolean) {
       let block = this.chain.mineBlock([
-        Tx.contractCall("collateral-rebalancing-pool", "set-approved-contract", [
+        Tx.contractCall("collateral-rebalancing-pool-v1", "set-approved-contract", [
           types.principal(owner),
           types.bool(approved)
         ], user.address),        

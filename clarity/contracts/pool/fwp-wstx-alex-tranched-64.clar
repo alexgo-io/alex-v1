@@ -13,12 +13,12 @@
 (define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 (define-constant ERR-INVALID-PERCENT (err u5000))
 (define-constant ERR-ALREADY-PROCESSED (err u1409))
-(define-constant ERR-DISTRIBUTION-IN-PROGRESS (err u1410))
+(define-constant ERR-DISTRIBUTION (err u1410))
 
 (define-constant ONE_8 u100000000)
 
-(define-data-var end-cycle uint u32)
-(define-data-var start-block uint u340282366920938463463374607431768211455)
+(define-data-var end-cycle uint u64)
+(define-data-var start-block uint u63926)
 (define-data-var open-to-all bool false)
 
 (define-read-only (get-start-block)
@@ -67,6 +67,20 @@
     (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-public (add-approved-contract (new-approved-contract principal))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts new-approved-contract true))
+	)
+)
+
+(define-public (set-approved-contract (owner principal) (approved bool))
+	(begin
+		(try! (check-is-owner))
+		(ok (map-set approved-contracts owner approved))
+	)
 )
 
 (define-private (check-is-owner)
@@ -198,23 +212,25 @@
   (contract-call? .alex-reserve-pool claim-staking-reward .fwp-wstx-alex-50-50-v1-01 reward-cycle)
 )
 
-(define-private (claim-staking-reward-iter (reward-cycle uint) (prior (response { entitled-token: uint, to-return: uint } uint)))
-  (let 
-    (
-      (prior-unwrapped (try! prior))
-      (claimed (try! (claim-staking-reward reward-cycle)))
+(define-private (sum-claimed (claimed-response (response { entitled-token: uint, to-return: uint } uint)) (prior-response (response { entitled-token: uint, to-return: uint } uint)))
+  (let
+    ( 
+      (claimed (try! claimed-response))
+      (prior (try! prior-response))
     )
-    (ok { entitled-token: (+ (get entitled-token claimed) (get entitled-token prior-unwrapped)), to-return: (+ (get to-return claimed) (get to-return prior-unwrapped)) })
-  )
+    (ok { entitled-token: (+ (get entitled-token claimed) (get entitled-token prior)), to-return: (+ (get to-return claimed) (get to-return prior)) })
+  )  
 )
 
-(define-public (claim-and-add-to-position-many (reward-cycles (list 200 uint)))
+(define-public (claim-and-add-to-position-many (reward-cycles (list 50 uint)))
   (let 
     (
-      (claimed (try! (fold claim-staking-reward-iter reward-cycles (ok { entitled-token: u0, to-return: u0 }))))
+      (claimed (map claim-staking-reward reward-cycles))
+      (total-claimed (try! (fold sum-claimed claimed (ok { entitled-token: u0, to-return: u0 }))))
     )
-    (try! (add-to-position-internal (get to-return claimed)))
-    (contract-call? .auto-alex add-to-position (get entitled-token claimed))    
+    (try! (add-to-position-internal (get to-return total-claimed)))
+    (try! (contract-call? .auto-alex add-to-position (get entitled-token total-claimed)))
+    (ok claimed)
   )
 )
 
@@ -328,7 +344,7 @@
       ;; if the user already received distribution, then skip
       (ok { cycle: cycle, atalex: atalex, balance: balance, sum: sum })
       (begin 
-        (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none)))
+        (and (> shares u0) (as-contract (try! (contract-call? .auto-alex transfer-fixed shares tx-sender recipient none))))
         (map-set user-distributed-per-cycle { user: recipient, cycle: cycle } true)
         (ok { cycle: cycle, atalex: atalex, balance: balance, sum: (+ sum shares) })
       )
@@ -347,6 +363,7 @@
 	(begin
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
     (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
+    (asserts! (> (get-distributable-per-cycle-or-default cycle) u0) ERR-DISTRIBUTION)
     (let
       (
         (output (try! (fold distribute-iter recipients (ok { cycle: cycle, atalex:  (get-distributable-per-cycle-or-default cycle), balance:  (get-total-balance-per-cycle-or-default cycle), sum: u0 }))))
@@ -368,7 +385,7 @@
         (> (get-distributable-per-cycle-or-default (var-get end-cycle)) u0)
         (is-eq (/ (get-distributable-per-cycle-or-default (var-get end-cycle)) ONE_8) (/ (get-distributed-per-cycle-or-default (var-get end-cycle)) ONE_8))
       ) 
-      ERR-DISTRIBUTION-IN-PROGRESS
+      ERR-DISTRIBUTION
     )  
     (let 
       (
@@ -397,8 +414,8 @@
       (var-set total-stx (- (var-get total-stx) stx-promised))
       (map-set user-stx sender u0)
       
-      (and (> stx-to-return u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-to-return tx-sender sender none))))
-      (and (> stx-residual u100) (as-contract (try! (contract-call? .token-wstx transfer-fixed stx-residual tx-sender (var-get contract-owner) none))))
+      (and (> stx-to-return u1000) (as-contract (try! (contract-call? .token-wstx transfer-fixed (* (/ stx-to-return u1000) u1000) tx-sender sender none))))
+      (and (> stx-residual u1000) (as-contract (try! (contract-call? .token-wstx transfer-fixed (* (/ stx-residual u1000) u1000) tx-sender (var-get contract-owner) none))))
       (and (> alex-residual u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed alex-residual tx-sender (var-get contract-owner) none))))
       (print { object: "pool", action: "position-reduced", data: { dx: stx-reduced, dy: alex-reduced } })
       (ok { stx-to-return: stx-to-return, stx-residual: stx-residual, alex-residual: alex-residual })
