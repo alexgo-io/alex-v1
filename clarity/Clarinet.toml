@@ -1,6 +1,9 @@
 [project]
 name = "alex-v1"
-requirements = [ ]
+
+[[project.requirements]]
+contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
+
 
 [repl]
 costs_version = 2
@@ -939,3 +942,15 @@ depends_on = [ "trait-ownable", "fwp-wstx-alex-tranched-64", "alex-reserve-pool"
 [contracts.lottery-claim-helper]
 path = "contracts/helpers/lottery-claim-helper.clar"
 depends_on = [ "trait-ownable", "alex-lottery" ]
+
+[contracts.bridge-helper]
+path = "contracts/helpers/bridge-helper.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
+[contracts.token-wxusd-tokensoft]
+path = "contracts/wrapped-token/token-wxusd-tokensoft.clar"
+depends_on = [ "trait-ownable", "trait-sip-010"]
+
+[contracts.faucet-xusd-tokensoft]
+path = "contracts/helpers/faucet-xusd-tokensoft.clar"
+depends_on = [ "token-wxusd-tokensoft" ]
