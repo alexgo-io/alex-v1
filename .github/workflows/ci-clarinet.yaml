@@ -21,7 +21,7 @@ jobs:
         uses: docker://hirosystems/clarinet:0.32.0
         with:
           entrypoint: "bash"
-          args: -c "cd clarity && ./scripts/clarinet_manager.sh install && clarinet check"
+          args: -c "cd clarity && apt-get install jq && ./scripts/clarinet_manager.sh install && clarinet check"
   test:
     name: test - ${{ github.ref_name }}
     runs-on: ubuntu-latest
