@@ -1,6 +1,3 @@
-# GitHub action to verify `clarinet check` runs against contract
-# Uses a prepare script outlined in testing section of README
-
 name: CI Clarinet
 
 # Controls when the action will run.
@@ -17,22 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: sergeysova/jq-action@v2
+      - name: Install Deps
+        run: |
+          cd clarity && ./scripts/clarinet_manager.sh install
       - name: "Check contract"
-        uses: docker://hirosystems/clarinet:0.27.0
+        uses: docker://hirosystems/clarinet:1.0.4
         with:
           entrypoint: "bash"
           args: -c "cd clarity && clarinet check"
-  test:
-    name: test - ${{ github.ref_name }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: "Set CI env"
-        run: |
-          echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
-      - name: "Execute test suite"
-        uses: docker://hirosystems/clarinet:0.27.0
-        with:
-          entrypoint: "bash"
-          #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
-          args: -c "cd clarity && clarinet test --coverage"
+#  test:
+#    name: test - ${{ github.ref_name }}
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: "Set CI env"
+#        run: |
+#          echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
+#      - name: "Execute test suite"
+#        uses: docker://hirosystems/clarinet:1.0.4
+#        with:
+#          entrypoint: "bash"
+#          #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
+#          args: -c "cd clarity && apt-get install -y jq git && GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" ./scripts/clarinet_manager.sh install && clarinet test --coverage"
