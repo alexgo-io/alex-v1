@@ -19,10 +19,10 @@ jobs:
         run: |
           cd clarity && ./scripts/clarinet_manager.sh install
       - name: "Check contract"
-        uses: docker://hirosystems/clarinet:1.0.4
+        uses: docker://hirosystems/clarinet:0.32.0
         with:
           entrypoint: "bash"
-          args: -c "cd clarity && clarinet check"
+          args: -c "cd clarity && apt-get -y install jq && ./scripts/clarinet_manager.sh install && clarinet check"
   test:
     name: test - ${{ github.ref_name }}
     runs-on: ubuntu-latest
@@ -36,8 +36,8 @@ jobs:
         run: |
           echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
       - name: "Execute test suite"
-        uses: docker://hirosystems/clarinet:1.0.4
+        uses: docker://hirosystems/clarinet:0.32.0
         with:
           entrypoint: "bash"
           #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
-          args: -c "cd clarity && clarinet test --coverage"
+          args: -c "cd clarity && ./scripts/clarinet_manager.sh install && clarinet test --coverage"
