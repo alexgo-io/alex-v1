@@ -23,7 +23,7 @@ jobs:
         uses: docker://hirosystems/clarinet:0.32.0
         with:
           entrypoint: "bash"
-          args: -c "cd clarity && apt-get -y install jq && ./scripts/clarinet_manager.sh install && clarinet check"
+          args: -c "cd clarity && clarinet check"
   test:
     name: test - ${{ github.ref_name }}
     runs-on: ubuntu-latest
@@ -42,4 +42,4 @@ jobs:
         with:
           entrypoint: "bash"
           #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
-          args: -c "cd clarity && ./scripts/clarinet_manager.sh install && clarinet test --coverage"
+          args: -c "cd clarity && clarinet test --coverage"
