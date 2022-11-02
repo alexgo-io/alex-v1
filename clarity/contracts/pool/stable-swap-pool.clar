@@ -53,7 +53,9 @@
     oracle-average: uint,
     oracle-resilient: uint,
     start-block: uint,
-    end-block: uint
+    end-block: uint,
+    threshold-x: uint,
+    threshold-y: uint
   }
 )
 
@@ -235,13 +237,16 @@
     (let
         (
             (exists (is-some (get-pool-exists token-x token-y factor)))
-            (token-from (if exists token-x token-y))
-            (token-to (if exists token-y token-x))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-from, token-y: token-to, factor: factor }) ERR-INVALID-POOL))
+            (pool
+                (if exists
+                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)
+                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, factor: factor }) ERR-INVALID-POOL)                    
+                )
+            )
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-from token-to factor))) 
-            (mul-down (get oracle-average pool) (if exists (get oracle-resilient pool) (div-down ONE_8 (get oracle-resilient pool)))))
+        (ok (+ (mul-down (- ONE_8 (get oracle-average pool)) (try! (get-oracle-instant-internal token-x token-y factor))) 
+            (mul-down (get oracle-average pool) (get oracle-resilient pool)))
         )           
     )
 )
@@ -265,23 +270,45 @@
 )
 
 (define-private (get-oracle-instant-internal (token-x principal) (token-y principal) (factor uint))
-    (begin                
-        (if (is-some (get-pool-exists token-x token-y factor))
-            (let
-                (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+    (let                 
+        (
+            (exists (is-some (get-pool-exists token-x token-y factor)))
+            (pool
+                (if exists
+                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)
+                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, factor: factor }) ERR-INVALID-POOL)                    
                 )
-                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (div-down (get balance-y pool) (get balance-x pool)))
-            )
-            (let
-                (
-                    (pool (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, factor: factor }) ERR-INVALID-POOL))
-                )
-                (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-                (ok (div-down (get balance-x pool) (get balance-y pool)))
             )
         )
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (if exists 
+            (ok (div-down (get balance-y pool) (get balance-x pool)))
+            (ok (div-down (get balance-x pool) (get balance-y pool)))
+        )
+    )
+)
+
+;; @desc correlated-token (y) per token (x)
+;; @desc get-price
+;; @desc b_y = balance-y
+;; @desc b_x = balance-x
+;; @desc price = (b_y / b_x) ^ t
+;; @returns (response uint uint)
+(define-read-only (get-price (token-x principal) (token-y principal) (factor uint))
+    (let
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+        )      
+        (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
+    )
+)
+
+(define-private (get-price-internal (balance-x uint) (balance-y uint) (factor uint))
+    (let
+        (
+          (price (pow-down (div-down balance-y balance-x) factor))
+        )
+        (if (<= price ONE_8) ONE_8 price)
     )
 )
 
@@ -327,7 +354,9 @@
                 oracle-average: u0,
                 oracle-resilient: u0,
                 start-block: u340282366920938463463374607431768211455,
-                end-block: u340282366920938463463374607431768211455
+                end-block: u340282366920938463463374607431768211455,
+                threshold-x: u0,
+                threshold-y: u0
             })
         )
 
@@ -594,6 +623,36 @@
     )
 )
 
+(define-read-only (get-threshold-x (token-x principal) (token-y principal) (factor uint))
+    (ok (get threshold-x (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-threshold-x (token-x principal) (token-y principal) (factor uint) (small-threshold uint))
+    (let 
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+        )
+        (try! (check-is-owner))
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-x: small-threshold }))
+        (ok true)
+    )
+)
+
+(define-read-only (get-threshold-y (token-x principal) (token-y principal) (factor uint))
+    (ok (get threshold-y (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+)
+
+(define-public (set-threshold-y (token-x principal) (token-y principal) (factor uint) (small-threshold uint))
+    (let 
+        (
+            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+        )
+        (try! (check-is-owner))
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-y: small-threshold }))
+        (ok true)
+    )
+)
+
 ;; @desc get-fee-rebate
 ;; @param token-x; token-x principal
 ;; @param token-y; token-y principal
@@ -722,8 +781,24 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: .token-wxusd, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (threshold (get threshold-x pool))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
         )
-        (contract-call? .yield-token-equation get-y-given-x (get balance-x pool) (get balance-y pool) factor dx)        
+        (if (> dx threshold)
+            (get-y-given-x-internal balance-x balance-y factor dx)
+            (let
+                (
+                    (dist (div-down (- threshold dx) threshold))
+                )
+                (ok
+                    (+ 
+                        (mul-down (- ONE_8 dist) (try! (get-y-given-x-internal balance-x balance-y factor threshold)))
+                        (mul-down dist (mul-down dx (get-price-internal balance-x balance-y factor)))
+                    )                    
+                )
+            )
+        )
     )
 )
 
@@ -735,8 +810,24 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: .token-wxusd, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (threshold (get threshold-y pool))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))            
         )
-        (contract-call? .yield-token-equation get-x-given-y (get balance-x pool) (get balance-y pool) factor dy)
+        (if (> dy threshold)
+            (get-x-given-y-internal balance-x balance-y factor dy)
+            (let
+                (
+                    (dist (div-down (- threshold dy) threshold))
+                )
+                (ok 
+                    (+
+                        (mul-down (- ONE_8 dist) (try! (get-x-given-y-internal balance-x balance-y factor threshold)))
+                        (mul-down dist (div-down dy (get-price-internal balance-x balance-y factor)))
+                    )
+                )
+            )            
+        )
     )
 )
 
@@ -781,7 +872,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
         )
-        (contract-call? .yield-token-equation get-x-given-price (get balance-x pool) (get balance-y pool) factor price)
+        (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor price)
     )
 )
 
@@ -796,7 +887,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
         )
-        (contract-call? .yield-token-equation get-y-given-price (get balance-x pool) (get balance-y pool) factor price)
+        (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor price)
     )
 )
 
@@ -811,10 +902,8 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
-            (token (try! (contract-call? .yield-token-equation get-token-given-position (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))))
         )
-        (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) (get dy token)) ERR-EXCEEDS-MAX-SLIPPAGE)
-        (ok token)
+        (get-token-given-position-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 
@@ -829,7 +918,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
         )
-        (contract-call? .yield-token-equation get-position-given-mint (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
+        (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
     )
 )
 
@@ -844,7 +933,7 @@
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
         )
-        (contract-call? .yield-token-equation get-position-given-burn (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
+        (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
     )
 )
 
@@ -867,52 +956,294 @@
     (get-y-given-x token-x token-y factor dx)
 )
 
+(define-constant ERR-NO-LIQUIDITY (err u2002))
+(define-constant ERR-MAX-IN-RATIO (err u4001))
+(define-constant ERR-MAX-OUT-RATIO (err u4002))
 
+(define-data-var MAX-IN-RATIO uint (* u5 (pow u10 u6))) ;; 5%
+(define-data-var MAX-OUT-RATIO uint (* u5 (pow u10 u6))) ;; 5%
 
-;; math-fixed-point
-;; Fixed Point Math
-;; following https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/FixedPoint.sol
+(define-read-only (get-max-in-ratio)
+  (var-get MAX-IN-RATIO)
+)
 
-;; constants
-;;
+(define-public (set-max-in-ratio (new-max-in-ratio uint))
+  (begin
+    (try! (check-is-owner))
+    (asserts! (> new-max-in-ratio u0) ERR-MAX-IN-RATIO)    
+    (var-set MAX-IN-RATIO new-max-in-ratio)
+    (ok true)
+  )
+)
+
+(define-read-only (get-max-out-ratio)
+  (var-get MAX-OUT-RATIO)
+)
+
+(define-public (set-max-out-ratio (new-max-out-ratio uint))
+  (begin
+    (try! (check-is-owner))
+    (asserts! (> new-max-out-ratio u0) ERR-MAX-OUT-RATIO)    
+    (var-set MAX-OUT-RATIO new-max-out-ratio)
+    (ok true)
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param dx; amount of token added
+;; @returns (response uint uint)
+(define-private (get-y-given-x-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))
+  (begin
+    (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
+    (let 
+      (
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-up ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (x-pow (pow-up balance-x t-comp))
+        (y-pow (pow-up balance-y t-comp))
+        (x-dx-pow (pow-down (+ balance-x dx) t-comp))
+        (add-term (+ x-pow y-pow))
+        (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
+        (final-term (pow-up term t-comp-num))
+        (dy (if (<= balance-y final-term) u0 (- balance-y final-term)))
+      )
+      (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+      (ok dy)
+    )  
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc d_x = b_x - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y + d_y) ^ (1 - t)) ^ (1 / (1 - t))
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param dy; amount of correlated-token added
+;; @returns (response uint uint)
+(define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
+  (begin
+    (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+    (let 
+      (          
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-up ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (x-pow (pow-up balance-x t-comp))
+        (y-pow (pow-up balance-y t-comp))
+        (y-dy-pow (pow-down (+ balance-y dy) t-comp))
+        (add-term (+ x-pow y-pow))
+        (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
+        (final-term (pow-up term t-comp-num))
+        (dx (if (<= balance-x final-term) u0 (- balance-x final-term)))
+      )
+      (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+      (ok dx)
+    )  
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc d_y = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x - d_x) ^ (1 - t)) ^ (1 / (1 - t)) - b_y
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param dx; amount of token added
+;; @returns (response uint uint)
+(define-private (get-y-in-given-x-out-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))
+  (begin
+    (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)     
+    (let 
+      (
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (x-pow (pow-down balance-x t-comp))
+        (y-pow (pow-down balance-y t-comp))
+        (x-dx-pow (pow-up (if (<= balance-x dx) u0 (- balance-x dx)) t-comp))
+        (add-term (+ x-pow y-pow))
+        (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
+        (final-term (pow-down term t-comp-num))
+        (dy (if (<= final-term balance-y) u0 (- final-term balance-y)))
+      )
+      (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+      (ok dy)
+    )  
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param dy; amount of correlated-token added
+;; @returns (response uint uint)
+(define-private (get-x-in-given-y-out-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
+  (begin
+    (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+    (let 
+      (          
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (x-pow (pow-down balance-x t-comp))
+        (y-pow (pow-down balance-y t-comp))
+        (y-dy-pow (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp))
+        (add-term (+ x-pow y-pow))
+        (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
+        (final-term (pow-down term t-comp-num))
+        (dx (if (<= final-term balance-x) u0 (- final-term balance-x)))
+      )
+      (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+      (ok dx)
+    )  
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc spot = (b_y / b_x) ^ t
+;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @param price; target price
+;; @returns (response uint uint)
+(define-read-only (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
+  (begin
+    (asserts! (< price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
+    (let 
+      (
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
+        (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+        (lead-term (pow-down (div-down numer denom) t-comp-num))
+      )
+      (if (<= lead-term ONE_8) (ok u0) (ok (mul-up balance-x (- lead-term ONE_8))))
+    )
+  )
+)
+
+;; @desc d_x = dx
+;; @desc d_y = dy 
+;; @desc b_x = balance-x
+;; @desc b_y = balance-y
+;; @desc spot = (b_y / b_x) ^ t
+;; @desc d_y = b_y - b_x * (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t))
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (yield-token)
+;; @param t; time-to-maturity
+;; @param price; target price
+;; @returns (response uint uint)
+(define-read-only (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
+  (begin
+    (asserts! (> price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
+    (let 
+      (
+        (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+        (t-comp-num-uncapped (div-down ONE_8 t-comp))
+        (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+        (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
+        (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+        (lead-term (mul-up balance-x (pow-down (div-down numer denom) t-comp-num)))
+      )
+      (if (<= balance-y lead-term) (ok u0) (ok (- balance-y lead-term)))
+    )
+  )
+)
+
+;; @desc get-invariant
+;; @desc invariant = b_x ^ (1 - t) + b_y ^ (1 - t)
+;; @param balance-x; balance of token-x
+;; @param balance-y; balance of token-y
+;; @param t; factor
+;; @returns (response uint uint)
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (t uint))
+    (begin
+        (ok (+ (pow-down balance-x (- ONE_8 t)) (pow-down balance-y (- ONE_8 t))))
+    )
+)
+
+;; @desc get-token-given-position
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param total-supply; total supply of pool tokens
+;; @param dx; amount of token added
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-token-given-position-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint) (dy uint))
+  (begin
+    (asserts! (and (> dx u0) (> dy u0))  ERR-NO-LIQUIDITY)
+    (ok
+      (if (is-eq total-supply u0)
+        {token: (unwrap-panic (get-invariant dx dy t)), dy: dy}
+        {token: (mul-down total-supply (div-down dx balance-x)), dy: (mul-down balance-y (div-down dx balance-x))}
+      )            
+    )
+  )
+)
+
+;; @desc get-position-given-mint
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token to be minted
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-position-given-mint-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
+  (begin
+    (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
+    (let
+      (
+        (token-div-supply (div-down token total-supply))
+        (dx (mul-down balance-x token-div-supply))
+        (dy (mul-down balance-y token-div-supply))
+      )                
+      (ok {dx: dx, dy: dy})
+    )      
+  )
+)
+
+;; @desc get-position-given-burn
+;; @param balance-x; balance of token-x (token)
+;; @param balance-y; balance of token-y (correlated-token)
+;; @param t; time-to-maturity
+;; @param total-supply; total supply of pool tokens
+;; @param token; amount of pool token to be burnt
+;; @returns (response (tuple uint uint) uint)
+(define-private (get-position-given-burn-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
+    (get-position-given-mint-internal balance-x balance-y t total-supply token)
+)
+
 (define-constant ONE_8 u100000000) ;; 8 decimal places
-
-;; TODO: this needs to be reviewed/updated
-;; With 8 fixed digits you would have a maximum error of 0.5 * 10^-8 in each entry, 
-;; which could aggregate to about 8 x 0.5 * 10^-8 = 4 * 10^-8 relative error 
-;; (i.e. the last digit of the result may be completely lost to this error).
 (define-constant MAX_POW_RELATIVE_ERROR u4) 
 
-;; public functions
-;;
-
-;; @desc scale-up
-;; @params a 
-;; @returns uint
-(define-read-only (scale-up (a uint))
-    (* a ONE_8)
-)
-
-;; @desc scale-down
-;; @params a 
-;; @returns uint
-(define-read-only (scale-down (a uint))
-    (/ a ONE_8)
-)
-
-;; @desc mul-down
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (mul-down (a uint) (b uint))
+(define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8)
 )
 
-;; @desc mul-up
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (mul-up (a uint) (b uint))
+(define-private (mul-up (a uint) (b uint))
     (let
         (
             (product (* a b))
@@ -924,33 +1255,21 @@
    )
 )
 
-;; @desc div-down
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (div-down (a uint) (b uint))
+(define-private (div-down (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (/ (* a ONE_8) b)
    )
 )
 
-;; @desc div-up
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (div-up (a uint) (b uint))
+(define-private (div-up (a uint) (b uint))
     (if (is-eq a u0)
         u0
         (+ u1 (/ (- (* a ONE_8) u1) b))
     )
 )
 
-;; @desc pow-down
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (pow-down (a uint) (b uint))    
+(define-private (pow-down (a uint) (b uint))    
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -963,11 +1282,7 @@
     )
 )
 
-;; @desc pow-up
-;; @params a 
-;; @params b
-;; @returns uint
-(define-read-only (pow-up (a uint) (b uint))
+(define-private (pow-up (a uint) (b uint))
     (let
         (
             (raw (unwrap-panic (pow-fixed a b)))
@@ -977,39 +1292,12 @@
     )
 )
 
-;; math-log-exp
-;; Exponentiation and logarithm functions for 8 decimal fixed point numbers (both base and exponent/argument).
-;; Exponentiation and logarithm with arbitrary bases (x^y and log_x(y)) are implemented by conversion to natural 
-;; exponentiation and logarithm (where the base is Euler's number).
-;; Reference: https://github.com/balancer-labs/balancer-monorepo/blob/master/pkg/solidity-utils/contracts/math/LogExpMath.sol
-;; MODIFIED: because we use only 128 bits instead of 256, we cannot do 20 decimal or 36 decimal accuracy like in Balancer. 
-
-;; constants
-;;
-;; All fixed point multiplications and divisions are inlined. This means we need to divide by ONE when multiplying
-;; two numbers, and multiply by ONE when dividing them.
-;; All arguments and return values are 8 decimal fixed point numbers.
 (define-constant UNSIGNED_ONE_8 (pow 10 8))
-
-;; The domain of natural exponentiation is bound by the word size and number of decimals used.
-;; The largest possible result is (2^127 - 1) / 10^8, 
-;; which makes the largest exponent ln((2^127 - 1) / 10^8) = 69.6090111872.
-;; The smallest possible result is 10^(-8), which makes largest negative argument ln(10^(-8)) = -18.420680744.
-;; We use 69.0 and -18.0 to have some safety margin.
 (define-constant MAX_NATURAL_EXPONENT (* 69 UNSIGNED_ONE_8))
 (define-constant MIN_NATURAL_EXPONENT (* -18 UNSIGNED_ONE_8))
-
 (define-constant MILD_EXPONENT_BOUND (/ (pow u2 u126) (to-uint UNSIGNED_ONE_8)))
+(define-constant x_a_list_no_deci (list {x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ))
 
-;; Because largest exponent is 69, we start from 64
-;; The first several a_n are too large if stored as 8 decimal numbers, and could cause intermediate overflows.
-;; Instead we store them as plain integers, with 0 decimals.
-
-(define-constant x_a_list_no_deci (list 
-{x_pre: 6400000000, a_pre: 62351490808116168829, use_deci: false} ;; x1 = 2^6, a1 = e^(x1)
-))
-
-;; 8 decimal constants
 (define-constant x_a_list (list 
 {x_pre: 3200000000, a_pre: 78962960182680695161, use_deci: true} ;; x2 = 2^5, a2 = e^(x2)
 {x_pre: 1600000000, a_pre: 888611052050787, use_deci: true} ;; x3 = 2^4, a3 = e^(x3)
@@ -1023,21 +1311,12 @@
 {x_pre: 6250000, a_pre: 106449446, use_deci: true} ;; x11 = 2^-4, a11 = e^x(11)
 ))
 
-
 (define-constant ERR-X-OUT-OF-BOUNDS (err u5009))
 (define-constant ERR-Y-OUT-OF-BOUNDS (err u5010))
 (define-constant ERR-PRODUCT-OUT-OF-BOUNDS (err u5011))
 (define-constant ERR-INVALID-EXPONENT (err u5012))
 (define-constant ERR-OUT-OF-BOUNDS (err u5013))
 
-;; private functions
-;;
-
-;; Internal natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-
-;; @desc ln-priv
-;; @params a
-;; @ returns (response uint)
 (define-private (ln-priv (a int))
   (let
     (
@@ -1055,10 +1334,6 @@
   )
 )
 
-;; @desc accumulate_division
-;; @params x_a_pre ; tuple(x_pre a_pre use_deci)
-;; @params rolling_a_sum ; tuple (a sum)
-;; @returns uint
 (define-private (accumulate_division (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_a_sum (tuple (a int) (sum int))))
   (let
     (
@@ -1075,10 +1350,6 @@
  )
 )
 
-;; @desc rolling_sum_div
-;; @params n
-;; @params rolling ; tuple (num seriesSum z_squared)
-;; @Sreturns tuple
 (define-private (rolling_sum_div (n int) (rolling (tuple (num int) (seriesSum int) (z_squared int))))
   (let
     (
@@ -1092,16 +1363,7 @@
  )
 )
 
-;; Instead of computing x^y directly, we instead rely on the properties of logarithms and exponentiation to
-;; arrive at that result. In particular, exp(ln(x)) = x, and ln(x^y) = y * ln(x). This means
-;; x^y = exp(y * ln(x)).
-;; Reverts if ln(x) * y is smaller than `MIN_NATURAL_EXPONENT`, or larger than `MAX_NATURAL_EXPONENT`.
-
-;; @desc pow-priv
-;; @params x
-;; @params y
-;; @returns (response uint)
-(define-read-only (pow-priv (x uint) (y uint))
+(define-private (pow-priv (x uint) (y uint))
   (let
     (
       (x-int (to-int x))
@@ -1114,16 +1376,11 @@
   )
 )
 
-;; @desc exp-pos
-;; @params x
-;; @returns (response uint)
-(define-read-only (exp-pos (x int))
+(define-private (exp-pos (x int))
   (begin
     (asserts! (and (<= 0 x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (let
       (
-        ;; For each x_n, we test if that term is present in the decomposition (if x is larger than it), and if so deduct
-        ;; it and compute the accumulated product.
         (x_product_no_deci (fold accumulate_product x_a_list_no_deci {x: x, product: 1}))
         (x_adj (get x x_product_no_deci))
         (firstAN (get product x_product_no_deci))
@@ -1140,10 +1397,6 @@
  )
 )
 
-;; @desc accumulate_product
-;; @params x_a_pre ; tuple (x_pre a_pre use_deci)
-;; @params rolling_x_p ; tuple (x product)
-;; @returns tuple
 (define-private (accumulate_product (x_a_pre (tuple (x_pre int) (a_pre int) (use_deci bool))) (rolling_x_p (tuple (x int) (product int))))
   (let
     (
@@ -1160,10 +1413,6 @@
  )
 )
 
-;; @desc rolling_div_sum
-;; @params n
-;; @params rolling ; tuple (term seriesSum x)
-;; @returns tuple
 (define-private (rolling_div_sum (n int) (rolling (tuple (term int) (seriesSum int) (x int))))
   (let
     (
@@ -1177,22 +1426,10 @@
  )
 )
 
-;; public functions
-;;
-
-;; Exponentiation (x^y) with unsigned 8 decimal fixed point base and exponent.
-;; @desc pow-fixed
-;; @params x
-;; @params y
-;; @returns (response uint)
-(define-read-only (pow-fixed (x uint) (y uint))
+(define-private (pow-fixed (x uint) (y uint))
   (begin
-    ;; The ln function takes a signed value, so we need to make sure x fits in the signed 128 bit range.
     (asserts! (< x (pow u2 u127)) ERR-X-OUT-OF-BOUNDS)
-
-    ;; This prevents y * ln(x) from overflowing, and at the same time guarantees y fits in the signed 128 bit range.
     (asserts! (< y MILD_EXPONENT_BOUND) ERR-Y-OUT-OF-BOUNDS)
-
     (if (is-eq y u0) 
       (ok (to-uint UNSIGNED_ONE_8))
       (if (is-eq x u0) 
@@ -1203,32 +1440,17 @@
   )
 )
 
-;; Natural exponentiation (e^x) with signed 8 decimal fixed point exponent.
-;; Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
-
-;; @desc exp-fixed
-;; @params x
-;; @returns (response uint)
-(define-read-only (exp-fixed (x int))
+(define-private (exp-fixed (x int))
   (begin
     (asserts! (and (<= MIN_NATURAL_EXPONENT x) (<= x MAX_NATURAL_EXPONENT)) ERR-INVALID-EXPONENT)
     (if (< x 0)
-      ;; We only handle positive exponents: e^(-x) is computed as 1 / e^x. We can safely make x positive since it
-      ;; fits in the signed 128 bit range (as it is larger than MIN_NATURAL_EXPONENT).
-      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
       (ok (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) (try! (exp-pos (* -1 x)))))
       (exp-pos x)
     )
   )
 )
 
-;; Logarithm (log(arg, base), with signed 8 decimal fixed point base and argument.
-;; @desc log-fixed
-;; @params arg
-;; @params base
-;; @returns (response uint)
-(define-read-only (log-fixed (arg int) (base int))
-  ;; This performs a simple base change: log(arg, base) = ln(arg) / ln(base).
+(define-private (log-fixed (arg int) (base int))
   (let
     (
       (logBase (* (ln-priv base) UNSIGNED_ONE_8))
@@ -1238,18 +1460,10 @@
  )
 )
 
-;; Natural logarithm (ln(a)) with signed 8 decimal fixed point argument.
-
-;; @desc ln-fixed
-;; @params a
-;; @returns (response uint)
-(define-read-only (ln-fixed (a int))
+(define-private (ln-fixed (a int))
   (begin
     (asserts! (> a 0) ERR-OUT-OF-BOUNDS)
     (if (< a UNSIGNED_ONE_8)
-      ;; Since ln(a^k) = k * ln(a), we can compute ln(a) as ln(a) = ln((1/a)^(-1)) = - ln((1/a)).
-      ;; If a is less than one, 1/a will be greater than one.
-      ;; Fixed point division requires multiplying by UNSIGNED_ONE_8.
       (ok (- 0 (ln-priv (/ (* UNSIGNED_ONE_8 UNSIGNED_ONE_8) a))))
       (ok (ln-priv a))
    )

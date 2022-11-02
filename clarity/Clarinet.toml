@@ -708,7 +708,6 @@ depends_on = [
   "alex-vault",
   "trait-sip-010",
   "trait-vault",
-  "yield-token-equation",
   "alex-reserve-pool",
   "token-wxusd",
 ]
@@ -965,3 +964,7 @@ depends_on = [ "trait-ownable", "trait-sip-010"]
 [contracts.faucet-xusd-tokensoft]
 path = "contracts/helpers/faucet-xusd-tokensoft.clar"
 depends_on = [ "token-wxusd-tokensoft" ]
+
+[contracts.stable-wxusd-wusda]
+path = "contracts/pool-token/stable-wxusd-wusda.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
