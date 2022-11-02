@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: sergeysova/jq-action@v2
+      - uses: wei/curl@v1
       - name: Install Deps
         run: |
           cd clarity && ./scripts/clarinet_manager.sh install
@@ -29,6 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: sergeysova/jq-action@v2
+      - uses: wei/curl@v1
       - name: Install Deps
         run: |
           cd clarity && ./scripts/clarinet_manager.sh install
