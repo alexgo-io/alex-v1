@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: "Check contract"
-        uses: docker://hirosystems/clarinet:0.27.0
+        uses: docker://hirosystems/clarinet:0.32.0
         with:
           entrypoint: "bash"
           args: -c "cd clarity && clarinet check"
@@ -31,7 +31,7 @@ jobs:
         run: |
           echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
       - name: "Execute test suite"
-        uses: docker://hirosystems/clarinet:0.27.0
+        uses: docker://hirosystems/clarinet:0.32.0
         with:
           entrypoint: "bash"
           #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
