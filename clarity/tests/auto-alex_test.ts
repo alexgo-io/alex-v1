@@ -501,15 +501,12 @@ Clarinet.test({
         const yieldVault = new YieldVault(chain, "auto-alex");
         const reservePool = new ReservePool(chain);
         const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
-        const fwpTest = new FWPTestAgent3(chain, deployer);
         const dx = ONE_8;
         const tranche_1_cycle = 10;
         const tranche_2_cycle = 20;
 
         let result = alexToken.mintFixed(deployer, deployer.address, 2 * dx);
-        result.expectOk();
-        result = alexToken.mintFixed(deployer, wallet_1.address, 2 * dx);
-        result.expectOk();            
+        result.expectOk(); 
 
         let block = chain.mineBlock([
             reservePool.addToken(deployer, alexTokenAddress),
@@ -544,7 +541,7 @@ Clarinet.test({
         
         block = chain.mineBlock([
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(1), types.uint(dx)], wallet_1.address),
-            // Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
+            Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
