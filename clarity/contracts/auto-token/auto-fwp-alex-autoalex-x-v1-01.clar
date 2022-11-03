@@ -481,7 +481,7 @@
         (asserts! (>= block-height (var-get start-block)) ERR-BLOCK-HEIGHT)
         (asserts! (>= alex-available dx) ERR-AVAILABLE-ALEX)        
 
-        ;; (as-contract (try! (contract-call? .age000-governance-token mint-fixed dx tx-sender)))
+        (as-contract (try! (contract-call? .age000-governance-token mint-fixed dx tx-sender)))
         ;; (as-contract (try! (contract-call? .auto-alex add-to-position alex-to-atalex)))
         ;; (as-contract (try! (contract-call? .simple-weight-pool-alex add-to-position .age000-governance-token .auto-alex .fwp-alex-autoalex (- dx (mul-down (var-get add-multiplier) alex-to-atalex)) (some atalex-amount))))
         (map-set available-alex { borrower: sender, tranche: tranche } (- alex-available dx))
