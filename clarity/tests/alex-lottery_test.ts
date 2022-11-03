@@ -21,8 +21,8 @@ import {
 
 const parameters = {
   tokensPerTicketInFixed: 50e8,
-  registrationStartHeight: 20,
-  registrationEndHeight: 30,
+  registrationStartHeight: 10,
+  registrationEndHeight: 20,
 };
 
 Clarinet.test({
@@ -74,7 +74,7 @@ Clarinet.test({
     third.receipts.map(({ result }) => result.expectOk());
 
     for (let t = 0; t < 500; t += 120) {
-      const registrationStartHeight = 20 + t;
+      const registrationStartHeight = 10 + t;
       const registrationEndHeight = registrationStartHeight + 10;
 
       const ticketRecipients = [

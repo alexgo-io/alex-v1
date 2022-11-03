@@ -893,10 +893,8 @@
     (let 
         (
             (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y }) ERR-INVALID-POOL))
-            (token (unwrap-panic (contract-call? .simple-equation get-token-given-position (get balance-x pool) (get balance-y pool) (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))))
         )
-        (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) (get dy token)) ERR-EXCEEDS-MAX-SLIPPAGE)
-        (ok token)        
+        (contract-call? .simple-equation get-token-given-position (get balance-x pool) (get balance-y pool) (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
 )
 

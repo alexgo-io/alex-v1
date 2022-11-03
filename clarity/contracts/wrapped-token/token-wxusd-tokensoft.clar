@@ -95,7 +95,7 @@
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
   (ok (/ (* (unwrap-panic (contract-call? 'ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD get-balance account)) (pow-decimals)) (pow u10 u8)))
-  ;; (ok (/ (* (unwrap-panic (contract-call? 'SP2TZK01NKDC89J6TA56SA47SDF7RTHYEQ79AAB9A.Wrapped-USD get-balance account)) (pow-decimals)) (pow u10 u8)))
+
 )
 
 ;; @desc get-token-uri
@@ -115,7 +115,6 @@
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
     (contract-call? 'ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
-    ;; (contract-call? 'SP2TZK01NKDC89J6TA56SA47SDF7RTHYEQ79AAB9A.Wrapped-USD transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
   )
 )
 
