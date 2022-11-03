@@ -33,15 +33,14 @@ install_project() {
 
 
   echo git clone "$git_repo" "$TMP_GIT_DIR"/"$project_name"
-  git clone "$git_repo" "$TMP_GIT_DIR"/"$project_name"
-  pushd "$TMP_GIT_DIR"/"$project_name" > /dev/null
-  echo git checkout "$commit"
-  git checkout "$commit"
-  popd > /dev/null
+  curl -L "$(echo $git_repo | sed -e 's/^git\@github.com:/https:\/\/github.com\//g' -e "s/\.git/\/archive\//g")""$commit".zip -o $TMP_GIT_DIR/$commit.zip
+  unzip $TMP_GIT_DIR/$commit.zip -d $TMP_GIT_DIR/$project_name
 
   mkdir -p "$ROOT/$CONTRACTS_MODULE_PATH"
   rm -rf "$ROOT/$CONTRACTS_MODULE_PATH/${project_name:?}"
-  cp -r "$TMP_GIT_DIR"/"$project_name"/"$contracts_path" "$ROOT"/"$CONTRACTS_MODULE_PATH"/$project_name
+  git_project_name=$(echo $git_repo | sed -e 's/^git\@github.com:alexgo-io\///g' -e "s/\.git//g")
+
+  cp -r "$TMP_GIT_DIR"/"$project_name"/"$git_project_name"-"$commit"/"$contracts_path" "$ROOT"/"$CONTRACTS_MODULE_PATH"/$project_name
 
   echo "cleaning..."
   rm -rf "$TMP_GIT_DIR"

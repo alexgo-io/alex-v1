@@ -30,9 +30,9 @@ const parameters = {
   pricePerTicketInFixed: 5000000000,
   activationThreshold: 1,
   ticketRecipients: undefined,
-  registrationStartHeight: 10,
-  registrationEndHeight: 20,
-  claimEndHeight: 30,
+  registrationStartHeight: 20,
+  registrationEndHeight: 30,
+  claimEndHeight: 40,
   apowerPerTicketInFixed: [
     { tierThreshold: 5, apowerPerTicketInFixed: 10 * ONE_8 },
     { tierThreshold: 10, apowerPerTicketInFixed: 50 * ONE_8 },
@@ -476,7 +476,7 @@ Clarinet.test({
       ),
     ]);
 
-    const registrationStartHeight = 10;
+    const registrationStartHeight = 20;
     const registrationEndHeight = registrationStartHeight + 10;
     const claimEndHeight = registrationEndHeight + 100;
 
@@ -707,7 +707,7 @@ Clarinet.test({
     ]);
 
     for (let t = 0; t < 500; t += 120) {
-      const registrationStartHeight = 10 + t;
+      const registrationStartHeight = 20 + t;
       const registrationEndHeight = registrationStartHeight + 10;
       const claimEndHeight = registrationEndHeight + 100;
 
