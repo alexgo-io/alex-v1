@@ -2,6 +2,11 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; stable-swap-pool
+;; uses the constant power sum formula whose "factor" determines 
+;; how far (or close) you are from (or to) constant product (aka Uniswap) and constant sum (aka mStable)
+;; this can be seen as the generalised formulation of Curve AMM.
+;; based on Yield Token Pool AMM (https://medium.com/alexgobtc/whitepaper-1-automated-market-making-of-the-yield-token-pool-b7739fcee038)
+;; factor => 1 gives you Uniswap, and factor => 0 gives you mStable. In-between, Curve.
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))
