@@ -544,7 +544,7 @@ Clarinet.test({
         
         block = chain.mineBlock([
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(1), types.uint(dx)], wallet_1.address),
-            Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
+            // Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
