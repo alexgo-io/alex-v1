@@ -18,7 +18,7 @@ jobs:
       - uses: wei/curl@v1
       - name: Install Deps
         run: |
-          cd clarity && ./scripts/clarinet_manager.sh update alex_dao main && ./scripts/clarinet_manager.sh install
+          cd clarity && ./scripts/clarinet_manager.sh install
       - name: "Check contract"
         uses: docker://hirosystems/clarinet:0.32.0
         with:
@@ -33,7 +33,7 @@ jobs:
       - uses: wei/curl@v1
       - name: Install Deps
         run: |
-          cd clarity && ./scripts/clarinet_manager.sh update alex_dao main && ./scripts/clarinet_manager.sh install
+          cd clarity && ./scripts/clarinet_manager.sh install
       - name: "Set CI env"
         run: |
           echo "ci_env=$(bash <(curl -s https://codecov.io/env))" >> $GITHUB_ENV
