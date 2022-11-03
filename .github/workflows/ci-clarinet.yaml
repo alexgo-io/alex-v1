@@ -42,4 +42,4 @@ jobs:
         with:
           entrypoint: "bash"
           #args: -c "cd clarity && clarinet test --coverage && curl -Os https://uploader.codecov.io/latest/linux/codecov && chmod +x codecov && ./codecov -t ${{ secrets.CODECOV_TOKEN }} -f coverage.lcov"
-          args: -c "cd clarity && clarinet test --coverage"
+          args: -c "cd clarity && clarinet test ./tests/auto-alex_test.ts --coverage"
