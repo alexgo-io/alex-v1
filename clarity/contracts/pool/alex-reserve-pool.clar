@@ -680,7 +680,6 @@
 (map-set approved-contracts .fixed-weight-pool-alex true)
 (map-set approved-contracts .simple-weight-pool true)
 (map-set approved-contracts .simple-weight-pool-alex true)
-(map-set approved-contracts .stable-swap-pool true)
 
 ;; testing only
 (map-set approved-contracts .collateral-rebalancing-pool-v1 true)  
