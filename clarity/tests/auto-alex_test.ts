@@ -521,11 +521,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
 
         block = chain.mineBlock([
-            yieldVault.addToPosition(deployer, dx),   
-        ]);
-        block.receipts.forEach(e => { e.result.expectOk() });
-        
-        block = chain.mineBlock([                                  
+            yieldVault.addToPosition(deployer, dx),                                
             Tx.contractCall("simple-weight-pool-alex", "create-pool", 
                 [
                     types.principal(deployer.address + ".age000-governance-token"),
@@ -536,6 +532,10 @@ Clarinet.test({
                     types.uint(dx)
                 ], deployer.address
             ),
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+        
+        block = chain.mineBlock([         
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-start-block", [types.uint(ACTIVATION_BLOCK)], deployer.address),
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-tranche-end-block", [types.uint(1), types.uint(ACTIVATION_BLOCK + (tranche_1_cycle + 1) * 525)], deployer.address),
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-tranche-end-block", [types.uint(2), types.uint(ACTIVATION_BLOCK + (tranche_2_cycle + 1) * 525)], deployer.address),
