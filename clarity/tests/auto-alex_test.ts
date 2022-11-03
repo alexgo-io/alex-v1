@@ -507,7 +507,9 @@ Clarinet.test({
         const tranche_2_cycle = 20;
 
         let result = alexToken.mintFixed(deployer, deployer.address, 2 * dx);
-        result.expectOk();    
+        result.expectOk();
+        result = alexToken.mintFixed(deployer, wallet_1.address, 2 * dx);
+        result.expectOk();            
 
         let block = chain.mineBlock([
             reservePool.addToken(deployer, alexTokenAddress),
@@ -540,11 +542,11 @@ Clarinet.test({
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
         
-        // block = chain.mineBlock([
-        //     Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(1), types.uint(dx)], wallet_1.address),
-        //     Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
-        // ]);
-        // block.receipts.forEach(e => { e.result.expectOk() });
+        block = chain.mineBlock([
+            Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(1), types.uint(dx)], wallet_1.address),
+            Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
 
         for(let cycle = 1; cycle < tranche_1_cycle; cycle++){
             chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (cycle + 1) * 525);   
