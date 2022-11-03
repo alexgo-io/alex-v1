@@ -521,7 +521,11 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
 
         block = chain.mineBlock([
-            yieldVault.addToPosition(deployer, dx),                 
+            yieldVault.addToPosition(deployer, dx),   
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+        
+        block = chain.mineBlock([                                  
             Tx.contractCall("simple-weight-pool-alex", "create-pool", 
                 [
                     types.principal(deployer.address + ".age000-governance-token"),
