@@ -532,15 +532,15 @@ Clarinet.test({
                     types.uint(dx)
                 ], deployer.address
             ),
-        ]);
-        block.receipts.forEach(e => { e.result.expectOk() });
-        
-        block = chain.mineBlock([         
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-start-block", [types.uint(ACTIVATION_BLOCK)], deployer.address),
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-tranche-end-block", [types.uint(1), types.uint(ACTIVATION_BLOCK + (tranche_1_cycle + 1) * 525)], deployer.address),
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-tranche-end-block", [types.uint(2), types.uint(ACTIVATION_BLOCK + (tranche_2_cycle + 1) * 525)], deployer.address),
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-available-alex", [types.principal(wallet_1.address), types.uint(1), types.uint(dx)], deployer.address),
-            Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-available-alex", [types.principal(wallet_1.address), types.uint(2), types.uint(dx)], deployer.address),                
+            Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "set-available-alex", [types.principal(wallet_1.address), types.uint(2), types.uint(dx)], deployer.address),                            
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+        
+        block = chain.mineBlock([
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(1), types.uint(dx)], wallet_1.address),
             Tx.contractCall("auto-fwp-alex-autoalex-x-v1-01", "add-to-position", [types.uint(2), types.uint(dx)], wallet_1.address)
         ]);
