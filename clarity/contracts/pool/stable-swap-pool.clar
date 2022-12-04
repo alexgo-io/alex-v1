@@ -287,8 +287,8 @@
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (if exists 
-            (ok (div-down (get balance-y pool) (get balance-x pool)))
-            (ok (div-down (get balance-x pool) (get balance-y pool)))
+            (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
+            (ok (get-price-internal (get balance-y pool) (get balance-x pool) factor))
         )
     )
 )
@@ -309,12 +309,7 @@
 )
 
 (define-private (get-price-internal (balance-x uint) (balance-y uint) (factor uint))
-    (let
-        (
-          (price (pow-down (div-down balance-y balance-x) factor))
-        )
-        (if (<= price ONE_8) ONE_8 price)
-    )
+    (pow-down (div-down balance-y balance-x) factor)
 )
 
 (define-private (add-approved-token-to-vault (token principal))
