@@ -11,9 +11,9 @@ concurrency:
 jobs:
   check:
     name: check - ${{ github.ref_name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: sergeysova/jq-action@v2
       - uses: wei/curl@v1
       - name: Install Deps
@@ -26,9 +26,9 @@ jobs:
           args: -c "cd clarity && clarinet check"
   test:
     name: test - ${{ github.ref_name }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: sergeysova/jq-action@v2
       - uses: wei/curl@v1
       - name: Install Deps
