@@ -1,5 +1,5 @@
 
-import {Clarinet, Tx, Chain, Account, types} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
+import {Clarinet, Tx, Chain, Account, types} from "https://deno.land/x/clarinet@v0.34.0/index.ts";
 
 class YieldVault{
     chain: Chain;

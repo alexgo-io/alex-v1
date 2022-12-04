@@ -4,10 +4,17 @@ name = "alex-v1"
 [[project.requirements]]
 contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
 
+[[project.requirements]]
+contract_id = "SP2TZK01NKDC89J6TA56SA47SDF7RTHYEQ79AAB9A.Wrapped-USD"
+
+[project.cache_location]
+path = "./.cache/.requirements"
 
 [repl]
 costs_version = 2
 
+# [repl.analysis]
+# passes = ["check_checker"]
 
 [contracts.age000-governance-token]
 path = "contracts_modules/alex_dao/extensions/age000-governance-token.clar"
@@ -702,6 +709,16 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 path = "contracts/wrapped-token/token-wdiko.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "token-diko" ]
 
+[contracts.stable-swap-pool]
+path = "contracts/pool/stable-swap-pool.clar"
+depends_on = [
+  "alex-vault",
+  "trait-sip-010",
+  "trait-vault",
+  "alex-reserve-pool",
+  "token-wxusd",
+]
+
 [contracts.auto-alex]
 path = "contracts/auto-token/auto-alex.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool", "staking-helper" ]
@@ -954,3 +971,7 @@ depends_on = [ "trait-ownable", "trait-sip-010"]
 [contracts.faucet-xusd-tokensoft]
 path = "contracts/helpers/faucet-xusd-tokensoft.clar"
 depends_on = [ "token-wxusd-tokensoft" ]
+
+[contracts.stable-wxusd-wusda]
+path = "contracts/pool-token/stable-wxusd-wusda.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
