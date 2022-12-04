@@ -1,6 +1,6 @@
 
-import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.31.1/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
+import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
+import { assertEquals } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
 
 import { FWPTestAgent1, FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
 import { MS_FWP_ALEX_USDA } from './models/alex-tests-multisigs.ts';

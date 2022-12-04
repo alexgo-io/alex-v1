@@ -4,7 +4,7 @@ import {
   Clarinet,
   Tx,
   types,
-} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
+} from "https://deno.land/x/clarinet@v0.34.0/index.ts";
 
 
 class ALEXToken {
