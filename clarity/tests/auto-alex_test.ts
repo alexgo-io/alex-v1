@@ -1,4 +1,4 @@
-import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v0.34.0/index.ts";
+import { Clarinet, Tx, Chain, Account, types } from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 import { YieldVault } from "./models/alex-tests-auto.ts";
 import { FWPTestAgent3 } from "./models/alex-tests-fixed-weight-pool.ts";
 import { ReservePool } from "./models/alex-tests-reserve-pool.ts";

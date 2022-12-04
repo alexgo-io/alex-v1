@@ -4,12 +4,12 @@ import {
   Chain,
   Account,
   types,
-} from "https://deno.land/x/clarinet@v0.34.0/index.ts";
+} from "https://deno.land/x/clarinet@v0.31.1/index.ts";
 import { YieldVault } from "./models/alex-tests-auto.ts";
 import { ReservePool } from "./models/alex-tests-reserve-pool.ts";
 import { FungibleToken } from "./models/alex-tests-tokens.ts";
 import { FWPTestAgent3 } from './models/alex-tests-fixed-weight-pool.ts';
-import { assertNotEquals } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
+import { assertNotEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
 
 const ONE_8 = 100000000;
 

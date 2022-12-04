@@ -1,7 +1,7 @@
 
 
-import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
+import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.31.1/index.ts';
+import { assertEquals } from 'https://deno.land/std@0.113.0/testing/asserts.ts';
 import { YTPTestAgent1, } from './models/alex-tests-yield-token-pool.ts';
 import { MS_YTP_YIELD_WBTC } from './models/alex-tests-multisigs.ts';
 import { USDAToken, WBTCToken, YIELD_WBTC, YTP_YIELD_WBTC, SemiFungibleToken } from './models/alex-tests-tokens.ts';
