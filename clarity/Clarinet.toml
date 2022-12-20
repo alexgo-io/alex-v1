@@ -972,3 +972,7 @@ depends_on = [ "token-wxusd-tokensoft" ]
 [contracts.stable-wxusd-wusda]
 path = "contracts/pool-token/stable-wxusd-wusda.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.bridge-endpoint]
+path = "contracts/bridge/bridge-endpoint.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
