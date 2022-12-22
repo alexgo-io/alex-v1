@@ -509,9 +509,7 @@
                 )
                 (sender tx-sender)             
             )
-
-            ;; a / b <= c / d == ad <= bc for b, d >=0
-            (asserts! (<= (mul-down dy balance-x) (mul-down dx-net-fees balance-y)) ERR-INVALID-LIQUIDITY)
+            (asserts! (<= (div-down dy dx-net-fees) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (unwrap! (contract-call? .token-wxusd transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
@@ -563,8 +561,7 @@
                 )
                 (sender tx-sender)
             )
-            ;; a / b >= c / d == ac >= bc for b, d >= 0
-            (asserts! (>= (mul-down dy-net-fees balance-x) (mul-down dx balance-y)) ERR-INVALID-LIQUIDITY)
+            (asserts! (>= (div-down dy-net-fees dx) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
             (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
             (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft .token-wxusd dx sender))))
