@@ -17,7 +17,7 @@ const fwpwstxusdaAddress = ".fwp-wstx-usda-50-50-v1-01"
 const fwpwstxwbtcAddress = ".fwp-wstx-wbtc-50-50-v1-01"
 const daoAddress = ".executor-dao"
 
-const factor = 0.01e8; // the smaller, the lower the slippage
+const factor = 0.0001e8; // the smaller, the lower the slippage
 const balance = 10e8;
 
 Clarinet.test({
