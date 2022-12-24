@@ -150,9 +150,9 @@ Clarinet.test({
         result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, deployer.address + fwpwstxusdaAddress, deployer.address + daoAddress, balance, balance);
         result.expectOk().expectBool(true);
 
-        result = SSPTest.setMaxInRatio(deployer, 0.3e8);
+        result = SSPTest.setMaxInRatio(deployer, 0.8e8);
         result.expectOk().expectBool(true);
-        result = SSPTest.setMaxOutRatio(deployer, 0.3e8);
+        result = SSPTest.setMaxOutRatio(deployer, 0.8e8);
         result.expectOk().expectBool(true);      
         result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 0);   
         result.expectOk().expectBool(true);                  
@@ -164,7 +164,7 @@ Clarinet.test({
         position['balance-y'].expectUint(balance);      
         
         // let's do some arb
-        const PT = 1.003e8; 
+        const PT = 1.0001e8; 
         const decimals = 3;
         call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, PT);
         const yToSell = Number(call.result.expectOk().replace(/\D/g, ""));
