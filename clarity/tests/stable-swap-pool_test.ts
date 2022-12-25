@@ -17,7 +17,7 @@ const fwpwstxusdaAddress = ".fwp-wstx-usda-50-50-v1-01"
 const fwpwstxwbtcAddress = ".fwp-wstx-wbtc-50-50-v1-01"
 const daoAddress = ".executor-dao"
 
-const factor = 0.01e8; // the smaller, the lower the slippage
+const factor = 0.0001e8; // the smaller, the lower the slippage
 const balance = 10e8;
 
 Clarinet.test({
@@ -81,14 +81,14 @@ Clarinet.test({
         // Add extra liquidity (1/4 of initial liquidity)
         result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, deployer.address + fwpwstxwbtcAddress, balance / 4, balance / 4);
         position = result.expectOk().expectTuple();
-        position['supply'].expectUint(Math.round(initial_supply / 4));
+        position['supply'].expectUint(Math.floor(initial_supply / 4));
         position['dy'].expectUint(balance / 4);
         position['dx'].expectUint(balance / 4);
 
         // Check pool details and print
         call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor);
         position = call.result.expectOk().expectTuple();
-        position['total-supply'].expectUint(Math.round(5/4 * initial_supply));
+        position['total-supply'].expectUint(Math.floor(5/4 * initial_supply));
         position['balance-y'].expectUint(5/4 * balance);
         position['balance-x'].expectUint(5/4 * balance);        
 
@@ -113,12 +113,12 @@ Clarinet.test({
         result = SSPTest.swapXForY(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, 1e8, 0);
         position = result.expectOk().expectTuple();
         position['dx'].expectUint(1e8);
-        position['dy'].expectUint(99799847);    
+        position['dy'].expectUint(99997812);    
         
         // swap some usda into wbtc
         result = SSPTest.swapYForX(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, 1e8, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(100199803);
+        position['dx'].expectUint(100001831);
         position['dy'].expectUint(1e8);        
 
         // attempt to swap zero throws an error
@@ -150,9 +150,9 @@ Clarinet.test({
         result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, deployer.address + fwpwstxusdaAddress, deployer.address + daoAddress, balance, balance);
         result.expectOk().expectBool(true);
 
-        result = SSPTest.setMaxInRatio(deployer, 0.3e8);
+        result = SSPTest.setMaxInRatio(deployer, 0.8e8);
         result.expectOk().expectBool(true);
-        result = SSPTest.setMaxOutRatio(deployer, 0.3e8);
+        result = SSPTest.setMaxOutRatio(deployer, 0.8e8);
         result.expectOk().expectBool(true);      
         result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 0);   
         result.expectOk().expectBool(true);                  
@@ -164,8 +164,8 @@ Clarinet.test({
         position['balance-y'].expectUint(balance);      
         
         // let's do some arb
-        const PT = 1.003e8; 
-        const decimals = 3;
+        const PT = 1.0001e8; 
+        let decimals = 4;
         call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, PT);
         const yToSell = Number(call.result.expectOk().replace(/\D/g, ""));
         result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, yToSell, 0)
@@ -179,7 +179,8 @@ Clarinet.test({
         assertEquals(Math.round((newBalY / newBalX) ** (factor / 1e8) * (10 ** decimals)) * 1e8 / (10 ** decimals), PT);  
         
         // let's do some arb
-        const newPT = 0.999e8;    
+        const newPT = 1.00005e8;
+        decimals = 5;
         // but calling get-y-given-price throws an error
         call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, newPT);
         call.result.expectErr().expectUint(2002);

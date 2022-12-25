@@ -795,7 +795,7 @@
                     )                    
                 )
             )
-        )
+        ) 
     )
 )
 
@@ -1011,9 +1011,10 @@
         (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
         (final-term (pow-up term t-comp-num))
         (dy (if (<= balance-y final-term) u0 (- balance-y final-term)))
+        (dy-bound (mul-down dx (get-price-internal balance-x balance-y t)))
       )
       (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-      (ok dy)
+      (ok (if (< dy dy-bound) dy dy-bound))
     )  
   )
 )
@@ -1043,9 +1044,10 @@
         (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
         (final-term (pow-up term t-comp-num))
         (dx (if (<= balance-x final-term) u0 (- balance-x final-term)))
+        (dx-bound (div-down dy (get-price-internal balance-x balance-y t)))
       )
       (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-      (ok dx)
+      (ok (if (< dx dx-bound) dx dx-bound))
     )  
   )
 )
@@ -1195,7 +1197,7 @@
     (ok
       (if (is-eq total-supply u0)
         {token: (unwrap-panic (get-invariant dx dy t)), dy: dy}
-        {token: (mul-down total-supply (div-down dx balance-x)), dy: (mul-down balance-y (div-down dx balance-x))}
+        {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)}
       )            
     )
   )
