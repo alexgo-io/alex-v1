@@ -1197,7 +1197,7 @@
     (ok
       (if (is-eq total-supply u0)
         {token: (unwrap-panic (get-invariant dx dy t)), dy: dy}
-        {token: (mul-down total-supply (div-down dx balance-x)), dy: (mul-down balance-y (div-down dx balance-x))}
+        {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)}
       )            
     )
   )
