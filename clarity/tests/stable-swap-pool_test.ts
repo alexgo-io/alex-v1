@@ -1,6 +1,6 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
-import { assertEquals } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
+import { assertEquals, assert } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
 
 import { SSPTestAgent1 } from './models/alex-tests-stable-swap-pool.ts';
 import { 
@@ -18,7 +18,12 @@ const fwpwstxwbtcAddress = ".fwp-wstx-wbtc-50-50-v1-01"
 const daoAddress = ".executor-dao"
 
 const factor = 0.0001e8; // the smaller, the lower the slippage
-const balance = 10e8;
+const threshold = 500e8;
+const balance = 50000e8;
+
+const testAmount = 1e8;
+
+function stringToUint(a: any) { return a.replace(/\D/g, ""); }
 
 Clarinet.test({
     name: "stable-swap-pool : pool creation, adding values and reducing values",
@@ -36,7 +41,7 @@ Clarinet.test({
         result.expectOk();
         result = usdaToken.mintFixed(deployer, wallet_1.address, 200000e8);
         result.expectOk();
-        result = wbtcToken.mintFixed(deployer, deployer.address, 100000e8);
+        result = wbtcToken.mintFixed(deployer, deployer.address, 100000000e8);
         result.expectOk();
         result = wbtcToken.mintFixed(deployer, wallet_1.address, 100000e8);
         result.expectOk();
@@ -58,7 +63,35 @@ Clarinet.test({
         result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 0);   
         result.expectOk().expectBool(true);     
         result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, 0);   
-        result.expectOk().expectBool(true);                
+        result.expectOk().expectBool(true);    
+
+        let block = chain.mineBlock([
+            Tx.contractCall("stable-swap-pool", "set-threshold-x", [
+              types.principal(deployer.address + wxusdAddress),
+              types.principal(deployer.address + usdaAddress),
+              types.uint(factor),
+              types.uint(threshold)
+            ], deployer.address),
+            Tx.contractCall("stable-swap-pool", "set-threshold-y", [
+                types.principal(deployer.address + wxusdAddress),
+                types.principal(deployer.address + usdaAddress),
+                types.uint(factor),
+                types.uint(threshold)
+              ], deployer.address),    
+              Tx.contractCall("stable-swap-pool", "set-threshold-x", [
+                types.principal(deployer.address + wxusdAddress),
+                types.principal(deployer.address + wbtcAddress),
+                types.uint(factor),
+                types.uint(threshold)
+              ], deployer.address),
+              Tx.contractCall("stable-swap-pool", "set-threshold-y", [
+                  types.principal(deployer.address + wxusdAddress),
+                  types.principal(deployer.address + wbtcAddress),
+                  types.uint(factor),
+                  types.uint(threshold)
+                ], deployer.address),                      
+          ]);
+          block.receipts.forEach(e => { e.result.expectOk() });                                 
 
         let call :any= chain.callReadOnlyFn("stable-swap-pool", "get-token-given-position",
         [
@@ -106,20 +139,53 @@ Clarinet.test({
         position['dx'].expectUint(balance);        
 
         // attempt to trade too much (> 90%) will be rejected
-        result = SSPTest.swapXForY(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, 91*1e8, 0);
+        result = SSPTest.swapXForY(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, balance * 0.9, 0);
         position = result.expectErr().expectUint(4001);
 
+        call = chain.callReadOnlyFn("stable-swap-pool", "get-price",
+        [
+          types.principal(deployer.address + wxusdAddress),
+          types.principal(deployer.address + usdaAddress),
+          types.uint(factor)
+        ], wallet_1.address);
+        console.log('usda: ', stringToUint(call.result.expectOk()));
+        call = chain.callReadOnlyFn("stable-swap-pool", "get-price",
+        [
+          types.principal(deployer.address + wxusdAddress),
+          types.principal(deployer.address + wbtcAddress),
+          types.uint(factor)
+        ], wallet_1.address);
+        console.log('wbtc: ', stringToUint(call.result.expectOk()));
+
+
         // swap some wbtc into usda
-        result = SSPTest.swapXForY(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+        result = SSPTest.swapXForY(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, testAmount, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(1e8);
-        position['dy'].expectUint(99997812);    
+        position['dx'].expectUint(testAmount);
+        position['dy'].expectUint(99997140);
+        // assert(position['dy'].replace(/\D/g, "") < testAmount, "dy must be smaller than testAmount");    
         
+        call = chain.callReadOnlyFn("stable-swap-pool", "get-price",
+        [
+          types.principal(deployer.address + wxusdAddress),
+          types.principal(deployer.address + usdaAddress),
+          types.uint(factor)
+        ], wallet_1.address);
+        console.log('usda: ', stringToUint(call.result.expectOk()));
+        call = chain.callReadOnlyFn("stable-swap-pool", "get-price",
+        [
+          types.principal(deployer.address + wxusdAddress),
+          types.principal(deployer.address + wbtcAddress),
+          types.uint(factor)
+        ], wallet_1.address);
+        console.log('wbtc: ', stringToUint(call.result.expectOk()));
+
         // swap some usda into wbtc
-        result = SSPTest.swapYForX(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+        result = SSPTest.swapYForX(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, testAmount, 0);
         position = result.expectOk().expectTuple();
-        position['dx'].expectUint(100001831);
-        position['dy'].expectUint(1e8);        
+        // assert(position['dx'].replace(/\D/g, "") > testAmount, "dx must be bigger than testAmount");        
+        position['dy'].expectUint(testAmount);        
+        position['dx'].expectUint(99996679);        
 
         // attempt to swap zero throws an error
         result = SSPTest.swapYForX(deployer, deployer.address + wbtcAddress, deployer.address + usdaAddress, factor, 0, 0);
@@ -155,7 +221,23 @@ Clarinet.test({
         result = SSPTest.setMaxOutRatio(deployer, 0.8e8);
         result.expectOk().expectBool(true);      
         result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 0);   
-        result.expectOk().expectBool(true);                  
+        result.expectOk().expectBool(true);          
+        
+        let block = chain.mineBlock([
+            Tx.contractCall("stable-swap-pool", "set-threshold-x", [
+              types.principal(deployer.address + wxusdAddress),
+              types.principal(deployer.address + usdaAddress),
+              types.uint(factor),
+              types.uint(threshold)
+            ], deployer.address),
+            Tx.contractCall("stable-swap-pool", "set-threshold-y", [
+                types.principal(deployer.address + wxusdAddress),
+                types.principal(deployer.address + usdaAddress),
+                types.uint(factor),
+                types.uint(threshold)
+              ], deployer.address),                          
+          ]);
+          block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Check pool details and print
         let call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor);
