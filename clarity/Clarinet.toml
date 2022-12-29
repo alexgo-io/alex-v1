@@ -979,7 +979,7 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 
 [contracts.amm-swap-pool]
 path = "contracts/pool/amm-swap-pool.clar"
-depends_on = ["trait-ownable", "trait-sip-010"]
+depends_on = ["trait-ownable", "trait-sip-010", "token-amm-swap-pool"]
 
 [contracts.token-amm-swap-pool]
 path = "contracts/pool-token/token-amm-swap-pool.clar"
