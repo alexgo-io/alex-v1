@@ -295,35 +295,7 @@ class SSPTestAgent1 {
       ], user.address),
     ]);
     return block.receipts[0].result;
-  }  
-
-  swapHelper(user: Account, tokenX: string, tokenY: string, factor: number, dx: number, dy_min: number) {
-    let block = this.chain.mineBlock([
-      Tx.contractCall("stable-swap-pool", "swap-helper", [
-        types.principal(tokenX),
-        types.principal(tokenY),
-        types.uint(factor),
-        types.uint(dx),
-        types.some(types.uint(dy_min))
-      ], user.address),
-    ]);
-    return block.receipts[0].result;
-  }  
-
-  swapHelperA(user: Account, tokenX: string, tokenY: string, tokenZ: string, factorX: number, factorY: number, dx: number, dz_min: number) {
-    let block = this.chain.mineBlock([
-      Tx.contractCall("stable-swap-pool", "swap-helper-a", [
-        types.principal(tokenX),
-        types.principal(tokenY),
-        types.principal(tokenZ),
-        types.uint(factorX),
-        types.uint(factorY),
-        types.uint(dx),
-        types.some(types.uint(dz_min))
-      ], user.address),
-    ]);
-    return block.receipts[0].result;
-  }    
+  }      
 }
 
 class SSPTestAgent2 {
@@ -382,13 +354,12 @@ class SSPTestAgent2 {
     return block.receipts[0].result;
   }    
 
-  createPool(user: Account, tokenX: string, tokenY: string, factor: number, pooltoken: string, multisig: string, balanceX: number, balanceY: number) {
+  createPool(user: Account, tokenX: string, tokenY: string, factor: number, multisig: string, balanceX: number, balanceY: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("config-swap-pool", "create-pool", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
-        types.principal(pooltoken),
         types.principal(multisig),
         types.uint(balanceX),
         types.uint(balanceY),
@@ -397,13 +368,12 @@ class SSPTestAgent2 {
     return block.receipts[0].result;
   }
 
-  addToPosition(user: Account, tokenX: string, tokenY: string, factor: number, pooltoken: string, dX: number, dY: number) {
+  addToPosition(user: Account, tokenX: string, tokenY: string, factor: number, dX: number, dY: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("config-swap-pool", "add-to-position", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
-        types.principal(pooltoken),
         types.uint(dX),
         types.some(types.uint(dY)),
       ], user.address),
@@ -411,13 +381,12 @@ class SSPTestAgent2 {
     return block.receipts[0].result;
   }
 
-  reducePosition(user: Account, tokenX: string, tokenY: string, factor: number, pooltoken: string, percentage: number) {
+  reducePosition(user: Account, tokenX: string, tokenY: string, factor: number, percentage: number) {
     let block = this.chain.mineBlock([
       Tx.contractCall("config-swap-pool", "reduce-position", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
-        types.principal(pooltoken),
         types.uint(percentage),
       ], user.address),
     ]);
@@ -617,7 +586,35 @@ class SSPTestAgent2 {
       ], user.address),
     ]);
     return block.receipts[0].result;
-  }     
+  } 
+  
+  swapHelper(user: Account, tokenX: string, tokenY: string, factor: number, dx: number, dy_min: number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("config-swap-pool", "swap-helper", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.uint(factor),
+        types.uint(dx),
+        types.some(types.uint(dy_min))
+      ], user.address),
+    ]);
+    return block.receipts[0].result;
+  }  
+
+  swapHelperA(user: Account, tokenX: string, tokenY: string, tokenZ: string, factorX: number, factorY: number, dx: number, dz_min: number) {
+    let block = this.chain.mineBlock([
+      Tx.contractCall("config-swap-pool", "swap-helper-a", [
+        types.principal(tokenX),
+        types.principal(tokenY),
+        types.principal(tokenZ),
+        types.uint(factorX),
+        types.uint(factorY),
+        types.uint(dx),
+        types.some(types.uint(dz_min))
+      ], user.address),
+    ]);
+    return block.receipts[0].result;
+  }  
   
 
 }

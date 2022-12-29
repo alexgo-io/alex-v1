@@ -2,7 +2,7 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
 import { assertEquals, assert } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
 
-import { SSPTestAgent2 } from './models/alex-tests-config-swap-pool.ts';
+import { SSPTestAgent2 } from './models/alex-tests-stable-swap-pool.ts';
 import { 
     USDAToken,
     WBTCToken,
@@ -15,7 +15,7 @@ const usdaAddress = ".token-wusda"
 const wxusdAddress = ".token-wxusd"
 const daoAddress = ".executor-dao"
 
-const factor = 0.0001e8; // the smaller, the lower the slippage
+const factor = 0.99e8; // the smaller, the lower the slippage
 const threshold = 500e8;
 const balance = 50000e8;
 
@@ -64,6 +64,12 @@ Clarinet.test({
         result.expectOk().expectBool(true);    
 
         let block = chain.mineBlock([
+            Tx.contractCall("alex-vault", "add-approved-contract", [
+              types.principal(deployer.address + '.config-swap-pool')
+            ], deployer.address),
+            Tx.contractCall("alex-reserve-pool", "add-approved-contract", [
+              types.principal(deployer.address + '.config-swap-pool')
+            ], deployer.address),            
             Tx.contractCall("config-swap-pool", "set-threshold-x", [
               types.principal(deployer.address + wxusdAddress),
               types.principal(deployer.address + usdaAddress),
@@ -216,20 +222,26 @@ Clarinet.test({
         result.expectOk().expectBool(true);          
         
         let block = chain.mineBlock([
-            Tx.contractCall("config-swap-pool", "set-threshold-x", [
+          Tx.contractCall("alex-vault", "add-approved-contract", [
+            types.principal(deployer.address + '.config-swap-pool')
+          ], deployer.address),
+          Tx.contractCall("alex-reserve-pool", "add-approved-contract", [
+            types.principal(deployer.address + '.config-swap-pool')
+          ], deployer.address),          
+          Tx.contractCall("config-swap-pool", "set-threshold-x", [
+            types.principal(deployer.address + wxusdAddress),
+            types.principal(deployer.address + usdaAddress),
+            types.uint(factor),
+            types.uint(threshold)
+          ], deployer.address),
+          Tx.contractCall("config-swap-pool", "set-threshold-y", [
               types.principal(deployer.address + wxusdAddress),
               types.principal(deployer.address + usdaAddress),
               types.uint(factor),
               types.uint(threshold)
-            ], deployer.address),
-            Tx.contractCall("config-swap-pool", "set-threshold-y", [
-                types.principal(deployer.address + wxusdAddress),
-                types.principal(deployer.address + usdaAddress),
-                types.uint(factor),
-                types.uint(threshold)
-              ], deployer.address),                          
-          ]);
-          block.receipts.forEach(e => { e.result.expectOk() });        
+            ], deployer.address)                    
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });        
 
         // Check pool details and print
         let call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor);
@@ -299,6 +311,28 @@ Clarinet.test({
         result.expectOk().expectBool(true);
         result = SSPTest.setMaxOutRatio(deployer, 0.3e8);        
         result.expectOk().expectBool(true);
+
+        let block = chain.mineBlock([
+          Tx.contractCall("alex-vault", "add-approved-contract", [
+            types.principal(deployer.address + '.config-swap-pool')
+          ], deployer.address),
+          Tx.contractCall("alex-reserve-pool", "add-approved-contract", [
+            types.principal(deployer.address + '.config-swap-pool')
+          ], deployer.address),          
+          Tx.contractCall("config-swap-pool", "set-threshold-x", [
+            types.principal(deployer.address + wxusdAddress),
+            types.principal(deployer.address + usdaAddress),
+            types.uint(factor),
+            types.uint(threshold)
+          ], deployer.address),
+          Tx.contractCall("config-swap-pool", "set-threshold-y", [
+              types.principal(deployer.address + wxusdAddress),
+              types.principal(deployer.address + usdaAddress),
+              types.uint(factor),
+              types.uint(threshold)
+            ], deployer.address)                    
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });         
 
         const startBlock = 100;
         result = SSPTest.setStartBlock(wallet_1, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, startBlock);
