@@ -308,7 +308,7 @@ class SSPTestAgent2 {
   }
 
   getPoolDetails(tokenX: string, tokenY: string, factor: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-pool-details", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-pool-details", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -316,7 +316,7 @@ class SSPTestAgent2 {
   }
 
   getOracleResilient(tokenX: string, tokenY: string, factor: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-oracle-resilient", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-oracle-resilient", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -324,7 +324,7 @@ class SSPTestAgent2 {
   }    
 
   getOracleInstant(tokenX: string, tokenY: string, factor: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-oracle-instant", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-oracle-instant", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -333,7 +333,7 @@ class SSPTestAgent2 {
 
   setOracleEnabled(user: Account, tokenX: string, tokenY: string, factor: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-oracle-enabled", [
+      Tx.contractCall("amm-swap-pool", "set-oracle-enabled", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor)
@@ -344,7 +344,7 @@ class SSPTestAgent2 {
 
   setOracleAverage(user: Account, tokenX: string, tokenY: string, factor: number, average: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-oracle-average", [
+      Tx.contractCall("amm-swap-pool", "set-oracle-average", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -356,7 +356,7 @@ class SSPTestAgent2 {
 
   createPool(user: Account, tokenX: string, tokenY: string, factor: number, multisig: string, balanceX: number, balanceY: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "create-pool", [
+      Tx.contractCall("amm-swap-pool", "create-pool", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -370,7 +370,7 @@ class SSPTestAgent2 {
 
   addToPosition(user: Account, tokenX: string, tokenY: string, factor: number, dX: number, dY: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "add-to-position", [
+      Tx.contractCall("amm-swap-pool", "add-to-position", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -383,7 +383,7 @@ class SSPTestAgent2 {
 
   reducePosition(user: Account, tokenX: string, tokenY: string, factor: number, percentage: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "reduce-position", [
+      Tx.contractCall("amm-swap-pool", "reduce-position", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -395,7 +395,7 @@ class SSPTestAgent2 {
 
   swapXForY(user: Account, tokenX: string, tokenY: string, factor: number, dx: number, dy_min: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "swap-x-for-y", [
+      Tx.contractCall("amm-swap-pool", "swap-x-for-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -408,7 +408,7 @@ class SSPTestAgent2 {
 
   swapYForX(user: Account, tokenX: string, tokenY: string, factor: number, dy: number, dx_min: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "swap-y-for-x", [
+      Tx.contractCall("amm-swap-pool", "swap-y-for-x", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -420,7 +420,7 @@ class SSPTestAgent2 {
   } 
 
   getXgivenPrice(tokenX: string, tokenY: string, factor: number, price: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-x-given-price", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-x-given-price", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -429,7 +429,7 @@ class SSPTestAgent2 {
   } 
   
   getYgivenPrice(tokenX: string, tokenY: string, factor: number, price: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-y-given-price", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-y-given-price", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -439,7 +439,7 @@ class SSPTestAgent2 {
 
   setFeetoAddress(user: Account, tokenX: string, tokenY: string, factor: number, address: string) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-fee-to-address", [
+      Tx.contractCall("amm-swap-pool", "set-fee-to-address", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -451,7 +451,7 @@ class SSPTestAgent2 {
 
   getFeetoAddress(user: Account, tokenX: string, tokenY: string, factor: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "get-fee-to-address", [
+      Tx.contractCall("amm-swap-pool", "get-fee-to-address", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor)
@@ -462,7 +462,7 @@ class SSPTestAgent2 {
 
   getFeeX(user: Account, tokenX: string, tokenY: string, factor: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "get-fee-rate-x", [
+      Tx.contractCall("amm-swap-pool", "get-fee-rate-x", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor)
@@ -473,7 +473,7 @@ class SSPTestAgent2 {
 
   getFeeY(user: Account, tokenX: string, tokenY: string, factor: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "get-fee-rate-y", [
+      Tx.contractCall("amm-swap-pool", "get-fee-rate-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor)
@@ -486,7 +486,7 @@ class SSPTestAgent2 {
 
   setFeeRateX(user: Account, tokenX: string, tokenY: string, factor: number, feerate:number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-fee-rate-x", [
+      Tx.contractCall("amm-swap-pool", "set-fee-rate-x", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -498,7 +498,7 @@ class SSPTestAgent2 {
 
   setFeeRateY(user: Account, tokenX: string, tokenY: string, factor: number, feerate:number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-fee-rate-y", [
+      Tx.contractCall("amm-swap-pool", "set-fee-rate-y", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -509,7 +509,7 @@ class SSPTestAgent2 {
   }
 
   getYgivenX(tokenX: string, tokenY: string, factor: number, dx: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-y-given-x", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-y-given-x", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -518,7 +518,7 @@ class SSPTestAgent2 {
   }
   
   getXgivenY(tokenX: string, tokenY: string, factor: number, dy: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-x-given-y", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-x-given-y", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -528,7 +528,7 @@ class SSPTestAgent2 {
 
   setFeeRebate(user: Account, tokenX: string, tokenY: string, factor: number, rebate : number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-fee-rebate", [
+      Tx.contractCall("amm-swap-pool", "set-fee-rebate", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -539,7 +539,7 @@ class SSPTestAgent2 {
   }
 
   getFeeRebate(tokenX: string, tokenY: string, factor: number) {
-    return this.chain.callReadOnlyFn("config-swap-pool", "get-fee-rebate", [
+    return this.chain.callReadOnlyFn("amm-swap-pool", "get-fee-rebate", [
       types.principal(tokenX),
       types.principal(tokenY),
       types.uint(factor),
@@ -548,7 +548,7 @@ class SSPTestAgent2 {
 
   setMaxInRatio(user: Account, ratio: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-max-in-ratio", [
+      Tx.contractCall("amm-swap-pool", "set-max-in-ratio", [
         types.uint(ratio)
       ], user.address),
     ]);
@@ -557,7 +557,7 @@ class SSPTestAgent2 {
 
   setMaxOutRatio(user: Account, ratio: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-max-out-ratio", [
+      Tx.contractCall("amm-swap-pool", "set-max-out-ratio", [
         types.uint(ratio)
       ], user.address),
     ]);
@@ -566,7 +566,7 @@ class SSPTestAgent2 {
 
   setStartBlock(user: Account, tokenX: string, tokenY: string, factor: number, start_block: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-start-block", [
+      Tx.contractCall("amm-swap-pool", "set-start-block", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),          
@@ -578,7 +578,7 @@ class SSPTestAgent2 {
 
   setEndBlock(user: Account, tokenX: string, tokenY: string, factor: number, end_block: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "set-end-block", [
+      Tx.contractCall("amm-swap-pool", "set-end-block", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),          
@@ -590,7 +590,7 @@ class SSPTestAgent2 {
   
   swapHelper(user: Account, tokenX: string, tokenY: string, factor: number, dx: number, dy_min: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "swap-helper", [
+      Tx.contractCall("amm-swap-pool", "swap-helper", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.uint(factor),
@@ -603,7 +603,7 @@ class SSPTestAgent2 {
 
   swapHelperA(user: Account, tokenX: string, tokenY: string, tokenZ: string, factorX: number, factorY: number, dx: number, dz_min: number) {
     let block = this.chain.mineBlock([
-      Tx.contractCall("config-swap-pool", "swap-helper-a", [
+      Tx.contractCall("amm-swap-pool", "swap-helper-a", [
         types.principal(tokenX),
         types.principal(tokenY),
         types.principal(tokenZ),

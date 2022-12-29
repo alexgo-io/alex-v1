@@ -6,7 +6,7 @@
 (define-constant ERR-INVALID-BALANCE (err u1001))
 (define-constant ERR-TRANSFER-FAILED (err u3000))
 
-(define-fungible-token config-swap-pool)
+(define-fungible-token amm-swap-pool)
 (define-map token-balances {token-id: uint, owner: principal} uint)
 (define-map token-supplies uint uint)
 (define-map token-owned principal (list 200 uint))
@@ -14,9 +14,9 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
-(define-data-var token-name (string-ascii 32) "config-swap-pool")
-(define-data-var token-symbol (string-ascii 32) "config-swap-pool")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-config-swap-pool.json"))
+(define-data-var token-name (string-ascii 32) "amm-swap-pool")
+(define-data-var token-symbol (string-ascii 32) "amm-swap-pool")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-amm-swap-pool.json"))
 
 (define-data-var token-decimals uint u8)
 (define-data-var transferrable bool true)
@@ -97,7 +97,7 @@
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-overall-balance (who principal))
-	(ok (ft-get-balance config-swap-pool who))
+	(ok (ft-get-balance amm-swap-pool who))
 )
 
 ;; @desc get-total-supply
@@ -110,7 +110,7 @@
 ;; @desc get-overall-supply
 ;; @returns (response uint)
 (define-read-only (get-overall-supply)
-	(ok (ft-get-supply config-swap-pool))
+	(ok (ft-get-supply amm-swap-pool))
 )
 
 ;; @desc get-decimals
@@ -142,7 +142,7 @@
 		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? config-swap-pool amount sender recipient))
+		(try! (ft-transfer? amm-swap-pool amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient})
@@ -166,7 +166,7 @@
 		(asserts! (var-get transferrable) ERR-TRANSFER-FAILED)
 		(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
 		(asserts! (<= amount sender-balance) ERR-INVALID-BALANCE)
-		(try! (ft-transfer? config-swap-pool amount sender recipient))
+		(try! (ft-transfer? amm-swap-pool amount sender recipient))
 		(try! (set-balance token-id (- sender-balance amount) sender))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(print {type: "sft_transfer", token-id: token-id, amount: amount, sender: sender, recipient: recipient, memo: memo})
@@ -182,7 +182,7 @@
 (define-public (mint (token-id uint) (amount uint) (recipient principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(try! (ft-mint? config-swap-pool amount recipient))
+		(try! (ft-mint? amm-swap-pool amount recipient))
 		(try! (set-balance token-id (+ (get-balance-or-default token-id recipient) amount) recipient))
 		(map-set token-supplies token-id (+ (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_mint", token-id: token-id, amount: amount, recipient: recipient})
@@ -198,7 +198,7 @@
 (define-public (burn (token-id uint) (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(try! (ft-burn? config-swap-pool amount sender))
+		(try! (ft-burn? amm-swap-pool amount sender))
 		(try! (set-balance token-id (- (get-balance-or-default token-id sender) amount) sender))
 		(map-set token-supplies token-id (- (unwrap-panic (get-total-supply token-id)) amount))
 		(print {type: "sft_burn", token-id: token-id, amount: amount, sender: sender})
@@ -246,14 +246,14 @@
 ;; @desc get-overall-supply-fixed
 ;; @returns (response uint)
 (define-read-only (get-overall-supply-fixed)
-	(ok (decimals-to-fixed (ft-get-supply config-swap-pool)))
+	(ok (decimals-to-fixed (ft-get-supply amm-swap-pool)))
 )
 
 ;; @desc get-overall-balance-fixed
 ;; @params who
 ;; @returns (response uint)
 (define-read-only (get-overall-balance-fixed (who principal))
-	(ok (decimals-to-fixed (ft-get-balance config-swap-pool who)))
+	(ok (decimals-to-fixed (ft-get-balance amm-swap-pool who)))
 )
 
 ;; @desc transfer-fixed
@@ -372,4 +372,4 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-contracts .config-swap-pool true)
+(map-set approved-contracts .amm-swap-pool true)

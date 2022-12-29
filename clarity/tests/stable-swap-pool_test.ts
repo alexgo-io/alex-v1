@@ -2,7 +2,7 @@
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
 import { assertEquals, assert } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
 
-import { SSPTestAgent1 } from './models/alex-tests-stable-swap-pool.ts';
+import { SSPTestAgent1 } from './models/alex-tests-amm-swap-pool.ts';
 import { 
     USDAToken,
     WBTCToken,

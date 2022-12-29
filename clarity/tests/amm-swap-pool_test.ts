@@ -1,7 +1,7 @@
 
 import { Clarinet, Tx, Chain, Account, types } from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
-import { assertEquals, assert } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
-import { SSPTestAgent2 } from './models/alex-tests-stable-swap-pool.ts';
+import { assertEquals, assert, assertAlmostEquals } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
+import { SSPTestAgent2 } from './models/alex-tests-amm-swap-pool.ts';
 import { USDAToken, WBTCToken, WXUSDToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
@@ -10,10 +10,11 @@ const usdaAddress = ".token-wusda"
 const wxusdAddress = ".token-wxusd"
 const daoAddress = ".executor-dao"
 
-const default_factor = 0.999e8;
+const defaultFactor = 0.999e8;
 const threshold = 500e8;
 const balance = 50000e8;
 const mintAmount = balance * 5;
+const maxRatio = 0.9e8;
 
 const testAmount = 1e8;
 
@@ -27,7 +28,7 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   const wbtcToken = new WBTCToken(chain, deployer);
   const wxusdToken = new WXUSDToken(chain, deployer);
 
-  const factor = _factor ? _factor : default_factor;
+  const factor = _factor ? _factor : defaultFactor;
 
   // Deployer minting initial tokens
   let result = usdaToken.mintFixed(deployer, deployer.address, mintAmount);
@@ -49,9 +50,9 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, deployer.address + daoAddress, balance, balance);
   result.expectOk().expectBool(true);
 
-  result = SSPTest.setMaxInRatio(deployer, 0.3e8);
+  result = SSPTest.setMaxInRatio(deployer, maxRatio);
   result.expectOk().expectBool(true);
-  result = SSPTest.setMaxOutRatio(deployer, 0.3e8);
+  result = SSPTest.setMaxOutRatio(deployer, maxRatio);
   result.expectOk().expectBool(true);
   result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 0);
   result.expectOk().expectBool(true);
@@ -60,30 +61,30 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
 
   let block = chain.mineBlock([
     Tx.contractCall("alex-vault", "add-approved-contract", [
-      types.principal(deployer.address + '.config-swap-pool')
+      types.principal(deployer.address + '.amm-swap-pool')
     ], deployer.address),
     Tx.contractCall("alex-reserve-pool", "add-approved-contract", [
-      types.principal(deployer.address + '.config-swap-pool')
+      types.principal(deployer.address + '.amm-swap-pool')
     ], deployer.address),
-    Tx.contractCall("config-swap-pool", "set-threshold-x", [
+    Tx.contractCall("amm-swap-pool", "set-threshold-x", [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
       types.uint(factor),
       types.uint(threshold)
     ], deployer.address),
-    Tx.contractCall("config-swap-pool", "set-threshold-y", [
+    Tx.contractCall("amm-swap-pool", "set-threshold-y", [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
       types.uint(factor),
       types.uint(threshold)
     ], deployer.address),
-    Tx.contractCall("config-swap-pool", "set-threshold-x", [
+    Tx.contractCall("amm-swap-pool", "set-threshold-x", [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + wbtcAddress),
       types.uint(factor),
       types.uint(threshold)
     ], deployer.address),
-    Tx.contractCall("config-swap-pool", "set-threshold-y", [
+    Tx.contractCall("amm-swap-pool", "set-threshold-y", [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + wbtcAddress),
       types.uint(factor),
@@ -116,17 +117,17 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   } = await setup(chain, accounts, _factor);
 
   // attempt to trade too much (> 90%) will be rejected
-  let result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, balance * 0.9, 0);
-  let position = result.expectErr().expectUint(4001);
+  let result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, balance * maxRatio / 1e8, 0);
+  result.expectErr().expectUint(4001);
 
-  let call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  let call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
       types.uint(factor)
     ], wallet_1.address);
   let usdaPrice = stringToUint(call.result.expectOk());
-  call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + wbtcAddress),
@@ -136,16 +137,17 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
 
   // swap some wbtc into usda
   result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, testAmount, 0);  
-  assert(stringToUint(result.expectOk()) <= testAmount * wbtcPrice / usdaPrice);
+  console.log('swap =>', 'expected:', testAmount * wbtcPrice / usdaPrice, 'actual:', stringToUint(result.expectOk()))
+  assert(stringToUint(result.expectOk()) <= testAmount * wbtcPrice / usdaPrice, "result is greater than expected");
 
-  call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
       types.uint(factor)
     ], wallet_1.address);
   usdaPrice = stringToUint(call.result.expectOk());
-  call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + wbtcAddress),
@@ -155,7 +157,8 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
 
   // swap some usda into wbtc
   result = SSPTest.swapHelperA(deployer, deployer.address + usdaAddress, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, factor, testAmount, 0);
-  assert(stringToUint(result.expectOk()) <= testAmount * usdaPrice / wbtcPrice);
+  console.log('swap =>', 'expected:', testAmount * usdaPrice / wbtcPrice, 'actual:', stringToUint(result.expectOk()))
+  assert(stringToUint(result.expectOk()) <= testAmount * usdaPrice / wbtcPrice, "result is greater than expected");
 
   // attempt to swap zero throws an error
   result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, 0, 0);
@@ -164,7 +167,7 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   result.expectErr().expectUint(2003);
 
   // let's do some arb
-  call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
@@ -174,17 +177,18 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   const PT = Math.floor(usdaPrice * (1 + 0.1 * factor / 1e8));
   call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, PT);
   result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, stringToUint(call.result.expectOk()), 0)
-  position = result.expectOk().expectTuple();
+  result.expectOk().expectTuple();
 
   // now pool price implies PT
-  call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
       types.uint(factor)
     ], wallet_1.address);
   usdaPrice = stringToUint(call.result.expectOk());  
-  assertEquals(usdaPrice, PT);
+  console.log('arb =>', 'expected:', PT, 'actual:', usdaPrice)
+  assertAlmostEquals(usdaPrice, PT, 0.1 * factor);
 
   // let's do some arb
   const newPT = Math.floor(PT * (1 - 0.1 * factor / 1e8));
@@ -194,21 +198,21 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   // we need to call get-x-given-price
   call = await SSPTest.getXgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, newPT);
   result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, stringToUint(call.result.expectOk()), 0)
-  position = result.expectOk().expectTuple();
+  result.expectOk().expectTuple();
 
-  call = chain.callReadOnlyFn("config-swap-pool", "get-price",
+  call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
       types.principal(deployer.address + usdaAddress),
       types.uint(factor)
     ], wallet_1.address);
   usdaPrice = stringToUint(call.result.expectOk());  
-  assertEquals(usdaPrice, newPT);
+  console.log('arb =>', 'expected:', newPT, 'actual:', usdaPrice)
+  assertAlmostEquals(usdaPrice, newPT, 0.1 * factor);
 }
 
 Clarinet.test({
-  name: "config-swap-pool : pool creation, adding values and reducing values",
-
+  name: "amm-swap-pool : pool creation, adding values and reducing values",
   async fn(chain: Chain, accounts: Map<string, Account>) {
 
     const {
@@ -221,7 +225,7 @@ Clarinet.test({
       factor
     } = await setup(chain, accounts);
 
-    let call: any = chain.callReadOnlyFn("config-swap-pool", "get-token-given-position",
+    let call: any = chain.callReadOnlyFn("amm-swap-pool", "get-token-given-position",
       [
         types.principal(deployer.address + wxusdAddress),
         types.principal(deployer.address + wbtcAddress),
@@ -269,8 +273,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "config-swap-pool : check start-block and end-block",
-
+  name: "amm-swap-pool : check start-block and end-block",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const {
       deployer,
@@ -316,11 +319,23 @@ Clarinet.test({
   },
 });       
 
+Clarinet.test({
+  name: "amm-swap-pool : factor = 0.99e8, aka uniswap",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    await swapTest(chain, accounts, 0.99e8);
+  },
+});
 
 Clarinet.test({
-  name: "config-swap-pool : testing get-x-given-price and get-y-given-price",
-
+  name: "amm-swap-pool : factor = 0.0001e8, aka Curve",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     await swapTest(chain, accounts, 0.0001e8);
+  },
+});
+
+Clarinet.test({
+  name: "amm-swap-pool : factor = 0.5e8, aka somewhere in between",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    await swapTest(chain, accounts, 0.5e8);
   },
 });

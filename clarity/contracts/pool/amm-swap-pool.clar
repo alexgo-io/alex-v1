@@ -1,7 +1,7 @@
 (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
-;; config-swap-pool
+;; amm-swap-pool
 ;; uses the constant power sum formula whose "factor" determines 
 ;; how far (or close) you are from (or to) constant product (aka Uniswap) and constant sum (aka mStable)
 ;; this can be seen as the generalised formulation of Curve AMM.
@@ -11,15 +11,11 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-POOL (err u2001))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
-(define-constant ERR-TRANSFER-FAILED (err u3000))
 (define-constant ERR-POOL-ALREADY-EXISTS (err u2000))
-(define-constant ERR-TOO-MANY-POOLS (err u2004))
 (define-constant ERR-PERCENT-GREATER-THAN-ONE (err u5000))
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
-(define-constant ERR-ORACLE-ALREADY-ENABLED (err u7003))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
-(define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var pool-nonce uint u0)
@@ -88,20 +84,20 @@
 (define-read-only (get-balances (token-x principal) (token-y principal) (factor uint) (factor uint))
   (let
     (
-      (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+      (pool (try! (get-pool-details token-x token-y factor)))
     )
     (ok {balance-x: (get balance-x pool), balance-y: (get balance-y pool)})
   )
 )
 
 (define-read-only (get-start-block (token-x principal) (token-y principal) (factor uint))
-    (ok (get start-block (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get start-block (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-start-block (token-x principal) (token-y principal) (factor uint) (new-start-block uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (ok
@@ -115,13 +111,13 @@
 )
 
 (define-read-only (get-end-block (token-x principal) (token-y principal) (factor uint))
-    (ok (get end-block (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get end-block (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-end-block (token-x principal) (token-y principal) (factor uint) (new-end-block uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (ok
@@ -137,7 +133,7 @@
 (define-read-only (check-pool-status (token-x principal) (token-y principal) (factor uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (ok (asserts! (and (>= block-height (get start-block pool)) (<= block-height (get end-block pool))) ERR-NOT-AUTHORIZED))
     )
@@ -147,7 +143,7 @@
     (ok 
         (get 
             oracle-enabled 
-            (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor}) ERR-INVALID-POOL)
+            (try! (get-pool-details token-x token-y factor))
         )
     )
 )
@@ -155,7 +151,7 @@
 (define-public (set-oracle-enabled (token-x principal) (token-y principal) (factor uint) (enabled bool))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (ok
@@ -172,7 +168,7 @@
     (ok 
         (get 
             oracle-average 
-            (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)
+            (try! (get-pool-details token-x token-y factor))
         )
     )
 )
@@ -180,7 +176,7 @@
 (define-public (set-oracle-average (token-x principal) (token-y principal) (factor uint) (new-oracle-average uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
@@ -209,8 +205,8 @@
             (exists (is-some (get-pool-exists token-x token-y factor)))
             (pool
                 (if exists
-                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)
-                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, factor: factor }) ERR-INVALID-POOL)                    
+                    (try! (get-pool-details token-x token-y factor))
+                    (try! (get-pool-details token-y token-x factor))                    
                 )
             )
         )
@@ -230,8 +226,8 @@
             (exists (is-some (get-pool-exists token-x token-y factor)))
             (pool
                 (if exists
-                    (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)
-                    (unwrap! (map-get? pools-data-map { token-x: token-y, token-y: token-x, factor: factor }) ERR-INVALID-POOL)                    
+                    (try! (get-pool-details token-x token-y factor))
+                    (try! (get-pool-details token-y token-x factor))                    
                 )
             )
         )
@@ -249,7 +245,7 @@
 (define-read-only (get-price (token-x principal) (token-y principal) (factor uint))
     (let
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )      
         (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
     )
@@ -323,7 +319,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
             (total-supply (get total-supply pool))
@@ -339,13 +335,10 @@
         )
         (asserts! (and (> dx u0) (> dy u0)) ERR-INVALID-LIQUIDITY)
         (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
-        
-        (unwrap! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
-        (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
-
+        (try! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none))
+        (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none))
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
-        (as-contract (try! (contract-call? .token-config-swap-pool mint-fixed (get pool-id pool) new-supply sender)))
-            
+        (as-contract (try! (contract-call? .token-amm-swap-pool mint-fixed (get pool-id pool) new-supply sender)))
         (print { object: "pool", action: "liquidity-added", data: pool-updated })
         (ok {supply: new-supply, dx: dx, dy: dy})
     )
@@ -356,10 +349,10 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-            (total-shares (unwrap-panic (contract-call? .token-config-swap-pool get-balance-fixed (get pool-id pool) tx-sender)))
+            (total-shares (unwrap-panic (contract-call? .token-amm-swap-pool get-balance-fixed (get pool-id pool) tx-sender)))
             (shares (if (is-eq percent ONE_8) total-shares (mul-down total-shares percent)))
             (total-supply (get total-supply pool))
             (reduce-data (try! (get-position-given-burn token-x token-y factor shares)))
@@ -374,13 +367,9 @@
             (sender tx-sender)
         )         
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
-        
         (as-contract (try! (contract-call? .alex-vault transfer-ft-two token-x-trait dx token-y-trait dy sender)))
-
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
-
-        (as-contract (try! (contract-call? .token-config-swap-pool burn-fixed (get pool-id pool) shares sender)))
-
+        (as-contract (try! (contract-call? .token-amm-swap-pool burn-fixed (get pool-id pool) shares sender)))
         (print { object: "pool", action: "liquidity-removed", data: pool-updated })
         (ok {dx: dx, dy: dy})
     )
@@ -391,7 +380,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
 
@@ -421,7 +410,7 @@
         (asserts! (<= (div-down dy dx-net-fees) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-        (unwrap! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none) ERR-TRANSFER-FAILED)
+        (try! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none))
         (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
         (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
 
@@ -437,7 +426,7 @@
         (
             (token-x (contract-of token-x-trait))
             (token-y (contract-of token-y-trait))
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
 
@@ -467,7 +456,7 @@
         (asserts! (>= (div-down dy-net-fees dx) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
         
-        (unwrap! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none) ERR-TRANSFER-FAILED)
+        (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none))
         (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender))))            
         (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
 
@@ -479,13 +468,13 @@
 )
 
 (define-read-only (get-threshold-x (token-x principal) (token-y principal) (factor uint))
-    (ok (get threshold-x (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get threshold-x (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-threshold-x (token-x principal) (token-y principal) (factor uint) (new-threshold uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-x: new-threshold }))
@@ -494,13 +483,13 @@
 )
 
 (define-read-only (get-threshold-y (token-x principal) (token-y principal) (factor uint))
-    (ok (get threshold-y (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get threshold-y (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-threshold-y (token-x principal) (token-y principal) (factor uint) (new-threshold uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-y: new-threshold }))
@@ -509,13 +498,13 @@
 )
 
 (define-read-only (get-fee-rebate (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-rebate (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get fee-rebate (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-fee-rebate (token-x principal) (token-y principal) (factor uint) (fee-rebate uint))
     (let 
         (            
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rebate: fee-rebate }))
@@ -524,17 +513,17 @@
 )
 
 (define-read-only (get-fee-rate-x (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-rate-x (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get fee-rate-x (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-read-only (get-fee-rate-y (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-rate-y (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get fee-rate-y (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-fee-rate-x (token-x principal) (token-y principal) (factor uint) (fee-rate-x uint))
     (let 
         (        
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-x: fee-rate-x }))
@@ -545,7 +534,7 @@
 (define-public (set-fee-rate-y (token-x principal) (token-y principal) (factor uint) (fee-rate-y uint))
     (let 
         (    
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-y: fee-rate-y }))
@@ -554,7 +543,7 @@
 )
 
 (define-read-only (get-fee-to-address (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-to-address (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL)))
+    (ok (get fee-to-address (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-fee-to-address (token-x principal) (token-y principal) (factor uint) (fee-to-address principal))
@@ -571,7 +560,7 @@
 (define-read-only (get-y-given-x (token-x principal) (token-y principal) (factor uint) (dx uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-x pool))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
@@ -586,7 +575,7 @@
 (define-read-only (get-x-given-y (token-x principal) (token-y principal) (factor uint) (dy uint)) 
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-y pool))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))            
@@ -601,7 +590,7 @@
 (define-read-only (get-x-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor price)
     )
@@ -610,7 +599,7 @@
 (define-read-only (get-y-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor price)
     )
@@ -619,7 +608,7 @@
 (define-read-only (get-token-given-position (token-x principal) (token-y principal) (factor uint) (dx uint) (max-dy (optional uint)))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (get-token-given-position-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
     )
@@ -628,7 +617,7 @@
 (define-read-only (get-position-given-mint (token-x principal) (token-y principal) (factor uint) (token uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
     )
@@ -637,7 +626,7 @@
 (define-read-only (get-position-given-burn (token-x principal) (token-y principal) (factor uint) (token uint))
     (let 
         (
-            (pool (unwrap! (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) ERR-INVALID-POOL))
+            (pool (try! (get-pool-details token-x token-y factor)))
         )
         (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
     )
