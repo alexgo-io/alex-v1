@@ -587,6 +587,36 @@
     )
 )
 
+(define-read-only (get-y-in-given-x-out (token-x principal) (token-y principal) (factor uint) (dx uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (threshold (get threshold-x pool))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))
+        )
+        (if (>= dx threshold)
+            (get-y-in-given-x-out-internal balance-x balance-y factor dx)
+            (ok (div-down (mul-down dx (try! (get-y-in-given-x-out-internal balance-x balance-y factor threshold))) threshold))
+        ) 
+    )
+)
+
+(define-read-only (get-x-in-given-y-out (token-x principal) (token-y principal) (factor uint) (dy uint)) 
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (threshold (get threshold-y pool))
+            (balance-x (get balance-x pool))
+            (balance-y (get balance-y pool))            
+        )
+        (if (>= dy threshold)
+            (get-x-in-given-y-out-internal balance-x balance-y factor dy)
+            (ok (div-down (mul-down dy (try! (get-x-in-given-y-out-internal balance-x balance-y factor threshold))) threshold))         
+        )
+    )
+)
+
 (define-read-only (get-x-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
     (let 
         (
