@@ -20,6 +20,7 @@
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 (define-constant ONE_8 u100000000)
+(define-constant MAX_REQUIRED_VALIDATORS u100)
 
 (define-constant structured-data-prefix 0x534950303138)
 ;; const domainHash = structuredDataHash(
@@ -32,35 +33,37 @@
 (define-constant message-domain 0xbba6c42cb177438f5dc4c3c1c51b9e2eb0d43e6bdec927433edd123888f4ce6b)
 
 (define-constant serialized-key-to (serialize-tuple-key "to"))
+(define-constant serialized-key-token (serialize-tuple-key "token"))
 (define-constant serialized-key-amount (serialize-tuple-key "amount-in-fixed"))
 (define-constant serialized-key-salt (serialize-tuple-key "salt"))
 (define-constant serialized-key-chain-id (serialize-tuple-key "chain-id"))
-(define-constant serialized-order-header (concat type-id-tuple (uint32-to-buff-be u4)))
+(define-constant serialized-order-header (concat type-id-tuple (uint32-to-buff-be u5)))
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var is-paused bool false)
 
-(define-map approved-tokens principal { approved: bool, fee: uint, accrued-fee: uint })
-
 (define-map approved-recipients principal bool)
+(define-map approved-relayers principal bool)
+
+(define-data-var token-nonce uint u0)
+(define-map token-id-registry principal uint)
+(define-map token-registry uint { token: principal, approved: bool, fee: uint, accrued-fee: uint })
 
 (define-data-var chain-nonce uint u0)
 (define-map approved-chains uint { name: (string-utf8 256), buff-length: uint })
 
-(define-map validator-registry uint { validator: principal, validator-pubkey: (buff 33) })
-(define-data-var validator-registry-nonce uint u0)
+(define-data-var validator-nonce uint u0)
 (define-map validator-id-registry principal uint)
+(define-map validator-registry uint { validator: principal, validator-pubkey: (buff 33) })
 (define-data-var validator-count uint u0)
 (define-data-var required-validators uint MAX_UINT)
 
 (define-map order-sent (buff 32) bool)
 (define-map order-validated-by { order-hash: (buff 32), validator: principal } bool)
 
-(define-map approved-relayers principal bool)
-
+(define-data-var user-nonce uint u0)
 (define-map user-registry uint principal)
 (define-map user-id-registry principal uint)
-(define-data-var user-registry-nonce uint u0)
 
 ;; temp variable
 (define-data-var order-hash-to-iter (buff 32) 0x)
@@ -70,21 +73,21 @@
 (define-public (register-user (user principal))
   (let
     (
-      (reg-id (+ (var-get user-registry-nonce) u1))
+      (reg-id (+ (var-get user-nonce) u1))
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
     (asserts! (map-insert user-id-registry user reg-id) ERR-USER-ALREADY-REGISTERED)
     (map-insert user-registry reg-id user)
-    (var-set user-registry-nonce reg-id)
-    (print { object: "bridge-endpoint", action: "register-user", user-id: reg-id, principal: user })
+    (var-set user-nonce reg-id)
     (ok reg-id)
   )
 )
 
-(define-public (transfer-to-wrap     
-    (order 
+(define-public (transfer-to-wrap
+    (order
       {
         to: uint,
+        token: uint,
         amount-in-fixed: uint,
         chain-id: uint,
         salt: (buff 256)
@@ -92,16 +95,16 @@
     )
     (token-trait <ft-trait>)
     (signature-packs (list 100 { signer: principal, order-hash: (buff 32), signature: (buff 65)})))
-    (let 
+    (let
         (
           (order-hash (hash-order order))
           (user (try! (user-from-id-or-fail (get to order))))
         )
         (asserts! (not (var-get is-paused)) ERR-PAUSED)
-        (asserts! (unwrap! (map-get? approved-relayers tx-sender) ERR-UKNOWN-RELAYER) ERR-UKNOWN-RELAYER)
+        (asserts! (is-some (map-get? approved-relayers tx-sender)) ERR-UKNOWN-RELAYER)
         (asserts! (>= (len signature-packs) (var-get required-validators)) ERR-REQUIRED-VALIDATORS)
-        (asserts! (is-none (map-get? order-sent order-hash)) ERR-ORDER-ALREADY-SENT)        
-        (var-set order-hash-to-iter order-hash)        
+        (asserts! (is-none (map-get? order-sent order-hash)) ERR-ORDER-ALREADY-SENT)
+        (var-set order-hash-to-iter order-hash)
         (try! (fold validate-signature-iter signature-packs (ok true)))
         (as-contract (try! (transfer-to-wrap-internal order token-trait)))
         (ok (map-set order-sent order-hash true))
@@ -109,10 +112,12 @@
 )
 
 (define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
-  (let 
+  (let
     (
+      (token (contract-of token-trait))
       (chain-details (try! (get-approved-chain-or-fail chain-id)))
-      (token-details (try! (get-approved-token-or-fail (contract-of token-trait))))
+      (token-id (try! (get-approved-token-id-or-fail token)))
+      (token-details (try! (get-approved-token-or-fail token)))
       (fee (mul-down amount-in-fixed (get fee token-details)))
       (net-amount (- amount-in-fixed fee))
     )
@@ -120,8 +125,7 @@
     (try! (check-is-approved-recipient recipient))
     (try! (contract-call? token-trait transfer-fixed net-amount tx-sender recipient none))
     (and (> fee u0) (try! (contract-call? token-trait transfer-fixed fee tx-sender (as-contract tx-sender) none)))
-    (and (> fee u0) (map-set approved-tokens (contract-of token-trait) { approved: (get approved token-details), fee: (get fee token-details), accrued-fee: (+ (get accrued-fee token-details) fee) }))
-    (print { object: "bridge-endpoint", action: "transfer-to-unwrap", chain: (get name chain-details), net-amount: net-amount, settle-address: (buff-slice settle-address u0 (get buff-length chain-details)), recipient: recipient })
+    (and (> fee u0) (map-set token-registry token-id (merge token-details { accrued-fee: (+ (get accrued-fee token-details) fee) })))
     (ok { chain: (get name chain-details), net-amount: net-amount, settle-address: (buff-slice settle-address u0 (get buff-length chain-details)) })
   )
 )
@@ -173,10 +177,11 @@
 )
 
 ;; salt should be tx hash of the source chain
-(define-read-only (hash-order 
-  (order 
+(define-read-only (hash-order
+  (order
     {
       to: uint,
+      token: uint,
       amount-in-fixed: uint,
       chain-id: uint,
       salt: (buff 256)
@@ -192,8 +197,10 @@
       (concat (serialize-uint (get chain-id order))
       (concat serialized-key-salt
 			(concat (serialize-buff (get salt order))
-		  (concat serialized-key-to (serialize-uint (get to order))
-      ))))))))
+      (concat serialized-key-to
+      (concat (serialize-uint (get to order))
+      (concat serialized-key-token (serialize-uint (get token order))
+      ))))))))))
 	)
 )
 
@@ -201,8 +208,16 @@
   (ok (var-get contract-owner))
 )
 
+(define-read-only (get-approved-token-id-or-fail (token principal))
+  (ok (unwrap! (map-get? token-id-registry token) ERR-TOKEN-NOT-AUTHORIZED))
+)
+
+(define-read-only (get-approved-token-by-id-or-fail (token-id uint))
+  (ok (unwrap! (map-get? token-registry token-id) ERR-TOKEN-NOT-AUTHORIZED))
+)
+
 (define-read-only (get-approved-token-or-fail (token principal))
-  (ok (unwrap! (map-get? approved-tokens token) ERR-TOKEN-NOT-AUTHORIZED))
+  (get-approved-token-by-id-or-fail (try! (get-approved-token-id-or-fail token)))
 )
 
 ;; owner functions
@@ -210,15 +225,15 @@
 (define-public (add-validator (validator-pubkey (buff 33)) (validator principal))
 	(let
 		(
-			(reg-id (+ (var-get validator-registry-nonce) u1))
+			(reg-id (+ (var-get validator-nonce) u1))
 		)
     (try! (check-is-owner))
 		(asserts! (map-insert validator-id-registry validator reg-id) ERR-VALIDATOR-ALREADY-REGISTERED)
-		(map-insert validator-registry reg-id {validator: validator, validator-pubkey: validator-pubkey})		
-		(var-set validator-registry-nonce reg-id)
+		(map-insert validator-registry reg-id {validator: validator, validator-pubkey: validator-pubkey})
+		(var-set validator-nonce reg-id)
     (var-set validator-count (+ u1 (var-get validator-count)))
 		(ok (+ u1 (var-get validator-count)))
-	)    
+	)
 )
 
 (define-public (remove-validator (validator principal))
@@ -228,38 +243,39 @@
         )
         (try! (check-is-owner))
         (map-delete validator-id-registry validator)
-        (map-delete validator-registry reg-id)        
+        (map-delete validator-registry reg-id)
         (var-set validator-count (- (var-get validator-count) u1))
         (ok (- (var-get validator-count) u1))
     )
 )
 
 (define-public (approve-relayer (relayer principal) (approved bool))
-    (begin 
+    (begin
         (try! (check-is-owner))
         (ok (map-set approved-relayers relayer approved))
     )
 )
 
 (define-public (set-required-validators (new-required-validators uint))
-    (begin 
+    (begin
         (try! (check-is-owner))
+        (asserts! (< new-required-validators MAX_REQUIRED_VALIDATORS) ERR-REQUIRED-VALIDATORS)
         (ok (var-set required-validators new-required-validators))
     )
 )
 
 (define-public (set-paused (paused bool))
-  (begin 
+  (begin
     (try! (check-is-owner))
     (ok (var-set is-paused paused))
   )
 )
 
 (define-public (set-approved-chain (chain-details { name: (string-utf8 256), buff-length: uint }))
-  (let 
+  (let
     (
       (chain-id (+ (var-get chain-nonce) u1))
-    ) 
+    )
     (try! (check-is-owner))
     (var-set chain-nonce chain-id)
     (ok (map-set approved-chains chain-id chain-details))
@@ -276,32 +292,48 @@
 (define-public (set-approved-token (token principal) (approved bool) (fee uint))
 	(begin
 		(try! (check-is-owner))
-    (match (map-get? approved-tokens token)
-      token-details
-      (ok (map-set approved-tokens token { approved: approved, fee: fee, accrued-fee: (get accrued-fee token-details) }))
-      (ok (map-set approved-tokens token { approved: approved, fee: fee, accrued-fee: u0 }))
-    )		
+    (match (map-get? token-id-registry token)
+      token-id
+      (let
+        (
+          (token-details (try! (get-approved-token-by-id-or-fail token-id)))
+        )
+        (map-set token-registry token-id (merge token-details { approved: approved, fee: fee }))
+        (ok token-id)
+      )
+      (let
+        (
+          (token-id (+ u1 (var-get token-nonce)))
+        )
+        (map-set token-id-registry token token-id)
+        (map-set token-registry token-id { token: token, approved: approved, fee: fee, accrued-fee: u0 })
+        (var-set token-nonce token-id)
+        (ok token-id)
+      )
+    )
 	)
 )
 
 (define-public (set-token-fee (token principal) (fee uint))
   (let
     (
+      (token-id (try! (get-approved-token-id-or-fail token)))
       (token-details (try! (get-approved-token-or-fail token)))
     )
     (try! (check-is-owner))
-    (ok (map-set approved-tokens token { approved: (get approved token-details), fee: fee, accrued-fee: (get accrued-fee token-details) }))
+    (ok (map-set token-registry token-id (merge token-details { fee: fee })))
   )
 )
 
 (define-public (collect-accrued-fee (token-trait <ft-trait>))
-  (let 
+  (let
     (
+      (token-id (try! (get-approved-token-id-or-fail (contract-of token-trait))))
       (token-details (try! (get-approved-token-or-fail (contract-of token-trait))))
-    ) 
+    )
     (try! (check-is-owner))
     (as-contract (try! (contract-call? token-trait transfer-fixed (get accrued-fee token-details) tx-sender (var-get contract-owner) none)))
-    (ok (map-set approved-tokens (contract-of token-trait) { approved: (get approved token-details), fee: (get fee token-details), accrued-fee: u0 }))
+    (ok (map-set token-registry token-id (merge token-details { accrued-fee: u0 })))
   )
 )
 
@@ -315,22 +347,22 @@
 ;; internal functions
 
 (define-private (validate-order (order-hash (buff 32)) (signature-pack { signer: principal, order-hash: (buff 32), signature: (buff 65)}))
-    (let 
+    (let
         (
             (validator (unwrap! (map-get? validator-registry (unwrap! (map-get? validator-id-registry (get signer signature-pack)) ERR-UNKNOWN-VALIDATOR-ID )) ERR-UNKNOWN-VALIDATOR-ID ))
-        ) 
+        )
         (asserts! (is-none (map-get? order-validated-by { order-hash: order-hash, validator: (get signer signature-pack) })) ERR-DUPLICATE-SIGNATURE)
         (asserts! (is-eq order-hash (get order-hash signature-pack)) ERR-ORDER-HASH-MISMATCH)
-        (asserts! (is-eq (secp256k1-recover? (sha256 (concat structured-data-prefix (concat message-domain order-hash))) (get signature signature-pack)) (ok (get validator-pubkey validator))) ERR-INVALID-SIGNATURE)        
+        (asserts! (is-eq (secp256k1-recover? (sha256 (concat structured-data-prefix (concat message-domain order-hash))) (get signature signature-pack)) (ok (get validator-pubkey validator))) ERR-INVALID-SIGNATURE)
         (ok (map-set order-validated-by { order-hash: order-hash, validator: (get signer signature-pack) } true))
     )
 )
 
-(define-private (validate-signature-iter 
+(define-private (validate-signature-iter
     (signature-pack { signer: principal, order-hash: (buff 32), signature: (buff 65)})
     (previous-response (response bool uint))
     )
-    (match previous-response 
+    (match previous-response
         prev-ok
         (validate-order (var-get order-hash-to-iter) signature-pack)
         prev-err
@@ -350,10 +382,11 @@
   (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
 )
 
-(define-private (transfer-to-wrap-internal 
-  (order 
+(define-private (transfer-to-wrap-internal
+  (order
     {
       to: uint,
+      token: uint,
       amount-in-fixed: uint,
       chain-id: uint,
       salt: (buff 256)
@@ -361,14 +394,14 @@
   )
   (token-trait <ft-trait>)
   )
-  (let 
+  (let
     (
       (chain-details (try! (get-approved-chain-or-fail (get chain-id order))))
       (recipient (try! (user-from-id-or-fail (get to order))))
     )
+    (asserts! (is-eq (try! (get-approved-token-id-or-fail (contract-of token-trait))) (get token order)) ERR-TOKEN-NOT-AUTHORIZED)
     (try! (check-is-approved-token (contract-of token-trait)))
     (try! (contract-call? token-trait transfer-fixed (get amount-in-fixed order) tx-sender recipient none))
-    (print { object: "bridge-endpoint", action: "transfer-to-wrap", salt: (get salt order), principal: recipient, amount-in-fixed: (get amount-in-fixed order) })
     (ok { chain: (get name chain-details), tx-id: (get salt order) })
   )
 )
