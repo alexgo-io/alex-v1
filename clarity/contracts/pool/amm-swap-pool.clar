@@ -890,7 +890,7 @@
 )
 
 ;; @desc spot = (b_y / b_x) ^ t
-;; @desc d_y = b_y - b_x * (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t))
+;; @desc d_y = b_y * (1 - (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)))
 (define-read-only (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (begin
         (asserts! (> price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
@@ -901,9 +901,9 @@
                 (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
                 (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
                 (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-                (lead-term (mul-up balance-x (pow-down (div-down numer denom) t-comp-num)))
+                (lead-term (pow-down (div-down numer denom) t-comp-num))
             )
-            (if (<= balance-y lead-term) (ok u0) (ok (- balance-y lead-term)))
+            (if (<= ONE_8 lead-term) (ok u0) (ok (mul-up balance-y (- ONE_8 lead-term))))
         )
     )
 )
