@@ -5,15 +5,16 @@ import { SSPTestAgent2 } from './models/alex-tests-amm-swap-pool.ts';
 import { USDAToken, WBTCToken, WXUSDToken } from './models/alex-tests-tokens.ts';
 
 // Deployer Address Constants 
-const wbtcAddress = ".token-wbtc"
+const usdcAddress = ".token-wbtc"
 const usdaAddress = ".token-wusda"
 const wxusdAddress = ".token-wxusd"
 const daoAddress = ".executor-dao"
 
 const defaultFactor = 0.999e8;
 const threshold = 500e8;
-const balance = 50000e8;
-const mintAmount = balance * 5;
+const balanceX = 50000e8;
+const balanceY = Math.floor(balanceX / 10);
+const mintAmount = Math.max(balanceX, balanceY) * 5;
 const maxRatio = 0.9e8;
 
 const testAmount = 1e8;
@@ -25,7 +26,7 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   const wallet_1 = accounts.get("wallet_1")!;
   const SSPTest = new SSPTestAgent2(chain, deployer);
   const usdaToken = new USDAToken(chain, deployer);
-  const wbtcToken = new WBTCToken(chain, deployer);
+  const usdcToken = new WBTCToken(chain, deployer);
   const wxusdToken = new WXUSDToken(chain, deployer);
 
   const factor = _factor ? _factor : defaultFactor;
@@ -35,9 +36,9 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   result.expectOk();
   result = usdaToken.mintFixed(deployer, wallet_1.address, mintAmount);
   result.expectOk();
-  result = wbtcToken.mintFixed(deployer, deployer.address, mintAmount);
+  result = usdcToken.mintFixed(deployer, deployer.address, mintAmount);
   result.expectOk();
-  result = wbtcToken.mintFixed(deployer, wallet_1.address, mintAmount);
+  result = usdcToken.mintFixed(deployer, wallet_1.address, mintAmount);
   result.expectOk();
   result = wxusdToken.mintFixed(deployer, deployer.address, mintAmount);
   result.expectOk();
@@ -45,9 +46,9 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   result.expectOk();
 
   // Deployer creating a pool, initial tokens injected to the pool
-  result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, deployer.address + daoAddress, balance, balance);
+  result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, deployer.address + daoAddress, balanceX, balanceY);
   result.expectOk().expectBool(true);
-  result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, deployer.address + daoAddress, balance, balance);
+  result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, deployer.address + daoAddress, balanceX, balanceY);
   result.expectOk().expectBool(true);
 
   result = SSPTest.setMaxInRatio(deployer, maxRatio);
@@ -56,7 +57,7 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   result.expectOk().expectBool(true);
   result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 0);
   result.expectOk().expectBool(true);
-  result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, 0);
+  result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, 0);
   result.expectOk().expectBool(true);
 
   let block = chain.mineBlock([
@@ -80,13 +81,13 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
     ], deployer.address),
     Tx.contractCall("amm-swap-pool", "set-threshold-x", [
       types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + wbtcAddress),
+      types.principal(deployer.address + usdcAddress),
       types.uint(factor),
       types.uint(threshold)
     ], deployer.address),
     Tx.contractCall("amm-swap-pool", "set-threshold-y", [
       types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + wbtcAddress),
+      types.principal(deployer.address + usdcAddress),
       types.uint(factor),
       types.uint(threshold)
     ], deployer.address),
@@ -98,7 +99,7 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
     wallet_1,
     SSPTest,
     usdaToken,
-    wbtcToken,
+    usdcToken,
     wxusdToken,
     factor
   }
@@ -111,13 +112,13 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
     wallet_1,
     SSPTest,
     usdaToken,
-    wbtcToken,
+    usdcToken,
     wxusdToken,
     factor
   } = await setup(chain, accounts, _factor);
 
   // attempt to trade too much (> 90%) will be rejected
-  let result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, balance * maxRatio / 1e8, 0);
+  let result = SSPTest.swapHelperA(deployer, deployer.address + usdcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, balanceX * maxRatio / 1e8, 0);
   result.expectErr().expectUint(4001);
 
   let call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
@@ -130,15 +131,16 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + wbtcAddress),
+      types.principal(deployer.address + usdcAddress),
       types.uint(factor)
     ], wallet_1.address);
-  let wbtcPrice = stringToUint(call.result.expectOk());
+  let usdcPrice = stringToUint(call.result.expectOk());
 
-  // swap some wbtc into usda
-  result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, testAmount, 0);  
-  console.log('swap =>', 'expected:', testAmount * wbtcPrice / usdaPrice, 'actual:', stringToUint(result.expectOk()))
-  assert(stringToUint(result.expectOk()) <= testAmount * wbtcPrice / usdaPrice, "result is greater than expected");
+  // swap some usdc into usda
+  result = SSPTest.swapHelperA(deployer, deployer.address + usdcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, testAmount, 0);  
+  console.log('swap =>', 'usdc:', usdcPrice, 'usda:', usdaPrice);
+  console.log('swap =>', 'expected:', testAmount * usdcPrice / usdaPrice, 'actual:', stringToUint(result.expectOk()))
+  assert(stringToUint(result.expectOk()) <= testAmount * usdcPrice / usdaPrice, "result is greater than expected");
 
   call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
@@ -150,20 +152,21 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
     [
       types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + wbtcAddress),
+      types.principal(deployer.address + usdcAddress),
       types.uint(factor)
     ], wallet_1.address);
-  wbtcPrice = stringToUint(call.result.expectOk());
+  usdcPrice = stringToUint(call.result.expectOk());
 
-  // swap some usda into wbtc
-  result = SSPTest.swapHelperA(deployer, deployer.address + usdaAddress, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, factor, testAmount, 0);
-  console.log('swap =>', 'expected:', testAmount * usdaPrice / wbtcPrice, 'actual:', stringToUint(result.expectOk()))
-  assert(stringToUint(result.expectOk()) <= testAmount * usdaPrice / wbtcPrice, "result is greater than expected");
+  // swap some usda into usdc
+  result = SSPTest.swapHelperA(deployer, deployer.address + usdaAddress, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, factor, testAmount, 0);
+  console.log('swap =>', 'usdc:', usdcPrice, 'usda:', usdaPrice);
+  console.log('swap =>', 'expected:', testAmount * usdaPrice / usdcPrice, 'actual:', stringToUint(result.expectOk()))
+  assert(stringToUint(result.expectOk()) <= testAmount * usdaPrice / usdcPrice, "result is greater than expected");
 
   // attempt to swap zero throws an error
-  result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, 0, 0);
+  result = SSPTest.swapHelperA(deployer, deployer.address + usdcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, 0, 0);
   result.expectErr().expectUint(2003);
-  result = SSPTest.swapHelperA(deployer, deployer.address + wbtcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, 0, 0);
+  result = SSPTest.swapHelperA(deployer, deployer.address + usdcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, 0, 0);
   result.expectErr().expectUint(2003);
 
   // let's do some arb
@@ -220,7 +223,7 @@ Clarinet.test({
       wallet_1,
       SSPTest,
       usdaToken,
-      wbtcToken,
+      usdcToken,
       wxusdToken,
       factor
     } = await setup(chain, accounts);
@@ -228,46 +231,46 @@ Clarinet.test({
     let call: any = chain.callReadOnlyFn("amm-swap-pool", "get-token-given-position",
       [
         types.principal(deployer.address + wxusdAddress),
-        types.principal(deployer.address + wbtcAddress),
+        types.principal(deployer.address + usdcAddress),
         types.uint(factor),
-        types.uint(balance),
+        types.uint(balanceX),
         types.none()
       ], wallet_1.address);
     const initial_supply = call.result.expectOk().expectTuple().token.replace(/\D/g, "");
 
     // Check pool details and print
-    call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor);
+    call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdcAddress, factor);
     let position: any = call.result.expectOk().expectTuple();
 
     position['total-supply'].expectUint(initial_supply);
-    position['balance-x'].expectUint(balance);
-    position['balance-y'].expectUint(balance);
+    position['balance-x'].expectUint(balanceX);
+    position['balance-y'].expectUint(balanceY);
     // Add extra liquidity (1/4 of initial liquidity)
-    let result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, balance / 4, balance / 4);
+    let result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, balanceX / 4, balanceY / 4);
     position = result.expectOk().expectTuple();
     position['supply'].expectUint(Math.floor(initial_supply / 4));
-    position['dy'].expectUint(balance / 4);
-    position['dx'].expectUint(balance / 4);
+    position['dy'].expectUint(balanceY / 4);
+    position['dx'].expectUint(balanceX / 4);
 
     // Check pool details and print
-    call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor);
+    call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdcAddress, factor);
     position = call.result.expectOk().expectTuple();
     position['total-supply'].expectUint(Math.floor(5 / 4 * initial_supply));
-    position['balance-y'].expectUint(5 / 4 * balance);
-    position['balance-x'].expectUint(5 / 4 * balance);
+    position['balance-y'].expectUint(5 / 4 * balanceY);
+    position['balance-x'].expectUint(5 / 4 * balanceX);
 
     // Reduce all liquidlity
-    result = SSPTest.reducePosition(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, 1e8);
+    result = SSPTest.reducePosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, 1e8);
     position = result.expectOk().expectTuple();
-    position['dy'].expectUint(5 / 4 * balance);
-    position['dx'].expectUint(5 / 4 * balance);
+    position['dy'].expectUint(5 / 4 * balanceY);
+    position['dx'].expectUint(5 / 4 * balanceX);
 
     // Add back some liquidity
-    result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + wbtcAddress, factor, balance, balance);
+    result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, balanceX, balanceY);
     position = result.expectOk().expectTuple();
     position['supply'].expectUint(initial_supply);
-    position['dy'].expectUint(balance);
-    position['dx'].expectUint(balance);
+    position['dy'].expectUint(balanceY);
+    position['dx'].expectUint(balanceX);
 
   },
 });
@@ -280,7 +283,7 @@ Clarinet.test({
       wallet_1,
       SSPTest,
       usdaToken,
-      wbtcToken,
+      usdcToken,
       wxusdToken,
       factor
     } = await setup(chain, accounts);
