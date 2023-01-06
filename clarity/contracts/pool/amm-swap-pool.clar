@@ -68,7 +68,7 @@
     total-supply: uint,
     balance-x: uint,
     balance-y: uint,
-    fee-to-address: principal,    
+    pool-owner: principal,    
     fee-rate-x: uint,
     fee-rate-y: uint,
     fee-rebate: uint,
@@ -112,7 +112,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (ok
             (map-set 
                 pools-data-map 
@@ -132,7 +132,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (ok
             (map-set 
                 pools-data-map 
@@ -166,7 +166,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (ok
             (map-set 
                 pools-data-map 
@@ -191,7 +191,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
         (ok 
@@ -268,7 +268,7 @@
     (pow-down (div-down balance-y balance-x) factor)
 )
 
-(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (factor uint) (fee-to-address principal) (dx uint) (dy uint)) 
+(define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (factor uint) (pool-owner principal) (dx uint) (dy uint)) 
     (let
         (
             (pool-id (+ (var-get pool-nonce) u1))
@@ -279,7 +279,7 @@
                 total-supply: u0,
                 balance-x: u0,
                 balance-y: u0,
-                fee-to-address: fee-to-address,
+                pool-owner: pool-owner,
                 fee-rate-x: u0,
                 fee-rate-y: u0,
                 fee-rebate: u0,
@@ -476,7 +476,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-x: new-threshold }))
         (ok true)
     )
@@ -491,7 +491,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-y: new-threshold }))
         (ok true)
     )
@@ -525,7 +525,7 @@
         (        
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-x: fee-rate-x }))
         (ok true)     
     )
@@ -536,23 +536,23 @@
         (    
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-y: fee-rate-y }))
         (ok true)     
     )
 )
 
-(define-read-only (get-fee-to-address (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-to-address (try! (get-pool-details token-x token-y factor))))
+(define-read-only (get-pool-owner (token-x principal) (token-y principal) (factor uint))
+    (ok (get pool-owner (try! (get-pool-details token-x token-y factor))))
 )
 
-(define-public (set-fee-to-address (token-x principal) (token-y principal) (factor uint) (fee-to-address principal))
+(define-public (set-pool-owner (token-x principal) (token-y principal) (factor uint) (pool-owner principal))
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
         (try! (check-is-owner))
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-to-address: fee-to-address }))
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { pool-owner: pool-owner }))
         (ok true)     
     )
 )
