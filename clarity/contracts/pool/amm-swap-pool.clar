@@ -16,9 +16,22 @@
 (define-constant ERR-EXCEEDS-MAX-SLIPPAGE (err u2020))
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
+(define-constant ERR-PAUSED (err u1001))
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var pool-nonce uint u0)
+(define-data-var paused bool false)
+
+(define-read-only (is-paused)
+    (var-get paused)
+)
+
+(define-public (pause (new-paused bool))
+    (begin 
+        (try! (check-is-owner))
+        (ok (var-set paused new-paused))
+    )
+)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -99,7 +112,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (ok
             (map-set 
                 pools-data-map 
@@ -119,7 +132,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (ok
             (map-set 
                 pools-data-map 
@@ -153,7 +166,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (ok
             (map-set 
                 pools-data-map 
@@ -178,7 +191,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
         (ok 
@@ -255,21 +268,6 @@
     (pow-down (div-down balance-y balance-x) factor)
 )
 
-(define-private (add-approved-token-to-vault (token principal))
-    (contract-call? .alex-vault add-approved-token token)
-)
-
-;; @desc check-err
-;; @params result 
-;; @params prior
-;; @returns (response bool uint)
-(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
-    (match prior 
-        ok-value result
-        err-value (err err-value)
-    )
-)
-
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (factor uint) (fee-to-address principal) (dx uint) (dy uint)) 
     (let
         (
@@ -294,7 +292,7 @@
                 threshold-y: u0
             })
         )
-        (try! (check-is-owner))
+        (asserts! (not (is-paused)) ERR-PAUSED)
         (asserts!
             (and
                 (is-none (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }))
@@ -305,8 +303,6 @@
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-data)
         (map-set pools-id-map pool-id { token-x: token-x, token-y: token-y, factor: factor })
         (var-set pool-nonce pool-id)
-        
-        (try! (fold check-err (map add-approved-token-to-vault (list token-x token-y)) (ok true)))
 
         (try! (add-to-position token-x-trait token-y-trait factor dx (some dy)))
         (print { object: "pool", action: "created", data: pool-data })
@@ -333,6 +329,7 @@
             }))
             (sender tx-sender)
         )
+        (asserts! (not (is-paused)) ERR-PAUSED)
         (asserts! (and (> dx u0) (> dy u0)) ERR-INVALID-LIQUIDITY)
         (asserts! (>= (default-to u340282366920938463463374607431768211455 max-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         (try! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none))
@@ -365,7 +362,8 @@
                 })
             )
             (sender tx-sender)
-        )         
+        )  
+        (asserts! (not (is-paused)) ERR-PAUSED)       
         (asserts! (<= percent ONE_8) ERR-PERCENT-GREATER-THAN-ONE)
         (as-contract (try! (contract-call? .alex-vault transfer-ft-two token-x-trait dx token-y-trait dy sender)))
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
@@ -405,6 +403,7 @@
             )
             (sender tx-sender)             
         )
+        (asserts! (not (is-paused)) ERR-PAUSED)
         (try! (check-pool-status token-x token-y factor))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (div-down dy dx-net-fees) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
@@ -451,6 +450,7 @@
             )
             (sender tx-sender)
         )
+        (asserts! (not (is-paused)) ERR-PAUSED)
         (try! (check-pool-status token-x token-y factor))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (asserts! (>= (div-down dy-net-fees dx) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
@@ -476,7 +476,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-x: new-threshold }))
         (ok true)
     )
@@ -491,7 +491,7 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (try! (check-is-owner))
+        (asserts! (or (is-eq tx-sender (get fee-to-address pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-y: new-threshold }))
         (ok true)
     )
@@ -872,7 +872,7 @@
 
 ;; @desc spot = (b_y / b_x) ^ t
 ;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
-(define-read-only (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
+(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (begin
         (asserts! (< price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
         (let 
@@ -891,7 +891,7 @@
 
 ;; @desc spot = (b_y / b_x) ^ t
 ;; @desc d_y = b_y * (1 - (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)))
-(define-read-only (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
+(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (begin
         (asserts! (> price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
         (let 

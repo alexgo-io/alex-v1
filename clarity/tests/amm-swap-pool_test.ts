@@ -45,6 +45,19 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   result = wxusdToken.mintFixed(deployer, wallet_1.address, mintAmount);
   result.expectOk();
 
+  let block = chain.mineBlock([
+    Tx.contractCall("alex-vault", "add-approved-token", [
+      types.principal(deployer.address + wxusdAddress)
+    ], deployer.address),
+    Tx.contractCall("alex-vault", "add-approved-token", [
+      types.principal(deployer.address + usdaAddress)
+    ], deployer.address),
+    Tx.contractCall("alex-vault", "add-approved-token", [
+      types.principal(deployer.address + usdcAddress)
+    ], deployer.address),    
+  ]);
+  block.receipts.forEach(e => { e.result.expectOk() });  
+
   // Deployer creating a pool, initial tokens injected to the pool
   result = SSPTest.createPool(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, deployer.address + daoAddress, balanceX, balanceY);
   result.expectOk().expectBool(true);
@@ -60,7 +73,7 @@ async function setup(chain: Chain, accounts: Map<string, Account>, _factor?: num
   result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, 0);
   result.expectOk().expectBool(true);
 
-  let block = chain.mineBlock([
+  block = chain.mineBlock([
     Tx.contractCall("alex-vault", "add-approved-contract", [
       types.principal(deployer.address + '.amm-swap-pool')
     ], deployer.address),
