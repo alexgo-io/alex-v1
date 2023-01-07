@@ -33,7 +33,7 @@
 (define-map activation-block principal uint)
 
 ;; token <> coinbase-amounts
-(define-map coinbase-amounts 
+(define-map coinbase-amounts
   principal
   {
     coinbase-amount-1: uint,
@@ -45,7 +45,7 @@
 )
 
 ;; At a given reward cycle, what is the total amount of tokens staked
-(define-map staking-stats-at-cycle 
+(define-map staking-stats-at-cycle
   {
     token: principal,
     reward-cycle: uint
@@ -75,7 +75,7 @@
 (define-map users-nonce principal uint)
 
 ;; store user principal by user id
-(define-map users 
+(define-map users
   {
     token: principal,
     user-id: uint
@@ -83,7 +83,7 @@
   principal
 )
 ;; store user id by user principal
-(define-map user-ids 
+(define-map user-ids
   {
     token: principal,
     user: principal
@@ -125,26 +125,26 @@
   )
 )
 
-;; @des get-balance 
+;; @des get-balance
 ;; @params token
 ;; @returns uint
 (define-read-only (get-balance (token principal))
   (default-to u0 (map-get? reserve token))
 )
 
-;; @desc add-to-balance 
-;; @params token 
-;; @params amount 
+;; @desc add-to-balance
+;; @params token
+;; @params amount
 ;; @returns (response bool)
 (define-public (add-to-balance (token principal) (amount uint))
   (begin
-    (asserts! (or (is-ok (check-is-self)) (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED) 
+    (asserts! (or (is-ok (check-is-self)) (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
     (ok (map-set reserve token (+ amount (get-balance token))))
   )
 )
 
-;; @desc remove-from-balance 
-;; @params token 
+;; @desc remove-from-balance
+;; @params token
 ;; @params amount
 ;; @returns (response bool)
 (define-public (remove-from-balance (token principal) (amount uint))
@@ -179,7 +179,7 @@
   (is-some (map-get? approved-tokens token))
 )
 
-;; @desc add-token 
+;; @desc add-token
 ;; @params token
 ;; @returns (response bool)
 (define-public (add-token (token principal))
@@ -202,7 +202,7 @@
 )
 
 
-;; @desc get-activation-block-or-default 
+;; @desc get-activation-block-or-default
 ;; @params token
 ;; @returns uint
 (define-read-only (get-activation-block-or-default (token principal))
@@ -217,8 +217,8 @@
 )
 
 ;; returns the total staked tokens for a given reward cycle
-;; @desc get-staking-stats-at-cycle 
-;; @params token 
+;; @desc get-staking-stats-at-cycle
+;; @params token
 ;; @params reward-cycle
 ;; @returns (optional (tuple))
 (define-read-only (get-staking-stats-at-cycle (token principal) (reward-cycle uint))
@@ -252,14 +252,14 @@
 )
 
 ;; returns (some number of registered users), used for activation and tracking user IDs, or none
-;; @desc get-registered-users-nonce 
-;; @params token 
+;; @desc get-registered-users-nonce
+;; @params token
 ;; @returns (optional (tuple))
 (define-read-only (get-registered-users-nonce (token principal))
   (map-get? users-nonce token)
 )
 
-;; @desc get-registered-users-nonce-or-default 
+;; @desc get-registered-users-nonce-or-default
 ;; @params token
 ;; @returns uint
 (define-read-only (get-registered-users-nonce-or-default (token principal))
@@ -267,8 +267,8 @@
 )
 
 ;; returns user ID if it has been created, or creates and returns new ID
-;; @desc get-or-create-user-id 
-;; @params token 
+;; @desc get-or-create-user-id
+;; @params token
 ;; @params user
 ;; @returns (response bool)/ (optional (tuple))
 (define-private (get-or-create-user-id (token principal) (user principal))
@@ -287,16 +287,16 @@
   )
 )
 
-;; @desc get-staker-at-cycle 
-;; @params token 
+;; @desc get-staker-at-cycle
+;; @params token
 ;; @params reward-cycl
-;; @params user-id 
+;; @params user-id
 ;; @returns (optional (tuple))
 (define-read-only (get-staker-at-cycle (token principal) (reward-cycle uint) (user-id uint))
   (map-get? staker-at-cycle { token: token, reward-cycle: reward-cycle, user-id: user-id })
 )
-;; @desc get-staker-at-cycle-or-default 
-;; @params token 
+;; @desc get-staker-at-cycle-or-default
+;; @params token
 ;; @params reward-cycle
 ;; @params user-id
 ;; @returns (optional (tuple))
@@ -306,8 +306,8 @@
 )
 
 ;; get the reward cycle for a given Stacks block height
-;; @desc get-reward-cycle 
-;; @params token 
+;; @desc get-reward-cycle
+;; @params token
 ;; @params stacks-height
 ;; @returns response
 (define-read-only (get-reward-cycle (token principal) (stacks-height uint))
@@ -324,8 +324,8 @@
 )
 
 ;; determine if staking is active in a given cycle
-;; @desc staking-active-at-cycle 
-;; @params token 
+;; @desc staking-active-at-cycle
+;; @params token
 ;; @params reward-cycle
 ;; @response bool
 (define-read-only (staking-active-at-cycle (token principal) (reward-cycle uint))
@@ -334,8 +334,8 @@
 
 ;; get the first Stacks block height for a given reward cycle.
 ;; @desc get-first-stacks-block-in-reward-cycle
-;; @params token 
-;; @params reward-cycle 
+;; @params token
+;; @params reward-cycle
 ;; @returns uint
 (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (reward-cycle uint))
   (+ (get-activation-block-or-default token) (* (var-get reward-cycle-length) reward-cycle))
@@ -365,7 +365,7 @@
     )
     (match (get-reward-cycle token stacks-height)
       current-cycle
-      (div-down (mul-down (get-coinbase-amount-or-default token target-cycle) user-staked-this-cycle) total-staked-this-cycle)      
+      (div-down (mul-down (get-coinbase-amount-or-default token target-cycle) user-staked-this-cycle) total-staked-this-cycle)
       u0
     )
   )
@@ -390,7 +390,7 @@
 ;; @params user
 ;; @params user-id
 ;; @params amount-token
-;; @params start-height 
+;; @params start-height
 ;; @params lock-period
 ;; @returns (ok response)
 (define-private (stake-tokens-at-cycle (token-trait <ft-trait>) (user principal) (user-id uint) (amount-token uint) (start-height uint) (lock-period uint))
@@ -406,8 +406,8 @@
         first: target-cycle,
         last: (+ target-cycle lock-period)
       })
-    )   
-    (try! (check-is-approved-token (contract-of token-trait))) 
+    )
+    (try! (check-is-approved-token (contract-of token-trait)))
     (asserts! (>= block-height (get-activation-block-or-default token)) ERR-CONTRACT-NOT-ACTIVATED)
     (asserts! (and (> lock-period u0) (<= lock-period MAX-REWARD-CYCLES)) ERR-CANNOT-STAKE)
     (asserts! (> amount-token u0) ERR-CANNOT-STAKE)
@@ -422,7 +422,7 @@
 ;; @params reward-cycle-idx
 ;; @returns bool/error
 (define-private (stake-tokens-closure (reward-cycle-idx uint)
-  (commitment-response (response 
+  (commitment-response (response
     {
       token: principal,
       staker-id: uint,
@@ -434,7 +434,7 @@
   )))
 
   (match commitment-response
-    commitment 
+    commitment
     (let
       (
         (token (get token commitment))
@@ -539,9 +539,9 @@
     (and (> to-return u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-trait to-return user))) (as-contract (try! (remove-from-balance (contract-of token-trait) to-return))))
     ;; send back rewards if user was eligible
     (and (> entitled-token u0) (as-contract (try! (contract-call? .age000-governance-token mint-fixed entitled-token user))))
-    (and 
-      (> entitled-token u0) 
-      (> (get-apower-multiplier-in-fixed-or-default token) u0) 
+    (and
+      (> entitled-token u0)
+      (> (get-apower-multiplier-in-fixed-or-default token) u0)
       (as-contract (try! (contract-call? .token-apower mint-fixed (mul-down entitled-token (get-apower-multiplier-in-fixed-or-default token)) user)))
     )
     (ok { to-return: to-return, entitled-token: entitled-token })
@@ -610,7 +610,7 @@
   (begin
     (try! (check-is-owner))
     (ok
-      (map-set coinbase-amounts token 
+      (map-set coinbase-amounts token
         {
           coinbase-amount-1: coinbase-1,
           coinbase-amount-2: coinbase-2,
@@ -631,15 +631,15 @@
 (define-read-only (get-coinbase-amount-or-default (token principal) (reward-cycle uint))
   (let
     (
-      (coinbase 
-        (default-to 
+      (coinbase
+        (default-to
           {
             coinbase-amount-1: u0,
             coinbase-amount-2: u0,
             coinbase-amount-3: u0,
             coinbase-amount-4: u0,
             coinbase-amount-5: u0
-          } 
+          }
           (map-get? coinbase-amounts token))
       )
     )
@@ -681,8 +681,9 @@
 (map-set approved-contracts .simple-weight-pool true)
 (map-set approved-contracts .simple-weight-pool-alex true)
 (map-set approved-contracts .stable-swap-pool true)
+(map-set approved-contracts .amm-swap-pool true)
 
 ;; testing only
-(map-set approved-contracts .collateral-rebalancing-pool-v1 true)  
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)
 (map-set approved-contracts .yield-token-pool true)
 (map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)

@@ -31,7 +31,7 @@
 ;; @returns (response boolean)
 (define-public (set-contract-owner (owner principal))
   (begin
-    (try! (check-is-owner)) 
+    (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
 )
@@ -63,22 +63,22 @@
 )
 
 (define-public (add-approved-contract (new-approved-contract principal))
-  (begin 
-    (try! (check-is-owner)) 
+  (begin
+    (try! (check-is-owner))
     (ok (map-set approved-contracts new-approved-contract true))
   )
 )
 
 (define-public (add-approved-flash-loan-user (new-approved-flash-loan-user principal))
-  (begin 
-    (try! (check-is-owner)) 
+  (begin
+    (try! (check-is-owner))
     (ok (map-set approved-flash-loan-users new-approved-flash-loan-user true))
   )
 )
 
 (define-public (add-approved-token (new-approved-token principal))
-  (begin 
-    (try! (check-is-owner)) 
+  (begin
+    (try! (check-is-owner))
     (ok (map-set approved-tokens new-approved-token true))
   )
 )
@@ -88,8 +88,8 @@
 ;; @params fee
 ;; @returns (response boolean)
 (define-public (set-flash-loan-fee-rate (fee uint))
-  (begin 
-    (try! (check-is-owner)) 
+  (begin
+    (try! (check-is-owner))
     (ok (var-set flash-loan-fee-rate fee))
   )
 )
@@ -99,8 +99,8 @@
 ;; @params token; ft-trait
 ;; @returns (response uint)
 (define-public (get-balance (token <ft-trait>))
-  (begin 
-    (try! (check-is-approved-token (contract-of token))) 
+  (begin
+    (try! (check-is-approved-token (contract-of token)))
     (contract-call? token get-balance-fixed (as-contract tx-sender))
   )
 )
@@ -113,7 +113,7 @@
 ;; @restricted Contrac-Owner
 ;; @returns (response boolean)
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (recipient principal))
-  (begin     
+  (begin
     (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
     (as-contract (contract-call? token transfer-fixed amount tx-sender recipient none))
   )
@@ -127,8 +127,8 @@
 ;; @params recipient
 ;; @returns (response boolean)
 (define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
-  (begin     
-    (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED) 
+  (begin
+    (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
     (as-contract (contract-call? token transfer-fixed token-id amount tx-sender recipient))
   )
 )
@@ -143,14 +143,14 @@
 (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
   (begin
     (asserts! (and (is-ok (check-is-approved-flash-loan-user (contract-of flash-loan-user))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
-    (let 
+    (let
       (
         (pre-bal (unwrap! (get-balance token) ERR-INVALID-BALANCE))
         (fee-with-principal (+ ONE_8 (var-get flash-loan-fee-rate)))
         (amount-with-fee (mul-up amount fee-with-principal))
         (recipient tx-sender)
       )
-    
+
       ;; make sure current balance > loan amount
       (asserts! (> pre-bal amount) ERR-INVALID-BALANCE)
 
@@ -168,7 +168,7 @@
 )
 
 (define-public (transfer-ft-two (token-x-trait <ft-trait>) (dx uint) (token-y-trait <ft-trait>) (dy uint) (recipient principal))
-  (begin 
+  (begin
     (try! (transfer-ft token-x-trait dx recipient))
     (transfer-ft token-y-trait dy recipient)
   )
@@ -203,16 +203,17 @@
 (map-set approved-tokens .age000-governance-token true)
 (map-set approved-contracts .alex-reserve-pool true)
 (map-set approved-contracts .fixed-weight-pool-v1-01 true)
-(map-set approved-contracts .fixed-weight-pool-v1-02 true) 
+(map-set approved-contracts .fixed-weight-pool-v1-02 true)
 (map-set approved-contracts .fixed-weight-pool-alex true)
 (map-set approved-contracts .simple-weight-pool true)
 (map-set approved-contracts .simple-weight-pool-alex true)
 (map-set approved-contracts .stable-swap-pool true)
+(map-set approved-contracts .amm-swap-pool true)
 
 ;; testing only
-(map-set approved-contracts .collateral-rebalancing-pool-v1 true)  
-(map-set approved-contracts .liquidity-bootstrapping-pool true)  
-(map-set approved-contracts .yield-token-pool true)  
+(map-set approved-contracts .collateral-rebalancing-pool-v1 true)
+(map-set approved-contracts .liquidity-bootstrapping-pool true)
+(map-set approved-contracts .yield-token-pool true)
 (map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-usda-wbtc true)
 (map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
