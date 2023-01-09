@@ -17,6 +17,7 @@
 (define-constant ERR-REQUIRED-VALIDATORS (err u1013))
 (define-constant ERR-ORDER-ALREADY-SENT (err u1014))
 (define-constant ERR-PAUSED (err u1015))
+(define-constant ERR-USER-NOT-WHITELISTED (err u1016))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 (define-constant ONE_8 u100000000)
@@ -41,13 +42,15 @@
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var is-paused bool false)
+(define-data-var use-whitelist bool false)
 
 (define-map approved-recipients principal bool)
 (define-map approved-relayers principal bool)
+(define-map whitelisted-users principal bool)
 
 (define-data-var token-nonce uint u0)
 (define-map token-id-registry principal uint)
-(define-map token-registry uint { token: principal, approved: bool, fee: uint, accrued-fee: uint })
+(define-map token-registry uint { token: principal, approved: bool, fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint })
 
 (define-data-var chain-nonce uint u0)
 (define-map approved-chains uint { name: (string-utf8 256), buff-length: uint })
@@ -76,40 +79,13 @@
       (reg-id (+ (var-get user-nonce) u1))
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
+    (asserts! (or (not (var-get use-whitelist)) (is-whitelisted user)) ERR-USER-NOT-WHITELISTED)
     (asserts! (map-insert user-id-registry user reg-id) ERR-USER-ALREADY-REGISTERED)
     (map-insert user-registry reg-id user)
     (var-set user-nonce reg-id)
     (print { object: "bridge-endpoint", action: "register-user", user-id: reg-id, principal: user })
     (ok reg-id)
   )
-)
-
-(define-public (transfer-to-wrap
-    (order
-      {
-        to: uint,
-        token: uint,
-        amount-in-fixed: uint,
-        chain-id: uint,
-        salt: (buff 256)
-      }
-    )
-    (token-trait <ft-trait>)
-    (signature-packs (list 100 { signer: principal, order-hash: (buff 32), signature: (buff 65)})))
-    (let
-        (
-          (order-hash (hash-order order))
-          (user (try! (user-from-id-or-fail (get to order))))
-        )
-        (asserts! (not (var-get is-paused)) ERR-PAUSED)
-        (asserts! (is-some (map-get? approved-relayers tx-sender)) ERR-UKNOWN-RELAYER)
-        (asserts! (>= (len signature-packs) (var-get required-validators)) ERR-REQUIRED-VALIDATORS)
-        (asserts! (is-none (map-get? order-sent order-hash)) ERR-ORDER-ALREADY-SENT)
-        (var-set order-hash-to-iter order-hash)
-        (try! (fold validate-signature-iter signature-packs (ok true)))
-        (as-contract (try! (transfer-to-wrap-internal order token-trait)))
-        (ok (map-set order-sent order-hash true))
-    )
 )
 
 (define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
@@ -123,6 +99,7 @@
       (net-amount (- amount-in-fixed fee))
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
+    (asserts! (or (not (var-get use-whitelist)) (is-whitelisted tx-sender)) ERR-USER-NOT-WHITELISTED)
     (try! (check-is-approved-recipient recipient))
     (try! (contract-call? token-trait transfer-fixed net-amount tx-sender recipient none))
     (and (> fee u0) (try! (contract-call? token-trait transfer-fixed fee tx-sender (as-contract tx-sender) none)))
@@ -133,6 +110,10 @@
 )
 
 ;; getters
+
+(define-read-only (is-whitelisted (user principal))
+  (default-to false (map-get? whitelisted-users user))
+)
 
 (define-read-only (get-user-id (user principal))
   (map-get? user-id-registry user)
@@ -222,7 +203,43 @@
   (get-approved-token-by-id-or-fail (try! (get-approved-token-id-or-fail token)))
 )
 
-;; owner functions
+(define-read-only (check-is-approved-token (token principal))
+  (ok (asserts! (get approved (try! (get-approved-token-or-fail token))) ERR-TOKEN-NOT-AUTHORIZED))
+)
+
+(define-read-only (check-is-approved-recipient (recipient principal))
+  (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
+)
+
+;; owner/priviledged functions
+
+(define-public (transfer-to-wrap
+    (order
+      {
+        to: uint,
+        token: uint,
+        amount-in-fixed: uint,
+        chain-id: uint,
+        salt: (buff 256)
+      }
+    )
+    (token-trait <ft-trait>)
+    (signature-packs (list 100 { signer: principal, order-hash: (buff 32), signature: (buff 65)})))
+    (let
+        (
+          (order-hash (hash-order order))
+          (user (try! (user-from-id-or-fail (get to order))))
+        )
+        (asserts! (not (var-get is-paused)) ERR-PAUSED)
+        (asserts! (is-some (map-get? approved-relayers tx-sender)) ERR-UKNOWN-RELAYER)
+        (asserts! (>= (len signature-packs) (var-get required-validators)) ERR-REQUIRED-VALIDATORS)
+        (asserts! (is-none (map-get? order-sent order-hash)) ERR-ORDER-ALREADY-SENT)
+        (var-set order-hash-to-iter order-hash)
+        (try! (fold validate-signature-iter signature-packs (ok true)))
+        (as-contract (try! (transfer-to-wrap-internal order token-trait)))
+        (ok (map-set order-sent order-hash true))
+    )
+)
 
 (define-public (add-validator (validator-pubkey (buff 33)) (validator principal))
 	(let
@@ -273,6 +290,13 @@
   )
 )
 
+(define-public (apply-whitelist (new-use-whitelist bool))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set use-whitelist new-use-whitelist))
+  )
+)
+
 (define-public (set-approved-chain (chain-details { name: (string-utf8 256), buff-length: uint }))
   (let
     (
@@ -291,7 +315,7 @@
   )
 )
 
-(define-public (set-approved-token (token principal) (approved bool) (fee uint))
+(define-public (set-approved-token (token principal) (approved bool) (fee uint) (min-amount uint) (max-amount uint))
 	(begin
 		(try! (check-is-owner))
     (match (map-get? token-id-registry token)
@@ -300,7 +324,7 @@
         (
           (token-details (try! (get-approved-token-by-id-or-fail token-id)))
         )
-        (map-set token-registry token-id (merge token-details { approved: approved, fee: fee }))
+        (map-set token-registry token-id (merge token-details { approved: approved, fee: fee, min-amount: min-amount, max-amount: max-amount }))
         (ok token-id)
       )
       (let
@@ -308,23 +332,12 @@
           (token-id (+ u1 (var-get token-nonce)))
         )
         (map-set token-id-registry token token-id)
-        (map-set token-registry token-id { token: token, approved: approved, fee: fee, accrued-fee: u0 })
+        (map-set token-registry token-id { token: token, approved: approved, fee: fee, min-amount: min-amount, max-amount: max-amount, accrued-fee: u0 })
         (var-set token-nonce token-id)
         (ok token-id)
       )
     )
 	)
-)
-
-(define-public (set-token-fee (token principal) (fee uint))
-  (let
-    (
-      (token-id (try! (get-approved-token-id-or-fail token)))
-      (token-details (try! (get-approved-token-or-fail token)))
-    )
-    (try! (check-is-owner))
-    (ok (map-set token-registry token-id (merge token-details { fee: fee })))
-  )
 )
 
 (define-public (collect-accrued-fee (token-trait <ft-trait>))
@@ -344,6 +357,17 @@
 		(try! (check-is-owner))
 		(ok (map-set approved-recipients recipient approved))
 	)
+)
+
+(define-public (whitelist (user principal) (whitelisted bool))
+  (begin
+    (try! (check-is-owner))
+    (ok (map-set whitelisted-users user whitelisted))
+  )
+)
+
+(define-public (whitelist-many (users (list 2000 principal)) (whitelisted (list 2000 bool)))
+  (ok (map whitelist users whitelisted))
 )
 
 ;; internal functions
@@ -374,14 +398,6 @@
 
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
-)
-
-(define-private (check-is-approved-token (token principal))
-  (ok (asserts! (get approved (try! (get-approved-token-or-fail token))) ERR-TOKEN-NOT-AUTHORIZED))
-)
-
-(define-private (check-is-approved-recipient (recipient principal))
-  (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
 )
 
 (define-private (transfer-to-wrap-internal
