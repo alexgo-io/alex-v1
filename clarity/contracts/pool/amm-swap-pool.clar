@@ -5,7 +5,7 @@
 ;; uses the constant power sum formula whose "factor" determines 
 ;; how far (or close) you are from (or to) constant product (aka Uniswap) and constant sum (aka mStable)
 ;; this can be seen as the generalised formulation of Curve AMM.
-;; based on Yield Token Pool AMM (https://medium.com/alexgobtc/whitepaper-1-automated-market-making-of-the-yield-token-pool-b7739fcee038)
+;; based on Trading Pool AMM (https://cdn.alexlab.co/pdf/ALEXGo_TradingPool.pdf)
 ;; factor => 1 gives you Uniswap, and factor => 0 gives you mStable. In-between, Curve.
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -94,7 +94,7 @@
     (map-get? pools-data-map { token-x: token-x, token-y: token-y, factor: factor }) 
 )
 
-(define-read-only (get-balances (token-x principal) (token-y principal) (factor uint) (factor uint))
+(define-read-only (get-balances (token-x principal) (token-y principal) (factor uint))
   (let
     (
       (pool (try! (get-pool-details token-x token-y factor)))
@@ -153,12 +153,7 @@
 )
 
 (define-read-only (get-oracle-enabled (token-x principal) (token-y principal) (factor uint))
-    (ok 
-        (get 
-            oracle-enabled 
-            (try! (get-pool-details token-x token-y factor))
-        )
-    )
+    (ok (get oracle-enabled (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-oracle-enabled (token-x principal) (token-y principal) (factor uint) (enabled bool))
@@ -178,12 +173,7 @@
 )
 
 (define-read-only (get-oracle-average (token-x principal) (token-y principal) (factor uint))
-    (ok 
-        (get 
-            oracle-average 
-            (try! (get-pool-details token-x token-y factor))
-        )
-    )
+    (ok (get oracle-average (try! (get-pool-details token-x token-y factor))))
 )
 
 (define-public (set-oracle-average (token-x principal) (token-y principal) (factor uint) (new-oracle-average uint))
@@ -381,25 +371,15 @@
             (pool (try! (get-pool-details token-x token-y factor)))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-
-            ;; fee = dx * fee-rate-x
             (fee (mul-up dx (get fee-rate-x pool)))
             (dx-net-fees (if (<= dx fee) u0 (- dx fee)))
             (fee-rebate (mul-down fee (get fee-rebate pool)))
-
             (dy (try! (get-y-given-x token-x token-y factor dx-net-fees)))                
-
-            (pool-updated
-                (merge pool
-                    {
-                    balance-x: (+ balance-x dx-net-fees fee-rebate),
-                    balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
-                    oracle-resilient:   (if (get oracle-enabled pool) 
-                                            (try! (get-oracle-resilient token-x token-y factor))
-                                            u0
-                                        )
-                    }
-                )
+            (pool-updated (merge pool {
+                balance-x: (+ balance-x dx-net-fees fee-rebate),
+                balance-y: (if (<= balance-y dy) u0 (- balance-y dy)),
+                oracle-resilient: (if (get oracle-enabled pool) (try! (get-oracle-resilient token-x token-y factor)) u0)
+                })
             )
             (sender tx-sender)             
         )
@@ -408,12 +388,9 @@
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (div-down dy dx-net-fees) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
-        
         (try! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none))
         (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
         (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-x (- fee fee-rebate))))
-
-        ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
         (print { object: "pool", action: "swap-x-for-y", data: pool-updated })
         (ok {dx: dx-net-fees, dy: dy})
@@ -428,25 +405,15 @@
             (pool (try! (get-pool-details token-x token-y factor)))
             (balance-x (get balance-x pool))
             (balance-y (get balance-y pool))
-
-            ;; fee = dy * fee-rate-y
             (fee (mul-up dy (get fee-rate-y pool)))
             (dy-net-fees (if (<= dy fee) u0 (- dy fee)))
             (fee-rebate (mul-down fee (get fee-rebate pool)))
-
             (dx (try! (get-x-given-y token-x token-y factor dy-net-fees)))
-
-            (pool-updated
-                (merge pool
-                    {
-                    balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
-                    balance-y: (+ balance-y dy-net-fees fee-rebate),
-                    oracle-resilient:   (if (get oracle-enabled pool) 
-                                            (try! (get-oracle-resilient token-x token-y factor))
-                                            u0
-                                        )
-                    }
-                )
+            (pool-updated (merge pool {
+                balance-x: (if (<= balance-x dx) u0 (- balance-x dx)),
+                balance-y: (+ balance-y dy-net-fees fee-rebate),
+                oracle-resilient: (if (get oracle-enabled pool) (try! (get-oracle-resilient token-x token-y factor)) u0)
+                })
             )
             (sender tx-sender)
         )
@@ -454,13 +421,10 @@
         (try! (check-pool-status token-x token-y factor))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
         (asserts! (>= (div-down dy-net-fees dx) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
-        (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)
-        
+        (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)        
         (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none))
         (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender))))            
         (as-contract (try! (contract-call? .alex-reserve-pool add-to-balance token-y (- fee fee-rebate))))
-
-        ;; post setting
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
         (ok {dx: dx, dy: dy-net-fees})
@@ -562,12 +526,10 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-x pool))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
         )
         (if (>= dx threshold)
-            (get-y-given-x-internal balance-x balance-y factor dx)
-            (ok (div-down (mul-down dx (try! (get-y-given-x-internal balance-x balance-y factor threshold))) threshold))
+            (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor dx)
+            (ok (div-down (mul-down dx (try! (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))
         ) 
     )
 )
@@ -577,12 +539,10 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-y pool))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))            
         )
         (if (>= dy threshold)
-            (get-x-given-y-internal balance-x balance-y factor dy)
-            (ok (div-down (mul-down dy (try! (get-x-given-y-internal balance-x balance-y factor threshold))) threshold))         
+            (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor dy)
+            (ok (div-down (mul-down dy (try! (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))         
         )
     )
 )
@@ -592,12 +552,10 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-x pool))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))
         )
         (if (>= dx threshold)
-            (get-y-in-given-x-out-internal balance-x balance-y factor dx)
-            (ok (div-down (mul-down dx (try! (get-y-in-given-x-out-internal balance-x balance-y factor threshold))) threshold))
+            (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor dx)
+            (ok (div-down (mul-down dx (try! (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))
         ) 
     )
 )
@@ -606,13 +564,11 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
-            (threshold (get threshold-y pool))
-            (balance-x (get balance-x pool))
-            (balance-y (get balance-y pool))            
+            (threshold (get threshold-y pool))  
         )
         (if (>= dy threshold)
-            (get-x-in-given-y-out-internal balance-x balance-y factor dy)
-            (ok (div-down (mul-down dy (try! (get-x-in-given-y-out-internal balance-x balance-y factor threshold))) threshold))         
+            (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor dy)
+            (ok (div-down (mul-down dy (try! (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))         
         )
     )
 )
@@ -732,8 +688,7 @@
     (token-x principal) (token-y principal) (token-z principal) (token-w principal)
     (factor-x uint) (factor-y uint) (factor-z uint))
     (ok (+ 
-            (try! (fee-helper token-x token-y factor-x))
-            (try! (fee-helper token-y token-z factor-y))
+            (try! (fee-helper-a token-x token-y token-z factor-x factor-y))
             (try! (fee-helper token-z token-w factor-z))
     ))
 )
@@ -742,10 +697,8 @@
     (token-x principal) (token-y principal) (token-z principal) (token-w principal) (token-v principal)
     (factor-x uint) (factor-y uint) (factor-z uint) (factor-w uint))
     (ok (+ 
-            (try! (fee-helper token-x token-y factor-x))
-            (try! (fee-helper token-y token-z factor-y))
-            (try! (fee-helper token-z token-w factor-z))
-            (try! (fee-helper token-w token-v factor-w))
+            (try! (fee-helper-a token-x token-y token-z factor-x factor-y))
+            (try! (fee-helper-a token-z token-w token-v factor-z factor-w))
     ))
 )
 
@@ -931,10 +884,8 @@
         (let
             (
                 (token-div-supply (div-down token total-supply))
-                (dx (mul-down balance-x token-div-supply))
-                (dy (mul-down balance-y token-div-supply))
             )                
-            (ok {dx: dx, dy: dy})
+            (ok {dx: (mul-down balance-x token-div-supply), dy: (mul-down balance-y token-div-supply)})
         )      
     )
 )
