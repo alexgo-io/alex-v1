@@ -1,0 +1,166 @@
+{
+  "1622594557": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-xusd.clar:111"
+  },
+  "1853457106": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-xusd.clar:20"
+  },
+  "1853457137": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-xusd.clar:30"
+  },
+  "1853457142": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-xusd.clar:35"
+  },
+  "1853457171": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-xusd.clar:43"
+  },
+  "1853457323": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-xusd.clar:90"
+  },
+  "2314892933": {
+    "code": "ERR-PAUSED",
+    "comment": "bridge-endpoint.clar:82"
+  },
+  "2314892934": {
+    "code": "ERR-USER-NOT-WHITELISTED",
+    "comment": "bridge-endpoint.clar:83"
+  },
+  "2314892935": {
+    "code": "ERR-USER-ALREADY-REGISTERED",
+    "comment": "bridge-endpoint.clar:84"
+  },
+  "3042197449": {
+    "code": "ERR-PAUSED",
+    "comment": "bridge-endpoint.clar:103"
+  },
+  "3042197450": {
+    "code": "ERR-USER-NOT-WHITELISTED",
+    "comment": "bridge-endpoint.clar:104"
+  },
+  "3042197451": {
+    "code": "ERR-AMOUNT-LESS-THAN-MIN-FEE",
+    "comment": "bridge-endpoint.clar:105"
+  },
+  "3042197545": {
+    "code": "ERR-UNKNOWN-USER-ID",
+    "comment": "bridge-endpoint.clar:136"
+  },
+  "3042197574": {
+    "code": "ERR-UNKNOWN-USER-ID",
+    "comment": "bridge-endpoint.clar:144"
+  },
+  "3042197603": {
+    "code": "ERR-UNKNOWN-VALIDATOR-ID",
+    "comment": "bridge-endpoint.clar:152"
+  },
+  "3042197632": {
+    "code": "ERR-UNKNOWN-VALIDATOR-ID",
+    "comment": "bridge-endpoint.clar:160"
+  },
+  "3042197665": {
+    "code": "ERR-CHAIN-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:172"
+  },
+  "3042198415": {
+    "code": "ERR-TOKEN-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:208"
+  },
+  "3042198440": {
+    "code": "ERR-TOKEN-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:212"
+  },
+  "3042198469": {
+    "code": "ERR-TOKEN-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:220"
+  },
+  "3042198473": {
+    "code": "ERR-RECIPIENT-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:224"
+  },
+  "3042198537": {
+    "code": "ERR-PAUSED",
+    "comment": "bridge-endpoint.clar:246"
+  },
+  "3042198538": {
+    "code": "ERR-UKNOWN-RELAYER",
+    "comment": "bridge-endpoint.clar:247"
+  },
+  "3042198539": {
+    "code": "ERR-REQUIRED-VALIDATORS",
+    "comment": "bridge-endpoint.clar:248"
+  },
+  "3042198540": {
+    "code": "ERR-ORDER-ALREADY-SENT",
+    "comment": "bridge-endpoint.clar:249"
+  },
+  "3042198596": {
+    "code": "ERR-VALIDATOR-ALREADY-REGISTERED",
+    "comment": "bridge-endpoint.clar:263"
+  },
+  "3042198628": {
+    "code": "ERR-UNKNOWN-VALIDATOR-ID",
+    "comment": "bridge-endpoint.clar:274"
+  },
+  "3042198690": {
+    "code": "ERR-REQUIRED-VALIDATORS",
+    "comment": "bridge-endpoint.clar:294"
+  },
+  "3042199624": {
+    "code": "ERR-UNKNOWN-VALIDATOR-ID,ERR-UNKNOWN-VALIDATOR-ID",
+    "comment": "bridge-endpoint.clar:388"
+  },
+  "3042199647": {
+    "code": "ERR-DUPLICATE-SIGNATURE",
+    "comment": "bridge-endpoint.clar:390"
+  },
+  "3042199648": {
+    "code": "ERR-ORDER-HASH-MISMATCH",
+    "comment": "bridge-endpoint.clar:391"
+  },
+  "3042199649": {
+    "code": "ERR-INVALID-SIGNATURE",
+    "comment": "bridge-endpoint.clar:392"
+  },
+  "3042200360": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:410"
+  },
+  "3042200422": {
+    "code": "ERR-TOKEN-NOT-AUTHORIZED",
+    "comment": "bridge-endpoint.clar:430"
+  },
+  "3271322643": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-wxusd.clar:116"
+  },
+  "3271322738": {
+    "code": "ERR-NOT-SUPPORTED",
+    "comment": "token-wxusd.clar:148"
+  },
+  "3271322823": {
+    "code": "ERR-MINT-FAILED",
+    "comment": "token-wxusd.clar:170"
+  },
+  "3271322827": {
+    "code": "ERR-BURN-FAILED",
+    "comment": "token-wxusd.clar:174"
+  },
+  "3271323569": {
+    "code": "ERR-TRANSFER-FAILED",
+    "comment": "token-wxusd.clar:202"
+  },
+  "4261946563": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-wxusd.clar:33"
+  },
+  "4261946686": {
+    "code": "ERR-NOT-SUPPORTED",
+    "comment": "token-wxusd.clar:72"
+  }
+}
