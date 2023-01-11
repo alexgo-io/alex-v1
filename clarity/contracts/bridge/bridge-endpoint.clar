@@ -107,8 +107,18 @@
     (try! (contract-call? token-trait transfer-fixed net-amount tx-sender recipient none))
     (and (> fee u0) (try! (contract-call? token-trait transfer-fixed fee tx-sender (as-contract tx-sender) none)))
     (and (> fee u0) (map-set token-registry token-id (merge token-details { accrued-fee: (+ (get accrued-fee token-details) fee) })))
-    (print { object: "bridge-endpoint", action: "transfer-to-unwrap", user-id: user-id, chain: (get name chain-details), net-amount: net-amount, settle-address: (buff-slice settle-address u0 (get buff-length chain-details)), recipient: recipient, token-id: token-id })
-    (ok { user-id: user-id, chain: (get name chain-details), net-amount: net-amount, settle-address: (buff-slice settle-address u0 (get buff-length chain-details)), recipient: recipient, token-id: token-id })
+    (print {
+      object: "bridge-endpoint",
+      action: "transfer-to-unwrap",
+      user-id: user-id,
+      chain: (get name chain-details),
+      net-amount: net-amount,
+      settle-address:
+      (buff-slice settle-address u0 (get buff-length chain-details)),
+      recipient: recipient,
+      token-id: token-id
+    })
+    (ok true)
   )
 )
 
@@ -419,7 +429,16 @@
     )
     (asserts! (is-eq (try! (get-approved-token-id-or-fail (contract-of token-trait))) (get token order)) ERR-TOKEN-NOT-AUTHORIZED)
     (try! (contract-call? token-trait transfer-fixed (get amount-in-fixed order) tx-sender recipient none))
-    (print { object: "bridge-endpoint", action: "transfer-to-wrap", salt: (get salt order), principal: recipient, amount-in-fixed: (get amount-in-fixed order), token: (get token order), to: (get to order), chain-id: (get chain-id order) })
+    (print {
+      object: "bridge-endpoint",
+      action: "transfer-to-wrap",
+      salt: (get salt order),
+      principal: recipient,
+      amount-in-fixed: (get amount-in-fixed order),
+      token: (get token order),
+      to: (get to order),
+      chain-id: (get chain-id order)
+    })
     (ok true)
   )
 )
