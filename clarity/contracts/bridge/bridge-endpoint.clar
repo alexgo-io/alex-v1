@@ -4,7 +4,6 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOKEN-NOT-AUTHORIZED (err u1001))
 (define-constant ERR-RECIPIENT-NOT-AUTHORIZED (err u1002))
-(define-constant ERR-CHAIN-NOT-AUTHORIZED (err u1003))
 (define-constant ERR-WRAPPER-NOT-AUTHORIZED (err u1004))
 (define-constant ERR-UNKNOWN-USER-ID (err u1005))
 (define-constant ERR-UNKNOWN-VALIDATOR-ID (err u1006))
@@ -18,6 +17,8 @@
 (define-constant ERR-ORDER-ALREADY-SENT (err u1014))
 (define-constant ERR-PAUSED (err u1015))
 (define-constant ERR-USER-NOT-WHITELISTED (err u1016))
+(define-constant ERR-AMOUNT-LESS-THAN-MIN-FEE (err u1017))
+(define-constant ERR-UNKNOWN-CHAIN-ID (err u1018))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 (define-constant ONE_8 u100000000)
@@ -53,7 +54,7 @@
 (define-map token-registry uint { token: principal, approved: bool, fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint })
 
 (define-data-var chain-nonce uint u0)
-(define-map approved-chains uint { name: (string-utf8 256), buff-length: uint })
+(define-map approved-chains uint { name: (string-utf8 256), min-fee: uint, buff-length: uint })
 
 (define-data-var validator-nonce uint u0)
 (define-map validator-id-registry principal uint)
@@ -88,24 +89,36 @@
   )
 )
 
-(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
+(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (the-chain-id uint) (settle-address (buff 256)))
   (let
     (
       (token (contract-of token-trait))
-      (chain-details (try! (get-approved-chain-or-fail chain-id)))
+      (chain-details (try! (get-approved-chain-or-fail the-chain-id)))
       (token-id (try! (get-approved-token-id-or-fail token)))
       (token-details (try! (get-approved-token-or-fail token)))
-      (fee (mul-down amount-in-fixed (get fee token-details)))
+      (fee (max (mul-down amount-in-fixed (get fee token-details)) (get min-fee chain-details)))
       (net-amount (- amount-in-fixed fee))
+      (user-id (match (get-user-id tx-sender) user-id user-id (try! (register-user tx-sender))))
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
     (asserts! (or (not (var-get use-whitelist)) (is-whitelisted tx-sender)) ERR-USER-NOT-WHITELISTED)
+    (asserts! (> amount-in-fixed (get min-fee chain-details)) ERR-AMOUNT-LESS-THAN-MIN-FEE)
     (try! (check-is-approved-recipient recipient))
     (try! (contract-call? token-trait transfer-fixed net-amount tx-sender recipient none))
     (and (> fee u0) (try! (contract-call? token-trait transfer-fixed fee tx-sender (as-contract tx-sender) none)))
     (and (> fee u0) (map-set token-registry token-id (merge token-details { accrued-fee: (+ (get accrued-fee token-details) fee) })))
-    (print { object: "bridge-endpoint", action: "transfer-to-unwrap", chain: (get name chain-details), net-amount: net-amount, settle-address: (buff-slice settle-address u0 (get buff-length chain-details)), recipient: recipient, token-id: token-id })
-    (ok { chain: (get name chain-details), net-amount: net-amount, settle-address: (buff-slice settle-address u0 (get buff-length chain-details)) })
+    (print {
+      object: "bridge-endpoint",
+      action: "transfer-to-unwrap",
+      user-id: user-id,
+      chain: (get name chain-details),
+      net-amount: net-amount,
+      settle-address:
+      (buff-slice settle-address u0 (get buff-length chain-details)),
+      recipient: recipient,
+      token-id: token-id
+    })
+    (ok true)
   )
 )
 
@@ -155,8 +168,8 @@
   (var-get is-paused)
 )
 
-(define-read-only (get-approved-chain-or-fail (chain-id uint))
-  (ok (unwrap! (map-get? approved-chains chain-id) ERR-CHAIN-NOT-AUTHORIZED))
+(define-read-only (get-approved-chain-or-fail (the-chain-id uint))
+  (ok (unwrap! (map-get? approved-chains the-chain-id) ERR-UNKNOWN-CHAIN-ID))
 )
 
 ;; salt should be tx hash of the source chain
@@ -297,14 +310,23 @@
   )
 )
 
-(define-public (set-approved-chain (chain-details { name: (string-utf8 256), buff-length: uint }))
-  (let
-    (
-      (chain-id (+ (var-get chain-nonce) u1))
-    )
+(define-public (set-approved-chain (the-chain-id uint) (chain-details { name: (string-utf8 256), min-fee: uint, buff-length: uint }))
+  (begin
     (try! (check-is-owner))
-    (var-set chain-nonce chain-id)
-    (ok (map-set approved-chains chain-id chain-details))
+    (if (is-some (map-get? approved-chains the-chain-id))
+      (begin
+        (map-set approved-chains the-chain-id chain-details)
+        (ok the-chain-id)
+      )
+      (let
+        (
+          (the-chain-id-next (+ (var-get chain-nonce) u1))
+        )
+        (var-set chain-nonce the-chain-id-next)
+        (map-set approved-chains the-chain-id-next chain-details)
+        (ok the-chain-id-next)
+      )
+    )
   )
 )
 
@@ -320,11 +342,8 @@
 		(try! (check-is-owner))
     (match (map-get? token-id-registry token)
       token-id
-      (let
-        (
-          (token-details (try! (get-approved-token-by-id-or-fail token-id)))
-        )
-        (map-set token-registry token-id (merge token-details { approved: approved, fee: fee, min-amount: min-amount, max-amount: max-amount }))
+      (begin
+        (map-set token-registry token-id (merge (try! (get-approved-token-by-id-or-fail token-id)) { approved: approved, fee: fee, min-amount: min-amount, max-amount: max-amount }))
         (ok token-id)
       )
       (let
@@ -418,10 +437,18 @@
       (recipient (try! (user-from-id-or-fail (get to order))))
     )
     (asserts! (is-eq (try! (get-approved-token-id-or-fail (contract-of token-trait))) (get token order)) ERR-TOKEN-NOT-AUTHORIZED)
-    (try! (check-is-approved-token (contract-of token-trait)))
     (try! (contract-call? token-trait transfer-fixed (get amount-in-fixed order) tx-sender recipient none))
-    (print { object: "bridge-endpoint", action: "transfer-to-wrap", salt: (get salt order), principal: recipient, amount-in-fixed: (get amount-in-fixed order), token: (get token order), to: (get to order), chain-id: (get chain-id order) })
-    (ok { chain: (get name chain-details), tx-id: (get salt order) })
+    (print {
+      object: "bridge-endpoint",
+      action: "transfer-to-wrap",
+      salt: (get salt order),
+      principal: recipient,
+      amount-in-fixed: (get amount-in-fixed order),
+      token: (get token order),
+      to: (get to order),
+      chain-id: (get chain-id order)
+    })
+    (ok true)
   )
 )
 
@@ -455,6 +482,10 @@
         u0
         (/ (* a ONE_8) b)
    )
+)
+
+(define-private (max (a uint) (b uint))
+  (if (<= a b) b a)
 )
 
 ;; Everything below this point can be removed to optimise later.
