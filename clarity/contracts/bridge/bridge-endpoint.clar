@@ -4,7 +4,6 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-TOKEN-NOT-AUTHORIZED (err u1001))
 (define-constant ERR-RECIPIENT-NOT-AUTHORIZED (err u1002))
-(define-constant ERR-CHAIN-NOT-AUTHORIZED (err u1003))
 (define-constant ERR-WRAPPER-NOT-AUTHORIZED (err u1004))
 (define-constant ERR-UNKNOWN-USER-ID (err u1005))
 (define-constant ERR-UNKNOWN-VALIDATOR-ID (err u1006))
@@ -19,6 +18,7 @@
 (define-constant ERR-PAUSED (err u1015))
 (define-constant ERR-USER-NOT-WHITELISTED (err u1016))
 (define-constant ERR-AMOUNT-LESS-THAN-MIN-FEE (err u1017))
+(define-constant ERR-UNKNOWN-CHAIN-ID (err u1018))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 (define-constant ONE_8 u100000000)
@@ -89,11 +89,11 @@
   )
 )
 
-(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
+(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (the-chain-id uint) (settle-address (buff 256)))
   (let
     (
       (token (contract-of token-trait))
-      (chain-details (try! (get-approved-chain-or-fail chain-id)))
+      (chain-details (try! (get-approved-chain-or-fail the-chain-id)))
       (token-id (try! (get-approved-token-id-or-fail token)))
       (token-details (try! (get-approved-token-or-fail token)))
       (fee (max (mul-down amount-in-fixed (get fee token-details)) (get min-fee chain-details)))
@@ -168,8 +168,8 @@
   (var-get is-paused)
 )
 
-(define-read-only (get-approved-chain-or-fail (chain-id uint))
-  (ok (unwrap! (map-get? approved-chains chain-id) ERR-CHAIN-NOT-AUTHORIZED))
+(define-read-only (get-approved-chain-or-fail (the-chain-id uint))
+  (ok (unwrap! (map-get? approved-chains the-chain-id) ERR-UNKNOWN-CHAIN-ID))
 )
 
 ;; salt should be tx hash of the source chain
@@ -310,14 +310,23 @@
   )
 )
 
-(define-public (set-approved-chain (chain-details { name: (string-utf8 256), min-fee: uint, buff-length: uint }))
-  (let
-    (
-      (chain-id (+ (var-get chain-nonce) u1))
-    )
+(define-public (set-approved-chain (the-chain-id uint) (chain-details { name: (string-utf8 256), min-fee: uint, buff-length: uint }))
+  (begin
     (try! (check-is-owner))
-    (var-set chain-nonce chain-id)
-    (ok (map-set approved-chains chain-id chain-details))
+    (if (is-some (map-get? approved-chains the-chain-id))
+      (begin
+        (map-set approved-chains the-chain-id chain-details)
+        (ok the-chain-id)
+      )
+      (let
+        (
+          (the-chain-id-next (+ (var-get chain-nonce) u1))
+        )
+        (var-set chain-nonce the-chain-id-next)
+        (map-set approved-chains the-chain-id-next chain-details)
+        (ok the-chain-id-next)
+      )
+    )
   )
 )
 
