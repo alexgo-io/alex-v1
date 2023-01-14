@@ -236,26 +236,16 @@
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (if exists 
-            (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
-            (ok (get-price-internal (get balance-y pool) (get balance-x pool) factor))
+            (get-price token-x token-y factor)
+            (get-price token-y token-x factor)
         )
     )
 )
 
-;; @desc get-price
-;; @desc price = (b_y / b_x) ^ t
+;; @desc get-price, of token-x in terms of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-price (token-x principal) (token-y principal) (factor uint))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )      
-        (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
-    )
-)
-
-(define-private (get-price-internal (balance-x uint) (balance-y uint) (factor uint))
-    (pow-down (div-down balance-y balance-x) factor)
+    (get-y-given-x token-x token-y factor ONE_8)
 )
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (factor uint) (pool-owner principal) (dx uint) (dy uint)) 
@@ -386,7 +376,6 @@
         (asserts! (not (is-paused)) ERR-PAUSED)
         (try! (check-pool-status token-x token-y factor))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (<= (div-down dy dx-net-fees) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         (try! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none))
         (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
@@ -420,7 +409,6 @@
         (asserts! (not (is-paused)) ERR-PAUSED)
         (try! (check-pool-status token-x token-y factor))
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
-        (asserts! (>= (div-down dy-net-fees dx) (pow-down (div-down balance-y balance-x) factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)        
         (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none))
         (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender))))            
@@ -526,11 +514,14 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-x pool))
+            (dy (if (>= dx threshold)
+                (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor dx)
+                (div-down (mul-down dx (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
+            ))
         )
-        (if (>= dx threshold)
-            (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor dx)
-            (ok (div-down (mul-down dx (try! (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))
-        ) 
+        (asserts! (< dx (mul-down (get balance-x pool) (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
+        (asserts! (< dy (mul-down (get balance-y pool) (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (ok dy)
     )
 )
 
@@ -539,11 +530,14 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-y pool))
-        )
-        (if (>= dy threshold)
-            (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor dy)
-            (ok (div-down (mul-down dy (try! (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))         
-        )
+            (dx (if (>= dy threshold)
+                (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor dy)
+                (div-down (mul-down dy (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)         
+            ))
+        )        
+        (asserts! (< dy (mul-down (get balance-y pool) (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down (get balance-x pool) (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (ok dx)
     )
 )
 
@@ -552,11 +546,14 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
             (threshold (get threshold-x pool))
+            (dy (if (>= dx threshold)
+                (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor dx)
+                (div-down (mul-down dx (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
+            ))
         )
-        (if (>= dx threshold)
-            (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor dx)
-            (ok (div-down (mul-down dx (try! (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))
-        ) 
+        (asserts! (< dy (mul-down (get balance-y pool) (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down (get balance-x pool) (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (ok dy)
     )
 )
 
@@ -564,12 +561,15 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
-            (threshold (get threshold-y pool))  
+            (threshold (get threshold-y pool))
+            (dx (if (>= dy threshold)
+                (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor dy)
+                (div-down (mul-down dy (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
+            ))
         )
-        (if (>= dy threshold)
-            (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor dy)
-            (ok (div-down (mul-down dy (try! (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor threshold))) threshold))         
-        )
+        (asserts! (< dx (mul-down (get balance-x pool) (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
+        (asserts! (< dy (mul-down (get balance-y pool) (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
+        (ok dx)
     )
 )
 
@@ -577,8 +577,10 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
+            (spot (try! (get-y-given-x token-x token-y factor ONE_8)))
         )
-        (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor price)
+        (asserts! (< price spot) ERR-NO-LIQUIDITY) 
+        (ok (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor spot price))
     )
 )
 
@@ -586,8 +588,10 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
+            (spot (try! (get-y-in-given-x-out token-x token-y factor ONE_8)))
         )
-        (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor price)
+        (asserts! (> price spot) ERR-NO-LIQUIDITY)
+        (ok (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor spot price))
     )
 )
 
@@ -595,8 +599,10 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
+            (dy (default-to u340282366920938463463374607431768211455 max-dy))
         )
-        (get-token-given-position-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx (default-to u340282366920938463463374607431768211455 max-dy))
+        (asserts! (and (> dx u0) (> dy u0))  ERR-NO-LIQUIDITY)
+        (ok (get-token-given-position-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx dy))
     )
 )
 
@@ -605,7 +611,8 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
+        (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
+        (ok (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
     )
 )
 
@@ -614,7 +621,8 @@
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
-        (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token)
+        (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
+        (ok (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
     )
 )
 
@@ -735,6 +743,10 @@
   )
 )
 
+(define-private (get-spot-internal (balance-x uint) (balance-y uint) (factor uint))
+    (pow-down (div-down balance-y balance-x) factor)
+)
+
 ;; @desc d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
 (define-private (get-y-given-x-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))
     (let
@@ -748,12 +760,8 @@
             (add-term (+ x-pow y-pow))
             (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
             (final-term (pow-up term t-comp-num))
-            (dy (if (<= balance-y final-term) u0 (- balance-y final-term)))
-            (dy-bound (mul-down dx (get-price-internal balance-x balance-y t)))
-        )
-        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)     
-        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-        (ok (if (< dy dy-bound) dy dy-bound))
+        )        
+        (if (<= balance-y final-term) u0 (- balance-y final-term))
     )  
 )
 
@@ -770,12 +778,8 @@
             (add-term (+ x-pow y-pow))
             (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
             (final-term (pow-up term t-comp-num))
-            (dx (if (<= balance-x final-term) u0 (- balance-x final-term)))
-            (dx-bound (div-down dy (get-price-internal balance-x balance-y t)))            
         )
-        (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
-        (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-        (ok (if (< dx dx-bound) dx dx-bound))
+        (if (<= balance-x final-term) u0 (- balance-x final-term))
     )
 )
 
@@ -792,12 +796,8 @@
             (add-term (+ x-pow y-pow))
             (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
             (final-term (pow-down term t-comp-num))
-            (dy (if (<= final-term balance-y) u0 (- final-term balance-y)))
-            (dy-bound (mul-down dx (get-price-internal balance-x balance-y t)))
         )
-        (asserts! (< dx (mul-down balance-x (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)     
-        (asserts! (< dy (mul-down balance-y (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
-        (ok (if (> dy dy-bound) dy dy-bound))
+        (if (<= final-term balance-y) u0 (- final-term balance-y))
     )
 )
 
@@ -814,50 +814,40 @@
             (add-term (+ x-pow y-pow))
             (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
             (final-term (pow-down term t-comp-num))
-            (dx (if (<= final-term balance-x) u0 (- final-term balance-x)))
-            (dx-bound (div-down dy (get-price-internal balance-x balance-y t)))  
         )
-        (asserts! (< dy (mul-down balance-y (var-get MAX-OUT-RATIO))) ERR-MAX-OUT-RATIO)
-        (asserts! (< dx (mul-down balance-x (var-get MAX-IN-RATIO))) ERR-MAX-IN-RATIO)
-        (ok (if (> dx dx-bound) dx dx-bound))
+        (if (<= final-term balance-x) u0 (- final-term balance-x))
     )
 )
 
 ;; @desc spot = (b_y / b_x) ^ t
 ;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
-(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
-    (begin
-        (asserts! (< price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
-        (let 
-            (
-                (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-                (t-comp-num-uncapped (div-down ONE_8 t-comp))
-                (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-                (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
-                (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-                (lead-term (pow-down (div-down numer denom) t-comp-num))
-            )
-            (if (<= lead-term ONE_8) (ok u0) (ok (mul-up balance-x (- lead-term ONE_8))))
+(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (spot uint) (price uint))
+    (let 
+        (
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (numer (+ ONE_8 (pow-down spot (div-down t-comp t))))
+            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+            (lead-term (pow-down (div-down numer denom) t-comp-num))
         )
+        (if (<= lead-term ONE_8) u0 (mul-up balance-x (- lead-term ONE_8)))
     )
 )
 
 ;; @desc spot = (b_y / b_x) ^ t
 ;; @desc d_y = b_y * (1 - (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)))
-(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
-    (begin
-        (asserts! (> price (get-price-internal balance-x balance-y t)) ERR-NO-LIQUIDITY) 
-        (let 
-            (
-                (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-                (t-comp-num-uncapped (div-down ONE_8 t-comp))
-                (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-                (numer (+ ONE_8 (pow-down (div-down balance-y balance-x) t-comp)))
-                (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-                (lead-term (pow-down (div-down numer denom) t-comp-num))
-            )
-            (if (<= ONE_8 lead-term) (ok u0) (ok (mul-up balance-y (- ONE_8 lead-term))))
+(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (spot uint) (price uint))
+    (let 
+        (
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (numer (+ ONE_8 (pow-down spot (div-down t-comp t))))
+            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+            (lead-term (pow-down (div-down numer denom) t-comp-num))
         )
+        (if (<= ONE_8 lead-term) u0 (mul-up balance-y (- ONE_8 lead-term)))
     )
 )
 
@@ -867,26 +857,18 @@
 )
 
 (define-private (get-token-given-position-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint) (dy uint))
-    (begin
-        (asserts! (and (> dx u0) (> dy u0))  ERR-NO-LIQUIDITY)
-        (ok
-            (if (is-eq total-supply u0)
-                {token: (get-invariant dx dy t), dy: dy}
-                {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)}
-            )            
-        )
+    (if (is-eq total-supply u0)
+        {token: (get-invariant dx dy t), dy: dy}
+        {token: (div-down (mul-down total-supply dx) balance-x), dy: (div-down (mul-down balance-y dx) balance-x)}
     )
 )
 
 (define-private (get-position-given-mint-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
-    (begin
-        (asserts! (> total-supply u0) ERR-NO-LIQUIDITY)
-        (let
-            (
-                (token-div-supply (div-down token total-supply))
-            )                
-            (ok {dx: (mul-down balance-x token-div-supply), dy: (mul-down balance-y token-div-supply)})
-        )      
+    (let
+        (
+            (token-div-supply (div-down token total-supply))
+        )                
+        {dx: (mul-down balance-x token-div-supply), dy: (mul-down balance-y token-div-supply)}    
     )
 )
 
