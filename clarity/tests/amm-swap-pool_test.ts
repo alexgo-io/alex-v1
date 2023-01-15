@@ -11,8 +11,8 @@ const wxusdAddress = ".token-wxusd"
 const daoAddress = ".executor-dao"
 
 const defaultFactor = 0.99e8;
-const thresholdX = 38265545282;
-const thresholdY = 0.025e8;
+const thresholdX = 0;
+const thresholdY = 0;
 const balanceX = 500000000000000;
 const balanceY = 6510000000;
 const mintAmount = Math.max(balanceX, balanceY) * 5;
@@ -187,168 +187,156 @@ async function swapTest(chain: Chain, accounts: Map<string, Account>, _factor?: 
   result = SSPTest.swapHelperA(deployer, deployer.address + usdcAddress, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, factor, 0, 0);
   result.expectErr().expectUint(2003);
 
-  // let's do some arb
-  call = chain.callReadOnlyFn("amm-swap-pool", "get-y-in-given-x-out",
-    [
-      types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + usdaAddress),
-      types.uint(factor),
-      types.uint(1e8)
-    ], wallet_1.address);
-  let usdaPrice = stringToUint(call.result.expectOk());  
-  const PT = Math.floor(usdaPrice * (1 + 0.1 * factor / 1e8));
-  call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, PT);
-  result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, stringToUint(call.result.expectOk()), 0)
-  result.expectOk().expectTuple();
+  // // let's do some arb
+  // call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
+  //   [
+  //     types.principal(deployer.address + wxusdAddress),
+  //     types.principal(deployer.address + usdaAddress),
+  //     types.uint(factor),
+  //   ], wallet_1.address);
+  // let usdaPrice = stringToUint(call.result.expectOk());  
+  // const PT = Math.floor(usdaPrice * (1 + 0.1 * factor / 1e8));
+  // call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, PT);
+  // result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, stringToUint(call.result.expectOk()), 0)
+  // result.expectOk().expectTuple();
 
-  // now pool price implies PT
-  call = chain.callReadOnlyFn("amm-swap-pool", "get-y-given-x",
-    [
-      types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + usdaAddress),
-      types.uint(factor),
-      types.uint(1e8)
-    ], wallet_1.address);
-  usdaPrice = stringToUint(call.result.expectOk());  
-  console.log('arb =>', 'expected:', PT, 'actual:', usdaPrice)
+  // // now pool price implies PT
+  // call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
+  //   [
+  //     types.principal(deployer.address + wxusdAddress),
+  //     types.principal(deployer.address + usdaAddress),
+  //     types.uint(factor),
+  //   ], wallet_1.address);
+  // usdaPrice = stringToUint(call.result.expectOk());  
+  // console.log('arb =>', 'expected:', PT, 'actual:', usdaPrice)
 
-  call = chain.callReadOnlyFn("amm-swap-pool", "get-y-given-x",
-    [
-      types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + usdaAddress),
-      types.uint(factor),
-      types.uint(1e8)
-    ], wallet_1.address);
-  usdaPrice = stringToUint(call.result.expectOk());
+  // // let's do some more arb
+  // const newPT = Math.floor(usdaPrice * (1 - 0.1 * factor / 1e8));
+  // // but calling get-y-given-price throws an error
+  // call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, newPT);
+  // call.result.expectErr().expectUint(2002);
+  // // we need to call get-x-given-price
+  // call = await SSPTest.getXgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, newPT);
+  // result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, stringToUint(call.result.expectOk()), 0)
+  // result.expectOk().expectTuple();
 
-  // let's do some more arb
-  const newPT = Math.floor(usdaPrice * (1 - 0.1 * factor / 1e8));
-  // but calling get-y-given-price throws an error
-  call = await SSPTest.getYgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, newPT);
-  call.result.expectErr().expectUint(2002);
-  // we need to call get-x-given-price
-  call = await SSPTest.getXgivenPrice(deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, newPT);
-  result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, stringToUint(call.result.expectOk()), 0)
-  result.expectOk().expectTuple();
-
-  call = chain.callReadOnlyFn("amm-swap-pool", "get-y-in-given-x-out",
-    [
-      types.principal(deployer.address + wxusdAddress),
-      types.principal(deployer.address + usdaAddress),
-      types.uint(factor),
-      types.uint(1e8)
-    ], wallet_1.address);
-  usdaPrice = stringToUint(call.result.expectOk());  
-  console.log('arb =>', 'expected:', newPT, 'actual:', usdaPrice)
+  // call = chain.callReadOnlyFn("amm-swap-pool", "get-price",
+  //   [
+  //     types.principal(deployer.address + wxusdAddress),
+  //     types.principal(deployer.address + usdaAddress),
+  //     types.uint(factor)
+  //   ], wallet_1.address);
+  // usdaPrice = stringToUint(call.result.expectOk());  
+  // console.log('arb =>', 'expected:', newPT, 'actual:', usdaPrice)
 }
 
-// Clarinet.test({
-//   name: "amm-swap-pool : pool creation, adding values and reducing values",
-//   async fn(chain: Chain, accounts: Map<string, Account>) {
+Clarinet.test({
+  name: "amm-swap-pool : pool creation, adding values and reducing values",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
 
-//     const {
-//       deployer,
-//       wallet_1,
-//       SSPTest,
-//       usdaToken,
-//       usdcToken,
-//       wxusdToken,
-//       factor
-//     } = await setup(chain, accounts);
+    const {
+      deployer,
+      wallet_1,
+      SSPTest,
+      usdaToken,
+      usdcToken,
+      wxusdToken,
+      factor
+    } = await setup(chain, accounts);
 
-//     let call: any = chain.callReadOnlyFn("amm-swap-pool", "get-token-given-position",
-//       [
-//         types.principal(deployer.address + wxusdAddress),
-//         types.principal(deployer.address + usdcAddress),
-//         types.uint(factor),
-//         types.uint(balanceX),
-//         types.none()
-//       ], wallet_1.address);
-//     const initial_supply = call.result.expectOk().expectTuple().token.replace(/\D/g, "");
+    let call: any = chain.callReadOnlyFn("amm-swap-pool", "get-token-given-position",
+      [
+        types.principal(deployer.address + wxusdAddress),
+        types.principal(deployer.address + usdcAddress),
+        types.uint(factor),
+        types.uint(balanceX),
+        types.none()
+      ], wallet_1.address);
+    const initial_supply = call.result.expectOk().expectTuple().token.replace(/\D/g, "");
 
-//     // Check pool details and print
-//     call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdcAddress, factor);
-//     let position: any = call.result.expectOk().expectTuple();
+    // Check pool details and print
+    call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdcAddress, factor);
+    let position: any = call.result.expectOk().expectTuple();
 
-//     position['total-supply'].expectUint(initial_supply);
-//     position['balance-x'].expectUint(balanceX);
-//     position['balance-y'].expectUint(balanceY);
-//     // Add extra liquidity (1/4 of initial liquidity)
-//     let result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, balanceX / 4, balanceY / 4);
-//     position = result.expectOk().expectTuple();
-//     position['supply'].expectUint(Math.floor(initial_supply / 4));
-//     position['dy'].expectUint(balanceY / 4);
-//     position['dx'].expectUint(balanceX / 4);
+    position['total-supply'].expectUint(initial_supply);
+    position['balance-x'].expectUint(balanceX);
+    position['balance-y'].expectUint(balanceY);
+    // Add extra liquidity (1/4 of initial liquidity)
+    let result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, balanceX / 4, balanceY / 4);
+    position = result.expectOk().expectTuple();
+    position['supply'].expectUint(Math.floor(initial_supply / 4));
+    position['dy'].expectUint(balanceY / 4);
+    position['dx'].expectUint(balanceX / 4);
 
-//     // Check pool details and print
-//     call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdcAddress, factor);
-//     position = call.result.expectOk().expectTuple();
-//     position['total-supply'].expectUint(Math.floor(5 / 4 * initial_supply));
-//     position['balance-y'].expectUint(5 / 4 * balanceY);
-//     position['balance-x'].expectUint(5 / 4 * balanceX);
+    // Check pool details and print
+    call = await SSPTest.getPoolDetails(deployer.address + wxusdAddress, deployer.address + usdcAddress, factor);
+    position = call.result.expectOk().expectTuple();
+    position['total-supply'].expectUint(Math.floor(5 / 4 * initial_supply));
+    position['balance-y'].expectUint(5 / 4 * balanceY);
+    position['balance-x'].expectUint(5 / 4 * balanceX);
 
-//     // Reduce all liquidlity
-//     result = SSPTest.reducePosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, 1e8);
-//     position = result.expectOk().expectTuple();
-//     position['dy'].expectUint(5 / 4 * balanceY);
-//     position['dx'].expectUint(5 / 4 * balanceX);
+    // Reduce all liquidlity
+    result = SSPTest.reducePosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, 1e8);
+    position = result.expectOk().expectTuple();
+    position['dy'].expectUint(5 / 4 * balanceY);
+    position['dx'].expectUint(5 / 4 * balanceX);
 
-//     // Add back some liquidity
-//     result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, balanceX, balanceY);
-//     position = result.expectOk().expectTuple();
-//     position['supply'].expectUint(initial_supply);
-//     position['dy'].expectUint(balanceY);
-//     position['dx'].expectUint(balanceX);
+    // Add back some liquidity
+    result = SSPTest.addToPosition(deployer, deployer.address + wxusdAddress, deployer.address + usdcAddress, factor, balanceX, balanceY);
+    position = result.expectOk().expectTuple();
+    position['supply'].expectUint(initial_supply);
+    position['dy'].expectUint(balanceY);
+    position['dx'].expectUint(balanceX);
 
-//   },
-// });
+  },
+});
 
-// Clarinet.test({
-//   name: "amm-swap-pool : check start-block and end-block",
-//   async fn(chain: Chain, accounts: Map<string, Account>) {
-//     const {
-//       deployer,
-//       wallet_1,
-//       SSPTest,
-//       usdaToken,
-//       usdcToken,
-//       wxusdToken,
-//       factor
-//     } = await setup(chain, accounts);
+Clarinet.test({
+  name: "amm-swap-pool : check start-block and end-block",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const {
+      deployer,
+      wallet_1,
+      SSPTest,
+      usdaToken,
+      usdcToken,
+      wxusdToken,
+      factor
+    } = await setup(chain, accounts);
 
-//     const startBlock = 100;
-//     let result = SSPTest.setStartBlock(wallet_1, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, startBlock);
-//     result.expectErr().expectUint(1000);
-//     result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, startBlock);
-//     result.expectOk().expectBool(true);
+    const startBlock = 100;
+    let result = SSPTest.setStartBlock(wallet_1, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, startBlock);
+    result.expectErr().expectUint(1000);
+    result = SSPTest.setStartBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, startBlock);
+    result.expectOk().expectBool(true);
 
-//     result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
-//     result.expectErr().expectUint(1000);
-//     result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
-//     result.expectErr().expectUint(1000);
+    result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+    result.expectErr().expectUint(1000);
+    result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+    result.expectErr().expectUint(1000);
 
-//     chain.mineEmptyBlockUntil(startBlock);
+    chain.mineEmptyBlockUntil(startBlock);
 
-//     result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
-//     result.expectOk().expectTuple();
-//     result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
-//     result.expectOk().expectTuple();
+    result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+    result.expectOk().expectTuple();
+    result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+    result.expectOk().expectTuple();
 
-//     const endBlock = 200;
-//     result = SSPTest.setEndBlock(wallet_1, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, endBlock);
-//     result.expectErr().expectUint(1000);
-//     result = SSPTest.setEndBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, endBlock);
-//     result.expectOk().expectBool(true);
+    const endBlock = 200;
+    result = SSPTest.setEndBlock(wallet_1, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, endBlock);
+    result.expectErr().expectUint(1000);
+    result = SSPTest.setEndBlock(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, endBlock);
+    result.expectOk().expectBool(true);
 
-//     chain.mineEmptyBlockUntil(endBlock + 1);
+    chain.mineEmptyBlockUntil(endBlock + 1);
 
-//     result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
-//     result.expectErr().expectUint(1000);
-//     result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
-//     result.expectErr().expectUint(1000);
+    result = SSPTest.swapYForX(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+    result.expectErr().expectUint(1000);
+    result = SSPTest.swapXForY(deployer, deployer.address + wxusdAddress, deployer.address + usdaAddress, factor, 1e8, 0);
+    result.expectErr().expectUint(1000);
 
-//   },
-// });       
+  },
+});       
 
 Clarinet.test({
   name: "amm-swap-pool : factor = 0.99e8, aka uniswap",
@@ -357,19 +345,19 @@ Clarinet.test({
   },
 });
 
-// Clarinet.test({
-//   name: "amm-swap-pool : factor = 0.0001e8, aka Curve",
-//   async fn(chain: Chain, accounts: Map<string, Account>) {
-//     await swapTest(chain, accounts, 0.0001e8);
-//   },
-// });
+Clarinet.test({
+  name: "amm-swap-pool : factor = 0.0001e8, aka Curve",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    await swapTest(chain, accounts, 0.0001e8);
+  },
+});
 
-// Clarinet.test({
-//   name: "amm-swap-pool : factor = 0.5e8, aka somewhere in between",
-//   async fn(chain: Chain, accounts: Map<string, Account>) {
-//     await swapTest(chain, accounts, 0.5e8);
-//   },
-// });
+Clarinet.test({
+  name: "amm-swap-pool : factor = 0.5e8, aka somewhere in between",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    await swapTest(chain, accounts, 0.5e8);
+  },
+});
 
 // Clarinet.test({
 //   name: "sanity check",

@@ -236,8 +236,8 @@
         )
         (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
         (if exists 
-            (get-price token-x token-y factor)
-            (get-price token-y token-x factor)
+            (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
+            (ok (get-price-internal (get balance-y pool) (get balance-x pool) factor))
         )
     )
 )
@@ -245,7 +245,12 @@
 ;; @desc get-price, of token-x in terms of token-y
 ;; @returns (response uint uint)
 (define-read-only (get-price (token-x principal) (token-y principal) (factor uint))
-    (get-y-given-x token-x token-y factor ONE_8)
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
+    )
 )
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (factor uint) (pool-owner principal) (dx uint) (dy uint)) 
@@ -376,6 +381,7 @@
         (asserts! (not (is-paused)) ERR-PAUSED)
         (try! (check-pool-status token-x token-y factor))
         (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
+        (asserts! (<= (div-down dy dx-net-fees) (get-price-internal balance-x balance-y factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dy) dy) ERR-EXCEEDS-MAX-SLIPPAGE)
         (try! (contract-call? token-x-trait transfer-fixed dx sender .alex-vault none))
         (and (> dy u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-y-trait dy sender))))
@@ -408,7 +414,8 @@
         )
         (asserts! (not (is-paused)) ERR-PAUSED)
         (try! (check-pool-status token-x token-y factor))
-        (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)
+        (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)        
+        (asserts! (>= (div-down dy-net-fees dx) (get-price-internal balance-x balance-y factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)        
         (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none))
         (and (> dx u0) (as-contract (try! (contract-call? .alex-vault transfer-ft token-x-trait dx sender))))            
@@ -577,10 +584,9 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
-            (spot (try! (get-y-given-x token-x token-y factor ONE_8)))
         )
-        (asserts! (< price spot) ERR-NO-LIQUIDITY) 
-        (ok (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor spot price))
+        (asserts! (< price (get-price-internal (get balance-x pool) (get balance-y pool) factor)) ERR-NO-LIQUIDITY) 
+        (ok (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor price))
     )
 )
 
@@ -588,10 +594,9 @@
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
-            (spot (try! (get-y-in-given-x-out token-x token-y factor ONE_8)))
         )
-        (asserts! (> price spot) ERR-NO-LIQUIDITY)
-        (ok (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor spot price))
+        (asserts! (> price (get-price-internal (get balance-x pool) (get balance-y pool) factor)) ERR-NO-LIQUIDITY)
+        (ok (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor price))
     )
 )
 
@@ -743,117 +748,83 @@
   )
 )
 
-(define-private (get-spot-internal (balance-x uint) (balance-y uint) (factor uint))
-    (pow-down (div-down balance-y balance-x) factor)
+;; @desc invariant = (1 - t) * (b_x + b_y) + t * b_x * b_y
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (t uint))
+    (+ (mul-down (- ONE_8 t) (+ balance-x balance-y)) (mul-down t (mul-down balance-x balance-y)))
 )
 
-;; @desc d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t))
+;; @desc p = ((1 - t) + t * b_y) / ((1 - t) + t * b_x)
+(define-private (get-price-internal (balance-x uint) (balance-y uint) (factor uint))
+    (div-down (+ (- ONE_8 factor) (mul-down factor balance-y)) (+ (- ONE_8 factor) (mul-down factor balance-x)))
+)
+
+;; @desc d_y = ((1 - t) * d_x + t * d_x * b_y) / ((1 - t) + t * (b_x + d_x))
 (define-private (get-y-given-x-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))
     (let
         (
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-            (t-comp-num-uncapped (div-up ONE_8 t-comp))
-            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-            (x-pow (pow-up balance-x t-comp))
-            (y-pow (pow-up balance-y t-comp))
-            (x-dx-pow (pow-down (+ balance-x dx) t-comp))
-            (add-term (+ x-pow y-pow))
-            (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
-            (final-term (pow-up term t-comp-num))
         )        
-        (if (<= balance-y final-term) u0 (- balance-y final-term))
+        (div-down (+ (mul-down t-comp dx) (mul-down t (mul-down dx balance-y))) (+ t-comp (mul-down t (+ balance-x dx))))
     )  
 )
 
-;; @desc d_x = b_x - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y + d_y) ^ (1 - t)) ^ (1 / (1 - t))
+;; @desc d_x = ((1 - t) * d_y + t * d_y * b_x) / ((1 - t) + t * (b_y + d_y))
 (define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
-    (let 
-        (          
+    (let
+        (
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-            (t-comp-num-uncapped (div-up ONE_8 t-comp))
-            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-            (x-pow (pow-up balance-x t-comp))
-            (y-pow (pow-up balance-y t-comp))
-            (y-dy-pow (pow-down (+ balance-y dy) t-comp))
-            (add-term (+ x-pow y-pow))
-            (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
-            (final-term (pow-up term t-comp-num))
-        )
-        (if (<= balance-x final-term) u0 (- balance-x final-term))
-    )
+        )        
+        (div-down (+ (mul-down t-comp dy) (mul-down t (mul-down dy balance-x))) (+ t-comp (mul-down t (+ balance-y dy))))
+    )  
 )
 
-;; @desc d_y = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x - d_x) ^ (1 - t)) ^ (1 / (1 - t)) - b_y
+;; @desc d_y = ((1 - t) * d_x + t * d_x * b_y) / ((1 - t) + t * (b_x - d_x))
 (define-private (get-y-in-given-x-out-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))    
     (let 
         (
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-            (t-comp-num-uncapped (div-down ONE_8 t-comp))
-            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-            (x-pow (pow-down balance-x t-comp))
-            (y-pow (pow-down balance-y t-comp))
-            (x-dx-pow (pow-up (if (<= balance-x dx) u0 (- balance-x dx)) t-comp))
-            (add-term (+ x-pow y-pow))
-            (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
-            (final-term (pow-down term t-comp-num))
         )
-        (if (<= final-term balance-y) u0 (- final-term balance-y))
+        (div-down (+ (mul-down t-comp dx) (mul-down t (mul-down dx balance-y))) (+ t-comp (mul-down t (- balance-x dx))))
     )
 )
 
-;; @desc d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x
+;; @desc d_x = ((1 - t) * d_y + t * d_y * b_x) / ((1 - t) + t * (b_y - d_y))
 (define-private (get-x-in-given-y-out-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
     (let 
         (          
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-            (t-comp-num-uncapped (div-down ONE_8 t-comp))
-            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-            (x-pow (pow-down balance-x t-comp))
-            (y-pow (pow-down balance-y t-comp))
-            (y-dy-pow (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp))
-            (add-term (+ x-pow y-pow))
-            (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
-            (final-term (pow-down term t-comp-num))
         )
-        (if (<= final-term balance-x) u0 (- final-term balance-x))
+        (div-down (+ (mul-down t-comp dy) (mul-down t (mul-down dy balance-x))) (+ t-comp (mul-down t (- balance-y dy))))
     )
 )
 
-;; @desc spot = (b_y / b_x) ^ t
-;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1)
-(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (spot uint) (price uint))
+;; TODO: formula need fixed
+(define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (let 
         (
-            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-            (t-comp-num-uncapped (div-down ONE_8 t-comp))
-            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-            (numer (+ ONE_8 (pow-down spot (div-down t-comp t))))
-            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-            (lead-term (pow-down (div-down numer denom) t-comp-num))
+            (t-comp (- ONE_8 t))
+            (p-term (- price t-comp))
+            (a (mul-down t p-term))
+            (b (+ (mul-down t-comp (+ p-term t)) (* u2 (mul-down t (mul-down balance-x p-term)))))
+            (c (- (+ (mul-down p-term (mul-down t (mul-down balance-x balance-x))) (mul-down p-term (mul-down t-comp balance-x))) (* u2 (mul-down balance-y (+ t-comp (mul-down t balance-x))))))
+
         )
-        (if (<= lead-term ONE_8) u0 (mul-up balance-x (- lead-term ONE_8)))
+        (div-down (- (pow-down (- (mul-down b b) (* u4 (mul-down a c))) u50000000) b) (* u2 a))
     )
 )
 
-;; @desc spot = (b_y / b_x) ^ t
-;; @desc d_y = b_y * (1 - (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)))
-(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (spot uint) (price uint))
+;; TODO: formula need fixed
+(define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (let 
         (
-            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
-            (t-comp-num-uncapped (div-down ONE_8 t-comp))
-            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
-            (numer (+ ONE_8 (pow-down spot (div-down t-comp t))))
-            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
-            (lead-term (pow-down (div-down numer denom) t-comp-num))
+            (t-comp (- ONE_8 t))
+            (p-term (- price t-comp))
+            (a (mul-down t t))
+            (neg-b (+ (mul-down t t-comp) (mul-down p-term (+ t-comp (* u2 (mul-down t balance-x))))))
+            (c (- (mul-down p-term (mul-down balance-x (+ t-comp (mul-down t balance-y)))) (+ (mul-down (mul-down t balance-y) (mul-down t balance-y)) (mul-down t (mul-down t-comp balance-y)))))
         )
-        (if (<= ONE_8 lead-term) u0 (mul-up balance-y (- ONE_8 lead-term)))
+        (div-down (+ (pow-down (- (mul-down neg-b neg-b) (* u4 (mul-down a c))) u50000000) neg-b) (* u2 a))
     )
-)
-
-;; @desc invariant = b_x ^ (1 - t) + b_y ^ (1 - t)
-(define-read-only (get-invariant (balance-x uint) (balance-y uint) (t uint))
-    (+ (pow-down balance-x (- ONE_8 t)) (pow-down balance-y (- ONE_8 t)))
 )
 
 (define-private (get-token-given-position-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint) (dy uint))
