@@ -17,10 +17,24 @@
 (define-constant ERR-ORACLE-NOT-ENABLED (err u7002))
 (define-constant ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE (err u7004))
 (define-constant ERR-PAUSED (err u1001))
+(define-constant ERR-SWITCH-THRESHOLD-BIGGER-THAN-ONE (err u7005))
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var pool-nonce uint u0)
 (define-data-var paused bool false)
+(define-data-var switch-threshold uint u80000000)
+
+(define-read-only (get-switch-threshold)
+    (var-get switch-threshold)
+)
+
+(define-public (set-switch-threshold (new-threshold uint))
+    (begin 
+        (try! (check-is-owner))
+        (asserts! (<= new-threshold ONE_8) ERR-SWITCH-THRESHOLD-BIGGER-THAN-ONE)
+        (ok (var-set switch-threshold new-threshold))
+    )
+)
 
 (define-read-only (is-paused)
     (var-get paused)
@@ -748,83 +762,178 @@
   )
 )
 
+;; @desc invariant = b_x ^ (1 - t) + b_y ^ (1 - t), or
 ;; @desc invariant = (1 - t) * (b_x + b_y) + t * b_x * b_y
 (define-read-only (get-invariant (balance-x uint) (balance-y uint) (t uint))
-    (+ (mul-down (- ONE_8 t) (+ balance-x balance-y)) (mul-down t (mul-down balance-x balance-y)))
+    (if (>= t (var-get switch-threshold))
+        (+ (mul-down (- ONE_8 t) (+ balance-x balance-y)) (mul-down t (mul-down balance-x balance-y)))
+        (+ (pow-down balance-x (- ONE_8 t)) (pow-down balance-y (- ONE_8 t)))
+    )
 )
 
+;; @desc p = (b_y / b_x) ^ t, or
 ;; @desc p = ((1 - t) + t * b_y) / ((1 - t) + t * b_x)
 (define-private (get-price-internal (balance-x uint) (balance-y uint) (factor uint))
-    (div-down (+ (- ONE_8 factor) (mul-down factor balance-y)) (+ (- ONE_8 factor) (mul-down factor balance-x)))
+    (if (>= factor (var-get switch-threshold))
+        (div-down (+ (- ONE_8 factor) (mul-down factor balance-y)) (+ (- ONE_8 factor) (mul-down factor balance-x)))
+        (pow-down (div-down balance-y balance-x) factor)
+    )
 )
 
+;; @desc d_y = b_y - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x + d_x) ^ (1 - t)) ^ (1 / (1 - t)), or
 ;; @desc d_y = ((1 - t) * d_x + t * d_x * b_y) / ((1 - t) + t * (b_x + d_x))
 (define-private (get-y-given-x-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))
+    (if (>= t (var-get switch-threshold))
     (let
         (
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         )        
         (div-down (+ (mul-down t-comp dx) (mul-down t (mul-down dx balance-y))) (+ t-comp (mul-down t (+ balance-x dx))))
+    )
+    (let
+        (
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-up ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (x-pow (pow-up balance-x t-comp))
+            (y-pow (pow-up balance-y t-comp))
+            (x-dx-pow (pow-down (+ balance-x dx) t-comp))
+            (add-term (+ x-pow y-pow))
+            (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
+            (final-term (pow-up term t-comp-num))
+        )        
+        (if (<= balance-y final-term) u0 (- balance-y final-term))
     )  
+    )      
 )
 
+;; @desc d_x = b_x - (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y + d_y) ^ (1 - t)) ^ (1 / (1 - t)), or
 ;; @desc d_x = ((1 - t) * d_y + t * d_y * b_x) / ((1 - t) + t * (b_y + d_y))
 (define-private (get-x-given-y-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
+    (if (>= t (var-get switch-threshold))
     (let
         (
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         )        
         (div-down (+ (mul-down t-comp dy) (mul-down t (mul-down dy balance-x))) (+ t-comp (mul-down t (+ balance-y dy))))
     )  
+    (let 
+        (          
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-up ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (x-pow (pow-up balance-x t-comp))
+            (y-pow (pow-up balance-y t-comp))
+            (y-dy-pow (pow-down (+ balance-y dy) t-comp))
+            (add-term (+ x-pow y-pow))
+            (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
+            (final-term (pow-up term t-comp-num))
+        )
+        (if (<= balance-x final-term) u0 (- balance-x final-term))
+    )
+    )    
 )
 
+;; @desc d_y = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_x - d_x) ^ (1 - t)) ^ (1 / (1 - t)) - b_y, or
 ;; @desc d_y = ((1 - t) * d_x + t * d_x * b_y) / ((1 - t) + t * (b_x - d_x))
 (define-private (get-y-in-given-x-out-internal (balance-x uint) (balance-y uint) (t uint) (dx uint))    
+    (if (>= t (var-get switch-threshold))
     (let 
         (
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         )
         (div-down (+ (mul-down t-comp dx) (mul-down t (mul-down dx balance-y))) (+ t-comp (mul-down t (- balance-x dx))))
     )
+    (let 
+        (
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (x-pow (pow-down balance-x t-comp))
+            (y-pow (pow-down balance-y t-comp))
+            (x-dx-pow (pow-up (if (<= balance-x dx) u0 (- balance-x dx)) t-comp))
+            (add-term (+ x-pow y-pow))
+            (term (if (<= add-term x-dx-pow) u0 (- add-term x-dx-pow)))
+            (final-term (pow-down term t-comp-num))
+        )
+        (if (<= final-term balance-y) u0 (- final-term balance-y))
+    )
+    )    
 )
 
+;; @desc d_x = (b_x ^ (1 - t) + b_y ^ (1 - t) - (b_y - d_y) ^ (1 - t)) ^ (1 / (1 - t)) - b_x, or
 ;; @desc d_x = ((1 - t) * d_y + t * d_y * b_x) / ((1 - t) + t * (b_y - d_y))
 (define-private (get-x-in-given-y-out-internal (balance-x uint) (balance-y uint) (t uint) (dy uint))
+    (if (>= t (var-get switch-threshold))
     (let 
         (          
             (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
         )
         (div-down (+ (mul-down t-comp dy) (mul-down t (mul-down dy balance-x))) (+ t-comp (mul-down t (- balance-y dy))))
     )
+    (let 
+        (          
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (x-pow (pow-down balance-x t-comp))
+            (y-pow (pow-down balance-y t-comp))
+            (y-dy-pow (pow-up (if (<= balance-y dy) u0 (- balance-y dy)) t-comp))
+            (add-term (+ x-pow y-pow))
+            (term (if (<= add-term y-dy-pow) u0 (- add-term y-dy-pow)))
+            (final-term (pow-down term t-comp-num))
+        )
+        (if (<= final-term balance-x) u0 (- final-term balance-x))
+    )
+    )    
 )
 
-;; TODO: formula need fixed
+;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1), or
+;; @desc d_x = b_x * ((spot / price) ^ 0.5 - 1)
 (define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
+    (if (>= t (var-get switch-threshold))
+    (let
+        (
+            (power (pow-down (div-down (get-price-internal balance-x balance-y t) price) u50000000))
+        )
+        (mul-down balance-x (if (<= power ONE_8) u0 (- power ONE_8)))
+    ) 
     (let 
         (
-            (t-comp (- ONE_8 t))
-            (p-term (- price t-comp))
-            (a (mul-down t p-term))
-            (b (+ (mul-down t-comp (+ p-term t)) (* u2 (mul-down t (mul-down balance-x p-term)))))
-            (c (- (+ (mul-down p-term (mul-down t (mul-down balance-x balance-x))) (mul-down p-term (mul-down t-comp balance-x))) (* u2 (mul-down balance-y (+ t-comp (mul-down t balance-x))))))
-
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (numer (+ ONE_8 (pow-down (get-price-internal balance-x balance-y t) (div-down t-comp t))))
+            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+            (lead-term (pow-down (div-down numer denom) t-comp-num))
         )
-        (div-down (- (pow-down (- (mul-down b b) (* u4 (mul-down a c))) u50000000) b) (* u2 a))
+        (if (<= lead-term ONE_8) u0 (mul-up balance-x (- lead-term ONE_8)))
     )
+    )    
 )
 
-;; TODO: formula need fixed
+;; @desc d_y = b_y * (1 - (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t))), or
+;; @desc d_y = b_y * ((price / spot) ^ 0.5 - 1)
 (define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
+    (if (>= t (var-get switch-threshold))
+    (let
+        (            
+            (power (pow-down (div-down price (get-price-internal balance-x balance-y t)) u50000000))
+        )
+        (mul-down balance-y (if (<= power ONE_8) u0 (- power ONE_8)))
+    )
     (let 
         (
-            (t-comp (- ONE_8 t))
-            (p-term (- price t-comp))
-            (a (mul-down t t))
-            (neg-b (+ (mul-down t t-comp) (mul-down p-term (+ t-comp (* u2 (mul-down t balance-x))))))
-            (c (- (mul-down p-term (mul-down balance-x (+ t-comp (mul-down t balance-y)))) (+ (mul-down (mul-down t balance-y) (mul-down t balance-y)) (mul-down t (mul-down t-comp balance-y)))))
+            (t-comp (if (<= ONE_8 t) u0 (- ONE_8 t)))
+            (t-comp-num-uncapped (div-down ONE_8 t-comp))
+            (t-comp-num (if (< t-comp-num-uncapped MILD_EXPONENT_BOUND) t-comp-num-uncapped MILD_EXPONENT_BOUND))            
+            (numer (+ ONE_8 (pow-down (get-price-internal balance-x balance-y t) (div-down t-comp t))))
+            (denom (+ ONE_8 (pow-down price (div-down t-comp t))))
+            (lead-term (pow-down (div-down numer denom) t-comp-num))
         )
-        (div-down (+ (pow-down (- (mul-down neg-b neg-b) (* u4 (mul-down a c))) u50000000) neg-b) (* u2 a))
+        (if (<= ONE_8 lead-term) u0 (mul-up balance-y (- ONE_8 lead-term)))
     )
+    )    
 )
 
 (define-private (get-token-given-position-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (dx uint) (dy uint))
