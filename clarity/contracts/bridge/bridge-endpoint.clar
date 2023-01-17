@@ -19,6 +19,7 @@
 (define-constant ERR-USER-NOT-WHITELISTED (err u1016))
 (define-constant ERR-AMOUNT-LESS-THAN-MIN-FEE (err u1017))
 (define-constant ERR-UNKNOWN-CHAIN-ID (err u1018))
+(define-constant ERR-INVALID-AMOUNT (err u1019))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 (define-constant ONE_8 u100000000)
@@ -42,7 +43,7 @@
 (define-constant serialized-order-header (concat type-id-tuple (uint32-to-buff-be u5)))
 
 (define-data-var contract-owner principal tx-sender)
-(define-data-var is-paused bool false)
+(define-data-var is-paused bool true)
 (define-data-var use-whitelist bool false)
 
 (define-map approved-recipients principal bool)
@@ -54,7 +55,7 @@
 (define-map token-registry uint { token: principal, approved: bool, fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint })
 
 (define-data-var chain-nonce uint u0)
-(define-map approved-chains uint { name: (string-utf8 256), min-fee: uint, buff-length: uint })
+(define-map chain-registry uint { name: (string-utf8 256), min-fee: uint, buff-length: uint })
 
 (define-data-var validator-nonce uint u0)
 (define-map validator-id-registry principal uint)
@@ -102,6 +103,7 @@
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
     (asserts! (or (not (var-get use-whitelist)) (is-whitelisted tx-sender)) ERR-USER-NOT-WHITELISTED)
+    (asserts! (and (>= amount-in-fixed (get min-amount token-details)) (<= amount-in-fixed (get max-amount token-details))) ERR-INVALID-AMOUNT)
     (asserts! (> amount-in-fixed (get min-fee chain-details)) ERR-AMOUNT-LESS-THAN-MIN-FEE)
     (try! (check-is-approved-recipient recipient))
     (try! (contract-call? token-trait transfer-fixed net-amount tx-sender recipient none))
@@ -169,7 +171,7 @@
 )
 
 (define-read-only (get-approved-chain-or-fail (the-chain-id uint))
-  (ok (unwrap! (map-get? approved-chains the-chain-id) ERR-UNKNOWN-CHAIN-ID))
+  (ok (unwrap! (map-get? chain-registry the-chain-id) ERR-UNKNOWN-CHAIN-ID))
 )
 
 ;; salt should be tx hash of the source chain
@@ -313,9 +315,9 @@
 (define-public (set-approved-chain (the-chain-id uint) (chain-details { name: (string-utf8 256), min-fee: uint, buff-length: uint }))
   (begin
     (try! (check-is-owner))
-    (if (is-some (map-get? approved-chains the-chain-id))
+    (if (is-some (map-get? chain-registry the-chain-id))
       (begin
-        (map-set approved-chains the-chain-id chain-details)
+        (map-set chain-registry the-chain-id chain-details)
         (ok the-chain-id)
       )
       (let
@@ -323,17 +325,10 @@
           (the-chain-id-next (+ (var-get chain-nonce) u1))
         )
         (var-set chain-nonce the-chain-id-next)
-        (map-set approved-chains the-chain-id-next chain-details)
+        (map-set chain-registry the-chain-id-next chain-details)
         (ok the-chain-id-next)
       )
     )
-  )
-)
-
-(define-public (set-contract-owner (owner principal))
-  (begin
-    (try! (check-is-owner))
-    (ok (var-set contract-owner owner))
   )
 )
 
@@ -387,6 +382,13 @@
 
 (define-public (whitelist-many (users (list 2000 principal)) (whitelisted (list 2000 bool)))
   (ok (map whitelist users whitelisted))
+)
+
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set contract-owner owner))
+  )
 )
 
 ;; internal functions
