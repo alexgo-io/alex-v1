@@ -120,12 +120,50 @@
 	(ok (var-get token-decimals))
 )
 
+(define-public (set-decimals (new-decimals uint))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-decimals new-decimals))
+	)
+)
+
 ;; @desc get-token-uri 
 ;; @params token-id
 ;; @returns (response none)
 (define-read-only (get-token-uri (token-id uint))
 	(ok (var-get token-uri))
 )
+
+(define-public (set-token-uri (new-uri (optional (string-utf8 256))))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-uri new-uri))
+	)
+)
+
+(define-read-only (get-name (token-id uint))
+	(ok (var-get token-name))
+)
+
+(define-public (set-name (new-name (string-ascii 32)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-name new-name))
+	)
+)
+
+(define-read-only (get-symbol (token-id uint))
+	(ok (var-get token-symbol))
+)
+
+(define-public (set-symbol (new-symbol (string-ascii 10)))
+	(begin
+		(try! (check-is-owner))
+		(ok (var-set token-symbol new-symbol))
+	)
+)
+
+
 
 ;; @desc transfer
 ;; @restricted sender ; tx-sender should be sender
