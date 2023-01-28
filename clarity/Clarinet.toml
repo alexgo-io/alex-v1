@@ -730,7 +730,7 @@ depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "fwp
 
 [contracts.auto-fwp-wstx-alex-120x]
 path = "contracts/auto-token/auto-fwp-wstx-alex-120x.clar"
-depends_on = [ "trait-sip-010", "trait-ownable", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token" ]
+depends_on = [ "trait-sip-010", "trait-ownable", "fixed-weight-pool-v1-01", "token-wstx", "age000-governance-token", "auto-fwp-wstx-alex-120" ]
 
 [contracts.auto-fwp-alex-usda]
 path = "contracts/auto-token/auto-fwp-alex-usda.clar"
