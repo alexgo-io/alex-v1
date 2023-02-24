@@ -13,8 +13,8 @@
 (define-public (execute (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
     (let
         (   
-            (swapped (try! (contract-call? .amm-swap-pool swap-helper .token-wxusd .token-wusda u10000 amount none)))
-            (swapped-back (try! (contract-call? .swap-helper-v1-03 swap-helper .token-wusda .token-wxusd swapped none)))                                    
+            (swapped (try! (contract-call? .swap-helper-v1-03 swap-helper .token-wxusd .token-wusda amount none))) 
+            (swapped-back (try! (contract-call? .amm-swap-pool swap-helper .token-wusda .token-wxusd u10000 swapped none)))                                               
             (amount-with-fee (mul-up amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault get-flash-loan-fee-rate)))))
         )
         (ok (asserts! (>= swapped-back amount-with-fee) ERR-NO-ARB-EXISTS))
