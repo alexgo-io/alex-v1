@@ -7,6 +7,9 @@ contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
 [[project.requirements]]
 contract_id = "SP2TZK01NKDC89J6TA56SA47SDF7RTHYEQ79AAB9A.Wrapped-USD"
 
+[[project.requirements]]
+contract_id = "SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token"
+
 [repl]
 costs_version = 2
 
@@ -991,4 +994,16 @@ depends_on = ["dual-farm-xusd-usda-helper"]
 
 [contracts.dual-farm-xusd-usda-helper]
 path = "contracts/helpers/dual-farm-xusd-usda-helper.clar"
+depends_on = []
+
+[contracts.flash-loan-user-usda-to-xusd]
+path = "contracts/flash-loan-user-usda-to-xusd.clar"
+depends_on = ["amm-swap-pool", "swap-helper-v1-03"]
+
+[contracts.flash-loan-user-xusd-to-usda]
+path = "contracts/flash-loan-user-xusd-to-usda.clar"
+depends_on = ["amm-swap-pool", "swap-helper-v1-03"]
+
+[contracts.token-wcorgi]
+path = "contracts/wrapped-token/token-wcorgi.clar"
 depends_on = []
