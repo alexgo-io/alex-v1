@@ -1000,10 +1000,14 @@ depends_on = []
 path = "contracts/flash-loan-user-usda-to-xusd.clar"
 depends_on = ["amm-swap-pool", "swap-helper-v1-03"]
 
-[contracts.flash-loan-user-xusd-to-usda]
+[contracts.flash-loan-user-xusd-to-usda-v1-01]
 path = "contracts/flash-loan-user-xusd-to-usda.clar"
-depends_on = ["amm-swap-pool", "swap-helper-v1-03"]
+depends_on = []
+
+[contracts.token-corgi]
+path = "contracts/token/token-corgi.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
 
 [contracts.token-wcorgi]
 path = "contracts/wrapped-token/token-wcorgi.clar"
-depends_on = []
+depends_on = ["token-corgi"]

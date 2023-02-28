@@ -94,7 +94,8 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? 'SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token get-balance account)) (pow-decimals)) (pow u10 u6)))
+  (ok (/ (* (unwrap-panic (contract-call? .token-corgi get-balance account)) (pow-decimals)) (pow u10 u6)))
+  ;; (ok (/ (* (unwrap-panic (contract-call? 'SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token get-balance account)) (pow-decimals)) (pow u10 u6)))
 )
 
 ;; @desc get-token-uri
@@ -113,7 +114,8 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? 'SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token transfer (/ (* amount (pow u10 u6)) (pow-decimals)) sender recipient memo)
+    (contract-call? .token-corgi transfer (/ (* amount (pow u10 u6)) (pow-decimals)) sender recipient memo)
+    ;; (contract-call? 'SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token transfer (/ (* amount (pow u10 u6)) (pow-decimals)) sender recipient memo)
   )
 )
 
