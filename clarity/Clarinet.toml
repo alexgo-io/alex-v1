@@ -3,12 +3,16 @@ name = "alex-v1"
 
 [[project.requirements]]
 contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
-
 [[project.requirements]]
 contract_id = "SP2TZK01NKDC89J6TA56SA47SDF7RTHYEQ79AAB9A.Wrapped-USD"
-
 [[project.requirements]]
 contract_id = "SP3NE50GEXFG9SZGTT51P40X2CKYSZ5CC4ZTZ7A2G.welshcorgicoin-token"
+[[project.requirements]]
+contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-swap-v2-1"
+[[project.requirements]]
+contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.wrapped-stx-token"
+[[project.requirements]]
+contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-token"
 
 [repl]
 costs_version = 2
@@ -1000,9 +1004,8 @@ depends_on = []
 path = "contracts/flash-loan-user-usda-to-xusd.clar"
 depends_on = ["amm-swap-pool", "swap-helper-v1-03"]
 
-[contracts.flash-loan-user-xusd-to-usda-v1-01]
+[contracts.flash-loan-user-xusd-to-usda]
 path = "contracts/flash-loan-user-xusd-to-usda.clar"
-depends_on = []
 
 [contracts.token-corgi]
 path = "contracts/token/token-corgi.clar"
@@ -1011,3 +1014,9 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 [contracts.token-wcorgi]
 path = "contracts/wrapped-token/token-wcorgi.clar"
 depends_on = ["token-corgi"]
+
+[contracts.flash-loan-user-wstx-to-diko]
+path = "contracts/flash-loan-user-wstx-to-diko.clar"
+
+[contracts.flash-loan-user-diko-to-wstx]
+path = "contracts/flash-loan-user-wstx-to-diko.clar"
