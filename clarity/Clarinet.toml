@@ -1020,3 +1020,7 @@ path = "contracts/flash-loan-user-wstx-to-diko.clar"
 
 [contracts.flash-loan-user-diko-to-wstx]
 path = "contracts/flash-loan-user-wstx-to-diko.clar"
+
+[contracts.swap-helper-bridged]
+path = "contracts/helpers/swap-helper-bridged.clar"
+
