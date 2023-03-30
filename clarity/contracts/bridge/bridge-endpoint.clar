@@ -18,7 +18,6 @@
 (define-constant ERR-AMOUNT-LESS-THAN-MIN-FEE (err u1017))
 (define-constant ERR-UNKNOWN-CHAIN-ID (err u1018))
 (define-constant ERR-INVALID-AMOUNT (err u1019))
-(define-constant ERR-BALANCE-NOT-ENOUGH (err u1020))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 (define-constant ONE_8 u100000000)
@@ -44,7 +43,7 @@
 
 (define-data-var token-nonce uint u0)
 (define-map token-id-registry principal uint)
-(define-map token-registry uint { token: principal, approved: bool, fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint, balance: uint })
+(define-map token-registry uint { token: principal, approved: bool, burnable: bool, fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint })
 
 (define-data-var chain-nonce uint u0)
 (define-map chain-registry uint { name: (string-utf8 256), min-fee: uint, buff-length: uint })
@@ -98,15 +97,21 @@
     (asserts! (or (not (var-get use-whitelist)) (is-whitelisted tx-sender)) ERR-USER-NOT-WHITELISTED)
     (asserts! (and (>= amount-in-fixed (get min-amount token-details)) (<= amount-in-fixed (get max-amount token-details))) ERR-INVALID-AMOUNT)
     (asserts! (> amount-in-fixed (get min-fee chain-details)) ERR-AMOUNT-LESS-THAN-MIN-FEE)
-    (as-contract (try! (contract-call? token-trait burn-fixed net-amount sender)))
-    (and (> fee u0) (try! (contract-call? token-trait transfer-fixed fee tx-sender (as-contract tx-sender) none)))
-    (map-set token-registry token-id (merge token-details { balance: (+ (get balance token-details) net-amount), accrued-fee: (+ (get accrued-fee token-details) fee) }))
+    (if (get burnable token-details)
+      (begin
+        (as-contract (try! (contract-call? token-trait burn-fixed net-amount sender)))
+        (and (> fee u0) (try! (contract-call? token-trait transfer-fixed fee tx-sender (as-contract tx-sender) none)))
+      )
+      (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender (as-contract tx-sender) none))
+    )
+    (map-set token-registry token-id (merge token-details { accrued-fee: (+ (get accrued-fee token-details) fee) }))
     (print {
       object: "bridge-endpoint",
       action: "transfer-to-unwrap",
       user-id: user-id,
       chain: (get name chain-details),
       net-amount: net-amount,
+      fee-amount: fee,
       settle-address:
       (default-to 0x (slice? settle-address u0 (get buff-length chain-details))),
       token-id: token-id
@@ -296,7 +301,7 @@
   )
 )
 
-(define-public (set-approved-token (token principal) (approved bool) (fee uint) (min-amount uint) (max-amount uint))
+(define-public (set-approved-token (token principal) (approved bool) (burnable bool) (fee uint) (min-amount uint) (max-amount uint))
 	(begin
 		(try! (check-is-owner))
     (match (map-get? token-id-registry token)
@@ -310,7 +315,7 @@
           (token-id (+ u1 (var-get token-nonce)))
         )
         (map-set token-id-registry token token-id)
-        (map-set token-registry token-id { token: token, approved: approved, fee: fee, min-amount: min-amount, max-amount: max-amount, balance: u0, accrued-fee: u0 })
+        (map-set token-registry token-id { token: token, approved: approved, burnable: burnable, fee: fee, min-amount: min-amount, max-amount: max-amount, accrued-fee: u0 })
         (var-set token-nonce token-id)
         (ok token-id)
       )
@@ -345,30 +350,6 @@
   (begin
     (try! (check-is-owner))
     (ok (var-set contract-owner owner))
-  )
-)
-
-(define-public (withdraw-balance (token-trait <ft-trait>) (amount-in-fixed uint))
-  (let
-    (
-      (token-id (try! (get-approved-token-id-or-fail (contract-of token-trait))))
-      (token-details (try! (get-approved-token-or-fail (contract-of token-trait))))
-    )
-    (try! (check-is-owner))
-    (asserts! (<= amount-in-fixed (get balance token-details)) ERR-BALANCE-NOT-ENOUGH)
-    (as-contract (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender (var-get contract-owner) none)))
-    (ok (map-set token-registry token-id (merge token-details { balance: (- (get balance token-details) amount-in-fixed) })))
-  )
-)
-
-(define-public (deposit-balance (token-trait <ft-trait>) (amount-in-fixed uint))
-  (let
-    (
-      (token-id (try! (get-approved-token-id-or-fail (contract-of token-trait))))
-      (token-details (try! (get-approved-token-or-fail (contract-of token-trait))))
-    )
-    (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender (as-contract tx-sender) none))
-    (ok (map-set token-registry token-id (merge token-details { balance: (+ (get balance token-details) amount-in-fixed) })))
   )
 )
 
@@ -416,11 +397,16 @@
   )
   (let
     (
+      (token (contract-of token-trait))
+      (token-details (try! (get-approved-token-or-fail token)))
       (chain-details (try! (get-approved-chain-or-fail (get chain-id order))))
       (recipient (try! (user-from-id-or-fail (get to order))))
     )
-    (asserts! (is-eq (try! (get-approved-token-id-or-fail (contract-of token-trait))) (get token order)) ERR-TOKEN-NOT-AUTHORIZED)
-    (try! (contract-call? token-trait mint-fixed (get amount-in-fixed order) recipient))
+    (asserts! (is-eq (try! (get-approved-token-id-or-fail token)) (get token order)) ERR-TOKEN-NOT-AUTHORIZED)
+    (if (get burnable token-details)
+      (try! (contract-call? token-trait mint-fixed (get amount-in-fixed order) recipient))
+      (as-contract (try! (contract-call? token-trait transfer-fixed (get amount-in-fixed order) tx-sender recipient none)))
+    )
     (print {
       object: "bridge-endpoint",
       action: "transfer-to-wrap",
