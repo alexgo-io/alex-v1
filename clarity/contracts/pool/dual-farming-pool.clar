@@ -71,7 +71,7 @@
 ;; @params token-trait; ft-trait
 ;; @params target-cycle
 ;; @returns (response tuple)
-(define-private (claim-staking-reward-by-tx-sender (token-trait <ft-trait>) (dual-token-trait <transfer-trait>) (target-cycle uint))
+(define-public (claim-staking-reward-by-tx-sender (token-trait <ft-trait>) (dual-token-trait <transfer-trait>) (target-cycle uint))
   (let
     (
       (token (contract-of token-trait))

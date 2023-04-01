@@ -695,6 +695,7 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 [contracts.auto-key-alex-autoalex]
 path = "contracts/auto-token/auto-key-alex-autoalex.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
+
 [contracts.dual-farming-pool]
 path = "contracts/pool/dual-farming-pool.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve-pool" ]
@@ -993,14 +994,6 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-amm-swap-pool"]
 [contracts.token-amm-swap-pool]
 path = "contracts/pool-token/token-amm-swap-pool.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible"]
-
-[contracts.dual-farming-pool-v1-01]
-path = "contracts/pool/dual-farming-pool-v1-01.clar"
-depends_on = ["dual-farm-xusd-usda-helper"]
-
-[contracts.dual-farm-xusd-usda-helper]
-path = "contracts/helpers/dual-farm-xusd-usda-helper.clar"
-depends_on = []
 
 [contracts.flash-loan-user-usda-to-xusd]
 path = "contracts/flash-loan-user-usda-to-xusd.clar"
