@@ -43,10 +43,10 @@
 
 (define-data-var token-nonce uint u0)
 (define-map token-id-registry principal uint)
-(define-map token-registry uint { token: principal, approved: bool, burnable: bool, fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint })
+(define-map token-registry uint { token: principal, approved: bool, burnable: bool, fee: uint, min-fee: uint, min-amount: uint, max-amount: uint, accrued-fee: uint })
 
 (define-data-var chain-nonce uint u0)
-(define-map chain-registry uint { name: (string-utf8 256), min-fee: uint, buff-length: uint })
+(define-map chain-registry uint { name: (string-utf8 256), buff-length: uint })
 
 (define-data-var validator-nonce uint u0)
 (define-map validator-id-registry principal uint)
@@ -89,14 +89,14 @@
       (chain-details (try! (get-approved-chain-or-fail the-chain-id)))
       (token-id (try! (get-approved-token-id-or-fail token)))
       (token-details (try! (get-approved-token-or-fail token)))
-      (fee (max (mul-down amount-in-fixed (get fee token-details)) (get min-fee chain-details)))
+      (fee (max (mul-down amount-in-fixed (get fee token-details)) (get min-fee token-details)))
       (net-amount (- amount-in-fixed fee))
       (user-id (match (get-user-id tx-sender) user-id user-id (try! (register-user tx-sender))))
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
     (asserts! (or (not (var-get use-whitelist)) (is-whitelisted tx-sender)) ERR-USER-NOT-WHITELISTED)
     (asserts! (and (>= amount-in-fixed (get min-amount token-details)) (<= amount-in-fixed (get max-amount token-details))) ERR-INVALID-AMOUNT)
-    (asserts! (> amount-in-fixed (get min-fee chain-details)) ERR-AMOUNT-LESS-THAN-MIN-FEE)
+    (asserts! (> amount-in-fixed (get min-fee token-details)) ERR-AMOUNT-LESS-THAN-MIN-FEE)
     (if (get burnable token-details)
       (begin
         (as-contract (try! (contract-call? token-trait burn-fixed net-amount sender)))
@@ -281,7 +281,7 @@
   )
 )
 
-(define-public (set-approved-chain (the-chain-id uint) (chain-details { name: (string-utf8 256), min-fee: uint, buff-length: uint }))
+(define-public (set-approved-chain (the-chain-id uint) (chain-details { name: (string-utf8 256), buff-length: uint }))
   (begin
     (try! (check-is-owner))
     (if (is-some (map-get? chain-registry the-chain-id))
@@ -301,13 +301,13 @@
   )
 )
 
-(define-public (set-approved-token (token principal) (approved bool) (burnable bool) (fee uint) (min-amount uint) (max-amount uint))
+(define-public (set-approved-token (token principal) (approved bool) (burnable bool) (fee uint) (min-fee uint) (min-amount uint) (max-amount uint))
 	(begin
 		(try! (check-is-owner))
     (match (map-get? token-id-registry token)
       token-id
       (begin
-        (map-set token-registry token-id (merge (try! (get-approved-token-by-id-or-fail token-id)) { approved: approved, fee: fee, min-amount: min-amount, max-amount: max-amount }))
+        (map-set token-registry token-id (merge (try! (get-approved-token-by-id-or-fail token-id)) { approved: approved, fee: fee, min-fee: min-fee, min-amount: min-amount, max-amount: max-amount }))
         (ok token-id)
       )
       (let
@@ -315,7 +315,7 @@
           (token-id (+ u1 (var-get token-nonce)))
         )
         (map-set token-id-registry token token-id)
-        (map-set token-registry token-id { token: token, approved: approved, burnable: burnable, fee: fee, min-amount: min-amount, max-amount: max-amount, accrued-fee: u0 })
+        (map-set token-registry token-id { token: token, approved: approved, burnable: burnable, fee: fee, min-fee: min-fee, min-amount: min-amount, max-amount: max-amount, accrued-fee: u0 })
         (var-set token-nonce token-id)
         (ok token-id)
       )
