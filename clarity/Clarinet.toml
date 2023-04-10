@@ -984,8 +984,8 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/bridged-tokens/token-susdt.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
 
-[contracts.bridge-endpoint]
-path = "contracts/bridge/bridge-endpoint.clar"
+[contracts.bridge-endpoint-v1-01]
+path = "contracts/bridge/bridge-endpoint-v1-01.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
 
 [contracts.amm-swap-pool]
