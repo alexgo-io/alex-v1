@@ -995,14 +995,6 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-amm-swap-pool"]
 path = "contracts/pool-token/token-amm-swap-pool.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible"]
 
-[contracts.amm-swap-pool-v1-1]
-path = "contracts/pool/amm-swap-pool-v1-1.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "token-amm-swap-pool-v1-1"]
-
-[contracts.token-amm-swap-pool-v1-1]
-path = "contracts/pool-token/token-amm-swap-pool-v1-1.clar"
-depends_on = ["trait-ownable", "trait-semi-fungible"]
-
 [contracts.flash-loan-user-usda-to-xusd]
 path = "contracts/flash-loan-user-usda-to-xusd.clar"
 depends_on = ["amm-swap-pool", "swap-helper-v1-03"]
@@ -1026,4 +1018,15 @@ path = "contracts/flash-loan-user-wstx-to-diko.clar"
 
 [contracts.swap-helper-bridged]
 path = "contracts/helpers/swap-helper-bridged.clar"
+
+[contracts.alex-vault-v1-1]
+path = "contracts/alex-vault-v1-1.clar"
+
+[contracts.amm-swap-pool-v1-1]
+path = "contracts/pool/amm-swap-pool-v1-1.clar"
+
+[contracts.token-amm-swap-pool-v1-1]
+path = "contracts/pool-token/token-amm-swap-pool-v1-1.clar"
+
+
 
