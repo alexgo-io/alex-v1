@@ -1028,12 +1028,20 @@ path = "contracts/helpers/swap-helper-bridged.clar"
 
 [contracts.alex-vault-v1-1]
 path = "contracts/alex-vault-v1-1.clar"
+depends_on = [
+  "trait-vault",
+  "trait-sip-010",
+  "trait-flash-loan-user",
+  "trait-ownable",
+  "trait-semi-fungible"
+]
 
 [contracts.amm-swap-pool-v1-1]
 path = "contracts/pool/amm-swap-pool-v1-1.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-amm-swap-pool-v1-1"]
 
 [contracts.token-amm-swap-pool-v1-1]
 path = "contracts/pool-token/token-amm-swap-pool-v1-1.clar"
-
+depends_on = ["trait-ownable", "trait-semi-fungible", "alex-vault-v1-1"]
 
 
