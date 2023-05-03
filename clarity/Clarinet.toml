@@ -1,6 +1,9 @@
 [project]
 name = "alex-v1"
 
+[project.cache_location]
+path = ".cache"
+
 [[project.requirements]]
 contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
 [[project.requirements]]
@@ -983,9 +986,13 @@ depends_on = [ "token-wxusd-tokensoft" ]
 path = "contracts/pool-token/stable-wxusd-wusda.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
 
-[contracts.bridge-endpoint]
-path = "contracts/bridge/bridge-endpoint.clar"
+[contracts.token-susdt]
+path = "contracts/bridged-tokens/token-susdt.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.bridge-endpoint-v1-01]
+path = "contracts/bridge/bridge-endpoint-v1-01.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
 
 [contracts.amm-swap-pool]
 path = "contracts/pool/amm-swap-pool.clar"
