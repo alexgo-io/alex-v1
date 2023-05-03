@@ -27,44 +27,6 @@
 (define-data-var paused bool false)
 (define-data-var switch-threshold uint u80000000)
 
-(define-read-only (get-switch-threshold)
-    (var-get switch-threshold)
-)
-
-(define-public (set-switch-threshold (new-threshold uint))
-    (begin 
-        (try! (check-is-owner))
-        (asserts! (<= new-threshold ONE_8) ERR-SWITCH-THRESHOLD-BIGGER-THAN-ONE)
-        (ok (var-set switch-threshold new-threshold))
-    )
-)
-
-(define-read-only (is-paused)
-    (var-get paused)
-)
-
-(define-public (pause (new-paused bool))
-    (begin 
-        (try! (check-is-owner))
-        (ok (var-set paused new-paused))
-    )
-)
-
-(define-read-only (get-contract-owner)
-  (ok (var-get contract-owner))
-)
-
-(define-public (set-contract-owner (owner principal))
-  (begin
-    (try! (check-is-owner))
-    (ok (var-set contract-owner owner))
-  )
-)
-
-(define-private (check-is-owner)
-    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
-)
-
 (define-map pools-id-map
     uint 
     {
@@ -101,6 +63,20 @@
   }
 )
 
+;; read-only calls
+
+(define-read-only (get-switch-threshold)
+    (var-get switch-threshold)
+)
+
+(define-read-only (is-paused)
+    (var-get paused)
+)
+
+(define-read-only (get-contract-owner)
+  (ok (var-get contract-owner))
+)
+
 (define-read-only (get-pool-details-by-id (pool-id uint))
     (ok (unwrap! (map-get? pools-id-map pool-id) ERR-INVALID-POOL))
 )
@@ -126,80 +102,16 @@
     (ok (get start-block (try! (get-pool-details token-x token-y factor))))
 )
 
-(define-public (set-start-block (token-x principal) (token-y principal) (factor uint) (new-start-block uint))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (ok
-            (map-set 
-                pools-data-map 
-                { token-x: token-x, token-y: token-y, factor: factor } 
-                (merge pool {start-block: new-start-block})
-            )
-        )    
-    )
-)
-
 (define-read-only (get-end-block (token-x principal) (token-y principal) (factor uint))
     (ok (get end-block (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-end-block (token-x principal) (token-y principal) (factor uint) (new-end-block uint))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (ok
-            (map-set 
-                pools-data-map 
-                { token-x: token-x, token-y: token-y, factor: factor } 
-                (merge pool {end-block: new-end-block})
-            )
-        )    
-    )
 )
 
 (define-read-only (get-max-in-ratio (token-x principal) (token-y principal) (factor uint))
     (ok (get max-in-ratio (try! (get-pool-details token-x token-y factor))))
 )
 
-(define-public (set-max-in-ratio (token-x principal) (token-y principal) (factor uint) (new-max-in-ratio uint))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (ok
-            (map-set 
-                pools-data-map 
-                { token-x: token-x, token-y: token-y, factor: factor } 
-                (merge pool {max-in-ratio: new-max-in-ratio})
-            )
-        )    
-    )
-)
-
 (define-read-only (get-max-out-ratio (token-x principal) (token-y principal) (factor uint))
     (ok (get max-out-ratio (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-max-out-ratio (token-x principal) (token-y principal) (factor uint) (new-max-out-ratio uint))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (ok
-            (map-set 
-                pools-data-map 
-                { token-x: token-x, token-y: token-y, factor: factor } 
-                (merge pool {max-out-ratio: new-max-out-ratio})
-            )
-        )    
-    )
 )
 
 (define-read-only (check-pool-status (token-x principal) (token-y principal) (factor uint))
@@ -215,49 +127,9 @@
     (ok (get oracle-enabled (try! (get-pool-details token-x token-y factor))))
 )
 
-(define-public (set-oracle-enabled (token-x principal) (token-y principal) (factor uint) (enabled bool))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (ok
-            (map-set 
-                pools-data-map 
-                { token-x: token-x, token-y: token-y, factor: factor } 
-                (merge pool {oracle-enabled: enabled})
-            )
-        )
-    )    
-)
-
 (define-read-only (get-oracle-average (token-x principal) (token-y principal) (factor uint))
     (ok (get oracle-average (try! (get-pool-details token-x token-y factor))))
 )
-
-(define-public (set-oracle-average (token-x principal) (token-y principal) (factor uint) (new-oracle-average uint))
-    (let
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
-        (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
-        (ok 
-            (map-set 
-                pools-data-map 
-                { token-x: token-x, token-y: token-y, factor: factor } 
-                (merge pool 
-                    {
-                    oracle-average: new-oracle-average,
-                    oracle-resilient: (try! (get-oracle-instant token-x token-y factor))
-                    }
-                )
-            )
-        )
-    )    
-)
-
 ;; @desc get-oracle-resilient
 ;; price of token-x in terms of token-y
 ;; @desc price-oracle that is less up to date but more resilient to manipulation
@@ -311,6 +183,410 @@
         (ok (get-price-internal (get balance-x pool) (get balance-y pool) factor))
     )
 )
+
+(define-read-only (get-threshold-x (token-x principal) (token-y principal) (factor uint))
+    (ok (get threshold-x (try! (get-pool-details token-x token-y factor))))
+)
+
+(define-read-only (get-threshold-y (token-x principal) (token-y principal) (factor uint))
+    (ok (get threshold-y (try! (get-pool-details token-x token-y factor))))
+)
+
+(define-read-only (get-fee-rebate (token-x principal) (token-y principal) (factor uint))
+    (ok (get fee-rebate (try! (get-pool-details token-x token-y factor))))
+)
+
+(define-read-only (get-fee-rate-x (token-x principal) (token-y principal) (factor uint))
+    (ok (get fee-rate-x (try! (get-pool-details token-x token-y factor))))
+)
+
+(define-read-only (get-fee-rate-y (token-x principal) (token-y principal) (factor uint))
+    (ok (get fee-rate-y (try! (get-pool-details token-x token-y factor))))
+)
+
+(define-read-only (get-pool-owner (token-x principal) (token-y principal) (factor uint))
+    (ok (get pool-owner (try! (get-pool-details token-x token-y factor))))
+)
+
+(define-read-only (get-y-given-x (token-x principal) (token-y principal) (factor uint) (dx uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (threshold (get threshold-x pool))
+            (dy (if (>= dx threshold)
+                (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor dx)
+                (div-down (mul-down dx (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
+            ))
+        )
+        (asserts! (< dx (mul-down (get balance-x pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)     
+        (asserts! (< dy (mul-down (get balance-y pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
+        (ok dy)
+    )
+)
+
+(define-read-only (get-x-given-y (token-x principal) (token-y principal) (factor uint) (dy uint)) 
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (threshold (get threshold-y pool))
+            (dx (if (>= dy threshold)
+                (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor dy)
+                (div-down (mul-down dy (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)         
+            ))
+        )        
+        (asserts! (< dy (mul-down (get balance-y pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down (get balance-x pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
+        (ok dx)
+    )
+)
+
+(define-read-only (get-y-in-given-x-out (token-x principal) (token-y principal) (factor uint) (dx uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (threshold (get threshold-x pool))
+            (dy (if (>= dx threshold)
+                (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor dx)
+                (div-down (mul-down dx (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
+            ))
+        )
+        (asserts! (< dy (mul-down (get balance-y pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)
+        (asserts! (< dx (mul-down (get balance-x pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
+        (ok dy)
+    )
+)
+
+(define-read-only (get-x-in-given-y-out (token-x principal) (token-y principal) (factor uint) (dy uint)) 
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (threshold (get threshold-y pool))
+            (dx (if (>= dy threshold)
+                (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor dy)
+                (div-down (mul-down dy (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
+            ))
+        )
+        (asserts! (< dx (mul-down (get balance-x pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)     
+        (asserts! (< dy (mul-down (get balance-y pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
+        (ok dx)
+    )
+)
+
+(define-read-only (get-x-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (< price (get-price-internal (get balance-x pool) (get balance-y pool) factor)) ERR-NO-LIQUIDITY) 
+        (ok (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor price))
+    )
+)
+
+(define-read-only (get-y-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (> price (get-price-internal (get balance-x pool) (get balance-y pool) factor)) ERR-NO-LIQUIDITY)
+        (ok (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor price))
+    )
+)
+
+(define-read-only (get-token-given-position (token-x principal) (token-y principal) (factor uint) (dx uint) (max-dy (optional uint)))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+            (dy (default-to u340282366920938463463374607431768211455 max-dy))
+        )
+        (asserts! (and (> dx u0) (> dy u0))  ERR-NO-LIQUIDITY)
+        (ok (get-token-given-position-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx dy))
+    )
+)
+
+(define-read-only (get-position-given-mint (token-x principal) (token-y principal) (factor uint) (token uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
+        (ok (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
+    )
+)
+
+(define-read-only (get-position-given-burn (token-x principal) (token-y principal) (factor uint) (token uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
+        (ok (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
+    )
+)
+
+(define-read-only (get-helper (token-x principal) (token-y principal) (factor uint) (dx uint))
+    (if (is-some (get-pool-exists token-x token-y factor))
+        (get-y-given-x token-x token-y factor dx)
+        (get-x-given-y token-y token-x factor dx)
+    )
+)
+
+(define-read-only (get-helper-a (token-x principal) (token-y principal) (token-z principal) (factor-x uint) (factor-y uint) (dx uint))
+    (get-helper token-y token-z factor-y (try! (get-helper token-x token-y factor-x dx)))
+)
+
+(define-read-only (get-helper-b
+    (token-x principal) (token-y principal) (token-z principal) (token-w principal)
+    (factor-x uint) (factor-y uint) (factor-z uint)
+    (dx uint))
+    (get-helper token-z token-w factor-z (try! (get-helper-a token-x token-y token-z factor-x factor-y dx)))
+)
+
+(define-read-only (get-helper-c
+    (token-x principal) (token-y principal) (token-z principal) (token-w principal) (token-v principal)
+    (factor-x uint) (factor-y uint) (factor-z uint) (factor-w uint)
+    (dx uint))
+    (get-helper-a token-z token-w token-v factor-z factor-w (try! (get-helper-a token-x token-y token-z factor-x factor-y dx)))
+)
+
+(define-read-only (fee-helper (token-x principal) (token-y principal) (factor uint))
+    (if (is-some (get-pool-exists token-x token-y factor))
+        (get-fee-rate-x token-x token-y factor)
+        (get-fee-rate-y token-y token-x factor)
+    )
+)
+
+(define-read-only (fee-helper-a (token-x principal) (token-y principal) (token-z principal) (factor-x uint) (factor-y uint))
+    (ok (+ 
+            (try! (fee-helper token-x token-y factor-x))
+            (try! (fee-helper token-y token-z factor-y))
+    ))
+)
+
+(define-read-only (fee-helper-b 
+    (token-x principal) (token-y principal) (token-z principal) (token-w principal)
+    (factor-x uint) (factor-y uint) (factor-z uint))
+    (ok (+ 
+            (try! (fee-helper-a token-x token-y token-z factor-x factor-y))
+            (try! (fee-helper token-z token-w factor-z))
+    ))
+)
+
+(define-read-only (fee-helper-c 
+    (token-x principal) (token-y principal) (token-z principal) (token-w principal) (token-v principal)
+    (factor-x uint) (factor-y uint) (factor-z uint) (factor-w uint))
+    (ok (+ 
+            (try! (fee-helper-a token-x token-y token-z factor-x factor-y))
+            (try! (fee-helper-a token-z token-w token-v factor-z factor-w))
+    ))
+)
+
+;; @desc invariant = b_x ^ (1 - t) + b_y ^ (1 - t), or
+;; @desc invariant = (1 - t) * (b_x + b_y) + t * b_x * b_y
+(define-read-only (get-invariant (balance-x uint) (balance-y uint) (t uint))
+    (if (>= t (var-get switch-threshold))
+        (+ (mul-down (- ONE_8 t) (+ balance-x balance-y)) (mul-down t (mul-down balance-x balance-y)))
+        (+ (pow-down balance-x (- ONE_8 t)) (pow-down balance-y (- ONE_8 t)))
+    )
+)
+
+
+;; governance calls
+
+(define-public (set-switch-threshold (new-threshold uint))
+    (begin 
+        (try! (check-is-owner))
+        (asserts! (<= new-threshold ONE_8) ERR-SWITCH-THRESHOLD-BIGGER-THAN-ONE)
+        (ok (var-set switch-threshold new-threshold))
+    )
+)
+
+(define-public (pause (new-paused bool))
+    (begin 
+        (try! (check-is-owner))
+        (ok (var-set paused new-paused))
+    )
+)
+
+(define-public (set-contract-owner (owner principal))
+  (begin
+    (try! (check-is-owner))
+    (ok (var-set contract-owner owner))
+  )
+)
+
+(define-public (set-fee-rebate (token-x principal) (token-y principal) (factor uint) (fee-rebate uint))
+    (let 
+        (            
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (try! (check-is-owner))
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rebate: fee-rebate }))
+        (ok true)     
+    )
+)
+
+(define-public (set-pool-owner (token-x principal) (token-y principal) (factor uint) (pool-owner principal))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (try! (check-is-owner))
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { pool-owner: pool-owner }))
+        (ok true)     
+    )
+)
+
+;; priviliged calls
+
+(define-public (set-start-block (token-x principal) (token-y principal) (factor uint) (new-start-block uint))
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, factor: factor } 
+                (merge pool {start-block: new-start-block})
+            )
+        )    
+    )
+)
+
+(define-public (set-end-block (token-x principal) (token-y principal) (factor uint) (new-end-block uint))
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, factor: factor } 
+                (merge pool {end-block: new-end-block})
+            )
+        )    
+    )
+)
+
+(define-public (set-max-in-ratio (token-x principal) (token-y principal) (factor uint) (new-max-in-ratio uint))
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, factor: factor } 
+                (merge pool {max-in-ratio: new-max-in-ratio})
+            )
+        )    
+    )
+)
+
+(define-public (set-max-out-ratio (token-x principal) (token-y principal) (factor uint) (new-max-out-ratio uint))
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, factor: factor } 
+                (merge pool {max-out-ratio: new-max-out-ratio})
+            )
+        )    
+    )
+)
+
+(define-public (set-oracle-enabled (token-x principal) (token-y principal) (factor uint) (enabled bool))
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (ok
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, factor: factor } 
+                (merge pool {oracle-enabled: enabled})
+            )
+        )
+    )    
+)
+
+(define-public (set-oracle-average (token-x principal) (token-y principal) (factor uint) (new-oracle-average uint))
+    (let
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (asserts! (get oracle-enabled pool) ERR-ORACLE-NOT-ENABLED)
+        (asserts! (< new-oracle-average ONE_8) ERR-ORACLE-AVERAGE-BIGGER-THAN-ONE)
+        (ok 
+            (map-set 
+                pools-data-map 
+                { token-x: token-x, token-y: token-y, factor: factor } 
+                (merge pool 
+                    {
+                    oracle-average: new-oracle-average,
+                    oracle-resilient: (try! (get-oracle-instant token-x token-y factor))
+                    }
+                )
+            )
+        )
+    )    
+)
+
+
+(define-public (set-threshold-x (token-x principal) (token-y principal) (factor uint) (new-threshold uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-x: new-threshold }))
+        (ok true)
+    )
+)
+
+(define-public (set-threshold-y (token-x principal) (token-y principal) (factor uint) (new-threshold uint))
+    (let 
+        (
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-y: new-threshold }))
+        (ok true)
+    )
+)
+
+(define-public (set-fee-rate-x (token-x principal) (token-y principal) (factor uint) (fee-rate-x uint))
+    (let 
+        (        
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-x: fee-rate-x }))
+        (ok true)     
+    )
+)
+
+(define-public (set-fee-rate-y (token-x principal) (token-y principal) (factor uint) (fee-rate-y uint))
+    (let 
+        (    
+            (pool (try! (get-pool-details token-x token-y factor)))
+        )
+        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-y: fee-rate-y }))
+        (ok true)     
+    )
+)
+
+;; public calls
 
 (define-public (create-pool (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (factor uint) (pool-owner principal) (dx uint) (dy uint)) 
     (let
@@ -478,217 +754,12 @@
         (asserts! (> dy u0) ERR-INVALID-LIQUIDITY)        
         (asserts! (>= (div-down dy-net-fees dx) (get-price-internal balance-x balance-y factor)) ERR-INVALID-LIQUIDITY)
         (asserts! (<= (default-to u0 min-dx) dx) ERR-EXCEEDS-MAX-SLIPPAGE)        
-        (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault none))
+        (try! (contract-call? token-y-trait transfer-fixed dy sender .alex-vault-v1-1 none))
         (and (> dx u0) (as-contract (try! (contract-call? .alex-vault-v1-1 transfer-ft token-x-trait dx sender))))            
         (as-contract (try! (contract-call? .alex-vault-v1-1 add-to-reserve token-y (- fee fee-rebate))))
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
         (print { object: "pool", action: "swap-y-for-x", data: pool-updated })
         (ok {dx: dx, dy: dy-net-fees})
-    )
-)
-
-(define-read-only (get-threshold-x (token-x principal) (token-y principal) (factor uint))
-    (ok (get threshold-x (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-threshold-x (token-x principal) (token-y principal) (factor uint) (new-threshold uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-x: new-threshold }))
-        (ok true)
-    )
-)
-
-(define-read-only (get-threshold-y (token-x principal) (token-y principal) (factor uint))
-    (ok (get threshold-y (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-threshold-y (token-x principal) (token-y principal) (factor uint) (new-threshold uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { threshold-y: new-threshold }))
-        (ok true)
-    )
-)
-
-(define-read-only (get-fee-rebate (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-rebate (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-fee-rebate (token-x principal) (token-y principal) (factor uint) (fee-rebate uint))
-    (let 
-        (            
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (try! (check-is-owner))
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rebate: fee-rebate }))
-        (ok true)     
-    )
-)
-
-(define-read-only (get-fee-rate-x (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-rate-x (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-read-only (get-fee-rate-y (token-x principal) (token-y principal) (factor uint))
-    (ok (get fee-rate-y (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-fee-rate-x (token-x principal) (token-y principal) (factor uint) (fee-rate-x uint))
-    (let 
-        (        
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-x: fee-rate-x }))
-        (ok true)     
-    )
-)
-
-(define-public (set-fee-rate-y (token-x principal) (token-y principal) (factor uint) (fee-rate-y uint))
-    (let 
-        (    
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (or (is-eq tx-sender (get pool-owner pool)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { fee-rate-y: fee-rate-y }))
-        (ok true)     
-    )
-)
-
-(define-read-only (get-pool-owner (token-x principal) (token-y principal) (factor uint))
-    (ok (get pool-owner (try! (get-pool-details token-x token-y factor))))
-)
-
-(define-public (set-pool-owner (token-x principal) (token-y principal) (factor uint) (pool-owner principal))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (try! (check-is-owner))
-        (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } (merge pool { pool-owner: pool-owner }))
-        (ok true)     
-    )
-)
-
-(define-read-only (get-y-given-x (token-x principal) (token-y principal) (factor uint) (dx uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-            (threshold (get threshold-x pool))
-            (dy (if (>= dx threshold)
-                (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor dx)
-                (div-down (mul-down dx (get-y-given-x-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
-            ))
-        )
-        (asserts! (< dx (mul-down (get balance-x pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)     
-        (asserts! (< dy (mul-down (get balance-y pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
-        (ok dy)
-    )
-)
-
-(define-read-only (get-x-given-y (token-x principal) (token-y principal) (factor uint) (dy uint)) 
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-            (threshold (get threshold-y pool))
-            (dx (if (>= dy threshold)
-                (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor dy)
-                (div-down (mul-down dy (get-x-given-y-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)         
-            ))
-        )        
-        (asserts! (< dy (mul-down (get balance-y pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)
-        (asserts! (< dx (mul-down (get balance-x pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
-        (ok dx)
-    )
-)
-
-(define-read-only (get-y-in-given-x-out (token-x principal) (token-y principal) (factor uint) (dx uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-            (threshold (get threshold-x pool))
-            (dy (if (>= dx threshold)
-                (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor dx)
-                (div-down (mul-down dx (get-y-in-given-x-out-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
-            ))
-        )
-        (asserts! (< dy (mul-down (get balance-y pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)
-        (asserts! (< dx (mul-down (get balance-x pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
-        (ok dy)
-    )
-)
-
-(define-read-only (get-x-in-given-y-out (token-x principal) (token-y principal) (factor uint) (dy uint)) 
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-            (threshold (get threshold-y pool))
-            (dx (if (>= dy threshold)
-                (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor dy)
-                (div-down (mul-down dy (get-x-in-given-y-out-internal (get balance-x pool) (get balance-y pool) factor threshold)) threshold)
-            ))
-        )
-        (asserts! (< dx (mul-down (get balance-x pool) (get max-in-ratio pool))) ERR-MAX-IN-RATIO)     
-        (asserts! (< dy (mul-down (get balance-y pool) (get max-out-ratio pool))) ERR-MAX-OUT-RATIO)
-        (ok dx)
-    )
-)
-
-(define-read-only (get-x-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (< price (get-price-internal (get balance-x pool) (get balance-y pool) factor)) ERR-NO-LIQUIDITY) 
-        (ok (get-x-given-price-internal (get balance-x pool) (get balance-y pool) factor price))
-    )
-)
-
-(define-read-only (get-y-given-price (token-x principal) (token-y principal) (factor uint) (price uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (> price (get-price-internal (get balance-x pool) (get balance-y pool) factor)) ERR-NO-LIQUIDITY)
-        (ok (get-y-given-price-internal (get balance-x pool) (get balance-y pool) factor price))
-    )
-)
-
-(define-read-only (get-token-given-position (token-x principal) (token-y principal) (factor uint) (dx uint) (max-dy (optional uint)))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-            (dy (default-to u340282366920938463463374607431768211455 max-dy))
-        )
-        (asserts! (and (> dx u0) (> dy u0))  ERR-NO-LIQUIDITY)
-        (ok (get-token-given-position-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) dx dy))
-    )
-)
-
-(define-read-only (get-position-given-mint (token-x principal) (token-y principal) (factor uint) (token uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
-        (ok (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
-    )
-)
-
-(define-read-only (get-position-given-burn (token-x principal) (token-y principal) (factor uint) (token uint))
-    (let 
-        (
-            (pool (try! (get-pool-details token-x token-y factor)))
-        )
-        (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
-        (ok (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
     )
 )
 
@@ -719,70 +790,10 @@
         (try! (swap-helper-a token-x-trait token-y-trait token-z-trait factor-x factor-y dx none)) min-dv)
 )
 
-(define-read-only (get-helper (token-x principal) (token-y principal) (factor uint) (dx uint))
-    (if (is-some (get-pool-exists token-x token-y factor))
-        (get-y-given-x token-x token-y factor dx)
-        (get-x-given-y token-y token-x factor dx)
-    )
-)
+;; private calls
 
-(define-read-only (get-helper-a (token-x principal) (token-y principal) (token-z principal) (factor-x uint) (factor-y uint) (dx uint))
-    (get-helper token-y token-z factor-y (try! (get-helper token-x token-y factor-x dx)))
-)
-
-(define-read-only (get-helper-b
-    (token-x principal) (token-y principal) (token-z principal) (token-w principal)
-    (factor-x uint) (factor-y uint) (factor-z uint)
-    (dx uint))
-    (get-helper token-z token-w factor-z (try! (get-helper-a token-x token-y token-z factor-x factor-y dx)))
-)
-
-(define-read-only (get-helper-c
-    (token-x principal) (token-y principal) (token-z principal) (token-w principal) (token-v principal)
-    (factor-x uint) (factor-y uint) (factor-z uint) (factor-w uint)
-    (dx uint))
-    (get-helper-a token-z token-w token-v factor-z factor-w (try! (get-helper-a token-x token-y token-z factor-x factor-y dx)))
-)
-
-(define-read-only (fee-helper (token-x principal) (token-y principal) (factor uint))
-    (if (is-some (get-pool-exists token-x token-y factor))
-        (get-fee-rate-x token-x token-y factor)
-        (get-fee-rate-y token-y token-x factor)
-    )
-)
-
-(define-read-only (fee-helper-a (token-x principal) (token-y principal) (token-z principal) (factor-x uint) (factor-y uint))
-    (ok (+ 
-            (try! (fee-helper token-x token-y factor-x))
-            (try! (fee-helper token-y token-z factor-y))
-    ))
-)
-
-(define-read-only (fee-helper-b 
-    (token-x principal) (token-y principal) (token-z principal) (token-w principal)
-    (factor-x uint) (factor-y uint) (factor-z uint))
-    (ok (+ 
-            (try! (fee-helper-a token-x token-y token-z factor-x factor-y))
-            (try! (fee-helper token-z token-w factor-z))
-    ))
-)
-
-(define-read-only (fee-helper-c 
-    (token-x principal) (token-y principal) (token-z principal) (token-w principal) (token-v principal)
-    (factor-x uint) (factor-y uint) (factor-z uint) (factor-w uint))
-    (ok (+ 
-            (try! (fee-helper-a token-x token-y token-z factor-x factor-y))
-            (try! (fee-helper-a token-z token-w token-v factor-z factor-w))
-    ))
-)
-
-;; @desc invariant = b_x ^ (1 - t) + b_y ^ (1 - t), or
-;; @desc invariant = (1 - t) * (b_x + b_y) + t * b_x * b_y
-(define-read-only (get-invariant (balance-x uint) (balance-y uint) (t uint))
-    (if (>= t (var-get switch-threshold))
-        (+ (mul-down (- ONE_8 t) (+ balance-x balance-y)) (mul-down t (mul-down balance-x balance-y)))
-        (+ (pow-down balance-x (- ONE_8 t)) (pow-down balance-y (- ONE_8 t)))
-    )
+(define-private (check-is-owner)
+    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
 ;; @desc p = (b_y / b_x) ^ t, or

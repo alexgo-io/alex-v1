@@ -7,8 +7,8 @@
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-INVALID-BALANCE (err u1001))
-(define-constant ERR-TRANSFER-FAILED (err u3000))
+(define-constant ERR-PAUSED (err u1001))
+(define-constant ERR-INVALID-BALANCE (err u1002))
 (define-constant ERR-INVALID-TOKEN (err u2026))
 (define-constant ERR-AMOUNT-EXCEED-RESERVE (err u2024))
 
@@ -25,14 +25,13 @@
 (define-data-var flash-loan-enabled bool false)
 (define-data-var paused bool false)
 
-
 ;; read-only calls
 
 (define-read-only (get-flash-loan-enabled)
   (var-get flash-loan-enabled)
 )
 
-(define-read-only (get-paused)
+(define-read-only (is-paused)
   (var-get paused)
 )
 
@@ -64,11 +63,11 @@
   )
 )
 
-(define-public (set-paused (pause bool))
-  (begin
-    (try! (check-is-owner)) 
-    (ok (var-set paused pause))
-  )
+(define-public (pause (new-paused bool))
+    (begin 
+        (try! (check-is-owner))
+        (ok (var-set paused new-paused))
+    )
 )
 
 (define-public (set-contract-owner (owner principal))
@@ -110,6 +109,7 @@
 
 (define-public (transfer-ft (token <ft-trait>) (amount uint) (recipient principal))
   (begin     
+    (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
     (as-contract (contract-call? token transfer-fixed amount tx-sender recipient none))
   )
@@ -124,6 +124,7 @@
 
 (define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
+    (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED) 
     (as-contract (contract-call? token transfer-fixed token-id amount tx-sender recipient))
   )
@@ -131,6 +132,7 @@
 
 (define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
   (begin
+    (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (and (is-ok (check-is-approved-flash-loan-user (contract-of flash-loan-user))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
     (let 
       (
@@ -158,6 +160,7 @@
 
 (define-public (add-to-reserve (token principal) (amount uint))
   (begin
+    (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED) 
     (ok (map-set reserve token (+ amount (get-reserve token))))
   )
@@ -165,6 +168,7 @@
 
 (define-public (remove-from-reserve (token principal) (amount uint))
   (begin
+    (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
     (asserts! (<= amount (get-reserve token)) ERR-AMOUNT-EXCEED-RESERVE)
     (ok (map-set reserve token (- (get-reserve token) amount)))
@@ -207,21 +211,3 @@
 
 ;; contract initialisation
 ;; (set-contract-owner .executor-dao)
-(map-set approved-tokens .age000-governance-token true)
-(map-set approved-contracts .alex-reserve-pool true)
-(map-set approved-contracts .fixed-weight-pool-v1-01 true)
-(map-set approved-contracts .fixed-weight-pool-v1-02 true) 
-(map-set approved-contracts .fixed-weight-pool-alex true)
-(map-set approved-contracts .simple-weight-pool true)
-(map-set approved-contracts .simple-weight-pool-alex true)
-(map-set approved-contracts .stable-swap-pool true)
-
-;; testing only
-(map-set approved-contracts .collateral-rebalancing-pool-v1 true)  
-(map-set approved-contracts .liquidity-bootstrapping-pool true)  
-(map-set approved-contracts .yield-token-pool true)  
-(map-set approved-contracts .yield-collateral-rebalancing-pool-v1 true)
-(map-set approved-flash-loan-users .flash-loan-user-margin-usda-wbtc true)
-(map-set approved-flash-loan-users .flash-loan-user-margin-wbtc-usda true)
-(map-set approved-flash-loan-users .flash-loan-user-margin-wstx-usda true)
-(map-set approved-flash-loan-users .flash-loan-user-margin-alex-usda true)
