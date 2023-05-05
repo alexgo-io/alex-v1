@@ -135,53 +135,53 @@ Clarinet.test({
         block.receipts[0].result.expectOk().expectBool(true);
         // console.log(block.receipts[0].events);
 
-        // block.receipts[0].events.expectFungibleTokenTransferEvent(
-        //     dx,
-        //     wallet_1.address,
-        //     deployer.address + ".auto-alex-v1-1",
-        //     "alex"
-        // );
-        // block.receipts[0].events.expectFungibleTokenTransferEvent(
-        //     dx,
-        //     deployer.address + ".auto-alex-v1-1",
-        //     deployer.address + ".alex-vault",
-        //     "alex"
-        // );
-        // block.receipts[0].events.expectFungibleTokenMintEvent(
-        //     dx,
-        //     wallet_1.address,
-        //     "auto-alex-v1-1"
-        // );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            wallet_1.address,
+            deployer.address + ".auto-alex-v1-1",
+            "alex"
+        );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            deployer.address + ".auto-alex-v1-1",
+            deployer.address + ".alex-vault",
+            "alex"
+        );
+        block.receipts[0].events.expectFungibleTokenMintEvent(
+            dx,
+            wallet_1.address,
+            "auto-alex-v1-1"
+        );
         
-        // // end of cycle 0
-        // chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
+        // end of cycle 0
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
 
-        // result = alexToken.mintFixed(deployer, wallet_2.address, dx);
-        // result.expectOk();        
+        result = alexToken.mintFixed(deployer, wallet_2.address, dx);
+        result.expectOk();        
 
-        // block = chain.mineBlock([
-        //     yieldVault.addToPosition(wallet_2, dx)
-        // ]);
-        // block.receipts[0].result.expectOk().expectBool(true);
-        // // console.log(block.receipts[0].events);
+        block = chain.mineBlock([
+            yieldVault.addToPosition(wallet_2, dx)
+        ]);
+        block.receipts[0].result.expectOk().expectBool(true);
+        // console.log(block.receipts[0].events);
 
-        // block.receipts[0].events.expectFungibleTokenTransferEvent(
-        //     dx,
-        //     wallet_2.address,
-        //     deployer.address + ".auto-alex-v1-1",
-        //     "alex"
-        // );
-        // block.receipts[0].events.expectFungibleTokenTransferEvent(
-        //     dx,
-        //     deployer.address + ".auto-alex-v1-1",
-        //     deployer.address + ".alex-vault",
-        //     "alex"
-        // );
-        // block.receipts[0].events.expectFungibleTokenMintEvent(
-        //     dx / 2,
-        //     wallet_2.address,
-        //     "auto-alex-v1-1"
-        // );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            wallet_2.address,
+            deployer.address + ".auto-alex-v1-1",
+            "alex"
+        );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            deployer.address + ".auto-alex-v1-1",
+            deployer.address + ".alex-vault",
+            "alex"
+        );
+        block.receipts[0].events.expectFungibleTokenMintEvent(
+            dx / 2,
+            wallet_2.address,
+            "auto-alex-v1-1"
+        );
     }
 })
 

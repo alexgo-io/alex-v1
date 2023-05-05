@@ -281,7 +281,7 @@
     (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
-    (asserts! (or (is-eq current-cycle u0) (is-cycle-staked (- current-cycle u1))) ERR-STAKING-NOT-AVAILABLE)
+    (asserts! (or (<= current-cycle u1) (is-cycle-staked (- current-cycle u1))) ERR-STAKING-NOT-AVAILABLE)
     (ok 
       (+         
         (get amount-staked (as-contract (get-staker-at-cycle (+ current-cycle u1)))) 
@@ -367,7 +367,7 @@
     (asserts! (>= block-height (var-get start-block)) ERR-NOT-ACTIVATED)        
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
-    (and (> current-cycle u0) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1))))
+    (and (> current-cycle u1) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1))))
     
     (let
       (
