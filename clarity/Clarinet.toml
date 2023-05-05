@@ -1,8 +1,8 @@
 [project]
 name = "alex-v1"
 
-# [project.cache_location]
-# path = ".cache"
+[project.cache_location]
+path = ".cache"
 
 # [[project.requirements]]
 # contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
@@ -1046,8 +1046,8 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
 clarity_version = 2
 epoch = "2.1"
 
-[contracts.auto-alex-v1-1]
-path = "contracts/auto-token/auto-alex-v1-1.clar"
+[contracts.auto-alex-v2]
+path = "contracts/auto-token/auto-alex-v2.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool", "staking-helper" ]
 
 
