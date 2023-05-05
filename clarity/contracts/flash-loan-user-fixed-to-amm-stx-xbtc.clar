@@ -10,7 +10,7 @@
         (   
             (swapped (try! (contract-call? .swap-helper-v1-03 swap-helper .token-wstx .token-wbtc amount none)))
             (swapped-back (try! (contract-call? .amm-swap-pool-v1-1 swap-helper .token-wbtc .token-wstx ONE_8 swapped none)))            
-            (amount-with-fee (mul-up amount (+ ONE_8 (unwrap-panic (contract-call? .alex-vault-v1-1 get-flash-loan-fee-rate)))))
+            (amount-with-fee (mul-up amount (+ ONE_8 (contract-call? .alex-vault-v1-1 get-flash-loan-fee-rate))))
         )
         (ok (asserts! (>= swapped-back amount-with-fee) ERR-NO-ARB-EXISTS))
     )

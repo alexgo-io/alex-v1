@@ -1056,5 +1056,11 @@ path = "contracts/flash-loan-user-amm-to-fixed-stx-alex.clar"
 [contracts.flash-loan-user-fixed-to-amm-stx-alex]
 path = "contracts/flash-loan-user-fixed-to-amm-stx-alex.clar"
 
+[contracts.flash-loan-user-amm-to-fixed-stx-xbtc]
+path = "contracts/flash-loan-user-amm-to-fixed-stx-xbtc.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-stx-xbtc]
+path = "contracts/flash-loan-user-fixed-to-amm-stx-xbtc.clar"
+
 
 
