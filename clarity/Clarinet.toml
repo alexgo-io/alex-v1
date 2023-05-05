@@ -1050,5 +1050,11 @@ epoch = "2.1"
 path = "contracts/auto-token/auto-alex-v2.clar"
 depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool", "staking-helper" ]
 
+[contracts.flash-loan-user-amm-to-fixed-stx-alex]
+path = "contracts/flash-loan-user-amm-to-fixed-stx-alex.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-stx-alex]
+path = "contracts/flash-loan-user-fixed-to-amm-stx-alex.clar"
+
 
 
