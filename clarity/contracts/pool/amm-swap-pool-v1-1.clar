@@ -1,4 +1,4 @@
-(impl-trait .trait-ownable.ownable-trait)
+;; (impl-trait .trait-ownable.ownable-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 
 ;; amm-swap-pool
@@ -303,23 +303,23 @@
     )
 )
 
-(define-read-only (get-position-given-mint (token-x principal) (token-y principal) (factor uint) (token uint))
+(define-read-only (get-position-given-mint (token-x principal) (token-y principal) (factor uint) (token-amount uint))
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
         (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
-        (ok (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
+        (ok (get-position-given-mint-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token-amount))
     )
 )
 
-(define-read-only (get-position-given-burn (token-x principal) (token-y principal) (factor uint) (token uint))
+(define-read-only (get-position-given-burn (token-x principal) (token-y principal) (factor uint) (token-amount uint))
     (let 
         (
             (pool (try! (get-pool-details token-x token-y factor)))
         )
         (asserts! (> (get total-supply pool) u0) ERR-NO-LIQUIDITY)
-        (ok (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token))
+        (ok (get-position-given-burn-internal (get balance-x pool) (get balance-y pool) factor (get total-supply pool) token-amount))
     )
 )
 
@@ -968,17 +968,17 @@
     )
 )
 
-(define-private (get-position-given-mint-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
+(define-private (get-position-given-mint-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token-amount uint))
     (let
         (
-            (token-div-supply (div-down token total-supply))
+            (token-div-supply (div-down token-amount total-supply))
         )                
         {dx: (mul-down balance-x token-div-supply), dy: (mul-down balance-y token-div-supply)}    
     )
 )
 
-(define-private (get-position-given-burn-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token uint))
-    (get-position-given-mint-internal balance-x balance-y t total-supply token)
+(define-private (get-position-given-burn-internal (balance-x uint) (balance-y uint) (t uint) (total-supply uint) (token-amount uint))
+    (get-position-given-mint-internal balance-x balance-y t total-supply token-amount)
 )
 
 (define-constant ONE_8 u100000000) ;; 8 decimal places

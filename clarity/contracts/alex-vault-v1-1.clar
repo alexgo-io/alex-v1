@@ -1,8 +1,8 @@
-(impl-trait .trait-ownable.ownable-trait)
-(impl-trait .trait-vault.vault-trait)
+;; (impl-trait .trait-ownable.ownable-trait)
+;; (impl-trait .trait-vault.vault-trait)
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
 (use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
-(use-trait flash-loan-user-trait .trait-flash-loan-user.flash-loan-user-trait)
+(use-trait flash-loan-trait .trait-flash-loan-user.flash-loan-user-trait)
 
 (define-constant ONE_8 u100000000) ;; 8 decimal places
 
@@ -43,14 +43,14 @@
   (var-get flash-loan-fee-rate)
 )
 
-(define-read-only (get-reserve (token principal))
-  (default-to u0 (map-get? reserve token))
+(define-read-only (get-reserve (the-token principal))
+  (default-to u0 (map-get? reserve the-token))
 )
 
-(define-public (get-balance (token <ft-trait>))
+(define-public (get-balance (the-token <ft-trait>))
   (begin 
-    (try! (check-is-approved-token (contract-of token))) 
-    (contract-call? token get-balance-fixed (as-contract tx-sender))
+    (try! (check-is-approved-token (contract-of the-token))) 
+    (contract-call? the-token get-balance-fixed (as-contract tx-sender))
   )
 )
 
@@ -107,11 +107,11 @@
 
 ;; priviliged calls
 
-(define-public (transfer-ft (token <ft-trait>) (amount uint) (recipient principal))
+(define-public (transfer-ft (the-token <ft-trait>) (amount uint) (recipient principal))
   (begin     
     (asserts! (not (is-paused)) ERR-PAUSED)
-    (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
-    (as-contract (contract-call? token transfer-fixed amount tx-sender recipient none))
+    (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of the-token)))) ERR-NOT-AUTHORIZED)
+    (as-contract (contract-call? the-token transfer-fixed amount tx-sender recipient none))
   )
 )
 
@@ -122,21 +122,21 @@
   )
 )
 
-(define-public (transfer-sft (token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
+(define-public (transfer-sft (the-token <sft-trait>) (token-id uint) (amount uint) (recipient principal))
   (begin     
     (asserts! (not (is-paused)) ERR-PAUSED)
-    (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED) 
-    (as-contract (contract-call? token transfer-fixed token-id amount tx-sender recipient))
+    (asserts! (and (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) (is-ok (check-is-approved-token (contract-of the-token)))) ERR-NOT-AUTHORIZED) 
+    (as-contract (contract-call? the-token transfer-fixed token-id amount tx-sender recipient))
   )
 )
 
-(define-public (flash-loan (flash-loan-user <flash-loan-user-trait>) (token <ft-trait>) (amount uint) (memo (optional (buff 16))))
+(define-public (flash-loan (the-flash-loan-user <flash-loan-trait>) (the-token <ft-trait>) (amount uint) (memo (optional (buff 16))))
   (begin
     (asserts! (not (is-paused)) ERR-PAUSED)
-    (asserts! (and (is-ok (check-is-approved-flash-loan-user (contract-of flash-loan-user))) (is-ok (check-is-approved-token (contract-of token)))) ERR-NOT-AUTHORIZED)
+    (asserts! (and (is-ok (check-is-approved-flash-loan-user (contract-of the-flash-loan-user))) (is-ok (check-is-approved-token (contract-of the-token)))) ERR-NOT-AUTHORIZED)
     (let 
       (
-        (pre-bal (unwrap! (get-balance token) ERR-INVALID-BALANCE))
+        (pre-bal (unwrap! (get-balance the-token) ERR-INVALID-BALANCE))
         (fee-with-principal (+ ONE_8 (var-get flash-loan-fee-rate)))
         (amount-with-fee (mul-up amount fee-with-principal))
         (recipient tx-sender)
@@ -146,32 +146,32 @@
       (asserts! (> pre-bal amount) ERR-INVALID-BALANCE)
 
       ;; transfer loan to flash-loan-user
-      (as-contract (try! (contract-call? token transfer-fixed amount tx-sender recipient none)))
+      (as-contract (try! (contract-call? the-token transfer-fixed amount tx-sender recipient none)))
 
       ;; flash-loan-user executes with loan received
-      (try! (contract-call? flash-loan-user execute token amount memo))
+      (try! (contract-call? the-flash-loan-user execute the-token amount memo))
 
       ;; return the loan + fee
-      (try! (contract-call? token transfer-fixed amount-with-fee tx-sender (as-contract tx-sender) none))
+      (try! (contract-call? the-token transfer-fixed amount-with-fee tx-sender (as-contract tx-sender) none))
       (ok amount-with-fee)
     )
   )
 )
 
-(define-public (add-to-reserve (token principal) (amount uint))
+(define-public (add-to-reserve (the-token principal) (amount uint))
   (begin
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED) 
-    (ok (map-set reserve token (+ amount (get-reserve token))))
+    (ok (map-set reserve the-token (+ amount (get-reserve the-token))))
   )
 )
 
-(define-public (remove-from-reserve (token principal) (amount uint))
+(define-public (remove-from-reserve (the-token principal) (amount uint))
   (begin
     (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-    (asserts! (<= amount (get-reserve token)) ERR-AMOUNT-EXCEED-RESERVE)
-    (ok (map-set reserve token (- (get-reserve token) amount)))
+    (asserts! (<= amount (get-reserve the-token)) ERR-AMOUNT-EXCEED-RESERVE)
+    (ok (map-set reserve the-token (- (get-reserve the-token) amount)))
   )
 )
 
@@ -185,8 +185,8 @@
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
-(define-private (check-is-approved-flash-loan-user (flash-loan-user principal))
-  (ok (asserts! (default-to false (map-get? approved-flash-loan-users flash-loan-user)) ERR-NOT-AUTHORIZED))
+(define-private (check-is-approved-flash-loan-user (the-flash-loan-user principal))
+  (ok (asserts! (default-to false (map-get? approved-flash-loan-users the-flash-loan-user)) ERR-NOT-AUTHORIZED))
 )
 
 (define-private (check-is-approved-token (flash-loan-token principal))

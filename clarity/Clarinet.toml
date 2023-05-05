@@ -1,8 +1,8 @@
 [project]
 name = "alex-v1"
 
-[[project.requirements]]
-contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
+# [[project.requirements]]
+# contract_id = "ST287GF5M9WEJ6BXEN7NPN1WGA95YWXWBE0ZRK6X.Wrapped-USD"
 [[project.requirements]]
 contract_id = "SP2TZK01NKDC89J6TA56SA47SDF7RTHYEQ79AAB9A.Wrapped-USD"
 [[project.requirements]]
@@ -19,8 +19,8 @@ contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-alex-dual-yiel
 [repl]
 costs_version = 2
 
-# [repl.analysis]
-# passes = ["check_checker"]
+[repl.analysis]
+passes = ["check_checker"]
 
 [contracts.age000-governance-token]
 path = "contracts_modules/alex_dao/extensions/age000-governance-token.clar"
@@ -1021,6 +1021,7 @@ path = "contracts/helpers/swap-helper-bridged.clar"
 
 [contracts.alex-vault-v1-1]
 path = "contracts/alex-vault-v1-1.clar"
+depends_on = []
 
 [contracts.amm-swap-pool-v1-1]
 path = "contracts/pool/amm-swap-pool-v1-1.clar"
