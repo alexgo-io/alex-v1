@@ -1046,5 +1046,23 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
 clarity_version = 2
 epoch = "2.1"
 
+[contracts.auto-alex-v2]
+path = "contracts/auto-token/auto-alex-v2.clar"
+depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool", "staking-helper" ]
+
+[contracts.flash-loan-user-amm-to-fixed-stx-alex]
+path = "contracts/flash-loan-user-amm-to-fixed-stx-alex.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-stx-alex]
+path = "contracts/flash-loan-user-fixed-to-amm-stx-alex.clar"
+
+[contracts.flash-loan-user-amm-to-fixed-stx-xbtc]
+path = "contracts/flash-loan-user-amm-to-fixed-stx-xbtc.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-stx-xbtc]
+path = "contracts/flash-loan-user-fixed-to-amm-stx-xbtc.clar"
+
+[contracts.auto-alex-buyback-helper]
+path = "contracts/helpers/auto-alex-buyback-helper.clar"
 
 

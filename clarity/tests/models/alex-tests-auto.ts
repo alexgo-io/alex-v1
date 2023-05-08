@@ -103,6 +103,26 @@ class YieldVault{
             sender.address
         )
     }       
+
+    setStartCycle(sender: Account, end_cycle: number){
+        return Tx.contractCall(
+            this.contractName,
+            "set-start-cycle",
+            [
+                types.uint(end_cycle)
+            ],
+            sender.address
+        )
+    }
+    
+    getStartCycle(sender: Account){
+        return this.chain.callReadOnlyFn(
+            this.contractName,
+            "get-start-cycle",
+            [],
+            sender.address
+        )
+    }      
 }
 
 class YieldVaultFarm{
