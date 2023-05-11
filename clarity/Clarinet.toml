@@ -1076,4 +1076,8 @@ depends_on = [
   "trait-semi-fungible"
 ]
 
+[contracts.staking-helper-sft]
+path = "contracts/helpers/staking-helper-sft.clar"
+depends_on = [ "alex-reserve-pool-sft", "trait-semi-fungible" ]
+
 
