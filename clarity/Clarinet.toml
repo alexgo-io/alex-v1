@@ -1065,4 +1065,7 @@ path = "contracts/flash-loan-user-fixed-to-amm-stx-xbtc.clar"
 [contracts.auto-alex-buyback-helper]
 path = "contracts/helpers/auto-alex-buyback-helper.clar"
 
+[contracts.alex-reserve-pool-sft]
+path = "contracts/pool/alex-reserve-pool-sft.clar"
+
 
