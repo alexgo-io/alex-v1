@@ -1067,5 +1067,13 @@ path = "contracts/helpers/auto-alex-buyback-helper.clar"
 
 [contracts.alex-reserve-pool-sft]
 path = "contracts/pool/alex-reserve-pool-sft.clar"
+depends_on = [
+  "trait-ownable",
+  "trait-sip-010",
+  "alex-vault",
+  "age000-governance-token",
+  "token-apower",
+  "trait-semi-fungible"
+]
 
 
