@@ -18,6 +18,8 @@ contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.wrapped-stx-token"
 contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-token"
 [[project.requirements]]
 contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-alex-dual-yield-v1-1"
+[[project.requirements]]
+contract_id = "SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token"
 
 [repl]
 costs_version = 2
@@ -1079,5 +1081,9 @@ depends_on = [
 [contracts.staking-helper-sft]
 path = "contracts/helpers/staking-helper-sft.clar"
 depends_on = [ "alex-reserve-pool-sft", "trait-semi-fungible" ]
+
+[contracts.token-wvibes]
+path = "contracts/wrapped-token/token-wvibes.clar"
+depends_on = []
 
 
