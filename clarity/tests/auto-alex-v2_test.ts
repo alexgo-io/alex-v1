@@ -122,7 +122,9 @@ Clarinet.test({
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             yieldVault.setStartCycle(deployer, 0),
-            yieldVault.setBountyInFixed(deployer, BountyFixed)
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
+            Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
+            Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address)
         ]);
         for (let i = 0; i < block.receipts.length; i++) {
             block.receipts[i].result.expectOk();
@@ -233,7 +235,9 @@ Clarinet.test({
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             yieldVault.setStartCycle(deployer, 0),
-            yieldVault.setBountyInFixed(deployer, BountyFixed)
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
+            Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
+            Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address)            
         ]);
         for (let i = 0; i < block.receipts.length; i++) {
             block.receipts[i].result.expectOk();
@@ -294,7 +298,9 @@ Clarinet.test({
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             yieldVault.setStartCycle(deployer, 0),
-            yieldVault.setBountyInFixed(deployer, BountyFixed)
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
+            Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
+            Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address)            
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
@@ -383,7 +389,9 @@ Clarinet.test({
             reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
             reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
             yieldVault.setStartCycle(deployer, 0),
-            yieldVault.setBountyInFixed(deployer, BountyFixed)
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
+            Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
+            Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address)            
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
@@ -463,6 +471,8 @@ Clarinet.test({
             ),
             yieldVault.setStartCycle(deployer, 0),
             yieldVault.setBountyInFixed(deployer, 0),
+            Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
+            Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address)
         ]);
         block.receipts.forEach((e) => { e.result.expectOk() });
 

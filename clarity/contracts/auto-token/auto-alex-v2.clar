@@ -242,8 +242,8 @@
 (define-data-var start-cycle uint u340282366920938463463374607431768211455)
 (define-data-var end-cycle uint u340282366920938463463374607431768211455)
 
-(define-data-var create-paused bool false)
-(define-data-var redeem-paused bool false)
+(define-data-var create-paused bool true)
+(define-data-var redeem-paused bool true)
 
 (define-data-var bounty-in-fixed uint u100000000) ;; 1 ALEX
 
@@ -322,7 +322,6 @@
   (begin 
     (try! (check-is-owner))
     (map-set staked-cycle new-start-cycle true)
-    ;; (map-set staked-cycle (+ new-start-cycle u1) true)
     (var-set start-cycle new-start-cycle)
     (ok true)
   )
@@ -515,5 +514,3 @@
 )
 
 ;; contract initialisation
-;; (set-contract-owner .executor-dao)
-;; (contract-call? .alex-vault add-approved-token .auto-alex-v2)
