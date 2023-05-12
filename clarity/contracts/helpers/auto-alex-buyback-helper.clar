@@ -6,8 +6,10 @@
 (define-constant ERR-INVALID-CYCLE (err u1001))
 (define-constant ERR-INVALID-AMOUNT (err u1002))
 (define-constant ERR-EXCEED-BUYBACK (err u1003))
+(define-constant ERR-PAUSED (err u1004))
 
 (define-data-var contract-owner principal tx-sender)
+(define-data-var paused bool true)
 
 (define-data-var rate-104305 uint u151959658)
 (define-data-var rate-103825 uint u155330000)
@@ -25,6 +27,13 @@
     (try! (check-is-owner))
     (ok (var-set contract-owner owner))
   )
+)
+
+(define-public (pause (new-paused bool))
+    (begin 
+        (try! (check-is-owner))
+        (ok (var-set paused new-paused))
+    )
 )
 
 (define-public (set-rate-103825 (new-rate uint))
@@ -64,6 +73,10 @@
 
 ;; read-only calls
 
+(define-read-only (is-paused)
+  (var-get paused)
+)
+
 (define-read-only (get-contract-owner)
   (var-get contract-owner)
 )
@@ -99,6 +112,7 @@
       (alex-103825 (mul-down (var-get rate-103825) claimed-103825))
       (alex-104305 (mul-down (var-get rate-104305) claimed-104305))
     )
+    (asserts! (not (is-paused)) ERR-PAUSED)
     (asserts! (<= amount (unwrap-panic (contract-call? .auto-alex get-balance-fixed user))) ERR-INVALID-AMOUNT)
     (asserts! (<= claimed-104305 buyback-104305-avail) ERR-EXCEED-BUYBACK)
 

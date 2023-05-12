@@ -1067,6 +1067,21 @@ path = "contracts/flash-loan-user-fixed-to-amm-stx-xbtc.clar"
 [contracts.auto-alex-buyback-helper]
 path = "contracts/helpers/auto-alex-buyback-helper.clar"
 
+[contracts.alex-reserve-pool-sft]
+path = "contracts/pool/alex-reserve-pool-sft.clar"
+depends_on = [
+  "trait-ownable",
+  "trait-sip-010",
+  "alex-vault",
+  "age000-governance-token",
+  "token-apower",
+  "trait-semi-fungible"
+]
+
+[contracts.staking-helper-sft]
+path = "contracts/helpers/staking-helper-sft.clar"
+depends_on = [ "alex-reserve-pool-sft", "trait-semi-fungible" ]
+
 [contracts.token-wvibes]
 path = "contracts/wrapped-token/token-wvibes.clar"
 depends_on = []
