@@ -154,7 +154,24 @@ Clarinet.test({
                 wallet_1.address
             )           
         ]);
-        block.receipts.forEach(e => { e.result.expectErr().expectUint(1002) });
+        block.receipts.forEach(e => { e.result.expectErr().expectUint(1004) });
+
+        block = chain.mineBlock([     
+            Tx.contractCall(
+                "auto-alex-buyback-helper",
+                "pause",
+                [types.bool(false)],
+                deployer.address
+            ),            
+            Tx.contractCall(
+                "auto-alex-buyback-helper",
+                "claim",
+                [types.uint(201e8)],
+                wallet_1.address
+            )           
+        ]);
+        block.receipts[0].result.expectOk();
+        block.receipts[1].result.expectErr().expectUint(1002);       
 
         block = chain.mineBlock([     
             Tx.contractCall(
