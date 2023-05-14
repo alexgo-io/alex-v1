@@ -1086,4 +1086,10 @@ depends_on = [ "alex-reserve-pool-sft", "trait-semi-fungible" ]
 path = "contracts/wrapped-token/token-wvibes.clar"
 depends_on = []
 
+[contracts.bridge-endpoint-v1-02]
+path = "contracts/bridge/bridge-endpoint-v1-02.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
+clarity_version = 2
+epoch = "2.1"
+
 
