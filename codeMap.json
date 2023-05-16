@@ -1,166 +1,138 @@
 {
-  "1622594557": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-xusd.clar:111"
-  },
-  "1853457106": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-xusd.clar:20"
-  },
-  "1853457137": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-xusd.clar:30"
-  },
-  "1853457142": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-xusd.clar:35"
-  },
-  "1853457171": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-xusd.clar:43"
-  },
-  "1853457323": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-xusd.clar:90"
-  },
-  "2314892933": {
+  "1088878385": {
     "code": "ERR-PAUSED",
-    "comment": "bridge-endpoint.clar:82"
+    "comment": "bridge-endpoint-v1-02.clar:76"
   },
-  "2314892934": {
+  "1088878386": {
     "code": "ERR-USER-NOT-WHITELISTED",
-    "comment": "bridge-endpoint.clar:83"
+    "comment": "bridge-endpoint-v1-02.clar:77"
   },
-  "2314892935": {
+  "1088878387": {
     "code": "ERR-USER-ALREADY-REGISTERED",
-    "comment": "bridge-endpoint.clar:84"
+    "comment": "bridge-endpoint-v1-02.clar:78"
   },
-  "3042197449": {
+  "1088878449": {
     "code": "ERR-PAUSED",
-    "comment": "bridge-endpoint.clar:103"
+    "comment": "bridge-endpoint-v1-02.clar:98"
   },
-  "3042197450": {
+  "1088878450": {
     "code": "ERR-USER-NOT-WHITELISTED",
-    "comment": "bridge-endpoint.clar:104"
+    "comment": "bridge-endpoint-v1-02.clar:99"
   },
-  "3042197451": {
+  "3690452965": {
+    "code": "ERR-INVALID-AMOUNT",
+    "comment": "bridge-endpoint-v1-02.clar:106"
+  },
+  "3690452966": {
     "code": "ERR-AMOUNT-LESS-THAN-MIN-FEE",
-    "comment": "bridge-endpoint.clar:105"
+    "comment": "bridge-endpoint-v1-02.clar:107"
   },
-  "3042197545": {
+  "3690453086": {
     "code": "ERR-UNKNOWN-USER-ID",
-    "comment": "bridge-endpoint.clar:136"
+    "comment": "bridge-endpoint-v1-02.clar:143"
   },
-  "3042197574": {
+  "3690453115": {
     "code": "ERR-UNKNOWN-USER-ID",
-    "comment": "bridge-endpoint.clar:144"
+    "comment": "bridge-endpoint-v1-02.clar:151"
   },
-  "3042197603": {
+  "3690453123": {
     "code": "ERR-UNKNOWN-VALIDATOR-ID",
-    "comment": "bridge-endpoint.clar:152"
+    "comment": "bridge-endpoint-v1-02.clar:159"
   },
-  "3042197632": {
+  "3690453152": {
     "code": "ERR-UNKNOWN-VALIDATOR-ID",
-    "comment": "bridge-endpoint.clar:160"
+    "comment": "bridge-endpoint-v1-02.clar:167"
   },
-  "3042197665": {
-    "code": "ERR-CHAIN-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:172"
+  "3690453185": {
+    "code": "ERR-UNKNOWN-CHAIN-ID",
+    "comment": "bridge-endpoint-v1-02.clar:179"
   },
-  "3042198415": {
+  "3690453920": {
     "code": "ERR-TOKEN-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:208"
+    "comment": "bridge-endpoint-v1-02.clar:200"
   },
-  "3042198440": {
+  "3690453924": {
     "code": "ERR-TOKEN-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:212"
+    "comment": "bridge-endpoint-v1-02.clar:204"
   },
-  "3042198469": {
+  "3690453953": {
     "code": "ERR-TOKEN-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:220"
+    "comment": "bridge-endpoint-v1-02.clar:212"
   },
-  "3042198473": {
-    "code": "ERR-RECIPIENT-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:224"
-  },
-  "3042198537": {
+  "3690454020": {
     "code": "ERR-PAUSED",
-    "comment": "bridge-endpoint.clar:246"
+    "comment": "bridge-endpoint-v1-02.clar:237"
   },
-  "3042198538": {
+  "3690454021": {
     "code": "ERR-UKNOWN-RELAYER",
-    "comment": "bridge-endpoint.clar:247"
+    "comment": "bridge-endpoint-v1-02.clar:238"
   },
-  "3042198539": {
+  "3690454022": {
     "code": "ERR-REQUIRED-VALIDATORS",
-    "comment": "bridge-endpoint.clar:248"
+    "comment": "bridge-endpoint-v1-02.clar:239"
   },
-  "3042198540": {
+  "3690454044": {
     "code": "ERR-ORDER-ALREADY-SENT",
-    "comment": "bridge-endpoint.clar:249"
+    "comment": "bridge-endpoint-v1-02.clar:240"
   },
-  "3042198596": {
-    "code": "ERR-VALIDATOR-ALREADY-REGISTERED",
-    "comment": "bridge-endpoint.clar:263"
-  },
-  "3042198628": {
-    "code": "ERR-UNKNOWN-VALIDATOR-ID",
-    "comment": "bridge-endpoint.clar:274"
-  },
-  "3042198690": {
-    "code": "ERR-REQUIRED-VALIDATORS",
-    "comment": "bridge-endpoint.clar:294"
-  },
-  "3042199624": {
-    "code": "ERR-UNKNOWN-VALIDATOR-ID,ERR-UNKNOWN-VALIDATOR-ID",
-    "comment": "bridge-endpoint.clar:388"
-  },
-  "3042199647": {
-    "code": "ERR-DUPLICATE-SIGNATURE",
-    "comment": "bridge-endpoint.clar:390"
-  },
-  "3042199648": {
-    "code": "ERR-ORDER-HASH-MISMATCH",
-    "comment": "bridge-endpoint.clar:391"
-  },
-  "3042199649": {
-    "code": "ERR-INVALID-SIGNATURE",
-    "comment": "bridge-endpoint.clar:392"
-  },
-  "3042200360": {
-    "code": "ERR-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:410"
-  },
-  "3042200422": {
+  "3690454045": {
     "code": "ERR-TOKEN-NOT-AUTHORIZED",
-    "comment": "bridge-endpoint.clar:430"
+    "comment": "bridge-endpoint-v1-02.clar:241"
   },
-  "3271322643": {
+  "3690454115": {
+    "code": "ERR-VALIDATOR-ALREADY-REGISTERED",
+    "comment": "bridge-endpoint-v1-02.clar:269"
+  },
+  "3690454168": {
+    "code": "ERR-UNKNOWN-VALIDATOR-ID",
+    "comment": "bridge-endpoint-v1-02.clar:280"
+  },
+  "3690454881": {
+    "code": "ERR-REQUIRED-VALIDATORS",
+    "comment": "bridge-endpoint-v1-02.clar:300"
+  },
+  "3690455873": {
+    "code": "ERR-UNKNOWN-VALIDATOR-ID,ERR-UNKNOWN-VALIDATOR-ID",
+    "comment": "bridge-endpoint-v1-02.clar:410"
+  },
+  "3690455875": {
+    "code": "ERR-DUPLICATE-SIGNATURE",
+    "comment": "bridge-endpoint-v1-02.clar:412"
+  },
+  "3690455876": {
+    "code": "ERR-ORDER-HASH-MISMATCH",
+    "comment": "bridge-endpoint-v1-02.clar:413"
+  },
+  "3690455877": {
+    "code": "ERR-INVALID-SIGNATURE",
+    "comment": "bridge-endpoint-v1-02.clar:414"
+  },
+  "3690455937": {
     "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-wxusd.clar:116"
+    "comment": "bridge-endpoint-v1-02.clar:432"
   },
-  "3271322738": {
-    "code": "ERR-NOT-SUPPORTED",
-    "comment": "token-wxusd.clar:148"
-  },
-  "3271322823": {
-    "code": "ERR-MINT-FAILED",
-    "comment": "token-wxusd.clar:170"
-  },
-  "3271322827": {
-    "code": "ERR-BURN-FAILED",
-    "comment": "token-wxusd.clar:174"
-  },
-  "3271323569": {
-    "code": "ERR-TRANSFER-FAILED",
-    "comment": "token-wxusd.clar:202"
-  },
-  "4261946563": {
+  "3955851312": {
     "code": "ERR-NOT-AUTHORIZED",
-    "comment": "token-wxusd.clar:33"
+    "comment": "token-susdt.clar:131"
   },
-  "4261946686": {
-    "code": "ERR-NOT-SUPPORTED",
-    "comment": "token-wxusd.clar:72"
+  "3955851346": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-susdt.clar:144"
+  },
+  "3955852218": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-susdt.clar:218"
+  },
+  "4145480797": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-susdt.clar:31"
+  },
+  "4145480801": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-susdt.clar:35"
+  },
+  "4145480959": {
+    "code": "ERR-NOT-AUTHORIZED",
+    "comment": "token-susdt.clar:88"
   }
 }
