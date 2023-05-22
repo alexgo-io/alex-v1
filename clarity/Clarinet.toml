@@ -1086,4 +1086,8 @@ depends_on = [ "alex-reserve-pool-sft", "trait-semi-fungible" ]
 path = "contracts/wrapped-token/token-wvibes.clar"
 depends_on = []
 
+[contracts.autoalex-apower-helper-v2]
+path = "contracts/helpers/autoalex-apower-helper-v2.clar"
+depends_on = [ "auto-alex-v2", "token-apower" ]
+
 
