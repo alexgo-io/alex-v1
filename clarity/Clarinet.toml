@@ -706,7 +706,7 @@ path = "contracts/pool/dual-farming-pool.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve-pool" ]
 
 [contracts.dual-farming-pool-v1-01]
-path = "contracts/pool/dual-farming-pool-v1-01.clar"
+path = "contracts/helpers/dual-farming-pool-v1-01.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool" ]
 
 [contracts.trait-transfer]
