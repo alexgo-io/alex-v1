@@ -1096,4 +1096,8 @@ depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
 clarity_version = 2
 epoch = "2.1"
 
+[contracts.autoalex-apower-helper-v2]
+path = "contracts/helpers/autoalex-apower-helper-v2.clar"
+depends_on = [ "auto-alex-v2", "token-apower" ]
+
 
