@@ -11,11 +11,9 @@
 (define-data-var contract-owner principal tx-sender)
 
 (define-map approved-pair 
+  principal
   {
-    token: principal,
-    dual-token: principal
-  }
-  {
+    dual-token: principal,
     multiplier-in-fixed: uint,
     start-cycle: uint
   }
@@ -37,50 +35,64 @@
 )
 
 (define-private (check-is-approved-pair (token principal) (dual-token principal))
-  (ok (asserts! (is-some (get-pair-details token dual-token)) ERR-NOT-AUTHORIZED))
+  (ok (asserts! (is-eq dual-token (get dual-token (try! (get-pair-details-or-fail token)))) ERR-NOT-AUTHORIZED))
 )
 
-(define-read-only (get-pair-details (token principal) (dual-token principal))
-  (map-get? approved-pair { token: token, dual-token: dual-token })
+(define-read-only (get-pair-details (token principal))
+  (map-get? approved-pair token)
 )
 
-(define-read-only (get-pair-details-or-fail (token principal) (dual-token principal))
-  (ok (unwrap! (get-pair-details token dual-token) ERR-NOT-FOUND))
+(define-read-only (get-pair-details-or-fail (token principal))
+  (ok (unwrap! (get-pair-details token) ERR-NOT-FOUND))
 )
 
-(define-read-only (get-multiplier-in-fixed-or-default (token principal) (dual-token principal))
-  (match (map-get? approved-pair { token: token, dual-token: dual-token })
+(define-read-only (get-dual-token-or-fail (token principal))
+  (ok (get dual-token (try! (get-pair-details-or-fail token))))
+)
+
+(define-public (set-dual-token-or-fail (token principal) (new-dual-token principal))
+  (let 
+    (
+      (pair-details (try! (get-pair-details-or-fail token)))
+    )
+    (try! (check-is-owner))
+    (ok (map-set approved-pair token (merge pair-details { dual-token: new-dual-token })))
+  )
+)
+
+(define-read-only (get-multiplier-in-fixed-or-default (token principal))
+  (match (get-pair-details token)
     pair-details
     (get multiplier-in-fixed pair-details)
     u0
   )
 )
 
-(define-public (set-multiplier-in-fixed (token principal) (dual-token principal) (new-multiplier-in-fixed uint))
+(define-public (set-multiplier-in-fixed (token principal) (new-multiplier-in-fixed uint))
   (let 
     (
-      (pair-details (try! (get-pair-details-or-fail token dual-token)))
+      (pair-details (try! (get-pair-details-or-fail token)))
     )
     (try! (check-is-owner))
-    (ok (map-set approved-pair { token: token, dual-token: dual-token } (merge pair-details { multiplier-in-fixed: new-multiplier-in-fixed })))
+    (ok (map-set approved-pair token (merge pair-details { multiplier-in-fixed: new-multiplier-in-fixed })))
   )
 )
 
-(define-read-only (get-start-cycle-or-default (token principal) (dual-token principal))
-  (match (map-get? approved-pair { token: token, dual-token: dual-token })
+(define-read-only (get-start-cycle-or-default (token principal))
+  (match (map-get? approved-pair token)
     pair-details
     (get start-cycle pair-details)
     MAX_UINT
   )
 )
 
-(define-public (set-start-cycle (token principal) (dual-token principal) (new-start-cycle uint))
+(define-public (set-start-cycle (token principal) (new-start-cycle uint))
   (let 
     (
-      (pair-details (try! (get-pair-details-or-fail token dual-token)))
+      (pair-details (try! (get-pair-details-or-fail token)))
     )
     (try! (check-is-owner))
-    (ok (map-set approved-pair { token: token, dual-token: dual-token } (merge pair-details { start-cycle: new-start-cycle })))
+    (ok (map-set approved-pair token (merge pair-details { start-cycle: new-start-cycle })))
   )
 )
 
@@ -90,7 +102,7 @@
 (define-public (add-token (token principal) (dual-token principal) (multiplier-in-fixed uint) (start-cycle uint))
   (begin
     (try! (check-is-owner))
-    (ok (map-set approved-pair { token: token, dual-token: dual-token } { multiplier-in-fixed: multiplier-in-fixed, start-cycle: start-cycle }))
+    (ok (map-set approved-pair token { dual-token: dual-token, multiplier-in-fixed: multiplier-in-fixed, start-cycle: start-cycle }))
   )
 )
 
@@ -108,7 +120,7 @@
       (dual-token (contract-of dual-token-trait))
       (sender tx-sender)
       (claimed (try! (contract-call? .alex-reserve-pool claim-staking-reward token-trait target-cycle)))
-      (entitled-dual (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token dual-token)))
+      (entitled-dual (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token)))
     )
     (try! (check-is-approved-pair token dual-token))
     (and 
