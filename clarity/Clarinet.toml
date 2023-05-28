@@ -705,6 +705,10 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/pool/dual-farming-pool.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve-pool" ]
 
+[contracts.dual-farming-pool-v1-01]
+path = "contracts/helpers/dual-farming-pool-v1-01.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool" ]
+
 [contracts.trait-transfer]
 path = "contracts/traits/trait-transfer.clar"
 depends_on = [ ]
@@ -1091,5 +1095,9 @@ path = "contracts/bridge/bridge-endpoint-v1-02.clar"
 depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
 clarity_version = 2
 epoch = "2.1"
+
+[contracts.autoalex-apower-helper-v2]
+path = "contracts/helpers/autoalex-apower-helper-v2.clar"
+depends_on = [ "auto-alex-v2", "token-apower" ]
 
 
