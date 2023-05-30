@@ -1100,4 +1100,8 @@ epoch = "2.1"
 path = "contracts/helpers/autoalex-apower-helper-v2.clar"
 depends_on = [ "auto-alex-v2", "token-apower" ]
 
+[contracts.autoalex-b20-helper-v2]
+path = "contracts/helpers/autoalex-b20-helper-v2.clar"
+depends_on = [ "auto-alex-v2", "token-apower", "brc20-db20" ]
+
 
