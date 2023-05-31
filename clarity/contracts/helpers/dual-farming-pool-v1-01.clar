@@ -131,6 +131,14 @@
   )
 )
 
+(define-public (claim-staking-reward-by-auto-alex (dual-token-trait <ft-trait>) (target-cycle uint))
+  (let 
+    (
+      (dual-token (contract-of dual-token-trait))
+    )
+  )
+)
+
 (define-public (claim-staking-reward (token <ft-trait>) (dual-token <ft-trait>) (reward-cycles (list 200 uint)))
   (ok 
     (map 
