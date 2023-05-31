@@ -707,7 +707,7 @@ depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve
 
 [contracts.dual-farming-pool-v1-01]
 path = "contracts/helpers/dual-farming-pool-v1-01.clar"
-depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool" ]
+depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool", "auto-alex-v2" ]
 
 [contracts.trait-transfer]
 path = "contracts/traits/trait-transfer.clar"
@@ -1103,5 +1103,9 @@ depends_on = [ "auto-alex-v2", "token-apower" ]
 [contracts.autoalex-b20-helper-v2]
 path = "contracts/helpers/autoalex-b20-helper-v2.clar"
 depends_on = [ "auto-alex-v2", "token-apower", "brc20-db20" ]
+
+[contracts.brc20-db20]
+path = "contracts/token/brc20-db20.clar"
+depends_on = []
 
 

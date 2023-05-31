@@ -5,6 +5,7 @@
 
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-NOT-FOUND (err u1003))
+(define-constant ERR-USER-ID-NOT-FOUND (err u1004))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 
@@ -135,7 +136,17 @@
   (let 
     (
       (dual-token (contract-of dual-token-trait))
+      (user-id (unwrap! (contract-call? .alex-reserve-pool get-user-id .age000-governance-token .auto-alex-v2) ERR-USER-ID-NOT-FOUND))
+      (entitled-token (contract-call? .alex-reserve-pool get-staking-reward .age000-governance-token user-id target-cycle))
+      (entitled-dual (mul-down entitled-token (get-multiplier-in-fixed-or-default .age000-governance-token)))
     )
+    (try! (check-is-approved-pair .age000-governance-token dual-token))
+    (try! (contract-call? .auto-alex-v2 claim-and-stake target-cycle))
+    (and 
+      (> entitled-dual u0)
+      (as-contract (try! (contract-call? dual-token-trait transfer-fixed entitled-dual tx-sender .auto-alex-v2 none)))
+    )
+    (ok { to-return: u0, entitled-token: entitled-token, entitled-dual: entitled-dual })
   )
 )
 
