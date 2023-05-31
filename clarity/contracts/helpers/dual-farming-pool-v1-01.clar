@@ -125,7 +125,7 @@
       (entitled-dual (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token)))
     )
     (try! (check-is-approved-pair token dual-token))
-    (asserts! (>= (get-start-cycle-or-default token) target-cycle) ERR-NOT-STARTED)
+    (asserts! (>= target-cycle (get-start-cycle-or-default token)) ERR-NOT-STARTED)
     (and 
       (> entitled-dual u0)
       (as-contract (try! (contract-call? dual-token-trait transfer-fixed entitled-dual tx-sender sender none)))
