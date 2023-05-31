@@ -371,6 +371,115 @@ Clarinet.test({
 })
 
 Clarinet.test({
+    name: "auto-alex-v2 / dual-farming-pool-v1-01 : ensure that claim-staking-reward-by-auto-alex works with a valid cycle",
+    async fn(chain: Chain, accounts: Map<string, Account>) {
+        const deployer = accounts.get("deployer")!;
+        const wallet_1 = accounts.get("wallet_1")!;
+        const wallet_2 = accounts.get("wallet_2")!;
+        const yieldVault = new YieldVault(chain, "auto-alex-v2");
+        const reservePool = new ReservePool(chain);
+        const alexToken = new FungibleToken(chain, deployer, "age000-governance-token");
+        const dx = ONE_8;
+
+        let result: any = alexToken.mintFixed(deployer, wallet_1.address, dx);
+        result.expectOk();
+
+        let block = chain.mineBlock([
+            reservePool.addToken(deployer, alexTokenAddress),
+            reservePool.setActivationBlock(deployer, alexTokenAddress, ACTIVATION_BLOCK),
+            reservePool.setCoinbaseAmount(deployer, alexTokenAddress, ONE_8, ONE_8, ONE_8, ONE_8, ONE_8),
+            yieldVault.setStartCycle(deployer, 0),
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
+            Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
+            Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address),
+            Tx.contractCall('brc20-db20', 'mint-fixed', [types.uint(100e8), types.principal(deployer.address + '.dual-farming-pool-v1-01')], deployer.address),
+            Tx.contractCall('dual-farming-pool-v1-01', 'add-token', [types.principal(deployer.address + '.age000-governance-token'), types.principal(deployer.address + '.brc20-db20'), types.uint(0.5e8), types.uint(1)], deployer.address)      
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+
+        block = chain.mineBlock([
+            yieldVault.addToPosition(wallet_1, dx),
+            // Tx.contractCall('dual-farming-pool-v1-01', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
+        ]);
+        block.receipts[0].result.expectOk();
+        // block.receipts[1].result.expectErr().expectUint(1005);
+
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            wallet_1.address,
+            deployer.address + ".auto-alex-v2",
+            "alex"
+        );
+        block.receipts[0].events.expectFungibleTokenTransferEvent(
+            dx,
+            deployer.address + ".auto-alex-v2",
+            deployer.address + ".alex-vault",
+            "alex"
+        );
+        block.receipts[0].events.expectFungibleTokenMintEvent(
+            dx,
+            wallet_1.address,
+            "auto-alex-v2"
+        );
+
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
+        block = chain.mineBlock([
+            Tx.contractCall('dual-farming-pool-v1-01', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
+        ]);
+        block.receipts[0].result.expectErr().expectUint(1005);        
+
+        // end of cycle 1
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 1050);
+
+        block = chain.mineBlock([
+            yieldVault.setBountyInFixed(deployer, ONE_8),
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+
+        block = chain.mineBlock([
+            yieldVault.setBountyInFixed(wallet_2, BountyFixed),
+            Tx.contractCall('dual-farming-pool-v1-01', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(1)], wallet_2.address)
+            // yieldVault.claimAndStake(wallet_2, 1)
+        ]);
+        block.receipts.forEach(e => { e.result.expectErr() });
+
+        block = chain.mineBlock([
+            yieldVault.setBountyInFixed(deployer, BountyFixed),
+            Tx.contractCall('dual-farming-pool-v1-01', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(1)], wallet_2.address)
+            // yieldVault.claimAndStake(wallet_2, 1)
+        ]);
+        block.receipts.forEach(e => { e.result.expectOk() });
+
+        block.receipts[1].events.expectFungibleTokenMintEvent(
+            ONE_8,
+            deployer.address + ".auto-alex-v2",
+            "alex"
+        );
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            BountyFixed,
+            deployer.address + ".auto-alex-v2",
+            wallet_2.address,
+            "alex"
+        );
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            ONE_8 - BountyFixed,
+            deployer.address + ".auto-alex-v2",
+            deployer.address + ".alex-vault",
+            "alex"
+        );
+        block.receipts[1].events.expectFungibleTokenTransferEvent(
+            ONE_8 / 2,
+            deployer.address + ".dual-farming-pool-v1-01",
+            deployer.address + ".auto-alex-v2",
+            "brc20-db20"
+        );        
+
+    }
+})
+
+Clarinet.test({
     name: "auto-alex-v2 : ensure that claim-and-mint works with valid cycles",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
