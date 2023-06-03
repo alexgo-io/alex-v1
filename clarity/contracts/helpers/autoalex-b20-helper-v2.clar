@@ -42,7 +42,7 @@
 	)
 )
 
-(define-private (mint-apower-iter (recipient {recipient: principal, amount: uint}) (prior (response uint uint)))
+(define-private (mint-db20-iter (recipient {recipient: principal, amount: uint}) (prior (response uint uint)))
   (begin
     (as-contract (try! (contract-call? .brc20-db20 mint-fixed (get amount recipient) (get recipient recipient))))
     (ok (+ (try! prior) (get amount recipient)))
@@ -56,13 +56,13 @@
   )
 )
 
-(define-public (mint-and-burn-apower (cycle uint) (batch uint) (recipients (list 200 {recipient: principal, amount: uint})))
+(define-public (mint-and-burn-db20 (cycle uint) (batch uint) (recipients (list 200 {recipient: principal, amount: uint})))
 	(begin
 		(asserts! (or (is-ok (check-is-owner)) (is-ok (check-is-approved))) ERR-NOT-AUTHORIZED)
     (asserts! (is-eq (is-cycle-batch-processed cycle batch) false) ERR-ALREADY-PROCESSED)
     (let
       (
-        (minted (try! (fold mint-apower-iter recipients (ok u0))))
+        (minted (try! (fold mint-db20-iter recipients (ok u0))))
       )
       (map-set processed-batches { cycle: cycle, batch: batch } true)
       (as-contract (contract-call? .brc20-db20 burn-fixed minted .auto-alex-v2))
