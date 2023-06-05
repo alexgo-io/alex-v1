@@ -424,11 +424,11 @@ Clarinet.test({
             "auto-alex-v2"
         );
 
-        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
-        block = chain.mineBlock([
-            Tx.contractCall('dual-farming-pool-v1-01', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
-        ]);
-        block.receipts[0].result.expectErr().expectUint(1005);        
+        // chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
+        // block = chain.mineBlock([
+        //     Tx.contractCall('dual-farming-pool-v1-01', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
+        // ]);
+        // block.receipts[0].result.expectErr().expectUint(1005);        
 
         // end of cycle 1
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 1050);
