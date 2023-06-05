@@ -6,7 +6,6 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-NOT-FOUND (err u1003))
 (define-constant ERR-USER-ID-NOT-FOUND (err u1004))
-(define-constant ERR-NOT-STARTED (err u1005))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 
@@ -62,6 +61,14 @@
   )
 )
 
+(define-read-only (get-multiplier-by-cycle-or-default (token principal) (target-cycle uint))
+  (match (get-pair-details token)
+    pair-details
+    (if (< target-cycle (get start-cycle pair-details)) u0 (get multiplier-in-fixed pair-details))
+    u0
+  )
+)
+
 (define-read-only (get-multiplier-in-fixed-or-default (token principal))
   (match (get-pair-details token)
     pair-details
@@ -81,7 +88,7 @@
 )
 
 (define-read-only (get-start-cycle-or-default (token principal))
-  (match (map-get? approved-pair token)
+  (match (get-pair-details token)
     pair-details
     (get start-cycle pair-details)
     MAX_UINT
@@ -122,10 +129,9 @@
       (dual-token (contract-of dual-token-trait))
       (sender tx-sender)
       (claimed (try! (contract-call? .alex-reserve-pool claim-staking-reward token-trait target-cycle)))
-      (entitled-dual (mul-down (get entitled-token claimed) (get-multiplier-in-fixed-or-default token)))
+      (entitled-dual (mul-down (get entitled-token claimed) (get-multiplier-by-cycle-or-default token target-cycle)))
     )
     (try! (check-is-approved-pair token dual-token))
-    (asserts! (>= target-cycle (get-start-cycle-or-default token)) ERR-NOT-STARTED)
     (and 
       (> entitled-dual u0)
       (as-contract (try! (contract-call? dual-token-trait transfer-fixed entitled-dual tx-sender sender none)))
@@ -140,10 +146,9 @@
       (dual-token (contract-of dual-token-trait))
       (user-id (unwrap! (contract-call? .alex-reserve-pool get-user-id .age000-governance-token .auto-alex-v2) ERR-USER-ID-NOT-FOUND))
       (entitled-token (contract-call? .alex-reserve-pool get-staking-reward .age000-governance-token user-id target-cycle))
-      (entitled-dual (mul-down entitled-token (get-multiplier-in-fixed-or-default .age000-governance-token)))
+      (entitled-dual (mul-down entitled-token (get-multiplier-by-cycle-or-default .age000-governance-token target-cycle)))
     )
     (try! (check-is-approved-pair .age000-governance-token dual-token))
-    (asserts! (>= target-cycle (get-start-cycle-or-default .age000-governance-token)) ERR-NOT-STARTED)
     (try! (contract-call? .auto-alex-v2 claim-and-stake target-cycle))
     (and 
       (> entitled-dual u0)
