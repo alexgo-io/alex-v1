@@ -709,6 +709,10 @@ depends_on = [ "trait-ownable", "trait-sip-010", "trait-transfer", "alex-reserve
 path = "contracts/helpers/dual-farming-pool-v1-01.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool", "auto-alex-v2" ]
 
+[contracts.dual-farming-pool-v1-02]
+path = "contracts/helpers/dual-farming-pool-v1-02.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool", "auto-alex-v2" ]
+
 [contracts.trait-transfer]
 path = "contracts/traits/trait-transfer.clar"
 depends_on = [ ]

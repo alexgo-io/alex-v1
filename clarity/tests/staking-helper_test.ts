@@ -338,7 +338,7 @@ Clarinet.test({
 });
 
 Clarinet.test({
-  name: "dual-farming-pool-v1-01/diko tests",
+  name: "dual-farming-pool-v1-02/diko tests",
 
   async fn(chain: Chain, accounts: Map<string, Account>) {
       let deployer = accounts.get("deployer")!;
@@ -352,9 +352,9 @@ Clarinet.test({
         ], deployer.address),
         Tx.contractCall("token-diko", "mint-fixed", [
           types.uint(100000e8),
-          types.principal(deployer.address + '.dual-farming-pool-v1-01')
+          types.principal(deployer.address + '.dual-farming-pool-v1-02')
         ], deployer.address),
-        Tx.contractCall('dual-farming-pool-v1-01', 'add-token', [
+        Tx.contractCall('dual-farming-pool-v1-02', 'add-token', [
           types.principal(stakedAddress),
           types.principal(underlyingAddress),
           types.uint(ONE_8),
@@ -380,7 +380,7 @@ Clarinet.test({
       chain.mineEmptyBlockUntil(8 + reward_cycle_length * 4 + 1);  
       
       block = chain.mineBlock([
-        Tx.contractCall("dual-farming-pool-v1-01", "claim-staking-reward", [
+        Tx.contractCall("dual-farming-pool-v1-02", "claim-staking-reward", [
           types.principal(stakedAddress),
           types.principal(underlyingAddress),
           types.list([types.uint(1), types.uint(2), types.uint(3)])
@@ -396,7 +396,7 @@ Clarinet.test({
 
       block.receipts[0].events.expectFungibleTokenTransferEvent(
         1e6,
-        deployer.address + '.dual-farming-pool-v1-01',
+        deployer.address + '.dual-farming-pool-v1-02',
         wallet_6.address,
         "diko"
       );
