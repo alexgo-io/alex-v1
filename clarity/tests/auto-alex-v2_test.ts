@@ -371,7 +371,7 @@ Clarinet.test({
 })
 
 Clarinet.test({
-    name: "auto-alex-v2 / dual-farming-pool-v1-02 : ensure that claim-staking-reward-by-auto-alex works with a valid cycle",
+    name: "auto-alex-v2 / dual-farming-pool-v1-03 : ensure that claim-staking-reward-by-auto-alex works with a valid cycle",
     async fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get("deployer")!;
         const wallet_1 = accounts.get("wallet_1")!;
@@ -392,8 +392,8 @@ Clarinet.test({
             yieldVault.setBountyInFixed(deployer, BountyFixed),
             Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
             Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address),
-            Tx.contractCall('brc20-db20', 'mint-fixed', [types.uint(100e8), types.principal(deployer.address + '.dual-farming-pool-v1-02')], deployer.address),
-            Tx.contractCall('dual-farming-pool-v1-02', 'add-token', [types.principal(deployer.address + '.age000-governance-token'), types.principal(deployer.address + '.brc20-db20'), types.uint(0.5e8), types.uint(1)], deployer.address)      
+            Tx.contractCall('brc20-db20', 'mint-fixed', [types.uint(100e8), types.principal(deployer.address + '.dual-farming-pool-v1-03')], deployer.address),
+            Tx.contractCall('dual-farming-pool-v1-03', 'add-token', [types.principal(deployer.address + '.age000-governance-token'), types.principal(deployer.address + '.brc20-db20'), types.uint(0.5e8), types.uint(1)], deployer.address)      
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
 
@@ -401,7 +401,7 @@ Clarinet.test({
 
         block = chain.mineBlock([
             yieldVault.addToPosition(wallet_1, dx),
-            // Tx.contractCall('dual-farming-pool-v1-02', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
+            // Tx.contractCall('dual-farming-pool-v1-03', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
         ]);
         block.receipts[0].result.expectOk();
         // block.receipts[1].result.expectErr().expectUint(1005);
@@ -426,7 +426,7 @@ Clarinet.test({
 
         // chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 525);
         // block = chain.mineBlock([
-        //     Tx.contractCall('dual-farming-pool-v1-02', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
+        //     Tx.contractCall('dual-farming-pool-v1-03', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(0)], wallet_2.address)
         // ]);
         // block.receipts[0].result.expectErr().expectUint(1005);        
 
@@ -440,14 +440,14 @@ Clarinet.test({
 
         block = chain.mineBlock([
             yieldVault.setBountyInFixed(wallet_2, BountyFixed),
-            Tx.contractCall('dual-farming-pool-v1-02', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(1)], wallet_2.address)
+            Tx.contractCall('dual-farming-pool-v1-03', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(1)], wallet_2.address)
             // yieldVault.claimAndStake(wallet_2, 1)
         ]);
         block.receipts.forEach(e => { e.result.expectErr() });
 
         block = chain.mineBlock([
             yieldVault.setBountyInFixed(deployer, BountyFixed),
-            Tx.contractCall('dual-farming-pool-v1-02', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(1)], wallet_2.address)
+            Tx.contractCall('dual-farming-pool-v1-03', 'claim-staking-reward-by-auto-alex', [types.principal(deployer.address + '.brc20-db20'), types.uint(1)], wallet_2.address)
             // yieldVault.claimAndStake(wallet_2, 1)
         ]);
         block.receipts.forEach(e => { e.result.expectOk() });
@@ -471,7 +471,7 @@ Clarinet.test({
         );
         block.receipts[1].events.expectFungibleTokenTransferEvent(
             ONE_8 / 2,
-            deployer.address + ".dual-farming-pool-v1-02",
+            deployer.address + ".dual-farming-pool-v1-03",
             deployer.address + ".auto-alex-v2",
             "brc20-db20"
         );        
