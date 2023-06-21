@@ -569,6 +569,10 @@ depends_on = [
 path = "contracts/pool/alex-launchpad-v1-1.clar"
 depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
 
+[contracts.alex-launchpad-v1-2]
+path = "contracts/pool/alex-launchpad-v1-2.clar"
+depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
+
 [contracts.token-banana]
 path = "contracts/token/token-banana.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
