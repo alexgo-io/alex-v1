@@ -1098,9 +1098,13 @@ depends_on = [
 path = "contracts/helpers/staking-helper-sft.clar"
 depends_on = [ "alex-reserve-pool-sft", "trait-semi-fungible" ]
 
+[contracts.token-vibes]
+path = "contracts/token/token-vibes.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+
 [contracts.token-wvibes]
 path = "contracts/wrapped-token/token-wvibes.clar"
-depends_on = []
+depends_on = [ "trait-ownable", "trait-sip-010", "token-vibes", "trait-ido-ft"]
 
 [contracts.bridge-endpoint-v1-02]
 path = "contracts/bridge/bridge-endpoint-v1-02.clar"
