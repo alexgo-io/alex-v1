@@ -94,7 +94,8 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? 'SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token get-balance account)) (pow-decimals)) (pow u10 u8)))
+  (ok (/ (* (unwrap-panic (contract-call? .token-vibes get-balance account)) (pow-decimals)) (pow u10 u8)))
+  ;; (ok (/ (* (unwrap-panic (contract-call? 'SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token get-balance account)) (pow-decimals)) (pow u10 u8)))
 )
 
 ;; @desc get-token-uri
@@ -113,7 +114,8 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? 'SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
+    (contract-call? .token-vibes transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
+    ;; (contract-call? 'SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token transfer (/ (* amount (pow u10 u8)) (pow-decimals)) sender recipient memo)
   )
 )
 
