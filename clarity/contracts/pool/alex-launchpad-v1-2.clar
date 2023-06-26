@@ -139,7 +139,8 @@
 )
 
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
-	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) u15) u10)
+	;; (/ (* (/ (* tickets-registered walk-resolution) total-tickets) u15) u10)
+	(/ (* tickets-registered walk-resolution) total-tickets)
 )
 
 (define-private (next-bounds (launch-id uint) (tickets uint))
