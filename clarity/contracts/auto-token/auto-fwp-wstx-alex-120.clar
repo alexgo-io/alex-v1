@@ -364,8 +364,8 @@
     (ok 
       (if (is-eq u0 (var-get total-supply))
         { token: dx, rewards: u0 }
-        { 
-          token: dx, ;;(div-down (mul-down (var-get total-supply) dx) (get principal next-base)), 
+        {
+          token: dx,
           rewards: (div-down (mul-down (get rewards next-base) dx) (get principal next-base))
         }
       )
@@ -408,7 +408,7 @@
         
       ;; mint pool token and send to tx-sender
       (var-set total-supply new-total-supply)
-	    (try! (ft-mint? auto-fwp-wstx-alex-120 (fixed-to-decimals (get token new-supply)) sender))
+			(try! (ft-mint? auto-fwp-wstx-alex-120 (fixed-to-decimals (get token new-supply)) sender))
       (print { object: "pool", action: "position-added", data: { new-supply: (get token new-supply), total-supply: new-total-supply }})
       (ok true)
     )
@@ -482,7 +482,7 @@
     
     ;; burn pool token
     (var-set total-supply new-total-supply)
-	  (try! (ft-burn? auto-fwp-wstx-alex-120 (fixed-to-decimals reduce-supply) sender))
+		(try! (ft-burn? auto-fwp-wstx-alex-120 (fixed-to-decimals reduce-supply) sender))
     (print { object: "pool", action: "position-removed", data: { reduce-supply: reduce-supply, total-supply: new-total-supply }})
     (ok { principal: reduce-principal-balance, rewards: reduce-alex-balance })
   ) 

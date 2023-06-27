@@ -14,18 +14,18 @@
 (define-data-var chain-nonce uint u0)
 (define-map approved-chains uint { name: (string-utf8 256), buff-length: uint })
 
-(define-read-only (get-approved-chain-or-fail (chain-id uint))
-  (ok (unwrap! (map-get? approved-chains chain-id) ERR-CHAIN-NOT-AUTHORIZED))
+(define-read-only (get-approved-chain-or-fail (the-chain-id uint))
+  (ok (unwrap! (map-get? approved-chains the-chain-id) ERR-CHAIN-NOT-AUTHORIZED))
 )
 
 (define-public (set-approved-chain (chain-details { name: (string-utf8 256), buff-length: uint }))
   (let 
     (
-      (chain-id (+ (var-get chain-nonce) u1))
+      (the-chain-id (+ (var-get chain-nonce) u1))
     ) 
     (try! (check-is-owner))
-    (var-set chain-nonce chain-id)
-    (ok (map-set approved-chains chain-id chain-details))
+    (var-set chain-nonce the-chain-id)
+    (ok (map-set approved-chains the-chain-id chain-details))
   )
 )
 
@@ -66,10 +66,10 @@
   (ok (asserts! (default-to false (map-get? approved-recipients recipient)) ERR-RECIPIENT-NOT-AUTHORIZED))
 )
 
-(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (settle-address (buff 256)))
+(define-public (transfer-to-unwrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (the-chain-id uint) (settle-address (buff 256)))
   (let 
     (
-      (chain-details (try! (get-approved-chain-or-fail chain-id)))
+      (chain-details (try! (get-approved-chain-or-fail the-chain-id)))
     ) 
     (try! (check-is-approved-token (contract-of token-trait)))
     (try! (check-is-approved-recipient recipient))
@@ -78,10 +78,10 @@
   )
 )
 
-(define-public (transfer-to-wrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (chain-id uint) (tx-id (buff 256)))
+(define-public (transfer-to-wrap (token-trait <ft-trait>) (amount-in-fixed uint) (recipient principal) (the-chain-id uint) (tx-id (buff 256)))
   (let 
     (
-      (chain-details (try! (get-approved-chain-or-fail chain-id)))
+      (chain-details (try! (get-approved-chain-or-fail the-chain-id)))
     )
     (try! (check-is-approved-token (contract-of token-trait)))
     (try! (contract-call? token-trait transfer-fixed amount-in-fixed tx-sender recipient none))
