@@ -18,5 +18,4 @@ node_modules
 yarn-error.log
 tsconfig.tsbuildinfo
 /clarity/contracts_modules
-/clarity/.cache/deps/
-/clarity/.cache/gen/
+/clarity/.cache
