@@ -94,7 +94,7 @@
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? .token-usda get-balance account)) (pow-decimals)) (pow u10 u6)))
+  (ok (/ (* (unwrap-panic (contract-call? 'SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.usda-token get-balance account)) (pow-decimals)) (pow u10 u6)))
   ;; SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.usda-token
 )
 
@@ -114,7 +114,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? .token-usda transfer (/ (* amount (pow u10 u6)) (pow-decimals)) sender recipient memo)
+    (contract-call? 'SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.usda-token transfer (/ (* amount (pow u10 u6)) (pow-decimals)) sender recipient memo)
   )
 )
 
