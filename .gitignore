@@ -19,3 +19,4 @@ yarn-error.log
 tsconfig.tsbuildinfo
 /clarity/contracts_modules
 /clarity/.cache
+/.vscode
