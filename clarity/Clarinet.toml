@@ -1135,4 +1135,10 @@ depends_on = [ "auto-alex-v2", "token-apower", "brc20-db20" ]
 path = "contracts/token/brc20-db20.clar"
 depends_on = []
 
+[contracts.flash-loan-user-amm-to-fixed-susdt-xusd]
+path = "contracts/flash-loan-user-amm-to-fixed-susdt-xusd.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-susdt-xusd]
+path = "contracts/flash-loan-user-fixed-to-amm-susdt-xusd.clar"
+
 
