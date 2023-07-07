@@ -1141,10 +1141,4 @@ path = "contracts/flash-loan-user-amm-to-fixed-susdt-xusd.clar"
 [contracts.flash-loan-user-fixed-to-amm-susdt-xusd]
 path = "contracts/flash-loan-user-fixed-to-amm-susdt-xusd.clar"
 
-[contracts.flash-loan-user-amm-to-fixed-xusd-susdt]
-path = "contracts/flash-loan-user-amm-to-fixed-xusd-susdt.clar"
-
-[contracts.flash-loan-user-fixed-to-amm-xusd-susdt]
-path = "contracts/flash-loan-user-fixed-to-amm-xusd-susdt.clar"
-
 
