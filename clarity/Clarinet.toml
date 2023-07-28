@@ -1151,4 +1151,7 @@ path = "contracts/flash-loan-user-amm-to-fixed-xusd-susdt.clar"
 [contracts.flash-loan-user-fixed-to-amm-xusd-susdt]
 path = "contracts/flash-loan-user-fixed-to-amm-xusd-susdt.clar"
 
+[contracts.ordinals-bluewheel]
+path = "contracts/token/ordinals-bluewheel.clar"
+
 
