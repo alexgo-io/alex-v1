@@ -7,9 +7,10 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-tokens principal bool)
 
-(define-data-var event-nonce uint u0) ;; TODO remove?
-(define-map claims { event: uint, claimer: principal, token: principal } uint)
-(define-map claimed { event: uint, claimer: principal, token: principal } uint)
+(define-data-var event-nonce uint u0)
+(define-map event-details uint { token: principal, amount: uint, start-timestamp: uint, end-timestamp: uint })
+(define-map claims { event: uint, claimer: principal } uint)
+(define-map claimed { event: uint, claimer: principal } uint)
 
 ;; governance functions
 
@@ -27,10 +28,50 @@
 	)
 )
 
-(define-public (set-claim-many (claim-many (list 1000 { event: uint, claimer: principal, token: principal, amount: uint })))
+(define-public (create-event (token-trait <ft-trait>) (amount uint) (start-timestamp uint) (end-timestamp uint))
+  (let 
+    (
+      (event-id (+ (var-get event-nonce) u1))
+    )
+    (try! (check-is-owner))
+    (try! (contract-call? token-trait transfer-fixed amount tx-sender (as-contract tx-sender) none))
+    (asserts! (< start-timestamp end-timestamp) ERR-INVALID-TIMESTAMP)
+    (map-set event-details event-id { token: (contract-of token-trait), amount: amount, start-timestamp: start-timestamp, end-timestamp: end-timestamp })
+    (var-set event-nonce event-id)
+    (ok event-id)
+  )
+)
+
+(define-public (update-event (event-id uint) (token-trait <ft-trait>) (amount uint) (start-timestamp uint) (end-timestamp uint))
+  (let 
+    (
+      (event-detail (get-event-detail-or-fail event-id))
+    )    
+    (try! (check-is-owner))
+    (asserts! (is-eq (contract-of token-trait) (get token event-detail)) ERR-TOKEN-NOT-MATCHED)
+    (asserts! (>= amount (get amount event-detail)) ERR-INVALID-AMOUNT)
+    (asserts! (< start-timestamp end-timestamp) ERR-INVALID-TIMESTAMP)
+    (and (> amount (get amount event-detail)) (try! (contract-call? token-trait transfer-fixed (- amount (get amount event-detail)) tx-sender (as-contract tx-sender) none)))
+    (ok (map-set event-details event-id ))
+
+  )
+)
+
+(define-read-only (get-event-detail-or-fail (event-id uint))
+  (ok (unwrap! (map-get? event-details event-id) ERR-UNKNOWN-EVENT-ID))
+)
+
+(define-public (set-claim-many (claim-many (list 1000 { event: uint, claimer: principal, amount: uint })))
   (begin 
     (try! (check-is-owner))
     (fold set-claim-iter claim-many (ok true))
+  )
+)
+
+(define-public (send-token (token-trait <ft-trait>) (amount uint))
+  (begin 
+    (try! (check-is-owner))
+    (as-contract (contract-call? token-trait transfer-fixed amount tx-sender (var-get contract-owner) none))
   )
 )
 
@@ -73,10 +114,13 @@
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
-(define-private (set-claim-iter (claim { event: uint, claimer: principal, token: principal, amount: uint }) (previous-response (response bool uint)))
+(define-private (set-claim-iter (claim { event: uint, claimer: principal, amount: uint }) (previous-response (response uint uint)))
   (match previous-response
     prev-ok
-    (begin
+    (let 
+      (
+        (amount-so-far (+ prev-ok (get amount claim)))
+      )
       (try! (check-is-approved-token (get token claim)))
       (ok (map-set claims { event: (get event claim), claimer: (get claimer claim), token: (get token claim) } (get amount claim)))
     )
