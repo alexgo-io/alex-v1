@@ -8,7 +8,7 @@
 (define-map approved-tokens principal bool)
 
 (define-data-var event-nonce uint u0)
-(define-map event-details uint { token: principal, amount: uint, start-timestamp: uint, end-timestamp: uint })
+(define-map event-details uint { token: principal, max: uint, deposited: uint, claimed: uint, start-timestamp: uint, end-timestamp: uint })
 (define-map claims { event: uint, claimer: principal } uint)
 (define-map claimed { event: uint, claimer: principal } uint)
 
@@ -52,19 +52,19 @@
     (asserts! (>= amount (get amount event-detail)) ERR-INVALID-AMOUNT)
     (asserts! (< start-timestamp end-timestamp) ERR-INVALID-TIMESTAMP)
     (and (> amount (get amount event-detail)) (try! (contract-call? token-trait transfer-fixed (- amount (get amount event-detail)) tx-sender (as-contract tx-sender) none)))
-    (ok (map-set event-details event-id ))
-
+    (ok (map-set event-details event-id { token: (get token event-detail), amount: amount, start-timestamp: start-timestamp, end-timestamp: end-timestamp }))
   )
 )
 
 (define-read-only (get-event-detail-or-fail (event-id uint))
   (ok (unwrap! (map-get? event-details event-id) ERR-UNKNOWN-EVENT-ID))
 )
-
-(define-public (set-claim-many (claim-many (list 1000 { event: uint, claimer: principal, amount: uint })))
+(define-data-var temp-event-id uint u0)
+(define-public (set-claim-many (event-id uint) (claim-many (list 1000 { claimer: principal, amount: uint })))
   (begin 
     (try! (check-is-owner))
-    (fold set-claim-iter claim-many (ok true))
+    (var-set temp-event-id event-id)
+    (fold set-claim-iter claim-many (ok u0))
   )
 )
 
@@ -114,15 +114,17 @@
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED))
 )
 
-(define-private (set-claim-iter (claim { event: uint, claimer: principal, amount: uint }) (previous-response (response uint uint)))
+(define-private (set-claim-iter (claim { claimer: principal, amount: uint }) (previous-response (response uint uint)))
   (match previous-response
     prev-ok
     (let 
       (
         (amount-so-far (+ prev-ok (get amount claim)))
+        (event-detail (get-event-detail-or-fail (var-get temp-event-id)))
       )
-      (try! (check-is-approved-token (get token claim)))
-      (ok (map-set claims { event: (get event claim), claimer: (get claimer claim), token: (get token claim) } (get amount claim)))
+      (asserts! (<= amount-so-far (get amount event-detail)) ERR-INVALID-AMOUNT)
+      (map-set claims { event: (var-get temp-event-id), claimer: (get claimer claim) } (get amount claim))
+      (ok amount-so-far)
     )
     prev-err
     previous-response
