@@ -1154,4 +1154,7 @@ path = "contracts/flash-loan-user-fixed-to-amm-xusd-susdt.clar"
 [contracts.ordinals-bluewheel]
 path = "contracts/token/ordinals-bluewheel.clar"
 
+[contracts.event-claim-helper]
+path = "contracts/helpers/event-claim-helper.clar"
+
 
