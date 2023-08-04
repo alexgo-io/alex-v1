@@ -18,8 +18,16 @@
 (define-map claimed { event: uint, claimer: principal } bool)
 
 (define-data-var temp-event-id uint u0)
+(define-data-var temp-timestamp uint u0)
 
 ;; governance functions
+
+(define-public (set-temp-timestamp (timestamp uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set temp-timestamp timestamp))
+  )
+)
 
 (define-public (set-contract-owner (owner principal))
   (begin
@@ -66,15 +74,6 @@
   )
 )
 
-(define-read-only (block-timestamp)
-  (match (get-block-info? time block-height)
-    timestamp
-    (ok timestamp)
-    ;; (ok u100000001) ;; TODO: testing only
-    ERR-GET-BLOCK-INFO
-  )
-)
-
 (define-public (send-excess-token (event-id uint) (token-trait <ft-trait>) (receiver principal))
   (let 
     (
@@ -90,6 +89,13 @@
 )
 
 ;; read-only functions
+
+(define-read-only (block-timestamp)
+  (if (is-eq chain-id u1)
+    (ok (unwrap! (get-block-info? time block-height) ERR-GET-BLOCK-INFO))
+    (ok (var-get temp-timestamp))
+  )
+)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
@@ -115,7 +121,7 @@
     (
       (event-details (try! (get-event-details-or-fail event-id)))
       (claim-amount (get-claim-or-default event-id claimer))      
-      (current-timestamp (unwrap-panic (get-block-info? time block-height)))
+      (current-timestamp (try! (block-timestamp)))
     )
     (asserts! (and (>= current-timestamp (get start-timestamp event-details)) (<= current-timestamp (get end-timestamp event-details))) ERR-INVALID-TIMESTAMP)
     (asserts! (is-eq (contract-of token-trait) (get token event-details)) ERR-TOKEN-NOT-MATCHED)
