@@ -8,6 +8,7 @@
 (define-constant ERR-INVALID-AMOUNT (err u1004))
 (define-constant ERR-ALREADY-CLAIMED (err u1005))
 (define-constant ERR-INVALID-USER (err u1006))
+(define-constant ERR-GET-BLOCK-INFO (err u1007))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -65,12 +66,12 @@
   )
 )
 
-;; TODO: testing only
 (define-read-only (block-timestamp)
   (match (get-block-info? time block-height)
     timestamp
-    timestamp
-    u100000001
+    (ok timestamp)
+    ;; (ok u100000001) ;; TODO: testing only
+    ERR-GET-BLOCK-INFO
   )
 )
 
@@ -78,7 +79,7 @@
   (let 
     (
       (event-details (try! (get-event-details-or-fail event-id)))
-      (current-timestamp (block-timestamp))
+      (current-timestamp (try! (block-timestamp)))
     ) 
     (try! (check-is-owner))
     (asserts! (is-eq (contract-of token-trait) (get token event-details)) ERR-TOKEN-NOT-MATCHED)
