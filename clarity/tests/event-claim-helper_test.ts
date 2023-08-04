@@ -224,15 +224,52 @@ Clarinet.test({
         results = chain.mineBlock([
             Tx.contractCall(
                 contractNames.helper,
-                'set-claim-many',
+                'set-temp-timestamp',
+                [types.uint(Number(eventDetails["start-timestamp"].replace(/\D/g, "")) + 1)],
+                deployer.address
+            ),
+            Tx.contractCall(
+                contractNames.helper,
+                'claim-for-claimer',
                 [
                     types.uint(1), 
-                    types.list(claimList.map(e => types.tuple({ claimer: types.principal(e.claimer), amount: types.uint(e.amount) })))
+                    types.principal(claimer.address),
+                    eventToken
+                ],
+                claimer.address,
+            ),
+            Tx.contractCall(
+                contractNames.helper,
+                'set-temp-timestamp',
+                [types.uint(Number(eventDetails["end-timestamp"].replace(/\D/g, "")) + 1)],
+                deployer.address
+            ),
+            Tx.contractCall(
+                contractNames.helper,
+                'claim-for-claimer',
+                [
+                    types.uint(1), 
+                    types.principal(claimer2.address),
+                    eventToken
+                ],
+                claimer2.address,
+            ),    
+            Tx.contractCall(
+                contractNames.helper,
+                'send-excess-token',
+                [
+                    types.uint(1), 
+                    eventToken,
+                    types.principal(deployer.address),                    
                 ],
                 deployer.address,
-            ),                               
+            ),                                                                 
         ]);
         results.receipts[0].result.expectOk();        
+        results.receipts[1].result.expectOk();
+        results.receipts[2].result.expectOk();
+        results.receipts[3].result.expectErr().expectUint(1001);
+        results.receipts[4].result.expectOk();
     },
 });
 

@@ -74,15 +74,6 @@
   )
 )
 
-(define-read-only (block-timestamp)
-  (match (get-block-info? time block-height)
-    timestamp
-    (ok timestamp)
-    ;; (ok u100000001) ;; TODO: testing only
-    ERR-GET-BLOCK-INFO
-  )
-)
-
 (define-public (send-excess-token (event-id uint) (token-trait <ft-trait>) (receiver principal))
   (let 
     (
