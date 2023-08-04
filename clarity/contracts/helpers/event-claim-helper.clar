@@ -115,7 +115,7 @@
     (
       (event-details (try! (get-event-details-or-fail event-id)))
       (claim-amount (get-claim-or-default event-id claimer))      
-      (current-timestamp (unwrap-panic (get-block-info? time block-height)))
+      (current-timestamp (try! (block-timestamp)))
     )
     (asserts! (and (>= current-timestamp (get start-timestamp event-details)) (<= current-timestamp (get end-timestamp event-details))) ERR-INVALID-TIMESTAMP)
     (asserts! (is-eq (contract-of token-trait) (get token event-details)) ERR-TOKEN-NOT-MATCHED)
