@@ -7,6 +7,8 @@
 (define-constant ERR-TOKEN-NOT-MATCHED (err u1003))
 (define-constant ERR-INVALID-AMOUNT (err u1004))
 (define-constant ERR-ALREADY-CLAIMED (err u1005))
+(define-constant ERR-INVALID-USER (err u1006))
+(define-constant ERR-GET-BLOCK-INFO (err u1007))
 
 (define-data-var contract-owner principal tx-sender)
 
@@ -64,11 +66,20 @@
   )
 )
 
+(define-read-only (block-timestamp)
+  (match (get-block-info? time block-height)
+    timestamp
+    (ok timestamp)
+    ;; (ok u100000001) ;; TODO: testing only
+    ERR-GET-BLOCK-INFO
+  )
+)
+
 (define-public (send-excess-token (event-id uint) (token-trait <ft-trait>) (receiver principal))
   (let 
     (
       (event-details (try! (get-event-details-or-fail event-id)))
-      (current-timestamp (unwrap-panic (get-block-info? time block-height)))
+      (current-timestamp (try! (block-timestamp)))
     ) 
     (try! (check-is-owner))
     (asserts! (is-eq (contract-of token-trait) (get token event-details)) ERR-TOKEN-NOT-MATCHED)
@@ -130,7 +141,7 @@
         (event-details (try! (get-event-details-or-fail (var-get temp-event-id))))
       )
       (asserts! (<= amount-so-far (get deposited event-details)) ERR-INVALID-AMOUNT)
-      (map-set claims { event: (var-get temp-event-id), claimer: (get claimer claim) } (get amount claim))
+      (asserts! (map-insert claims { event: (var-get temp-event-id), claimer: (get claimer claim) } (get amount claim)) ERR-INVALID-USER)
       (ok amount-so-far)
     )
     prev-err
