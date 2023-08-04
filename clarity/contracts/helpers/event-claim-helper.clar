@@ -91,7 +91,7 @@
 ;; read-only functions
 
 (define-read-only (block-timestamp)
-  (if (or (is-eq chain-id u1) (is-eq chain-id u2147483648))
+  (if (is-eq chain-id u1)
     (ok (unwrap! (get-block-info? time block-height) ERR-GET-BLOCK-INFO))
     (ok (var-get temp-timestamp))
   )
