@@ -18,8 +18,16 @@
 (define-map claimed { event: uint, claimer: principal } bool)
 
 (define-data-var temp-event-id uint u0)
+(define-data-var temp-timestamp uint u0)
 
 ;; governance functions
+
+(define-public (set-temp-timestamp (timestamp uint))
+  (begin 
+    (try! (check-is-owner))
+    (ok (var-set temp-timestamp timestamp))
+  )
+)
 
 (define-public (set-contract-owner (owner principal))
   (begin
@@ -66,15 +74,6 @@
   )
 )
 
-(define-read-only (block-timestamp)
-  (match (get-block-info? time block-height)
-    timestamp
-    (ok timestamp)
-    ;; (ok u100000001) ;; TODO: testing only
-    ERR-GET-BLOCK-INFO
-  )
-)
-
 (define-public (send-excess-token (event-id uint) (token-trait <ft-trait>) (receiver principal))
   (let 
     (
@@ -90,6 +89,13 @@
 )
 
 ;; read-only functions
+
+(define-read-only (block-timestamp)
+  (if (or (is-eq chain-id u1) (is-eq chain-id u2147483648))
+    (ok (unwrap! (get-block-info? time block-height) ERR-GET-BLOCK-INFO))
+    (ok (var-get temp-timestamp))
+  )
+)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))

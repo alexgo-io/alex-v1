@@ -1156,5 +1156,7 @@ path = "contracts/token/ordinals-bluewheel.clar"
 
 [contracts.event-claim-helper]
 path = "contracts/helpers/event-claim-helper.clar"
+clarity_version = 2
+epoch = "2.1"
 
 
