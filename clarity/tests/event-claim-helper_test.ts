@@ -5,7 +5,7 @@ import {
     Clarinet,
     Tx,
     types,
-} from 'https://deno.land/x/clarinet@v0.34.0/index.ts';
+} from 'https://deno.land/x/clarinet@v1.7.1/index.ts';
 export { assertEquals } from 'https://deno.land/std@0.166.0/testing/asserts.ts';
 export {
     Chain,
@@ -22,7 +22,7 @@ export {
 export type { Account };
 
 const contractNames = {
-    helper: 'event-claim-helper',
+    helper: 'event-claim-helper-v1-01',
     eventToken: 'age000-governance-token',
 };
 
@@ -46,6 +46,9 @@ export function prepare(
 ) {
     const deployer = accounts.get('deployer')!;
 
+    const startTimestamp = Math.floor(Date.now() / 1000);
+    const endTimestamp = startTimestamp + 24000;
+
     return chain.mineBlock([
         Tx.contractCall(
             contractNames.eventToken,
@@ -59,8 +62,8 @@ export function prepare(
             [
                 '.' + contractNames.eventToken, 
                 types.uint(5000e8),
-                types.uint(0),
-                types.uint(1e8)
+                types.uint(startTimestamp),
+                types.uint(endTimestamp)
             ],
             deployer.address,
         ),
@@ -219,15 +222,9 @@ Clarinet.test({
                 deployer.address,
             ),                               
         ]);
-        results.receipts[0].result.expectOk();
+        results.receipts[0].result.expectOk();    
 
         results = chain.mineBlock([
-            Tx.contractCall(
-                contractNames.helper,
-                'set-temp-timestamp',
-                [types.uint(Number(eventDetails["start-timestamp"].replace(/\D/g, "")) + 1)],
-                deployer.address
-            ),
             Tx.contractCall(
                 contractNames.helper,
                 'claim-for-claimer',
@@ -237,13 +234,21 @@ Clarinet.test({
                     eventToken
                 ],
                 claimer.address,
-            ),
-            Tx.contractCall(
-                contractNames.helper,
-                'set-temp-timestamp',
-                [types.uint(Number(eventDetails["end-timestamp"].replace(/\D/g, "")) + 1)],
-                deployer.address
-            ),
+            )                                                            
+        ]);
+        results.receipts[0].result.expectOk();
+
+        // const blockTimestamp = chain.callReadOnlyFn(
+        //     contractNames.helper,
+        //     'block-timestamp',
+        //     [],
+        //     deployer.address
+        // )!.result.expectOk();
+        // console.log(blockTimestamp);  
+
+        chain.mineEmptyBlock(100000); // enough to go beyond endTimestamp
+
+        results = chain.mineBlock([
             Tx.contractCall(
                 contractNames.helper,
                 'claim-for-claimer',
@@ -265,11 +270,8 @@ Clarinet.test({
                 deployer.address,
             ),                                                                 
         ]);
-        results.receipts[0].result.expectOk();        
-        results.receipts[1].result.expectOk();
-        results.receipts[2].result.expectOk();
-        results.receipts[3].result.expectErr().expectUint(1001);
-        results.receipts[4].result.expectOk();
+        results.receipts[0].result.expectErr().expectUint(1001);
+        results.receipts[1].result.expectOk();                
     },
 });
 
