@@ -246,7 +246,7 @@ Clarinet.test({
         // )!.result.expectOk();
         // console.log(blockTimestamp);  
 
-        chain.mineEmptyBlock(1000); // enough to go beyond endTimestamp
+        chain.mineEmptyBlock(100000); // enough to go beyond endTimestamp
 
         results = chain.mineBlock([
             Tx.contractCall(
