@@ -97,12 +97,12 @@
     )
     (asserts! (not (var-get is-paused)) ERR-PAUSED)
     (asserts! (or (not (var-get use-whitelist)) (is-whitelisted tx-sender)) ERR-USER-NOT-WHITELISTED)
-    (asserts! 
-      (and 
-        (>= amount-in-fixed (get min-amount token-details)) 
+    (asserts!
+      (and
+        (>= amount-in-fixed (get min-amount token-details))
         (<= amount-in-fixed (get max-amount token-details))
         (<= amount-in-fixed (get-token-reserve-or-default token-id the-chain-id))
-      ) 
+      )
     ERR-INVALID-AMOUNT)
     (asserts! (> amount-in-fixed (get-min-fee-or-default token-id the-chain-id)) ERR-AMOUNT-LESS-THAN-MIN-FEE)
     (if (get burnable token-details)
@@ -231,7 +231,7 @@
         (token (contract-of token-trait))
         (order-hash (hash-order order))
         (token-details (try! (get-approved-token-or-fail token)))
-        (chain-details (try! (get-approved-chain-or-fail (get chain-id order))))          
+        (chain-details (try! (get-approved-chain-or-fail (get chain-id order))))
         (recipient (try! (user-from-id-or-fail (get to order))))
       )
       (asserts! (not (var-get is-paused)) ERR-PAUSED)
@@ -240,7 +240,7 @@
       (asserts! (is-none (map-get? order-sent order-hash)) ERR-ORDER-ALREADY-SENT)
       (asserts! (is-eq (try! (get-approved-token-id-or-fail token)) (get token order)) ERR-TOKEN-NOT-AUTHORIZED)
       (var-set order-hash-to-iter order-hash)
-      (try! (fold validate-signature-iter signature-packs (ok true)))    
+      (try! (fold validate-signature-iter signature-packs (ok true)))
       (if (get burnable token-details)
         (as-contract (try! (contract-call? token-trait mint-fixed (get amount-in-fixed order) recipient)))
         (as-contract (try! (contract-call? token-trait transfer-fixed (get amount-in-fixed order) tx-sender recipient none)))

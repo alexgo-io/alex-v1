@@ -1070,12 +1070,22 @@ path = "contracts/pool-token/token-amm-swap-pool-v1-1.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible", "alex-vault-v1-1"]
 
 [contracts.token-susdt]
-path = "contracts/bridged-tokens/token-susdt.clar"
+path = "contracts/bridge/bridged-tokens/token-susdt.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
 
-[contracts.bridge-endpoint-v1-01]
-path = "contracts/bridge/bridge-endpoint-v1-01.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
+[contracts.token-slunr]
+path = "contracts/bridge/bridged-tokens/token-slunr.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.bridge-endpoint-v1-02]
+path = "contracts/bridge/bridge-endpoint-v1-02.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-susdt", "token-slunr"]
+clarity_version = 2
+epoch = "2.1"
+
+[contracts.bridge-registration-helper-v1-02]
+path = "contracts/bridge/bridge-registration-helper-v1-02.clar"
+depends_on = ["bridge-endpoint-v1-02"]
 clarity_version = 2
 epoch = "2.1"
 
@@ -1120,12 +1130,6 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 [contracts.token-wvibes]
 path = "contracts/wrapped-token/token-wvibes.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-vibes", "trait-ido-ft"]
-
-[contracts.bridge-endpoint-v1-02]
-path = "contracts/bridge/bridge-endpoint-v1-02.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
-clarity_version = 2
-epoch = "2.1"
 
 [contracts.autoalex-apower-helper-v2]
 path = "contracts/helpers/autoalex-apower-helper-v2.clar"
