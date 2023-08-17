@@ -47,7 +47,7 @@ export function prepare(
     const deployer = accounts.get('deployer')!;
 
     const startTimestamp = Math.floor(Date.now() / 1000);
-    const endTimestamp = startTimestamp + 24000;
+    const endTimestamp = startTimestamp + 48000;
 
     return chain.mineBlock([
         Tx.contractCall(
