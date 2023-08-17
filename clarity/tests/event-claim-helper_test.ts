@@ -46,8 +46,15 @@ export function prepare(
 ) {
     const deployer = accounts.get('deployer')!;
 
-    const startTimestamp = Math.floor(Date.now() / 1000);
-    const endTimestamp = startTimestamp + 148000;
+    const blockTimestamp = chain.callReadOnlyFn(
+        contractNames.helper,
+        'block-timestamp',
+        [],
+        deployer.address
+    )!.result.expectOk();
+
+    const startTimestamp = parseInt(blockTimestamp.substring(1));
+    const endTimestamp = startTimestamp + 24000;
 
     return chain.mineBlock([
         Tx.contractCall(
@@ -223,8 +230,27 @@ Clarinet.test({
             ),                               
         ]);
         results.receipts[0].result.expectOk();    
+        
+        const blockTimestamp0 = chain.callReadOnlyFn(
+            contractNames.helper,
+            'block-timestamp',
+            [],
+            deployer.address
+        )!.result.expectOk();    
 
         results = chain.mineBlock([
+            Tx.contractCall(
+                contractNames.helper,
+                'update-event',
+                [
+                    types.uint(1),
+                    eventToken,
+                    types.uint(0),
+                    eventDetails["start-timestamp"],
+                    types.uint(parseInt(blockTimestamp0.substring(1)) + 1)
+                ],
+                deployer.address
+            ),
             Tx.contractCall(
                 contractNames.helper,
                 'claim-for-claimer',
@@ -237,18 +263,28 @@ Clarinet.test({
             )                                                            
         ]);
         results.receipts[0].result.expectOk();
+        results.receipts[1].result.expectOk();
 
-        // const blockTimestamp = chain.callReadOnlyFn(
-        //     contractNames.helper,
-        //     'block-timestamp',
-        //     [],
-        //     deployer.address
-        // )!.result.expectOk();
-        // console.log(blockTimestamp);  
-
-        chain.mineEmptyBlock(10000000); // enough to go beyond endTimestamp
+        const blockTimestamp1 = chain.callReadOnlyFn(
+            contractNames.helper,
+            'block-timestamp',
+            [],
+            deployer.address
+        )!.result.expectOk();         
 
         results = chain.mineBlock([
+            Tx.contractCall(
+                contractNames.helper,
+                'update-event',
+                [
+                    types.uint(1),
+                    eventToken,
+                    types.uint(0),
+                    eventDetails["start-timestamp"],
+                    types.uint(parseInt(blockTimestamp1.substring(1)) - 1)
+                ],
+                deployer.address
+            ),            
             Tx.contractCall(
                 contractNames.helper,
                 'claim-for-claimer',
@@ -270,8 +306,9 @@ Clarinet.test({
                 deployer.address,
             ),                                                                 
         ]);
-        results.receipts[0].result.expectErr().expectUint(1001);
-        results.receipts[1].result.expectOk();                
+        results.receipts[0].result.expectOk();  
+        results.receipts[1].result.expectErr().expectUint(1001);
+        results.receipts[2].result.expectOk();                
     },
 });
 
