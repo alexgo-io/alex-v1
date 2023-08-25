@@ -1,6 +1,6 @@
-### ALEX is an open-source DeFi protocol built on Stacks Blockchain and modelled on the world’s financial markets
+### ALEX builds finance on Bitcoin. Create best-in-class financial apps on Bitcoin with ALEX!
 
-See you at https://docs.alexgo.io if you want to find out more!
+See you at https://docs.alexgo.io if you want to find out more.
 
 Before you run, we use a custom dependency management tool, so please run the following.
 
