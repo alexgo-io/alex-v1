@@ -1163,4 +1163,7 @@ path = "contracts/helpers/event-claim-helper-v1-01.clar"
 clarity_version = 2
 epoch = "2.1"
 
+[contracts.launchpad-liquidity-lock-v1-3]
+path = "contracts/pool/launchpad-liquidity-lock-v1-3.clar"
+
 
