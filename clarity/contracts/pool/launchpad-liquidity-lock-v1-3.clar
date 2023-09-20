@@ -4,7 +4,7 @@
 
 (define-constant ONE_8 u100000000)
 
-(define-map locked uint uint)
+(define-map locked uint { pct: uint, period: uint })
 
 (define-public (create-pool
 	(launch-token-trait <ft-trait>)
@@ -22,39 +22,60 @@
 		registration-max-tickets: uint,
 		fee-per-ticket-in-fixed: uint
 		})
-	(locked-percent uint)
+	(locked { pct: uint, period: uint })
 	)
 	(let 
 		(
 			(launch-id (try! (contract-call? .alex-launchpad-v1-3 create-pool launch-token-trait payment-token-trait offering)))
 		) 		
-		(ok (map-set locked launch-id locked-percent))
+		(ok (map-set locked launch-id locked))
 	)
+)
+
+(define-read-only (get-launch (launch-id uint))
+	(unwrap! (contract-call? .alex-launchpad-v1-3 get-launch launch-id))
+)
+
+(define-read-only (get-locked-details (launch-id uint))
+	(map-get? locked launch-id)
 )
 
 (define-public (add-to-position (launch-id uint) (tickets uint) (launch-token-trait <ft-trait>))
 	(let
 		(
-			(offering (unwrap! (unwrap! (contract-call? .alex-launchpad-v1-3 get-launch launch-id))))
-			(locked-percent (unwrap! (map-get? locked launch-id)))
+			(offering (unwrap! (get-launch launch-id)))
+			(locked-details (unwrap! (get-locked-details launch-id)))
 		)
 		(try! (contract-call? .alex-launchpad-v1-3 add-to-position launch-id tickets launch-token-trait))
-		(contract-call? launch-token-trait transfer-fixed (* (get launch-tokens-per-ticket offering) tickets ONE_8 locked-percent) tx-sender (as-contract tx-sender) none)
+		(contract-call? launch-token-trait transfer-fixed (mul-down (* (get launch-tokens-per-ticket offering) tickets ONE_8) (get pct locked-details)) tx-sender (as-contract tx-sender) none)
 	)
 )
 
-;; TODO calculate the locked payment tokens and withhold
-;; TODO inject liquidity and mint LP tokens
 (define-public (claim (launch-id uint) (input (list 200 principal)) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>))
-	(begin
-		(var-set tm-amount (* ONE_8 (try! (claim-process launch-id input (contract-of launch-token-trait) payment-token-trait))))
-		(fold transfer-many-iter input launch-token-trait)
-		(ok true)
+	(let 
+		(
+			(offering (unwrap! (get-launch launch-id)))
+			(locked-details (unwrap! (get-locked-details launch-id)))
+			(launch-token-amount (* (get launch-tokens-per-ticket offering) (len input) ONE_8 (get pct locked-details)))
+			(fee-per-ticket (mul-down (get price-per-ticket-in-fixed offering) (get fee-per-ticket-in-fixed offering)))
+			(net-price-per-ticket (- (get price-per-ticket-in-fixed offering) fee-per-ticket))
+			(payment-token-amount (mul-down (* net-price-per-ticket (len input)) (get pct locked-details)))
+		)
+		(try! (contract-call? .alex-launchpad-v1-3 claim launch-id input launch-token-trait payment-token-trait))
+		(try! (contract-call? payment-token-trait transfer-fixed payment-token-amount (get launch-owner offering) (as-contract tx-sender) none))
+		;; transfer payment-token-amount from launch-owner
+		;; inject launch-/payment-token-amount to mint LP tokens (if pool doesn't exist, create one)		
 	)
 )
 
 ;; TODO redeem LP after lock period
+(define-public (redeem-liquidity (launch-id uint) (liquidity-token-trait <sft-trait>) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>))
+	;; assert block-height > end of launch + locked-period
+	;; redeem liquidity tokens
+	;; send launch-/payment-tokens to launch-owner
+)
 
+;; TODO equivalent for semifungible
 (define-public (transfer-all-to-owner (token-trait <ft-trait>))
 	(let 
 		(
@@ -63,18 +84,7 @@
 		(try! (check-is-owner))
 		(and 
 			(> balance u0) 
-			(as-contract 
-				(try!
-					(contract-call? 
-						token-trait 
-						transfer-fixed 
-				 		balance
-						tx-sender 
-						(var-get contract-owner) 
-						none
-					)
-				)
-			)
+			(as-contract (try! (contract-call? token-trait transfer-fixed balance tx-sender (var-get contract-owner) none)))
 		)
 		(ok true)
 	)
