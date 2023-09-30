@@ -21,7 +21,9 @@ export type StandardTestParameters = {
 	ticketRecipients: TicketAllocation[],
 	apowerPerTicketInFixed: any[],
 	registrationMaxTickets: number,
-	feePerTicketInFixed: number	
+	feePerTicketInFixed: number,
+	lockPct: number,
+	lockPeriod: number
 };
 
 export const contractPrincipal = (address: Account | string, contractName: string) => `${(address as Account).address || address}.${contractName}`;
@@ -51,13 +53,16 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		ticketRecipients,
 		apowerPerTicketInFixed,
 		registrationMaxTickets,
-		feePerTicketInFixed
+		feePerTicketInFixed,
+		lockPct,
+		lockPeriod
 	} = parameters;
 	const first = chain.mineBlock([		
+		Tx.contractCall("alex-vault-v1-1", "set-approved-contract", [types.principal(deployer.address + '.amm-swap-pool-v1-1'), types.bool(true)], deployer.address),
 		Tx.contractCall("token-banana", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
-		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-launchpad-v1-3"))], deployer.address),
+		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-launchpad-v1-3"))], deployer.address),		
 		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(determineApower(allocation.amount, apowerPerTicketInFixed)), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
-		Tx.contractCall("launchpad-liquidity-lock-v1-3", "create-pool", [
+		Tx.contractCall("liquidity-launchpad", "create-pool", [
 			types.principal(contractPrincipal(deployer, "token-wban")),
 			types.principal(contractPrincipal(deployer, "token-wstx")),
 			types.tuple({
@@ -72,13 +77,13 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 				"registration-max-tickets": types.uint(registrationMaxTickets),
 				"fee-per-ticket-in-fixed": types.uint(feePerTicketInFixed)
 			}),
-			types.tuple({ pct: 0.1e8, period: 20 })
+			types.tuple({ pct: types.uint(lockPct), period: types.uint(lockPeriod) })
 		], deployer.address),
 	]);
 	const idoId = parseInt(first.receipts[first.receipts.length - 1].result.expectOk().toString().substring(1));
 	assertEquals(isNaN(idoId), false, "failed to get Launch ID");
 	const second = chain.mineBlock([
-		Tx.contractCall("launchpad-liquidity-lock-v1-3", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
+		Tx.contractCall("liquidity-launchpad", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
 	]);
 	return { idoId, blocks: [first, second] };
 }

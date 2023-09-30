@@ -1,4 +1,5 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
+(use-trait sft-trait .trait-semi-fungible.semi-fungible-trait)
 
 (define-constant err-unknown-launch (err u2045))
 (define-constant err-block-height-not-reached (err u2042))
@@ -8,7 +9,7 @@
 
 (define-data-var contract-owner principal tx-sender)
 
-(define-map locked uint { pct: uint, period: uint, pool-id: uint })
+(define-map locked uint { launch-owner: principal, pct: uint, period: uint, pool-id: uint })
 
 ;; governance functions
 
@@ -39,27 +40,32 @@
 	)
 	(let 
 		(
-			(launch-id (try! (contract-call? .alex-launchpad-v1-3 create-pool launch-token-trait payment-token-trait offering)))
+			(launch-id (try! (contract-call? .alex-launchpad-v1-3 create-pool launch-token-trait payment-token-trait (merge offering { launch-owner: (as-contract tx-sender) }))))
 		)
 		(try! (contract-call? .alex-vault-v1-1 set-approved-token (contract-of launch-token-trait) true))
 		(try! (contract-call? .alex-vault-v1-1 set-approved-token (contract-of payment-token-trait) true))
-
-		(ok (map-set locked launch-id (merge locked-params { pool-id: u0 })))
+		(map-set locked launch-id (merge locked-params { launch-owner: (get launch-owner offering), pool-id: u0 }))
+		(ok launch-id)
 	)
 )
 
-;; TODO equivalent for semifungible
 (define-public (transfer-all-to-owner (token-trait <ft-trait>))
 	(let 
 		(
 			(balance (try! (contract-call? token-trait get-balance-fixed (as-contract tx-sender))))
 		)
 		(try! (check-is-owner))
-		(and 
-			(> balance u0) 
-			(as-contract (try! (contract-call? token-trait transfer-fixed balance tx-sender (var-get contract-owner) none)))
+		(ok (and (> balance u0) (as-contract (try! (contract-call? token-trait transfer-fixed balance tx-sender (var-get contract-owner) none)))))
+	)
+)
+
+(define-public (transfer-all-semi-to-owner (token-trait <sft-trait>) (token-id uint))
+	(let 
+		(
+			(balance (try! (contract-call? token-trait get-balance-fixed token-id (as-contract tx-sender))))
 		)
-		(ok true)
+		(try! (check-is-owner))		
+		(ok (and (> balance u0) (as-contract (try! (contract-call? token-trait transfer-fixed token-id balance tx-sender (var-get contract-owner))))))
 	)
 )
 
@@ -71,7 +77,9 @@
 			(offering (unwrap! (get-launch launch-id) err-unknown-launch))
 			(locked-details (unwrap! (get-locked-details launch-id) err-unknown-launch))
 		)
-		(try! (contract-call? .alex-launchpad-v1-3 add-to-position launch-id tickets launch-token-trait))
+		(asserts! (or (is-eq (get launch-owner locked-details) tx-sender) (is-ok (check-is-owner))) err-not-authorized)		
+		(try! (contract-call? launch-token-trait transfer-fixed (* (get launch-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
+		(as-contract (try! (contract-call? .alex-launchpad-v1-3 add-to-position launch-id tickets launch-token-trait)))
 		(contract-call? launch-token-trait transfer-fixed (mul-down (* (get launch-tokens-per-ticket offering) tickets ONE_8) (get pct locked-details)) tx-sender (as-contract tx-sender) none)
 	)
 )
@@ -99,14 +107,12 @@
 			(launch-token (get launch-token offering))
 			(payment-token (get payment-token offering))
 			(locked-details (unwrap! (get-locked-details launch-id) err-unknown-launch))
-			(launch-token-amount (* (get launch-tokens-per-ticket offering) (len input) ONE_8 (get pct locked-details)))
+			(launch-token-amount (* (get launch-tokens-per-ticket offering) (len input) (get pct locked-details)))
 			(fee-per-ticket (mul-down (get price-per-ticket-in-fixed offering) (get fee-per-ticket-in-fixed offering)))
 			(net-price-per-ticket (- (get price-per-ticket-in-fixed offering) fee-per-ticket))
 			(payment-token-amount (mul-down (* net-price-per-ticket (len input)) (get pct locked-details)))
 		)
 		(try! (contract-call? .alex-launchpad-v1-3 claim launch-id input launch-token-trait payment-token-trait))
-		(try! (contract-call? payment-token-trait transfer-fixed payment-token-amount (get launch-owner offering) (as-contract tx-sender) none))
-
 		(if (is-some (contract-call? .amm-swap-pool-v1-1 get-pool-exists payment-token launch-token ONE_8))
 			(begin 
 				(as-contract (try! (contract-call? .amm-swap-pool-v1-1 add-to-position payment-token-trait launch-token-trait ONE_8 payment-token-amount (some launch-token-amount))))
@@ -144,8 +150,8 @@
 			(reduced (as-contract (try! (contract-call? .amm-swap-pool-v1-1 reduce-position payment-token-trait launch-token-trait ONE_8 percent))))
 		) 
 		(asserts! (> block-height (+ (get registration-end-height offering) (get period locked-details))) err-block-height-not-reached)
-		(as-contract (try! (contract-call? payment-token-trait transfer-fixed (get dx reduced) tx-sender (get launch-owner offering) none)))
-		(as-contract (try! (contract-call? launch-token-trait transfer-fixed (get dy reduced) tx-sender (get launch-owner offering) none)))
+		(as-contract (try! (contract-call? payment-token-trait transfer-fixed (get dx reduced) tx-sender (get launch-owner locked-details) none)))
+		(as-contract (try! (contract-call? launch-token-trait transfer-fixed (get dy reduced) tx-sender (get launch-owner locked-details) none)))
 		(ok reduced)
 	)
 )
