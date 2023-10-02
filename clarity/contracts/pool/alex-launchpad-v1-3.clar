@@ -23,6 +23,7 @@
 (define-map approved-operators principal bool)
 
 (define-data-var launch-id-nonce uint u0)
+(define-data-var max-size-factor uint u15)
 
 (define-map offerings
 	uint
@@ -138,8 +139,19 @@
 	)
 )
 
+(define-read-only (get-max-size-factor)
+	(var-get max-size-factor)
+)
+
+(define-public (set-max-size-factor (factor uint))
+	(begin 
+		(try! (check-is-owner))
+		(ok (var-set max-size-factor factor))
+	)
+)
+
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
-	(/ (* tickets-registered walk-resolution) total-tickets)
+	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) (var-get max-size-factor)) u10)
 )
 
 (define-private (next-bounds (launch-id uint) (tickets uint))

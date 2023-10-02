@@ -573,6 +573,10 @@ depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
 path = "contracts/pool/alex-launchpad-v1-2.clar"
 depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
 
+[contracts.alex-launchpad-v1-3]
+path = "contracts/pool/alex-launchpad-v1-3.clar"
+depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
+
 [contracts.token-banana]
 path = "contracts/token/token-banana.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
@@ -1035,6 +1039,17 @@ path = "contracts/flash-loan-user-wstx-to-diko.clar"
 
 [contracts.swap-helper-bridged]
 path = "contracts/helpers/swap-helper-bridged.clar"
+depends_on = [
+  "trait-sip-010",
+  "amm-swap-pool"
+]
+
+[contracts.swap-helper-bridged-v1-1]
+path = "contracts/helpers/swap-helper-bridged-v1-1.clar"
+depends_on = [
+  "trait-sip-010",
+  "amm-swap-pool-v1-1"
+]
 
 [contracts.alex-vault-v1-1]
 path = "contracts/alex-vault-v1-1.clar"
@@ -1055,12 +1070,22 @@ path = "contracts/pool-token/token-amm-swap-pool-v1-1.clar"
 depends_on = ["trait-ownable", "trait-semi-fungible", "alex-vault-v1-1"]
 
 [contracts.token-susdt]
-path = "contracts/bridged-tokens/token-susdt.clar"
+path = "contracts/bridge/bridged-tokens/token-susdt.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
 
-[contracts.bridge-endpoint-v1-01]
-path = "contracts/bridge/bridge-endpoint-v1-01.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
+[contracts.token-slunr]
+path = "contracts/bridge/bridged-tokens/token-slunr.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.bridge-endpoint-v1-02]
+path = "contracts/bridge/bridge-endpoint-v1-02.clar"
+depends_on = ["trait-ownable", "trait-sip-010", "token-susdt", "token-slunr"]
+clarity_version = 2
+epoch = "2.1"
+
+[contracts.bridge-registration-helper-v1-02]
+path = "contracts/bridge/bridge-registration-helper-v1-02.clar"
+depends_on = ["bridge-endpoint-v1-02"]
 clarity_version = 2
 epoch = "2.1"
 
@@ -1106,12 +1131,6 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 path = "contracts/wrapped-token/token-wvibes.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-vibes", "trait-ido-ft"]
 
-[contracts.bridge-endpoint-v1-02]
-path = "contracts/bridge/bridge-endpoint-v1-02.clar"
-depends_on = ["trait-ownable", "trait-sip-010", "token-susdt"]
-clarity_version = 2
-epoch = "2.1"
-
 [contracts.autoalex-apower-helper-v2]
 path = "contracts/helpers/autoalex-apower-helper-v2.clar"
 depends_on = [ "auto-alex-v2", "token-apower" ]
@@ -1123,5 +1142,28 @@ depends_on = [ "auto-alex-v2", "token-apower", "brc20-db20" ]
 [contracts.brc20-db20]
 path = "contracts/token/brc20-db20.clar"
 depends_on = []
+
+[contracts.flash-loan-user-amm-to-fixed-susdt-xusd]
+path = "contracts/flash-loan-user-amm-to-fixed-susdt-xusd.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-susdt-xusd]
+path = "contracts/flash-loan-user-fixed-to-amm-susdt-xusd.clar"
+
+[contracts.flash-loan-user-amm-to-fixed-xusd-susdt]
+path = "contracts/flash-loan-user-amm-to-fixed-xusd-susdt.clar"
+
+[contracts.flash-loan-user-fixed-to-amm-xusd-susdt]
+path = "contracts/flash-loan-user-fixed-to-amm-xusd-susdt.clar"
+
+[contracts.ordinals-bluewheel]
+path = "contracts/token/ordinals-bluewheel.clar"
+
+[contracts.event-claim-helper-v1-01]
+path = "contracts/helpers/event-claim-helper-v1-01.clar"
+clarity_version = 2
+epoch = "2.1"
+
+[contracts.liquidity-launchpad]
+path = "contracts/pool/liquidity-launchpad.clar"
 
 

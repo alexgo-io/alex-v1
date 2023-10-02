@@ -913,7 +913,7 @@
     )    
 )
 
-;; @desc d_x = b_x * ((1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t)) - 1), or
+;; @desc d_x = b_x * (((1 + spot ^ ((1 - t) / t)) / (1 + price ^ ((1 - t) / t))) ^ (1 / (1 - t)) - 1), or
 ;; @desc d_x = b_x * ((spot / price) ^ 0.5 - 1)
 (define-private (get-x-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (if (>= t (var-get switch-threshold))
@@ -937,7 +937,7 @@
     )    
 )
 
-;; @desc d_y = b_y * (1 - (1 + spot ^ ((1 - t) / t) / (1 + price ^ ((1 - t) / t)) ^ (1 / (1 - t))), or
+;; @desc d_y = b_y * (1 - ((1 + spot ^ ((1 - t) / t)) / (1 + price ^ ((1 - t) / t))) ^ (1 / (1 - t))), or
 ;; @desc d_y = b_y * ((price / spot) ^ 0.5 - 1)
 (define-private (get-y-given-price-internal (balance-x uint) (balance-y uint) (t uint) (price uint))
     (if (>= t (var-get switch-threshold))
