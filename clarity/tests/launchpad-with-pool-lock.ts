@@ -9,12 +9,12 @@ import {
   extractBounds,
   extractParameters,
   determineApower,
-} from "./models/liquidity-launchpad.ts";
+} from "./models/launchpad-with-pool-lock.ts";
 import type {
   Chain,
   Account,
   StandardTestParameters,
-} from "./models/liquidity-launchpad.ts";
+} from "./models/launchpad-with-pool-lock.ts";
 import {
   determineWinners,
   determineLosers,
@@ -48,7 +48,7 @@ const parameters = {
 };
 
 Clarinet.test({
-  name: "liquidity-launchpad : example claim walk test",
+  name: "launchpad-with-pool-lock : example claim walk test",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const [
       deployer,
@@ -201,7 +201,7 @@ Clarinet.test({
         // console.log(winners_sliced[0], winners_sliced[winners_sliced.length - 1]);
         const claim = chain.mineBlock([
           Tx.contractCall(
-            "liquidity-launchpad",
+            "launchpad-with-pool-lock",
             "claim",
             [
               types.uint(idoId),
@@ -227,16 +227,16 @@ Clarinet.test({
             ONE_8) *
             1e6,
           deployer.address + ".alex-launchpad-v1-3",
-          deployer.address + ".liquidity-launchpad"
+          deployer.address + ".launchpad-with-pool-lock"
         );
         events.expectSTXTransferEvent(
           dx / ONE_8 * 1e6,
-          deployer.address + '.liquidity-launchpad',
+          deployer.address + '.launchpad-with-pool-lock',
           deployer.address + '.alex-vault-v1-1'
         );
         events.expectFungibleTokenTransferEvent(
           dy / ONE_8 * 1e6,
-          deployer.address + '.liquidity-launchpad',
+          deployer.address + '.launchpad-with-pool-lock',
           deployer.address + '.alex-vault-v1-1',
           "banana"    
         )
@@ -256,7 +256,7 @@ Clarinet.test({
       chain.mineEmptyBlockUntil(registrationEndHeight + 19);
       const reduceFail = chain.mineBlock([
         Tx.contractCall(
-          "liquidity-launchpad",
+          "launchpad-with-pool-lock",
           "reduce-position",
           [
             types.uint(idoId),
@@ -344,7 +344,7 @@ Clarinet.test({
 
       const reduceOk = chain.mineBlock([
         Tx.contractCall(
-          "liquidity-launchpad",
+          "launchpad-with-pool-lock",
           "reduce-position",
           [
             types.uint(idoId),
@@ -360,22 +360,22 @@ Clarinet.test({
       events.expectSTXTransferEvent(
         dx_expected / ONE_8 * 1e6,
         deployer.address + '.alex-vault-v1-1',
-        deployer.address + '.liquidity-launchpad'
+        deployer.address + '.launchpad-with-pool-lock'
       )
       events.expectSTXTransferEvent(
         dx_expected / ONE_8 * 1e6,
-        deployer.address + '.liquidity-launchpad',
+        deployer.address + '.launchpad-with-pool-lock',
         accountA.address
       )
       events.expectFungibleTokenTransferEvent(
         dy_expected / ONE_8 * 1e6,
         deployer.address + '.alex-vault-v1-1',
-        deployer.address + '.liquidity-launchpad',
+        deployer.address + '.launchpad-with-pool-lock',
         "banana"
       )
       events.expectFungibleTokenTransferEvent(
         dy_expected / ONE_8 * 1e6,
-        deployer.address + '.liquidity-launchpad',
+        deployer.address + '.launchpad-with-pool-lock',
         accountA.address,
         "banana"
       )
