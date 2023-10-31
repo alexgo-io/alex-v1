@@ -1143,6 +1143,10 @@ depends_on = [ "auto-alex-v2", "token-apower", "brc20-db20" ]
 path = "contracts/token/brc20-db20.clar"
 depends_on = []
 
+[contracts.brc20-chax]
+path = "contracts/token/brc20-chax.clar"
+depends_on = []
+
 [contracts.flash-loan-user-amm-to-fixed-susdt-xusd]
 path = "contracts/flash-loan-user-amm-to-fixed-susdt-xusd.clar"
 
@@ -1168,11 +1172,6 @@ path = "contracts/pool/launchpad-with-pool-lock.clar"
 
 [contracts.bridge-apower-helper]
 path = "contracts/helpers/bridge-apower-helper.clar"
-clarity_version = 2
-epoch = "2.4"
-
-[contracts.bridge-apower-helper-v1-01]
-path = "contracts/helpers/bridge-apower-helper-v1-01.clar"
 clarity_version = 2
 epoch = "2.4"
 
