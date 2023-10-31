@@ -1166,4 +1166,9 @@ epoch = "2.1"
 [contracts.launchpad-with-pool-lock]
 path = "contracts/pool/launchpad-with-pool-lock.clar"
 
+[contracts.bridge-apower-helper]
+path = "contracts/helpers/bridge-apower-helper.clar"
+clarity_version = 2
+epoch = "2.4"
+
 
