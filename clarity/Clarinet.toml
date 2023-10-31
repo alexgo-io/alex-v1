@@ -1175,9 +1175,4 @@ path = "contracts/helpers/bridge-apower-helper.clar"
 clarity_version = 2
 epoch = "2.4"
 
-[contracts.bridge-apower-helper-v1-01]
-path = "contracts/helpers/bridge-apower-helper-v1-01.clar"
-clarity_version = 2
-epoch = "2.4"
-
 
