@@ -62,7 +62,7 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 		Tx.contractCall("token-banana", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
 		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-launchpad-v1-3"))], deployer.address),		
 		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(determineApower(allocation.amount, apowerPerTicketInFixed)), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
-		Tx.contractCall("liquidity-launchpad", "create-pool", [
+		Tx.contractCall("launchpad-with-pool-lock", "create-pool", [
 			types.principal(contractPrincipal(deployer, "token-wban")),
 			types.principal(contractPrincipal(deployer, "token-wstx")),
 			types.tuple({
@@ -83,7 +83,7 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 	const idoId = parseInt(first.receipts[first.receipts.length - 1].result.expectOk().toString().substring(1));
 	assertEquals(isNaN(idoId), false, "failed to get Launch ID");
 	const second = chain.mineBlock([
-		Tx.contractCall("liquidity-launchpad", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
+		Tx.contractCall("launchpad-with-pool-lock", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
 	]);
 	return { idoId, blocks: [first, second] };
 }
