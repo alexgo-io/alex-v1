@@ -137,7 +137,9 @@ Clarinet.test({
     block.receipts[0].result.expectErr().expectUint(1000);
     block.receipts[1].result.expectOk();
 
-    chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+    if(chain.block < ACTIVATION_BLOCK){
+      chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+    }
 
     block = chain.mineBlock(
       [
