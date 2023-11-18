@@ -1,5 +1,4 @@
 (use-trait ft-trait .trait-sip-010.sip-010-trait)
-(use-trait launch-ft-trait .trait-ido-ft.ido-ft-trait)
 
 (define-constant err-unknown-launch (err u2045))
 (define-constant err-block-height-not-reached (err u2042))
@@ -23,6 +22,7 @@
 (define-map approved-operators principal bool)
 
 (define-data-var launch-id-nonce uint u0)
+(define-data-var max-size-factor uint u15)
 
 (define-map offerings
 	uint
@@ -39,12 +39,11 @@
 	total-tickets: uint,
 	apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
 	registration-max-tickets: uint,
-	fee-per-ticket-in-fixed: uint,
-	max-size-factor: uint,
-	total-tickets-registered: uint,
-	total-tickets-won: uint
+	fee-per-ticket-in-fixed: uint
 	}
 )
+
+(define-map total-tickets-registered uint uint)
 
 (define-map start-indexes uint uint)
 
@@ -58,6 +57,8 @@
 	uint
 )
 
+(define-map total-tickets-won uint uint)
+
 (define-map tickets-won
 	{launch-id: uint, owner: principal}
 	uint
@@ -65,20 +66,88 @@
 
 (define-map claim-walk-positions uint uint)
 
+(define-public (create-pool
+	(launch-token-trait <ft-trait>)
+	(payment-token-trait <ft-trait>)
+	(offering
+		{
+		launch-owner: principal,
+		launch-tokens-per-ticket: uint,
+		price-per-ticket-in-fixed: uint,
+		activation-threshold: uint,
+		registration-start-height: uint,
+		registration-end-height: uint,
+		claim-end-height: uint,
+		apower-per-ticket-in-fixed: (list 6 {apower-per-ticket-in-fixed: uint, tier-threshold: uint}),
+		registration-max-tickets: uint,
+		fee-per-ticket-in-fixed: uint
+		})
+	)
+	(let 
+		(
+			(launch-id (var-get launch-id-nonce))
+		)
+		(try! (check-is-owner))
+		(asserts!
+			(and
+				(< block-height (get registration-start-height offering))
+				(< (get registration-start-height offering) (get registration-end-height offering))
+				(< (get registration-end-height offering) (get claim-end-height offering))
+				(<= (get fee-per-ticket-in-fixed offering) ONE_8)
+			)
+			err-invalid-launch-setting
+		)
+		(map-set offerings launch-id (merge offering
+			{
+				launch-token: (contract-of launch-token-trait),
+				payment-token: (contract-of payment-token-trait),
+				total-tickets: u0
+			})
+		)
+		(var-set launch-id-nonce (+ launch-id u1))
+		(ok launch-id)
+	)
+)
+
 (define-read-only (get-launch-id-nonce)
-	(var-get launch-id-nonce))
+	(ok (var-get launch-id-nonce))
+)
 
 (define-read-only (get-launch (launch-id uint))
-	(map-get? offerings launch-id))
+	(ok (map-get? offerings launch-id))
+)
 
-(define-read-only (get-launch-or-fail (launch-id uint))
-	(ok (unwrap! (map-get? offerings launch-id) err-unknown-launch)))
+(define-public (add-to-position (launch-id uint) (tickets uint) (launch-token-trait <ft-trait>))
+	(let
+		(
+			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
+		)
+		(asserts! (< block-height (get registration-start-height offering)) err-block-height-not-reached)
+		(asserts! 
+			(or 
+				(is-eq (get launch-owner offering) tx-sender) 
+				(is-ok (check-is-approved)) 
+				(is-ok (check-is-owner))
+			) 
+			err-not-authorized
+		)
+		(asserts! (is-eq (contract-of launch-token-trait) (get launch-token offering)) err-invalid-launch-token-trait)
+		(try! (contract-call? launch-token-trait transfer-fixed (* (get launch-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
+		(map-set offerings launch-id (merge offering {total-tickets: (+ (get total-tickets offering) tickets)}))
+		(ok true)
+	)
+)
 
-(define-public (set-max-size-factor (launch-id uint) (factor uint))
-	(let (
-			(launch-details (try! (get-launch-or-fail launch-id)))) 
+(define-read-only (get-max-size-factor)
+	(var-get max-size-factor)
+)
+
+(define-public (set-max-size-factor (factor uint))
+	(begin 
 		(try! (check-is-owner))
-		(ok (map-set offerings launch-id (merge { max-size-factor: factor } launch-details)))))
+		(ok (var-set max-size-factor factor))
+	)
+)
 
 (define-read-only (calculate-max-step-size (tickets-registered uint) (total-tickets uint))
 	(/ (* (/ (* tickets-registered walk-resolution) total-tickets) (var-get max-size-factor)) u10)
@@ -156,7 +225,7 @@
 		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
 		(asserts! (is-eq (get payment-token offering) (contract-of payment-token-trait)) err-invalid-payment-token-trait)		
 		(try! (contract-call? payment-token-trait transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
-		(as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender)))
+		(and (> apower-to-burn u0) (as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender))))
 		(map-set offering-ticket-bounds {launch-id: launch-id, owner: tx-sender} bounds)
 		(map-set offering-ticket-amounts {launch-id: launch-id, owner: tx-sender} tickets)
 		(map-set total-tickets-registered launch-id (+ (get-total-tickets-registered launch-id) tickets))
@@ -325,64 +394,6 @@
 		)
 		(fold transfer-many-amounts-iter input payment-token-trait)
 		(ok true)
-	)
-)
-
-
-;; if launch-token-trait implements <launch-ft-trait>, we can process claim/refund much more efficiently
-
-(define-public (claim-optimal (launch-id uint) (input (list 200 principal)) (launch-token-trait <launch-ft-trait>) (payment-token-trait <ft-trait>))
-	(let
-		(
-			(launch-tokens-per-ticket (* ONE_8 (try! (claim-process launch-id input (contract-of launch-token-trait) payment-token-trait))))
-		)
-		(as-contract (contract-call? launch-token-trait transfer-many-ido launch-tokens-per-ticket input))
-	)
-)
-
-(define-public (refund-optimal (launch-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token-trait <launch-ft-trait>))
-	(let 
-		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
-		)
-		(asserts! (is-eq (get payment-token offering) (contract-of payment-token-trait)) err-invalid-payment-token-trait)
-		(asserts!
-			(or
-				(>= block-height (+ (get claim-end-height offering) claim-grace-period))
-				(is-eq (get launch-owner offering) tx-sender)
-				(is-ok (check-is-owner))
-				(is-ok (check-is-approved))
-			)
-			err-not-authorized
-		)		
-		(asserts! (get s
-			(fold refund-optimal-iter input
-				{
-					i: launch-id,
-					u: (try! (max-upper-refund-bound launch-id (get total-tickets offering) (get-total-tickets-registered launch-id) (get registration-end-height offering) (get activation-threshold offering))),
-					p: (unwrap! (get price-per-ticket-in-fixed (map-get? offerings launch-id)) err-unknown-launch),
-					s: true
-				}))
-			err-invalid-sequence
-		)
-		(as-contract (contract-call? payment-token-trait transfer-many-amounts-ido input))
-	)
-)
-
-(define-private (refund-optimal-iter (e {recipient: principal, amount: uint}) (p {i: uint, u: uint, p: uint, s: bool}))
-	(let
-		(
-			(k {launch-id: (get i p), owner: (get recipient e)})
-			(b (unwrap! (map-get? offering-ticket-bounds k) (merge p {s: false})))
-		)
-		(asserts! (get s p) p)
-		(map-delete offering-ticket-bounds k)
-		{
-			i: (get i p),
-			u: (get u p),
-			p: (get p p),
-			s: (and (<= (get end b) (get u p)) (is-eq (* (- (/ (- (get end b) (get start b)) walk-resolution) (default-to u0 (map-get? tickets-won k))) (get p p)) (get amount e)))
-		}
 	)
 )
 
