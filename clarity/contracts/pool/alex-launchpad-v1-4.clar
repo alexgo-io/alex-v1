@@ -178,14 +178,15 @@
 	(ok (buff-to-uint64 (unwrap! (get-block-info? vrf-seed height) err-block-height-not-reached)))
 )
 
-(define-read-only (validate-register (owner principal) (launch-id uint) (tickets uint) (payment-token principal))
+(define-read-only (validate-register (owner principal) (launch-id uint) (payment-amount uint) (payment-token principal))
 	(let (
-			(offering (try! (get-launch-or-fail launch-id))))
+			(offering (try! (get-launch-or-fail launch-id)))
+			(tickets (div-down payment-amount (get price-per-ticket-in-fixed offering))))
 		(asserts! (is-none (map-get? offering-ticket-bounds {launch-id: launch-id, owner: owner})) err-already-registered)
 		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
 		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
 		(asserts! (is-eq (get payment-token offering) payment-token) err-invalid-payment-token-trait)
-		(ok offering)))
+		(ok { offering: offering, tickets: tickets })))
 
 ;; governance calls
 
@@ -318,18 +319,20 @@
 
 ;; public calls
 
-(define-public (register (launch-id uint) (tickets uint) (payment-token-trait <ft-trait>))
-	(register-on-behalf tx-sender launch-id tickets payment-token-trait))
+(define-public (register (launch-id uint) (payment-amount uint) (payment-token-trait <ft-trait>))
+	(register-on-behalf tx-sender launch-id payment-amount payment-token-trait))
 
-(define-public (register-on-behalf (owner principal) (launch-id uint) (tickets uint) (payment-token-trait <ft-trait>))
+(define-public (register-on-behalf (owner principal) (launch-id uint) (payment-amount uint) (payment-token-trait <ft-trait>))
 	(let
 		(
-			(offering (try! (validate-register owner launch-id tickets (contract-of payment-token-trait))))
+			(offering-details (try! (validate-register owner launch-id payment-amount (contract-of payment-token-trait))))
+			(tickets (get tickets offering-details))
+			(offering (get offering offering-details))
 			(apower-to-burn (try! (get-apower-required-in-fixed launch-id tickets)))
 			(bounds (next-bounds launch-id tickets))
 			(sender tx-sender)
 		)
-		(try! (contract-call? payment-token-trait transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
+		(try! (contract-call? payment-token-trait transfer-fixed payment-amount sender (as-contract tx-sender) none))		
 		(and (> apower-to-burn u0) (as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender))))
 		(map-set offering-ticket-bounds {launch-id: launch-id, owner: owner} bounds)
 		(map-set offering-ticket-amounts {launch-id: launch-id, owner: owner} tickets)
