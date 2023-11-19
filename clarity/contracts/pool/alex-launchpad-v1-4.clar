@@ -181,7 +181,7 @@
 (define-read-only (validate-register (owner principal) (launch-id uint) (payment-amount uint) (payment-token principal))
 	(let (
 			(offering (try! (get-launch-or-fail launch-id)))
-			(tickets (div-down payment-amount (get price-per-ticket-in-fixed offering))))
+			(tickets (/ payment-amount (get price-per-ticket-in-fixed offering))))
 		(asserts! (is-none (map-get? offering-ticket-bounds {launch-id: launch-id, owner: owner})) err-already-registered)
 		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
 		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
