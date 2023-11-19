@@ -142,11 +142,8 @@
 )
 
 (define-read-only (get-apower-required-in-fixed (launch-id uint) (tickets uint))
-	(let 
-		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
-			(tiers (get apower-per-ticket-in-fixed offering))
-		)
+	(let (
+			(tiers (get apower-per-ticket-in-fixed (try! (get-launch-or-fail launch-id)))))
 		(ok (get apower-so-far (fold get-apower-required-iter tiers {remaining-tickets: tickets, apower-so-far: u0, length: (len tiers)})))
 	)	
 )
@@ -165,7 +162,7 @@
 (define-read-only (get-offering-walk-parameters (launch-id uint))
 	(let
 		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered launch-id) (get total-tickets offering)))
 			(walk-position (try! (get-initial-walk-position (get registration-end-height offering) max-step-size)))
 		)
@@ -181,35 +178,36 @@
 	(ok (buff-to-uint64 (unwrap! (get-block-info? vrf-seed height) err-block-height-not-reached)))
 )
 
+(define-read-only (validate-register (owner principal) (launch-id uint) (tickets uint) (payment-token principal))
+	(let (
+			(offering (try! (get-launch-or-fail launch-id))))
+		(asserts! (is-none (map-get? offering-ticket-bounds {launch-id: launch-id, owner: owner})) err-already-registered)
+		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
+		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
+		(asserts! (is-eq (get payment-token offering) payment-token) err-invalid-payment-token-trait)
+		(ok offering)))
+
 ;; governance calls
 
 (define-public (set-contract-owner (owner principal))
 	(begin
 		(try! (check-is-owner))
-		(ok (var-set contract-owner owner))
-	)
-)
+		(ok (var-set contract-owner owner))))
 
 (define-public (set-fee-to-address (owner principal))
 	(begin 
 		(try! (check-is-owner))
-		(ok (var-set fee-to-address owner))
-	)
-)
+		(ok (var-set fee-to-address owner))))
 
 (define-public (add-approved-operator (new-approved-operator principal))
 	(begin
 		(try! (check-is-owner))
-		(ok (map-set approved-operators new-approved-operator true))
-	)
-)
+		(ok (map-set approved-operators new-approved-operator true))))
 
 (define-public (set-max-size-factor (factor uint))
 	(begin 
 		(try! (check-is-owner))
-		(ok (var-set max-size-factor factor))
-	)
-)
+		(ok (var-set max-size-factor factor))))
 
 (define-public (create-pool
 	(launch-token-trait <ft-trait>)
@@ -242,17 +240,9 @@
 			)
 			err-invalid-launch-setting
 		)
-		(map-set offerings launch-id (merge offering
-			{
-				launch-token: (contract-of launch-token-trait),
-				payment-token: (contract-of payment-token-trait),
-				total-tickets: u0
-			})
-		)
+		(map-set offerings launch-id (merge offering { launch-token: (contract-of launch-token-trait), payment-token: (contract-of payment-token-trait), total-tickets: u0}))
 		(var-set launch-id-nonce (+ launch-id u1))
-		(ok launch-id)
-	)
-)
+		(ok launch-id)))
 
 (define-public (transfer-all-to-owner (token-trait <ft-trait>))
 	(let (
@@ -266,7 +256,7 @@
 (define-public (add-to-position (launch-id uint) (tickets uint) (launch-token-trait <ft-trait>))
 	(let
 		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 		)
 		(asserts! (< block-height (get registration-start-height offering)) err-block-height-not-reached)
 		(asserts! 
@@ -295,7 +285,7 @@
 (define-public (refund (launch-id uint) (input (list 200 {recipient: principal, amount: uint})) (payment-token-trait <ft-trait>))
 	(let 
 		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 		)
 		(asserts! (is-eq (get payment-token offering) (contract-of payment-token-trait)) err-invalid-payment-token-trait)
 		(asserts! (>= block-height (get registration-end-height offering)) err-block-height-not-reached)
@@ -328,28 +318,23 @@
 
 ;; public calls
 
-(define-public (register-on-behalf ))
-(define-read-only (validate))
 (define-public (register (launch-id uint) (tickets uint) (payment-token-trait <ft-trait>))
+	(register-on-behalf tx-sender launch-id tickets payment-token-trait))
+
+(define-public (register-on-behalf (owner principal) (launch-id uint) (tickets uint) (payment-token-trait <ft-trait>))
 	(let
 		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
+			(offering (try! (validate-register owner launch-id tickets (contract-of payment-token-trait))))
 			(apower-to-burn (try! (get-apower-required-in-fixed launch-id tickets)))
 			(bounds (next-bounds launch-id tickets))
 			(sender tx-sender)
 		)
-		(asserts! (is-none (map-get? offering-ticket-bounds {launch-id: launch-id, owner: tx-sender})) err-already-registered)
-		(asserts! (and (> tickets u0) (<= tickets (get registration-max-tickets offering))) err-invalid-input)
-		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)	
-		(asserts! (is-eq (get payment-token offering) (contract-of payment-token-trait)) err-invalid-payment-token-trait)		
 		(try! (contract-call? payment-token-trait transfer-fixed (* (get price-per-ticket-in-fixed offering) tickets) sender (as-contract tx-sender) none))		
 		(and (> apower-to-burn u0) (as-contract (try! (contract-call? .token-apower burn-fixed apower-to-burn sender))))
-		(map-set offering-ticket-bounds {launch-id: launch-id, owner: tx-sender} bounds)
-		(map-set offering-ticket-amounts {launch-id: launch-id, owner: tx-sender} tickets)
+		(map-set offering-ticket-bounds {launch-id: launch-id, owner: owner} bounds)
+		(map-set offering-ticket-amounts {launch-id: launch-id, owner: owner} tickets)
 		(map-set total-tickets-registered launch-id (+ (get-total-tickets-registered launch-id) tickets))
-		(ok bounds)
-	)
-)
+		(ok bounds)))
 
 ;; private calls
 
@@ -472,7 +457,7 @@
 (define-private (claim-process (launch-id uint) (input (list 200 principal)) (launch-token-trait principal) (payment-token-trait <ft-trait>))
 	(let
 		(
-			(offering (unwrap! (map-get? offerings launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 			(total-won (default-to u0 (map-get? total-tickets-won launch-id)))
 			(max-step-size (calculate-max-step-size (get-total-tickets-registered launch-id) (get total-tickets offering)))
 			(walk-position (try! (get-last-claim-walk-position launch-id (get registration-end-height offering) max-step-size)))
