@@ -60,9 +60,9 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 	const first = chain.mineBlock([		
 		Tx.contractCall("alex-vault-v1-1", "set-approved-contract", [types.principal(deployer.address + '.amm-swap-pool-v1-1'), types.bool(true)], deployer.address),
 		Tx.contractCall("token-banana", "mint-fixed", [types.uint(totalIdoTokens * ticketsForSale * ONE_8), types.principal(idoOwner.address)], deployer.address),
-		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-launchpad-v1-3"))], deployer.address),		
+		Tx.contractCall("token-apower", "add-approved-contract", [types.principal(contractPrincipal(deployer, "alex-launchpad-v1-4"))], deployer.address),		
 		...ticketRecipients.map(allocation => Tx.contractCall("token-apower", "mint-fixed", [types.uint(determineApower(allocation.amount, apowerPerTicketInFixed)), types.principal((allocation.recipient as Account).address || allocation.recipient as string)], deployer.address)),
-		Tx.contractCall("launchpad-with-pool-lock", "create-pool", [
+		Tx.contractCall("launchpad-with-pool-lock-v1-4", "create-pool", [
 			types.principal(contractPrincipal(deployer, "token-wban")),
 			types.principal(contractPrincipal(deployer, "token-wstx")),
 			types.tuple({
@@ -83,7 +83,7 @@ export function prepareStandardTest(chain: Chain, parameters: StandardTestParame
 	const idoId = parseInt(first.receipts[first.receipts.length - 1].result.expectOk().toString().substring(1));
 	assertEquals(isNaN(idoId), false, "failed to get Launch ID");
 	const second = chain.mineBlock([
-		Tx.contractCall("launchpad-with-pool-lock", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
+		Tx.contractCall("launchpad-with-pool-lock-v1-4", "add-to-position", [types.uint(idoId), types.uint(ticketsForSale), types.principal(contractPrincipal(deployer, "token-wban"))], idoOwner.address),
 	]);
 	return { idoId, blocks: [first, second] };
 }
