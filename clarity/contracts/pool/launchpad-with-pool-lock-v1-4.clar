@@ -40,7 +40,7 @@
 	)
 	(let 
 		(
-			(launch-id (try! (contract-call? .alex-launchpad-v1-3 create-pool launch-token-trait payment-token-trait (merge offering { launch-owner: (as-contract tx-sender) }))))
+			(launch-id (try! (contract-call? .alex-launchpad-v1-4 create-pool launch-token-trait payment-token-trait (merge offering { launch-owner: (as-contract tx-sender) }))))
 		)
 		(try! (contract-call? .alex-vault-v1-1 set-approved-token (contract-of launch-token-trait) true))
 		(try! (contract-call? .alex-vault-v1-1 set-approved-token (contract-of payment-token-trait) true))
@@ -74,21 +74,20 @@
 (define-public (add-to-position (launch-id uint) (tickets uint) (launch-token-trait <ft-trait>))
 	(let
 		(
-			(offering (unwrap! (get-launch launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 			(locked-details (unwrap! (get-locked-details launch-id) err-unknown-launch))
 		)
 		(asserts! (or (is-eq (get launch-owner locked-details) tx-sender) (is-ok (check-is-owner))) err-not-authorized)		
 		(try! (contract-call? launch-token-trait transfer-fixed (* (get launch-tokens-per-ticket offering) tickets ONE_8) tx-sender (as-contract tx-sender) none))
-		(as-contract (try! (contract-call? .alex-launchpad-v1-3 add-to-position launch-id tickets launch-token-trait)))
+		(as-contract (try! (contract-call? .alex-launchpad-v1-4 add-to-position launch-id tickets launch-token-trait)))
 		(contract-call? launch-token-trait transfer-fixed (mul-down (* (get launch-tokens-per-ticket offering) tickets ONE_8) (get pct locked-details)) tx-sender (as-contract tx-sender) none)
 	)
 )
 
 ;; read-only functions
 
-(define-read-only (get-launch (launch-id uint))
-	(unwrap-panic (contract-call? .alex-launchpad-v1-3 get-launch launch-id))
-)
+(define-read-only (get-launch-or-fail (launch-id uint))
+	(contract-call? .alex-launchpad-v1-4 get-launch-or-fail launch-id))
 
 (define-read-only (get-locked-details (launch-id uint))
 	(map-get? locked launch-id)
@@ -103,7 +102,7 @@
 (define-public (claim (launch-id uint) (input (list 200 principal)) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>))
 	(let 
 		(
-			(offering (unwrap! (get-launch launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 			(launch-token (get launch-token offering))
 			(payment-token (get payment-token offering))
 			(locked-details (unwrap! (get-locked-details launch-id) err-unknown-launch))
@@ -112,7 +111,7 @@
 			(net-price-per-ticket (- (get price-per-ticket-in-fixed offering) fee-per-ticket))
 			(payment-token-amount (mul-down (* net-price-per-ticket (len input)) (get pct locked-details)))
 		)
-		(try! (contract-call? .alex-launchpad-v1-3 claim launch-id input launch-token-trait payment-token-trait))
+		(try! (contract-call? .alex-launchpad-v1-4 claim launch-id input launch-token-trait payment-token-trait))
 		(if (is-some (contract-call? .amm-swap-pool-v1-1 get-pool-exists payment-token launch-token ONE_8))
 			(begin 
 				(as-contract (try! (contract-call? .amm-swap-pool-v1-1 add-to-position payment-token-trait launch-token-trait ONE_8 payment-token-amount (some launch-token-amount))))
@@ -145,7 +144,7 @@
 (define-public (reduce-position (launch-id uint) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>) (percent uint))
 	(let 
 		(
-			(offering (unwrap! (get-launch launch-id) err-unknown-launch))
+			(offering (try! (get-launch-or-fail launch-id)))
 			(locked-details (unwrap! (get-locked-details launch-id) err-unknown-launch))
 			(reduced (as-contract (try! (contract-call? .amm-swap-pool-v1-1 reduce-position payment-token-trait launch-token-trait ONE_8 percent))))
 		) 
