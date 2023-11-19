@@ -272,13 +272,14 @@ Clarinet.test({
 
     chain.mineEmptyBlockUntil(parameters.registrationStartHeight);
 
+    // console.log(ticketRecipient.amount * params.pricePerTicketInFixed);
     const block = chain.mineBlock([
       Tx.contractCall(
         "alex-launchpad-v1-4",
         "register",
         [
           types.uint(idoId),
-          types.uint(ticketRecipient.amount),
+          types.uint(ticketRecipient.amount * params.pricePerTicketInFixed),
           types.principal(contractPrincipal(deployer, "token-wstx")),
         ],
         ticketRecipient.recipient.address
@@ -288,7 +289,7 @@ Clarinet.test({
         "register",
         [
           types.uint(idoId),
-          types.uint(ticketRecipient.amount),
+          types.uint(ticketRecipient.amount * params.pricePerTicketInFixed),
           types.principal(contractPrincipal(deployer, "token-wstx")),
         ],
         ticketRecipient.recipient.address
@@ -346,7 +347,7 @@ Clarinet.test({
         "register",
         [
           types.uint(idoId),
-          types.uint(ticketRecipient.amount),
+          types.uint(ticketRecipient.amount * params.pricePerTicketInFixed),
           types.principal(contractPrincipal(deployer, "token-wstx")),
         ],
         ticketRecipient.recipient.address
@@ -402,7 +403,7 @@ Clarinet.test({
         "register",
         [
           types.uint(idoId),
-          types.uint(ticketRecipient.amount),
+          types.uint(ticketRecipient.amount * params.pricePerTicketInFixed),
           types.principal(contractPrincipal(deployer, "token-wstx")),
         ],
         ticketRecipient.recipient.address
@@ -522,7 +523,7 @@ Clarinet.test({
           "register",
           [
             types.uint(idoId),
-            types.uint(entry.amount),
+            types.uint(entry.amount * params.pricePerTicketInFixed),
             types.principal(contractPrincipal(deployer, "token-wstx")),
           ],
           (entry.recipient as Account).address ||
@@ -753,7 +754,7 @@ Clarinet.test({
             "register",
             [
               types.uint(idoId),
-              types.uint(entry.amount),
+              types.uint(entry.amount * params.pricePerTicketInFixed),
               types.principal(contractPrincipal(deployer, "token-wstx")),
             ],
             (entry.recipient as Account).address ||
