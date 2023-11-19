@@ -328,6 +328,8 @@
 
 ;; public calls
 
+(define-public (register-on-behalf ))
+(define-read-only (validate))
 (define-public (register (launch-id uint) (tickets uint) (payment-token-trait <ft-trait>))
 	(let
 		(
