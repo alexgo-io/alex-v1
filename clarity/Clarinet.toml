@@ -581,6 +581,10 @@ depends_on = ["trait-sip-010", "trait-ido-ft", "token-apower"]
 path = "contracts/pool/alex-launchpad-v1-4.clar"
 depends_on = ["trait-sip-010", "token-apower"]
 
+[contracts.alex-launchpad-v1-5]
+path = "contracts/pool/alex-launchpad-v1-5.clar"
+depends_on = ["trait-sip-010", "token-apower"]
+
 [contracts.token-banana]
 path = "contracts/token/token-banana.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
@@ -1177,6 +1181,9 @@ path = "contracts/pool/launchpad-with-pool-lock.clar"
 [contracts.launchpad-with-pool-lock-v1-4]
 path = "contracts/pool/launchpad-with-pool-lock-v1-4.clar"
 
+[contracts.launchpad-with-pool-lock-v1-5]
+path = "contracts/pool/launchpad-with-pool-lock-v1-5.clar"
+
 [contracts.bridge-apower-helper]
 path = "contracts/helpers/bridge-apower-helper.clar"
 clarity_version = 2
@@ -1200,6 +1207,12 @@ epoch = 2.4
 [contracts.sponsored-alex-launchpad-v1-4]
 path = 'contracts/sponsored/sponsored-alex-launchpad-v1-4.clar'
 depends_on = ["alex-launchpad-v1-4"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.sponsored-alex-launchpad-v1-5]
+path = 'contracts/sponsored/sponsored-alex-launchpad-v1-5.clar'
+depends_on = ["alex-launchpad-v1-5"]
 clarity_version = 2
 epoch = 2.4
 
