@@ -1194,3 +1194,26 @@ path = "contracts/helpers/bridge-apower-helper-v1-01.clar"
 clarity_version = 2
 epoch = "2.4"
 
+[contracts.token-abtc]
+path = "contracts/bridge/bridged-tokens/token-abtc.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.sponsored-amm-swap-pool-v1-1]
+path = 'contracts/sponsored/sponsored-amm-swap-pool-v1-1.clar'
+depends_on= ["amm-swap-pool-v1-1"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.sponsored-alex-launchpad-v1-4]
+path = 'contracts/sponsored/sponsored-alex-launchpad-v1-4.clar'
+depends_on = ["alex-launchpad-v1-4"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.sponsored-alex-launchpad-v1-5]
+path = 'contracts/sponsored/sponsored-alex-launchpad-v1-5.clar'
+depends_on = ["alex-launchpad-v1-5"]
+clarity_version = 2
+epoch = 2.4
+
+
