@@ -1181,6 +1181,9 @@ path = "contracts/pool/launchpad-with-pool-lock.clar"
 [contracts.launchpad-with-pool-lock-v1-4]
 path = "contracts/pool/launchpad-with-pool-lock-v1-4.clar"
 
+[contracts.launchpad-with-pool-lock-v1-5]
+path = "contracts/pool/launchpad-with-pool-lock-v1-5.clar"
+
 [contracts.bridge-apower-helper]
 path = "contracts/helpers/bridge-apower-helper.clar"
 clarity_version = 2
