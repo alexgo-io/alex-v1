@@ -527,7 +527,7 @@ Clarinet.test({
             types.principal(contractPrincipal(deployer, "token-wstx")),
           ],
           (entry.recipient as Account).address ||
-            (entry.recipient as unknown as string)
+          (entry.recipient as unknown as string)
         )
       )
     );
@@ -538,7 +538,7 @@ Clarinet.test({
       registrations.receipts[i].events.expectSTXTransferEvent(
         ((ticketRecipients[i]["amount"] * parameters["pricePerTicketInFixed"]) /
           ONE_8) *
-          1e6,
+        1e6,
         ticketRecipients[i]["recipient"].address,
         deployer.address + ".alex-launchpad-v1-5"
       );
@@ -614,8 +614,8 @@ Clarinet.test({
         winners.winners.indexOf(participant) == -1
           ? 0
           : winners.winners.lastIndexOf(participant) -
-            winners.winners.indexOf(participant) +
-            1;
+          winners.winners.indexOf(participant) +
+          1;
       let lost =
         losers_list.indexOf(participant) == -1
           ? 0
@@ -666,7 +666,7 @@ Clarinet.test({
         events.expectSTXTransferEvent(
           ((losers_sliced[j]["amount"] * parameters["pricePerTicketInFixed"]) /
             ONE_8) *
-            1e6,
+          1e6,
           deployer.address + ".alex-launchpad-v1-5",
           losers_sliced[j]["recipient"]
         );
@@ -708,87 +708,87 @@ Clarinet.test({
       ),
     ]);
 
-      const registrationStartHeight = 20;
-      const registrationEndHeight = registrationStartHeight + 10;
-      const claimEndHeight = registrationEndHeight + 100;
+    const registrationStartHeight = 20;
+    const registrationEndHeight = registrationStartHeight + 10;
+    const claimEndHeight = registrationEndHeight + 100;
 
-      const ticketRecipients = [
-        { recipient: accountA, amount: 10 },
-        { recipient: accountB, amount: 4000 },
-        { recipient: accountC, amount: 2000 },
-        { recipient: accountD, amount: 50000 },
-        { recipient: accountE, amount: 1010 },
-        { recipient: accountF, amount: 100000 },
-        { recipient: accountG, amount: 10 },
-      ];
+    const ticketRecipients = [
+      { recipient: accountA, amount: 10 },
+      { recipient: accountB, amount: 4000 },
+      { recipient: accountC, amount: 2000 },
+      { recipient: accountD, amount: 50000 },
+      { recipient: accountE, amount: 1010 },
+      { recipient: accountF, amount: 100000 },
+      { recipient: accountG, amount: 10 },
+    ];
 
-      const params: StandardTestParameters = {
-        ...parameters,
-        totalIdoTokens: 50000,
-        idoOwner: accountA,
-        ticketsForSale: 500,
-        idoTokensPerTicket: 100,
-        pricePerTicketInFixed: 33e8,
-        activationThreshold: 500,
-        ticketRecipients: ticketRecipients,
-        registrationStartHeight: registrationStartHeight,
-        registrationEndHeight: registrationEndHeight,
-        claimEndHeight: claimEndHeight,
-      };
+    const params: StandardTestParameters = {
+      ...parameters,
+      totalIdoTokens: 50000,
+      idoOwner: accountA,
+      ticketsForSale: 500,
+      idoTokensPerTicket: 100,
+      pricePerTicketInFixed: 33e8,
+      activationThreshold: 500,
+      ticketRecipients: ticketRecipients,
+      registrationStartHeight: registrationStartHeight,
+      registrationEndHeight: registrationEndHeight,
+      claimEndHeight: claimEndHeight,
+    };
 
-      const preparation = prepareStandardTest(chain, params, deployer);
-      preparation.blocks.map((block) =>
-        block.receipts.map(({ result }) => result.expectOk())
-      );
+    const preparation = prepareStandardTest(chain, params, deployer);
+    preparation.blocks.map((block) =>
+      block.receipts.map(({ result }) => result.expectOk())
+    );
 
-      const { idoId } = preparation;
+    const { idoId } = preparation;
 
-      const whitelisted = chain.mineBlock([
+    const whitelisted = chain.mineBlock([
+      Tx.contractCall(
+        "alex-launchpad-v1-5",
+        "set-use-whitelist",
+        [types.uint(idoId), types.bool(true)],
+        deployer.address
+      ),
+      Tx.contractCall(
+        "alex-launchpad-v1-5",
+        "set-whitelisted",
+        [
+          types.uint(idoId),
+          types.list([
+            types.tuple({ owner: types.principal(accountA.address), whitelisted: types.bool(true) }),
+            types.tuple({ owner: types.principal(accountB.address), whitelisted: types.bool(true) })
+          ])
+        ],
+        deployer.address
+      )
+    ]);
+    whitelisted.receipts.map(({ result }) => result.expectOk());
+
+    chain.mineEmptyBlockUntil(registrationStartHeight);
+    const registrations = chain.mineBlock(
+      ticketRecipients.map((entry) =>
         Tx.contractCall(
           "alex-launchpad-v1-5",
-          "set-use-whitelist",
-          [ types.uint(idoId), types.bool(true) ],
-          deployer.address
-        ),
-        Tx.contractCall(
-          "alex-launchpad-v1-5",
-          "set-whitelisted",
+          "register",
           [
             types.uint(idoId),
-            types.list([
-              types.tuple({ owner: types.principal(accountA.address), whitelisted: types.bool(true) }),
-              types.tuple({ owner: types.principal(accountB.address), whitelisted: types.bool(true) })
-            ])
+            types.uint(entry.amount * params.pricePerTicketInFixed),
+            types.principal(contractPrincipal(deployer, "token-wstx")),
           ],
-          deployer.address
+          (entry.recipient as Account).address ||
+          (entry.recipient as unknown as string)
         )
-        ]);
-        whitelisted.receipts.map(({ result }) => result.expectOk());
-
-      chain.mineEmptyBlockUntil(registrationStartHeight);
-      const registrations = chain.mineBlock(
-        ticketRecipients.map((entry) =>
-          Tx.contractCall(
-            "alex-launchpad-v1-5",
-            "register",
-            [
-              types.uint(idoId),
-              types.uint(entry.amount * params.pricePerTicketInFixed),
-              types.principal(contractPrincipal(deployer, "token-wstx")),
-            ],
-            (entry.recipient as Account).address ||
-              (entry.recipient as unknown as string)
-          )
-        )
-      );
-      // console.log(registrations.receipts);
-      registrations.receipts[0].result.expectOk();
-      registrations.receipts[1].result.expectOk();
-      registrations.receipts[2].result.expectErr(); // accountC not whitelisted
-      registrations.receipts[3].result.expectErr(); // accountD not whitelisted
-      registrations.receipts[4].result.expectErr(); // accountE not whitelisted
-      registrations.receipts[5].result.expectErr(); // accountF not whitelisted
-      registrations.receipts[6].result.expectErr(); // accountG not whitelisted
+      )
+    );
+    // console.log(registrations.receipts);
+    registrations.receipts[0].result.expectOk();
+    registrations.receipts[1].result.expectOk();
+    registrations.receipts[2].result.expectErr(); // accountC not whitelisted
+    registrations.receipts[3].result.expectErr(); // accountD not whitelisted
+    registrations.receipts[4].result.expectErr(); // accountE not whitelisted
+    registrations.receipts[5].result.expectErr(); // accountF not whitelisted
+    registrations.receipts[6].result.expectErr(); // accountG not whitelisted
   }
 })
 
@@ -875,7 +875,7 @@ Clarinet.test({
               types.principal(contractPrincipal(deployer, "token-wstx")),
             ],
             (entry.recipient as Account).address ||
-              (entry.recipient as unknown as string)
+            (entry.recipient as unknown as string)
           )
         )
       );
@@ -887,7 +887,7 @@ Clarinet.test({
           ((ticketRecipients[i]["amount"] *
             params["pricePerTicketInFixed"]) /
             ONE_8) *
-            1e6,
+          1e6,
           ticketRecipients[i]["recipient"].address,
           deployer.address + ".alex-launchpad-v1-5"
         );
@@ -962,7 +962,7 @@ Clarinet.test({
         events.expectSTXTransferEvent(
           ((params["pricePerTicketInFixed"] * winners_sliced.length) /
             ONE_8) *
-            1e6,
+          1e6,
           deployer.address + ".alex-launchpad-v1-5",
           accountA.address
         );
@@ -989,8 +989,8 @@ Clarinet.test({
           winners.winners.indexOf(participant) == -1
             ? 0
             : winners.winners.lastIndexOf(participant) -
-              winners.winners.indexOf(participant) +
-              1;
+            winners.winners.indexOf(participant) +
+            1;
         let lost =
           losers_list.indexOf(participant) == -1
             ? 0
@@ -1042,7 +1042,7 @@ Clarinet.test({
             ((losers_sliced[j]["amount"] *
               params["pricePerTicketInFixed"]) /
               ONE_8) *
-              1e6,
+            1e6,
             deployer.address + ".alex-launchpad-v1-5",
             losers_sliced[j]["recipient"]
           );
@@ -1055,7 +1055,7 @@ Clarinet.test({
       Math.min(...winners_list),
       "median: ",
       winners_list.sort((a, b) => (a > b ? 1 : -1))[
-        Math.floor(winners_list.length / 2)
+      Math.floor(winners_list.length / 2)
       ],
       "mean: ",
       winners_list.reduce((sum, x) => sum + x, 0) / winners_list.length,
