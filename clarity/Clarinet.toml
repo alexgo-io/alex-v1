@@ -1216,4 +1216,8 @@ depends_on = ["alex-launchpad-v1-5"]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.dual-farming-pool-sft]
+path = "contracts/helpers/dual-farming-pool-sft.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool-sft", "auto-alex-v2", "trait-semi-fungible" ]
+
 
