@@ -1220,4 +1220,6 @@ epoch = 2.4
 path = "contracts/helpers/dual-farming-pool-sft.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool-sft", "auto-alex-v2", "trait-semi-fungible" ]
 
-
+[contracts.brc20-ordg]
+path = "contracts/token/brc20-ordg.clar"
+depends_on = []
