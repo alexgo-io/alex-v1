@@ -1223,3 +1223,11 @@ depends_on = [ "trait-ownable", "trait-sip-010", "alex-reserve-pool-sft", "auto-
 [contracts.brc20-ordg]
 path = "contracts/token/brc20-ordg.clar"
 depends_on = []
+
+[contracts.vault-welsh-pool]
+path = "contracts/vault-token/vault-welsh-pool.clar"
+depends_on = ["token-amm-swap-pool", "token-wcorgi"]
+
+[contracts.stake-vault-welsh-pool]
+path = "contracts/vault-token/stake-vault-welsh-pool.clar"
+depends_on = ["vault-welsh-pool"]
