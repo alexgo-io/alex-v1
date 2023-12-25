@@ -17,9 +17,14 @@
 
 (define-data-var token-decimals uint u8)
 
-(define-constant token-id u3)
+(define-data-var token-id uint u3) ;; mainnet
 
 ;; governance functions
+
+(define-public (set-token-id (new-id uint))
+	(begin 
+		(try! (check-is-owner))
+		(ok (var-set token-id new-id))))
 
 (define-public (set-contract-owner (owner principal))
 	(begin
@@ -70,16 +75,19 @@
 (define-public (mint-fixed (amount uint) (recipient principal))
 	(begin
 		(asserts! (is-eq recipient tx-sender) ERR-NOT-AUTHORIZED)
-		(try! (contract-call? .token-amm-swap-pool transfer-fixed token-id amount recipient (as-contract tx-sender)))		
+		(try! (contract-call? .token-amm-swap-pool transfer-fixed (var-get token-id) amount recipient (as-contract tx-sender)))		
 		(ft-mint? vault-welsh-pool (fixed-to-decimals amount) recipient)))
 
 (define-public (burn-fixed (amount uint) (sender principal))
 	(begin
 		(asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
 		(try! (ft-burn? vault-welsh-pool (fixed-to-decimals amount) sender))
-		(as-contract (contract-call? .token-amm-swap-pool transfer-fixed token-id amount tx-sender sender))))
+		(as-contract (contract-call? .token-amm-swap-pool transfer-fixed (var-get token-id) amount tx-sender sender))))
 
 ;; read-only functions
+
+(define-read-only (get-token-id)
+	(var-get token-id))
 
 (define-read-only (get-name)
 	(ok (var-get token-name)))
