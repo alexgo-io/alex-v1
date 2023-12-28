@@ -20,6 +20,8 @@ contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-token"
 contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-alex-dual-yield-v1-1"
 [[project.requirements]]
 contract_id = "SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token"
+[[project.requirements]]
+contract_id = "SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega"
 
 [repl]
 costs_version = 2
@@ -1244,3 +1246,7 @@ depends_on = ["token-amm-swap-pool", "token-wcorgi"]
 [contracts.stake-vault-welsh-pool]
 path = "contracts/vault-token/stake-vault-welsh-pool.clar"
 depends_on = ["vault-welsh-pool"]
+
+[contracts.token-wmega]
+path = "contracts/wrapped-token/token-wmega.clar"
+depends_on = [ "trait-ownable", "trait-sip-010"]
