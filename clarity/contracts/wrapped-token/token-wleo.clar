@@ -1,11 +1,11 @@
 (impl-trait .trait-ownable.ownable-trait)
 (impl-trait .trait-sip-010.sip-010-trait)
 
-(define-fungible-token wmega)
+(define-fungible-token wleo)
 
-(define-data-var token-name (string-ascii 32) "Wrapped MEGA")
-(define-data-var token-symbol (string-ascii 10) "wmega")
-(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-wmega.json"))
+(define-data-var token-name (string-ascii 32) "Wrapped LEO")
+(define-data-var token-symbol (string-ascii 10) "wleo")
+(define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-wleo.json"))
 
 (define-data-var token-decimals uint u8)
 
@@ -91,13 +91,13 @@
 )
 
 (define-private (get-base-decimals)
-  (contract-call? 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega get-decimals))
+  (contract-call? 'SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token get-decimals))
 
 ;; @desc get-balance
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
-  (ok (/ (* (unwrap-panic (contract-call? 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
+  (ok (/ (* (unwrap-panic (contract-call? 'SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
 )
 
 ;; @desc get-token-uri
@@ -116,7 +116,7 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-    (contract-call? 'SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
+    (contract-call? 'SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
   )
 )
 
