@@ -22,6 +22,11 @@ contract_id = "SP2C2YFP12AJZB4MABJBAJ55XECVS7E4PMMZ89YZR.arkadiko-alex-dual-yiel
 contract_id = "SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token"
 [[project.requirements]]
 contract_id = "SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega"
+<<<<<<< HEAD
+[[project.requirements]]
+contract_id = "SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token"
+=======
+>>>>>>> cde872020e9021f70cd1e4ae83bedcdb62fa39ac
 
 [repl]
 costs_version = 2
@@ -1250,3 +1255,9 @@ depends_on = ["vault-welsh-pool"]
 [contracts.token-wmega]
 path = "contracts/wrapped-token/token-wmega.clar"
 depends_on = [ "trait-ownable", "trait-sip-010"]
+
+[contracts.token-wleo]
+path = "contracts/wrapped-token/token-wleo.clar"
+depends_on = [ "trait-ownable", "trait-sip-010"]
+clarity_version = 2
+epoch = 2.4
