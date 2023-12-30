@@ -1249,12 +1249,20 @@ depends_on = ["token-amm-swap-pool", "token-wcorgi"]
 path = "contracts/vault-token/stake-vault-welsh-pool.clar"
 depends_on = ["vault-welsh-pool"]
 
-[contracts.token-wmega]
-path = "contracts/wrapped-token/token-wmega.clar"
+[contracts.token-mega]
+path = "contracts/token/token-mega.clar"
 depends_on = [ "trait-ownable", "trait-sip-010"]
+
+[contracts.token-wmega-v2]
+path = "contracts/wrapped-token/token-wmega-v2.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-mega"]
+
+[contracts.token-leo]
+path = "contracts/token/token-leo.clar"
+depends_on = ["trait-ownable", "trait-sip-010"]
 
 [contracts.token-wleo]
 path = "contracts/wrapped-token/token-wleo.clar"
-depends_on = [ "trait-ownable", "trait-sip-010"]
+depends_on = [ "trait-ownable", "trait-sip-010", "token-leo"]
 clarity_version = 2
 epoch = 2.4
