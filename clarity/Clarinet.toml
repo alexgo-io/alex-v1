@@ -1253,7 +1253,7 @@ depends_on = ["vault-welsh-pool"]
 path = "contracts/token/token-mega.clar"
 depends_on = [ "trait-ownable", "trait-sip-010"]
 
-[contracts.token-wmega]
+[contracts.token-wmega-v2]
 path = "contracts/wrapped-token/token-wmega-v2.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-mega"]
 
