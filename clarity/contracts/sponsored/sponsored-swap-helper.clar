@@ -20,20 +20,30 @@
 
 ;; sponsored / public calls
 
-(define-public (swap-helper (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
+(define-public (swap-helper-v1-03 (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (dx uint) (min-dy (optional uint)))
     (begin 
         (try! (pay-to-sponsor))
         (contract-call? .swap-helper-v1-03 swap-helper token-x-trait token-y-trait dx min-dy)))
 
-(define-public (swap-helper-to-amm (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (factor-y uint) (dx uint) (min-dz (optional uint)))
+(define-public (swap-helper-to-amm-v1-1 (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (factor-y uint) (dx uint) (min-dz (optional uint)))
     (begin 
         (try! (pay-to-sponsor))
         (contract-call? .swap-helper-bridged-v1-1 swap-helper-to-amm token-x-trait token-y-trait token-z-trait factor-y dx min-dz)))
 
-(define-public (swap-helper-from-amm (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (factor-x uint) (dx uint) (min-dz (optional uint)))
+(define-public (swap-helper-from-amm-v1-1 (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (factor-x uint) (dx uint) (min-dz (optional uint)))
     (begin 
         (try! (pay-to-sponsor))
         (contract-call? .swap-helper-bridged-v1-1 swap-helper-from-amm token-x-trait token-y-trait token-z-trait factor-x dx min-dz)))
+
+(define-public (swap-helper-to-amm (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (factor-y uint) (dx uint) (min-dz (optional uint)))
+    (begin 
+        (try! (pay-to-sponsor))
+        (contract-call? .swap-helper-bridged swap-helper-to-amm token-x-trait token-y-trait token-z-trait factor-y dx min-dz)))
+
+(define-public (swap-helper-from-amm (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (factor-x uint) (dx uint) (min-dz (optional uint)))
+    (begin 
+        (try! (pay-to-sponsor))
+        (contract-call? .swap-helper-bridged swap-helper-from-amm token-x-trait token-y-trait token-z-trait factor-x dx min-dz)))
 
 ;; private calls
 

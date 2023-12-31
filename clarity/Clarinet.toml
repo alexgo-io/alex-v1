@@ -1267,6 +1267,6 @@ epoch = 2.4
 
 [contracts.sponsored-swap-helper]
 path = 'contracts/sponsored/sponsored-swap-helper.clar'
-depends_on= ["swap-helper-v1-03", "swap-helper-bridged-v1-1"]
+depends_on= ["swap-helper-v1-03", "swap-helper-bridged-v1-1", "swap-helper-bridged"]
 clarity_version = 2
 epoch = 2.4
