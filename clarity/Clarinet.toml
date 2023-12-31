@@ -1258,3 +1258,15 @@ path = "contracts/wrapped-token/token-wleo.clar"
 depends_on = [ "trait-ownable", "trait-sip-010"]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.sponsored-amm-swap-pool]
+path = 'contracts/sponsored/sponsored-amm-swap-pool.clar'
+depends_on= ["amm-swap-pool"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.sponsored-swap-helper]
+path = 'contracts/sponsored/sponsored-swap-helper.clar'
+depends_on= ["swap-helper-v1-03", "swap-helper-bridged-v1-1"]
+clarity_version = 2
+epoch = 2.4
