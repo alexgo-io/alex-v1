@@ -1278,3 +1278,16 @@ path = 'contracts/sponsored/sponsored-swap-helper.clar'
 depends_on= ["swap-helper-v1-03", "swap-helper-bridged-v1-1", "swap-helper-bridged"]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.sponsored-alex-launchpad-v1-7]
+path = 'contracts/sponsored/sponsored-alex-launchpad-v1-7.clar'
+depends_on = ["alex-launchpad-v1-7"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.alex-launchpad-v1-7]
+path = "contracts/pool/alex-launchpad-v1-7.clar"
+depends_on = ["trait-sip-010", "token-apower"]
+
+[contracts.launchpad-with-pool-lock-v1-7]
+path = "contracts/pool/launchpad-with-pool-lock-v1-7.clar"
