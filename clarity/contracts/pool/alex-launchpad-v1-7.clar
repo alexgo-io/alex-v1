@@ -165,7 +165,7 @@
 		(asserts! (and (>= block-height (get registration-start-height offering)) (< block-height (get registration-end-height offering))) err-block-height-not-reached)			
 		(asserts! (is-eq (get payment-token offering) payment-token) err-invalid-payment-token-trait)
 		(asserts! (>= apower-bal apower-to-burn) err-apower-not-enough)
-		(asserts! (<= (get-total-tickets-registered launch-id) (get total-registration-max offering)) err-total-registration-max)
+		(asserts! (<= (+ (get-total-tickets-registered launch-id) tickets) (get total-registration-max offering)) err-total-registration-max)
 		(ok { offering: offering, tickets: tickets, apower-to-burn: apower-to-burn })))
 
 (define-read-only (get-use-whitelist-or-default (launch-id uint))
