@@ -1291,3 +1291,7 @@ depends_on = ["trait-sip-010", "token-apower"]
 
 [contracts.launchpad-with-pool-lock-v1-7]
 path = "contracts/pool/launchpad-with-pool-lock-v1-7.clar"
+
+[contracts.brc20-reos]
+path = "contracts/token/brc20-reos.clar"
+depends_on = []
