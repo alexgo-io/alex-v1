@@ -24,6 +24,8 @@ contract_id = "SP27BB1Y2DGSXZHS7G9YHKTSH6KQ6BD3QG0AN3CR9.vibes-token"
 contract_id = "SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega"
 [[project.requirements]]
 contract_id = "SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token"
+[[project.requirements]]
+contract_id = "SP1JFFSYTSH7VBM54K29ZFS9H4SVB67EA8VT2MYJ9.gus-token"
 
 [repl]
 costs_version = 2
