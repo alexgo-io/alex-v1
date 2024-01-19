@@ -1307,3 +1307,7 @@ path = "contracts/wrapped-token/token-wgus.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-gus"]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.brc20-ornj]
+path = "contracts/token/brc20-ornj.clar"
+depends_on = []
