@@ -1315,3 +1315,7 @@ depends_on = []
 [contracts.brc20-izip]
 path = "contracts/token/brc20-izip.clar"
 depends_on = []
+
+[contracts.launchpad-buyback-helper]
+path = "contracts/helpers/launchpad-buyback-helper.clar"
+depends_on = ["alex-launchpad-v1-7"]
