@@ -42,7 +42,7 @@
 	;; max-size-factor: uint
 
 ;; TODO: need update flexibility
-(define-public (create-buyback (launch-id uint) (payment-token-trait <ft-trait>) (pct uint) (start-block uint) (end-block uint))
+(define-public (open-buyback (launch-id uint) (payment-token-trait <ft-trait>) (pct uint) (start-block uint) (end-block uint))
   (let (
       (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
       (total-tickets-won (try! (contract-call? .alex-launchpad-v1-7 get-total-tickets-won launch-id)))
@@ -55,18 +55,23 @@
     (try! (contract-call? payment-token-trait transfer-fixed amount tx-sender (as-contract tx-sender) none))
     (ok (map-set buybacks launch-id { pct: pct, claimed: u0, paused: false}))))
 
-(define-public (send-token (launch-id uint) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>) (receiver principal))
+(define-public (pause-buyback (launch-id uint) (paused bool))
+  (begin 
+    (try! (check-is-owner))
+    (ok (map-set buybacks (merge (try! (get-buybacks-or-fail launch-id)) { pause: paused })))))
+
+(define-public (close-buyback (launch-id uint) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>) (receiver principal))
   (let (
       (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
       (backback-details (try! (get-buybacks-or-fail launch-id)))
       (buyback-price (mul-down (/ (get price-per-ticket-in-fixed launch-details) (get launch-tokens-per-ticket launch-details)) (get pct buyback-details))) ;; buy-back price per ticket
       (buyback-amount (mul-down (get claimed backback-details) buyback-price))
-      (buyback-total (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) (get pct buyback-details)))
+      (buyback-total (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) (get pct buyback-details))))
     (try! (check-is-owner))
     (asserts! (or (< block-height start-block) (> block-height end-block)) ERR-INVALID-BLOCKS)
     (asserts! (is-eq (contract-of launch-token-trait) (get launch-token launch-details)) ERR-TOKEN-NOT-MATCHED)
     (asserts! (is-eq (contract-of payment-token-trait) (get payment-token launch-details)) ERR-TOKEN-NOT-MATCHED)
-    )
+    
     (as-contract (try! (contract-call? launch-token-trait transfer-fixed (get claimed backback-details) tx-sender receiver none)))
     (as-contract (try! (contract-call? payment-token-trait transfer-fixed (- buyback-total buyback-amount) tx-sender receiveer none)))
     (map-set buybacks launch-id {pct: (get pct backback-details), claimed: (add (get claimed backback-details) launch-amount)})
