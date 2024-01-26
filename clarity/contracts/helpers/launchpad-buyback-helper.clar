@@ -41,6 +41,7 @@
 	;; total-registration-max: uint,
 	;; max-size-factor: uint
 
+;; TODO: need update flexibility
 (define-public (create-buyback (launch-id uint) (payment-token-trait <ft-trait>) (pct uint) (start-block uint) (end-block uint))
   (let (
       (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
@@ -51,38 +52,11 @@
     (asserts! (< (get registration-end-height launch-details) start-block) ERR-INVALID-BLOCKS)
     (asserts! (is-eq (contract-of payment-token-trait) (get payment-token launch-details)) ERR-TOKEN-NOT-MATCHED)
     (try! (contract-call? payment-token-trait transfer-fixed (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) pct) tx-sender (as-contract tx-sender) none))
-    (ok (map-set buybacks launch-id pct))
-  )
-)
+    (ok (map-set buybacks launch-id pct))))
 
-(define-public (update-event (event-id uint) (token-trait <ft-trait>) (top-up-amount uint) (start-timestamp uint) (end-timestamp uint))
-  (let 
-    (
-      (event-details (try! (get-event-details-or-fail event-id)))
-    )    
-    (try! (check-is-owner))
-    (asserts! (is-eq (contract-of token-trait) (get token event-details)) ERR-TOKEN-NOT-MATCHED)
-    (asserts! (< start-timestamp end-timestamp) ERR-INVALID-TIMESTAMP)
-    (and (> top-up-amount u0) (try! (contract-call? token-trait transfer-fixed top-up-amount tx-sender (as-contract tx-sender) none)))
-    (ok (map-set events event-id (merge event-details { deposited: (+ (get deposited event-details) top-up-amount), start-timestamp: start-timestamp, end-timestamp: end-timestamp })))
-  )
-)
-
-(define-public (set-claim-many (event-id uint) (claim-many (list 1000 { claimer: principal, amount: uint })))
-  (let 
-    (
-      (event-details (try! (get-event-details-or-fail event-id)))
-    ) 
-    (try! (check-is-owner))
-    (var-set temp-event-id event-id)
-    (ok (map-set events event-id (merge event-details { allocated: (try! (fold set-claim-iter claim-many (ok (get allocated event-details)))) })))
-  )
-)
-
-(define-public (send-excess-token (event-id uint) (token-trait <ft-trait>) (receiver principal))
-  (let 
-    (
-      (event-details (try! (get-event-details-or-fail event-id)))
+(define-public (send-excess-token (launch-id uint) (launch-token-trait (payment-token-trait <ft-trait>) (receiver principal))
+  (let (
+      (launch-details (try! (get-event-details-or-fail event-id)))
       (current-timestamp (try! (block-timestamp)))
     ) 
     (try! (check-is-owner))
@@ -94,13 +68,6 @@
 )
 
 ;; read-only functions
-
-(define-read-only (block-timestamp)
-  (if (is-eq chain-id u1)
-    (ok (unwrap! (get-block-info? time block-height) ERR-GET-BLOCK-INFO))
-    (ok (var-get temp-timestamp))
-  )
-)
 
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
