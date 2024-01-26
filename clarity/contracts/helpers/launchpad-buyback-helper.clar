@@ -15,7 +15,7 @@
 
 (define-data-var contract-owner principal tx-sender)
 
-(define-map buybacks uint uint)
+(define-map buybacks uint { pct: uint, claimed: uint, paused: bool })
 (define-map claimed { launch-id: uint, claimer: principal } uint)
 
 ;; governance functions
@@ -45,23 +45,49 @@
 (define-public (create-buyback (launch-id uint) (payment-token-trait <ft-trait>) (pct uint) (start-block uint) (end-block uint))
   (let (
       (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
-      (total-tickets-won (try! (contract-call? .alex-launchpad-v1-7 get-total-tickets-won launch-id))))
+      (total-tickets-won (try! (contract-call? .alex-launchpad-v1-7 get-total-tickets-won launch-id)))
+      (amount (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) pct)))
     (try! (check-is-owner))
     (asserts! (< start-block end-block) ERR-INVALID-BLOCKS)
     (asserts! (<= pct ONE_8) ERR-INVALID-PCT)
     (asserts! (< (get registration-end-height launch-details) start-block) ERR-INVALID-BLOCKS)
     (asserts! (is-eq (contract-of payment-token-trait) (get payment-token launch-details)) ERR-TOKEN-NOT-MATCHED)
-    (try! (contract-call? payment-token-trait transfer-fixed (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) pct) tx-sender (as-contract tx-sender) none))
-    (ok (map-set buybacks launch-id pct))))
+    (try! (contract-call? payment-token-trait transfer-fixed amount tx-sender (as-contract tx-sender) none))
+    (ok (map-set buybacks launch-id { pct: pct, claimed: u0, paused: false}))))
 
-(define-public (send-excess-token (launch-id uint) (launch-token-trait (payment-token-trait <ft-trait>) (receiver principal))
+(define-public (send-token (launch-id uint) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>) (receiver principal))
   (let (
-      (launch-details (try! (get-event-details-or-fail event-id)))
-      (current-timestamp (try! (block-timestamp)))
-    ) 
+      (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
+      (backback-details (try! (get-buybacks-or-fail launch-id)))
+      (buyback-price (mul-down (/ (get price-per-ticket-in-fixed launch-details) (get launch-tokens-per-ticket launch-details)) (get pct buyback-details))) ;; buy-back price per ticket
+      (buyback-amount (mul-down (get claimed backback-details) buyback-price))
+      (buyback-total (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) (get pct buyback-details)))
     (try! (check-is-owner))
-    (asserts! (is-eq (contract-of token-trait) (get token event-details)) ERR-TOKEN-NOT-MATCHED)
-    (asserts! (> current-timestamp (get end-timestamp event-details)) ERR-INVALID-TIMESTAMP)
+    (asserts! (or (< block-height start-block) (> block-height end-block)) ERR-INVALID-BLOCKS)
+    (asserts! (is-eq (contract-of launch-token-trait) (get launch-token launch-details)) ERR-TOKEN-NOT-MATCHED)
+    (asserts! (is-eq (contract-of payment-token-trait) (get payment-token launch-details)) ERR-TOKEN-NOT-MATCHED)
+    )
+    (as-contract (try! (contract-call? launch-token-trait transfer-fixed (get claimed backback-details) tx-sender receiver none)))
+    (as-contract (try! (contract-call? payment-token-trait transfer-fixed (- buyback-total buyback-amount) tx-sender receiveer none)))
+    (map-set buybacks launch-id {pct: (get pct backback-details), claimed: (add (get claimed backback-details) launch-amount)})
+    (ok true))
+
+(define-public (get-buybacks-or-fail (launch-id uint))
+  (let ((backback-details (try! (get buybacks launch-id))))
+    (asserts! (is-some backback-details) ERR-UNKNOWN-EVENT-ID)
+    backback-details))
+
+(define-public (get-claimed (launch-id uint) (user principal))
+  (let ((claimed-amount (try! (get claimed
+      (spent-payment (* (get claimed backback-details) (get )) ;; already spent payment-tokens)
+      (total-tickets-won (try! (contract-call? .alex-launchpad-v1-7 get-total-tickets-won launch-id)))
+      (amount (- (mul-down (* total-tickets-won (get price-per-ticket-in-fixed launch-details)) (get pct buyback-details)) (* (get cla)))      
+      (payment-amount (* (get claimed backback-details) )) 
+    (try! (check-is-owner))
+    (asserts! (is-eq (contract-of launch-token-trait) (get launch-token launch-details)) ERR-TOKEN-NOT-MATCHED)
+    (asserts! (is-eq (contract-of payment-token-trait) (get payment-token launch-details)) ERR-TOKEN-NOT-MATCHED)
+    (asserts! (or (< block-height start-block) (> block-heght end-block)) ERR-INVALID-BLOCKS)
+    (as-contract (try! (contract-call? launch-token-trait transfer-fixed (* ))))
     (as-contract (try! (contract-call? token-trait transfer-fixed (- (get deposited event-details) (get claimed event-details)) tx-sender receiver none)))
     (ok (map-set events event-id (merge event-details { deposited: (get claimed event-details) })))
   )
@@ -73,17 +99,11 @@
   (ok (var-get contract-owner))
 )
 
-(define-read-only (get-event-details-or-fail (event-id uint))
-  (ok (unwrap! (map-get? events event-id) ERR-UNKNOWN-EVENT-ID))
-)
+(define-read-only (get-buybacks-or-fail (launch-id uint))
+  (ok (unwrap! (map-get buybacks launch-id) ERR-UNKNOWN-ID)))
 
-(define-read-only (get-claim-or-default (event-id uint) (claimer principal))
-  (default-to u0 (map-get? claims { event: event-id, claimer: claimer }))
-)
-
-(define-read-only (get-claimed-or-default (event-id uint) (claimer principal))
-  (default-to false (map-get? claimed { event: event-id, claimer: claimer }))
-)
+(define-read-only (get-claimed-or-default (launch-id uint) (claimer principal))
+  (default-to u0 (map-get claimed {launch-id: launch-id, claimer: claimer})))
 
 
 ;; external functions
