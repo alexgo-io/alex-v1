@@ -1311,3 +1311,7 @@ epoch = 2.4
 [contracts.brc20-ornj]
 path = "contracts/token/brc20-ornj.clar"
 depends_on = []
+
+[contracts.brc20-izip]
+path = "contracts/token/brc20-izip.clar"
+depends_on = []
