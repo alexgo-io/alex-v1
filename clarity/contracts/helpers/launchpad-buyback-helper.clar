@@ -84,7 +84,7 @@
     false))
 
 (define-read-only (is-buyback-paused-many (launch-ids (list 100 uint)))
-  (ok (map is-buyback-paused launch-ids)))
+  (map is-buyback-paused launch-ids))
 
 (define-read-only (get-claimed-or-default (launch-id uint) (claimer principal))
   (default-to u0 (map-get? claimed {launch-id: launch-id, claimer: claimer})))
