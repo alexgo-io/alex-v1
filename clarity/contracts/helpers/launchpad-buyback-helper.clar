@@ -75,15 +75,27 @@
 (define-read-only (get-buybacks-or-fail (launch-id uint))
   (ok (unwrap! (map-get? buybacks launch-id) ERR-UNKNOWN-ID)))
 
+(define-read-only (get-backbacks-or-fail-many (launch-ids (list 100 uint)))
+  (ok (map get-buybacks-or-fail launch-ids)))
+
 (define-read-only (is-buyback-paused (launch-id uint))
   (match (map-get? buybacks launch-id)
     some-value (get paused some-value)
     false))
 
+(define-read-only (is-buyback-paused-many (launch-ids (list 100 uint)))
+  (ok (map is-buyback-paused launch-ids)))
+
 (define-read-only (get-claimed-or-default (launch-id uint) (claimer principal))
   (default-to u0 (map-get? claimed {launch-id: launch-id, claimer: claimer})))
 
+(define-read-only (get-claimed-or-default-many (launch-ids (list 1000 uint)) (claimers (list 1000 principal)))
+  (map get-claimed-or-default launch-ids claimers))
+
 ;; external functions
+
+(define-public (claim-many (launch-ids (list 1000 uint)) (amounts (list 1000 uint)) (launch-token-traits (list 1000 <ft-trait>)) (payment-token-traits (list 1000 <ft-trait>)))
+  (fold check-err (map claim launch-ids amounts launch-token-traits payment-token-traits) (ok true)))
 
 (define-public (claim (launch-id uint) (amount uint) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>))
   (let (
@@ -107,7 +119,8 @@
     (as-contract (try! (contract-call? payment-token-trait transfer-fixed payment-amount tx-sender sender none)))
     (map-set claimed { launch-id: launch-id, claimer: sender } (+ claimed-amount amount))
     (map-set buybacks launch-id (merge buyback-details { claimed: (+ (get claimed buyback-details) amount), reserve: (- (get reserve buyback-details) payment-amount)}))    
-    (ok (+ claimed-amount amount))))
+    (print { action: "claim", user-claimed: (+ claimed-amount amount), total-claimed: (+ (get claimed buyback-details) amount), reserve: (- (get reserve buyback-details) payment-amount) })
+    (ok true)))
 
 ;; internal functions
 
@@ -116,3 +129,8 @@
 
 (define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8))
+
+(define-private (check-err (result (response bool uint)) (prior (response bool uint)))
+    (match prior 
+        ok-value result
+        err-value (err err-value)))
