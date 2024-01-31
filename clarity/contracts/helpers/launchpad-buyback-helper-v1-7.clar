@@ -105,32 +105,30 @@
        (payment-amount (mul-down remaining-amount (get price buyback-details))))
       (asserts! (not (is-buyback-paused launch-id)) ERR-PAUSED)
       (asserts! (and (>= block-height (get start-block buyback-details)) (<= block-height (get end-block buyback-details))) ERR-INVALID-BLOCKS)
-      (ok {remaining: remaining-amount, payment: payment-amount})))
+      (ok { launch-details: launch-details, buyback-details: buyback-details, claimed-amount: claimed-amount, remaining-amount: remaining-amount, payment-amount: payment-amount })))
 
-(define-read-only (get-available-amount-many (launch-ids (list 1000 uint)) (claimers (list 1000 principal)))
+(define-read-only (get-available-amount-many (launch-ids (list 200 uint)) (claimers (list 200 principal)))
   (map get-available-amount launch-ids claimers))
 
 ;; external functions
 
-(define-public (claim-many (launch-ids (list 1000 uint)) (amounts (list 1000 uint)) (launch-token-traits (list 1000 <ft-trait>)) (payment-token-traits (list 1000 <ft-trait>)))
+(define-public (claim-many (launch-ids (list 200 uint)) (amounts (list 200 uint)) (launch-token-traits (list 200 <ft-trait>)) (payment-token-traits (list 200 <ft-trait>)))
   (fold check-err (map claim launch-ids amounts launch-token-traits payment-token-traits) (ok true)))
 
 (define-public (claim (launch-id uint) (amount uint) (launch-token-trait <ft-trait>) (payment-token-trait <ft-trait>))
   (let (
       (sender tx-sender)
-      (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
-      (buyback-details (try! (get-buybacks-or-fail launch-id)))
-      (total-amount (*
-        (contract-call? .alex-launchpad-v1-7 get-tickets-won launch-id sender)
-        (get launch-tokens-per-ticket launch-details)
-        ONE_8))
-      (claimed-amount (get-claimed-or-default launch-id sender))
-      (payment-amount (mul-down amount (get price buyback-details))))
+      (available-data (try! (get-available-amount launch-id sender)))
+      (launch-details (get launch-details available-data))
+      (buyback-details (get buyback-details available-data))      
+      (claimed-amount (get claimed-amount available-data))
+      (remaining-amount (get remaining-amount available-data))
+      (payment-amount (mul-down amount (get price buyback-details))))      
     (asserts! (not (is-buyback-paused launch-id)) ERR-PAUSED)
     (asserts! (and (>= block-height (get start-block buyback-details)) (<= block-height (get end-block buyback-details))) ERR-INVALID-BLOCKS)
     (asserts! (is-eq (contract-of launch-token-trait) (get launch-token launch-details)) ERR-TOKEN-NOT-MATCHED)
     (asserts! (is-eq (contract-of payment-token-trait) (get payment-token launch-details)) ERR-TOKEN-NOT-MATCHED)
-    (asserts! (<= (+ claimed-amount amount) total-amount) ERR-AMOUNT-EXCEED-CLAIM)
+    (asserts! (<= amount remaining-amount) ERR-AMOUNT-EXCEED-CLAIM)
 
     (try! (contract-call? launch-token-trait transfer-fixed amount sender (as-contract tx-sender) none))
     (as-contract (try! (contract-call? payment-token-trait transfer-fixed payment-amount tx-sender sender none)))
