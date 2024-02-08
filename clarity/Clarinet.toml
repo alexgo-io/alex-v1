@@ -26,6 +26,8 @@ contract_id = "SP3D6PV2ACBPEKYJTCMH7HEN02KP87QSP8KTEH335.mega"
 contract_id = "SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token"
 [[project.requirements]]
 contract_id = "SP1JFFSYTSH7VBM54K29ZFS9H4SVB67EA8VT2MYJ9.gus-token"
+[[project.requirements]]
+contract_id = "SP265WBWD4NH7TVPYQTVD23X3607NNK4484DTXQZ3.longcoin"
 
 [repl]
 costs_version = 2
@@ -1319,3 +1321,9 @@ depends_on = []
 [contracts.launchpad-buyback-helper-v1-7]
 path = "contracts/helpers/launchpad-buyback-helper-v1-7.clar"
 depends_on = ["alex-launchpad-v1-7"]
+
+[contracts.token-wlong]
+path = "contracts/wrapped-token/token-wlong.clar"
+depends_on = [ "trait-ownable", "trait-sip-010"]
+clarity_version = 2
+epoch = 2.4
