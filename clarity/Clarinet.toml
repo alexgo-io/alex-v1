@@ -1327,3 +1327,11 @@ path = "contracts/wrapped-token/token-wlong.clar"
 depends_on = [ "trait-ownable", "trait-sip-010"]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.trait-sip-009]
+path = "contracts/traits/trait-sip-009.clar"
+
+[contracts.token-stx404]
+path = "contracts/stx404-tokens/token-stx404.clar"
+clarity_version = 2
+epoch = 2.4
