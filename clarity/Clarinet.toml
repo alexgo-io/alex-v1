@@ -1335,3 +1335,16 @@ path = "contracts/traits/trait-sip-009.clar"
 path = "contracts/stx404-tokens/token-stx404.clar"
 clarity_version = 2
 epoch = 2.4
+
+[contracts.trait-rebase-sip-010]
+path = "contracts/traits/trait-rebase-sip-010.clar"
+
+[contracts.token-rebase-swap-pool]
+path = "contracts/pool-token/token-rebase-swap-pool.clar"
+clarity_version = 2
+epoch = 2.4
+
+[contracts.rebase-swap-pool]
+path = "contracts/pool/rebase-swap-pool.clar"
+clarity_version = 2
+epoch = 2.4
