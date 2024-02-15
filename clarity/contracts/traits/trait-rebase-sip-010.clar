@@ -31,7 +31,7 @@
     	(mint-fixed (uint principal) (response bool uint))
 		(burn-fixed (uint principal) (response bool uint))  
 
-        (get-reward-multiplier () (response uint uint))
+        (get-reserve () (response uint uint))
 		(get-tokens-to-shares (uint) (response uint uint))        
 		(get-shares-to-tokens (uint) (response uint uint))
 	)

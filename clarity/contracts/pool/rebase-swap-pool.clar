@@ -588,7 +588,7 @@
             (token-y (contract-of token-y-trait))
             (pool (try! (get-pool-details token-x token-y factor)))
             (last-multiplier (get last-multiplier pool))
-            (current-multiplier (try! (contract-call? token-y-trait get-reward-multiplier)))
+            (current-multiplier (try! (contract-call? token-y-trait get-reserve)))
             (balance-y (div-down (mul-down (get balance-y pool) current-multiplier) last-multiplier))
             (pool-updated (merge pool { last-multiplier: current-multiplier, balance-y: balance-y }))
         )
