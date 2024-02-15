@@ -53,7 +53,7 @@
     threshold-y: uint,
     max-in-ratio: uint,
     max-out-ratio: uint,
-    last-multiplier: uint
+    last-reserve: uint
   }
 )
 
@@ -587,10 +587,10 @@
         (    
             (token-y (contract-of token-y-trait))
             (pool (try! (get-pool-details token-x token-y factor)))
-            (last-multiplier (get last-multiplier pool))
-            (current-multiplier (try! (contract-call? token-y-trait get-reserve)))
-            (balance-y (div-down (mul-down (get balance-y pool) current-multiplier) last-multiplier))
-            (pool-updated (merge pool { last-multiplier: current-multiplier, balance-y: balance-y }))
+            (last-reserve (get last-reserve pool))
+            (current-reserve (try! (contract-call? token-y-trait get-reserve)))
+            (balance-y (div-down (mul-down (get balance-y pool) current-reserve) last-reserve))
+            (pool-updated (merge pool { last-reserve: current-reserve, balance-y: balance-y }))
         )
         (map-set pools-data-map { token-x: token-x, token-y: token-y, factor: factor } pool-updated)
         (ok pool-updated)     
@@ -621,7 +621,7 @@
                 threshold-y: u0,
                 max-in-ratio: u0,
                 max-out-ratio: u0,
-                last-multiplier: u0
+                last-reserve: u0
             })
         )
         (asserts! (not (is-paused)) ERR-PAUSED)
