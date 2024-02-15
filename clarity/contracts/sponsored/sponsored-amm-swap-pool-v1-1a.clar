@@ -72,7 +72,8 @@
         sponsor 
         (let (
             (fee-floored (match fee some-value (max some-value (var-get sponsored-fee)) (var-get sponsored-fee))))
-            (and (> fee-floored u0) (contract-call? .token-abtc transfer-fixed fee-floored tx-sender sponsor none)) (ok false))))
+            (ok (and (> fee-floored u0) (try! (contract-call? .token-abtc transfer-fixed fee-floored tx-sender sponsor none))))) 
+        (ok false)))
 
 (define-private (min (a uint) (b uint))
     (if (> a b) b a))

@@ -38,7 +38,7 @@
     (token-x-trait <ft-trait>) (token-y-trait <ft-trait>) (token-z-trait <ft-trait>) (token-w-trait <ft-trait>) 
     (factor-x uint) (factor-y uint) (factor-z uint)
     (dx uint) (min-dw (optional uint))
-    (fee (optional uint))))
+    (fee (optional uint)))
     (begin 
         (try! (pay-to-sponsor fee))
         (contract-call? .amm-swap-pool swap-helper-b token-x-trait token-y-trait token-z-trait token-w-trait factor-x factor-y factor-z dx min-dw)))
@@ -65,7 +65,8 @@
         sponsor 
         (let (
             (fee-floored (match fee some-value (max some-value (var-get sponsored-fee)) (var-get sponsored-fee))))
-            (and (> fee-floored u0) (contract-call? .token-abtc transfer-fixed fee-floored tx-sender sponsor none)) (ok false))))
+            (ok (and (> fee-floored u0) (try! (contract-call? .token-abtc transfer-fixed fee-floored tx-sender sponsor none))))) 
+        (ok false)))
 
 (define-private (min (a uint) (b uint))
     (if (> a b) b a))
