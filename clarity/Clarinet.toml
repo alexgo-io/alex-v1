@@ -1328,8 +1328,12 @@ depends_on = ["alex-launchpad-v1-7"]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-long]
+path = "contracts/token/token-long.clar"
+depends_on = [ "trait-ownable", "trait-sip-010"]
+
 [contracts.token-wlong]
 path = "contracts/wrapped-token/token-wlong.clar"
-depends_on = [ "trait-ownable", "trait-sip-010"]
+depends_on = [ "trait-ownable", "trait-sip-010", "token-long"]
 clarity_version = 2
 epoch = 2.4
