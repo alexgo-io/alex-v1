@@ -32,7 +32,9 @@
 		(burn-fixed (uint principal) (response bool uint))  
 
         (get-reserve () (response uint uint))
-		(get-tokens-to-shares (uint) (response uint uint))        
-		(get-shares-to-tokens (uint) (response uint uint))
+        (get-share (principal) (response uint uint))
+        (get-total-shares () (response uint uint))        
+        (get-share-fixed (principal) (response uint uint))
+        (get-total-shares-fixed () (response uint uint))            
 	)
 )
