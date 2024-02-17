@@ -1349,3 +1349,15 @@ depends_on = [ "trait-ownable", "trait-sip-010"]
 [contracts.token-wnthng]
 path = "contracts/wrapped-token/token-wnthng.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-wnothing"]
+[contracts.trait-rebase-sip-010]
+path = "contracts/traits/trait-rebase-sip-010.clar"
+
+[contracts.token-rebase-swap-pool]
+path = "contracts/pool-token/token-rebase-swap-pool.clar"
+clarity_version = 2
+epoch = 2.4
+
+[contracts.rebase-swap-pool]
+path = "contracts/pool/rebase-swap-pool.clar"
+clarity_version = 2
+epoch = 2.4
