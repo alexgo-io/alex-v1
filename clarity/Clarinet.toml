@@ -28,10 +28,8 @@ contract_id = "SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token"
 contract_id = "SP1JFFSYTSH7VBM54K29ZFS9H4SVB67EA8VT2MYJ9.gus-token"
 [[project.requirements]]
 contract_id = "SP265WBWD4NH7TVPYQTVD23X3607NNK4484DTXQZ3.longcoin"
-[[project.requirements]]
-contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.wrapped-nothing-v8"
-[[project.requirements]]
-contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.micro-nthng"
+# [[project.requirements]]
+# contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.wrapped-nothing-v8"
 
 [repl]
 costs_version = 2
@@ -1334,13 +1332,33 @@ epoch = 2.4
 
 [contracts.token-long]
 path = "contracts/token/token-long.clar"
-depends_on = [ "trait-ownable", "trait-sip-010"]
+depends_on = [ "trait-ownable", "trait-sip-010" ]
 
 [contracts.token-wlong]
 path = "contracts/wrapped-token/token-wlong.clar"
-depends_on = [ "trait-ownable", "trait-sip-010", "token-long"]
+depends_on = [ "trait-ownable", "trait-sip-010", "token-long" ]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.token-stx404]
+path = "contracts/stx404-token/token-stx404.clar"
+clarity_version = 2
+epoch = 2.4
+
+[contracts.token-wstx404]
+path = "contracts/wrapped-token/token-wstx404.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-stx404"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.trait-transfer-fixed]
+path = "contracts/traits/trait-transfer-fixed.clar"
+
+[contracts.trait-sft-transfer-fixed]
+path = "contracts/traits/trait-sft-transfer-fixed.clar"
+
+[contracts.trait-flash-loan-user-fixed]
+path = "contracts/traits/trait-flash-loan-user-fixed.clar"
 
 [contracts.token-wnothing]
 path = "contracts/token/token-wnothing.clar"
@@ -1349,6 +1367,7 @@ depends_on = [ "trait-ownable", "trait-sip-010"]
 [contracts.token-wnthng]
 path = "contracts/wrapped-token/token-wnthng.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-wnothing"]
+
 [contracts.trait-rebase-sip-010]
 path = "contracts/traits/trait-rebase-sip-010.clar"
 
