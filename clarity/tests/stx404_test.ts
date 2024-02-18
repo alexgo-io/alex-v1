@@ -12,6 +12,7 @@ import {
 const contractNames = {
     amm: 'amm-swap-pool-v1-2',
     stx404: 'token-stx404',
+    wstx404: 'token-wstx404',
     wstx: 'token-wstx',
 };
 
@@ -24,7 +25,7 @@ const tupleCV = types.tuple;
 const boolCV = types.bool;
 
 Clarinet.test({
-    name: 'Test',
+    name: 'stx404 works',
     fn(chain: Chain, accounts: Map<string, Account>) {
         const deployer = accounts.get('deployer')!;
         const user = accounts.get('wallet_4')!;
@@ -51,7 +52,7 @@ Clarinet.test({
                 'create-pool',
                 [
                     principalCV(deployer.address + '.' + contractNames.wstx),
-                    principalCV(deployer.address + '.' + contractNames.stx404),
+                    principalCV(deployer.address + '.' + contractNames.wstx404),
                     uintCV(1e8),
                     principalCV(deployer.address),
                     uintCV(1e8),
@@ -64,7 +65,7 @@ Clarinet.test({
                 'create-pool',
                 [
                     principalCV(deployer.address + '.' + contractNames.wstx),
-                    principalCV(deployer.address + '.' + contractNames.stx404),
+                    principalCV(deployer.address + '.' + contractNames.wstx404),
                     uintCV(1e8),
                     principalCV(user.address),
                     uintCV(1e8),

@@ -33,12 +33,6 @@
     (match (nft-get-owner? stx404nft id)
         some-value (is-eq some-value owner)
         false))
-    
-(define-read-only (get-name)
-    (ok "stx404"))
-
-(define-read-only (get-symbol)
-    (ok "stx404"))
 
 (define-read-only (get-decimals)
     (ok u8))
@@ -46,17 +40,8 @@
 (define-read-only (get-balance (owner principal))
     (ok (ft-get-balance stx404 owner)))
 
-(define-read-only (get-balance-fixed (account principal))
-    (ok (decimals-to-fixed (unwrap-panic (get-balance account)))))
-
 (define-read-only (get-total-supply)
     (ok (ft-get-supply stx404)))
-
-(define-read-only (get-total-supply-fixed)
-    (ok (decimals-to-fixed (unwrap-panic (get-total-supply)))))
-
-(define-read-only (fixed-to-decimals (amount uint))
-    (/ (* amount (pow-decimals)) one-8))
 
 ;; governance calls
 
@@ -87,8 +72,8 @@
                 (try! (nft-transfer? stx404nft amount-or-id sender recipient))
                 (ok true))
             (let (
-                (balance-sender (unwrap-panic (get-balance-fixed sender)))
-                (balance-recipient (unwrap-panic (get-balance-fixed recipient)))
+                (balance-sender (unwrap-panic (get-balance sender)))
+                (balance-recipient (unwrap-panic (get-balance recipient)))
                 (check-balance (try! (ft-transfer? stx404 amount-or-id sender recipient)))
                 (no-to-treasury (- (/ balance-sender one-8) (/ (- balance-sender amount-or-id) one-8)))
                 (no-to-recipient (- (/ (+ balance-recipient amount-or-id) one-8) (/ balance-recipient one-8)))
@@ -108,18 +93,7 @@
                 (var-set available-ids (if (is-eq no-to-recipient u0) new-available-ids (unwrap-panic (slice? new-available-ids u0 (- (len new-available-ids) no-to-recipient)))))
                 (ok true)))))
 
-(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
-    (transfer (fixed-to-decimals amount) sender recipient))
-
 ;; private calls
-
-(define-private (decimals-to-fixed (amount uint))
-    (/ (* amount one-8) (pow-decimals)))
-
-;; @desc pow-decimals
-;; @returns uint
-(define-private (pow-decimals)
-    (pow u10 (unwrap-panic (get-decimals))))
 
 (define-data-var sender-temp principal tx-sender)
 (define-data-var recipient-temp principal tx-sender)
