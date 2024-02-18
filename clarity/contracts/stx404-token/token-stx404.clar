@@ -1,16 +1,17 @@
 (define-non-fungible-token stx404nft uint)
 (define-fungible-token stx404)
 
-(define-constant ERR-NOT-AUTHORIZED (err u1000))
-(define-constant ERR-INVALID-ID (err u1001))
-(define-constant ERR-MAX-SUPPLY (err u1002))
+(define-constant err-not-authorised (err u1000))
+(define-constant err-invalid-id (err u1001))
+(define-constant err-max-supply (err u1002))
 
-(define-constant MAX-SUPPLY u10000)
-(define-constant ONE_8 u100000000)
+(define-constant max-supply u10000)
+(define-constant one-8 u100000000)
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var id-nonce uint u0)
 (define-map owned principal (list 10000 uint))
+(define-data-var available-ids (list 10000 uint) (list ))
 
 ;; read-only calls
 (define-read-only (get-contract-owner)
@@ -55,7 +56,7 @@
     (ok (decimals-to-fixed (unwrap-panic (get-total-supply)))))
 
 (define-read-only (fixed-to-decimals (amount uint))
-    (/ (* amount (pow-decimals)) ONE_8))
+    (/ (* amount (pow-decimals)) one-8))
 
 ;; governance calls
 
@@ -63,53 +64,57 @@
     (let (
         (id (var-get id-nonce)))
         (try! (check-is-owner))
-        (asserts! (< id MAX-SUPPLY) ERR-MAX-SUPPLY)
-        (try! (ft-mint? stx404 ONE_8 tx-sender))
-        (try! (nft-mint? stx404nft id tx-sender))
-        (map-set owned tx-sender (unwrap-panic (as-max-len? (append (get-owned-or-default tx-sender) id) u10000)))
-        (var-set id-nonce (+ id u1))
-        (transfer id tx-sender recipient)))
+        (asserts! (< id max-supply) err-max-supply)
+        (try! (ft-mint? stx404 one-8 recipient))
+        (try! (nft-mint? stx404nft id recipient))
+        (map-set owned recipient (unwrap-panic (as-max-len? (append (get-owned-or-default recipient) id) u10000)))
+        (ok (var-set id-nonce (+ id u1)))))
 
 ;; public calls
+
 (define-public (transfer (amount-or-id uint) (sender principal) (recipient principal))
     (begin
-        (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-        (if (<= amount-or-id MAX-SUPPLY) ;; id transfer
+        (asserts! (is-eq sender tx-sender) err-not-authorised)
+        (if (<= amount-or-id max-supply) ;; id transfer
             (let (
-                (check-id (asserts! (is-id-owned-by-or-default amount-or-id sender) ERR-INVALID-ID))
+                (check-id (asserts! (is-id-owned-by-or-default amount-or-id sender) err-invalid-id))
                 (owned-by-sender (get-owned-or-default sender))
                 (owned-by-recipient (get-owned-or-default recipient))
                 (id-idx (unwrap-panic (index-of? owned-by-sender amount-or-id))))
-
-                (map-set owned sender (unwrap-panic (as-max-len? (concat (unwrap-panic (slice? owned-by-sender u0 id-idx)) (unwrap-panic (slice? owned-by-sender (+ id-idx u1) (len owned-by-sender)))) u10000)))
+                (map-set owned sender (pop owned-by-sender id-idx))
                 (map-set owned recipient (unwrap-panic (as-max-len? (append owned-by-recipient amount-or-id) u10000)))
-                (try! (ft-transfer? stx404 ONE_8 sender recipient))
+                (try! (ft-transfer? stx404 one-8 sender recipient))
                 (try! (nft-transfer? stx404nft amount-or-id sender recipient))
                 (ok true))
             (let (
+                (balance-sender (unwrap-panic (get-balance-fixed sender)))
+                (balance-recipient (unwrap-panic (get-balance-fixed recipient)))
                 (check-balance (try! (ft-transfer? stx404 amount-or-id sender recipient)))
-                (no-ids (/ amount-or-id ONE_8))
+                (no-to-treasury (- (/ balance-sender one-8) (/ (- balance-sender amount-or-id) one-8)))
+                (no-to-recipient (- (/ (+ balance-recipient amount-or-id) one-8) (/ balance-recipient one-8)))
                 (owned-by-sender (get-owned-or-default sender))
                 (owned-by-recipient (get-owned-or-default recipient))
-                (ids-to-move (unwrap-panic (slice? owned-by-sender (- (len owned-by-sender) no-ids) (len owned-by-sender))))
-                (ids-to-keep (unwrap-panic (slice? owned-by-sender u0 (- (len owned-by-sender) no-ids)))))
-                
+                (ids-to-treasury (if (is-eq no-to-treasury u0) (list ) (unwrap-panic (slice? owned-by-sender (- (len owned-by-sender) no-to-treasury) (len owned-by-sender)))))
+                (new-available-ids (if (is-eq no-to-treasury u0) (var-get available-ids) (unwrap-panic (as-max-len? (concat (var-get available-ids) ids-to-treasury) u10000))))
+                (ids-to-recipient (if (is-eq no-to-recipient u0) (list ) (unwrap-panic (slice? new-available-ids (- (len new-available-ids) no-to-recipient) (len new-available-ids))))))
                 (var-set sender-temp sender)
+                (var-set recipient-temp (as-contract tx-sender))
+                (and (> no-to-treasury u0) (try! (fold check-err (map nft-transfer-iter ids-to-treasury) (ok true))))
+                (var-set sender-temp (as-contract tx-sender))
                 (var-set recipient-temp recipient)
-                (try! (fold check-err (map nft-transfer-iter ids-to-move) (ok true)))
-                (map-set owned sender ids-to-keep)
-                (map-set owned recipient (unwrap-panic (as-max-len? (concat owned-by-recipient ids-to-move) u10000)))
+                (and (> no-to-recipient u0) (try! (fold check-err (map nft-transfer-iter ids-to-recipient) (ok true))))
+                (map-set owned sender (if (is-eq no-to-treasury u0) owned-by-sender (unwrap-panic (slice? owned-by-sender u0 (- (len owned-by-sender) no-to-treasury)))))
+                (map-set owned recipient (if (is-eq no-to-recipient u0) owned-by-recipient (unwrap-panic (as-max-len? (concat owned-by-recipient ids-to-recipient) u10000))))
+                (var-set available-ids (unwrap-panic (slice? new-available-ids u0 (- (len new-available-ids) no-to-recipient))))
                 (ok true)))))
 
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
     (transfer (fixed-to-decimals amount) sender recipient))
 
-
-
 ;; private calls
 
 (define-private (decimals-to-fixed (amount uint))
-    (/ (* amount ONE_8) (pow-decimals)))
+    (/ (* amount one-8) (pow-decimals)))
 
 ;; @desc pow-decimals
 ;; @returns uint
@@ -126,7 +131,12 @@
     (match prior ok-value result err-value (err err-value)))
 
 (define-private (check-is-owner)
-    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
+    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorised)))
+
+(define-private (pop (target (list 10000 uint)) (idx uint))
+    (match (slice? target (+ idx u1) (len target))
+        some-value (unwrap-panic (as-max-len? (concat (unwrap-panic (slice? target u0 idx)) some-value) u1000))
+        (unwrap-panic (slice? target u0 idx))))
 
 
 
