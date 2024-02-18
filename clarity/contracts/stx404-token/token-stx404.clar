@@ -105,7 +105,7 @@
                 (and (> no-to-recipient u0) (try! (fold check-err (map nft-transfer-iter ids-to-recipient) (ok true))))
                 (map-set owned sender (if (is-eq no-to-treasury u0) owned-by-sender (unwrap-panic (slice? owned-by-sender u0 (- (len owned-by-sender) no-to-treasury)))))
                 (map-set owned recipient (if (is-eq no-to-recipient u0) owned-by-recipient (unwrap-panic (as-max-len? (concat owned-by-recipient ids-to-recipient) u10000))))
-                (var-set available-ids (unwrap-panic (slice? new-available-ids u0 (- (len new-available-ids) no-to-recipient))))
+                (var-set available-ids (if (is-eq no-to-recipient u0) new-available-ids (unwrap-panic (slice? new-available-ids u0 (- (len new-available-ids) no-to-recipient)))))
                 (ok true)))))
 
 (define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
