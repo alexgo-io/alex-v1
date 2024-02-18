@@ -1357,18 +1357,6 @@ path = "contracts/traits/trait-transfer-fixed.clar"
 [contracts.trait-sft-transfer-fixed]
 path = "contracts/traits/trait-sft-transfer-fixed.clar"
 
-[contracts.amm-swap-pool-v1-2]
-path = "contracts/pool/amm-swap-pool-v1-2.clar"
-clarity_version = 2
-epoch = 2.4
-
-[contracts.token-amm-swap-pool-v1-2]
-path = "contracts/pool-token/token-amm-swap-pool-v1-2.clar"
-depends_on = ["trait-ownable", "trait-semi-fungible", "alex-vault-v1-2"]
-
-[contracts.alex-vault-v1-2]
-path = "contracts/alex-vault-v1-2.clar"
-
 [contracts.trait-flash-loan-user-fixed]
 path = "contracts/traits/trait-flash-loan-user-fixed.clar"
 
