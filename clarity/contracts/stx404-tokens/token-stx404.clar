@@ -6,7 +6,7 @@
 (define-constant ERR-MAX-SUPPLY (err u1002))
 
 (define-constant MAX-SUPPLY u10000)
-(define-constant ONE-8 u100000000)
+(define-constant ONE_8 u100000000)
 
 (define-data-var contract-owner principal tx-sender)
 (define-data-var id-nonce uint u0)
@@ -32,6 +32,30 @@
     (match (nft-get-owner? stx404nft id)
         some-value (is-eq some-value owner)
         false))
+    
+(define-read-only (get-name)
+    (ok "stx404"))
+
+(define-read-only (get-symbol)
+    (ok "stx404"))
+
+(define-read-only (get-decimals)
+    (ok u8))
+
+(define-read-only (get-balance (owner principal))
+    (ok (ft-get-balance stx404 owner)))
+
+(define-read-only (get-balance-fixed (account principal))
+    (ok (decimals-to-fixed (unwrap-panic (get-balance account)))))
+
+(define-read-only (get-total-supply)
+    (ok (ft-get-supply stx404)))
+
+(define-read-only (get-total-supply-fixed)
+    (ok (decimals-to-fixed (unwrap-panic (get-total-supply)))))
+
+(define-read-only (fixed-to-decimals (amount uint))
+    (/ (* amount (pow-decimals)) ONE_8))
 
 ;; governance calls
 
@@ -40,7 +64,7 @@
         (id (var-get id-nonce)))
         (try! (check-is-owner))
         (asserts! (< id MAX-SUPPLY) ERR-MAX-SUPPLY)
-        (try! (ft-mint? stx404 ONE-8 tx-sender))
+        (try! (ft-mint? stx404 ONE_8 tx-sender))
         (try! (nft-mint? stx404nft id tx-sender))
         (map-set owned tx-sender (unwrap-panic (as-max-len? (append (get-owned-or-default tx-sender) id) u10000)))
         (var-set id-nonce (+ id u1))
@@ -59,12 +83,12 @@
 
                 (map-set owned sender (unwrap-panic (as-max-len? (concat (unwrap-panic (slice? owned-by-sender u0 id-idx)) (unwrap-panic (slice? owned-by-sender (+ id-idx u1) (len owned-by-sender)))) u10000)))
                 (map-set owned recipient (unwrap-panic (as-max-len? (append owned-by-recipient amount-or-id) u10000)))
-                (try! (ft-transfer? stx404 ONE-8 sender recipient))
+                (try! (ft-transfer? stx404 ONE_8 sender recipient))
                 (try! (nft-transfer? stx404nft amount-or-id sender recipient))
                 (ok true))
             (let (
                 (check-balance (try! (ft-transfer? stx404 amount-or-id sender recipient)))
-                (no-ids (/ amount-or-id ONE-8))
+                (no-ids (/ amount-or-id ONE_8))
                 (owned-by-sender (get-owned-or-default sender))
                 (owned-by-recipient (get-owned-or-default recipient))
                 (ids-to-move (unwrap-panic (slice? owned-by-sender (- (len owned-by-sender) no-ids) (len owned-by-sender))))
@@ -77,7 +101,20 @@
                 (map-set owned recipient (unwrap-panic (as-max-len? (concat owned-by-recipient ids-to-move) u10000)))
                 (ok true)))))
 
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+    (transfer (fixed-to-decimals amount) sender recipient))
+
+
+
 ;; private calls
+
+(define-private (decimals-to-fixed (amount uint))
+    (/ (* amount ONE_8) (pow-decimals)))
+
+;; @desc pow-decimals
+;; @returns uint
+(define-private (pow-decimals)
+    (pow u10 (unwrap-panic (get-decimals))))
 
 (define-data-var sender-temp principal tx-sender)
 (define-data-var recipient-temp principal tx-sender)
@@ -90,4 +127,6 @@
 
 (define-private (check-is-owner)
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
+
+
 
