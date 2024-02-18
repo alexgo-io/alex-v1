@@ -10,7 +10,7 @@ import {
 } from 'https://deno.land/x/clarinet@v1.2.0/index.ts';
 
 const contractNames = {
-    amm: 'amm-swap-pool-v1-2',
+    amm: 'amm-swap-pool-v1-1',
     stx404: 'token-stx404',
     wstx404: 'token-wstx404',
     wstx: 'token-wstx',
