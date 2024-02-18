@@ -4,13 +4,13 @@
 
 
 ;; Alex voting for MultiSig DAO
-;; 
-;; Voting and proposing the proposals 
+;;
+;; Voting and proposing the proposals
 ;; A proposal will just update the DAO with new contracts.
 
 ;; Voting can be done by locking up the corresponding pool token.
-;; Common Trait and for each pool, implementation is required. 
-;; 
+;; Common Trait and for each pool, implementation is required.
+;;
 
 ;; Errors
 (define-constant ERR-INVALID-BALANCE (err u1001))
@@ -35,8 +35,8 @@
 
 ;; Proposal variables
 ;; With Vote, we can set :
-;; 1. contract to have right to mint/burn token 
-;; 2. Set Feerate / Fee address / Collect Fees 
+;; 1. contract to have right to mint/burn token
+;; 2. Set Feerate / Fee address / Collect Fees
 (define-map proposals
   { id: uint }
   {
@@ -62,19 +62,19 @@
 (define-data-var voting-period uint u1440) ;; approx. 10 days
 
 (define-public (set-voting-period (new-voting-period uint))
-  (begin 
+  (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set voting-period new-voting-period))
   )
 )
 (define-public (set-threshold (new-threshold uint))
-  (begin 
+  (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set threshold new-threshold))
   )
 )
 (define-public (set-proposal-threshold (new-proposal-threshold uint))
-  (begin 
+  (begin
     (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
     (ok (var-set proposal-threshold new-proposal-threshold))
   )
@@ -106,22 +106,22 @@
 ;; @params member
 ;; @returns (optional (tuple))
 (define-read-only (get-votes-by-member-by-id (proposal-id uint) (member principal))
-  (default-to 
+  (default-to
     { vote-count: u0 }
     (map-get? votes-by-member { proposal-id: proposal-id, member: member })
   )
 )
 
-;; @desc get-tokens-by-member-by-id 
+;; @desc get-tokens-by-member-by-id
 ;; @params proposal-id
-;; @params member 
+;; @params member
 ;; @params token; sft-trait
-;; @params expiry 
+;; @params expiry
 ;; @returns (optional (tuple))
 (define-read-only (get-tokens-by-member-by-id (proposal-id uint) (member principal) (token <sft-trait>) (expiry uint))
-  (default-to 
+  (default-to
     { amount: u0 }
-    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token), expiry: expiry }) 
+    (map-get? tokens-by-member { proposal-id: proposal-id, member: member, token: (contract-of token), expiry: expiry })
   )
 )
 
@@ -149,7 +149,7 @@
   )
 )
 
-;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed. 
+;; To check which tokens are accepted as votes, Only by staking Pool Token is allowed.
 ;; @desc is-token-accepted
 ;; @params token; sft-trait
 ;; @returns bool
@@ -164,7 +164,7 @@
 ;; @params expiry
 ;; @params start-block-height
 ;; @params title
-;; @params url 
+;; @params url
 ;; @params new-fee-rate-x
 ;; @params new-fee-rate-y
 ;; @returns uint
@@ -182,7 +182,7 @@
     (proposal-id (+ u1 (var-get proposal-count)))
   )
 
-    ;; Requires 10% of the supply 
+    ;; Requires 10% of the supply
     (asserts! (>= (* proposer-balance (var-get proposal-threshold)) total-supply) ERR-INVALID-BALANCE)
     ;; Mutate
     (map-set proposals
@@ -208,7 +208,7 @@
   )
 )
 
-;; @desc vote-for 
+;; @desc vote-for
 ;; @params token; sft-trait
 ;; @params proposal-id uint
 ;; @params amount
@@ -218,7 +218,7 @@
     (proposal (get-proposal-by-id proposal-id))
     (expiry (get expiry proposal))
     (vote-count (get vote-count (get-votes-by-member-by-id proposal-id tx-sender)))
-    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token expiry)))    
+    (token-count (get amount (get-tokens-by-member-by-id proposal-id tx-sender token expiry)))
   )
 
     ;; Can vote with corresponding pool token
@@ -227,14 +227,14 @@
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
-    
-    ;; Voter should stake the corresponding pool token to the vote contract. 
+
+    ;; Voter should stake the corresponding pool token to the vote contract.
     (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender)))
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
       (merge proposal { yes-votes: (+ amount (get yes-votes proposal)) }))
-    (map-set votes-by-member 
+    (map-set votes-by-member
       { proposal-id: proposal-id, member: tx-sender }
       { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
@@ -245,10 +245,10 @@
   )
 )
 
-;; @desc vote-against 
+;; @desc vote-against
 ;; @params token;sft-trait
-;; @params proposal-id 
-;; @params amount 
+;; @params proposal-id
+;; @params amount
 ;; @returns (response uint)
 (define-public (vote-against (token <sft-trait>) (proposal-id uint) (amount uint))
   (let (
@@ -263,28 +263,28 @@
     (asserts! (get is-open proposal) ERR-NOT-AUTHORIZED)
     ;; Vote should be casted after the start-block-height
     (asserts! (>= block-height (get start-block-height proposal)) ERR-NOT-AUTHORIZED)
-    ;; Voter should stake the corresponding pool token to the vote contract. 
+    ;; Voter should stake the corresponding pool token to the vote contract.
     (try! (contract-call? token transfer-fixed expiry amount tx-sender (as-contract tx-sender)))
 
     ;; Mutate
     (map-set proposals
       { id: proposal-id }
       (merge proposal { no-votes: (+ amount (get no-votes proposal)) }))
-    (map-set votes-by-member 
+    (map-set votes-by-member
       { proposal-id: proposal-id, member: tx-sender }
       { vote-count: (+ amount vote-count) })
     (map-set tokens-by-member
       { proposal-id: proposal-id, member: tx-sender, token: (contract-of token), expiry: expiry }
       { amount: (+ amount token-count)})
     (ok amount)
-  )    
+  )
 )
 
 ;; @desc end-proposal
 ;; @params proposal-id
 ;; @returns (response bool)
 (define-public (end-proposal (proposal-id uint))
-  (let 
+  (let
     (
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
@@ -310,17 +310,17 @@
 
 ;; Return votes to voter(member)
 ;; This function needs to be called for all members
-;; @desc return-votes-to-member 
+;; @desc return-votes-to-member
 ;; @params token; sft-trait
 ;; @params proposal-id
 ;; @params member
 ;; @returns (response bool)
 (define-public (return-votes-to-member (token <sft-trait>) (proposal-id uint) (member principal))
-  (let 
+  (let
     (
       (proposal (get-proposal-by-id proposal-id))
       (expiry (get expiry proposal))
-      (token-count (/ (get amount (get-tokens-by-member-by-id proposal-id member token expiry)) ONE_8))      
+      (token-count (/ (get amount (get-tokens-by-member-by-id proposal-id member token expiry)) ONE_8))
     )
 
     (asserts! (is-token-accepted (contract-of token)) ERR-INVALID-TOKEN)
@@ -343,12 +343,12 @@
     (expiry (get expiry proposal))
     (new-fee-rate-token (get new-fee-rate-token proposal))
     (new-fee-rate-yield-token (get new-fee-rate-yield-token proposal))
-  ) 
-  
+  )
+
     ;; Setting for Yield Token Pool
-    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-alex new-fee-rate-token)))
-    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-alex new-fee-rate-yield-token)))
-    
+    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-token expiry .yield-alex-v1 new-fee-rate-token)))
+    (as-contract (try! (contract-call? .yield-token-pool set-fee-rate-yield-token expiry .yield-alex-v1 new-fee-rate-yield-token)))
+
     (ok true)
   )
 )
