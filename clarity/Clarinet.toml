@@ -28,10 +28,8 @@ contract_id = "SP1AY6K3PQV5MRT6R4S671NWW2FRVPKM0BR162CT6.leo-token"
 contract_id = "SP1JFFSYTSH7VBM54K29ZFS9H4SVB67EA8VT2MYJ9.gus-token"
 [[project.requirements]]
 contract_id = "SP265WBWD4NH7TVPYQTVD23X3607NNK4484DTXQZ3.longcoin"
-[[project.requirements]]
-contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.wrapped-nothing-v8"
-[[project.requirements]]
-contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.micro-nthng"
+# [[project.requirements]]
+# contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.wrapped-nothing-v8"
 
 [repl]
 costs_version = 2
