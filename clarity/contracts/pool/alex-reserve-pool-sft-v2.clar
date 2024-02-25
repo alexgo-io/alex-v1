@@ -363,8 +363,9 @@
 ;; @params target-cycle
 ;; @returns uint
 (define-read-only (get-staking-reward (token principal) (token-id uint) (user-id uint) (target-cycle uint))
-  (get-entitled-staking-reward token token-id user-id target-cycle block-height)
-)
+  (+ 
+    (contract-call? .alex-reserve-pool-sft get-staking-reward token token-id user-id target-cycle)
+    (get-entitled-staking-reward token token-id user-id target-cycle block-height)))
 
 ;; @desc get-entitled-staking-reward
 ;; @params token
@@ -375,8 +376,8 @@
 (define-private (get-entitled-staking-reward (token principal) (token-id uint) (user-id uint) (target-cycle uint) (stacks-height uint))
   (let
     (
-      (total-staked-this-cycle (get-staking-stats-at-cycle-or-default token token-id target-cycle))
-      (user-staked-this-cycle (get amount-staked (get-staker-at-cycle-or-default token token-id target-cycle user-id)))
+      (total-staked-this-cycle (get-staking-stats-at-cycle-or-default-internal token token-id target-cycle))
+      (user-staked-this-cycle (get amount-staked (get-staker-at-cycle-or-default-internal token token-id target-cycle user-id)))
     )
     (match (get-reward-cycle token token-id stacks-height)
       current-cycle
@@ -520,6 +521,7 @@
 (define-public (claim-staking-reward (token-trait <sft-trait>) (token-id uint) (target-cycle uint))
   (begin
     (try! (check-is-approved-token (contract-of token-trait) token-id))
+    (try! (contract-call? .alex-reserve-pool-sft claim-staking-reward token-trait token-id target-cycle))
     (claim-staking-reward-at-cycle token-trait token-id tx-sender block-height target-cycle)
   )
 )
