@@ -15,6 +15,7 @@
 (define-constant ERR-INVALID-TOKEN (err u2026))
 
 (define-constant ONE_8 u100000000) ;; 8 decimal places
+(define-constant MAX_UINT u340282366920938463463374607431768211455)
 
 (define-constant MAX-REWARD-CYCLES u32)
 (define-constant REWARD-CYCLE-INDEXES (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31))
@@ -120,12 +121,6 @@
   uint
 )
 
-;; @dev next cycle + first block of the next cycle
-(define-map legacy-cut-offs { token: principal, token-id: uint } { cycle: uint, block: uint })
-
-(define-read-only (get-legacy-cut-off-or-default (token principal) (token-id uint))
-  (default-to { cycle: u0, block: u0 } (map-get? legacy-cut-off { token: token, token-id: token-id })))
-
 (define-read-only (get-contract-owner)
   (ok (var-get contract-owner))
 )
@@ -211,7 +206,7 @@
 ;; @params token
 ;; @returns uint
 (define-read-only (get-activation-block-or-default (token principal) (token-id uint))
-  (default-to u100000000 (map-get? activation-block { token: token, token-id: token-id }))
+  (default-to MAX_UINT (map-get? activation-block { token: token, token-id: token-id }))
 )
 
 (define-public (set-activation-block (token principal) (token-id uint) (new-activation-block uint))
@@ -227,8 +222,12 @@
 ;; @params reward-cycle
 ;; @returns (optional (tuple))
 (define-read-only (get-staking-stats-at-cycle (token principal) (token-id uint) (reward-cycle uint))
-  (map-get? staking-stats-at-cycle {token: token, token-id: token-id, reward-cycle: reward-cycle})
-)
+  (match (contract-call? .alex-reserve-pool-sft get-staking-stats-at-cycle token token-id reward-cycle)
+    some-value 
+    (match (map-get? staking-stats-at-cycle {token: token, token-id: token-id, reward-cycle: reward-cycle})
+      some-value-v2 (some (+ some-value some-value-v2))
+      (some some-value))
+    none))
 
 ;; returns the total staked tokens for a given reward cycle
 ;; or, zero
@@ -237,8 +236,7 @@
 ;; @params reward-cycle
 ;; @returns uint
 (define-read-only (get-staking-stats-at-cycle-or-default (token principal) (token-id uint) (reward-cycle uint))
-  (default-to u0 (get-staking-stats-at-cycle token token-id reward-cycle))
-)
+  (default-to u0 (get-staking-stats-at-cycle token token-id reward-cycle)))
 
 ;; @desc get-user-id
 ;; @params token
@@ -297,18 +295,32 @@
 ;; @params reward-cycl
 ;; @params user-id 
 ;; @returns (optional (tuple))
+
+  {
+    amount-staked: uint,
+    to-return: uint
+  }
 (define-read-only (get-staker-at-cycle (token principal) (token-id uint) (reward-cycle uint) (user-id uint))
-  (map-get? staker-at-cycle { token: token, token-id: token-id, reward-cycle: reward-cycle, user-id: user-id })
-)
+  (match (contract-call? .alex-reserve-pool-sft get-staker-at-cycle token token-id reward-cycle user-id)
+    some-value
+    (match (map-get? staker-at-cycle { token: token, token-id: token-id, reward-cycle: reward-cycle, user-id: user-id })
+      some-value-v2 (some { amount-staked: (+ (get amount-staked some-value) (get amount-staked some-value-v2)), to-return: (+ (get to-return some-value) (get to-return some-value-v2)) })
+      (some some-value))
+    none))
+
 ;; @desc get-staker-at-cycle-or-default 
 ;; @params token 
 ;; @params reward-cycle
 ;; @params user-id
 ;; @returns (optional (tuple))
 (define-read-only (get-staker-at-cycle-or-default (token principal) (token-id uint) (reward-cycle uint) (user-id uint))
-  (default-to { amount-staked: u0, to-return: u0 }
-  (map-get? staker-at-cycle { token: token, token-id: token-id, reward-cycle: reward-cycle, user-id: user-id }))
-)
+  (default-to { amount-staked: u0, to-return: u0 } (get-staker-at-cycle token token-id reward-cycle user-id)))
+
+(define-private (get-staker-at-cycle-or-default-internal (token principal) (token-id uint) (reward-cycle uint) (user-id uint))
+  (default-to { amount-staked: u0, to-return: u0 } (map-get? staker-at-cycle { token: token, token-id: token-id, reward-cycle: reward-cycle, user-id: user-id })))
+
+(define-private (get-staking-stats-at-cycle-or-default-internal (token principal) (token-id uint) (reward-cycle uint))
+  (default-to u0 (map-get? staking-stats-at-cycle { token: token, token-id: token-id, reward-cycle: reward-cycle })))
 
 ;; get the reward cycle for a given Stacks block height
 ;; @desc get-reward-cycle 
@@ -316,18 +328,12 @@
 ;; @params stacks-height
 ;; @returns response
 (define-read-only (get-reward-cycle (token principal) (token-id uint) (stacks-height uint))
-  (let
-    (
-      (legacy-cut-off (get-legacy-cut-off-or-default token token-id))
-      (first-staking-block (if (is-eq (get cycle legacy-cut-off) u0) (get-activation-block-or-default token token-id) (get block legacy-cut-off))
-      (rcLen (var-get reward-cycle-length))
-    )
-    (if (>= stacks-height first-staking-block)
-      (some (+ (/ (- stacks-height first-staking-block) rcLen) (get cycle legacy-cut-off)))
-      none
-    )
-  )
-)
+  (if (< stacks-height (get-activation-block-or-default token token-id))
+    (contract-call? .alex-reserve-pool-sft get-reward-cycle token token-id stacks-height)
+    (let (
+        (first-staking-block (get-activation-block-or-default token token-id))
+        (last-cycle (contract-call? .alex-reserve-pool-sft get-reward-cycle token token-id (- first-staking-block u1))))
+      (some (+ (/ (- stacks-height (get-activation-block-or-default token token-id)) (var-get reward-cycle-length)) last-cycle u1)))))
 
 ;; determine if staking is active in a given cycle
 ;; @desc staking-active-at-cycle 
@@ -344,8 +350,11 @@
 ;; @params reward-cycle 
 ;; @returns uint
 (define-read-only (get-first-stacks-block-in-reward-cycle (token principal) (token-id uint) (reward-cycle uint))
-  (+ (get-activation-block-or-default token token-id) (* (var-get reward-cycle-length) reward-cycle))
-)
+  (let (
+      (first-cycle (get-reawrd-cycle token token-id (get-activation-block-or-default token token-id))))
+    (if (< reward-cycle first-cycle)
+      (contract-call? .alex-reserve-pool-sft get-first-stacks-block-in-reward-cycle token token-id reward-cycle)
+      (+ (get-activation-block-or-default token token-id) (* (var-get reward-cycle-length) (- reward-cycle first-cycle))))))
 
 ;; getter for get-entitled-staking-reward that specifies block height
 ;; @desc get-staking-reward
@@ -451,7 +460,7 @@
         (first-cycle (get first commitment))
         (last-cycle (get last commitment))
         (target-cycle (+ first-cycle reward-cycle-idx))
-        (this-staker-at-cycle (get-staker-at-cycle-or-default token token-id target-cycle staker-id))
+        (this-staker-at-cycle (get-staker-at-cycle-or-default-internal token token-id target-cycle staker-id))
         (amount-staked (get amount-staked this-staker-at-cycle))
         (to-return (get to-return this-staker-at-cycle))
       )
@@ -483,9 +492,9 @@
 (define-private (set-tokens-staked (token principal) (token-id uint) (user-id uint) (target-cycle uint) (amount-staked uint) (to-return uint))
   (let
     (
-      (this-staker-at-cycle (get-staker-at-cycle-or-default token token-id target-cycle user-id))
+      (this-staker-at-cycle (get-staker-at-cycle-or-default-internal token token-id target-cycle user-id))
     )
-    (map-set staking-stats-at-cycle {token: token, token-id: token-id, reward-cycle: target-cycle} (+ amount-staked (get-staking-stats-at-cycle-or-default token token-id target-cycle)))
+    (map-set staking-stats-at-cycle {token: token, token-id: token-id, reward-cycle: target-cycle} (+ amount-staked (get-staking-stats-at-cycle-or-default-internal token token-id target-cycle)))
     (map-set staker-at-cycle
       {
         token: token,
