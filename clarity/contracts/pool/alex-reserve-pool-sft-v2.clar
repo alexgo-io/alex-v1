@@ -466,7 +466,7 @@
       )
       (begin
         (if (and (>= target-cycle first-cycle) (< target-cycle last-cycle))
-          (begin
+          (begingit 
             (if (is-eq target-cycle (- last-cycle u1))
               (set-tokens-staked token token-id staker-id target-cycle amount-token amount-token)
               (set-tokens-staked token token-id staker-id target-cycle amount-token u0)
