@@ -1380,3 +1380,7 @@ epoch = 2.4
 path = "contracts/pool/rebase-swap-pool.clar"
 clarity_version = 2
 epoch = 2.4
+
+[contracts.alex-reserve-pool-sft-v2]
+path = "contracts/pool/alex-reserve-pool-sft-v2.clar"
+depends_on = [ "alex-reserve-pool-sft" ]
