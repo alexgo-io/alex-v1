@@ -1398,3 +1398,9 @@ epoch = 2.4
 path = "contracts/pool/rebase-swap-pool.clar"
 clarity_version = 2
 epoch = 2.4
+
+[contracts.stx20-bridge-endpoint]
+path = "contracts/bridge/stx20-bridge-endpoint.clar"
+clarity_version = 2
+epoch = 2.4
+
