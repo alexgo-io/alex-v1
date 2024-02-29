@@ -91,14 +91,16 @@
 )
 
 (define-private (get-base-decimals)
- (contract-call? 'SP7V1SE7EA3ZG3QTWSBA2AAG8SRHEYJ06EBBD1J2.max-token get-decimals))
+ (contract-call? .token-max get-decimals))
+;; (contract-call? 'SP7V1SE7EA3ZG3QTWSBA2AAG8SRHEYJ06EBBD1J2.max-token get-decimals))
 
 
 ;; @desc get-balance
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
- (ok (/ (* (unwrap-panic (contract-call? 'SP7V1SE7EA3ZG3QTWSBA2AAG8SRHEYJ06EBBD1J2.max-token get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
+ (ok (/ (* (unwrap-panic (contract-call? .token-max get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
+;; (ok (/ (* (unwrap-panic (contract-call? 'SP7V1SE7EA3ZG3QTWSBA2AAG8SRHEYJ06EBBD1J2.max-token get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
 )
 
 ;; @desc get-token-uri
@@ -117,7 +119,8 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (is-eq sender tx-sender) ERR-NOT-AUTHORIZED)
-   (contract-call? 'SP7V1SE7EA3ZG3QTWSBA2AAG8SRHEYJ06EBBD1J2.max-token transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
+   (contract-call? .token-max transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
+;;   (contract-call? 'SP7V1SE7EA3ZG3QTWSBA2AAG8SRHEYJ06EBBD1J2.max-token transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
   )
 )
 
