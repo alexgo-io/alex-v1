@@ -8,23 +8,34 @@
 
 (define-constant ONE_8 u100000000)
 
-(define-map tx-sent (buff 32) { from: principal, to: principal, ticker: (string-ascii 8), amount: uint })
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-operators principal bool)
-(define-map ticker-to-tokens (string-ascii 8) principal)
-(define-map token-to-tickers principal (string-ascii 8))
 
 (define-read-only (get-approved-operator-or-default (operator principal))
-    (default-to false (map-get? approved-operators operator)))
+    (contract-call? .stx20-bridge-registry get-approved-operator-or-default operator))
 
 (define-read-only (get-ticker-to-token-or-fail (ticker (string-ascii 8)))
-    (ok (unwrap! (map-get? ticker-to-tokens ticker) err-invalid-token-or-ticker)))
+    (contract-call? .stx20-bridge-registry get-ticker-to-token-or-fail ticker))
 
 (define-read-only (get-token-to-ticker-or-fail (token principal))
-    (ok (unwrap! (map-get? token-to-tickers token) err-invalid-token-or-ticker)))
+    (contract-call? .stx20-bridge-registry get-token-to-ticker-or-fail token))
 
 (define-read-only (get-tx-sent-or-fail (txid (buff 32)))
-    (ok (unwrap! (map-get? tx-sent txid) err-invalid-txid)))
+    (contract-call? .stx20-bridge-registry get-tx-sent-or-fail txid))
+
+;; governance calls
+
+(define-public (set-contract-owner (owner principal))
+    (begin 
+        (try! (check-is-owner))
+        (ok (var-set contract-owner owner))))
+
+(define-public (set-approved-operator (operator principal) (approved bool))
+    (begin 
+        (try! (check-is-owner))
+        (ok (map-set approved-operators operator approved))))
+
+;; privileged calls
 
 (define-public (finalize-peg-in (txid (buff 32)) (transfer { from: principal, to: principal, ticker: (string-ascii 8), amount: uint }) (token-trait <ft-trait>))
     (begin 
@@ -32,8 +43,10 @@
         (asserts! (is-eq (get to transfer) (as-contract tx-sender)) err-invalid-peg-in-address)
         (asserts! (is-err (get-tx-sent-or-fail txid)) err-invalid-txid)
         (asserts! (is-eq (contract-of token-trait) (try! (get-ticker-to-token-or-fail (get ticker transfer)))) err-invalid-token-or-ticker)
-        (map-set tx-sent txid transfer)
+        (as-contract (try! (contract-call? .stx20-bridge-registry set-tx-sent txid transfer)))
         (as-contract (contract-call? token-trait mint-fixed (* (get amount transfer) ONE_8) (get from transfer)))))
+
+;; public calls
 
 (define-public (finalize-peg-out (token-trait <ft-trait>) (amount uint))
     (let (
@@ -42,4 +55,11 @@
             (memo (unwrap-panic (to-consensus-buff? (concat "t" (concat ticker (unwrap! (as-max-len? (int-to-ascii (/ amount ONE_8)) u20) err-amount-exceeds-max-len)))))))
         (as-contract (try! (contract-call? token-trait burn-fixed amount sender)))
         (as-contract (stx-transfer-memo? u1 tx-sender sender memo))))
-        
+
+;; internal calls
+
+(define-private (check-is-owner)
+    (ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorised)))
+
+(define-private (check-is-approved)
+    (ok (asserts! (or (get-approved-operator-or-default tx-sender) (is-ok (check-is-owner))) err-not-authorised)))
