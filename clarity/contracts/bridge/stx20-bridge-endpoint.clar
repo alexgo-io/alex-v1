@@ -3,7 +3,7 @@
 (define-constant err-not-authorised (err u1000))
 (define-constant err-invalid-token-or-ticker (err u1001))
 (define-constant err-invalid-peg-in-address (err u1002))
-(define-constant err-invalid-txid (err u1003))
+(define-constant err-invalid-tx (err u1003))
 (define-constant err-amount-exceeds-max-len (err u1004))
 
 (define-constant ONE_8 u100000000)
@@ -20,8 +20,8 @@
 (define-read-only (get-token-to-ticker-or-fail (token principal))
     (contract-call? .stx20-bridge-registry get-token-to-ticker-or-fail token))
 
-(define-read-only (get-tx-sent-or-fail (txid (buff 32)))
-    (contract-call? .stx20-bridge-registry get-tx-sent-or-fail txid))
+(define-read-only (get-tx-sent-or-default (tx { txid: (buff 32), from: principal, to: principal, ticker: (string-ascii 8), amount: uint }))
+    (contract-call? .stx20-bridge-registry get-tx-sent-or-default tx))
 
 ;; governance calls
 
@@ -37,14 +37,14 @@
 
 ;; privileged calls
 
-(define-public (finalize-peg-in (txid (buff 32)) (transfer { from: principal, to: principal, ticker: (string-ascii 8), amount: uint }) (token-trait <ft-trait>))
+(define-public (finalize-peg-in (tx { txid: (buff 32), from: principal, to: principal, ticker: (string-ascii 8), amount: uint }) (token-trait <ft-trait>))
     (begin 
-        (asserts! (get-approved-operator-or-default tx-sender) err-not-authorised)
-        (asserts! (is-eq (get to transfer) (as-contract tx-sender)) err-invalid-peg-in-address)
-        (asserts! (is-err (get-tx-sent-or-fail txid)) err-invalid-txid)
-        (asserts! (is-eq (contract-of token-trait) (try! (get-ticker-to-token-or-fail (get ticker transfer)))) err-invalid-token-or-ticker)
-        (as-contract (try! (contract-call? .stx20-bridge-registry set-tx-sent txid transfer)))
-        (as-contract (contract-call? token-trait mint-fixed (* (get amount transfer) ONE_8) (get from transfer)))))
+        (asserts! (get-approved-operator-or-default tx-sender) err-not-authorised) ;; only oracle can call this.
+        (asserts! (is-eq (get to tx) (as-contract tx-sender)) err-invalid-peg-in-address) ;; recipient must be this contract.
+        (asserts! (not (get-tx-sent-or-default tx)) err-invalid-tx) ;; it should not have been sent before.
+        (asserts! (is-eq (contract-of token-trait) (try! (get-ticker-to-token-or-fail (get ticker tx)))) err-invalid-token-or-ticker) ;; token-trait must be the token for this ticker.
+        (as-contract (try! (contract-call? .stx20-bridge-registry set-tx-sent tx true)))
+        (as-contract (contract-call? token-trait mint-fixed (* (get amount tx) ONE_8) (get from tx)))))
 
 ;; public calls
 

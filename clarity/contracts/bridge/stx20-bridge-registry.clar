@@ -9,7 +9,7 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-operators principal bool)
 
-(define-map tx-sent (buff 32) { from: principal, to: principal, ticker: (string-ascii 8), amount: uint })
+(define-map tx-sent { txid: (buff 32), from: principal, to: principal, ticker: (string-ascii 8), amount: uint } bool)
 (define-map ticker-to-tokens (string-ascii 8) principal)
 (define-map token-to-tickers principal (string-ascii 8))
 
@@ -24,8 +24,8 @@
 (define-read-only (get-token-to-ticker-or-fail (token principal))
     (ok (unwrap! (map-get? token-to-tickers token) err-invalid-token-or-ticker)))
 
-(define-read-only (get-tx-sent-or-fail (txid (buff 32)))
-    (ok (unwrap! (map-get? tx-sent txid) err-invalid-txid)))
+(define-read-only (get-tx-sent-or-default (tx { txid: (buff 32), from: principal, to: principal, ticker: (string-ascii 8), amount: uint }))
+    (default-to false (map-get? tx-sent tx)))
 
 ;; governance calls
 
@@ -50,10 +50,10 @@
 
 ;; privileged calls
 
-(define-public (set-tx-sent (txid (buff 32)) (transfer { from: principal, to: principal, ticker: (string-ascii 8), amount: uint }))
+(define-public (set-tx-sent (tx { txid: (buff 32), from: principal, to: principal, ticker: (string-ascii 8), amount: uint }) (sent bool))
     (begin 
         (try! (check-is-approved))
-        (ok (map-set tx-sent txid transfer))))
+        (ok (map-set tx-sent tx sent))))
 
 ;; internal call
 
