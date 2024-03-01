@@ -1417,6 +1417,11 @@ path = "contracts/bridge/stx20-bridge-registry.clar"
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-aewbtc]
+path = "contracts/token/token-aewbtc.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
 [contracts.token-waewbtc]
 path = "contracts/wrapped-token/token-waewbtc.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
@@ -1435,9 +1440,26 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-max]
+path = "contracts/token/token-max.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.token-play]
+path = "contracts/token/token-play.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
 [contracts.token-waeusdc]
 path = "contracts/wrapped-token/token-waeusdc.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-aeusdc]
+path = "contracts/token/token-aeusdc.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
