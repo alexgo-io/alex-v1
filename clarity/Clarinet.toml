@@ -1383,4 +1383,12 @@ epoch = 2.4
 
 [contracts.auto-alex-v3]
 path = "contracts/auto-token/auto-alex-v3.clar"
-depends_on = [ "trait-sip-010", "trait-ownable", "age000-governance-token", "alex-reserve-pool" ]
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.auto-alex-v3-registry]
+path = "contracts/auto-token/auto-alex-v3-registry.clar"
+depends_on = [ ]
+
+[contracts.auto-alex-v3-endpoint]
+path = "contracts/auto-token/auto-alex-v3-endpoint.clar"
+depends_on = [ "trait-sip-010", "age000-governance-token", "alex-reserve-pool" ]
