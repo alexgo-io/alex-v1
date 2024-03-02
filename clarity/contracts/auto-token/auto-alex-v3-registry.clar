@@ -16,7 +16,6 @@
 (define-map approved-contracts principal bool)
 
 (define-data-var start-cycle uint u340282366920938463463374607431768211455)
-(define-data-var end-cycle uint u340282366920938463463374607431768211455)
 (define-data-var redeem-request-nonce uint u0)
 
 (define-map staked-cycle uint bool)
@@ -40,9 +39,6 @@
 
 (define-read-only (get-start-cycle)
   (var-get start-cycle))
-
-(define-read-only (get-end-cycle)
-  (var-get end-cycle))
 
 (define-read-only (is-cycle-staked (reward-cycle uint))
   (default-to false (map-get? staked-cycle reward-cycle)))
@@ -76,11 +72,6 @@
     (try! (check-is-approved))
     (map-set staked-cycle new-start-cycle true)
     (ok (var-set start-cycle new-start-cycle))))
-
-(define-public (set-end-cycle (new-end-cycle uint))
-  (begin 
-    (try! (check-is-approved))
-    (ok (var-set end-cycle new-end-cycle))))
 
 (define-public (set-staked-cycle (cycle uint) (staked bool))
   (begin 
