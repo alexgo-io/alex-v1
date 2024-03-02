@@ -220,14 +220,31 @@
 )
 
 (define-private (mul-down (a uint) (b uint))
-    (/ (* a b) ONE_8)
-)
+    (/ (* a b) ONE_8))
 
 (define-private (div-down (a uint) (b uint))
-  (if (is-eq a u0)
-    u0
-    (/ (* a ONE_8) b)
-  )
-)
+  (if (is-eq a u0) u0 (/ (* a ONE_8) b)))
 
-;; contract initialisation
+;; staking related fuctions
+
+(use-trait ft-trait .trait-sip-010.sip-010-trait)
+
+(define-public (stake-tokens (amount-tokens uint) (lock-period uint))
+	(begin
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(as-contract (contract-call? .alex-reserve-pool stake-tokens .age000-governance-token amount-tokens lock-period))))
+
+(define-public (transfer-token (token-trait <ft-trait>) (amount uint) (recipient principal))
+	(begin 
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(as-contract (contract-call? token-trait transfer-fixed amount tx-sender recipient none))))
+
+(define-public (claim-staking-reward (reward-cycle uint))
+	(begin 
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(as-contract (contract-call? .alex-reserve-pool claim-staking-reward .age000-governance-token reward-cycle))))
+
+(define-public (reduce-position-v2)
+	(begin 
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
+		(as-contract (contract-call? .auto-alex-v2 reduce-position ONE_8))))
