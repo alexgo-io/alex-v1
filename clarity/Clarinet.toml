@@ -1476,12 +1476,22 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-nope]
+path = "contracts/token/token-nope.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
 [contracts.token-wnope]
 path = "contracts/wrapped-token/token-wnope.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-mick]
+path = "contracts/token/token-mick.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
 [contracts.token-wmick]
 path = "contracts/wrapped-token/token-wmick.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
