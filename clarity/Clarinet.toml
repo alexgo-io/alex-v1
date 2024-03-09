@@ -44,6 +44,10 @@ contract_id = "SP1Z92MPDQEWZXW36VX71Q25HKF5K2EPCJ304F275.tokensoft-token-v4k6863
 contract_id = "SP32AEEF6WW5Y0NMJ1S8SBSZDAY8R5J32NBZFPKKZ.nope"
 [[project.requirements]]
 contract_id = "SP2Y8T3TR3FKH3Y2FPZVNQAEKNJXKWVS4RVQF48JE.stakemouse"
+[[project.requirements]]
+contract_id = "SP3951VNPC55BMS9RCF6SKRZP4K3Q2PQ2RSM1DD1V.fast"
+[[project.requirements]]
+contract_id = "SPPK49DG7WR1J5D50GZ4W7DYYWM5MAXSX0ZA9VEJ.FrodoSaylorKeanuPepe10Inu-token-v69"
 
 [repl]
 costs_version = 2
@@ -1484,6 +1488,18 @@ epoch = 2.4
 
 [contracts.token-wmick]
 path = "contracts/wrapped-token/token-wmick.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.token-wfast]
+path = "contracts/wrapped-token/token-wfast.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.token-wfrodo]
+path = "contracts/wrapped-token/token-wfrodo.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
