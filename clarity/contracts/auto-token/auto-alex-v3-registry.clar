@@ -64,14 +64,14 @@
 		(try! (check-is-owner))
 		(ok (map-set approved-contracts owner approved))))
 
-;; privileged functions
-;;   
-
 (define-public (set-start-cycle (new-start-cycle uint))
   (begin 
-    (try! (check-is-approved))
+    (try! (check-is-owner))
     (map-set staked-cycle new-start-cycle true)
     (ok (var-set start-cycle new-start-cycle))))
+
+;; privileged functions
+;;   
 
 (define-public (set-staked-cycle (cycle uint) (staked bool))
   (begin 
@@ -80,10 +80,11 @@
 
 (define-public (set-redeem-request (request-id uint) (request-details { requested-by: principal, shares: uint, redeem-cycle: uint, status: (buff 1) }))
   (let (
-      (current-nonce (var-get redeem-request-nonce))
-      (id (if (> request-id u0) request-id (begin (var-set redeem-request-nonce (+ current-nonce u1)) current-nonce))))
+      (next-nonce (+ (var-get redeem-request-nonce) u1))
+      (id (if (> request-id u0) request-id (begin (var-set redeem-request-nonce next-nonce) next-nonce))))
     (try! (check-is-approved))
-    (ok (map-set redeem-requests id request-details))))
+    (map-set redeem-requests id request-details)
+    (ok id)))
 
 (define-public (set-redeem-shares-per-cycle (reward-cycle uint) (shares uint))
   (begin 

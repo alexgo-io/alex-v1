@@ -237,7 +237,9 @@
 (define-public (transfer-token (token-trait <ft-trait>) (amount uint) (recipient principal))
 	(begin 
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(as-contract (contract-call? token-trait transfer-fixed amount tx-sender recipient none))))
+		(if (is-eq (contract-of token-trait) (as-contract tx-sender))
+			(as-contract (transfer-fixed amount tx-sender recipient none))
+			(as-contract (contract-call? token-trait transfer-fixed amount tx-sender recipient none)))))
 
 (define-public (claim-staking-reward (reward-cycle uint))
 	(begin 
@@ -246,5 +248,8 @@
 
 (define-public (reduce-position-v2)
 	(begin 
-		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
-		(as-contract (contract-call? .auto-alex-v2 reduce-position ONE_8))))
+		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)		
+		(if (is-eq u0 (unwrap-panic (contract-call? .auto-alex-v2 get-balance (as-contract tx-sender))))
+			u0
+			(as-contract (try! (contract-call? .auto-alex-v2 reduce-position ONE_8))))
+		(ok true)))

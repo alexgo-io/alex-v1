@@ -6,7 +6,6 @@
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-NOT-ACTIVATED (err u2043))
 (define-constant ERR-ACTIVATED (err u2044))
-(define-constant ERR-INSUFFICIENT-BALANCE (err u2045))
 (define-constant ERR-PAUSED (err u2046))
 (define-constant ERR-INVALID-PERCENT (err u5000))
 (define-constant ERR-GET-BALANCE-FIXED-FAIL (err u6001))
@@ -20,6 +19,8 @@
 (define-constant ERR-END-CYCLE-V2 (err u10022))
 
 (define-constant ONE_8 u100000000)
+
+(define-constant REWARD-CYCLE-INDEXES (list u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31 u32))
 
 ;; data maps and vars
 ;;
@@ -73,7 +74,8 @@
 ;; @desc           + intrinsic of autoALEXv2 in the contract
 (define-read-only (get-next-base)
   (let (
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE)))
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+      (auto-alex-v2-bal (unwrap! (contract-call? .auto-alex-v2 get-balance-fixed .auto-alex-v3) ERR-GET-BALANCE-FIXED-FAIL)))
     (asserts! (or (is-eq current-cycle (get-start-cycle)) (is-cycle-staked (- current-cycle u1))) ERR-CLAIM-AND-STAKE)
     (ok 
       (+         
@@ -81,9 +83,7 @@
         (get to-return (as-contract (get-staker-at-cycle current-cycle)))
         (as-contract (get-staking-reward current-cycle))
         (unwrap! (contract-call? .age000-governance-token get-balance-fixed .auto-alex-v3) ERR-GET-BALANCE-FIXED-FAIL)
-        (mul-down 
-          (unwrap! (contract-call? .auto-alex-v2 get-balance-fixed .auto-alex-v3) ERR-GET-BALANCE-FIXED-FAIL) 
-          (try! (contract-call? .auto-alex-v2 get-intrinsic)))))))
+        (if (is-eq auto-alex-v2-bal u0) u0 (mul-down auto-alex-v2-bal (try! (contract-call? .auto-alex-v2 get-intrinsic))))))))
 
 ;; @desc get the intrinsic value of auto-alex-v3
 ;; @desc intrinsic = next capital base of the vault / total supply of auto-alex-v3
@@ -134,7 +134,6 @@
       (start-cycle (get-start-cycle))
       (check-start-cycle (asserts! (<= start-cycle current-cycle) ERR-NOT-ACTIVATED))
       (check-claim-and-stake (and (> current-cycle start-cycle) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1)))))
-      (cycles-to-stake (+ current-cycle u32))
       (new-supply (try! (get-tokens-to-shares dx)))
       (sender tx-sender))
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
@@ -142,7 +141,7 @@
 
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .age000-governance-token transfer-fixed dx sender .auto-alex-v3 none))
-    (as-contract (try! (stake-tokens dx cycles-to-stake)))
+    (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: dx })))
         
     ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3 mint-fixed new-supply sender)))
@@ -155,6 +154,7 @@
       (start-cycle (get-start-cycle))
       (end-cycle-v2 (contract-call? .auto-alex-v2 get-end-cycle))
       (check-start-cycle (asserts! (<= start-cycle current-cycle) ERR-NOT-ACTIVATED))
+      (check-claim-and-stake (and (> current-cycle start-cycle) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1)))))
       (intrinsic-dx (mul-down dx (try! (contract-call? .auto-alex-v2 get-intrinsic))))
       (new-supply (try! (get-tokens-to-shares intrinsic-dx)))
       (sender tx-sender))
@@ -164,7 +164,7 @@
 
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .auto-alex-v2 transfer-fixed dx sender .auto-alex-v3 none))
-    (and (< end-cycle-v2 current-cycle) (begin (as-contract (try! (reduce-position-v2))) true))
+    (and (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))))
         
     ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3 mint-fixed new-supply sender)))
@@ -187,30 +187,29 @@
       (end-cycle-v2 (get-end-cycle-v2))    
       ;; claim all that's available to claim for the reward-cycle
       (claimed (and (> (get-user-id) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))
-      (claimed-v2 (if (< end-cycle-v2 current-cycle) (begin (try! (as-contract (reduce-position-v2))) true) (try! (claim-and-stake-v2 reward-cycle))))
+      (claimed-v2 (if (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))) (try! (claim-and-stake-v2 reward-cycle))))
       (tokens (unwrap! (contract-call? .age000-governance-token get-balance-fixed .auto-alxex-v3) ERR-GET-BALANCE-FIXED-FAIL))
-      (cycles-to-stake (+ current-cycle u32))
-      (redeem-tokens (try! (get-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle))))
-      (sender tx-sender))
+      (set-staked (as-contract (contract-call? .auto-alex-v3-registry set-staked-cycle reward-cycle true))))
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (> tokens redeem-tokens) ERR-REDEMPTION-TOO-HIGH)
-    (and (> cycles-to-stake u0) (as-contract (try! (stake-tokens (- tokens redeem-tokens) cycles-to-stake))))    
-    (as-contract (try! (contract-call? .auto-alex-v3-registry set-redeem-tokens-per-cycle reward-cycle redeem-tokens)))
-    (as-contract (contract-call? .auto-alex-v3-registry set-staked-cycle reward-cycle true))))
+    (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: tokens })))
+    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-tokens-per-cycle reward-cycle (try! (get-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle)))))))
 
 (define-public (request-redeem (amount uint))
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
-      (redeem-cycle (+ current-cycle u32)))
+      (redeem-cycle (+ current-cycle u32))
+      (request-details { requested-by: tx-sender, shares: amount, redeem-cycle: redeem-cycle, status: (get-pending) }))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
-    (try! (contract-call? .auto-alex-v3 transfer-fixed amount tx-sender .auto-alex-v3 none))
-    (as-contract (try! (contract-call? .auto-alex-v3-registry set-redeem-request u0 { requested-by: tx-sender, shares: amount, redeem-cycle: redeem-cycle, status: (get-pending) })))
-    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-shares-per-cycle redeem-cycle (+ (get-redeem-shares-per-cycle-or-default redeem-cycle) amount)))))
+    (try! (contract-call? .auto-alex-v3 transfer-fixed amount tx-sender .auto-alex-v3 none))    
+    (as-contract (try! (contract-call? .auto-alex-v3-registry set-redeem-shares-per-cycle redeem-cycle (+ (get-redeem-shares-per-cycle-or-default redeem-cycle) amount))))
+    (print { object: "pool", action: "redeem-request", data: request-details })
+    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request u0 request-details))))
 
 (define-public (finalize-redeem (request-id uint))
-  (let (
+  (let (      
       (request-details (try! (get-redeem-request-or-fail request-id)))
-      (check-staked (asserts! (is-cycle-staked (get redeem-cycle request-details)) ERR-REWARD-CYCLE-NOT-COMPLETED))
+      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
+      (check-claim-and-stake (and (not (is-cycle-staked (get redeem-cycle request-details))) (try! (claim-and-stake (get redeem-cycle request-details)))))
       (redeem-cycle (get redeem-cycle request-details))
       (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle))))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED) 
@@ -222,11 +221,13 @@
 
 (define-public (revoke-redeem (request-id uint))
   (let (
-      (request-details (try! (get-redeem-request-or-fail request-id))))
+      (request-details (try! (get-redeem-request-or-fail request-id)))
+      (redeem-cycle (get redeem-cycle request-details)))
     (asserts! (is-eq tx-sender (get requested-by request-details)) ERR-NOT-AUTHORIZED)
-    (asserts! (not (is-cycle-staked (get redeem-cycle request-details))) ERR-REWARD-CYCLE-NOT-COMPLETED)
+    (asserts! (not (is-cycle-staked redeem-cycle)) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (is-eq (get-pending) (get status request-details)) ERR-REQUEST-FINALIZED-OR-REVOKED)
     (as-contract (try! (contract-call? .auto-alex-v3 transfer-token .auto-alex-v3 (get shares request-details) (get requested-by request-details))))
+    (as-contract (try! (contract-call? .auto-alex-v3-registry set-redeem-shares-per-cycle redeem-cycle (- (get-redeem-shares-per-cycle-or-default redeem-cycle) (get shares request-details)))))
     (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id (merge request-details { status: (get-revoked) })))))
 
 ;; private functions
@@ -242,6 +243,24 @@
   (match claimed-response
     claimed (+ sum-so-far (get to-return claimed) (get entitled-token claimed))
     err sum-so-far))
+
+(define-private (stake-tokens-iter (cycles-to-stake uint) (previous-response (response { current-cycle: uint, remaining: uint } uint)))
+  (match previous-response
+    ok-value
+    (let (
+      (reward-cycle (+ (get current-cycle ok-value) cycles-to-stake))
+      (redeeming (try! (get-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle))))
+      (returning (get to-return (get-staker-at-cycle reward-cycle)))
+      (staking (if (is-eq cycles-to-stake u32) 
+        (get remaining ok-value) 
+        (if (> returning redeeming) 
+          u0
+          (if (> (get remaining ok-value) (- redeeming returning)) 
+            (- redeeming returning) 
+            (get remaining ok-value))))))
+      (and (> staking u0) (as-contract (try! (stake-tokens staking cycles-to-stake))))
+      (ok { current-cycle: (get current-cycle ok-value), remaining: (- (get remaining ok-value) staking) }))
+    err-value previous-response))
 
 (define-private (get-reward-cycle (stack-height uint))
   (contract-call? .alex-reserve-pool get-reward-cycle .age000-governance-token stack-height))
