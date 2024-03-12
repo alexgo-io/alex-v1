@@ -20,6 +20,12 @@
 (define-read-only (get-last-token-id)
     (ok (var-get id-nonce)))
 
+(define-read-only (get-name)
+    (ok "Picsum 404"))
+
+(define-read-only (get-symbol)
+    (ok "PICSUM"))
+
 (define-read-only (get-token-uri (id uint))
     (ok (some (concat "https://picsum.photos/id/" (concat (int-to-ascii id) "/5000/3333")))))
 
