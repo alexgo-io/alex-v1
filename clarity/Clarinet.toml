@@ -1535,3 +1535,9 @@ epoch = 2.4
 path = "contracts/token/token-picsum-404.clar"
 clarity_version = 2
 epoch = 2.4
+
+[contracts.token-wpicsum]
+path = "contracts/wrapped-token/token-wpicsum.clar"
+depends_on = [ "trait-ownable", "trait-sip-010", "token-picsum-404"]
+clarity_version = 2
+epoch = 2.4
