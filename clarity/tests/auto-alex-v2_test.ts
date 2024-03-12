@@ -585,17 +585,17 @@ Clarinet.test({
         ]);
         block.receipts.forEach((e) => { e.result.expectOk() });
 
+        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+
+        block = chain.mineBlock([yieldVault.addToPosition(wallet_1, dx)]);
+        block.receipts.forEach((e) => { e.result.expectOk() });
+
         block = chain.mineBlock([
             yieldVault.setEndCycle(wallet_1, end_cycle),
             yieldVault.setEndCycle(deployer, end_cycle)
         ]);
         block.receipts[0].result.expectErr().expectUint(1000);
-        block.receipts[1].result.expectOk();
-
-        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
-
-        block = chain.mineBlock([yieldVault.addToPosition(wallet_1, dx)]);
-        block.receipts.forEach((e) => { e.result.expectOk() });
+        block.receipts[1].result.expectOk();        
 
         for (let cycle = 1; cycle < end_cycle; cycle++) {
             chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (cycle + 1) * 525);
@@ -622,4 +622,3 @@ Clarinet.test({
         )
     },
 });
-

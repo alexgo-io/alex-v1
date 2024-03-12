@@ -1417,6 +1417,17 @@ path = "contracts/pool/rebase-swap-pool.clar"
 clarity_version = 2
 epoch = 2.4
 
+[contracts.auto-alex-v3]
+path = "contracts/auto-token/auto-alex-v3.clar"
+depends_on = [ "trait-sip-010", "trait-ownable" ]
+
+[contracts.auto-alex-v3-registry]
+path = "contracts/auto-token/auto-alex-v3-registry.clar"
+depends_on = [ ]
+
+[contracts.auto-alex-v3-endpoint]
+path = "contracts/auto-token/auto-alex-v3-endpoint.clar"
+depends_on = [ "trait-sip-010", "age000-governance-token", "alex-reserve-pool" ]
 [contracts.stx20-bridge-endpoint]
 path = "contracts/bridge/stx20-bridge-endpoint.clar"
 clarity_version = 2
@@ -1456,6 +1467,11 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
+[contracts.token-pepe]
+path = "contracts/token/token-pepe.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
 [contracts.token-wpepe]
 path = "contracts/wrapped-token/token-wpepe.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
