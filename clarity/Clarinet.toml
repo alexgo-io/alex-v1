@@ -1530,3 +1530,8 @@ path = "contracts/wrapped-token/token-wfrodo.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.token-picsum-404]
+path = "contracts/token/token-picsum-404.clar"
+clarity_version = 2
+epoch = 2.4
