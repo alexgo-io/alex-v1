@@ -10,8 +10,8 @@ import {
 } from 'https://deno.land/x/clarinet@v1.2.0/index.ts';
 
 const contractNames = {
-    endpoint: 'stx20-bridge-endpoint',
-    registry: 'stx20-bridge-registry',
+    endpoint: 'stx20-bridge-endpoint-v1-01',
+    registry: 'stx20-bridge-registry-v1-01',
     stxs: 'stx20-stxs',
     wstx: 'token-wstx',
 };

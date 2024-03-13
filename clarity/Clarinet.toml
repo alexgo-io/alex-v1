@@ -1429,13 +1429,13 @@ depends_on = [ ]
 path = "contracts/auto-token/auto-alex-v3-endpoint.clar"
 depends_on = [ "trait-sip-010", "age000-governance-token", "alex-reserve-pool" ]
 
-[contracts.stx20-bridge-endpoint]
-path = "contracts/bridge/stx20-bridge-endpoint.clar"
+[contracts.stx20-bridge-endpoint-v1-01]
+path = "contracts/bridge/stx20-bridge-endpoint-v1-01.clar"
 clarity_version = 2
 epoch = 2.4
 
-[contracts.stx20-bridge-registry]
-path = "contracts/bridge/stx20-bridge-registry.clar"
+[contracts.stx20-bridge-registry-v1-01]
+path = "contracts/bridge/stx20-bridge-registry-v1-01.clar"
 clarity_version = 2
 epoch = 2.4
 
