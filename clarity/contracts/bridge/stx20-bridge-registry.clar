@@ -64,6 +64,11 @@
         (try! (check-is-approved))
         (ok (map-set tx-sent tx sent))))
 
+(define-public (transfer-stx (amount uint) (recipient principal) (memo  (buff 34)))
+    (begin 
+        (try! (check-is-approved))
+        (as-contract (stx-transfer-memo? amount tx-sender recipient memo))))
+
 ;; internal call
 
 (define-private (check-is-owner)
