@@ -80,7 +80,7 @@ Clarinet.test({
                     tupleCV({
                         txid: bufferCV('0x00'),
                         from: principalCV(user.address),
-                        to: principalCV(deployer.address + '.' + contractNames.endpoint),
+                        to: principalCV(deployer.address + '.' + contractNames.registry),
                         ticker: stringAsciiCV('STXS'),
                         amount: uintCV(1),
                     }),
@@ -110,7 +110,7 @@ Clarinet.test({
                     tupleCV({
                         txid: bufferCV('0x00'),
                         from: principalCV(user.address),
-                        to: principalCV(deployer.address + '.' + contractNames.endpoint),
+                        to: principalCV(deployer.address + '.' + contractNames.registry),
                         ticker: stringAsciiCV('STXS'),
                         amount: uintCV(1),
                     }),
@@ -125,7 +125,7 @@ Clarinet.test({
                     tupleCV({
                         txid: bufferCV('0x00'),
                         from: principalCV(user.address),
-                        to: principalCV(deployer.address + '.' + contractNames.endpoint),
+                        to: principalCV(deployer.address + '.' + contractNames.registry),
                         ticker: stringAsciiCV('STXS'),
                         amount: uintCV(1),
                     }),
@@ -140,7 +140,7 @@ Clarinet.test({
                     tupleCV({
                         txid: bufferCV('0x00'),
                         from: principalCV(user.address),
-                        to: principalCV(deployer.address + '.' + contractNames.endpoint),
+                        to: principalCV(deployer.address + '.' + contractNames.registry),
                         ticker: stringAsciiCV('STXS'),
                         amount: uintCV(1),
                     }),
