@@ -8,6 +8,7 @@
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-operators principal bool)
+(define-map approved-contracts principal bool)
 
 (define-map tx-sent { txid: (buff 32), from: principal, to: principal, ticker: (string-ascii 8), amount: uint } bool)
 (define-map ticker-to-tokens (string-ascii 8) principal)
@@ -17,6 +18,9 @@
 
 (define-read-only (get-approved-operator-or-default (operator principal))
     (default-to false (map-get? approved-operators operator)))
+
+(define-read-only (get-approved-contract-or-default (contract principal))
+    (default-to false (map-get? approved-contracts contract)))
 
 (define-read-only (get-ticker-to-token-or-fail (ticker (string-ascii 8)))
     (ok (unwrap! (map-get? ticker-to-tokens ticker) err-invalid-token-or-ticker)))
@@ -38,6 +42,11 @@
     (begin 
         (try! (check-is-owner))
         (ok (map-set approved-operators operator approved))))
+
+(define-public (set-approved-contract (contract principal) (approved bool))
+    (begin 
+        (try! (check-is-owner))
+        (ok (map-set approved-contracts contract approved))))
 
 (define-public (set-ticker-to-token (ticker (string-ascii 8)) (token principal))
     (begin 
@@ -61,4 +70,4 @@
     (ok (asserts! (is-eq tx-sender (var-get contract-owner)) err-not-authorised)))
 
 (define-private (check-is-approved)
-    (ok (asserts! (or (get-approved-operator-or-default tx-sender) (is-ok (check-is-owner))) err-not-authorised)))
+    (ok (asserts! (or (get-approved-contract-or-default tx-sender) (is-ok (check-is-owner))) err-not-authorised)))
