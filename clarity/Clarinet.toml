@@ -1434,6 +1434,11 @@ path = "contracts/bridge/stx20-bridge-endpoint-v1-01.clar"
 clarity_version = 2
 epoch = 2.4
 
+[contracts.stx20-bridge-endpoint-v1-02]
+path = "contracts/bridge/stx20-bridge-endpoint-v1-02.clar"
+clarity_version = 2
+epoch = 2.4
+
 [contracts.stx20-bridge-registry-v1-01]
 path = "contracts/bridge/stx20-bridge-registry-v1-01.clar"
 clarity_version = 2

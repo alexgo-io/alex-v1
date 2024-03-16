@@ -10,7 +10,7 @@ import {
 } from 'https://deno.land/x/clarinet@v1.2.0/index.ts';
 
 const contractNames = {
-    endpoint: 'stx20-bridge-endpoint-v1-01',
+    endpoint: 'stx20-bridge-endpoint-v1-02',
     registry: 'stx20-bridge-registry-v1-01',
     stxs: 'stx20-stxs',
     wstx: 'token-wstx',
@@ -183,7 +183,7 @@ Clarinet.test({
         responses.receipts[4].result.expectErr(1003);              
         responses.receipts[5].result.expectErr(1);
         responses.receipts[6].result.expectErr(1001);
-        responses.receipts[7].result.expectOk("tSTXS1");
+        responses.receipts[7].result.expectOk();
         console.log(responses.receipts[3].events);
         console.log(responses.receipts[7].events);
     },
