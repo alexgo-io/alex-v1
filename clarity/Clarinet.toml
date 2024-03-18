@@ -48,6 +48,8 @@ contract_id = "SP2Y8T3TR3FKH3Y2FPZVNQAEKNJXKWVS4RVQF48JE.stakemouse"
 contract_id = "SP3951VNPC55BMS9RCF6SKRZP4K3Q2PQ2RSM1DD1V.fast"
 [[project.requirements]]
 contract_id = "SPPK49DG7WR1J5D50GZ4W7DYYWM5MAXSX0ZA9VEJ.FrodoSaylorKeanuPepe10Inu-token-v69"
+[[project.requirements]]
+contract_id = "SP3WPNAEBYMX06RQNNYTH5PTJ1FRGX5A13ZZMZ01D.dogwifhat-token"
 
 [repl]
 costs_version = 2
@@ -1551,5 +1553,11 @@ epoch = 2.4
 [contracts.token-wpicsum]
 path = "contracts/wrapped-token/token-wpicsum.clar"
 depends_on = [ "trait-ownable", "trait-sip-010", "token-picsum-404"]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.token-wwif]
+path = "contracts/wrapped-token/token-wwif.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
