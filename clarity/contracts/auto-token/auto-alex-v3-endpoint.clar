@@ -211,13 +211,15 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (check-claim-and-stake (and (not (is-cycle-staked (get redeem-cycle request-details))) (try! (claim-and-stake (get redeem-cycle request-details)))))
       (redeem-cycle (get redeem-cycle request-details))
-      (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle))))
+      (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle)))
+      (updated-request-details (merge request-details { status: (get-finalized) })))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED) 
     (asserts! (is-eq (get-pending) (get status request-details)) ERR-REQUEST-FINALIZED-OR-REVOKED)
     
     (as-contract (try! (contract-call? .auto-alex-v3 transfer-token .age000-governance-token redeem-tokens (get requested-by request-details))))
     (as-contract (try! (contract-call? .auto-alex-v3 burn-fixed (get shares request-details) .auto-alex-v3)))
-    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id (merge request-details { status: (get-finalized) })))))
+    (print { notification: "finalize-redeem", payload: updated-request-details })
+    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id updated-request-details))))
 
 (define-public (revoke-redeem (request-id uint))
   (let (
