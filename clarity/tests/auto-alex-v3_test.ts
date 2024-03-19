@@ -77,7 +77,9 @@ Clarinet.test({
         block.receipts[3].result.expectOk();
         block.receipts[4].result.expectOk();
 
-        chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+        if(chain.blockHeight < ACTIVATION_BLOCK){
+            chain.mineEmptyBlockUntil(ACTIVATION_BLOCK);
+        }
 
         block = chain.mineBlock([
             yieldVault.addToPosition(wallet_1, dx),
