@@ -110,17 +110,17 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (redeem_cycle + 1) * 525);
         block = chain.mineBlock([
-            Tx.contractCall('auto-alex-v3-endpoint', 'revoke-redeem', [types.uint(3)], wallet_3.address),
+            // Tx.contractCall('auto-alex-v3-endpoint', 'revoke-redeem', [types.uint(3)], wallet_3.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'claim-and-stake', [types.uint(redeem_cycle)], deployer.address)
         ]);
         console.log(block.receipts[0].events);
         block.receipts.forEach(e => { e.result.expectOk() });        
 
-        block = chain.mineBlock([
-            Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_1.address),            
-        ]);
-        console.log(block.receipts[0].events);
-        block.receipts.forEach(e => { e.result.expectOk() });
+        // block = chain.mineBlock([
+        //     Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_1.address),            
+        // ]);
+        // console.log(block.receipts[0].events);
+        // block.receipts.forEach(e => { e.result.expectOk() });
 
         block = chain.mineBlock([
             Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),            

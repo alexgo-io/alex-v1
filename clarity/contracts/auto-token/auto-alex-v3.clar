@@ -250,6 +250,5 @@
 	(begin 
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)		
 		(if (is-eq u0 (unwrap-panic (contract-call? .auto-alex-v2 get-balance (as-contract tx-sender))))
-			u0
-			(as-contract (try! (contract-call? .auto-alex-v2 reduce-position ONE_8))))
-		(ok true)))
+			(ok u0)
+			(as-contract (contract-call? .auto-alex-v2 reduce-position ONE_8)))))

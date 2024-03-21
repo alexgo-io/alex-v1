@@ -51,6 +51,9 @@
 (define-read-only (is-cycle-staked (reward-cycle uint))
   (contract-call? .auto-alex-v3-registry is-cycle-staked reward-cycle))
 
+(define-read-only (get-staked-cycle-shares-to-tokens-or-fail (reward-cycle uint))
+  (contract-call? .auto-alex-v3-registry get-staked-cycle-shares-to-tokens-or-fail reward-cycle))
+
 (define-read-only (get-redeem-shares-per-cycle-or-default (reward-cycle uint))
   (contract-call? .auto-alex-v3-registry get-redeem-shares-per-cycle-or-default reward-cycle))
 
@@ -90,6 +93,7 @@
 (define-read-only (get-intrinsic)
   (ok (div-down (try! (get-next-base)) (unwrap-panic (contract-call? .auto-alex-v3 get-total-supply-fixed)))))
 
+;; @dev need to save the historical ratio.
 (define-read-only (get-shares-to-tokens (dx uint))
   (let (
       (total-supply (unwrap-panic (contract-call? .auto-alex-v3 get-total-supply-fixed))))
@@ -164,7 +168,7 @@
 
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .auto-alex-v2 transfer-fixed dx sender .auto-alex-v3 none))
-    (and (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))))
+    (and (< end-cycle-v2 current-cycle) (begin (as-contract (try! (reduce-position-v2))) true))
 
     ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3 mint-fixed new-supply sender)))
@@ -186,13 +190,18 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (end-cycle-v2 (get-end-cycle-v2))
       ;; claim all that's available to claim for the reward-cycle
-      (claimed (and (> (get-user-id) u0) (is-ok (as-contract (claim-staking-reward reward-cycle)))))
-      (claimed-v2 (if (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))) (try! (claim-and-stake-v2 reward-cycle))))
-      (tokens (unwrap! (contract-call? .age000-governance-token get-balance-fixed .auto-alex-v3) ERR-GET-BALANCE-FIXED-FAIL))
-      (set-staked (as-contract (contract-call? .auto-alex-v3-registry set-staked-cycle reward-cycle true))))
+      (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
+      (claimed-v2 (if (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))) (begin (try! (claim-and-stake-v2 reward-cycle)) u0)))
+      (tokens (+ (get to-return claimed) (get entitled-token claimed) claimed-v2))
+      (previous-shares-to-tokens (try! (get-staked-cycle-shares-to-tokens-or-fail (- reward-cycle u1))))
+      (redeeming (mul-down previous-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle))))    
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: tokens })))
-    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-tokens-per-cycle reward-cycle (try! (get-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle)))))))
+    (asserts! (>= tokens redeeming) (err redeeming))    
+    (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle reward-cycle true)))
+    (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle-shares-to-tokens reward-cycle (try! (get-shares-to-tokens ONE_8)))))    
+    (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: (- tokens redeeming) })))        
+    (print { notification: "claim-and-stake", payload: { redeeming: redeeming }})
+    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-tokens-per-cycle reward-cycle redeeming))))
 
 (define-public (request-redeem (amount uint))
   (let (
@@ -208,7 +217,6 @@
 (define-public (finalize-redeem (request-id uint))
   (let (
       (request-details (try! (get-redeem-request-or-fail request-id)))
-      (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (check-claim-and-stake (and (not (is-cycle-staked (get redeem-cycle request-details))) (try! (claim-and-stake (get redeem-cycle request-details)))))
       (redeem-cycle (get redeem-cycle request-details))
       (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle)))
@@ -216,21 +224,23 @@
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
     (asserts! (is-eq (get-pending) (get status request-details)) ERR-REQUEST-FINALIZED-OR-REVOKED)
 
-    (as-contract (try! (contract-call? .auto-alex-v3 transfer-token .age000-governance-token redeem-tokens (get requested-by request-details))))
-    (as-contract (try! (contract-call? .auto-alex-v3 burn-fixed (get shares request-details) .auto-alex-v3)))
+    (as-contract (unwrap! (contract-call? .auto-alex-v3 transfer-token .age000-governance-token redeem-tokens (get requested-by request-details)) (err u123)))
+    (as-contract (unwrap! (contract-call? .auto-alex-v3 burn-fixed (get shares request-details) .auto-alex-v3) (err u1234)))
     (print { notification: "finalize-redeem", payload: updated-request-details })
     (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id updated-request-details))))
 
 (define-public (revoke-redeem (request-id uint))
   (let (
       (request-details (try! (get-redeem-request-or-fail request-id)))
-      (redeem-cycle (get redeem-cycle request-details)))
+      (redeem-cycle (get redeem-cycle request-details))
+      (updated-request-details (merge request-details { status: (get-revoked) })))
     (asserts! (is-eq tx-sender (get requested-by request-details)) ERR-NOT-AUTHORIZED)
     (asserts! (not (is-cycle-staked redeem-cycle)) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (is-eq (get-pending) (get status request-details)) ERR-REQUEST-FINALIZED-OR-REVOKED)
     (as-contract (try! (contract-call? .auto-alex-v3 transfer-token .auto-alex-v3 (get shares request-details) (get requested-by request-details))))
     (as-contract (try! (contract-call? .auto-alex-v3-registry set-redeem-shares-per-cycle redeem-cycle (- (get-redeem-shares-per-cycle-or-default redeem-cycle) (get shares request-details)))))
-    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id (merge request-details { status: (get-revoked) })))))
+    (print { notification: "revoke-redeem", payload: updated-request-details })
+    (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id updated-request-details))))
 
 ;; private functions
 ;;
