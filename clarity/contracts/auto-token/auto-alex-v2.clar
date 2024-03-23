@@ -423,7 +423,7 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (> balance bounty) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (>= balance bounty) ERR-INSUFFICIENT-BALANCE)
     (asserts! (>= (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
 
     (let 
@@ -431,7 +431,7 @@
         (sender tx-sender)
         (cycles-to-stake (if (>= (var-get end-cycle) (+ current-cycle u32)) u32 (- (var-get end-cycle) current-cycle)))
       )
-      (and (> cycles-to-stake u0) (as-contract (try! (stake-tokens (- balance bounty) cycles-to-stake))))
+      (and (> (- balance bounty) u0) (and (> cycles-to-stake u0) (as-contract (try! (stake-tokens (- balance bounty) cycles-to-stake)))))
       (and (> bounty u0) (as-contract (try! (contract-call? .age000-governance-token transfer-fixed bounty tx-sender sender none))))
       (map-set staked-cycle reward-cycle true)
     
