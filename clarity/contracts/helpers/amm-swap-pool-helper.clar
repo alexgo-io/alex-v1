@@ -6,6 +6,7 @@
 (define-constant err-insufficient-balance (err u1003))
 (define-constant err-request-not-found (err u1004))
 (define-constant err-request-not-approved (err u1005))
+(define-constant err-request-already-processed (err u1006))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 
@@ -24,13 +25,13 @@
     requested-by: principal, requested-at: uint,
     token-x: principal, token-y: principal, factor: uint,
     bal-x: uint, bal-y: uint,
-    fee-rate-x: uint, fee-rate-y: uint, 
+    fee-rate-x: uint, fee-rate-y: uint,
     max-in-ratio: uint, max-out-ratio: uint,
     threshold-x: uint, threshold-y: uint,
     oracle-enabled: bool, oracle-average: uint,
     start-block: uint,
-    memo: (buff 256),
-    status: (buff 1), status-memo: (buff 256)
+    memo: (optional (buff 256)),
+    status: (buff 1), status-memo: (optional (buff 256))
 })
 
 ;; read-only calls
@@ -46,7 +47,7 @@
 
 ;; public calls
 
-(define-public (request-create 
+(define-public (request-create
     (request-details {
         token-x: principal, token-y: principal, factor: uint,
         bal-x: uint, bal-y: uint,
@@ -55,11 +56,11 @@
         threshold-x: uint, threshold-y: uint,
         oracle-enabled: bool, oracle-average: uint,
         start-block: uint,
-        memo: (buff 256) }) (token-x-trait <ft-trait>))
+        memo: (optional (buff 256)) }) (token-x-trait <ft-trait>))
     (let (
             (next-nonce (+ (var-get request-nonce) u1))
             (token-details (get-approved-tokens-or-default (get token-x request-details)))
-            (updated-request-details (merge request-details { requested-by: tx-sender, requested-at: block-height, status: PENDING, status-memo: 0x00 }))) 
+            (updated-request-details (merge request-details { requested-by: tx-sender, requested-at: block-height, status: PENDING, status-memo: none })))
         (asserts! (is-eq (get token-x request-details) (contract-of token-x-trait)) err-token-mismatch)
         (asserts! (get approved token-details) err-token-not-approved)
         (asserts! (>= (get bal-x request-details) (get min-x token-details)) err-insufficient-balance)
@@ -67,12 +68,12 @@
         (map-set requests next-nonce updated-request-details)
         (var-set request-nonce next-nonce)
         (print { notification: "request-create", payload: updated-request-details })
-        (ok true)))
+        (ok next-nonce)))
 
 (define-public (finalize-request (request-id uint) (token-x-trait <ft-trait>) (token-y-trait <ft-trait>))
     (let (
             (request-details (try! (get-request-or-fail request-id)))
-            (updated-request-details (merge request-details { requested-by: tx-sender, status: FINALIZED }))) 
+            (updated-request-details (merge request-details { requested-by: tx-sender, status: FINALIZED })))
         (asserts! (is-eq (get requested-by request-details) tx-sender) err-not-authorised)
         (asserts! (is-eq (get status request-details) APPROVED) err-request-not-approved)
         (asserts! (is-eq (get token-x request-details) (contract-of token-x-trait)) err-token-mismatch)
@@ -94,13 +95,24 @@
 
 ;; priviliged calls
 
-(define-public (approve-request (request-id uint) (approved bool) (token-x-trait <ft-trait>) (wrapped-token-y principal) (memo (buff 256)))
+(define-public (approve-request (request-id uint) (wrapped-token-y principal) (memo (optional (buff 256))))
     (let (
             (request-details (try! (get-request-or-fail request-id)))
-            (updated-request-details (merge request-details { token-y: wrapped-token-y, status: (if approved APPROVED REJECTED), status-memo: memo }))) 
+            (updated-request-details (merge request-details { token-y: wrapped-token-y, status: APPROVED, status-memo: memo })))
         (try! (check-is-approved))
+        (asserts! (is-eq (get status request-details) PENDING) err-request-already-processed)
+        (map-set requests request-id updated-request-details)
+        (print { notification: "approve-request", payload: updated-request-details })
+        (ok true)))
+
+(define-public (reject-request (request-id uint) (token-x-trait <ft-trait>) (memo (optional (buff 256))))
+    (let (
+            (request-details (try! (get-request-or-fail request-id)))
+            (updated-request-details (merge request-details { status: REJECTED, status-memo: memo })))
+        (try! (check-is-approved))
+        (asserts! (is-eq (get status request-details) PENDING) err-request-already-processed)
         (asserts! (is-eq (get token-x request-details) (contract-of token-x-trait)) err-token-mismatch)
-        (and (not approved) (as-contract (try! (contract-call? token-x-trait transfer-fixed (get bal-x request-details) tx-sender (get requested-by request-details) none))))
+        (as-contract (try! (contract-call? token-x-trait transfer-fixed (get bal-x request-details) tx-sender (get requested-by request-details) none)))
         (map-set requests request-id updated-request-details)
         (print { notification: "approve-request", payload: updated-request-details })
         (ok true)))
@@ -108,14 +120,19 @@
 ;; governance calls
 
 (define-public (set-owner (owner principal))
-    (begin 
+    (begin
         (try! (check-is-owner))
         (ok (var-set contract-owner owner))))
 
 (define-public (approve-operator (operator principal) (approved bool))
-    (begin 
+    (begin
         (try! (check-is-owner))
         (ok (map-set approved-operators operator approved))))
+
+(define-public (approve-token (operator principal) (approved bool) (min-x uint))
+    (begin
+        (try! (check-is-owner))
+        (ok (map-set approved-tokens operator { approved: approved, min-x: min-x }))))
 
 ;; private calls
 
