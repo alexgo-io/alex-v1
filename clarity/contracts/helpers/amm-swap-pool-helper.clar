@@ -109,7 +109,7 @@
             (request-details (try! (get-request-or-fail request-id)))
             (updated-request-details (merge request-details { status: REJECTED, status-memo: memo })))
         (try! (check-is-approved))
-        (asserts! (is-eq (get status request-details) PENDING) err-request-already-processed)
+        (asserts! (or (is-eq (get status request-details) PENDING) (is-eq (get status request-details) APPROVED)) err-request-already-processed)
         (asserts! (is-eq (get token-x request-details) (contract-of token-x-trait)) err-token-mismatch)
         (as-contract (try! (contract-call? token-x-trait transfer-fixed (get bal-x request-details) tx-sender (get requested-by request-details) none)))
         (map-set requests request-id updated-request-details)
