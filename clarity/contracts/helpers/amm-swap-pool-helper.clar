@@ -7,6 +7,7 @@
 (define-constant err-request-not-found (err u1004))
 (define-constant err-request-not-approved (err u1005))
 (define-constant err-request-already-processed (err u1006))
+(define-constant err-pool-exists (err u1007))
 
 (define-constant MAX_UINT u340282366920938463463374607431768211455)
 
@@ -64,6 +65,10 @@
         (asserts! (is-eq (get token-x request-details) (contract-of token-x-trait)) err-token-mismatch)
         (asserts! (get approved token-details) err-token-not-approved)
         (asserts! (>= (get bal-x request-details) (get min-x token-details)) err-insufficient-balance)
+        (asserts! (and 
+            (is-none (contract-call? .amm-swap-pool-v1-1 get-pool-exists (get token-x request-details) (get token-y request-details) (get factor request-details)))
+            (is-none (contract-call? .amm-swap-pool-v1-1 get-pool-exists (get token-y request-details) (get token-x request-details) (get factor request-details))))
+            err-pool-exists)
         (try! (contract-call? token-x-trait transfer-fixed (get bal-x request-details) tx-sender (as-contract tx-sender) none))
         (map-set requests next-nonce updated-request-details)
         (var-set request-nonce next-nonce)
