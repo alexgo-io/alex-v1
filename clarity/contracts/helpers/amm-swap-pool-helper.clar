@@ -100,7 +100,7 @@
             (request-details (try! (get-request-or-fail request-id)))
             (updated-request-details (merge request-details { token-y: wrapped-token-y, status: APPROVED, status-memo: memo })))
         (try! (check-is-approved))
-        (asserts! (is-eq (get status request-details) PENDING) err-request-already-processed)
+        (asserts! (and (not (is-eq (get status request-details) FINALIZED)) (not (is-eq (get status request-details) REJECTED))) err-request-already-processed)
         (map-set requests request-id updated-request-details)
         (print { notification: "approve-request", payload: updated-request-details })
         (ok true)))
@@ -109,12 +109,12 @@
     (let (
             (request-details (try! (get-request-or-fail request-id)))
             (updated-request-details (merge request-details { status: REJECTED, status-memo: memo })))
-        (try! (check-is-approved))
-        (asserts! (is-eq (get status request-details) PENDING) err-request-already-processed)
+        (asserts! (or (is-ok (check-is-approved)) (is-eq tx-sender (get requested-by request-details))) err-not-authorised) ;; either requestor or approved operator can reject
+        (asserts! (or (is-eq (get status request-details) PENDING) (is-eq (get status request-details) APPROVED)) err-request-already-processed)
         (asserts! (is-eq (get token-x request-details) (contract-of token-x-trait)) err-token-mismatch)
         (as-contract (try! (contract-call? token-x-trait transfer-fixed (get bal-x request-details) tx-sender (get requested-by request-details) none)))
         (map-set requests request-id updated-request-details)
-        (print { notification: "approve-request", payload: updated-request-details })
+        (print { notification: "reject-request", payload: updated-request-details })
         (ok true)))
 
 ;; governance calls
