@@ -84,7 +84,7 @@ Clarinet.test({
         block = chain.mineBlock([
             yieldVault.addToPosition(wallet_1, dx),
             Tx.contractCall('auto-alex-v3-endpoint', 'add-to-position', [types.uint(dx)], wallet_2.address),
-            // Tx.contractCall('auto-alex-v3-endpoint', 'add-to-position', [types.uint(dx)], wallet_3.address),
+            Tx.contractCall('auto-alex-v3-endpoint', 'add-to-position', [types.uint(dx)], wallet_3.address),
         ]);
         block.receipts.forEach((e) => { e.result.expectOk() });
 
@@ -95,7 +95,7 @@ Clarinet.test({
             Tx.contractCall('auto-alex-v3-endpoint', 'upgrade', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_2.address),
-            // Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_3.address),
+            Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_3.address),
         ]);
         console.log(block.receipts[2].events);
         block.receipts.forEach(e => { e.result.expectOk() });        
@@ -106,7 +106,7 @@ Clarinet.test({
             chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (cycle + 1) * 525);
             block = chain.mineBlock([
                 Tx.contractCall('auto-alex-v3-endpoint', 'claim-and-stake', [types.uint(cycle)], deployer.address),
-                Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_2.address),
+                Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),
             ]);
             block.receipts[0].result.expectOk();
             block.receipts[1].result.expectErr(10018);
@@ -114,23 +114,22 @@ Clarinet.test({
 
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (redeem_cycle + 1) * 525);
         block = chain.mineBlock([
-            // Tx.contractCall('auto-alex-v3-endpoint', 'revoke-redeem', [types.uint(3)], wallet_3.address),
+            Tx.contractCall('auto-alex-v3-endpoint', 'revoke-redeem', [types.uint(3)], wallet_3.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'claim-and-stake', [types.uint(redeem_cycle)], deployer.address),
-            Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_2.address),
+            Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),
         ]);
         console.log(block.receipts[0].events);
-        block.receipts[0].result.expectOk();
         console.log(block.receipts[1].events);
-        block.receipts[1].result.expectOk();
-
-        // block = chain.mineBlock([
-        //     Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_1.address),            
-        // ]);
-        // console.log(block.receipts[0].events);
-        // block.receipts.forEach(e => { e.result.expectOk() });
+        block.receipts.forEach(e => { e.result.expectOk() });      
 
         block = chain.mineBlock([
-            Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_2.address),            
+            Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(1)], wallet_1.address),            
+        ]);
+        console.log(block.receipts[0].events);
+        block.receipts.forEach(e => { e.result.expectOk() });
+
+        block = chain.mineBlock([
+            Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),            
         ]);
         console.log(block.receipts[0].events);
         block.receipts[0].result.expectErr(10020);        

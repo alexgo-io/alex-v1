@@ -34,7 +34,7 @@
 ;; read-only calls
 
 (define-read-only (get-contract-owner)
-  (ok (var-get contract-owner)))
+  (var-get contract-owner))
 
 (define-read-only (get-pending)
   (contract-call? .auto-alex-v3-registry get-pending))
@@ -197,7 +197,6 @@
       (redeeming (mul-down previous-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle))))    
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)    
     (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle reward-cycle true)))
-    (asserts! (>= tokens redeeming) (err redeeming));;(err (try! (get-next-base))))
     (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle-shares-to-tokens reward-cycle (try! (get-shares-to-tokens ONE_8)))))    
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: (- tokens redeeming) })))        
     (print { notification: "claim-and-stake", payload: { redeeming: redeeming }})
@@ -217,15 +216,15 @@
 (define-public (finalize-redeem (request-id uint))
   (let (
       (request-details (try! (get-redeem-request-or-fail request-id)))
-      (check-claim-and-stake (and (not (is-cycle-staked (get redeem-cycle request-details))) (try! (claim-and-stake (get redeem-cycle request-details)))))
       (redeem-cycle (get redeem-cycle request-details))
+      (check-claim-and-stake (and (not (is-cycle-staked redeem-cycle)) (try! (claim-and-stake redeem-cycle))))      
       (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle)))
       (updated-request-details (merge request-details { status: (get-finalized) })))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
     (asserts! (is-eq (get-pending) (get status request-details)) ERR-REQUEST-FINALIZED-OR-REVOKED)
 
-    (as-contract (unwrap! (contract-call? .auto-alex-v3 transfer-token .age000-governance-token redeem-tokens (get requested-by request-details)) (err u123)))
-    (as-contract (unwrap! (contract-call? .auto-alex-v3 burn-fixed (get shares request-details) .auto-alex-v3) (err u1234)))
+    (as-contract (try! (contract-call? .auto-alex-v3 transfer-token .age000-governance-token redeem-tokens (get requested-by request-details))))
+    (as-contract (try! (contract-call? .auto-alex-v3 burn-fixed (get shares request-details) .auto-alex-v3)))
     (print { notification: "finalize-redeem", payload: updated-request-details })
     (as-contract (contract-call? .auto-alex-v3-registry set-redeem-request request-id updated-request-details))))
 
