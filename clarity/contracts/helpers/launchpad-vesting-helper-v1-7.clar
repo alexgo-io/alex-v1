@@ -40,12 +40,16 @@
             (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
             (tickets-won (contract-call? .alex-launchpad-v1-7 get-tickets-won launch-id user))
             (total-amount (* tickets-won (get launch-tokens-per-ticket launch-details) (get multiplier vesting-details)))
-            (vesting-amount-per-block (/ total-amount (- (get end vesting-details) (get start vesting-details))))
+            (vesting-amount-per-block (div-down total-amount (* (- (get end vesting-details) (get start vesting-details)) ONE_8)))
             (checkpoint (try! (get-checkpoint-or-fail launch-id user)))
             (new-checkpoint (max (get start vesting-details) (min (get end vesting-details) block-height)))
             (vested-amount (* (- new-checkpoint checkpoint) vesting-amount-per-block))
             (claimed-amount (* (- checkpoint (get start vesting-details)) vesting-amount-per-block)))
-        (ok {available-amount: vested-amount, total-amount: total-amount, claimed-amount: claimed-amount, checkpoint: checkpoint, new-checkpoint: new-checkpoint, start-block: (get start vesting-details), end-block: (get end vesting-details)})))
+        (ok {
+          available-amount: vested-amount, total-amount: total-amount, claimed-amount: claimed-amount, 
+          checkpoint: checkpoint, new-checkpoint: new-checkpoint, 
+          start-block: (get start vesting-details), end-block: (get end vesting-details),
+          launch-token: (get launch-token launch-details) })))
 
 ;; governance calls
 
@@ -80,27 +84,19 @@
 
 (define-public (claim (launch-id uint) (user principal) (token-trait <ft-trait>))
     (let (
-            (vesting-details (try! (get-vesting-or-fail launch-id)))
-            (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
-            (tickets-won (contract-call? .alex-launchpad-v1-7 get-tickets-won launch-id user))
-            (total-amount (* tickets-won (get launch-tokens-per-ticket launch-details) (get multiplier vesting-details)))
-            (vesting-amount-per-block (/ total-amount (- (get end vesting-details) (get start vesting-details))))
-            (checkpoint (try! (get-checkpoint-or-fail launch-id user)))
-            (new-checkpoint (max (get start vesting-details) (min (get end vesting-details) block-height)))
-            (vested-amount (* (- new-checkpoint checkpoint) vesting-amount-per-block)))
+            (user-stats (try! (get-user-stats launch-id user))))
         (asserts! (not (is-paused)) ERR-PAUSED)
-        (asserts! (> block-height (get start vesting-details)) ERR-VESTING-NOT-STARTED)
-        (asserts! (is-eq (contract-of token-trait) (get launch-token launch-details)) ERR-TOKEN-MISMATCH)
+        (asserts! (> block-height (get start-block user-stats)) ERR-VESTING-NOT-STARTED)
+        (asserts! (is-eq (contract-of token-trait) (get launch-token user-stats)) ERR-TOKEN-MISMATCH)
 
-        (map-set checkpoints { launch-id: launch-id, user: user } new-checkpoint)
-        (and (> vested-amount u0) (try! (as-contract (contract-call? token-trait transfer-fixed vested-amount tx-sender user none))))
+        (map-set checkpoints { launch-id: launch-id, user: user } (get new-checkpoint user-stats))
+        (and (> (get available-amount user-stats) u0) (try! (as-contract (contract-call? token-trait transfer-fixed (get available-amount user-stats) tx-sender user none))))
 
-        (print { notification: "claim", payload: { launch-id: launch-id, user: user, amount: vested-amount } })
+        (print { notification: "claim", payload: { launch-id: launch-id, user: user, amount: (get available-amount user-stats) } })
         (ok true)))
 
 (define-public (claim-many (launch-ids (list 200 uint)) (user (list 200 principal)) (token-trait (list 200 <ft-trait>)))
   (fold check-err (map claim launch-ids user token-trait) (ok true)))
-
 
 ;; private calls
 
