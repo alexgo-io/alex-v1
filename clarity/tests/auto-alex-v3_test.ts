@@ -31,7 +31,7 @@ Clarinet.test({
         result = alexToken.mintFixed(deployer, wallet_2.address, dx);
         result.expectOk();
         result = alexToken.mintFixed(deployer, wallet_3.address, dx);
-        result.expectOk();                
+        result.expectOk();
 
         let block = chain.mineBlock([
             Tx.contractCall(
@@ -56,7 +56,7 @@ Clarinet.test({
                 0
             ),
             yieldVault.setStartCycle(deployer, 0),
-            yieldVault.setBountyInFixed(deployer, 0),
+            yieldVault.setBountyInFixed(deployer, 1),
             Tx.contractCall('auto-alex-v2', 'pause-create', [types.bool(false)], deployer.address),
             Tx.contractCall('auto-alex-v2', 'pause-redeem', [types.bool(false)], deployer.address)
         ]);
@@ -91,13 +91,14 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 2 * 525);
 
         block = chain.mineBlock([
+            Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(dx), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'claim-and-stake', [types.uint(1)], deployer.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'upgrade', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_2.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'request-redeem', [types.uint(dx)], wallet_3.address),
         ]);
-        console.log(block.receipts[2].events);
+        console.log(block.receipts[3].events);
         block.receipts.forEach(e => { e.result.expectOk() });        
 
         const redeem_cycle = end_cycle + 2;       
@@ -105,11 +106,12 @@ Clarinet.test({
         for (let cycle = 2; cycle < redeem_cycle; cycle++) {
             chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (cycle + 1) * 525);
             block = chain.mineBlock([
+                Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(dx), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
                 Tx.contractCall('auto-alex-v3-endpoint', 'claim-and-stake', [types.uint(cycle)], deployer.address),
                 Tx.contractCall('auto-alex-v3-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),
             ]);
-            block.receipts[0].result.expectOk();
-            block.receipts[1].result.expectErr(10018);
+            block.receipts[1].result.expectOk();
+            block.receipts[2].result.expectErr(10018);
         }
 
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (redeem_cycle + 1) * 525);
