@@ -34,6 +34,19 @@
 (define-read-only (is-paused)
   (var-get paused))
 
+(define-read-only (get-user-stats (launch-id uint) (user principal))
+    (let (
+            (vesting-details (try! (get-vesting-or-fail launch-id)))
+            (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
+            (tickets-won (contract-call? .alex-launchpad-v1-7 get-tickets-won launch-id user))
+            (total-amount (mul-down tickets-won (mul-down (get launch-tokens-per-ticket launch-details) (get multiplier vesting-details))))
+            (vesting-amount-per-block (div-down total-amount (- (get end vesting-details) (get start vesting-details))))
+            (checkpoint (* (try! (get-checkpoint-or-fail launch-id user)) ONE_8))
+            (new-checkpoint (* (min (get end vesting-details) block-height) ONE_8))
+            (vested-amount (mul-down (- new-checkpoint checkpoint) vesting-amount-per-block))
+            (claimed-amount (mul-down (- checkpoint (get start vesting-details)) vesting-amount-per-block)))
+        (ok {available-amount: vested-amount, total-amount: total-amount, claimed-amount: claimed-amount, start-block: (get start vesting-details), end-block: (get end vesting-details)})))
+
 ;; governance calls
 
 (define-public (set-contract-owner (owner principal))
