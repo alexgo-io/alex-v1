@@ -50,7 +50,7 @@
     (let (
             (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
             (total-tickets-won (contract-call? .alex-launchpad-v1-7 get-total-tickets-won launch-id))
-            (total-amount (* (* total-tickets-won (get launch-tokens-per-ticket launch-details)) (get multiplier details))))
+            (total-amount (* total-tickets-won (get launch-tokens-per-ticket launch-details) (get multiplier details))))
         (try! (check-is-owner))
         (asserts! (is-eq (contract-of token-trait) (get launch-token launch-details)) ERR-TOKEN-MISMATCH)
         (asserts! (> (get end details) (get start details)) ERR-INVALID-VESTING-DETAILS)
