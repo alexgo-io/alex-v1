@@ -42,7 +42,7 @@
     (ok (var-set contract-owner owner))))
 
 (define-public (transfer (token-trait <ft-trait>) (amount uint) (recipient principal))
-    (begin 
+    (begin
         (try! (check-is-owner))
         (as-contract (contract-call? token-trait transfer-fixed amount tx-sender recipient none))))
 
@@ -50,7 +50,7 @@
     (let (
             (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
             (total-tickets-won (contract-call? .alex-launchpad-v1-7 get-total-tickets-won launch-id))
-            (total-amount (mul-down total-tickets-won (mul-down (get launch-tokens-per-ticket launch-details) (get multiplier details)))))
+            (total-amount (* (* total-tickets-won (get launch-tokens-per-ticket launch-details)) (get multiplier details))))
         (try! (check-is-owner))
         (asserts! (is-eq (contract-of token-trait) (get launch-token launch-details)) ERR-TOKEN-MISMATCH)
         (asserts! (> (get end details) (get start details)) ERR-INVALID-VESTING-DETAILS)
@@ -67,8 +67,8 @@
 
 (define-public (claim (launch-id uint) (user principal) (token-trait <ft-trait>))
     (let (
-            (vesting-details (try! (get-vesting-or-fail launch-id)))            
-            (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))                        
+            (vesting-details (try! (get-vesting-or-fail launch-id)))
+            (launch-details (try! (contract-call? .alex-launchpad-v1-7 get-launch-or-fail launch-id)))
             (tickets-won (contract-call? .alex-launchpad-v1-7 get-tickets-won launch-id user))
             (total-amount (mul-down tickets-won (mul-down (get launch-tokens-per-ticket launch-details) (get multiplier vesting-details))))
             (checkpoint (* (try! (get-checkpoint-or-fail launch-id user)) ONE_8))
@@ -78,7 +78,7 @@
         (asserts! (not (is-paused)) ERR-PAUSED)
         (asserts! (> block-height (get start vesting-details)) ERR-VESTING-NOT-STARTED)
         (asserts! (is-eq (contract-of token-trait) (get launch-token launch-details)) ERR-TOKEN-MISMATCH)
-        
+
         (map-set checkpoints { launch-id: launch-id, user: user } new-checkpoint)
         (and (> vested-amount u0) (try! (as-contract (contract-call? token-trait transfer-fixed vested-amount tx-sender user none))))
 
