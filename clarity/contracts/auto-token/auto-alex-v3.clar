@@ -16,9 +16,6 @@
 
 (define-data-var reserve uint u0)
 
-(define-read-only (get-contract-owner)
-  (var-get contract-owner))
-
 ;; governance functions
 
 (define-public (set-contract-owner (owner principal))
@@ -73,15 +70,27 @@
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(ft-mint? auto-alex-v3 (get-tokens-to-shares amount) recipient)))
 
+(define-public (mint-fixed (amount uint) (recipient principal))
+	(mint amount recipient))
+
 (define-public (burn (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-ok (check-is-approved)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)
 		(ft-burn? auto-alex-v3 (get-tokens-to-shares amount) sender)))
+	
+(define-public (burn-fixed (amount uint) (sender principal))
+	(burn amount sender))
 
 (define-public (burn-many (senders (list 200 {amount: uint, sender: principal})))
 	(fold check-err (map burn-many-iter senders) (ok true)))
 
+(define-public (burn-fixed-many (senders (list 200 {amount: uint, sender: principal})))
+	(burn-many senders))
+
 ;; read-only functions
+
+(define-read-only (get-contract-owner)
+  (var-get contract-owner))
 
 (define-read-only (get-name)
 	(ok (var-get token-name)))
@@ -98,14 +107,32 @@
 (define-read-only (get-balance (who principal))
 	(ok (get-shares-to-tokens (unwrap-panic (get-share who)))))
 
+(define-read-only (get-balance-fixed (who principal))
+	(get-balance who))
+
 (define-read-only (get-total-supply)
 	(get-reserve))
+
+(define-read-only (get-total-supply-fixed)
+	(get-total-supply))
 
 (define-read-only (get-share (who principal))
 	(ok (ft-get-balance auto-alex-v3 who)))
 
+(define-read-only (get-share-fixed (who principal))
+	(get-share who))
+
 (define-read-only (get-total-shares)
 	(ok (ft-get-supply auto-alex-v3)))
+
+(define-read-only (get-total-shares-fixed)
+	(get-total-shares))
+
+(define-read-only (get-reserve)
+	(ok (var-get reserve)))
+
+(define-read-only (get-reserve-fixed)
+	(get-reserve))
 
 (define-read-only (get-tokens-to-shares (amount uint))
 	(if (is-eq (get-reserve) (ok u0))
@@ -117,19 +144,19 @@
 		shares
 		(/ (* shares (unwrap-panic (get-reserve))) (unwrap-panic (get-total-shares)))))
 
-(define-read-only (get-reserve)
-	(ok (var-get reserve)))
-
 ;; public calls
 
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
 	(let (
 			(shares (get-tokens-to-shares amount)))
-		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) err-unauthorised)
+		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) ERR-NOT-AUTHORIZED)
 		(try! (ft-transfer? auto-alex-v3 shares sender recipient))
 		(match memo to-print (print to-print) 0x)
 		(print { notification: "transfer", payload: { amount: amount, shares: shares, sender: sender, recipient: recipient } })
 		(ok true)))
+
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+	(transfer amount sender recipient memo))
 
 ;; private functions
 
