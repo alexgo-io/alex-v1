@@ -50,8 +50,8 @@ contract_id = "SP3951VNPC55BMS9RCF6SKRZP4K3Q2PQ2RSM1DD1V.fast"
 contract_id = "SPPK49DG7WR1J5D50GZ4W7DYYWM5MAXSX0ZA9VEJ.FrodoSaylorKeanuPepe10Inu-token-v69"
 [[project.requirements]]
 contract_id = "SP3WPNAEBYMX06RQNNYTH5PTJ1FRGX5A13ZZMZ01D.dogwifhat-token"
-[[project.requirements]]
-contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.Wsbtc"
+# [[project.requirements]]
+# contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.Wsbtc"
 [[project.requirements]]
 contract_id = "SP3SJSNPJXXHY7RJM48ZT6G1BXYZADAC5YAXZA3ZC.ODINToken"
 [[project.requirements]]
@@ -1586,7 +1586,7 @@ depends_on = ["trait-ownable", "trait-sip-010"]
 
 # [contracts.token-ssl-wsbtc-08JSD]
 # path = "contracts/wrapped-token/token-ssl-wsbtc-08JSD.clar"
-# depends_on = [ "trait-ownable", "trait-sip-010" ]
+# depends_on = [ ]
 # clarity_version = 2
 # epoch = 2.4
 
