@@ -56,6 +56,8 @@ contract_id = "SP3WPNAEBYMX06RQNNYTH5PTJ1FRGX5A13ZZMZ01D.dogwifhat-token"
 contract_id = "SP3SJSNPJXXHY7RJM48ZT6G1BXYZADAC5YAXZA3ZC.ODINToken"
 [[project.requirements]]
 contract_id = "SPXZB55NWTRQM02QYK7Z6K2PP7F279F640HAYTPG.TwinsPig"
+[[project.requirements]]
+contract_id = "SP1N4EXSR8DP5GRN2XCWZEW9PR32JHNRYW7MVPNTA.PomerenianBoo-Pomboo"
 
 [repl]
 costs_version = 2
@@ -1611,3 +1613,9 @@ epoch = 2.4
 [contracts.token-blif]
 path = "contracts/token/token-blif.clar"
 depends_on = ["trait-ownable", "trait-sip-010"]
+
+[contracts.token-ssl-PomBoo-VPNTA]
+path = "contracts/wrapped-token/token-ssl-PomBoo-VPNTA.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
