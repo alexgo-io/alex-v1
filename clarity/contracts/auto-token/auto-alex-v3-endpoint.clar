@@ -31,6 +31,11 @@
 (define-data-var create-paused bool true)
 (define-data-var redeem-paused bool true)
 
+;; __IF_MAINNET__
+(define-constant redeem-delay-cycles u32)
+;; (define-constant redeem-delay-cycles u2)
+;; __ENDIF__
+
 ;; read-only calls
 
 (define-read-only (get-contract-owner)
@@ -131,7 +136,7 @@
       (start-cycle (get-start-cycle))
       (check-start-cycle (asserts! (<= start-cycle current-cycle) ERR-NOT-ACTIVATED)))
     (and (> current-cycle start-cycle) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1))))
-    (as-contract (try! (contract-call? .auto-alex-v3 set-reserve (try! (get-next-base)))))    
+    (as-contract (try! (contract-call? .auto-alex-v3 set-reserve (try! (get-next-base)))))
     (ok current-cycle)))
 
 ;; @desc add to position
@@ -150,12 +155,12 @@
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: dx })))
 
     ;; mint pool token and send to tx-sender
-    (as-contract (try! (contract-call? .auto-alex-v3 mint-fixed new-supply sender)))        
+    (as-contract (try! (contract-call? .auto-alex-v3 mint-fixed new-supply sender)))
     (print { notification: "position-added", payload: { new-supply: new-supply } })
     (rebase)))
 
 (define-public (upgrade (dx uint))
-  (let (      
+  (let (
       (end-cycle-v2 (contract-call? .auto-alex-v2 get-end-cycle))
       (current-cycle (try! (rebase)))
       (intrinsic-dx (mul-down dx (try! (contract-call? .auto-alex-v2 get-intrinsic))))
@@ -193,11 +198,11 @@
       (claimed-v2 (if (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))) (begin (try! (claim-and-stake-v2 reward-cycle)) u0)))
       (tokens (+ (get to-return claimed) (get entitled-token claimed) claimed-v2))
       (previous-shares-to-tokens (try! (get-staked-cycle-shares-to-tokens-or-fail (- reward-cycle u1))))
-      (redeeming (mul-down previous-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle))))    
-    (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)    
+      (redeeming (mul-down previous-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle))))
+    (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle reward-cycle true)))
-    (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle-shares-to-tokens reward-cycle (get-shares-to-tokens ONE_8))))    
-    (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: (- tokens redeeming) })))        
+    (as-contract (try! (contract-call? .auto-alex-v3-registry set-staked-cycle-shares-to-tokens reward-cycle (get-shares-to-tokens ONE_8))))
+    (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: (- tokens redeeming) })))
     (print { notification: "claim-and-stake", payload: { redeeming: redeeming }})
     (as-contract (try! (contract-call? .auto-alex-v3-registry set-redeem-tokens-per-cycle reward-cycle redeeming)))
     (ok true)))
@@ -205,7 +210,7 @@
 (define-public (request-redeem (amount uint))
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
-      (redeem-cycle (+ current-cycle u32))
+      (redeem-cycle (+ current-cycle redeem-delay-cycles))
       (request-details { requested-by: tx-sender, shares: amount, redeem-cycle: redeem-cycle, status: (get-pending) }))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
     (try! (contract-call? .auto-alex-v3 transfer-fixed amount tx-sender .auto-alex-v3 none))
@@ -217,7 +222,7 @@
   (let (
       (request-details (try! (get-redeem-request-or-fail request-id)))
       (redeem-cycle (get redeem-cycle request-details))
-      (check-claim-and-stake (and (not (is-cycle-staked redeem-cycle)) (try! (claim-and-stake redeem-cycle))))      
+      (check-claim-and-stake (and (not (is-cycle-staked redeem-cycle)) (try! (claim-and-stake redeem-cycle))))
       (current-cycle (try! (rebase)))
       (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle)))
       (updated-request-details (merge request-details { status: (get-finalized) })))
