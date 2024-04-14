@@ -61,7 +61,7 @@
 	(begin 
 		(asserts! (or (is-eq tx-sender recipient) (is-eq contract-caller recipient)) ERR-NOT-AUTHORIZED)				
 		(try! (ft-mint? auto-alex-v3-wrapped (get-tokens-to-shares amount) recipient))
-		(contract-call? .auto-alex-v3 transfer amount recipient (as-contract tx-sender) none)))
+		(contract-call? .auto-alex-v3-1 transfer amount recipient (as-contract tx-sender) none)))
 
 (define-public (mint-fixed (amount uint) (recipient principal))
     (mint amount recipient))
@@ -69,7 +69,7 @@
 (define-public (burn (amount uint) (sender principal))
 	(begin
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) ERR-NOT-AUTHORIZED)
-		(as-contract (try! (contract-call? .auto-alex-v3 transfer (get-shares-to-tokens amount) tx-sender sender none)))
+		(as-contract (try! (contract-call? .auto-alex-v3-1 transfer (get-shares-to-tokens amount) tx-sender sender none)))
 		(ft-burn? auto-alex-v3-wrapped amount sender)))
 
 (define-public (burn-fixed (amount uint) (sender principal))
@@ -102,7 +102,7 @@
 	(ok (get-shares-to-tokens (unwrap-panic (get-balance who)))))
 
 (define-read-only (get-total-shares)
-	(contract-call? .auto-alex-v3 get-balance (as-contract tx-sender)))
+	(contract-call? .auto-alex-v3-1 get-balance (as-contract tx-sender)))
 
 (define-read-only (get-tokens-to-shares (amount uint))
 	(if (is-eq (get-total-supply) (ok u0))

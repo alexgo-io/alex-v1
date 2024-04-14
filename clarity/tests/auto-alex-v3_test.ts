@@ -65,7 +65,7 @@ Clarinet.test({
         block = chain.mineBlock([
             yieldVault.setEndCycle(wallet_1, end_cycle),
             yieldVault.setEndCycle(deployer, end_cycle),
-            Tx.contractCall('auto-alex-v3', 'set-approved-contract', [types.principal(deployer.address + '.auto-alex-v3-endpoint'), types.bool(true)], deployer.address),
+            Tx.contractCall('auto-alex-v3-1', 'set-approved-contract', [types.principal(deployer.address + '.auto-alex-v3-endpoint'), types.bool(true)], deployer.address),
             Tx.contractCall('auto-alex-v3-registry', 'set-approved-contract', [types.principal(deployer.address + '.auto-alex-v3-endpoint'), types.bool(true)], deployer.address),
             Tx.contractCall('auto-alex-v3-registry', 'set-start-cycle', [types.uint(0)], deployer.address),
             Tx.contractCall('auto-alex-v3-endpoint', 'pause-create', [types.bool(false)], deployer.address),
