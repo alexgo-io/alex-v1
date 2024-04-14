@@ -1441,12 +1441,12 @@ depends_on = [ "trait-sip-010", "trait-ownable" ]
 path = "contracts/auto-token/auto-alex-v3-1-wrapped.clar"
 depends_on = [ "trait-sip-010", "trait-ownable" ]
 
-[contracts.auto-alex-v3-registry]
-path = "contracts/auto-token/auto-alex-v3-registry.clar"
+[contracts.auto-alex-v3-1-registry]
+path = "contracts/auto-token/auto-alex-v3-1-registry.clar"
 depends_on = [ ]
 
-[contracts.auto-alex-v3-endpoint]
-path = "contracts/auto-token/auto-alex-v3-endpoint.clar"
+[contracts.auto-alex-v3-1-endpoint]
+path = "contracts/auto-token/auto-alex-v3-1-endpoint.clar"
 depends_on = [ "trait-sip-010", "age000-governance-token", "alex-reserve-pool" ]
 
 [contracts.stx20-bridge-endpoint-v1-01]

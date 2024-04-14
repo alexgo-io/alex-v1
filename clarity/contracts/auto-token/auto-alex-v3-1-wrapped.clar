@@ -121,3 +121,5 @@
 
 (define-private (check-is-approved)
   (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED)))
+
+(contract-call? .alex-vault-v1-1 set-approved-token .auto-alex-v3-1-wrapped true)

@@ -199,3 +199,5 @@
 		(if (is-eq u0 (unwrap-panic (contract-call? .auto-alex-v2 get-balance (as-contract tx-sender))))
 			(ok u0)
 			(as-contract (contract-call? .auto-alex-v2 reduce-position ONE_8)))))
+
+(contract-call? .alex-vault-v1-1 set-approved-token .auto-alex-v3-1 true)
