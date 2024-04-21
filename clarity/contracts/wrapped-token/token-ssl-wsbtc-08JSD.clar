@@ -4,7 +4,7 @@
 (define-fungible-token wsbtc-08JSD)
 
 (define-data-var token-name (string-ascii 32) "wsbtc-08JSD (SSL)")
-(define-data-var token-symbol (string-ascii 10) "wsbtc-08JSD")
+(define-data-var token-symbol (string-ascii 10) "wsbtc")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/token-ssl-wsbtc-08JSD.json"))
 
 (define-data-var token-decimals uint u8)

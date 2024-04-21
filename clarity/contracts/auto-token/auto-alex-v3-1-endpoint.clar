@@ -98,7 +98,6 @@
 (define-read-only (get-intrinsic)
   (contract-call? .auto-alex-v3-1 get-shares-to-tokens ONE_8))
 
-;; @dev need to save the historical ratio.
 (define-read-only (get-shares-to-tokens (dx uint))
   (contract-call? .auto-alex-v3-1 get-shares-to-tokens dx))
 
@@ -157,7 +156,7 @@
 
 (define-public (upgrade (dx uint))
   (let (
-      (end-cycle-v2 (contract-call? .auto-alex-v2 get-end-cycle))
+      (end-cycle-v2 (get-end-cycle-v2))
       (current-cycle (try! (rebase)))
       (intrinsic-dx (mul-down dx (try! (contract-call? .auto-alex-v2 get-intrinsic))))
       (sender tx-sender))
