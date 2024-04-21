@@ -102,9 +102,6 @@
 (define-read-only (get-shares-to-tokens (dx uint))
   (contract-call? .auto-alex-v3-1 get-shares-to-tokens dx))
 
-(define-read-only (get-tokens-to-shares (dx uint))
-  (contract-call? .auto-alex-v3-1 get-tokens-to-shares dx))
-
 ;; governance calls
 
 (define-public (set-contract-owner (owner principal))
@@ -145,7 +142,6 @@
 (define-public (add-to-position (dx uint))
   (let (
       (current-cycle (try! (rebase)))
-      (new-supply (get-tokens-to-shares dx))
       (sender tx-sender))
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
@@ -155,8 +151,8 @@
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: dx })))
 
     ;; mint pool token and send to tx-sender
-    (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed new-supply sender)))
-    (print { notification: "position-added", payload: { new-supply: new-supply } })
+    (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed dx sender)))
+    (print { notification: "position-added", payload: { new-supply: dx } })
     (rebase)))
 
 (define-public (upgrade (dx uint))
@@ -164,7 +160,6 @@
       (end-cycle-v2 (contract-call? .auto-alex-v2 get-end-cycle))
       (current-cycle (try! (rebase)))
       (intrinsic-dx (mul-down dx (try! (contract-call? .auto-alex-v2 get-intrinsic))))
-      (new-supply (get-tokens-to-shares intrinsic-dx))
       (sender tx-sender))
     (asserts! (> intrinsic-dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
@@ -175,8 +170,8 @@
     (and (< end-cycle-v2 current-cycle) (begin (as-contract (try! (reduce-position-v2))) true))
 
     ;; mint pool token and send to tx-sender
-    (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed new-supply sender)))
-    (print { notification: "upgrade-position-added", payload: { new-supply: new-supply } })
+    (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed intrinsic-dx sender)))
+    (print { notification: "upgrade-position-added", payload: { new-supply: intrinsic-dx } })
     (rebase)))
 
 ;; claims alex for the reward-cycles and mint auto-alex-v3
