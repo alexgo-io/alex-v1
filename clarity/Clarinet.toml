@@ -72,11 +72,8 @@ contract_id = "SP3MRT36YWK7R0SKFCQ1TDJB3Y3XBAVRFXPYBQ33E.Something-v420"
 contract_id = "SP2VGJQAB0T7R2Y9S2PJRNPDEW91CM2YCDYJGGPQS.mooneeb"
 [[project.requirements]]
 contract_id = "SP351ZJK9F5AWZJEEZGZ7NZKSRKA65EWFRR48V9KS.ALL"
-<<<<<<< HEAD
 [[project.requirements]]
 contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.nakamoto"
-=======
->>>>>>> 5dd0056a66a52a69e756b4346315413b557b6854
 
 [repl]
 costs_version = 2
