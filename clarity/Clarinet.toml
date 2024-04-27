@@ -75,7 +75,7 @@ contract_id = "SP2VGJQAB0T7R2Y9S2PJRNPDEW91CM2YCDYJGGPQS.mooneeb"
 [[project.requirements]]
 contract_id = "SP351ZJK9F5AWZJEEZGZ7NZKSRKA65EWFRR48V9KS.ALL"
 [[project.requirements]]
-contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.nakamoto"
+# contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.nakamoto"
 
 [repl]
 costs_version = 2
@@ -1666,8 +1666,8 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
-[contracts.token-ssl-nakamoto-08JSD]
-path = "contracts/wrapped-token/token-ssl-nakamoto-08JSD.clar"
-depends_on = [ "trait-ownable", "trait-sip-010" ]
-clarity_version = 2
-epoch = 2.4
+# [contracts.token-ssl-nakamoto-08JSD]
+# path = "contracts/wrapped-token/token-ssl-nakamoto-08JSD.clar"
+# depends_on = [ "trait-ownable", "trait-sip-010" ]
+# clarity_version = 2
+# epoch = 2.4
