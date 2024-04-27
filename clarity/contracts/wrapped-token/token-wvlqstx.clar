@@ -209,9 +209,6 @@
   (fold check-err (map transfer-from-tuple recipients) (ok true))
 )
 
-(define-read-only (get-reserve-fixed)
-	(ok (* (unwrap-panic (contract-call? 'SM26NBC8SFHNW4P1Y4DFH27974P56WN86C92HPEHH.token-vlqstx get-reserve)) u100)))
-
 ;; contract initialisation
 (contract-call? .alex-vault-v1-1 set-approved-token .token-wvlqstx true)
 (set-contract-owner .executor-dao)
