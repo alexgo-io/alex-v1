@@ -91,14 +91,21 @@
 )
 
 (define-private (get-base-decimals)
- (contract-call? 'SM26NBC8SFHNW4P1Y4DFH27974P56WN86C92HPEHH.token-vlqstx get-decimals))
+;; __IF_MAINNET__
+   (contract-call? 'SM26NBC8SFHNW4P1Y4DFH27974P56WN86C92HPEHH.token-vlqstx get-decimals))
+;;   (contract-call? 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-vlqstx get-decimals))
+;; __ENDIF__
+
 
 
 ;; @desc get-balance
 ;; @params account
 ;; @returns (response uint)
 (define-read-only (get-balance (account principal))
+;; __IF_MAINNET__
  (ok (/ (* (unwrap-panic (contract-call? 'SM26NBC8SFHNW4P1Y4DFH27974P56WN86C92HPEHH.token-vlqstx get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
+;; (ok (/ (* (unwrap-panic (contract-call? 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-vlqstx get-balance account)) (pow-decimals)) (pow u10 (unwrap-panic (get-base-decimals)))))
+;; __ENDIF__
 )
 
 ;; @desc get-token-uri
@@ -117,7 +124,10 @@
 (define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
   (begin
     (asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) err-not-authorized)
+;; __IF_MAINNET__
     (contract-call? 'SM26NBC8SFHNW4P1Y4DFH27974P56WN86C92HPEHH.token-vlqstx transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
+;;    (contract-call? 'ST1HTBVD3JG9C05J7HBJTHGR0GGW7KXW28M5JS8QE.token-vlqstx transfer (/ (* amount (pow u10 (unwrap-panic (get-base-decimals)))) (pow-decimals)) sender recipient memo)
+;; __ENDIF__
   )
 )
 
