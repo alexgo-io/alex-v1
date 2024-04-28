@@ -1642,11 +1642,11 @@ depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
 
-# [contracts.token-wlqstx]
-# path = "contracts/wrapped-token/token-wlqstx.clar"
-# depends_on = [ "trait-ownable", "trait-sip-010"]
-# clarity_version = 2
-# epoch = 2.4
+ [contracts.token-wlqstx]
+ path = "contracts/wrapped-token/token-wlqstx.clar"
+ depends_on = [ "trait-ownable", "trait-sip-010"]
+ clarity_version = 2
+ epoch = 2.4
 
 [contracts.token-wvlqstx]
 path = "contracts/wrapped-token/token-wvlqstx.clar"
