@@ -76,6 +76,8 @@ contract_id = "SP2VGJQAB0T7R2Y9S2PJRNPDEW91CM2YCDYJGGPQS.mooneeb"
 contract_id = "SP351ZJK9F5AWZJEEZGZ7NZKSRKA65EWFRR48V9KS.ALL"
 [[project.requirements]]
 # contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.nakamoto"
+[[project.requirements]]
+contract_id = "SPTJG5KG69N7GEDB2WKMN898Q934ZB2J2NTQW155.Parker-Muneebs-Cat"
 
 [repl]
 costs_version = 2
@@ -1671,3 +1673,9 @@ epoch = 2.4
 # depends_on = [ "trait-ownable", "trait-sip-010" ]
 # clarity_version = 2
 # epoch = 2.4
+
+[contracts.token-ssl-parker-QW155]
+path = "contracts/wrapped-token/token-ssl-parker-QW155.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
