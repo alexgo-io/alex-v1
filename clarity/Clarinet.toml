@@ -78,8 +78,11 @@ contract_id = "SP351ZJK9F5AWZJEEZGZ7NZKSRKA65EWFRR48V9KS.ALL"
 # contract_id = "SP3R4MHK99JAAM0N3T0CBZRZVSVQFG1N75DQ08JSD.nakamoto"
 [[project.requirements]]
 contract_id = "SPTJG5KG69N7GEDB2WKMN898Q934ZB2J2NTQW155.Parker-Muneebs-Cat"
+<<<<<<< HEAD
 [[project.requirements]]
 contract_id = "SP2F4QC563WN0A0949WPH5W1YXVC4M1R46QKE0G14.memegoatstx"
+=======
+>>>>>>> 0b9914a943c2c0caa27918f0afe9e2e5e52c2b82
 
 [repl]
 costs_version = 2
