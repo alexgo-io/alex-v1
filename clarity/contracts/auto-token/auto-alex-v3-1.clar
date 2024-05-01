@@ -5,14 +5,14 @@
 
 (define-constant ONE_8 u100000000)
 
+(define-constant token-decimals u8)
+
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 
 (define-data-var token-name (string-ascii 32) "Auto ALEX v3")
 (define-data-var token-symbol (string-ascii 10) "atALEXv3")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/auto-alex-v3.json"))
-
-(define-data-var token-decimals uint u8)
 
 (define-data-var reserve uint u0)
 
@@ -37,11 +37,6 @@
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-symbol new-symbol))))
-
-(define-public (set-decimals (new-decimals uint))
-	(begin
-		(try! (check-is-owner))
-		(ok (var-set token-decimals new-decimals))))
 
 (define-public (set-token-uri (new-uri (optional (string-utf8 256))))
 	(begin
@@ -102,7 +97,7 @@
 	(ok (var-get token-uri)))
 
 (define-read-only (get-decimals)
-	(ok (var-get token-decimals)))
+	(ok token-decimals))
 
 (define-read-only (get-balance (who principal))
 	(ok (get-shares-to-tokens (unwrap-panic (get-share who)))))
@@ -130,9 +125,6 @@
 
 (define-read-only (get-reserve)
 	(ok (var-get reserve)))
-
-(define-read-only (get-reserve-fixed)
-	(get-reserve))
 
 (define-read-only (get-tokens-to-shares (amount uint))
 	(if (is-eq (get-reserve) (ok u0))
@@ -167,10 +159,10 @@
     (match prior ok-value result err-value (err err-value)))
 
 (define-private (check-is-owner)
-  (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
+	(ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
 
 (define-private (check-is-approved)
-  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED)))
+	(ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED)))
 
 ;; staking related fuctions
 

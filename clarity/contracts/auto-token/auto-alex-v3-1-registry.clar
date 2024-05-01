@@ -21,9 +21,8 @@
 
 (define-map staked-cycle uint bool)
 (define-map staked-cycle-shares-to-token uint uint)
-(define-map redeem-requests uint { requested-by: principal, shares: uint, redeem-cycle: uint, status: (buff 1) })
+(define-map redeem-requests uint { requested-by: principal, amount: uint, shares: uint, redeem-cycle: uint, status: (buff 1) })
 (define-map redeem-shares-per-cycle uint uint)
-(define-map redeem-tokens-per-cycle uint uint)
 
 ;; read-only calls
 
@@ -50,9 +49,6 @@
 
 (define-read-only (get-redeem-shares-per-cycle-or-default (reward-cycle uint))
   (default-to u0 (map-get? redeem-shares-per-cycle reward-cycle)))
-
-(define-read-only (get-redeem-tokens-per-cycle-or-default (reward-cycle uint))
-  (default-to u0 (map-get? redeem-tokens-per-cycle reward-cycle)))
 
 (define-read-only (get-redeem-request-or-fail (request-id uint))
   (ok (unwrap! (map-get? redeem-requests request-id) ERR-REQUEST-ID-NOT-FOUND)))
@@ -90,7 +86,7 @@
     (asserts! (is-cycle-staked cycle) ERR-CYCLE-NOT-STAKED)
     (ok (map-set staked-cycle-shares-to-token cycle shares-to-tokens))))
 
-(define-public (set-redeem-request (request-id uint) (request-details { requested-by: principal, shares: uint, redeem-cycle: uint, status: (buff 1) }))
+(define-public (set-redeem-request (request-id uint) (request-details { requested-by: principal, amount: uint, shares: uint, redeem-cycle: uint, status: (buff 1) }))
   (let (
       (next-nonce (+ (var-get redeem-request-nonce) u1))
       (id (if (> request-id u0) request-id (begin (var-set redeem-request-nonce next-nonce) next-nonce))))
@@ -102,11 +98,6 @@
   (begin 
     (try! (check-is-approved))
     (ok (map-set redeem-shares-per-cycle reward-cycle shares))))
-
-(define-public (set-redeem-tokens-per-cycle (reward-cycle uint) (tokens uint))
-  (begin 
-    (try! (check-is-approved))
-    (ok (map-set redeem-tokens-per-cycle reward-cycle tokens))))
 
 ;; private functions
 ;;

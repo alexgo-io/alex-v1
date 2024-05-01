@@ -3,6 +3,7 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 
 (define-constant ONE_8 u100000000)
+(define-constant token-decimals u8)
 
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
@@ -11,14 +12,12 @@
 (define-data-var token-symbol (string-ascii 10) "watALEXv3")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/auto-alex-v3-wrapped.json"))
 
-(define-data-var token-decimals uint u8)
-
 ;; governance functions
 
 (define-public (set-contract-owner (owner principal))
-  (begin
-    (try! (check-is-owner))
-    (ok (var-set contract-owner owner))))
+	(begin
+    	(try! (check-is-owner))
+    	(ok (var-set contract-owner owner))))
 
 (define-public (set-approved-contract (owner principal) (approved bool))
 	(begin
@@ -34,11 +33,6 @@
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-symbol new-symbol))))
-
-(define-public (set-decimals (new-decimals uint))
-	(begin
-		(try! (check-is-owner))
-		(ok (var-set token-decimals new-decimals))))
 
 (define-public (set-token-uri (new-uri (optional (string-utf8 256))))
 	(begin
@@ -90,13 +84,19 @@
 	(ok (var-get token-uri)))
 
 (define-read-only (get-decimals)
-	(ok (var-get token-decimals)))
+	(ok token-decimals))
 
 (define-read-only (get-balance (who principal))
 	(ok (ft-get-balance auto-alex-v3-wrapped who)))
 
+(define-read-only (get-balance-fixed (who principal))
+	(get-balance who))
+
 (define-read-only (get-total-supply)
 	(ok (ft-get-supply auto-alex-v3-wrapped)))
+
+(define-read-only (get-total-supply-fixed)
+	(get-total-supply))
 
 (define-read-only (get-share (who principal))
 	(ok (get-shares-to-tokens (unwrap-panic (get-balance who)))))
