@@ -80,6 +80,8 @@ contract_id = "SP351ZJK9F5AWZJEEZGZ7NZKSRKA65EWFRR48V9KS.ALL"
 contract_id = "SPTJG5KG69N7GEDB2WKMN898Q934ZB2J2NTQW155.Parker-Muneebs-Cat"
 [[project.requirements]]
 contract_id = "SP2F4QC563WN0A0949WPH5W1YXVC4M1R46QKE0G14.memegoatstx"
+[[project.requirements]]
+contract_id = "SP4M2C88EE8RQZPYTC4PZ88CE16YGP825EYF6KBQ.stacks-rock"
 
 [repl]
 costs_version = 2
@@ -1691,3 +1693,9 @@ epoch = 2.4
 [contracts.runes-dog]
 path = "contracts/token/runes-dog.clar"
 depends_on = []
+
+[contracts.token-ssl-stacks-rock-F6KBQ]
+path = "contracts/wrapped-token/token-ssl-stacks-rock-F6KBQ.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
