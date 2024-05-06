@@ -33,6 +33,8 @@ Clarinet.test({
         result.expectOk();
         result = alexToken.mintFixed(deployer, wallet_3.address, dx);
         result.expectOk();
+        result = alexToken.mintFixed(deployer, wallet_4.address, dx);
+        result.expectOk();        
 
         let block = chain.mineBlock([
             Tx.contractCall(
@@ -50,11 +52,11 @@ Clarinet.test({
             reservePool.setCoinbaseAmount(
                 deployer,
                 alexTokenAddress,
-                0,
-                0,
-                0,
-                0,
-                0
+                1e8,
+                1e8,
+                1e8,
+                1e8,
+                1e8
             ),
             yieldVault.setStartCycle(deployer, 0),
             yieldVault.setBountyInFixed(deployer, 1),
@@ -123,7 +125,7 @@ Clarinet.test({
 
         block = chain.mineBlock([            
             Tx.contractCall('auto-alex-v3-1-endpoint', 'rebase', [], deployer.address),            
-            Tx.contractCall('auto-alex-v3-1-endpoint', 'revoke-redeem', [types.uint(3)], wallet_3.address),
+            Tx.contractCall('auto-alex-v3-1-endpoint', 'revoke-redeem', [types.uint(3)], wallet_3.address),            
         ]);
         console.log(block.receipts[0].events);        
         block.receipts[0].result.expectOk();
@@ -131,9 +133,11 @@ Clarinet.test({
         
         console.log(chain.callReadOnlyFn('age000-governance-token', 'get-balance-fixed', [types.principal(deployer.address + '.auto-alex-v3-1')], wallet_1.address));
         console.log(chain.callReadOnlyFn('auto-alex-v3-1-endpoint', 'get-redeem-request-or-fail', [types.uint(2)], wallet_1.address).result);
+        console.log(chain.callReadOnlyFn('auto-alex-v3-1-endpoint', 'get-redeem-request-or-fail', [types.uint(3)], wallet_1.address).result);
         console.log(chain.callReadOnlyFn('auto-alex-v3-1-endpoint', 'get-intrinsic', [], wallet_1.address));
         
         block = chain.mineBlock([
+            Tx.contractCall('auto-alex-v3-1-endpoint', 'finalize-redeem', [types.uint(3)], wallet_3.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),
         ]);        
         block.receipts.forEach(e => { e.result.expectOk() });      

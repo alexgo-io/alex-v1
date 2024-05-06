@@ -121,9 +121,9 @@
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (start-cycle (get-start-cycle))
-      (check-start-cycle (asserts! (<= start-cycle current-cycle) ERR-NOT-ACTIVATED))
-      (auto-alex-v2-bal (unwrap-panic (contract-call? .auto-alex-v2 get-balance-fixed .auto-alex-v3-1)))
-      (auto-alex-v3-wrapped-bal (unwrap-panic (contract-call? .auto-alex-v3-1-wrapped get-balance-fixed .auto-alex-v3-1))))
+      (check-start-cycle (asserts! (<= start-cycle current-cycle) ERR-NOT-ACTIVATED)))
+      ;; (auto-alex-v2-bal (unwrap-panic (contract-call? .auto-alex-v2 get-balance-fixed .auto-alex-v3-1)))
+      ;; (auto-alex-v3-wrapped-bal (unwrap-panic (contract-call? .auto-alex-v3-1-wrapped get-balance-fixed .auto-alex-v3-1))))
     (and (> current-cycle start-cycle) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1))))
     ;; (print { notification: "next-base", payload: {
     ;;   ;; amount-staked: (get amount-staked (as-contract (get-staker-at-cycle (+ current-cycle u1)))),
@@ -178,12 +178,8 @@
       (sender tx-sender))
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
-
-    ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .age000-governance-token transfer-fixed dx sender .auto-alex-v3-1 none))
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: dx })))
-
-    ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed dx sender)))
     (print { notification: "position-added", payload: { new-supply: dx } })
     (rebase)))
@@ -197,12 +193,8 @@
     (asserts! (> intrinsic-dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
     (asserts! (< end-cycle-v2 (+ current-cycle u32)) ERR-END-CYCLE-V2) ;; auto-alex-v2 is not configured correctly
-
-    ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .auto-alex-v2 transfer-fixed dx sender .auto-alex-v3-1 none))
     (and (< end-cycle-v2 current-cycle) (begin (as-contract (try! (reduce-position-v2))) true))
-
-    ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed intrinsic-dx sender)))
     (print { notification: "upgrade-position-added", payload: { new-supply: intrinsic-dx } })
     (rebase)))
