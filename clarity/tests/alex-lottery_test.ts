@@ -101,7 +101,9 @@ Clarinet.test({
 
       const { lotteryId } = preparation;
 
+          if(chain.blockHeight < registrationStartHeight){
       chain.mineEmptyBlockUntil(registrationStartHeight);
+    }
       const registrations = chain.mineBlock(
         ticketRecipients.map((entry) =>
           Tx.contractCall(

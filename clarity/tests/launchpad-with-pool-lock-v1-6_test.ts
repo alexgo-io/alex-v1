@@ -117,7 +117,9 @@ Clarinet.test({
 
       const { idoId } = preparation;
 
+          if(chain.blockHeight < registrationStartHeight){
       chain.mineEmptyBlockUntil(registrationStartHeight);
+    }
       const registrations = chain.mineBlock(
         ticketRecipients.map((entry) =>
           Tx.contractCall(
