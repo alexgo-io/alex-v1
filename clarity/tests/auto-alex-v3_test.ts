@@ -85,8 +85,8 @@ Clarinet.test({
         }
 
         block = chain.mineBlock([
-            // yieldVault.addToPosition(wallet_1, dx),
-            Tx.contractCall('auto-alex-v3-1-endpoint', 'add-to-position', [types.uint(dx)], wallet_1.address),
+            yieldVault.addToPosition(wallet_1, dx),
+            // Tx.contractCall('auto-alex-v3-1-endpoint', 'add-to-position', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'add-to-position', [types.uint(dx)], wallet_2.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'add-to-position', [types.uint(dx)], wallet_3.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'add-to-position', [types.uint(dx)], wallet_4.address),
@@ -98,7 +98,7 @@ Clarinet.test({
         block = chain.mineBlock([
             Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(1), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'rebase', [], deployer.address),
-            // Tx.contractCall('auto-alex-v3-1-endpoint', 'upgrade', [types.uint(dx)], wallet_1.address),
+            Tx.contractCall('auto-alex-v3-1-endpoint', 'upgrade', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'request-redeem', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'request-redeem', [types.uint(dx)], wallet_2.address),
             Tx.contractCall('auto-alex-v3-1-endpoint', 'request-redeem', [types.uint(dx)], wallet_3.address),

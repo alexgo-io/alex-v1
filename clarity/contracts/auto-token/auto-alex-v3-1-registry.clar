@@ -19,9 +19,9 @@
 (define-data-var redeem-request-nonce uint u0)
 
 (define-map staked-cycle uint bool)
-(define-map staked-cycle-shares-to-token uint uint)
-(define-map redeem-requests uint { requested-by: principal, amount: uint, shares: uint, redeem-cycle: uint, status: (buff 1) })
+(define-map redeem-requests uint { requested-by: principal, amount: uint, redeem-cycle: uint, status: (buff 1) })
 (define-map redeem-shares-per-cycle uint uint)
+(define-map shares-to-token-per-cycle uint uint)
 
 ;; read-only calls
 
@@ -43,8 +43,8 @@
 (define-read-only (is-cycle-staked (reward-cycle uint))
   (is-some (map-get? staked-cycle reward-cycle)))
 
-(define-read-only (get-staked-cycle-shares-to-tokens-or-default (reward-cycle uint))
-  (default-to u0 (map-get? staked-cycle-shares-to-token reward-cycle)))
+(define-read-only (get-shares-to-tokens-per-cycle-or-default (reward-cycle uint))
+  (default-to u0 (map-get? shares-to-token-per-cycle reward-cycle)))
 
 (define-read-only (get-redeem-shares-per-cycle-or-default (reward-cycle uint))
   (default-to u0 (map-get? redeem-shares-per-cycle reward-cycle)))
@@ -68,7 +68,6 @@
   (begin 
     (try! (check-is-owner))
     (map-set staked-cycle new-start-cycle true)
-    (map-set staked-cycle-shares-to-token new-start-cycle u0)
     (ok (var-set start-cycle new-start-cycle))))
 
 ;; privileged functions
@@ -79,12 +78,12 @@
     (try! (check-is-approved))
     (ok (map-set staked-cycle cycle staked))))
 
-(define-public (set-staked-cycle-shares-to-tokens (cycle uint) (shares-to-tokens uint))
+(define-public (set-shares-to-tokens-per-cycle (cycle uint) (shares-to-tokens uint))
   (begin 
     (try! (check-is-approved))
-    (ok (map-set staked-cycle-shares-to-token cycle shares-to-tokens))))
+    (ok (map-set shares-to-token-per-cycle cycle shares-to-tokens))))
 
-(define-public (set-redeem-request (request-id uint) (request-details { requested-by: principal, amount: uint, shares: uint, redeem-cycle: uint, status: (buff 1) }))
+(define-public (set-redeem-request (request-id uint) (request-details { requested-by: principal, amount: uint, redeem-cycle: uint, status: (buff 1) }))
   (let (
       (next-nonce (+ (var-get redeem-request-nonce) u1))
       (id (if (> request-id u0) request-id (begin (var-set redeem-request-nonce next-nonce) next-nonce))))
