@@ -122,21 +122,7 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
       (start-cycle (get-start-cycle))
       (check-start-cycle (asserts! (<= start-cycle current-cycle) ERR-NOT-ACTIVATED)))
-      ;; (auto-alex-v2-bal (unwrap-panic (contract-call? .auto-alex-v2 get-balance-fixed .auto-alex-v3-1)))
-      ;; (auto-alex-v3-wrapped-bal (unwrap-panic (contract-call? .auto-alex-v3-1-wrapped get-balance-fixed .auto-alex-v3-1))))
     (and (> current-cycle start-cycle) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1))))
-    ;; (print { notification: "next-base", payload: {
-    ;;   ;; amount-staked: (get amount-staked (as-contract (get-staker-at-cycle (+ current-cycle u1)))),
-    ;;   ;; to-return: (get to-return (as-contract (get-staker-at-cycle current-cycle))),
-    ;;   ;; staking-reward: (as-contract (get-staking-reward current-cycle)),
-    ;;   ;; alex-balance: (unwrap-panic (contract-call? .age000-governance-token get-balance-fixed .auto-alex-v3-1)),
-    ;;   ;; v2-balance: (if (is-eq auto-alex-v2-bal u0) u0 (mul-down auto-alex-v2-bal (try! (contract-call? .auto-alex-v2 get-intrinsic)))),
-    ;;   ;; v2-balance: auto-alex-v2-bal,
-    ;;   ;; v2-intrinsic: (try! (contract-call? .auto-alex-v2 get-intrinsic))
-    ;;   ;; v3-balance: (if (is-eq auto-alex-v3-wrapped-bal u0) u0 (contract-call? .auto-alex-v3-1-wrapped get-shares-to-tokens auto-alex-v3-wrapped-bal))
-    ;;   v3-balance: auto-alex-v3-wrapped-bal,
-    ;;   v3-intrinsic: (contract-call? .auto-alex-v3-1-wrapped get-shares-to-tokens ONE_8)
-    ;; }})    
     (as-contract (try! (contract-call? .auto-alex-v3-1 set-reserve (try! (get-next-base)))))    
     (ok current-cycle)))
 
@@ -155,11 +141,11 @@
       (redeeming (mul-down previous-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle)))
       (intrinsic (get-shares-to-tokens ONE_8)))
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (>= tokens redeeming) (err redeeming));;ERR-REDEEM-IMBALANCE)
+    (asserts! (>= tokens redeeming) ERR-REDEEM-IMBALANCE)
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-staked-cycle reward-cycle true)))
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-shares-to-tokens-per-cycle reward-cycle intrinsic)))
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: (- tokens redeeming) })))
-    (print { notification: "claim-and-stake", payload: { redeeming: redeeming, tokens: tokens, intrinsic: intrinsic }})
+    (print { notification: "claim-and-stake", payload: { redeeming: redeeming, tokens: tokens }})
     (ok true)))  
 
 ;; claims alex for the reward-cycles and mint auto-alex-v3
