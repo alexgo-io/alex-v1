@@ -4,7 +4,6 @@
 ;;
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-REQUEST-ID-NOT-FOUND (err u10019))
-(define-constant ERR-CYCLE-NOT-STAKED (err u20020))
 
 (define-constant PENDING 0x00)
 (define-constant FINALIZED 0x01)
@@ -44,8 +43,8 @@
 (define-read-only (is-cycle-staked (reward-cycle uint))
   (is-some (map-get? staked-cycle reward-cycle)))
 
-(define-read-only (get-staked-cycle-shares-to-tokens-or-fail (reward-cycle uint))
-  (ok (unwrap! (map-get? staked-cycle-shares-to-token reward-cycle) ERR-CYCLE-NOT-STAKED)))
+(define-read-only (get-staked-cycle-shares-to-tokens-or-default (reward-cycle uint))
+  (default-to u0 (map-get? staked-cycle-shares-to-token reward-cycle)))
 
 (define-read-only (get-redeem-shares-per-cycle-or-default (reward-cycle uint))
   (default-to u0 (map-get? redeem-shares-per-cycle reward-cycle)))
@@ -83,7 +82,6 @@
 (define-public (set-staked-cycle-shares-to-tokens (cycle uint) (shares-to-tokens uint))
   (begin 
     (try! (check-is-approved))
-    (asserts! (is-cycle-staked cycle) ERR-CYCLE-NOT-STAKED)
     (ok (map-set staked-cycle-shares-to-token cycle shares-to-tokens))))
 
 (define-public (set-redeem-request (request-id uint) (request-details { requested-by: principal, amount: uint, shares: uint, redeem-cycle: uint, status: (buff 1) }))

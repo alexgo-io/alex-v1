@@ -53,8 +53,8 @@
 (define-read-only (is-cycle-staked (reward-cycle uint))
   (contract-call? .auto-alex-v3-1-registry is-cycle-staked reward-cycle))
 
-(define-read-only (get-staked-cycle-shares-to-tokens-or-fail (reward-cycle uint))
-  (contract-call? .auto-alex-v3-1-registry get-staked-cycle-shares-to-tokens-or-fail reward-cycle))
+(define-read-only (get-staked-cycle-shares-to-tokens-or-default (reward-cycle uint))
+  (contract-call? .auto-alex-v3-1-registry get-staked-cycle-shares-to-tokens-or-default reward-cycle))
 
 (define-read-only (get-redeem-shares-per-cycle-or-default (reward-cycle uint))
   (contract-call? .auto-alex-v3-1-registry get-redeem-shares-per-cycle-or-default reward-cycle))
@@ -151,13 +151,13 @@
       (claimed (as-contract (try! (claim-staking-reward reward-cycle))))
       (claimed-v2 (if (< end-cycle-v2 current-cycle) (as-contract (try! (reduce-position-v2))) (begin (try! (claim-and-stake-v2 reward-cycle)) u0)))
       (tokens (+ (get to-return claimed) (get entitled-token claimed) claimed-v2))
-      (previous-shares-to-tokens (try! (get-staked-cycle-shares-to-tokens-or-fail (- reward-cycle u1))))
+      (previous-shares-to-tokens (get-staked-cycle-shares-to-tokens-or-default reward-cycle))
       (redeeming (mul-down previous-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle)))
-      (intrinsic (get-intrinsic)))
+      (intrinsic (get-shares-to-tokens ONE_8)))
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
     (asserts! (>= tokens redeeming) ERR-REDEEM-IMBALANCE)
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-staked-cycle reward-cycle true)))
-    (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-staked-cycle-shares-to-tokens reward-cycle intrinsic)))
+    (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-staked-cycle-shares-to-tokens (+ reward-cycle u1) intrinsic)))
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: (- tokens redeeming) })))
     (print { notification: "claim-and-stake", payload: { redeeming: redeeming, tokens: tokens, intrinsic: intrinsic }})
     (ok true)))  
@@ -302,7 +302,7 @@
   (contract-call? .auto-alex-v3-1 reduce-position-v2))
 
 (define-private (get-shares-to-tokens (dx uint))
-  (contract-call? .auto-alex-v3-1 get-shares-to-tokens dx))
+  (contract-call? .auto-alex-v3-1-wrapped get-shares-to-tokens dx))
 
 (define-private (claim-and-stake-v2 (reward-cycle uint))
   (contract-call? .auto-alex-v2 claim-and-stake reward-cycle))
