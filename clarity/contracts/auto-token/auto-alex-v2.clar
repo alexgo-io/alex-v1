@@ -423,7 +423,7 @@
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
     )
     (asserts! (> current-cycle reward-cycle) ERR-REWARD-CYCLE-NOT-COMPLETED)
-    (asserts! (>= balance bounty) ERR-INSUFFICIENT-BALANCE)
+    (asserts! (> balance bounty) ERR-INSUFFICIENT-BALANCE)
     (asserts! (>= (var-get end-cycle) current-cycle) ERR-STAKING-NOT-AVAILABLE)
 
     (let 

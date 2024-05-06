@@ -96,7 +96,7 @@ Clarinet.test({
         chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + 2 * 525);
 
         block = chain.mineBlock([
-            Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(1), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
+            Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(3), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
             Tx.contractCall('auto-alex-v3-2-endpoint', 'rebase', [], deployer.address),
             Tx.contractCall('auto-alex-v3-2-endpoint', 'upgrade', [types.uint(dx)], wallet_1.address),
             Tx.contractCall('auto-alex-v3-2-endpoint', 'request-redeem', [types.uint(dx)], wallet_1.address),
@@ -113,7 +113,7 @@ Clarinet.test({
         for (let cycle = 2; cycle < redeem_cycle; cycle++) {
             chain.mineEmptyBlockUntil(ACTIVATION_BLOCK + (cycle + 1) * 525);
             block = chain.mineBlock([
-                Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(1), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
+                Tx.contractCall('age000-governance-token', 'mint-fixed', [types.uint(3), types.principal(deployer.address + ".auto-alex-v2")], deployer.address),
                 Tx.contractCall('auto-alex-v3-2-endpoint', 'rebase', [], deployer.address),
                 Tx.contractCall('auto-alex-v3-2-endpoint', 'finalize-redeem', [types.uint(2)], wallet_2.address),
             ]);
