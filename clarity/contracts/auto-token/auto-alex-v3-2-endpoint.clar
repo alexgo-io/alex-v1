@@ -22,14 +22,13 @@
 ;;
 
 (define-data-var contract-owner principal tx-sender)
-(define-map approved-contracts principal bool)
 
 (define-data-var create-paused bool true)
 (define-data-var redeem-paused bool true)
 
 ;; __IF_MAINNET__
-(define-constant redeem-delay-cycles u32)
-;; (define-constant redeem-delay-cycles u2)
+(define-constant max-cycles u32)
+;; (define-constant max-cycles u2)
 ;; __ENDIF__
 
 ;; read-only calls
@@ -98,11 +97,6 @@
     (try! (check-is-owner))
     (ok (var-set contract-owner owner))))
 
-(define-public (set-approved-contract (owner principal) (approved bool))
-	(begin
-		(try! (check-is-owner))
-		(ok (map-set approved-contracts owner approved))))
-
 (define-public (pause-create (pause bool))
   (begin
     (try! (check-is-owner))
@@ -151,7 +145,7 @@
 (define-public (claim-and-mint (reward-cycles (list 200 uint)))
   (let (
       (claimed (unwrap-panic (contract-call? .staking-helper claim-staking-reward .age000-governance-token reward-cycles))))
-    (try! (add-to-position (fold sum-claimed claimed u0)))
+    (try! (add-to-position (try! (fold sum-claimed claimed (ok u0)))))
     (ok claimed)))  
 
 ;; @desc add to position
@@ -177,7 +171,7 @@
       (sender tx-sender))
     (asserts! (> intrinsic-dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
-    (asserts! (< end-cycle-v2 (+ current-cycle u32)) ERR-END-CYCLE-V2) ;; auto-alex-v2 is not configured correctly
+    (asserts! (< end-cycle-v2 (+ current-cycle max-cycles)) ERR-END-CYCLE-V2) ;; auto-alex-v2 is not configured correctly
     (try! (contract-call? .auto-alex-v2 transfer-fixed dx sender .auto-alex-v3-2 none))
     (and (< end-cycle-v2 current-cycle) (begin (as-contract (try! (reduce-position-v2))) true))
     (as-contract (try! (contract-call? .auto-alex-v3-2 mint-fixed intrinsic-dx sender)))
@@ -187,7 +181,7 @@
 (define-public (request-redeem (amount uint))
   (let (
       (current-cycle (try! (rebase)))
-      (redeem-cycle (+ current-cycle redeem-delay-cycles))
+      (redeem-cycle (+ current-cycle max-cycles))
       (request-details { requested-by: tx-sender, amount: amount, redeem-cycle: redeem-cycle, status: (get-pending) }))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
     (try! (contract-call? .auto-alex-v3-2 transfer-fixed amount tx-sender .auto-alex-v3-2 none))
@@ -235,13 +229,10 @@
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
 
-(define-private (check-is-approved)
-  (ok (asserts! (or (default-to false (map-get? approved-contracts tx-sender)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)))
-
-(define-private (sum-claimed (claimed-response (response (tuple (entitled-token uint) (to-return uint)) uint)) (sum-so-far uint))
-  (match claimed-response
-    claimed (+ sum-so-far (get to-return claimed) (get entitled-token claimed))
-    err sum-so-far))
+(define-private (sum-claimed (claimed-response (response (tuple (entitled-token uint) (to-return uint)) uint)) (prior (response uint uint)))
+  (match prior 
+    ok-value (match claimed-response claimed (ok (+ ok-value (get to-return claimed) (get entitled-token claimed))) err (err err))
+    err-value (err err-value)))
 
 (define-private (stake-tokens-iter (cycles-to-stake uint) (previous-response (response { current-cycle: uint, remaining: uint } uint)))
   (match previous-response
@@ -250,7 +241,7 @@
       (reward-cycle (+ (get current-cycle ok-value) cycles-to-stake))
       (redeeming (get-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle)))
       (returning (get to-return (get-staker-at-cycle reward-cycle)))
-      (staking (if (is-eq cycles-to-stake u32)
+      (staking (if (is-eq cycles-to-stake max-cycles)
         (get remaining ok-value)
         (if (> returning redeeming)
           u0

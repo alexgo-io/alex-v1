@@ -11,7 +11,7 @@
 (define-map approved-contracts principal bool)
 
 (define-data-var token-name (string-ascii 32) "LiALEX")
-(define-data-var token-symbol (string-ascii 10) "LiALEX")
+(define-data-var token-symbol (string-ascii 32) "LiALEX")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/auto-alex-v3.json"))
 
 (define-data-var reserve uint u0)
@@ -33,7 +33,7 @@
 		(try! (check-is-owner))
 		(ok (var-set token-name new-name))))
 
-(define-public (set-symbol (new-symbol (string-ascii 10)))
+(define-public (set-symbol (new-symbol (string-ascii 32)))
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-symbol new-symbol))))
@@ -138,7 +138,7 @@
 
 ;; public calls
 
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(let (
 			(shares (get-tokens-to-shares amount)))
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) ERR-NOT-AUTHORIZED)
@@ -147,7 +147,7 @@
 		(print { notification: "transfer", payload: { amount: amount, shares: shares, sender: sender, recipient: recipient } })
 		(ok true)))
 
-(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(transfer amount sender recipient memo))
 
 ;; private functions

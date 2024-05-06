@@ -2,24 +2,19 @@
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ONE_8 u100000000)
 (define-data-var contract-owner principal tx-sender)
-(define-map approved-contracts principal bool)
 (define-data-var token-name (string-ascii 32) "Wrapped Auto ALEX v3")
-(define-data-var token-symbol (string-ascii 10) "watALEXv3")
+(define-data-var token-symbol (string-ascii 32) "watALEXv3")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/auto-alex-v3-wrapped.json"))
 (define-data-var token-decimals uint u8)
 (define-public (set-contract-owner (owner principal))
   (begin
     (try! (check-is-owner))
     (ok (var-set contract-owner owner))))
-(define-public (set-approved-contract (owner principal) (approved bool))
-	(begin
-		(try! (check-is-owner))
-		(ok (map-set approved-contracts owner approved))))
 (define-public (set-name (new-name (string-ascii 32)))
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-name new-name))))
-(define-public (set-symbol (new-symbol (string-ascii 10)))
+(define-public (set-symbol (new-symbol (string-ascii 32)))
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-symbol new-symbol))))
@@ -31,13 +26,13 @@
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-uri new-uri))))
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(begin
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) ERR-NOT-AUTHORIZED)
 		(try! (ft-transfer? auto-alex-v3-wrapped amount sender recipient))
 		(print { type: "transfer", amount: amount, sender: sender, recipient: recipient, memo: memo })
 		(ok true)))
-(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
     (transfer amount sender recipient memo))
 (define-public (mint (amount uint) (recipient principal))
 	(begin 
@@ -73,7 +68,7 @@
 (define-read-only (get-total-shares)
 	(contract-call? .auto-alex-v3-1 get-balance (as-contract tx-sender)))
 (define-read-only (get-tokens-to-shares (amount uint))
-	(if (is-eq (get-total-supply) (ok u0))
+	(if (is-eq (get-total-shares) (ok u0))
 		amount
 		(/ (* amount (unwrap-panic (get-total-supply))) (unwrap-panic (get-total-shares)))))
 (define-read-only (get-shares-to-tokens (shares uint))
@@ -82,6 +77,4 @@
 		(/ (* shares (unwrap-panic (get-total-shares))) (unwrap-panic (get-total-supply)))))
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
-(define-private (check-is-approved)
-  (ok (asserts! (default-to false (map-get? approved-contracts tx-sender)) ERR-NOT-AUTHORIZED)))
 (contract-call? .alex-vault-v1-1 set-approved-token .auto-alex-v3-1-wrapped true)

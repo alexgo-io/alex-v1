@@ -5,7 +5,7 @@
 (define-data-var contract-owner principal tx-sender)
 (define-map approved-contracts principal bool)
 (define-data-var token-name (string-ascii 32) "Auto ALEX v3")
-(define-data-var token-symbol (string-ascii 10) "atALEXv3")
+(define-data-var token-symbol (string-ascii 32) "atALEXv3")
 (define-data-var token-uri (optional (string-utf8 256)) (some u"https://cdn.alexlab.co/metadata/auto-alex-v3.json"))
 (define-data-var token-decimals uint u8)
 (define-data-var reserve uint u0)
@@ -21,7 +21,7 @@
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-name new-name))))
-(define-public (set-symbol (new-symbol (string-ascii 10)))
+(define-public (set-symbol (new-symbol (string-ascii 32)))
 	(begin
 		(try! (check-is-owner))
 		(ok (var-set token-symbol new-symbol))))
@@ -100,7 +100,7 @@
 	(if (is-eq (get-total-shares) (ok u0))
 		shares
 		(/ (* shares (unwrap-panic (get-reserve))) (unwrap-panic (get-total-shares)))))
-(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(let (
 			(shares (get-tokens-to-shares amount)))
 		(asserts! (or (is-eq tx-sender sender) (is-eq contract-caller sender)) ERR-NOT-AUTHORIZED)
@@ -108,7 +108,7 @@
 		(match memo to-print (print to-print) 0x)
 		(print { notification: "transfer", payload: { amount: amount, shares: shares, sender: sender, recipient: recipient } })
 		(ok true)))
-(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 2048))))
+(define-public (transfer-fixed (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
 	(transfer amount sender recipient memo))
 (define-private (burn-many-iter (item {amount: uint, sender: principal}))
 	(burn (get amount item) (get sender item)))
