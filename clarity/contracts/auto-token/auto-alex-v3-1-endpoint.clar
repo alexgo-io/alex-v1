@@ -1,7 +1,3 @@
-;; -- autoALEX creation/staking/redemption
-
-;; constants
-;;
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
 (define-constant ERR-INVALID-LIQUIDITY (err u2003))
 (define-constant ERR-NOT-ACTIVATED (err u2043))
@@ -17,69 +13,36 @@
 (define-constant ERR-REQUEST-FINALIZED-OR-REVOKED (err u10020))
 (define-constant ERR-REDEMPTION-TOO-HIGH (err u10021))
 (define-constant ERR-END-CYCLE-V2 (err u10022))
-
 (define-constant ONE_8 u100000000)
-
 (define-constant REWARD-CYCLE-INDEXES (list u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29 u30 u31 u32))
-
-;; data maps and vars
-;;
-
 (define-data-var contract-owner principal tx-sender)
-(define-map approved-contracts principal bool)
-
 (define-data-var create-paused bool true)
 (define-data-var redeem-paused bool true)
-
-;; __IF_MAINNET__
-(define-constant redeem-delay-cycles u32)
-;; (define-constant redeem-delay-cycles u2)
-;; __ENDIF__
-
-;; read-only calls
-
+(define-constant max-cycles u32)
 (define-read-only (get-contract-owner)
   (var-get contract-owner))
-
 (define-read-only (get-pending)
   (contract-call? .auto-alex-v3-1-registry get-pending))
-
 (define-read-only (get-finalized)
   (contract-call? .auto-alex-v3-1-registry get-finalized))
-
 (define-read-only (get-revoked)
   (contract-call? .auto-alex-v3-1-registry get-revoked))
-
 (define-read-only (get-start-cycle)
   (contract-call? .auto-alex-v3-1-registry get-start-cycle))
-
 (define-read-only (is-cycle-staked (reward-cycle uint))
   (contract-call? .auto-alex-v3-1-registry is-cycle-staked reward-cycle))
-
 (define-read-only (get-staked-cycle-shares-to-tokens-or-fail (reward-cycle uint))
   (contract-call? .auto-alex-v3-1-registry get-staked-cycle-shares-to-tokens-or-fail reward-cycle))
-
 (define-read-only (get-redeem-shares-per-cycle-or-default (reward-cycle uint))
   (contract-call? .auto-alex-v3-1-registry get-redeem-shares-per-cycle-or-default reward-cycle))
-
 (define-read-only (get-redeem-tokens-per-cycle-or-default (reward-cycle uint))
   (contract-call? .auto-alex-v3-1-registry get-redeem-tokens-per-cycle-or-default reward-cycle))
-
 (define-read-only (get-redeem-request-or-fail (request-id uint))
   (contract-call? .auto-alex-v3-1-registry get-redeem-request-or-fail request-id))
-
 (define-read-only (is-create-paused)
   (var-get create-paused))
-
 (define-read-only (is-redeem-paused)
   (var-get redeem-paused))
-
-;; @desc get the next capital base of the vault
-;; @desc next-base = principal to be staked at the next cycle
-;; @desc           + principal to be claimed at the next cycle and staked for the following cycle
-;; @desc           + reward to be claimed at the next cycle and staked for the following cycle
-;; @desc           + balance of ALEX in the contract
-;; @desc           + intrinsic of autoALEXv2 in the contract
 (define-read-only (get-next-base)
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
@@ -92,44 +55,24 @@
         (as-contract (get-staking-reward current-cycle))
         (unwrap! (contract-call? .age000-governance-token get-balance-fixed .auto-alex-v3-1) ERR-GET-BALANCE-FIXED-FAIL)
         (if (is-eq auto-alex-v2-bal u0) u0 (mul-down auto-alex-v2-bal (try! (contract-call? .auto-alex-v2 get-intrinsic))))))))
-
-;; @desc get the intrinsic value of auto-alex-v3
-;; @desc intrinsic = next capital base of the vault / total supply of auto-alex-v3
 (define-read-only (get-intrinsic)
   (contract-call? .auto-alex-v3-1 get-shares-to-tokens ONE_8))
-
-;; @dev need to save the historical ratio.
 (define-read-only (get-shares-to-tokens (dx uint))
   (contract-call? .auto-alex-v3-1 get-shares-to-tokens dx))
-
 (define-read-only (get-tokens-to-shares (dx uint))
   (contract-call? .auto-alex-v3-1 get-tokens-to-shares dx))
-
-;; governance calls
-
 (define-public (set-contract-owner (owner principal))
   (begin
     (try! (check-is-owner))
     (ok (var-set contract-owner owner))))
-
-(define-public (set-approved-contract (owner principal) (approved bool))
-	(begin
-		(try! (check-is-owner))
-		(ok (map-set approved-contracts owner approved))))
-
 (define-public (pause-create (pause bool))
   (begin
     (try! (check-is-owner))
     (ok (var-set create-paused pause))))
-
 (define-public (pause-redeem (pause bool))
   (begin
     (try! (check-is-owner))
     (ok (var-set redeem-paused pause))))
-
-;; public functions
-;;
-
 (define-public (rebase)
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
@@ -138,10 +81,6 @@
     (and (> current-cycle start-cycle) (not (is-cycle-staked (- current-cycle u1))) (try! (claim-and-stake (- current-cycle u1))))
     (as-contract (try! (contract-call? .auto-alex-v3-1 set-reserve (try! (get-next-base)))))
     (ok current-cycle)))
-
-;; @desc add to position
-;; @desc transfers dx to vault, stake them for 32 cycles and mints auto-alex-v3, the number of which is determined as % of total supply / next base
-;; @param dx the number of $ALEX in 8-digit fixed point notation
 (define-public (add-to-position (dx uint))
   (let (
       (current-cycle (try! (rebase)))
@@ -149,16 +88,13 @@
       (sender tx-sender))
     (asserts! (> dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
-
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .age000-governance-token transfer-fixed dx sender .auto-alex-v3-1 none))
     (try! (fold stake-tokens-iter REWARD-CYCLE-INDEXES (ok { current-cycle: current-cycle, remaining: dx })))
-
     ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed new-supply sender)))
     (print { notification: "position-added", payload: { new-supply: new-supply } })
     (rebase)))
-
 (define-public (upgrade (dx uint))
   (let (
       (end-cycle-v2 (contract-call? .auto-alex-v2 get-end-cycle))
@@ -168,27 +104,19 @@
       (sender tx-sender))
     (asserts! (> intrinsic-dx u0) ERR-INVALID-LIQUIDITY)
     (asserts! (not (is-create-paused)) ERR-PAUSED)
-    (asserts! (< end-cycle-v2 (+ current-cycle u32)) ERR-END-CYCLE-V2) ;; auto-alex-v2 is not configured correctly
-
+    (asserts! (< end-cycle-v2 (+ current-cycle max-cycles)) ERR-END-CYCLE-V2) ;; auto-alex-v2 is not configured correctly
     ;; transfer dx to contract to stake for max cycles
     (try! (contract-call? .auto-alex-v2 transfer-fixed dx sender .auto-alex-v3-1 none))
     (and (< end-cycle-v2 current-cycle) (begin (as-contract (try! (reduce-position-v2))) true))
-
     ;; mint pool token and send to tx-sender
     (as-contract (try! (contract-call? .auto-alex-v3-1 mint-fixed new-supply sender)))
     (print { notification: "upgrade-position-added", payload: { new-supply: new-supply } })
     (rebase)))
-
-;; claims alex for the reward-cycles and mint auto-alex-v3
 (define-public (claim-and-mint (reward-cycles (list 200 uint)))
   (let (
       (claimed (unwrap-panic (contract-call? .staking-helper claim-staking-reward .age000-governance-token reward-cycles))))
-    (try! (add-to-position (fold sum-claimed claimed u0)))
+    (try! (add-to-position (try! (fold sum-claimed claimed (ok u0)))))
     (ok claimed)))
-
-;; @desc triggers external event that claims all that's available and stake for another 32 cycles
-;; @desc this can be triggered by anyone
-;; @param reward-cycle the target cycle to claim (and stake for current cycle + 32 cycles). reward-cycle must be < current cycle.
 (define-public (claim-and-stake (reward-cycle uint))
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
@@ -206,35 +134,31 @@
     (print { notification: "claim-and-stake", payload: { redeeming: redeeming }})
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-redeem-tokens-per-cycle reward-cycle redeeming)))
     (ok true)))
-
 (define-public (request-redeem (amount uint))
   (let (
       (current-cycle (unwrap! (get-reward-cycle block-height) ERR-STAKING-NOT-AVAILABLE))
-      (redeem-cycle (+ current-cycle redeem-delay-cycles))
+      (redeem-cycle (+ current-cycle max-cycles))
       (request-details { requested-by: tx-sender, shares: amount, redeem-cycle: redeem-cycle, status: (get-pending) }))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
     (try! (contract-call? .auto-alex-v3-1 transfer-fixed amount tx-sender .auto-alex-v3-1 none))
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-redeem-shares-per-cycle redeem-cycle (+ (get-redeem-shares-per-cycle-or-default redeem-cycle) amount))))
     (print { notification: "redeem-request", payload: request-details })
     (as-contract (contract-call? .auto-alex-v3-1-registry set-redeem-request u0 request-details))))
-
 (define-public (finalize-redeem (request-id uint))
   (let (
       (request-details (try! (get-redeem-request-or-fail request-id)))
       (redeem-cycle (get redeem-cycle request-details))
       (check-claim-and-stake (and (not (is-cycle-staked redeem-cycle)) (try! (claim-and-stake redeem-cycle))))
       (current-cycle (try! (rebase)))
-      (redeem-tokens (div-down (mul-down (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle)))
+      (redeem-tokens (/ (* (get shares request-details) (get-redeem-tokens-per-cycle-or-default redeem-cycle)) (get-redeem-shares-per-cycle-or-default redeem-cycle)))
       (updated-request-details (merge request-details { status: (get-finalized) })))
     (asserts! (not (is-redeem-paused)) ERR-PAUSED)
     (asserts! (is-eq (get-pending) (get status request-details)) ERR-REQUEST-FINALIZED-OR-REVOKED)
-
     (as-contract (try! (contract-call? .auto-alex-v3-1 transfer-token .age000-governance-token redeem-tokens (get requested-by request-details))))
     (as-contract (try! (contract-call? .auto-alex-v3-1 burn-fixed (get shares request-details) .auto-alex-v3-1)))
     (print { notification: "finalize-redeem", payload: updated-request-details })
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-redeem-request request-id updated-request-details)))
     (rebase)))
-
 (define-public (revoke-redeem (request-id uint))
   (let (
       (request-details (try! (get-redeem-request-or-fail request-id)))
@@ -247,21 +171,12 @@
     (as-contract (try! (contract-call? .auto-alex-v3-1-registry set-redeem-shares-per-cycle redeem-cycle (- (get-redeem-shares-per-cycle-or-default redeem-cycle) (get shares request-details)))))
     (print { notification: "revoke-redeem", payload: updated-request-details })
     (as-contract (contract-call? .auto-alex-v3-1-registry set-redeem-request request-id updated-request-details))))
-
-;; private functions
-;;
-
 (define-private (check-is-owner)
   (ok (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)))
-
-(define-private (check-is-approved)
-  (ok (asserts! (or (default-to false (map-get? approved-contracts tx-sender)) (is-ok (check-is-owner))) ERR-NOT-AUTHORIZED)))
-
-(define-private (sum-claimed (claimed-response (response (tuple (entitled-token uint) (to-return uint)) uint)) (sum-so-far uint))
-  (match claimed-response
-    claimed (+ sum-so-far (get to-return claimed) (get entitled-token claimed))
-    err sum-so-far))
-
+(define-private (sum-claimed (claimed-response (response (tuple (entitled-token uint) (to-return uint)) uint)) (prior (response uint uint)))
+  (match prior 
+    ok-value (match claimed-response claimed (ok (+ ok-value (get to-return claimed) (get entitled-token claimed))) err (err err))
+    err-value (err err-value)))
 (define-private (stake-tokens-iter (cycles-to-stake uint) (previous-response (response { current-cycle: uint, remaining: uint } uint)))
   (match previous-response
     ok-value
@@ -269,7 +184,7 @@
       (reward-cycle (+ (get current-cycle ok-value) cycles-to-stake))
       (redeeming (get-shares-to-tokens (get-redeem-shares-per-cycle-or-default reward-cycle)))
       (returning (get to-return (get-staker-at-cycle reward-cycle)))
-      (staking (if (is-eq cycles-to-stake u32)
+      (staking (if (is-eq cycles-to-stake max-cycles)
         (get remaining ok-value)
         (if (> returning redeeming)
           u0
@@ -279,38 +194,25 @@
       (and (> staking u0) (as-contract (try! (stake-tokens staking cycles-to-stake))))
       (ok { current-cycle: (get current-cycle ok-value), remaining: (- (get remaining ok-value) staking) }))
     err-value previous-response))
-
 (define-private (get-reward-cycle (stack-height uint))
   (contract-call? .alex-reserve-pool get-reward-cycle .age000-governance-token stack-height))
-
 (define-private (get-staking-reward (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staking-reward .age000-governance-token (get-user-id) reward-cycle))
-
 (define-private (get-staker-at-cycle (reward-cycle uint))
   (contract-call? .alex-reserve-pool get-staker-at-cycle-or-default .age000-governance-token reward-cycle (get-user-id)))
-
 (define-private (get-user-id)
   (default-to u0 (contract-call? .alex-reserve-pool get-user-id .age000-governance-token .auto-alex-v3-1)))
-
 (define-private (stake-tokens (amount-tokens uint) (lock-period uint))
   (contract-call? .auto-alex-v3-1 stake-tokens amount-tokens lock-period))
-
 (define-private (claim-staking-reward (reward-cycle uint))
   (contract-call? .auto-alex-v3-1 claim-staking-reward reward-cycle))
-
 (define-private (reduce-position-v2)
   (contract-call? .auto-alex-v3-1 reduce-position-v2))
-
 (define-private (claim-and-stake-v2 (reward-cycle uint))
   (contract-call? .auto-alex-v2 claim-and-stake reward-cycle))
-
 (define-private (get-end-cycle-v2)
   (contract-call? .auto-alex-v2 get-end-cycle))
-
 (define-private (mul-down (a uint) (b uint))
     (/ (* a b) ONE_8))
-
 (define-private (div-down (a uint) (b uint))
   (if (is-eq a u0) u0 (/ (* a ONE_8) b)))
-
-;; contract initialisation

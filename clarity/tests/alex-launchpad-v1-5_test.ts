@@ -515,7 +515,9 @@ Clarinet.test({
 
     const { idoId } = preparation;
 
-    chain.mineEmptyBlockUntil(registrationStartHeight);
+        if(chain.blockHeight < registrationStartHeight){
+      chain.mineEmptyBlockUntil(registrationStartHeight);
+    }
     const registrations = chain.mineBlock(
       ticketRecipients.map((entry) =>
         Tx.contractCall(
@@ -765,7 +767,9 @@ Clarinet.test({
     ]);
     whitelisted.receipts.map(({ result }) => result.expectOk());
 
-    chain.mineEmptyBlockUntil(registrationStartHeight);
+        if(chain.blockHeight < registrationStartHeight){
+      chain.mineEmptyBlockUntil(registrationStartHeight);
+    }
     const registrations = chain.mineBlock(
       ticketRecipients.map((entry) =>
         Tx.contractCall(
@@ -863,7 +867,9 @@ Clarinet.test({
 
       const { idoId } = preparation;
 
+          if(chain.blockHeight < registrationStartHeight){
       chain.mineEmptyBlockUntil(registrationStartHeight);
+    }
       const registrations = chain.mineBlock(
         ticketRecipients.map((entry) =>
           Tx.contractCall(
