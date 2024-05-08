@@ -86,6 +86,8 @@ contract_id = "SP4M2C88EE8RQZPYTC4PZ88CE16YGP825EYF6KBQ.stacks-rock"
 contract_id = "SP1NKZVK335XCGQGGFDXY4Q8E78F7YT4A6QFW1K62.Pikachu-Thunders-Stacks"
 [[project.requirements]]
 contract_id = "SP2GEP37WGW6QRFHVDAM3XW9Z716SRS94FJXPZFT3.meme3"
+[[project.requirements]]
+contract_id = "SP28NB976TJHHGF4218KT194NPWP9N1X3WY516Z1P.Hashiko"
 
 [repl]
 costs_version = 2
@@ -1712,6 +1714,12 @@ epoch = 2.4
 
 [contracts.token-ssl-meme3-PZFT3]
 path = "contracts/wrapped-token/token-ssl-meme3-PZFT3.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.4
+
+[contracts.token-ssl-hashiko-16Z1P]
+path = "contracts/wrapped-token/token-ssl-hashiko-16Z1P.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
