@@ -1723,3 +1723,7 @@ path = "contracts/wrapped-token/token-ssl-hashiko-16Z1P.clar"
 depends_on = [ "trait-ownable", "trait-sip-010" ]
 clarity_version = 2
 epoch = 2.4
+
+[contracts.runes-games]
+path = "contracts/token/runes-games.clar"
+depends_on = []
