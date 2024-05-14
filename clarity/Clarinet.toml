@@ -88,6 +88,10 @@ contract_id = "SP1NKZVK335XCGQGGFDXY4Q8E78F7YT4A6QFW1K62.Pikachu-Thunders-Stacks
 contract_id = "SP2GEP37WGW6QRFHVDAM3XW9Z716SRS94FJXPZFT3.meme3"
 [[project.requirements]]
 contract_id = "SP28NB976TJHHGF4218KT194NPWP9N1X3WY516Z1P.Hashiko"
+[[project.requirements]]
+contract_id = "SPBVF489RM32YGESDWE38AWHQVKXGDZ6XM57JYRJ.RunestoneStacks-Token"
+[[project.requirements]]
+contract_id = "SP1Z92MPDQEWZXW36VX71Q25HKF5K2EPCJ304F275.tokensoft-token-v4karmaedcr"
 
 [repl]
 costs_version = 2
@@ -1727,3 +1731,15 @@ epoch = 2.4
 [contracts.runes-games]
 path = "contracts/token/runes-games.clar"
 depends_on = []
+
+[contracts.token-ssl-Runestone-7JYRJ]
+path = "contracts/wrapped-token/token-ssl-Runestone-7JYRJ.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.5
+
+[contracts.token-ssl-STXOSHI-RNTJY]
+path = "contracts/wrapped-token/token-ssl-STXOSHI-RNTJY.clar"
+depends_on = [ "trait-ownable", "trait-sip-010" ]
+clarity_version = 2
+epoch = 2.5
